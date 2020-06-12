@@ -158,7 +158,7 @@ jar {
 	}
 }
 
-task jarBase ( type: Jar, dependsOn: compileJava ) {
+task jarBase ( type: Jar, dependsOn: compileAll ) {
 	manifest {
 		attributes "Implementation-Title": "Choral Base Jar Package",
 		"Implementation-Version": "0.1"
@@ -168,7 +168,7 @@ task jarBase ( type: Jar, dependsOn: compileJava ) {
 	from sourceSets.base.output
 }
 
-task jarRuntime ( type: Jar, dependsOn: compileJava ) {
+task jarRuntime ( type: Jar, dependsOn: compileAll ) {
 	manifest {
 		attributes "Implementation-Title": "Choral Runtime Jar Package",
 				"Implementation-Version": "0.1"
@@ -181,7 +181,7 @@ task jarRuntime ( type: Jar, dependsOn: compileJava ) {
 	}
 }
 
-task jarChoralUnit ( type: Jar, dependsOn: compileJava ) {
+task jarChoralUnit ( type: Jar, dependsOn: compileAll ) {
 	manifest {
 		attributes "Implementation-Title": "ChoralUnit Jar Package",
 				"Implementation-Version": "0.1"
