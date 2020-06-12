@@ -1,0 +1,30 @@
+<TaskOptions>
+  <TaskOptions>
+    <option name="arguments" value="check --verbosity=DEBUG $FilePath$" />
+    <option name="checkSyntaxErrors" value="true" />
+    <option name="description" />
+    <option name="exitCodeBehavior" value="ALWAYS" />
+    <option name="fileExtension" value="Choral" />
+    <option name="immediateSync" value="true" />
+    <option name="name" value="Choral Command" />
+    <option name="output" value="" />
+    <option name="outputFilters">
+      <array>
+        <FilterInfo>
+          <option name="description" value="" />
+          <option name="name" value="" />
+          <option name="regExp" value="$FILE_PATH$:$LINE$:$COLUMN$: $MESSAGE$" />
+        </FilterInfo>
+      </array>
+    </option>
+    <option name="outputFromStdout" value="false" />
+    <option name="program" value="$PROJECT_DIR$/src/launchers/choral" />
+    <option name="runOnExternalChanges" value="true" />
+    <option name="scopeName" value="Current File" />
+    <option name="trackOnlyRoot" value="false" />
+    <option name="workingDir" value="" />
+    <envs>
+      <env name="CHORAL_HOME" value="$PROJECT_DIR$/dist" />
+    </envs>
+  </TaskOptions>
+</TaskOptions>

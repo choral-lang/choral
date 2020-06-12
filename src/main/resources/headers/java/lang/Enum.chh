@@ -1,0 +1,4 @@
+/* Choral Header Version 0.1 */
+package java.lang;
+
+public abstract class Enum@A<T@A extends Enum@A<T>> { }

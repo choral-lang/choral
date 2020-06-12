@@ -1,0 +1,13 @@
+.gradle/
+build/
+dist/
+release/
+out/
+.idea/workspace.xml
+.idea/modules.xml
+gradlew
+gradlew.bat
+
+# antlr generated files
+src/main/java/org/choral/grammar/
+

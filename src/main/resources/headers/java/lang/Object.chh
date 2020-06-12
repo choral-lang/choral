@@ -1,0 +1,28 @@
+/* Choral Header Version 0.1 */
+package java.lang;
+
+public class Object@A {
+
+    public Object() {  }
+
+    public int@A hashCode() {  }
+
+    public boolean@A equals(Object@A obj) {  }
+
+    protected Object@A clone() /* throws CloneNotSupportedException */ {  }
+
+    public String@A toString() {  }
+
+    public final void notify() {  }
+
+    public final void notifyAll() {  }
+
+    public final void wait(long@A timeout) /* throws InterruptedException */ {  }
+
+    public final void wait(long@A timeout, int@A nanos) /* throws InterruptedException */ {  }
+
+    public final void wait() /* throws InterruptedException */ {  }
+
+    protected void finalize() /* throws Throwable */ { }
+
+}

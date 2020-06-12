@@ -1,0 +1,16 @@
+/* Choral Header Version 0.1 */
+package java.lang;
+
+public class Exception@A extends Throwable@A {
+
+    public Exception() {  }
+
+    public Exception(String@A message) {  }
+
+    public Exception(String@A message, Throwable@A cause) {  }
+
+    protected Exception(String@A message, Throwable@A cause, boolean@A enableSuppression, boolean@A writableStackTrace) {  }
+
+    public Exception(Throwable@A cause) {  }
+
+}

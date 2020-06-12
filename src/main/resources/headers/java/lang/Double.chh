@@ -1,0 +1,6 @@
+/* Choral Header Version 0.1 */
+package java.lang;
+
+public final class Double@A extends Number@A {
+
+}
