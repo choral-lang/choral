@@ -111,7 +111,7 @@ task testParsing( type: JavaExec ){
 task compile11( type: JavaCompile ) {
 	sourceCompatibility = 11
 	targetCompatibility = 11
-	classpath = sourceSets.main.runtimeClasspath
+	classpath = sourceSets.choralUnit.runtimeClasspath
 	destinationDir = compileJava.destinationDir
 	def sources = layout.files()
 	sources += sourceSets.main.java.sourceDirectories
@@ -121,10 +121,10 @@ task compile11( type: JavaCompile ) {
 	source = sources
 }
 
-task compile14( type: JavaCompile ) {
+task compile14( type: JavaCompile, dependsOn: compile11 ) {
 	sourceCompatibility = 14
 	targetCompatibility = 14
-	classpath = sourceSets.main.runtimeClasspath
+	classpath = sourceSets.test.runtimeClasspath
 	destinationDir = compileJava.destinationDir
 	source = sourceSets.tests.java.sourceDirectories
 }
@@ -158,7 +158,7 @@ jar {
 	}
 }
 
-task jarBase ( type: Jar, dependsOn: compileAll ) {
+task jarBase ( type: Jar, dependsOn: compile11 ) {
 	manifest {
 		attributes "Implementation-Title": "Choral Base Jar Package",
 		"Implementation-Version": "0.1"
@@ -168,7 +168,7 @@ task jarBase ( type: Jar, dependsOn: compileAll ) {
 	from sourceSets.base.output
 }
 
-task jarRuntime ( type: Jar, dependsOn: compileAll ) {
+task jarRuntime ( type: Jar, dependsOn: compile11 ) {
 	manifest {
 		attributes "Implementation-Title": "Choral Runtime Jar Package",
 				"Implementation-Version": "0.1"
@@ -181,7 +181,7 @@ task jarRuntime ( type: Jar, dependsOn: compileAll ) {
 	}
 }
 
-task jarChoralUnit ( type: Jar, dependsOn: compileAll ) {
+task jarChoralUnit ( type: Jar, dependsOn: compile11 ) {
 	manifest {
 		attributes "Implementation-Title": "ChoralUnit Jar Package",
 				"Implementation-Version": "0.1"
@@ -194,7 +194,14 @@ task jarChoralUnit ( type: Jar, dependsOn: compileAll ) {
 	}
 }
 
-task makeRelease( type: Zip, dependsOn: jar ) {
+task jarAll {
+	dependsOn jar
+	dependsOn jarBase
+	dependsOn jarRuntime
+	dependsOn jarChoralUnit
+}
+
+task makeRelease( type: Zip, dependsOn: jarAll ) {
 	def destDir = file( jarOutputFolder )
 	from ( destDir ) {
 		include "*.jar"
