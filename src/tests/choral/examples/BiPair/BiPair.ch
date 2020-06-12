@@ -16,5 +16,4 @@ public class BiPair@( A, B )< L@X, R@Y > {
 	public R@B right() {
 		return this.right;
 	}
-
 }
