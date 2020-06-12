@@ -2,15 +2,15 @@ package choral.examples.ConsumeItems;
 import java.util.function.Consumer;
 import java.util.Iterator;
 
-import org.choral.lang.Channels.DiChannel2;
+import org.choral.lang.Channels.DiChannel_B;
 import org.choral.lang.Unit;
 
 public class ConsumeItems_B {
-	public static void consumeItems( DiChannel2< Integer > ch, Unit it, Consumer < Integer > consumer ) {
+	public static void consumeItems( DiChannel_B< Integer > ch, Unit it, Consumer < Integer > consumer ) {
 		consumeItems( ch, consumer );
 	}
 
-	public static void consumeItems( DiChannel2 < Integer > ch, Consumer < Integer > consumer ) {
+	public static void consumeItems( DiChannel_B < Integer > ch, Consumer < Integer > consumer ) {
 		ch.< Integer >com( Unit.id );
 		{
 			switch( ch.< ConsumeChoice >select( Unit.id ) ){

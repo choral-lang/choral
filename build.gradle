@@ -103,16 +103,39 @@ generateGrammarSource {
 	doLast({ println("Done " + tasks[name].description.toString()) })
 }
 
-compileJava {
-	dependsOn generateGrammarSource
-}
-
 task testParsing( type: JavaExec ){
 	classpath = sourceSets.main.runtimeClasspath
 	main = 'org.choral.compiler.DebuggingParser'
 }
 
-task runSingle( type: JavaExec, dependsOn: compileJava ) {
+task compile11( type: JavaCompile ) {
+	sourceCompatibility = 11
+	targetCompatibility = 11
+	classpath = sourceSets.main.runtimeClasspath
+	destinationDir = compileJava.destinationDir
+	def sources = layout.files()
+	sources += sourceSets.main.java.sourceDirectories
+	sources += sourceSets.base.java.sourceDirectories
+	sources += sourceSets.runtime.java.sourceDirectories
+	sources += sourceSets.choralUnit.java.sourceDirectories
+	source = sources
+}
+
+task compile14( type: JavaCompile ) {
+	sourceCompatibility = 14
+	targetCompatibility = 14
+	classpath = sourceSets.main.runtimeClasspath
+	destinationDir = compileJava.destinationDir
+	source = sourceSets.tests.java.sourceDirectories
+}
+
+task compileAll{
+	dependsOn generateGrammarSource
+	dependsOn compile11
+	dependsOn compile14
+}
+
+task runSingle( type: JavaExec, dependsOn: compileAll ) {
 	classpath = sourceSets.main.runtimeClasspath
 	doFirst({ println("Starting " + tasks[name].description.toString() ) })
 

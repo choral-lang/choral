@@ -121,7 +121,7 @@ public class TestChoral {
 					new String[]{
 							"check",
 							"--verbosity=DEBUG",
-							"--headers=src/tests/choral/Prelude",
+//							"--headers=src/tests/choral/Prelude",
 							compilationRequest.sourceFolder() + File.separator + compilationRequest.symbol + ".ch"
 					},
 					new String[]{}
@@ -136,7 +136,7 @@ public class TestChoral {
 						new String[]{
 								"epp",
 								"--verbosity=DEBUG",
-								"--headers=src/tests/choral/Prelude",
+//								"--headers=src/tests/choral/Prelude",
 								"-t", compilationRequest.targetFolder(),
 								"-s", compilationRequest.sourceFolder(),
 								compilationRequest.symbol() }
