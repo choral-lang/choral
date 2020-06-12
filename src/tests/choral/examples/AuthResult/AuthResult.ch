@@ -1,7 +1,6 @@
 package choral.examples.AuthResult;
 
-import choral.examples.BiPair.BiPair1;
-import choral.examples.BiPair.BiPair2;
+import choral.examples.BiPair.BiPair;
 import choral.examples.DistAuthUtils.AuthToken;
 import java.util.Optional;
 

@@ -25,30 +25,34 @@ import org.apache.commons.lang.ArrayUtils;
 import org.choral.Choral;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TestChoral {
 
 	private static class CompilationRequest {
-		private final String sourceFolder;
+		private final List< String > sourceFolder;
 		private final String targetFolder;
+		private final List< String > headersFolders;
 		private final String symbol;
 		private final List< String > worlds;
 
 		public CompilationRequest(
-				String sourceFolder, String targetFolder, String symbol,
+				List< String > sourceFolder, String targetFolder, List< String > headersFolders, String symbol,
 				List< String > worlds
 		) {
 			this.sourceFolder = sourceFolder;
 			this.targetFolder = targetFolder;
+			this.headersFolders = headersFolders;
 			this.symbol = symbol;
 			this.worlds = worlds;
 		}
 
-		public String sourceFolder() {
+		public List< String > sourceFolder() {
 			return sourceFolder;
 		}
 
@@ -63,6 +67,10 @@ public class TestChoral {
 		public List< String > worlds() {
 			return worlds;
 		}
+
+		public List< String > headersFolders() {
+			return headersFolders;
+		}
 	}
 
 	static final List< String > ALL_WORLDS = Collections.singletonList( "" );
@@ -71,10 +79,10 @@ public class TestChoral {
 		return sourceFolder + File.separator + subFolder;
 	}
 
-	public static void main ( String[] args ) {
+	static String sourceFolder = "src/tests/choral/examples";
+	static String targetFolder = "src/tests/java/";
 
-		String sourceFolder = "src/tests/choral/examples";
-		String targetFolder = "src/tests/java/";
+	public static void main ( String[] args ) {
 
 		List< CompilationRequest > compilationRequests = Stream.of(
 
@@ -84,11 +92,16 @@ public class TestChoral {
 
 //				new CompilationRequest( subFolder( sourceFolder, "Foo"), targetFolder, "Foo", ALL_WORLDS )
 
-				new CompilationRequest( subFolder( sourceFolder, "ConsumeItems"), targetFolder, "ConsumeItems", ALL_WORLDS )
+//				new CompilationRequest( subFolder( sourceFolder, "ConsumeItems"), targetFolder, "ConsumeItems", ALL_WORLDS )
 
 //				new CompilationRequest( subFolder( sourceFolder, "RemoteFunction"), targetFolder, "RemoteFunction", ALL_WORLDS )
 
-//				new CompilationRequest( subFolder( sourceFolder, "AuthResult"), targetFolder, "AuthResult", ALL_WORLDS )
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "AuthResult" ),
+								subFolder( sourceFolder, "BiPair" ) ),
+						targetFolder,
+						List.of( "src/tests/choral/examples/BiPair", "src/tests/choral/examples/AuthResult" ),
+						"AuthResult", ALL_WORLDS )
 
 //				new CompilationRequest( subFolder( sourceFolder, "BuyerSellerShipper"), targetFolder, "BuyerSellerShipper", ALL_WORLDS )
 
@@ -111,8 +124,10 @@ public class TestChoral {
 
 		).collect( Collectors.toList() );
 
-//		check( compilationRequests );
-		project( compilationRequests );
+//		generateCHH( headersRequest ); // use exclusively because they call exit
+//		check( compilationRequests ); // use exclusively because they call exit
+		project( compilationRequests ); // use exclusively because they call exit
+		System.out.println( "Projected Classes" );
 	}
 
 	private static void check( List< CompilationRequest > compilationRequests ){
@@ -132,18 +147,17 @@ public class TestChoral {
 	private static void project( List< CompilationRequest > compilationRequests ){
 		try {
 			for ( CompilationRequest compilationRequest : compilationRequests ) {
-				Choral.main( ( String[] ) //ArrayUtils.addAll(
+				String[] parameters = ( String[] ) //ArrayUtils.addAll(
 						new String[]{
 								"epp",
 								"--verbosity=DEBUG",
-//								"--headers=src/tests/choral/Prelude",
+								"--headers=" + String.join( ":", compilationRequest.headersFolders() ),
 								"-t", compilationRequest.targetFolder(),
-								"-s", compilationRequest.sourceFolder(),
+								"-s", String.join( ":", compilationRequest.sourceFolder() ),
 								compilationRequest.symbol() }
-//								,
-//						compilationRequest.worlds().toArray()
-//				)
-			);
+/*						,compilationRequest.worlds().toArray() ) */;
+				System.out.println( "Issuing command " + Arrays.toString( parameters ) );
+				Choral.main( parameters );
 			}
 		} catch ( Exception e ) {
 			e.printStackTrace();
