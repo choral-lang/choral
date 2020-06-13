@@ -79,6 +79,10 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		@Mixin
 		PathOption.HeadersPathOption headersPathOption;
 
+		@Option( names = { "--strict-header-search" },
+				description = "ignore headers in the same folder of the source files, unless specified by -l/--headers." )
+		boolean strictHeaderSearch = false;
+
 		@Parameters( arity = "1..*" )
 		Collection< File > sourceFiles;
 
@@ -88,8 +92,12 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList());
 				Collection< CompilationUnit > headerUnits = Stream.concat( HeaderLoader.loadStandardProfile(),
-						HeaderLoader.loadFromPath( headersPathOption.getPaths() )).collect(
-						Collectors.toList());
+						HeaderLoader.loadFromPath(
+								headersPathOption.getPaths(),
+								sourceFiles,
+								true, strictHeaderSearch )
+						)
+						.collect(Collectors.toList());
 				Collection< CompilationUnit > annotatedUnits = Typer.annotate( sourceUnits,
 						headerUnits );
 				Compiler.checkProjectiability( annotatedUnits );
