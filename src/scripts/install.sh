@@ -21,7 +21,7 @@ echoFancy() {
 showCommands() {
 cat <<EOS
 To launch the Choral installer with different parameters you can run:
- curl https://raw.githubusercontent.com/choral-lang/choral/src/scripts/install.sh | bash -s /path/to/store/the/launcher /path/to/store/the/binaries
+ curl https://raw.githubusercontent.com/choral-lang/choral/master/src/scripts/install.sh | bash -s /path/to/store/the/launcher /path/to/store/the/binaries
 
 EOS
 }
