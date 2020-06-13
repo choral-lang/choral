@@ -65,16 +65,17 @@ echoFancy "${tty_bold}Downloading Choral from $CHORAL_URL into $TMP_DIR"
 curl -L -o $TMP_DIR/choral.zip $CHORAL_URL
 
 echoFancy $tty_bold "Unpacking Choral in $TMP_DIR"
-unzip choral.zip -d $TMP_DIR
+unzip $TMP_DIR/choral.zip -d $TMP_DIR
 
-echoFancy $tty_bold "Installing Choral launcher in $CHORAL_LAUNCHER_DIR"
+echoFancy "${tty_bold}Installing Choral launcher in $CHORAL_LAUNCHER_DIR"
+mkdir -p $CHORAL_LAUNCHER_DIR
 mv $TMP_DIR/choral/launchers/choral $CHORAL_LAUNCHER_DIR/choral
 chmod +x $CHORAL_LAUNCHER_DIR/choral
-echoFancy $tty_bold "Installing Choral libraries in $CHORAL_HOME"
+echoFancy "${tty_bold}Installing Choral libraries in $CHORAL_HOME"
 mkdir -p $CHORAL_HOME
 mv $TMP_DIR/choral/dist/* $CHORAL_HOME/
 
-echoFancy $tty_bold "Cleaning up temporary installation files in $TMP_DIR"
+echoFancy "${tty_bold}Cleaning up temporary installation files in $TMP_DIR"
 rm -rf $TMP_DIR
 
 echo ""
