@@ -33,7 +33,7 @@ case "$PROCEED" in
         ;;
     *)
         echo "Installation interrupted by the user"
-        showCommands
+        help
         exit 0
         ;;
 esac
