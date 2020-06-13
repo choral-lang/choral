@@ -175,11 +175,11 @@ task makeRelease( type: Zip, dependsOn: jar ) {
 	def destDir = file( jarOutputFolder )
 	from ( destDir ) {
 		include "*.jar"
-		into "dist"
+		into "choral/dist"
 	}
 	from ( file( "src/scripts" ) ){
 		include "choral"
-		into "launchers"
+		into "choral/launchers"
 	}
 	archiveFileName = "choral.zip"
 	destinationDirectory = file( "release" )

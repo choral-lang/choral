@@ -21,7 +21,7 @@ echoFancy() {
 showCommands() {
 cat <<EOS
 To launch the Choral installer with different parameters you can run:
- curl https://raw.githubusercontent.com/choral/choral/src/scripts/install.sh | bash -s /path/to/store/the/launcher /path/to/store/the/binaries
+ curl https://raw.githubusercontent.com/choral-lang/choral/src/scripts/install.sh | bash -s /path/to/store/the/launcher /path/to/store/the/binaries
 
 EOS
 }
@@ -54,13 +54,16 @@ esac
 
 # Main
 
-echoFancy "${tty_bold}Downloading Choral"
+echoFancy "${tty_bold}Getting the latest Choral version identifier from GitHub"
 
-CHORAL_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/jolie/jolie/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
-CHORAL_URL="https://github.com/jolie/jolie/releases/download/${CHORAL_LATEST_VERSION}/choral-${CHORAL_LATEST_VERSION}.zip"
-curl -L -o choral.zip $CHORAL_URL
+CHORAL_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/choral-lang/choral/releases/latest | sed -e 's/.*"tag_name":"v\([^"]*\)".*/\1/')
+echoFancy "${tty_bold}Latest version is $CHORAL_LATEST_VERSION"
 
 TMP_DIR=$(mktemp -d -t choral-XXXXXXXX)
+CHORAL_URL="https://github.com/choral-lang/choral/releases/download/v${CHORAL_LATEST_VERSION}/choral-${CHORAL_LATEST_VERSION}.zip"
+echoFancy "${tty_bold}Downloading Choral from $CHORAL_URL into $TMP_DIR"
+curl -L -o $TMP_DIR/choral.zip $CHORAL_URL
+
 echoFancy $tty_bold "Unpacking Choral in $TMP_DIR"
 unzip choral.zip -d $TMP_DIR
 
