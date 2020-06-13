@@ -88,7 +88,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList());
 				Collection< CompilationUnit > headerUnits = Stream.concat( HeaderLoader.loadStandardProfile(),
-						HeaderLoader.loadFromPath( headersPathOption.getPaths(true) )).collect(
+						HeaderLoader.loadFromPath( headersPathOption.getPaths() )).collect(
 						Collectors.toList());
 				Collection< CompilationUnit > annotatedUnits = Typer.annotate( sourceUnits,
 						headerUnits );

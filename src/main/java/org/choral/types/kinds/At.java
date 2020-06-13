@@ -19,24 +19,24 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package org.choral.kinds;
+package org.choral.types.kinds;
 
-public class Star extends Kind {
-	Star() {
+public class At extends Kind {
+	At() {
 	}
 
-	@java.lang.Override
-	public java.lang.String toString() {
-		return "*";
+	@Override
+	public String toString() {
+		return "@";
 	}
 
-	@java.lang.Override
+	@Override
 	public boolean equals( Object o ) {
-		return ( o == this ) || ( o instanceof Star );
+		return ( o == this ) || ( o instanceof At );
 	}
 
 	@Override
 	public int hashCode() {
-		return System.identityHashCode( Kind.getStar() );
+		return System.identityHashCode( Kind.getAt() );
 	}
 }

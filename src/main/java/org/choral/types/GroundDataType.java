@@ -31,12 +31,12 @@ public interface GroundDataType extends DataType, GroundDataTypeOrVoid {
 	}
 
 	@Override
-	default Types.SpecialTypeTag specialTypeTag() {
+	default Universe.SpecialTypeTag specialTypeTag() {
 		return typeConstructor().specialTypeTag();
 	}
 
 	@Override
-	default Types.PrimitiveTypeTag primitiveTypeTag() {
+	default Universe.PrimitiveTypeTag primitiveTypeTag() {
 		return typeConstructor().primitiveTypeTag();
 	}
 

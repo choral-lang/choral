@@ -126,11 +126,11 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 				throw new StaticVerificationException(
 						"illegal inheritance, cannot inherit from final '" + type + "'" );
 			}
-			if( type.typeConstructor() == universe().specialType( Types.SpecialTypeTag.ENUM )
+			if( type.typeConstructor() == universe().specialType( Universe.SpecialTypeTag.ENUM )
 					&& variety() != Variety.ENUM ) {
 				throw new StaticVerificationException(
 						"illegal inheritance, only enum types can inherit from '" + universe().specialType(
-								Types.SpecialTypeTag.ENUM ) + "'" );
+								Universe.SpecialTypeTag.ENUM ) + "'" );
 			}
 			if( type.worldArguments().size() != worldArguments().size() ||
 					!type.worldArguments().containsAll( worldParameters ) ) {

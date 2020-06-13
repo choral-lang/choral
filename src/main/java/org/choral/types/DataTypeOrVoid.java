@@ -25,11 +25,11 @@ public interface DataTypeOrVoid {
 
 	boolean isVoid();
 
-	default Types.SpecialTypeTag specialTypeTag() {
+	default Universe.SpecialTypeTag specialTypeTag() {
 		return null;
 	}
 
-	default Types.PrimitiveTypeTag primitiveTypeTag() {
+	default Universe.PrimitiveTypeTag primitiveTypeTag() {
 		return null;
 	}
 

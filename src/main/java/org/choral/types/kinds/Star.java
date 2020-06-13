@@ -19,38 +19,24 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package org.choral.kinds;
+package org.choral.types.kinds;
 
-import org.choral.exceptions.ChoralException;
-
-public class KindApplicationException extends ChoralException {
-
-	private final Kind subject;
-	private final Kind object;
-
-	public KindApplicationException( Kind subject, Kind object ) {
-		super( "" );
-		this.subject = subject;
-		this.object = object;
-	}
-
-	public Kind getSubject() {
-		return subject;
-	}
-
-	public Kind getObject() {
-		return object;
-	}
-
-	public String message() {
-		return "ill-formed kind application " + subject + object + ".";
+public class Star extends Kind {
+	Star() {
 	}
 
 	@java.lang.Override
-	public String toString() {
-		return "KindApplicationException{" +
-				"subject=" + subject +
-				", object=" + object +
-				'}';
+	public java.lang.String toString() {
+		return "*";
+	}
+
+	@java.lang.Override
+	public boolean equals( Object o ) {
+		return ( o == this ) || ( o instanceof Star );
+	}
+
+	@Override
+	public int hashCode() {
+		return System.identityHashCode( Kind.getStar() );
 	}
 }

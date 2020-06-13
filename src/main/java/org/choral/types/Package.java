@@ -27,7 +27,7 @@ import java.util.*;
 
 public class Package {
 
-	private Package( Types universe ) {
+	private Package( Universe universe ) {
 		this.identifier = "";
 		this.declarationContext = null;
 		this.universe = universe;
@@ -39,7 +39,7 @@ public class Package {
 		this.identifier = identifier;
 	}
 
-	static Package createNewRoot( final Types universe ) {
+	static Package createNewRoot( final Universe universe ) {
 		return new Package( universe ) {
 			@Override
 			public boolean isRoot() {
@@ -53,9 +53,9 @@ public class Package {
 		};
 	}
 
-	private final Types universe;
+	private final Universe universe;
 
-	public Types universe() {
+	public Universe universe() {
 		return universe;
 	}
 

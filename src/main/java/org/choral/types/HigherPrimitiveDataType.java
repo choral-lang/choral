@@ -29,15 +29,15 @@ import java.util.Map;
 
 public final class HigherPrimitiveDataType extends HigherDataType implements PrimitiveDataType {
 
-	HigherPrimitiveDataType( Types universe, Types.PrimitiveTypeTag tag ) {
+	HigherPrimitiveDataType(Universe universe, Universe.PrimitiveTypeTag tag ) {
 		super( universe, List.of( new World( universe, World.DEFAULT_NAME ) ) );
 		this.tag = tag;
 	}
 
-	private final Types.PrimitiveTypeTag tag;
+	private final Universe.PrimitiveTypeTag tag;
 
 	@Override
-	public Types.PrimitiveTypeTag primitiveTypeTag() {
+	public Universe.PrimitiveTypeTag primitiveTypeTag() {
 		return tag;
 	}
 

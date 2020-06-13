@@ -22,7 +22,7 @@
 package org.choral.types;
 
 import org.choral.exceptions.StaticVerificationException;
-import org.choral.kinds.Kind;
+import org.choral.types.kinds.Kind;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public abstract class HigherDataType extends TypeBase
 		implements DataType, WorldParameterDeclarationContext {
 
-	HigherDataType( Types universe, List< World > worldParameters ) {
+	HigherDataType(Universe universe, List< World > worldParameters ) {
 		super( universe );
 		this.worldParameters = List.copyOf( worldParameters );
 		String[] names = new String[ worldParameters.size() ];

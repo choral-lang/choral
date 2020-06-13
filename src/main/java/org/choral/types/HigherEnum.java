@@ -109,10 +109,10 @@ public final class HigherEnum extends HigherClass implements Enum {
 
 		@Override
 		public void setExtendedClass() {
-			HigherClass t = (HigherClass) universe().specialType( Types.SpecialTypeTag.ENUM );
+			HigherClass t = (HigherClass) universe().specialType( Universe.SpecialTypeTag.ENUM );
 			if( t == null ){
 				throw new StaticVerificationException( "Unknown class '" +
-						Types.SpecialTypeTag.ENUM.qualifiedName +
+						Universe.SpecialTypeTag.ENUM.qualifiedName +
 						"', missing a header?" );
 			}
 			super.setExtendedClass( t.applyTo( this.worldArguments(), List.< HigherReferenceType >of( typeConstructor() ) ) );

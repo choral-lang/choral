@@ -28,14 +28,13 @@ import org.choral.utils.Formatting;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class HigherTypeParameter extends HigherReferenceType {
 
 	public HigherTypeParameter(
-			Types universe,
+			Universe universe,
 			String identifier,
 			List< World > worldParameters
 	) {
@@ -44,7 +43,7 @@ public final class HigherTypeParameter extends HigherReferenceType {
 	}
 
 	public HigherTypeParameter(
-			Types universe,
+			Universe universe,
 			String identifier,
 			List< World > worldParameters,
 			Node sourceCode

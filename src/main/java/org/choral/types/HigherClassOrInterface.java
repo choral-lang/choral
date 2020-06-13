@@ -23,7 +23,7 @@ package org.choral.types;
 
 import org.choral.ast.Node;
 import org.choral.exceptions.StaticVerificationException;
-import org.choral.kinds.Kind;
+import org.choral.types.kinds.Kind;
 import org.choral.utils.Formatting;
 
 import java.util.*;
@@ -93,10 +93,10 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		this.tag = universe().registerSpecialType( this );
 	}
 
-	private final Types.SpecialTypeTag tag;
+	private final Universe.SpecialTypeTag tag;
 
 	@Override
-	public Types.SpecialTypeTag specialTypeTag() {
+	public Universe.SpecialTypeTag specialTypeTag() {
 		return tag;
 	}
 

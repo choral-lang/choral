@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 
 public abstract class HigherReferenceType extends HigherDataType implements ReferenceType {
 
-	HigherReferenceType( Types universe,
+	HigherReferenceType( Universe universe,
 						 List< World > worldParameters
 	) {
 		super( universe, worldParameters );
