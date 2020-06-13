@@ -22,7 +22,7 @@
 package org.choral.types;
 
 import org.choral.exceptions.StaticVerificationException;
-import org.choral.kinds.Kind;
+import org.choral.types.kinds.Kind;
 import org.choral.utils.Formatting;
 
 import java.util.*;
@@ -32,9 +32,9 @@ import java.util.stream.Stream;
 import static org.choral.types.Modifier.ABSTRACT;
 import static org.choral.types.Modifier.PUBLIC;
 
-public class Types {
+public class Universe {
 
-	public Types() {
+	public Universe() {
 		for( PrimitiveTypeTag tag : PrimitiveTypeTag.values() ) {
 			primitiveTypes.put( tag, new HigherPrimitiveDataType( this, tag ) );
 		}
@@ -189,7 +189,7 @@ public class Types {
 		assert ( worlds > 0 );
 		HigherClass t;
 		if( worlds == 1 ) {
-			t = (HigherClass) this.specialType( Types.SpecialTypeTag.OBJECT );
+			t = (HigherClass) this.specialType( Universe.SpecialTypeTag.OBJECT );
 		} else {
 			t = topClassesIndex.get( worlds );
 			if( t == null ) {
@@ -237,7 +237,7 @@ public class Types {
 	private final class HigherNullType extends HigherReferenceType {
 
 		HigherNullType( List< World > worldParameters ) {
-			super( Types.this, worldParameters );
+			super( Universe.this, worldParameters );
 		}
 
 		public String toString() {
@@ -264,7 +264,7 @@ public class Types {
 		final class GroundNullType extends TypeBase implements GroundReferenceType {
 
 			public GroundNullType( List< ? extends World > worldArguments ) {
-				super( Types.this );
+				super( Universe.this );
 				this.worldArguments = worldArguments;
 			}
 

@@ -22,22 +22,21 @@
 package org.choral.types;
 
 import org.choral.ast.Node;
-import org.choral.kinds.Kind;
+import org.choral.types.kinds.Kind;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public final class World extends TypeBase {
 
 	static final String DEFAULT_NAME = "A";
 
-	public World( Types universe, String identifier ) {
+	public World(Universe universe, String identifier ) {
 		super( universe );
 		this.identifier = identifier;
 	}
 
-	public World( Types universe, String identifier, Node sourceCode ) {
+	public World(Universe universe, String identifier, Node sourceCode ) {
 		this( universe, identifier );
 		setSourceCode( sourceCode );
 	}
@@ -81,11 +80,11 @@ public final class World extends TypeBase {
 		return ( !strict && this.isEquivalentTo( type ) );
 	}
 
-	public static List< World > freshWorlds( Types universe, int size ) {
+	public static List< World > freshWorlds(Universe universe, int size ) {
 		return freshWorlds( universe, size, DEFAULT_NAME );
 	}
 
-	public static List< World > freshWorlds( Types universe, int size, String basename ){
+	public static List< World > freshWorlds(Universe universe, int size, String basename ){
 		List<World> ws = new ArrayList<>(size);
 		if(size==1){
 			ws.add( new World( universe, basename ) );

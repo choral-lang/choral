@@ -21,10 +21,7 @@
 
 package org.choral.types;
 
-import org.choral.ast.Node;
-import org.choral.kinds.Kind;
-
-import java.util.Optional;
+import org.choral.types.kinds.Kind;
 
 public interface Type extends HasSource {
 	Kind kind();
@@ -41,5 +38,5 @@ public interface Type extends HasSource {
 		return isSubtypeOf( type, false );
 	}
 
-	Types universe();
+	Universe universe();
 }

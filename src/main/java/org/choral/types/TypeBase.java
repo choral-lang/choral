@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 
 abstract class TypeBase implements Type {
 
-	public TypeBase( Types universe ) {
+	public TypeBase( Universe universe ) {
 		this.universe = universe;
 	}
 
@@ -65,10 +65,10 @@ abstract class TypeBase implements Type {
 		this.source = source;
 	}
 
-	private final Types universe;
+	private final Universe universe;
 
 	@Override
-	public Types universe() {
+	public Universe universe() {
 		return universe;
 	}
 

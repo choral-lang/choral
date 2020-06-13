@@ -294,7 +294,7 @@ public abstract class Member implements HasSource {
 		protected final List< HigherTypeParameter > prepareTypeParameters(
 				Substitution substitution
 		) {
-			Types universe = declarationContext().universe();
+			Universe universe = declarationContext().universe();
 			List< HigherTypeParameter > newTypeParams = new ArrayList<>();
 			for( HigherTypeParameter t : typeParameters() ) {
 				newTypeParams.add( new HigherTypeParameter(

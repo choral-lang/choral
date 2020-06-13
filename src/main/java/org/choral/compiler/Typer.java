@@ -34,14 +34,12 @@ import org.choral.exceptions.AstPositionedException;
 import org.choral.exceptions.StaticVerificationException;
 import org.choral.types.*;
 import org.choral.types.Package;
-import org.choral.types.Types.*;
+import org.choral.types.Universe.*;
 import org.choral.utils.Formatting;
 import org.choral.utils.Pair;
 
-import java.lang.Enum;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Typer {
 
@@ -58,7 +56,7 @@ public class Typer {
 			Collection< CompilationUnit > sourceUnits, Collection< CompilationUnit > headerUnits
 	) {
 		TaskQueue taskQueue = new TaskQueue();
-		Types universe = new Types();
+		Universe universe = new Universe();
 		Visitor headerVisitor = new HeaderVisitor( taskQueue, universe );
 		headerUnits.forEach( cu -> taskQueue.enqueue( Phase.TYPE_SYMBOL_DECLARATIONS,
 				() -> headerVisitor.visit( cu ) ) );
@@ -74,14 +72,14 @@ public class Typer {
 		private static final String SELECTION_METHOD_ANNOTATION = "SelectionMethod";
 
 		private final TaskQueue taskQueue;
-		private final Types universe;
+		private final Universe universe;
 
-		public Visitor( TaskQueue taskQueue, Types universe ) {
+		public Visitor( TaskQueue taskQueue, Universe universe ) {
 			this.taskQueue = taskQueue;
 			this.universe = universe;
 		}
 
-		protected Types universe() {
+		protected Universe universe() {
 			return universe;
 		}
 
@@ -783,7 +781,7 @@ public class Typer {
 
 	private static class HeaderVisitor
 			extends Visitor {
-		public HeaderVisitor( TaskQueue taskQueue, Types universe ) {
+		public HeaderVisitor( TaskQueue taskQueue, Universe universe ) {
 			super( taskQueue, universe );
 		}
 
@@ -812,7 +810,7 @@ public class Typer {
 
 	private static class SourceVisitor
 			extends Visitor {
-		public SourceVisitor( TaskQueue taskQueue, Types universe ) {
+		public SourceVisitor( TaskQueue taskQueue, Universe universe ) {
 			super( taskQueue, universe );
 		}
 
