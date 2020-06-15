@@ -278,8 +278,13 @@ public class Typer {
 							() -> visitConstructorBody( callableScope.getScope(), tm,
 									nm.body() ) );
 				}
-				taskQueue.enqueue( new MemberTask( Phase.MEMBER_DECLARATIONS, t,
-						t.innerType()::finaliseInterface ) );
+				taskQueue.enqueue( new MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
+					try {
+						t.innerType().finaliseInterface();
+					} catch( StaticVerificationException e ) {
+						throw new AstPositionedException( n.position(), e );
+					}
+				} ) );
 			} );
 			taskQueue.enqueue( Phase.DEBUG, () -> assertTypeDefinitionFinalised( t ) );
 		}
@@ -326,8 +331,13 @@ public class Typer {
 						throw new AstPositionedException( c.position(), e );
 					}
 				}
-				taskQueue.enqueue( new MemberTask( Phase.MEMBER_DECLARATIONS, t,
-						t.innerType()::finaliseInterface ) );
+				taskQueue.enqueue( new MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
+					try {
+						t.innerType().finaliseInterface();
+					} catch( StaticVerificationException e ) {
+						throw new AstPositionedException( n.position(), e );
+					}
+				} ) );
 			} );
 			taskQueue.enqueue( Phase.DEBUG, () -> assertTypeDefinitionFinalised( t ) );
 		}
@@ -414,8 +424,13 @@ public class Typer {
 					tm.innerCallable().finalise();
 					t.innerType().addMethod( tm );
 				}
-				taskQueue.enqueue( new MemberTask( Phase.MEMBER_DECLARATIONS, t,
-						t.innerType()::finaliseInterface ) );
+				taskQueue.enqueue( new MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
+					try {
+						t.innerType().finaliseInterface();
+					} catch( StaticVerificationException e ) {
+						throw new AstPositionedException( n.position(), e );
+					}
+				} ) );
 			} );
 			taskQueue.enqueue( Phase.DEBUG, () -> assertTypeDefinitionFinalised( t ) );
 		}

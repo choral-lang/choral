@@ -24,10 +24,12 @@ package org.choral.compiler.soloist;
 import org.choral.ast.Name;
 import org.choral.ast.Node;
 import org.choral.ast.body.*;
+import org.choral.ast.expression.MethodCallExpression;
 import org.choral.ast.statement.NilStatement;
 import org.choral.ast.type.TypeExpression;
 import org.choral.ast.type.WorldArgument;
 import org.choral.ast.visitors.AbstractSoloistProjector;
+import org.choral.compiler.unitNormaliser.ExpressionUnitNormaliser;
 import org.choral.compiler.unitNormaliser.StatementsUnitNormaliser;
 import org.choral.compiler.unitNormaliser.UnitRepresentation;
 
@@ -139,8 +141,11 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 	public ConstructorDefinition visit( ConstructorDefinition n ) {
 		ConstructorDefinition c = new ConstructorDefinition(
 				visit( n.signature() ),
+				n.explicitConstructorInvocation().map(
+						x -> (MethodCallExpression) ExpressionUnitNormaliser.visitExpression(
+								ExpressionProjector.visit( this.world(), x ) ) ).orElse( null ),
 				StatementsUnitNormaliser.visitStatement(
-						StatementsProjector.visit( this.world(), n.body() ) ),
+						StatementsProjector.visit( this.world(), n.blockStatements() ) ),
 				n.modifiers(),
 				n.position()
 		);

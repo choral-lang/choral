@@ -21,7 +21,7 @@
 
 package choral.examples.HealthCareService;
 
-import choral.examples.AuthResult.AuthResult2;
+import choral.examples.AuthResult.AuthResult_B;
 import choral.examples.DistAuth.DistAuth2;
 import choral.examples.DistAuthUtils.AuthToken;
 import org.choral.choralUnit.testUtils.TestUtils1;
@@ -50,7 +50,7 @@ public class Storage {
 	}
 
 	public void authenticate( TLSChannel1< Object > channel ){
-		AuthResult2 authResult = new DistAuth2( channel ).authenticate();
+		AuthResult_B authResult = new DistAuth2( channel ).authenticate();
 		authResult.right().ifPresent( this::loop );
 	}
 

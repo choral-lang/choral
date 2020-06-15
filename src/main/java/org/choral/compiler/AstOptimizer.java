@@ -668,10 +668,11 @@ public class AstOptimizer implements ChoralVisitor {
 				modifiers.add( m );
 			}
 		}
-
+		Pair< MethodCallExpression, Statement > b = visitConstructorBody( cd.constructorBody() );
 		return new ConstructorDefinition(
 				visitConstructorDeclarator( cd.constructorDeclarator() ),
-				visitConstructorBody( cd.constructorBody() ),
+				b.left(),
+				b.right(),
 				modifiers,
 				getPosition( cd ) );
 	}
@@ -705,20 +706,32 @@ public class AstOptimizer implements ChoralVisitor {
 	/* * * * * * * * * * * CONSTRUCTOR AND METHOD BODIES (STATEMENTS BLOCKS ETC) * * * * * * * * * * * * * */
 
 	@Override
-	public Statement visitConstructorBody( ChoralParser.ConstructorBodyContext ctx ) {
+	public Pair< MethodCallExpression, Statement > visitConstructorBody(
+			ChoralParser.ConstructorBodyContext ctx
+	) {
 		debugInfo();
-//		ifPresent( ctx.blockStatements() ).applyOrElse(
-//				this::visitBlockStatements,
-//				() -> new NilStatement( getPosition( ctx ) );
-		return visitBlock( ctx.block() );
+		return new Pair<>(
+				( ctx.explicitConstructorInvocation() == null )
+						? null
+						: visitExplicitConstructorInvocation( ctx.explicitConstructorInvocation() ),
+				visitBlockStatements( ctx.blockStatements() )
+		);
 	}
 
-//	@Override
-//	public Object visitExplicitConstructorInvocation(
-//			ChoralParser.ExplicitConstructorInvocationContext ctx
-//	) {
-//		return null;
-//	}
+	@Override
+	public MethodCallExpression visitExplicitConstructorInvocation(
+			ChoralParser.ExplicitConstructorInvocationContext ctx
+	) {
+		return new MethodCallExpression(
+				getName( (ctx.SUPER() == null) ? ctx.THIS() : ctx.SUPER()),
+				ifPresent( ctx.argumentList() )
+						.apply( this::visitArgumentList )
+						.orElse( List.of() ),
+				ifPresent( ctx.typeArguments() )
+						.apply( this::visitTypeArguments )
+						.orElse( List.of() ),
+				getPosition( ctx ) );
+	}
 
 	@Override
 	public List< InterfaceMethodDefinition > visitInterfaceBody(
@@ -817,7 +830,7 @@ public class AstOptimizer implements ChoralVisitor {
 			}
 			return chainedStatement;
 		} else {
-			return new NilStatement( getPosition( bss ) );
+			return new NilStatement();
 		}
 	}
 

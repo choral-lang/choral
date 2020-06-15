@@ -1,7 +1,7 @@
 package choral.examples.DistAuth5;
 
 import choral.examples.AuthResult.AuthResult1;
-import choral.examples.AuthResult.AuthResult2;
+import choral.examples.AuthResult.AuthResult_B;
 import choral.examples.DistAuthUtils.AuthToken;
 import choral.examples.DistAuthUtils.Base64_Encoder;
 import choral.examples.DistAuthUtils.ClientRegistry;

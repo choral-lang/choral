@@ -1,5 +1,5 @@
 package choral.examples.DistAuth;
-import choral.examples.AuthResult.AuthResult2;
+import choral.examples.AuthResult.AuthResult_B;
 import choral.examples.DistAuthUtils.AuthToken;
 import org.choral.runtime.Enum.EnumBoolean;
 import org.choral.runtime.TLSChannel.TLSChannel1;
@@ -24,11 +24,11 @@ public class DistAuth2 {
 		}
 	}
 
-	public AuthResult2 authenticate( Unit credentials ) {
+	public AuthResult_B authenticate( Unit credentials ) {
 		return authenticate();
 	}
 
-	public AuthResult2 authenticate() {
+	public AuthResult_B authenticate() {
 		calcHash( Unit.id, Unit.id );
 		{
 			switch( ch_Service_IP.< EnumBoolean >select( Unit.id ) ){
@@ -36,10 +36,10 @@ public class DistAuth2 {
 					throw new RuntimeException( "Received unexpected label from select operation" );
 				}
 				case True -> {
-					return new AuthResult2( Unit.id, ch_Service_IP.< AuthToken >com( Unit.id ) );
+					return new AuthResult_B( Unit.id, ch_Service_IP.< AuthToken >com( Unit.id ) );
 				}
 				case False -> {
-					return new AuthResult2();
+					return new AuthResult_B();
 				}
 			}
 		}

@@ -165,17 +165,20 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 		@Override
 		public void finaliseInterface() {
 			// default empty constructor
-			if( constructors.isEmpty() && ( extendedClass == null // top class
-					|| extendedClass.constructors().filter( x -> x.isAccessibleFrom( this ) )
-					.anyMatch( x -> x.typeParameters().size() == 0 && x.arity() == 0 ) )
-			) {
-				Member.HigherConstructor c = new Member.HigherConstructor(
-						this,
-						EnumSet.of( PUBLIC ),
-						List.of()
-				);
-				c.innerCallable().finalise();
-				addConstructor( c );
+			if( constructors.isEmpty() ) {
+				if ( extendedClass != null
+						&& extendedClass.constructors().filter( x -> x.isAccessibleFrom( this ) )
+						.noneMatch( x -> x.typeParameters().size() == 0 && x.arity() == 0 ) ) {
+					throw new StaticVerificationException( "there is no default constructor available in '" + extendedClass + "'" );
+				} else {
+					Member.HigherConstructor c = new Member.HigherConstructor(
+							this,
+							EnumSet.of( PUBLIC ),
+							List.of()
+					);
+					c.innerCallable().finalise();
+					addConstructor( c );
+				}
 			}
 			// inherit fields and methods
 			if( extendedClass != null ) {

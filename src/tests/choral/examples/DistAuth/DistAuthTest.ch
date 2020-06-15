@@ -1,7 +1,7 @@
 package choral.examples.DistAuth.ChoralUnit;
 
 import choral.examples.AuthResult.AuthResult1;
-import choral.examples.AuthResult.AuthResult2;
+import choral.examples.AuthResult.AuthResult_B;
 import choral.examples.DistAuth.DistAuth1;
 import choral.examples.DistAuth.DistAuth2;
 import choral.examples.DistAuth.DistAuth3;
