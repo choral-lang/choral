@@ -35,14 +35,15 @@ public class HeaderCompiler {
 	}
 
 	public static HeaderSourceObject compile( CompilationUnit n ) {
-		if( n.position().sourceFile() == null ){
+		if( n.position().sourceFile() == null ) {
 			// Trying to generate a header file for a compilation unit without a source file
 			throw new UnsupportedOperationException( "Headers can be generated only for " );
 		}
 		String choralFile = n.position().sourceFile();
 		String name = Paths.get( choralFile ).getFileName().toString();
 		name = name.substring( 0, name.length() - ChoralSourceObject.FILE_EXTENSION.length() );
-		String headerFile = choralFile.substring( 0, choralFile.length() - ChoralSourceObject.FILE_EXTENSION.length() ) + HeaderSourceObject.FILE_EXTENSION;
+		String headerFile = choralFile.substring( 0,
+				choralFile.length() - ChoralSourceObject.FILE_EXTENSION.length() ) + HeaderSourceObject.FILE_EXTENSION;
 
 		return new HeaderSourceObject(
 				new Compiler().visit( n ),

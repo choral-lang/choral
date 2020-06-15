@@ -45,9 +45,9 @@ public class Arrow extends Kind {
 
 	@Override
 	public Kind apply( Kind argument ) {
-		if( argument == this.domain ){
+		if( argument == this.domain ) {
 			return this.codomain;
-		} else{
+		} else {
 			throw new KindApplicationException( this, argument );
 		}
 	}
@@ -59,21 +59,21 @@ public class Arrow extends Kind {
 
 	@Override
 	public String toString() {
-		if( domain.isArrow() ){
+		if( domain.isArrow() ) {
 			return "(" + domain + ") => " + codomain;
-		} else{
+		} else {
 			return domain + " => " + codomain;
 		}
 	}
 
 	@Override
 	public boolean equals( Object o ) {
-		if( o == this ){
+		if( o == this ) {
 			return true;
-		} else if( o instanceof Arrow ){
+		} else if( o instanceof Arrow ) {
 			Arrow a = (Arrow) o;
 			return this.domain.equals( a.domain ) && this.codomain.equals( a.codomain );
-		} else{
+		} else {
 			return false;
 		}
 	}

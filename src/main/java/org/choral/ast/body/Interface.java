@@ -49,7 +49,8 @@ public class Interface extends TemplateDeclaration {
 			final List< InterfaceMethodDefinition > methods,
 			final List< Annotation > annotations,
 			final EnumSet< InterfaceModifier > modifiers,
-			final Position position ) {
+			final Position position
+	) {
 		super( name, worldParameters, typeParameters, position );
 		this.methods = methods;
 		this.extendsInterfaces = extendsInterfaces;

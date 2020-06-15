@@ -59,7 +59,9 @@ public class Parser {
 				.optimise( ctx, file );
 	}
 
-	public static CompilationUnit parseSourceFile( InputStream in, String file) throws IOException {
+	public static CompilationUnit parseSourceFile(
+			InputStream in, String file
+	) throws IOException {
 		ANTLRInputStream input = new ANTLRInputStream( in );
 		ChoralLexer lexer = new ChoralLexer( input );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );

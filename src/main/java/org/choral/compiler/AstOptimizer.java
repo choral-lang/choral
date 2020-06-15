@@ -710,7 +710,7 @@ public class AstOptimizer implements ChoralVisitor {
 //		ifPresent( ctx.blockStatements() ).applyOrElse(
 //				this::visitBlockStatements,
 //				() -> new NilStatement( getPosition( ctx ) );
-		return visitBlock( ctx.block());
+		return visitBlock( ctx.block() );
 	}
 
 //	@Override
@@ -1040,12 +1040,12 @@ public class AstOptimizer implements ChoralVisitor {
 						Collectors.toList() );
 		for( Pair< Expression, ? extends InvocationExpression > p : invocationChain ) {
 			if( p.right() instanceof ClassInstantiationExpression ) {
-				ClassInstantiationExpression c = ( ClassInstantiationExpression ) p.right();
+				ClassInstantiationExpression c = (ClassInstantiationExpression) p.right();
 				expression = new ClassInstantiationExpression( c.typeExpression(),
 						Collections.singletonList( expression ), c.typeArguments(), c.position() );
 			} else {
 				expression = new MethodCallExpression(
-						( ( MethodCallExpression ) p.right() ).name(),
+						( (MethodCallExpression) p.right() ).name(),
 						Collections.singletonList( expression ),
 						p.right().typeArguments(),
 						p.right().position()
@@ -1216,8 +1216,10 @@ public class AstOptimizer implements ChoralVisitor {
 								this::visitTypeArguments, Collections::emptyList
 						)
 				),
-				ifPresent( cice.argumentList() ).applyOrElse( this::visitArgumentList, Collections::emptyList ),
-				ifPresent( cice.methodArgs ).applyOrElse( this::visitTypeArguments, Collections::emptyList ),
+				ifPresent( cice.argumentList() ).applyOrElse( this::visitArgumentList,
+						Collections::emptyList ),
+				ifPresent( cice.methodArgs ).applyOrElse( this::visitTypeArguments,
+						Collections::emptyList ),
 				getPosition( cice )
 		);
 //		return new ClassInstantiationExpression(

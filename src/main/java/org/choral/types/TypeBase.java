@@ -77,7 +77,7 @@ abstract class TypeBase implements Type {
 	}
 
 	static String prettyTypeList( Stream< ? extends Type > types ) {
-		return prettyQuotedList(types);
+		return prettyQuotedList( types );
 	}
 
 	static String prettyQuotedList( Stream< ? > elements ) {

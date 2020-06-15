@@ -36,7 +36,9 @@ public class FormalMethodParameter extends Node {
 ////        this.type = type;
 ////    }
 
-	public FormalMethodParameter( final Name name, final TypeExpression type, final Position position ) {
+	public FormalMethodParameter(
+			final Name name, final TypeExpression type, final Position position
+	) {
 		super( position );
 		this.name = name;
 		this.type = type;

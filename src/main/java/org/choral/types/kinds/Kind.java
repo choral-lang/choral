@@ -40,7 +40,7 @@ public abstract class Kind implements Serializable {
 	protected static Kind getDefaultInstance( Kind instance ) {
 		assert instance != null;
 		Kind defaultInstance = instances.get( instance );
-		if( defaultInstance == null ){
+		if( defaultInstance == null ) {
 			defaultInstance = instance;
 			instances.put( defaultInstance, defaultInstance );
 		}
@@ -54,7 +54,7 @@ public abstract class Kind implements Serializable {
 
 	public static Kind getAtTower( int rank, Kind base ) {
 		Kind result = base;
-		while( --rank > 0 ){
+		while( --rank > 0 ) {
 			result = new Arrow( Kind.AT_INSTANCE, result );
 		}
 		return getDefaultInstance( result );
@@ -62,7 +62,7 @@ public abstract class Kind implements Serializable {
 
 	public static Kind getTower( List< Kind > ks, Kind base ) {
 		Kind result = base;
-		for( int i = ks.size() - 1; i > 0; i-- ){
+		for( int i = ks.size() - 1; i > 0; i-- ) {
 			result = new Arrow( ks.get( i ), result );
 		}
 		return getDefaultInstance( result );

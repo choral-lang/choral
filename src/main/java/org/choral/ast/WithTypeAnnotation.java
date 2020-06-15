@@ -25,7 +25,7 @@ import org.choral.types.Type;
 
 import java.util.Optional;
 
-public interface WithTypeAnnotation<T> {
+public interface WithTypeAnnotation< T > {
 	Optional< ? extends T > typeAnnotation();
 
 	void setTypeAnnotation( T typeAnnotation );

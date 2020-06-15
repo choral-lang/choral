@@ -37,13 +37,18 @@ public class BinaryExpression extends Expression {
 	private final Expression left, right;
 	private final Operator operator;
 
-	public BinaryExpression( final Expression left, final Expression right, final Operator operator ) {
+	public BinaryExpression(
+			final Expression left, final Expression right, final Operator operator
+	) {
 		this.left = left;
 		this.right = right;
 		this.operator = operator;
 	}
 
-	public BinaryExpression( final Expression left, final Expression right, final Operator operator, final Position position ) {
+	public BinaryExpression(
+			final Expression left, final Expression right, final Operator operator,
+			final Position position
+	) {
 		super( position );
 		this.left = left;
 		this.right = right;
@@ -98,7 +103,7 @@ public class BinaryExpression extends Expression {
 		}
 
 		public static BinaryExpression.Operator getIfPresent( String name ) {
-			switch( name ){
+			switch( name ) {
 				case "==":
 					return EQUALS;
 				case "!=":

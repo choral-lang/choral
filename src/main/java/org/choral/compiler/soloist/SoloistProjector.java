@@ -69,8 +69,8 @@ public class SoloistProjector extends ChoralVisitor {
 		return new Interface(
 				new Name( Utils.getProjectionName( n.name().identifier(), w,
 						n.worldParameters().stream()
-								.map(	FormalWorldParameter::toWorldArgument )
-								.collect( Collectors.toList()) ) ),
+								.map( FormalWorldParameter::toWorldArgument )
+								.collect( Collectors.toList() ) ) ),
 				Collections.emptyList(),
 				TypesProjector.visitAndCollect( w, n.typeParameters() ),
 				TypesProjector.visitAndCollect( w, n.extendsInterfaces() ),
@@ -100,7 +100,7 @@ public class SoloistProjector extends ChoralVisitor {
 		Name name = new Name( Utils.getProjectionName( n.name().identifier(), w,
 				n.worldParameters().stream()
 						.map( FormalWorldParameter::toWorldArgument )
-						.collect( Collectors.toList()) ) );
+						.collect( Collectors.toList() ) ) );
 		return new Class(
 				name,
 				Collections.emptyList(),

@@ -30,13 +30,13 @@ public interface GroundPrimitiveDataType extends GroundDataType, PrimitiveDataTy
 	GroundPrimitiveDataType applySubstitution( Substitution substitution );
 
 	@Override
-	default GroundClass boxedType(){
+	default GroundClass boxedType() {
 		return typeConstructor().boxedType().applyTo( worldArguments() );
 	}
 
 	@Override
 	default boolean isAssignableTo( GroundDataTypeOrVoid type ) {
-		if(type instanceof GroundDataType) {
+		if( type instanceof GroundDataType ) {
 			GroundDataType t = (GroundDataType) type;
 			return t.worldArguments().equals( t.worldArguments() )
 					&& ( t.primitiveTypeTag().isAssignableTo(

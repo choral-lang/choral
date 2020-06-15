@@ -38,7 +38,8 @@ import java.util.stream.Collectors;
 public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 
 	private final Name SELECT_CHANNEL_METHOD = new Name( "select" );
-	public static final SwitchArgument.SwitchArgumentLabel SELECT_DEFAULT = new SwitchArgument.SwitchArgumentLabel( new Name( "$SELECT_DEFAULT" ) );
+	public static final SwitchArgument.SwitchArgumentLabel SELECT_DEFAULT = new SwitchArgument.SwitchArgumentLabel(
+			new Name( "$SELECT_DEFAULT" ) );
 
 	private StatementsProjector( WorldArgument w ) {
 		super( w );
@@ -64,7 +65,8 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 									new Pair< VariableDeclaration, Statement >(
 											new VariableDeclaration(
 													p.left().name(),
-													TypesProjector.visit( this.world(), p.left().type() ).get( 0 ) ),
+													TypesProjector.visit( this.world(),
+															p.left().type() ).get( 0 ) ),
 											visit( p.right() ) );
 							return r;
 						} ) // add exceptions to gamma here
@@ -85,25 +87,27 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 
 	@Override
 	public Statement visit( VariableDeclarationStatement n ) {
-		VariableDeclaration v = n.variables().get( 0 ); // there is only one variable after desugaring
-		if( v.type().worldArguments().contains( this.world() ) ){
+		VariableDeclaration v = n.variables().get(
+				0 ); // there is only one variable after desugaring
+		if( v.type().worldArguments().contains( this.world() ) ) {
 			return new VariableDeclarationStatement(
 					Collections.singletonList(
-							new VariableDeclaration( v.name(), TypesProjector.visit( this.world(), v.type() ).get( 0 ) )
+							new VariableDeclaration( v.name(),
+									TypesProjector.visit( this.world(), v.type() ).get( 0 ) )
 					),
 					visit( n.continuation() )
 			).copyPosition( n );
-		} else{
+		} else {
 			return visit( n.continuation() );
 		}
 	}
 
 	private boolean isSelectionMethodAtWorld( Expression e ) {
-		if( e instanceof ScopedExpression ){
+		if( e instanceof ScopedExpression ) {
 			Pair< Expression, Expression > ht = Utils.headAndTail( (ScopedExpression) e );
 			return isSelectionMethodAtWorld( ht.right() );
 		}
-		if( e instanceof MethodCallExpression ){
+		if( e instanceof MethodCallExpression ) {
 //			if( ( (MethodCallExpression) e ).arguments().size() > 1 ){
 //				throw new SoloistProjectorException( "Found improper expression " + new PrettyPrinterVisitor().visit( e ) + " as selection method" );
 //			}
@@ -111,37 +115,45 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 			MethodCallExpression methodCall = ( (MethodCallExpression) e );
 			return methodCall.isSelect()
 					&& ( (GroundDataType) methodCall.methodAnnotation().get().returnType() )
-					.worldArguments().stream().map( w -> new WorldArgument( new Name( w.identifier() ) ) ).collect( Collectors.toList() ).contains( this.world() );
+					.worldArguments().stream().map(
+							w -> new WorldArgument( new Name( w.identifier() ) ) ).collect(
+							Collectors.toList() ).contains( this.world() );
 		}
 		return false;
 	}
 
 	private Name getSelectionMethodEnum( Expression e ) {
-		if( e instanceof ScopedExpression ){
+		if( e instanceof ScopedExpression ) {
 			Pair< Expression, Expression > ht = Utils.headAndTail( (ScopedExpression) e );
 			return getSelectionMethodEnum( ht.right() );
 		}
-		if( e instanceof MethodCallExpression ){
-			if( ( (MethodCallExpression) e ).arguments().size() > 1 ){
-				throw new SoloistProjectorException( "Found improper expression " + new PrettyPrinterVisitor().visit( e ) + " as selection method" );
+		if( e instanceof MethodCallExpression ) {
+			if( ( (MethodCallExpression) e ).arguments().size() > 1 ) {
+				throw new SoloistProjectorException(
+						"Found improper expression " + new PrettyPrinterVisitor().visit(
+								e ) + " as selection method" );
 			}
 			return getSelectionMethodEnum( ( (MethodCallExpression) e ).arguments().get( 0 ) );
 		}
-		if( e instanceof EnumCaseInstantiationExpression ){
+		if( e instanceof EnumCaseInstantiationExpression ) {
 			return ( (EnumCaseInstantiationExpression) e )._case();
 		}
-		if( e instanceof FieldAccessExpression ){
+		if( e instanceof FieldAccessExpression ) {
 			return ( (FieldAccessExpression) e ).name();
 		}
-		throw new SoloistProjectorException( "Found improper expression " + new PrettyPrinterVisitor().visit( e ) + " as selection method " );
+		throw new SoloistProjectorException(
+				"Found improper expression " + new PrettyPrinterVisitor().visit(
+						e ) + " as selection method " );
 	}
 
 	@Override
 	public Statement visit( ExpressionStatement n ) {
-		if( isSelectionMethodAtWorld( n.expression() ) ){
+		if( isSelectionMethodAtWorld( n.expression() ) ) {
 			Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
-			cases.put( SELECT_DEFAULT, new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
-			cases.put( new SwitchArgument.SwitchArgumentLabel( getSelectionMethodEnum( n.expression() ) ), visit( n.continuation() ) );
+			cases.put( SELECT_DEFAULT,
+					new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
+			cases.put( new SwitchArgument.SwitchArgumentLabel(
+					getSelectionMethodEnum( n.expression() ) ), visit( n.continuation() ) );
 			return new SwitchStatement(
 					ExpressionProjector.visit( this.world(), n.expression() ),
 					cases,
@@ -157,18 +169,19 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 
 	@Override
 	public Statement visit( IfStatement n ) {
-		if( ExpressionProjector.atWorld( n.condition(), this.world() ) ){
+		if( ExpressionProjector.atWorld( n.condition(), this.world() ) ) {
 			return new IfStatement(
 					ExpressionProjector.visit( this.world, n.condition() ),
 					visit( n.ifBranch() ),
 					visit( n.elseBranch() ),
 					visit( n.continuation() )
 			).copyPosition( n );
-		} else{
+		} else {
 			return new BlockStatement(
 					new ExpressionStatement(
 							ExpressionProjector.visit( this.world(), n.condition() ),
-							StatementsMerger.merge( Arrays.asList( visit( n.ifBranch() ), visit( n.elseBranch() ) ) ) ),
+							StatementsMerger.merge( Arrays.asList( visit( n.ifBranch() ),
+									visit( n.elseBranch() ) ) ) ),
 					visit( n.continuation() )
 			).copyPosition( n );
 		}
@@ -176,7 +189,7 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 
 	@Override
 	public Statement visit( SwitchStatement n ) {
-		if( ExpressionProjector.atWorld( n.guard(), this.world() ) ){
+		if( ExpressionProjector.atWorld( n.guard(), this.world() ) ) {
 			return new SwitchStatement(
 					ExpressionProjector.visit( this.world, n.guard() ),
 					n.cases().entrySet().stream().map( e ->
@@ -185,7 +198,7 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 					).collect( Collectors.toMap( Pair::left, Pair::right ) ),
 					visit( n.continuation() )
 			).copyPosition( n );
-		} else{
+		} else {
 			return new BlockStatement(
 					new ExpressionStatement(
 							ExpressionProjector.visit( this.world(), n.guard() ),

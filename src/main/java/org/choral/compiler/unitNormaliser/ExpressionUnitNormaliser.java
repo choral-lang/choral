@@ -31,7 +31,8 @@ import org.choral.utils.Pair;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ExpressionUnitNormaliser extends AbstractChoralVisitor< ExpressionUnitNormaliser.EUNResult > {
+public class ExpressionUnitNormaliser
+		extends AbstractChoralVisitor< ExpressionUnitNormaliser.EUNResult > {
 
 	private ExpressionUnitNormaliser() {
 	}
@@ -45,22 +46,23 @@ public class ExpressionUnitNormaliser extends AbstractChoralVisitor< ExpressionU
 		if( expression instanceof FieldAccessExpression
 				|| expression instanceof ThisExpression
 				|| expression instanceof NullExpression
-		){
+		) {
 			return true;
 		}
-		if( expression instanceof ScopedExpression ){
+		if( expression instanceof ScopedExpression ) {
 			Expression scope = ( (ScopedExpression) expression ).scope();
 			Expression scoped = ( (ScopedExpression) expression ).scopedExpression();
 			// CHECK FOR Unit.id
 			if( scope instanceof StaticAccessExpression
-					&& ( (StaticAccessExpression) scope ).typeExpression().name().equals( UnitRepresentation.UNIT )
+					&& ( (StaticAccessExpression) scope ).typeExpression().name().equals(
+					UnitRepresentation.UNIT )
 					&& scoped instanceof FieldAccessExpression
 					&& ( (FieldAccessExpression) scoped ).name() == ( UnitRepresentation.UID )
-			){
+			) {
 				return true;
 			}
 			// CHECK FOR id.id.id....
-			if( scope instanceof FieldAccessExpression && isNoop( scoped ) ){
+			if( scope instanceof FieldAccessExpression && isNoop( scoped ) ) {
 				return true;
 			}
 		}
@@ -82,13 +84,16 @@ public class ExpressionUnitNormaliser extends AbstractChoralVisitor< ExpressionU
 		Pair< Expression, Expression > ht = Utils.headAndTail( n );
 		if( // we check if we have Unit.id.id( Exp_1, ..., Exp_n )
 				ht.left() instanceof StaticAccessExpression
-						&& ( (StaticAccessExpression) ht.left() ).typeExpression().name().equals( UnitRepresentation.UNIT )
+						&& ( (StaticAccessExpression) ht.left() ).typeExpression().name().equals(
+						UnitRepresentation.UNIT )
 						&& ht.right() instanceof ScopedExpression
 						&& ( (ScopedExpression) ht.right() ).scope() instanceof FieldAccessExpression
-						&& ( (FieldAccessExpression) ( (ScopedExpression) ht.right() ).scope() ).name().equals( UnitRepresentation.UID )
+						&& ( (FieldAccessExpression) ( (ScopedExpression) ht.right() ).scope() ).name().equals(
+						UnitRepresentation.UID )
 						&& ( (ScopedExpression) ht.right() ).scopedExpression() instanceof MethodCallExpression
-						&& ( (MethodCallExpression) ( (ScopedExpression) ht.right() ).scopedExpression() ).name().equals( UnitRepresentation.UID )
-		){
+						&& ( (MethodCallExpression) ( (ScopedExpression) ht.right() ).scopedExpression() ).name().equals(
+						UnitRepresentation.UID )
+		) {
 			return EUNResult.changed(
 					UnitRepresentation.unitMC(
 							( (MethodCallExpression) ( (ScopedExpression) ht.right() ).scopedExpression() ).arguments(),
@@ -96,28 +101,33 @@ public class ExpressionUnitNormaliser extends AbstractChoralVisitor< ExpressionU
 					) );
 		} else if( // we check if we have Unit.id( Exp ) *only one expression*
 				ht.left() instanceof StaticAccessExpression
-						&& ( (StaticAccessExpression) ht.left() ).typeExpression().name().equals( UnitRepresentation.UNIT )
+						&& ( (StaticAccessExpression) ht.left() ).typeExpression().name().equals(
+						UnitRepresentation.UNIT )
 						&& ht.right() instanceof MethodCallExpression
-						&& ( (MethodCallExpression) ht.right() ).name().equals( UnitRepresentation.UID )
+						&& ( (MethodCallExpression) ht.right() ).name().equals(
+						UnitRepresentation.UID )
 						&& ( (MethodCallExpression) ht.right() ).arguments().size() == 1
-		){
+		) {
 			return EUNResult.changed( ( (MethodCallExpression) ht.right() ).arguments().get( 0 ) );
-		} else{
+		} else {
 			EUNResult scopedExpression = visitScoped( ht.right() ); // this is always present
 			if( // we check if we would have Unit.[blank] and return Unit.id
 					ht.left() instanceof StaticAccessExpression
-							&& ( (StaticAccessExpression) ht.left() ).typeExpression().name().equals( UnitRepresentation.UNIT )
+							&& ( (StaticAccessExpression) ht.left() ).typeExpression().name().equals(
+							UnitRepresentation.UNIT )
 							&& scopedExpression.expression().isEmpty()
-			){
-				return EUNResult.unChanged( UnitRepresentation.UnitFD( null ) ); // this will stop the recursive visit because change is false
-			} else{
+			) {
+				return EUNResult.unChanged( UnitRepresentation.UnitFD(
+						null ) ); // this will stop the recursive visit because change is false
+			} else {
 				EUNResult headER = visit( ht.left() );
 				return new EUNResult(
 						headER.changed() || scopedExpression.changed(),
 						Optional.of(
 								scopedExpression.expression().isPresent() ?
 										new ScopedExpression(
-												headER.expression().get(), // safe to get, since we never remove the head of the chain
+												headER.expression().get(),
+												// safe to get, since we never remove the head of the chain
 												scopedExpression.expression().get() )
 										: headER.expression.get()
 						)
@@ -131,14 +141,15 @@ public class ExpressionUnitNormaliser extends AbstractChoralVisitor< ExpressionU
 	}
 
 	private EUNResult visitScoped( Expression e ) {
-		if( e instanceof FieldAccessExpression ){
+		if( e instanceof FieldAccessExpression ) {
 			return _visitScoped( (FieldAccessExpression) e );
-		} else if( e instanceof MethodCallExpression ){
+		} else if( e instanceof MethodCallExpression ) {
 			return _visitScoped( (MethodCallExpression) e );
-		} else if( e instanceof ScopedExpression ){
+		} else if( e instanceof ScopedExpression ) {
 			return _visitScoped( (ScopedExpression) e );
-		} else{
-			throw new ChoralException( "Found unexpected kind of expression in scoped visit: " + e.getClass().getCanonicalName() );
+		} else {
+			throw new ChoralException(
+					"Found unexpected kind of expression in scoped visit: " + e.getClass().getCanonicalName() );
 		}
 	}
 
@@ -150,7 +161,7 @@ public class ExpressionUnitNormaliser extends AbstractChoralVisitor< ExpressionU
 		List< EUNResult > argumentsVisit = new ArrayList<>();
 		n.arguments().forEach( a -> argumentsVisit.add( visit( a ) ) );
 		// either it is a non-.id call ...
-		if( n.name() != UnitRepresentation.UID ){
+		if( n.name() != UnitRepresentation.UID ) {
 			return new EUNResult(
 					argumentsVisit.stream().anyMatch( EUNResult::changed ),
 					Optional.of( new MethodCallExpression(
@@ -167,21 +178,24 @@ public class ExpressionUnitNormaliser extends AbstractChoralVisitor< ExpressionU
 			if( argumentsVisit.stream().allMatch(
 					er -> er.expression().isEmpty()
 							|| isNoop( er.expression().get() ) )
-			){
+			) {
 				return new EUNResult( true, Optional.empty() );
 			}
 			// ... or an .id call where we can remove blank/NOOP arguments
-			else{
+			else {
 				return new EUNResult(
 						argumentsVisit.stream().anyMatch( a ->
 								a.changed()
 										|| a.expression().isEmpty()          // the arguments will change
-										|| isNoop( a.expression().get() ) ),  // in size (we remove some)
+										|| isNoop( a.expression().get() ) ),
+						// in size (we remove some)
 						Optional.of(
 								new MethodCallExpression(
 										UnitRepresentation.UID,
 										argumentsVisit.stream()
-												.filter( er -> er.expression().isPresent() && !isNoop( er.expression().get() ) )
+												.filter(
+														er -> er.expression().isPresent() && !isNoop(
+																er.expression().get() ) )
 												.map( er -> er.expression().get() )
 												.collect( Collectors.toList() ),
 										n.typeArguments()
@@ -195,18 +209,20 @@ public class ExpressionUnitNormaliser extends AbstractChoralVisitor< ExpressionU
 		Pair< Expression, Expression > ht = Utils.headAndTail( n );
 		Expression head = ht.left();
 		// either it's id.Exp ...
-		if( head instanceof FieldAccessExpression ){
+		if( head instanceof FieldAccessExpression ) {
 			EUNResult er = visitScoped( ht.right() );
-			return new EUNResult( er.changed(), Optional.of( getScopedOrJustHead( ht.left(), er.expression() ) ) );
+			return new EUNResult( er.changed(),
+					Optional.of( getScopedOrJustHead( ht.left(), er.expression() ) ) );
 		} // or id( Exp_1, ..., Exp_n ).Exp
-		else{
+		else {
 			EUNResult headER = _visitScoped( (MethodCallExpression) head );
 			EUNResult tailER = visitScoped( ht.right() );
 			return new EUNResult(
 					headER.changed() || tailER.changed(),
 					headER.expression().isEmpty() ?
 							tailER.expression
-							: Optional.of( getScopedOrJustHead( headER.expression().get(), tailER.expression() ) )
+							: Optional.of(
+							getScopedOrJustHead( headER.expression().get(), tailER.expression() ) )
 			);
 		}
 	}
@@ -219,17 +235,22 @@ public class ExpressionUnitNormaliser extends AbstractChoralVisitor< ExpressionU
 	@Override
 	public EUNResult visit( EnclosedExpression n ) {
 		EUNResult er = visit( n.nestedExpression() );
-		return new EUNResult( er.changed(), Optional.of( new EnclosedExpression( er.expression().get() ) ) );
+		return new EUNResult( er.changed(),
+				Optional.of( new EnclosedExpression( er.expression().get() ) ) );
 	}
 
 	@Override
-	public EUNResult visit( MethodCallExpression n ) { // this also catches ClassInstantiationExpression and dispatches it
-		List< EUNResult > argumentsList = n.arguments().stream().map( this::visit ).collect( Collectors.toList() );
+	public EUNResult visit(
+			MethodCallExpression n
+	) { // this also catches ClassInstantiationExpression and dispatches it
+		List< EUNResult > argumentsList = n.arguments().stream().map( this::visit ).collect(
+				Collectors.toList() );
 		return new EUNResult(
 				argumentsList.stream().anyMatch( EUNResult::changed ),
 				Optional.of( new MethodCallExpression(
 								n.name(),
-								argumentsList.stream().map( er -> er.expression().get() ).collect( Collectors.toList() ),
+								argumentsList.stream().map( er -> er.expression().get() ).collect(
+										Collectors.toList() ),
 								n.typeArguments()
 						)
 				)
@@ -238,7 +259,8 @@ public class ExpressionUnitNormaliser extends AbstractChoralVisitor< ExpressionU
 
 	@Override
 	public EUNResult visit( ClassInstantiationExpression n ) {
-		List< EUNResult > argumentsList = n.arguments().stream().map( this::visit ).collect( Collectors.toList() );
+		List< EUNResult > argumentsList = n.arguments().stream().map( this::visit ).collect(
+				Collectors.toList() );
 		return new EUNResult(
 				argumentsList.stream().anyMatch( EUNResult::changed ),
 				Optional.of(
@@ -248,7 +270,8 @@ public class ExpressionUnitNormaliser extends AbstractChoralVisitor< ExpressionU
 										n.typeExpression().worldArguments(),
 										n.typeExpression().typeArguments()
 								),
-								argumentsList.stream().map( er -> er.expression().get() ).collect( Collectors.toList() ),
+								argumentsList.stream().map( er -> er.expression().get() ).collect(
+										Collectors.toList() ),
 								n.typeArguments()
 						)
 				)
@@ -278,7 +301,8 @@ public class ExpressionUnitNormaliser extends AbstractChoralVisitor< ExpressionU
 	@Override
 	public EUNResult visit( NotExpression n ) {
 		EUNResult er = visit( n.expression() );
-		return new EUNResult( er.changed(), Optional.of( new NotExpression( er.expression().get() ) ) );
+		return new EUNResult( er.changed(),
+				Optional.of( new NotExpression( er.expression().get() ) ) );
 	}
 
 	@Override

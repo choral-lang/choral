@@ -30,7 +30,7 @@ public interface GroundClassOrInterface extends ClassOrInterface, GroundReferenc
 	HigherClassOrInterface typeConstructor();
 
 	@Override
-	default Package declarationPackage(){
+	default Package declarationPackage() {
 		return typeConstructor().declarationPackage();
 	}
 
@@ -47,7 +47,8 @@ public interface GroundClassOrInterface extends ClassOrInterface, GroundReferenc
 	Stream< ? extends GroundInterface > extendedInterfaces();
 
 	default Stream< GroundInterface > allExtendedInterfaces() {
-		return Stream.concat( extendedInterfaces(), extendedClassesOrInterfaces().flatMap( GroundClassOrInterface::allExtendedInterfaces ) );
+		return Stream.concat( extendedInterfaces(), extendedClassesOrInterfaces().flatMap(
+				GroundClassOrInterface::allExtendedInterfaces ) );
 	}
 
 	Stream< Member.Field > declaredFields();

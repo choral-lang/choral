@@ -31,12 +31,12 @@ public final class World extends TypeBase {
 
 	static final String DEFAULT_NAME = "A";
 
-	public World(Universe universe, String identifier ) {
+	public World( Universe universe, String identifier ) {
 		super( universe );
 		this.identifier = identifier;
 	}
 
-	public World(Universe universe, String identifier, Node sourceCode ) {
+	public World( Universe universe, String identifier, Node sourceCode ) {
 		this( universe, identifier );
 		setSourceCode( sourceCode );
 	}
@@ -64,8 +64,9 @@ public final class World extends TypeBase {
 	}
 
 	public void setDeclarationContext( WorldParameterDeclarationContext declarationContext ) {
-		if( this.declarationContext != null ){
-			throw new UnsupportedOperationException( "world parameter '" + identifier + "' is already associated with a declaration context" );
+		if( this.declarationContext != null ) {
+			throw new UnsupportedOperationException(
+					"world parameter '" + identifier + "' is already associated with a declaration context" );
 		}
 		this.declarationContext = declarationContext;
 	}
@@ -80,16 +81,16 @@ public final class World extends TypeBase {
 		return ( !strict && this.isEquivalentTo( type ) );
 	}
 
-	public static List< World > freshWorlds(Universe universe, int size ) {
+	public static List< World > freshWorlds( Universe universe, int size ) {
 		return freshWorlds( universe, size, DEFAULT_NAME );
 	}
 
-	public static List< World > freshWorlds(Universe universe, int size, String basename ){
-		List<World> ws = new ArrayList<>(size);
-		if(size==1){
+	public static List< World > freshWorlds( Universe universe, int size, String basename ) {
+		List< World > ws = new ArrayList<>( size );
+		if( size == 1 ) {
 			ws.add( new World( universe, basename ) );
 		} else {
-			for ( int i = 1; i <= size; i++) {
+			for( int i = 1; i <= size; i++ ) {
 				ws.add( new World( universe, basename + i ) );
 			}
 		}

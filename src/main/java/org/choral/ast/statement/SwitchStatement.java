@@ -43,13 +43,19 @@ public class SwitchStatement extends Statement {
 	private final Map< SwitchArgument< ? >, Statement > cases;
 	private final Expression guard;
 
-	public SwitchStatement( final Expression guard, final Map< SwitchArgument< ? >, Statement > cases, final Statement continuation ) {
+	public SwitchStatement(
+			final Expression guard, final Map< SwitchArgument< ? >, Statement > cases,
+			final Statement continuation
+	) {
 		super( continuation );
 		this.guard = guard;
 		this.cases = cases;
 	}
 
-	public SwitchStatement( final Expression guard, final Map< SwitchArgument< ? >, Statement > cases, final Statement continuation, final Position position ) {
+	public SwitchStatement(
+			final Expression guard, final Map< SwitchArgument< ? >, Statement > cases,
+			final Statement continuation, final Position position
+	) {
 		super( continuation, position );
 		this.guard = guard;
 		this.cases = cases;
@@ -70,10 +76,11 @@ public class SwitchStatement extends Statement {
 
 	@Override
 	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try{
+		try {
 			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ){
-			throw new ChoralException( "Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
+		} catch( ClassCastException e ) {
+			throw new ChoralException(
+					"Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
 		}
 	}
 
@@ -82,7 +89,8 @@ public class SwitchStatement extends Statement {
 		return new SwitchStatement(
 				this.guard,
 				this.cases,
-				this.continuation() == null ? continuation : continuation().cloneWithContinuation( continuation ),
+				this.continuation() == null ? continuation : continuation().cloneWithContinuation(
+						continuation ),
 				this.position() );
 	}
 

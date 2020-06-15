@@ -45,7 +45,9 @@ public class CaseSignature extends Node {
 		this.parameters = parameters;
 	}
 
-	public CaseSignature( final Name name, final List< FormalMethodParameter > parameters, final Position position ) {
+	public CaseSignature(
+			final Name name, final List< FormalMethodParameter > parameters, final Position position
+	) {
 		super( position );
 		this.name = name;
 		this.parameters = parameters;

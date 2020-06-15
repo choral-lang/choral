@@ -130,7 +130,7 @@ public abstract class Member implements HasSource {
 //		System.out.println("-- result = " + (this.declarationContext == context || this.isPublic() || this.isProtected() || ( this.isPackagePrivate() &&
 //				context.declarationPackage() == this.declarationContext().declarationPackage() )));
 		return this.declarationContext == context || this.isPublic() || this.isProtected() || ( this.isPackagePrivate() &&
-				context.declarationPackage() == this.declarationContext().declarationPackage() ) ;
+				context.declarationPackage() == this.declarationContext().declarationPackage() );
 	}
 
 	private final GroundClassOrInterface declarationContext;
@@ -275,7 +275,7 @@ public abstract class Member implements HasSource {
 				throw new StaticVerificationException(
 						"illegal type instantiation: expected " + typeParameters.size() + " type arguments but found " + typeArgs.size() );
 			}
-			Substitution substitution =  new Substitution() {
+			Substitution substitution = new Substitution() {
 				@Override
 				public HigherReferenceType get( HigherTypeParameter placeHolder ) {
 					int i = typeParameters.indexOf( placeHolder );
@@ -400,11 +400,11 @@ public abstract class Member implements HasSource {
 			return this.isSubSignature( other ) || other.isSameErasure( this );
 		}
 
-		public boolean isProjectionOverloadEquivalent( HigherCallable other){
+		public boolean isProjectionOverloadEquivalent( HigherCallable other ) {
 			return false; //ToDo
 		}
 
-		public void assertNoClash( HigherCallable other){
+		public void assertNoClash( HigherCallable other ) {
 
 		}
 

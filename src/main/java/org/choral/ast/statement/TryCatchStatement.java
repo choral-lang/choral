@@ -43,13 +43,19 @@ public class TryCatchStatement extends Statement {
 	private final List< Pair< VariableDeclaration, Statement > > catches;
 	private final Statement body;
 
-	public TryCatchStatement( final Statement body, final List< Pair< VariableDeclaration, Statement > > catches, final Statement continuation ) {
+	public TryCatchStatement(
+			final Statement body, final List< Pair< VariableDeclaration, Statement > > catches,
+			final Statement continuation
+	) {
 		super( continuation );
 		this.catches = catches;
 		this.body = body;
 	}
 
-	public TryCatchStatement( final Statement body, final List< Pair< VariableDeclaration, Statement > > catches, final Statement continuation, final Position position ) {
+	public TryCatchStatement(
+			final Statement body, final List< Pair< VariableDeclaration, Statement > > catches,
+			final Statement continuation, final Position position
+	) {
 		super( continuation, position );
 		this.catches = catches;
 		this.body = body;
@@ -70,17 +76,19 @@ public class TryCatchStatement extends Statement {
 
 	@Override
 	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try{
+		try {
 			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ){
-			throw new ChoralException( "Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
+		} catch( ClassCastException e ) {
+			throw new ChoralException(
+					"Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
 		}
 	}
 
 	@Override
 	public Statement cloneWithContinuation( Statement continuation ) {
 		return new TryCatchStatement( this.body, this.catches,
-				this.continuation() == null ? continuation : continuation().cloneWithContinuation( continuation ), position() );
+				this.continuation() == null ? continuation : continuation().cloneWithContinuation(
+						continuation ), position() );
 	}
 
 }

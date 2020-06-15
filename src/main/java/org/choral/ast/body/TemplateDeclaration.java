@@ -35,7 +35,10 @@ import static org.choral.ast.body.ClassModifier.*;
 
 public abstract class TemplateDeclaration extends RefType {
 
-	protected TemplateDeclaration( Name name, List< FormalWorldParameter > worldparameters, List< FormalTypeParameter > typeparameters, Position position ) {
+	protected TemplateDeclaration(
+			Name name, List< FormalWorldParameter > worldparameters,
+			List< FormalTypeParameter > typeparameters, Position position
+	) {
 		super( name, worldparameters, typeparameters, position );
 	}
 

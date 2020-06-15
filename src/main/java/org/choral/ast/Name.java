@@ -47,7 +47,7 @@ public class Name extends Node {
 
 	@Override
 	public boolean equals( Object n ) {
-		if( n == null ){
+		if( n == null ) {
 			throw new ChoralException( "Undefined name comparison" );
 		}
 		return this.identifier().equals( ( (Name) n ).identifier() );

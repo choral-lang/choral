@@ -27,6 +27,7 @@ import org.choral.compiler.*;
 import org.choral.compiler.Compiler;
 import org.choral.exceptions.AstPositionedException;
 import org.choral.exceptions.StaticVerificationException;
+
 import static org.choral.utils.Streams.*;
 
 import picocli.AutoComplete;
@@ -90,14 +91,15 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		public Integer call() {
 			try {
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
-						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList());
-				Collection< CompilationUnit > headerUnits = Stream.concat( HeaderLoader.loadStandardProfile(),
+						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
+				Collection< CompilationUnit > headerUnits = Stream.concat(
+						HeaderLoader.loadStandardProfile(),
 						HeaderLoader.loadFromPath(
 								headersPathOption.getPaths(),
 								sourceFiles,
 								true, strictHeaderSearch )
-						)
-						.collect(Collectors.toList());
+				)
+						.collect( Collectors.toList() );
 				Collection< CompilationUnit > annotatedUnits = Typer.annotate( sourceUnits,
 						headerUnits );
 				Compiler.checkProjectiability( annotatedUnits );
@@ -140,7 +142,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		@Override
 		public Integer call() {
 			try {
-				Collection< File > sourceFiles = sourcesPathOption.getPaths(true).stream()
+				Collection< File > sourceFiles = sourcesPathOption.getPaths( true ).stream()
 						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
 							if( Files.isDirectory( q ) ) return false;
 							String x = q.toString();
@@ -164,16 +166,17 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 //						.collect( Collectors.toList() );
 //                Collection<File> headerFiles = Collections.EMPTY_LIST;
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
-						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList());
+						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 //				Collection< CompilationUnit > headerUnits = headerFiles.stream().map(
 //						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList());
-				Collection< CompilationUnit > headerUnits = Stream.concat( HeaderLoader.loadStandardProfile(),
-						HeaderLoader.loadFromPath(  headersPathOption.getPaths() )).collect(
-						Collectors.toList());
+				Collection< CompilationUnit > headerUnits = Stream.concat(
+						HeaderLoader.loadStandardProfile(),
+						HeaderLoader.loadFromPath( headersPathOption.getPaths() ) ).collect(
+						Collectors.toList() );
 				Collection< CompilationUnit > annotatedUnits = Typer.annotate( sourceUnits,
 						headerUnits );
 				// TODO: ... UNTIL HERE (annotatedUnits)
-				if( worlds == null ){
+				if( worlds == null ) {
 					worlds = Collections.emptyList();
 				}
 				Compiler.project(
@@ -386,20 +389,20 @@ abstract class PathOption {
 	}
 
 	public final List< Path > getPaths() {
-		return getPaths(false);
+		return getPaths( false );
 	}
 
-	public final List< Path > getPaths(boolean cwdIfEmpty) {
+	public final List< Path > getPaths( boolean cwdIfEmpty ) {
 		if( paths == null ) {
 			paths = new LinkedList<>();
-			if(value != null) {
+			if( value != null ) {
 				for( String p : value().split( File.pathSeparator ) ) {
 					paths.add( Paths.get( p ) );
 				}
 			}
 		}
-		if(cwdIfEmpty && paths.isEmpty()){
-			paths.add( Paths.get("") );
+		if( cwdIfEmpty && paths.isEmpty() ) {
+			paths.add( Paths.get( "" ) );
 		}
 		return paths;
 	}

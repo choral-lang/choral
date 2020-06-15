@@ -59,10 +59,11 @@ public class TypesProjector extends AbstractSoloistProjector< List< ? extends No
 	public List< TypeExpression > visit( TypeExpression n ) {
 		if( n.worldArguments().size() == 0 // it is a @ => *
 				|| n.worldArguments().contains( this.world() ) // it is a *
-		){
+		) {
 			return Collections.singletonList(
 					new TypeExpression(
-							new Name( Utils.getProjectionName( n.name().identifier(), this.world(), n.worldArguments() ) ),
+							new Name( Utils.getProjectionName( n.name().identifier(), this.world(),
+									n.worldArguments() ) ),
 							Collections.singletonList( this.world() ),
 							n.typeArguments().stream()
 									.map( this::visit )
@@ -70,7 +71,7 @@ public class TypesProjector extends AbstractSoloistProjector< List< ? extends No
 									.collect( Collectors.toList() )
 					).copyPosition( n )
 			);
-		} else{
+		} else {
 			return singletonList( UnitRepresentation.getType( this.world() ) );
 		}
 	}
@@ -89,7 +90,7 @@ public class TypesProjector extends AbstractSoloistProjector< List< ? extends No
 								w.toWorldArgument(),
 								n.worldParameters().stream()
 										.map( FormalWorldParameter::toWorldArgument )
-										.collect( Collectors.toList()) ) ),
+										.collect( Collectors.toList() ) ) ),
 						emptyList(),
 						visitAndCollect( w.toWorldArgument(), n.upperBound() )
 				).< FormalTypeParameter >copyPosition( n )
@@ -98,14 +99,14 @@ public class TypesProjector extends AbstractSoloistProjector< List< ? extends No
 
 	@Override
 	public List< FormalMethodParameter > visit( FormalMethodParameter n ) {
-		if( n.type().worldArguments().contains( this.world() ) ){
+		if( n.type().worldArguments().contains( this.world() ) ) {
 			return Collections.singletonList(
 					new FormalMethodParameter(
 							n.name(),
 							visit( world(), n.type() ).get( 0 ),
 							n.position() )
 			);
-		} else{
+		} else {
 			return emptyList();
 		}
 	}

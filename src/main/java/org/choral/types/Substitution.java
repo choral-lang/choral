@@ -52,7 +52,7 @@ public abstract class Substitution {
 			@Override
 			public HigherReferenceType get( HigherTypeParameter placeHolder ) {
 				HigherReferenceType x = s1.get( placeHolder );
-				if( x instanceof HigherTypeParameter ){
+				if( x instanceof HigherTypeParameter ) {
 					x = s2.get( (HigherTypeParameter) x );
 				}
 				return x;

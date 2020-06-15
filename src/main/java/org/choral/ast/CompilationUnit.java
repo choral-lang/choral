@@ -51,8 +51,8 @@ public class CompilationUnit extends Node {
 		this.interfaces = interfaces;
 		this.classes = classes;
 		this.enums = enums;
-		int k = Math.max(0,Math.min( sourceFile.length(), sourceFile.lastIndexOf( '.' ) ));
-		int j = Math.min( k, sourceFile.lastIndexOf( File.separatorChar )+1 );
+		int k = Math.max( 0, Math.min( sourceFile.length(), sourceFile.lastIndexOf( '.' ) ) );
+		int j = Math.min( k, sourceFile.lastIndexOf( File.separatorChar ) + 1 );
 		this.primaryType = sourceFile.substring( j, k );
 	}
 

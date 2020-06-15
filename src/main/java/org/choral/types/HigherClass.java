@@ -205,7 +205,7 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 										+ ModifierUtils.prettyAccess( x.modifiers() ) + "'" );
 							}
 							// check assignable return type;
-							if( !y.isReturnTypeAssignable(x) ){
+							if( !y.isReturnTypeAssignable( x ) ) {
 								throw new StaticVerificationException( "method '" + y
 										+ "' in '" + this + "' clashes with method '"
 										+ x + "' in '" + extendedClass

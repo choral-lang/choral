@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public abstract class HigherDataType extends TypeBase
 		implements DataType, WorldParameterDeclarationContext {
 
-	HigherDataType(Universe universe, List< World > worldParameters ) {
+	HigherDataType( Universe universe, List< World > worldParameters ) {
 		super( universe );
 		this.worldParameters = List.copyOf( worldParameters );
 		String[] names = new String[ worldParameters.size() ];

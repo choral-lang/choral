@@ -52,8 +52,10 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 		return new CompilationUnit(
 				n.packageDeclaration(),
 				n.imports(),
-				n.interfaces().stream().map( CourtesyMethodsSynthesiser::visitInterface ).collect( Collectors.toList() ),
-				n.classes().stream().map( CourtesyMethodsSynthesiser::visitClass ).collect( Collectors.toList() ),
+				n.interfaces().stream().map( CourtesyMethodsSynthesiser::visitInterface ).collect(
+						Collectors.toList() ),
+				n.classes().stream().map( CourtesyMethodsSynthesiser::visitClass ).collect(
+						Collectors.toList() ),
 				n.enums(),
 				""
 		);
@@ -67,14 +69,16 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 		constructors.addAll( v.syntheticConstructors );
 		return new Class( n.name(),
 				n.worldParameters(), n.typeParameters(), n.extendsClass(), n.implementsInterfaces(),
-				v.visitAndCollect( n.fields() ), methods, constructors, n.annotations(), n.modifiers(), n.position() );
+				v.visitAndCollect( n.fields() ), methods, constructors, n.annotations(),
+				n.modifiers(), n.position() );
 	}
 
 	private static Interface visitInterface( Interface n ) {
 		CourtesyMethodsSynthesiser v = new CourtesyMethodsSynthesiser();
 		List< InterfaceMethodDefinition > methods = v.visitAndCollect( n.methods() );
 		methods.addAll( v.syntheticInterfaceMethods );
-		return new Interface( n.name(), n.worldParameters(), n.typeParameters(), n.extendsInterfaces(), methods, n.annotations(), n.modifiers(), n.position() );
+		return new Interface( n.name(), n.worldParameters(), n.typeParameters(),
+				n.extendsInterfaces(), methods, n.annotations(), n.modifiers(), n.position() );
 	}
 
 
@@ -105,7 +109,7 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 	@Override
 	public ClassMethodDefinition visit( ClassMethodDefinition n ) {
 		Set< Name > unitParameters = _visit( n.signature() );
-		if( !unitParameters.isEmpty() && !n.modifiers().contains( ClassMethodModifier.PRIVATE ) ){
+		if( !unitParameters.isEmpty() && !n.modifiers().contains( ClassMethodModifier.PRIVATE ) ) {
 			MethodSignature sytheticMethodSignature = new MethodSignature(
 					n.signature().name(),
 					n.signature().typeParameters(),
@@ -116,7 +120,8 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 					n.position()
 			);
 			List< Expression > parameterBypass = n.signature().parameters().stream()
-					.filter( p -> !unitParameters.contains( p.name() ) ) // we keep only the non-Unit parameters
+					.filter( p -> !unitParameters.contains(
+							p.name() ) ) // we keep only the non-Unit parameters
 					.map( p -> new FieldAccessExpression( p.name() ) )
 					.collect( Collectors.toList() );
 			List< TypeExpression > typeParameters = n.signature().typeParameters().stream()
@@ -134,8 +139,10 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 					n.modifiers(),
 					n.position()
 			) );
-			MethodCallExpression proxyMethod = new MethodCallExpression( n.signature().name(), parameterBypass, typeParameters );
-			Statement proxyStatement = n.signature().returnType().name().identifier().equals( "void" ) ?
+			MethodCallExpression proxyMethod = new MethodCallExpression( n.signature().name(),
+					parameterBypass, typeParameters );
+			Statement proxyStatement = n.signature().returnType().name().identifier().equals(
+					"void" ) ?
 					new ExpressionStatement( proxyMethod, new NilStatement() )
 					: new ReturnStatement( proxyMethod, new NilStatement() );
 			return new ClassMethodDefinition(
@@ -145,7 +152,7 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 					n.modifiers(),
 					n.position()
 			);
-		} else{
+		} else {
 			return new ClassMethodDefinition(
 					visit( n.signature() ),
 					n.body().orElse( null ),
@@ -160,7 +167,7 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 	public InterfaceMethodDefinition visit( InterfaceMethodDefinition n ) {
 		// lots of commented code needed for static and default methods (not supported yet)
 		Set< Name > unitParameters = _visit( n.signature() );
-		if( !unitParameters.isEmpty() ){
+		if( !unitParameters.isEmpty() ) {
 			MethodSignature methodSignature = new MethodSignature(
 					n.signature().name(),
 					n.signature().typeParameters(),
@@ -200,7 +207,7 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 					n.modifiers(),
 					n.position()
 			);
-		} else{
+		} else {
 			return new InterfaceMethodDefinition(
 					visit( n.signature() ),
 //					n.body(),
@@ -232,7 +239,7 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 	@Override
 	public ConstructorDefinition visit( ConstructorDefinition n ) {
 		Set< Name > unitParameters = _visit( n.signature() );
-		if( !unitParameters.isEmpty() && !n.modifiers().contains( ConstructorModifier.PRIVATE ) ){
+		if( !unitParameters.isEmpty() && !n.modifiers().contains( ConstructorModifier.PRIVATE ) ) {
 			ConstructorSignature constructorSignature = new ConstructorSignature(
 					n.signature().name(),
 					n.signature().typeParameters(),
@@ -250,7 +257,8 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 					.collect( Collectors.toList() );
 			MethodCallExpression proxyConstructor =
 					new MethodCallExpression( new Name( "this" ),
-							parameterBypass, Collections.emptyList() ); // TODO: fix this, we need to have the type parameters of the class
+							parameterBypass,
+							Collections.emptyList() ); // TODO: fix this, we need to have the type parameters of the class
 			syntheticConstructors.add( new ConstructorDefinition(
 					constructorSignature,
 					n.body(),
@@ -273,7 +281,8 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 	}
 
 	private < T extends Node > List< T > visitAndCollect( List< T > n ) {
-		return n.stream().map( this::safeVisit ).filter( Objects::nonNull ).collect( Collectors.toList() );
+		return n.stream().map( this::safeVisit ).filter( Objects::nonNull ).collect(
+				Collectors.toList() );
 	}
 
 	@SuppressWarnings( "unchecked cast" )

@@ -79,24 +79,30 @@ public class HeaderLoader {
 	public static Stream< CompilationUnit > loadFromPath(
 			Collection< Path > folders, boolean ignoreIfSourcePresent
 	) throws IOException {
-		return loadFromPath(folders,List.of(),ignoreIfSourcePresent,true );
+		return loadFromPath( folders, List.of(), ignoreIfSourcePresent, true );
 	}
 
 	public static Stream< CompilationUnit > loadFromPath(
-			Collection< Path > headersPaths, Collection<File> sourceFiles, boolean ignoreIfSourcePresent, boolean strictHeaderSearch
+			Collection< Path > headersPaths, Collection< File > sourceFiles,
+			boolean ignoreIfSourcePresent, boolean strictHeaderSearch
 	) throws IOException {
-		Stream<Path> pathsFromHeaders = headersPaths.stream().flatMap(wrapFunction(p -> Files.find(p, 999,
-				(q, a) -> !a.isDirectory() && keepHeaderFile(q, sourceFiles, ignoreIfSourcePresent)
-				, FileVisitOption.FOLLOW_LINKS)));
-		Stream< Path> pathsFromSources;
-		if(strictHeaderSearch) {
+		Stream< Path > pathsFromHeaders = headersPaths.stream().flatMap(
+				wrapFunction( p -> Files.find( p, 999,
+						( q, a ) -> !a.isDirectory() && keepHeaderFile( q, sourceFiles,
+								ignoreIfSourcePresent )
+						, FileVisitOption.FOLLOW_LINKS ) ) );
+		Stream< Path > pathsFromSources;
+		if( strictHeaderSearch ) {
 			pathsFromSources = Stream.of();
 		} else {
-			pathsFromSources = sourceFiles.stream().map( x-> Paths.get( (x.isDirectory()) ? x.getPath() : x.getParent()))
-					.flatMap(wrapFunction( p -> Files.find(p,1,( q, a ) -> !a.isDirectory() && keepHeaderFile( q,sourceFiles, ignoreIfSourcePresent )
+			pathsFromSources = sourceFiles.stream().map(
+					x -> Paths.get( ( x.isDirectory() ) ? x.getPath() : x.getParent() ) )
+					.flatMap( wrapFunction( p -> Files.find( p, 1,
+							( q, a ) -> !a.isDirectory() && keepHeaderFile( q, sourceFiles,
+									ignoreIfSourcePresent )
 							, FileVisitOption.FOLLOW_LINKS ) ) );
 		}
-		List< File > files = Stream.concat(pathsFromHeaders, pathsFromSources)
+		List< File > files = Stream.concat( pathsFromHeaders, pathsFromSources )
 				.map( Path::toFile )
 				.distinct()
 				.collect( Collectors.toList() );
@@ -107,14 +113,17 @@ public class HeaderLoader {
 		return headers.stream();
 	}
 
-	private static boolean keepHeaderFile( Path file, Collection<File> sourceFiles,boolean ignoreIfSourcePresent ) {
+	private static boolean keepHeaderFile(
+			Path file, Collection< File > sourceFiles, boolean ignoreIfSourcePresent
+	) {
 		String f = file.toString();
 		if( f.toLowerCase().endsWith( SourceObject.HeaderSourceObject.FILE_EXTENSION ) ) {
 			if( ignoreIfSourcePresent ) {
-				String s = f.substring(f.length() - SourceObject.HeaderSourceObject.FILE_EXTENSION.length() )
+				String s = f.substring(
+						f.length() - SourceObject.HeaderSourceObject.FILE_EXTENSION.length() )
 						+ SourceObject.ChoralSourceObject.FILE_EXTENSION;
-				for(File sf : sourceFiles){
-					if( Paths.get(s).compareTo(sf.toPath()) == 0 ) {
+				for( File sf : sourceFiles ) {
+					if( Paths.get( s ).compareTo( sf.toPath() ) == 0 ) {
 						return false;
 					}
 				}

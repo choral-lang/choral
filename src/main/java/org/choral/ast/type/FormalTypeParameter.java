@@ -39,13 +39,19 @@ public class FormalTypeParameter extends Node {
 	private final List< FormalWorldParameter > worlds;
 	private final List< TypeExpression > upperBound;
 
-	public FormalTypeParameter( final Name name, final List< FormalWorldParameter > worlds, final List< TypeExpression > upperBound ) {
+	public FormalTypeParameter(
+			final Name name, final List< FormalWorldParameter > worlds,
+			final List< TypeExpression > upperBound
+	) {
 		this.name = name;
 		this.worlds = worlds;
 		this.upperBound = upperBound;
 	}
 
-	public FormalTypeParameter( final Name name, final List< FormalWorldParameter > worlds, final List< TypeExpression > upperBound, final Position position ) {
+	public FormalTypeParameter(
+			final Name name, final List< FormalWorldParameter > worlds,
+			final List< TypeExpression > upperBound, final Position position
+	) {
 		super( position );
 		this.name = name;
 		this.worlds = worlds;

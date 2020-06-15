@@ -40,28 +40,37 @@ public class SourceWriter {
 		writeSource( source, Optional.ofNullable( targetFolder ), true );
 	}
 
-	public static void writeSource( SourceObject source, Optional< Path > targetFolder ) throws IOException {
+	public static void writeSource(
+			SourceObject source, Optional< Path > targetFolder
+	) throws IOException {
 		writeSource( source, targetFolder, true );
 	}
 
-	public static void writeSource( SourceObject source, Optional< Path > targetFolder, boolean allowOverwriting ) throws IOException {
+	public static void writeSource(
+			SourceObject source, Optional< Path > targetFolder, boolean allowOverwriting
+	) throws IOException {
 		writeSource( source, targetFolder, true, true );
 	}
 
-	public static void writeSource( SourceObject source, Optional< Path > targetFolder, boolean useCanonicalPath, boolean allowOverwriting ) throws IOException {
+	public static void writeSource(
+			SourceObject source, Optional< Path > targetFolder, boolean useCanonicalPath,
+			boolean allowOverwriting
+	) throws IOException {
 		Path pathToFile = targetFolder
 				.map( t -> Paths.get( t.toString(), source.getCanonicalPath() ) )
 				.orElseGet( ( useCanonicalPath )
 						? () -> Paths.get( source.getCanonicalPath() )
 						: () -> Paths.get( source.sourceFile() ) );
-		if( pathToFile.getParent() != null ){
+		if( pathToFile.getParent() != null ) {
 			// files in the cwd may not have a parent if the path is relative.
 			Files.createDirectories( pathToFile.getParent() );
 		}
-		if( allowOverwriting ){
-			Files.write( pathToFile, source.sourceCode().getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING );
-		} else{
-			Files.write( pathToFile, source.sourceCode().getBytes(), StandardOpenOption.CREATE_NEW );
+		if( allowOverwriting ) {
+			Files.write( pathToFile, source.sourceCode().getBytes(), StandardOpenOption.CREATE,
+					StandardOpenOption.TRUNCATE_EXISTING );
+		} else {
+			Files.write( pathToFile, source.sourceCode().getBytes(),
+					StandardOpenOption.CREATE_NEW );
 		}
 	}
 

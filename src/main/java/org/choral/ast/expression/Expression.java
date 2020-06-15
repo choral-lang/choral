@@ -32,7 +32,8 @@ import org.choral.types.Member;
 
 import java.util.Optional;
 
-public abstract class Expression extends Node implements WithTypeAnnotation<GroundDataTypeOrVoid> {
+public abstract class Expression extends Node
+		implements WithTypeAnnotation< GroundDataTypeOrVoid > {
 
 	protected Expression() {
 		super();

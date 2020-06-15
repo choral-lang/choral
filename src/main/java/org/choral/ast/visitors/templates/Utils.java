@@ -62,9 +62,9 @@ public class Utils {
 		RuntimeServices rs = RuntimeSingleton.getRuntimeServices();
 		StringReader sr = new StringReader( template );
 		SimpleNode sn = null;
-		try{
+		try {
 			sn = rs.parse( sr, "" );
-		} catch( ParseException e ){
+		} catch( ParseException e ) {
 			e.printStackTrace();
 		}
 

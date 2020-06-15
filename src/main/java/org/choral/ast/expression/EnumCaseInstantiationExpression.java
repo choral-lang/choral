@@ -40,7 +40,9 @@ public class EnumCaseInstantiationExpression extends Expression {
 		this.world = world;
 	}
 
-	public EnumCaseInstantiationExpression( Name name, Name _case, WorldArgument world, final Position position ) {
+	public EnumCaseInstantiationExpression(
+			Name name, Name _case, WorldArgument world, final Position position
+	) {
 		super( position );
 		this.name = name;
 		this._case = _case;

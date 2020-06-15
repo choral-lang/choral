@@ -44,9 +44,9 @@ public class ExpressionsMerger extends AbstractMerger< Expression > {
 
 	@Override
 	public Expression merge( Expression n1, Expression n2 ) {
-		try{
+		try {
 			return n1.merge( this, n2 );
-		} catch( ChoralException e ){
+		} catch( ChoralException e ) {
 			throw new MergeException( e.getMessage(), n1, n2 );
 		}
 	}
@@ -54,7 +54,8 @@ public class ExpressionsMerger extends AbstractMerger< Expression > {
 	@Override
 	public Expression merge( AssignExpression n1, AssignExpression n2 ) {
 		MergeException._assert(
-				n1.operator().equals( n2.operator() ), "Cannot merge assignment due to different operators: " +
+				n1.operator().equals( n2.operator() ),
+				"Cannot merge assignment due to different operators: " +
 						n1.operator() + " and " + n2.operator(), n1, n2
 		);
 		return new AssignExpression(
@@ -67,7 +68,8 @@ public class ExpressionsMerger extends AbstractMerger< Expression > {
 	@Override
 	public Expression merge( BinaryExpression n1, BinaryExpression n2 ) {
 		MergeException._assert(
-				n1.operator().equals( n2.operator() ), "Cannot merge binary expression due to different operators: " +
+				n1.operator().equals( n2.operator() ),
+				"Cannot merge binary expression due to different operators: " +
 						n1.operator() + " and " + n2.operator(), n1, n2
 		);
 		return new BinaryExpression(
@@ -82,43 +84,53 @@ public class ExpressionsMerger extends AbstractMerger< Expression > {
 		String errorPrefix = "Cannot merge class instantiation expression due to ";
 		MergeException._assert(
 				n1.typeExpression().name().equals( n2.typeExpression().name() ),
-				errorPrefix + "different class names: " + n1.typeExpression().name() + " and " + n2.typeExpression().name(), n1, n2
+				errorPrefix + "different class names: " + n1.typeExpression().name() + " and " + n2.typeExpression().name(),
+				n1, n2
 		);
 		MergeException._assert(
 				n1.typeArguments().size() == n2.typeArguments().size(),
-				errorPrefix + "different generic argument sizes: " + n1.typeArguments().size() + " and " + n2.typeArguments().size(), n1, n2
+				errorPrefix + "different generic argument sizes: " + n1.typeArguments().size() + " and " + n2.typeArguments().size(),
+				n1, n2
 		);
-		for( int i = 0; i < n1.typeArguments().size(); i++ ){
+		for( int i = 0; i < n1.typeArguments().size(); i++ ) {
 			MergeException._assert(
 					n1.typeArguments().get( i ).equals( n2.typeArguments().get( i ) ),
-					errorPrefix + "different class types: " + ppv.visit( n1.typeArguments().get( i ) ) + " and " + ppv.visit( n2.typeArguments().get( i ) ), n1, n2
+					errorPrefix + "different class types: " + ppv.visit(
+							n1.typeArguments().get( i ) ) + " and " + ppv.visit(
+							n2.typeArguments().get( i ) ), n1, n2
 			);
 		}
 		MergeException._assert(
 				n1.arguments().size() == n2.arguments().size(),
-				errorPrefix + "different parameter sizes: " + n1.arguments().size() + " and " + n2.arguments().size(), n1, n2
+				errorPrefix + "different parameter sizes: " + n1.arguments().size() + " and " + n2.arguments().size(),
+				n1, n2
 		);
 		List< Expression > arguments = new ArrayList<>();
-		for( int i = 0; i < n1.arguments().size(); i++ ){
+		for( int i = 0; i < n1.arguments().size(); i++ ) {
 			arguments.add( merge( n1.arguments().get( i ), n2.arguments().get( i ) ) );
 		}
 		return new ClassInstantiationExpression(
-				new TypeExpression( n1.typeExpression().name(), n1.typeExpression().worldArguments(), n1.typeExpression().typeArguments() ),
+				new TypeExpression( n1.typeExpression().name(),
+						n1.typeExpression().worldArguments(), n1.typeExpression().typeArguments() ),
 				arguments,
 				n1.typeArguments()
 		);
 	}
 
 	@Override
-	public Expression merge( EnumCaseInstantiationExpression n1, EnumCaseInstantiationExpression n2 ) {
+	public Expression merge(
+			EnumCaseInstantiationExpression n1, EnumCaseInstantiationExpression n2
+	) {
 		String errorPrefix = "Cannot merge enum case instantiation expression due to ";
 		MergeException._assert(
 				n1.name().equals( n2.name() ),
-				errorPrefix + "enums with different names: " + n1.name() + " and " + n2.name(), n1, n2
+				errorPrefix + "enums with different names: " + n1.name() + " and " + n2.name(), n1,
+				n2
 		);
 		MergeException._assert(
 				n1._case().equals( n2._case() ),
-				errorPrefix + "enums with different cases: " + n1._case() + " and " + n2._case(), n1, n2
+				errorPrefix + "enums with different cases: " + n1._case() + " and " + n2._case(),
+				n1, n2
 		);
 		return new EnumCaseInstantiationExpression( n1.name(), n1._case(), n1.world() );
 	}
@@ -134,7 +146,8 @@ public class ExpressionsMerger extends AbstractMerger< Expression > {
 	public Expression merge( FieldAccessExpression n1, FieldAccessExpression n2 ) {
 		MergeException._assert(
 				n1.name().equals( n2.name() ),
-				"Cannot merge field access expressions due to different fields: " + n1.name() + " and " + n2.name(), n1, n2
+				"Cannot merge field access expressions due to different fields: " + n1.name() + " and " + n2.name(),
+				n1, n2
 		);
 		return new FieldAccessExpression( n1.name() );
 	}
@@ -144,7 +157,8 @@ public class ExpressionsMerger extends AbstractMerger< Expression > {
 		MergeException._assert(
 				n1.typeExpression().equals( n2.typeExpression() ),
 				"Cannot merge static access expressions due to different types: "
-						+ ppv.visit( n1.typeExpression() ) + " and " + ppv.visit( n2.typeExpression() ), n1, n2
+						+ ppv.visit( n1.typeExpression() ) + " and " + ppv.visit(
+						n2.typeExpression() ), n1, n2
 		);
 		return new StaticAccessExpression( n1.typeExpression() );
 	}
@@ -158,20 +172,24 @@ public class ExpressionsMerger extends AbstractMerger< Expression > {
 		);
 		MergeException._assert(
 				n1.typeArguments().size() == n2.typeArguments().size(),
-				errorPrefix + "different generic argument sizes: " + n1.typeArguments().size() + " and " + n2.typeArguments().size(), n1, n2
+				errorPrefix + "different generic argument sizes: " + n1.typeArguments().size() + " and " + n2.typeArguments().size(),
+				n1, n2
 		);
-		for( int i = 0; i < n1.typeArguments().size(); i++ ){
+		for( int i = 0; i < n1.typeArguments().size(); i++ ) {
 			MergeException._assert(
 					n1.typeArguments().get( i ).equals( n2.typeArguments().get( i ) ),
-					errorPrefix + "different class types: " + ppv.visit( n1.typeArguments().get( i ) ) + " and " + ppv.visit( n2.typeArguments().get( i ) ), n1, n2
+					errorPrefix + "different class types: " + ppv.visit(
+							n1.typeArguments().get( i ) ) + " and " + ppv.visit(
+							n2.typeArguments().get( i ) ), n1, n2
 			);
 		}
 		MergeException._assert(
 				n1.arguments().size() == n2.arguments().size(),
-				errorPrefix + "different argument sizes: " + n1.arguments().size() + " and " + n2.arguments().size(), n1, n2
+				errorPrefix + "different argument sizes: " + n1.arguments().size() + " and " + n2.arguments().size(),
+				n1, n2
 		);
 		List< Expression > arguments = new ArrayList<>();
-		for( int i = 0; i < n1.arguments().size(); i++ ){
+		for( int i = 0; i < n1.arguments().size(); i++ ) {
 			arguments.add( merge( n1.arguments().get( i ), n2.arguments().get( i ) ) );
 		}
 		return new MethodCallExpression( n1.name(), arguments, n1.typeArguments() );
@@ -192,7 +210,8 @@ public class ExpressionsMerger extends AbstractMerger< Expression > {
 		String errorPrefix = "Cannot merge literal expressions due to ";
 		MergeException._assert(
 				n1.getClass().getCanonicalName().equals( n2.getClass().getCanonicalName() ),
-				errorPrefix + "different types: " + n1.getClass().getCanonicalName() + " and " + n2.getClass().getCanonicalName(), n1, n2
+				errorPrefix + "different types: " + n1.getClass().getCanonicalName() + " and " + n2.getClass().getCanonicalName(),
+				n1, n2
 		);
 		MergeException._assert(
 				n1.content().equals( n2.content() ),

@@ -44,17 +44,18 @@ public class Class extends TemplateDeclaration {
 	private final List< Annotation > annotations;
 	private final EnumSet< ClassModifier > modifiers;
 
-	public Class( final Name name,
-				  final List< FormalWorldParameter > worldparameters,
-				  final List< FormalTypeParameter > typeparameters,
-				  final TypeExpression extendsClass,
-				  final List< TypeExpression > implementsInterfaces,
-				  final List< Field > fields,
-				  final List< ClassMethodDefinition > methods,
-				  final List< ConstructorDefinition > constructors,
-				  final List< Annotation > annotations,
-				  final EnumSet< ClassModifier > modifiers,
-				  final Position position
+	public Class(
+			final Name name,
+			final List< FormalWorldParameter > worldparameters,
+			final List< FormalTypeParameter > typeparameters,
+			final TypeExpression extendsClass,
+			final List< TypeExpression > implementsInterfaces,
+			final List< Field > fields,
+			final List< ClassMethodDefinition > methods,
+			final List< ConstructorDefinition > constructors,
+			final List< Annotation > annotations,
+			final EnumSet< ClassModifier > modifiers,
+			final Position position
 	) {
 		super( name, worldparameters, typeparameters, position );
 		this.fields = fields;
@@ -63,7 +64,8 @@ public class Class extends TemplateDeclaration {
 		this.extendsClass = extendsClass;
 		this.implementsInterfaces = implementsInterfaces;
 		this.annotations = annotations;
-		this.modifiers = ( modifiers == null ) ? EnumSet.noneOf( ClassModifier.class ) : EnumSet.copyOf( modifiers );
+		this.modifiers = ( modifiers == null ) ? EnumSet.noneOf(
+				ClassModifier.class ) : EnumSet.copyOf( modifiers );
 	}
 
 	private HigherClass typeAnnotation;

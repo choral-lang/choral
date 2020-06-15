@@ -1294,7 +1294,19 @@ public class Typer {
 			@Override
 			public GroundDataType visit( StaticAccessExpression n ) {
 				leftStatic = true;
-				return visitGroundDataTypeExpression( scope, n.typeExpression(), false );
+				TypeExpression m = n.typeExpression();
+				HigherReferenceType type = scope.assertLookupReferenceType( m.name().identifier() );
+				List< World > worldArgs = m.worldArguments().stream()
+						.map( x -> scope.lookupWorldParameter( x.name().identifier() ).orElseThrow(
+								() -> new AstPositionedException( x.position(),
+										new UnresolvedSymbolException( x.name().identifier() ) ) ) )
+						.collect( Collectors.toList() );
+				if( !m.typeArguments().isEmpty() ) {
+					throw new AstPositionedException( m.typeArguments().get( 0 ).position(),
+							new StaticVerificationException(
+									"unexpected type argument in static member access" ) );
+				}
+				return annotate( n, type.applyTo( worldArgs ) );
 			}
 
 			@Override
@@ -1321,7 +1333,7 @@ public class Typer {
 					Member.GroundConstructor c;
 					try {
 						c = x.applyTo( typeArgs );
-					} catch (StaticVerificationException e) {
+					} catch( StaticVerificationException e ) {
 						continue;
 					}
 					List< ? extends Signature.Parameter > cparams = c.signature().parameters();
@@ -1410,7 +1422,7 @@ public class Typer {
 						Member.GroundMethod c;
 						try {
 							c = x.applyTo( typeArgs );
-						} catch (StaticVerificationException e) {
+						} catch( StaticVerificationException e ) {
 //							System.out.println("type parameter compatible: false");
 							continue;
 						}

@@ -29,7 +29,9 @@ class VariableDeclarationMerger extends AbstractMerger< VariableDeclaration > {
 		super();
 	}
 
-	static VariableDeclaration mergeVariableDeclarations( VariableDeclaration n1, VariableDeclaration n2 ) {
+	static VariableDeclaration mergeVariableDeclarations(
+			VariableDeclaration n1, VariableDeclaration n2
+	) {
 		String errorPrefix = "Cannot merge variable declarations due to ";
 		MergeException._assert(
 				n1.name().equals( n2.name() ),

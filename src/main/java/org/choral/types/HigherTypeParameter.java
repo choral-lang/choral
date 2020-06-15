@@ -75,7 +75,7 @@ public final class HigherTypeParameter extends HigherReferenceType {
 	}
 
 	HigherReferenceType getRawType() {
-		if( innerType().isBoundFinalised() ){
+		if( innerType().isBoundFinalised() ) {
 			return new HigherReferenceType( universe(),
 					this.worldParameters.stream()
 							.map( x -> new World( universe(), x.identifier() ) ).collect(
@@ -85,27 +85,28 @@ public final class HigherTypeParameter extends HigherReferenceType {
 					return HigherTypeParameter.this.applyTo( args );
 				}
 			};
-		} else{
+		} else {
 			return this;
 		}
 	}
 
 	public boolean checkWithinBounds( Substitution substitution ) {
-		HigherReferenceType typeArg = substitution.get(this);
+		HigherReferenceType typeArg = substitution.get( this );
 		return isSameKind( typeArg ) && innerType.upperBound()
-				.allMatch( u -> typeArg.applyTo( worldParameters ).isSubtypeOf( u.applySubstitution( substitution ) ) );
+				.allMatch( u -> typeArg.applyTo( worldParameters ).isSubtypeOf(
+						u.applySubstitution( substitution ) ) );
 	}
 
-	public void assertWithinBounds( Substitution substitution) {
-		if( !checkWithinBounds( substitution ) ){
-			HigherReferenceType typeArg = substitution.get(this);
-			List<World> worldArgs = World.freshWorlds( universe(), worldParameters.size(), "X" );
+	public void assertWithinBounds( Substitution substitution ) {
+		if( !checkWithinBounds( substitution ) ) {
+			HigherReferenceType typeArg = substitution.get( this );
+			List< World > worldArgs = World.freshWorlds( universe(), worldParameters.size(), "X" );
 			Substitution s2 = new Substitution() {
 				@Override
 				public World get( World placeHolder ) {
 					int i = worldParameters.indexOf( placeHolder );
-					return (i < 0)
-							? substitution.get(placeHolder)
+					return ( i < 0 )
+							? substitution.get( placeHolder )
 							: worldArgs.get( i );
 				}
 
@@ -119,7 +120,7 @@ public final class HigherTypeParameter extends HigherReferenceType {
 					+ "' is not within bounds, '" + typeArg.applyTo( worldArgs ) + "' must extend "
 					+ prettyTypeList( innerType.upperBound().map( x -> x.applySubstitution( s2 ) ) )
 					+ " for any role "
-					+ prettyTypeList( worldArgs ));
+					+ prettyTypeList( worldArgs ) );
 		}
 	}
 
@@ -134,7 +135,8 @@ public final class HigherTypeParameter extends HigherReferenceType {
 		return innerType().applySubstitution( getApplicationSubstitution( args ) );
 	}
 
-	public final class Definition extends HigherReferenceType.Definition implements GroundTypeParameter {
+	public final class Definition extends HigherReferenceType.Definition
+			implements GroundTypeParameter {
 
 		public String toString() {
 			return typeConstructor().toString() +
@@ -152,11 +154,11 @@ public final class HigherTypeParameter extends HigherReferenceType {
 		@Override
 		public GroundReferenceType applySubstitution( Substitution substitution ) {
 			GroundReferenceType result = alphaIndex.get( substitution );
-			if( result == null ){
+			if( result == null ) {
 				HigherReferenceType t = substitution.get( this.typeConstructor() );
-				if( t == typeConstructor() ){
+				if( t == typeConstructor() ) {
 					result = new Proxy( substitution );
-				} else{
+				} else {
 					result = t.applyTo( worldArguments().stream()
 							.map( substitution::get )
 							.collect( Collectors.toCollection(
@@ -176,7 +178,7 @@ public final class HigherTypeParameter extends HigherReferenceType {
 		}
 
 		public void finaliseBound() {
-			if( upperClass == null ){
+			if( upperClass == null ) {
 				setUpperClass();
 			}
 			this.boundFinalised = true;
@@ -186,7 +188,7 @@ public final class HigherTypeParameter extends HigherReferenceType {
 
 		private void setUpperClass() {
 			assert ( !isBoundFinalised() );
-			upperClass =  universe().topReferenceType( worldArguments() );
+			upperClass = universe().topReferenceType( worldArguments() );
 		}
 
 		@Override
@@ -204,29 +206,29 @@ public final class HigherTypeParameter extends HigherReferenceType {
 		public void addUpperBound( GroundReferenceType type ) {
 			assert ( !isBoundFinalised() );
 			if( type.worldArguments().size() != worldArguments().size() ||
-					!type.worldArguments().containsAll( worldParameters ) ){
+					!type.worldArguments().containsAll( worldParameters ) ) {
 				throw new StaticVerificationException(
 						"illegal bound, '" + type + "' and '" + this + "' must have the same roles" );
 			}
-			if( type instanceof GroundInterface ){
-				if( upperClass == null ){
+			if( type instanceof GroundInterface ) {
+				if( upperClass == null ) {
 					setUpperClass();
 				}
-				if( upperInterfaces().anyMatch( x -> x.isEquivalentTo( type ) ) ){
+				if( upperInterfaces().anyMatch( x -> x.isEquivalentTo( type ) ) ) {
 					throw new StaticVerificationException(
 							"duplicate parameter bound, '" + type + "' is repeated" );
 				}
 				upperInterfaces.add( (GroundInterface) type );
-			} else{
-				if( upperClass == null ){
+			} else {
+				if( upperClass == null ) {
 					upperClass = type;
-				} else{
+				} else {
 					String s;
-					if( type instanceof GroundEnum ){
+					if( type instanceof GroundEnum ) {
 						s = " an enum";
-					} else if( type instanceof GroundClass ){
+					} else if( type instanceof GroundClass ) {
 						s = " a class";
-					} else{
+					} else {
 						s = " a type parameter";
 					}
 					throw new StaticVerificationException(
@@ -242,13 +244,13 @@ public final class HigherTypeParameter extends HigherReferenceType {
 
 		@Override
 		protected boolean isEquivalentTo( GroundDataType type ) {
-			if( type == this ){
+			if( type == this ) {
 				return true;
-			} else if( type instanceof Proxy ){
+			} else if( type instanceof Proxy ) {
 				Proxy other = (Proxy) type;
 				return ( other.definition() == this ) &&
 						worldArguments().equals( other.worldArguments() );
-			} else{
+			} else {
 				return false;
 			}
 		}
@@ -332,13 +334,13 @@ public final class HigherTypeParameter extends HigherReferenceType {
 
 		@Override
 		protected boolean isEquivalentTo( GroundDataType type ) {
-			if( type instanceof Definition ){
+			if( type instanceof Definition ) {
 				return type.isEquivalentTo( this );
-			} else if( type instanceof Proxy ){
+			} else if( type instanceof Proxy ) {
 				Proxy other = (Proxy) type;
 				return ( this.definition() == other.definition() ) &&
 						worldArguments().equals( other.worldArguments() );
-			} else{
+			} else {
 				return false;
 			}
 		}

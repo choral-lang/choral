@@ -34,9 +34,9 @@ public class DebuggingParser {
 		//		String sourceFile = Files.readString( Paths.get( src ) );
 		System.out.println( "Parsing " + src );
 		ANTLRFileStream input = null;
-		try{
+		try {
 			input = new ANTLRFileStream( src );
-		} catch( IOException e ){
+		} catch( IOException e ) {
 			e.printStackTrace();
 		}
 		ChoralLexer lexer = new ChoralLexer( input );

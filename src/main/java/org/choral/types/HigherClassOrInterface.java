@@ -121,7 +121,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 	protected void assertModifiers( EnumSet< Modifier > modifiers ) {
 		assertLegalModifiers( legalOuterModifiers, modifiers, "for " + variety().labelPlural );
 		assertAccessModifiers( modifiers );
-		// for nested only
+		// for nested types only
 		//   assertIllegalCombinationOfModifiers(modifiers,ABSTRACT,STATIC);
 		//   assertIllegalCombinationOfModifiers(modifiers,ABSTRACT,PRIVATE);
 		//   assertIllegalCombinationOfModifiers(modifiers,ABSTRACT,FINAL);
@@ -211,8 +211,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 
 	@Override
 	public GroundClassOrInterface applyTo( List< ? extends World > args ) {
-		return applyTo( args,
-				List.of() ); // fails if there are type parameters, raw types are not supported
+		return applyTo( args, List.of() );
 	}
 
 	@Override

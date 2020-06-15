@@ -29,7 +29,7 @@ import java.util.Map;
 
 public final class HigherPrimitiveDataType extends HigherDataType implements PrimitiveDataType {
 
-	HigherPrimitiveDataType(Universe universe, Universe.PrimitiveTypeTag tag ) {
+	HigherPrimitiveDataType( Universe universe, Universe.PrimitiveTypeTag tag ) {
 		super( universe, List.of( new World( universe, World.DEFAULT_NAME ) ) );
 		this.tag = tag;
 	}

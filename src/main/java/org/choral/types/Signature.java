@@ -113,7 +113,7 @@ public class Signature {
 	@Override
 	public String toString() {
 		return parameters.stream().map( Parameter::type ).map( GroundDataType::toString )
-				.collect(Formatting.joining( ",", "(", ")", "()" ) );
+				.collect( Formatting.joining( ",", "(", ")", "()" ) );
 	}
 
 	public static final class Parameter {

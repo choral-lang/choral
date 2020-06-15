@@ -40,7 +40,9 @@ public class Pair< L, R > {
 		return new Pair( left, right );
 	}
 
-	public static < L1, L2, R1, R2 > Function< Pair< L1, R1 >, Pair< L2, R2 > > lift( Function< L1, L2 > left, Function< R1, R2 > right ) {
+	public static < L1, L2, R1, R2 > Function< Pair< L1, R1 >, Pair< L2, R2 > > lift(
+			Function< L1, L2 > left, Function< R1, R2 > right
+	) {
 		return ( x ) -> Pair.of( left.apply( x.left ), right.apply( x.right ) );
 	}
 

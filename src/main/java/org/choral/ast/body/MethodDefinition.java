@@ -36,7 +36,8 @@ public abstract class MethodDefinition extends Node {
 	public MethodDefinition(
 			final MethodSignature signature,
 			final List< Annotation > annotations,
-			Position position ) {
+			Position position
+	) {
 		super( position );
 		this.signature = signature;
 		this.annotations = annotations;
@@ -57,7 +58,7 @@ public abstract class MethodDefinition extends Node {
 		return signature;
 	}
 
-	public List< Annotation > annotations () {
+	public List< Annotation > annotations() {
 		return annotations;
 	}
 }

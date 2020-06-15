@@ -36,7 +36,9 @@ public class BlockStatement extends Statement {
 		this.enclosedStatement = enclosedStatement;
 	}
 
-	public BlockStatement( Statement enclosedStatement, Statement continuation, final Position position ) {
+	public BlockStatement(
+			Statement enclosedStatement, Statement continuation, final Position position
+	) {
 		super( continuation, position );
 		this.enclosedStatement = enclosedStatement;
 	}
@@ -49,7 +51,8 @@ public class BlockStatement extends Statement {
 	public Statement cloneWithContinuation( Statement continuation ) {
 		return new BlockStatement(
 				this.enclosedStatement,
-				this.continuation() == null ? continuation : continuation().cloneWithContinuation( continuation ),
+				this.continuation() == null ? continuation : continuation().cloneWithContinuation(
+						continuation ),
 				this.position() );
 	}
 
@@ -60,10 +63,11 @@ public class BlockStatement extends Statement {
 
 	@Override
 	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try{
+		try {
 			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ){
-			throw new ChoralException( "Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
+		} catch( ClassCastException e ) {
+			throw new ChoralException(
+					"Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
 		}
 	}
 

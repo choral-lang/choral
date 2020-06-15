@@ -51,10 +51,11 @@ public class NotExpression extends Expression {
 
 	@Override
 	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try{
+		try {
 			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ){
-			throw new ChoralException( "Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
+		} catch( ClassCastException e ) {
+			throw new ChoralException(
+					"Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
 		}
 	}
 }

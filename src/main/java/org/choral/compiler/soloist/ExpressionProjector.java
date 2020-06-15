@@ -143,7 +143,8 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 	private Optional< Expression > _visitScoped( ScopedExpression n, Boolean atWorld ) {
 		Pair< Expression, Expression > ht = Utils.headAndTail( n );
 		Optional< Expression > scopedExpression;
-		scopedExpression = visitScoped( ht.right(), atWorld && atWorld( worlds( ht.left() ) ) ); // TODO: check if it is worlds( ht.right() ) or ht.left()
+		scopedExpression = visitScoped( ht.right(), atWorld && atWorld(
+				worlds( ht.left() ) ) ); // TODO: check if it is worlds( ht.right() ) or ht.left()
 		Optional< Expression > scope = visitScoped( ht.left(), atWorld );
 		return scope.isEmpty() ?
 				scopedExpression
@@ -346,7 +347,7 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 		if( e.typeAnnotation().isPresent() && !e.typeAnnotation().get().isVoid() ) {
 			return ( (GroundDataType) e.typeAnnotation().get() ).worldArguments().stream();
 		} else {
-			if( e.typeAnnotation().isEmpty() ){
+			if( e.typeAnnotation().isEmpty() ) {
 				System.out.println( new PrettyPrinterVisitor().visit( e ) + " is not annotated" );
 			}
 			return Stream.of();

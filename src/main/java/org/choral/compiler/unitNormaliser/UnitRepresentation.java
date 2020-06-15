@@ -49,11 +49,13 @@ public final class UnitRepresentation {
 						UNIT,
 						Collections.singletonList( world ),
 						Collections.emptyList()
-				) ), new MethodCallExpression( UnitRepresentation.UID, a, Collections.emptyList() ) );
+				) ),
+				new MethodCallExpression( UnitRepresentation.UID, a, Collections.emptyList() ) );
 	}
 
 	public static TypeExpression getType( WorldArgument world ) {
-		return new TypeExpression( UNIT, Collections.singletonList( world ), Collections.emptyList() );
+		return new TypeExpression( UNIT, Collections.singletonList( world ),
+				Collections.emptyList() );
 	}
 
 }

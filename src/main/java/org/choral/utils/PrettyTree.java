@@ -42,7 +42,7 @@ public class PrettyTree {
 		level++;
 		String s = Trees.getNodeText( t, ruleNames );
 		sb.append( s + ' ' );
-		for( int i = 0; i < t.getChildCount(); i++ ){
+		for( int i = 0; i < t.getChildCount(); i++ ) {
 			sb.append( process( t.getChild( i ), ruleNames, level ) );
 		}
 		level--;
@@ -56,9 +56,9 @@ public class PrettyTree {
 
 	private static String lead( int level ) {
 		StringBuilder sb = new StringBuilder();
-		if( level > 0 ){
+		if( level > 0 ) {
 			sb.append( Eol );
-			for( int cnt = 0; cnt < level; cnt++ ){
+			for( int cnt = 0; cnt < level; cnt++ ) {
 				sb.append( getIndents() );
 			}
 		}

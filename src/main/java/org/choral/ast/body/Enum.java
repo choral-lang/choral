@@ -40,8 +40,13 @@ public class Enum extends TemplateDeclaration {
 	private final List< Annotation > annotations;
 	private final EnumSet< ClassModifier > modifiers;
 
-	public Enum( final Name name, final FormalWorldParameter worldParameter, final List< Name > cases, List< Annotation > annotations, final EnumSet< ClassModifier > modifiers, final Position position ) {
-		super( name, Collections.singletonList( worldParameter ), Collections.emptyList(), position );
+	public Enum(
+			final Name name, final FormalWorldParameter worldParameter, final List< Name > cases,
+			List< Annotation > annotations, final EnumSet< ClassModifier > modifiers,
+			final Position position
+	) {
+		super( name, Collections.singletonList( worldParameter ), Collections.emptyList(),
+				position );
 		this.cases = cases;
 		this.annotations = annotations;
 		this.modifiers = EnumSet.copyOf( modifiers );

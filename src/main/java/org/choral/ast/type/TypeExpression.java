@@ -35,19 +35,25 @@ import java.util.Optional;
  * HashMap( World1, World2 )< String( World1 ), List( World2 )< Integer > >
  */
 
-public class TypeExpression extends Node implements WithTypeAnnotation<Type> {
+public class TypeExpression extends Node implements WithTypeAnnotation< Type > {
 	private final Name name;
 	private final List< WorldArgument > worlds;
 	private final List< TypeExpression > parameters;
 	private Type type;
 
-	public TypeExpression( final Name name, final List< WorldArgument > worlds, final List< TypeExpression > parameters ) {
+	public TypeExpression(
+			final Name name, final List< WorldArgument > worlds,
+			final List< TypeExpression > parameters
+	) {
 		this.name = name;
 		this.worlds = worlds;
 		this.parameters = parameters;
 	}
 
-	public TypeExpression( final Name name, final List< WorldArgument > worlds, final List< TypeExpression > parameters, final Position position ) {
+	public TypeExpression(
+			final Name name, final List< WorldArgument > worlds,
+			final List< TypeExpression > parameters, final Position position
+	) {
 		super( position );
 		this.name = name;
 		this.worlds = worlds;
@@ -79,14 +85,15 @@ public class TypeExpression extends Node implements WithTypeAnnotation<Type> {
 	@Override
 	// WARNING: used in the merge, does not check world correspondence
 	public boolean equals( Object n ) {
-		if( n instanceof TypeExpression && ( (TypeExpression) n ).typeArguments().size() == this.typeArguments().size() ){
-			for( int i = 0; i < this.typeArguments().size(); i++ ){
-				if( ( (TypeExpression) n ).typeArguments().get( i ).equals( this.typeArguments().get( i ) ) ){
+		if( n instanceof TypeExpression && ( (TypeExpression) n ).typeArguments().size() == this.typeArguments().size() ) {
+			for( int i = 0; i < this.typeArguments().size(); i++ ) {
+				if( ( (TypeExpression) n ).typeArguments().get( i ).equals(
+						this.typeArguments().get( i ) ) ) {
 					return false;
 				}
 			}
 			return true;
-		} else{
+		} else {
 			return false;
 		}
 	}

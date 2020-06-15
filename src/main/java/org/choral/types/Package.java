@@ -80,9 +80,9 @@ public class Package {
 	}
 
 	public String identifier( boolean qualified ) {
-		if( qualified && !declarationContext().isRoot() ){
+		if( qualified && !declarationContext().isRoot() ) {
 			return declarationContext().identifier( true ) + "." + identifier;
-		} else{
+		} else {
 			return this.identifier;
 		}
 	}
@@ -105,17 +105,18 @@ public class Package {
 	public Package declarePackage( String path ) {
 		String[] names = path.split( "\\." );
 		Package pkg = this;
-		for( int i = 0; i < names.length; i++ ){
+		for( int i = 0; i < names.length; i++ ) {
 			String name = names[ i ];
 			Optional< Package > x = pkg.declaredPackage( name );
-			if( x.isEmpty() ){
-				if( declaredType( name ).isPresent() ){
-					throw new StaticVerificationException( "Duplicate declaration for '" + name + "'" );
+			if( x.isEmpty() ) {
+				if( declaredType( name ).isPresent() ) {
+					throw new StaticVerificationException(
+							"Duplicate declaration for '" + name + "'" );
 				}
 				Package y = new Package( pkg, name );
 				pkg.declaredPackages.put( name, y );
 				pkg = y;
-			} else{
+			} else {
 				pkg = x.get();
 			}
 		}
@@ -134,7 +135,8 @@ public class Package {
 
 	final void registerDeclaredType( HigherClassOrInterface type ) {
 		assert ( type.declarationContext() == this );
-		if( declaredTypes.containsKey( type.identifier() ) || declaredPackages.containsKey( type.identifier() ) ){
+		if( declaredTypes.containsKey( type.identifier() ) || declaredPackages.containsKey(
+				type.identifier() ) ) {
 			throw StaticVerificationException.of( "Duplicate declaration for '" + type.identifier()
 					+ ( ( isRoot() ) ? "'" : "' in '" + this + "'" ), type.sourceCode() );
 		}
