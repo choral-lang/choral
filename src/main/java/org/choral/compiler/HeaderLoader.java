@@ -56,10 +56,11 @@ public class HeaderLoader {
 			}
 		}
 		List< CompilationUnit > headers = new ArrayList<>( files.size() );
+		// "choral://"
 		for( String file : files ) {
 			try( InputStream in = cl.getResourceAsStream( "headers/" + file ) ) {
 				headers.add( Parser.parseSourceFile( cl.getResourceAsStream( "headers/" + file ),
-						"choral://" + file ) );
+						file ) );
 			}
 		}
 		return headers.stream();
@@ -78,10 +79,26 @@ public class HeaderLoader {
 	public static Stream< CompilationUnit > loadFromPath(
 			Collection< Path > folders, boolean ignoreIfSourcePresent
 	) throws IOException {
-		List< File > files = folders.stream().flatMap( wrapFunction( p -> Files.find( p, 999,
-				( q, a ) -> !a.isDirectory() && keepHeaderFile( q, ignoreIfSourcePresent )
-				, FileVisitOption.FOLLOW_LINKS ) ) )
+		return loadFromPath(folders,List.of(),ignoreIfSourcePresent,true );
+	}
+
+	public static Stream< CompilationUnit > loadFromPath(
+			Collection< Path > headersPaths, Collection<File> sourceFiles, boolean ignoreIfSourcePresent, boolean strictHeaderSearch
+	) throws IOException {
+		Stream<Path> pathsFromHeaders = headersPaths.stream().flatMap(wrapFunction(p -> Files.find(p, 999,
+				(q, a) -> !a.isDirectory() && keepHeaderFile(q, sourceFiles, ignoreIfSourcePresent)
+				, FileVisitOption.FOLLOW_LINKS)));
+		Stream< Path> pathsFromSources;
+		if(strictHeaderSearch) {
+			pathsFromSources = Stream.of();
+		} else {
+			pathsFromSources = sourceFiles.stream().map( x-> Paths.get( (x.isDirectory()) ? x.getPath() : x.getParent()))
+					.flatMap(wrapFunction( p -> Files.find(p,1,( q, a ) -> !a.isDirectory() && keepHeaderFile( q,sourceFiles, ignoreIfSourcePresent )
+							, FileVisitOption.FOLLOW_LINKS ) ) );
+		}
+		List< File > files = Stream.concat(pathsFromHeaders, pathsFromSources)
 				.map( Path::toFile )
+				.distinct()
 				.collect( Collectors.toList() );
 		ArrayList< CompilationUnit > headers = new ArrayList<>( files.size() );
 		for( File file : files ) {
@@ -90,19 +107,21 @@ public class HeaderLoader {
 		return headers.stream();
 	}
 
-	private static boolean keepHeaderFile( Path file, boolean ignoreIfSourcePresent ) {
+	private static boolean keepHeaderFile( Path file, Collection<File> sourceFiles,boolean ignoreIfSourcePresent ) {
 		String f = file.toString();
 		if( f.toLowerCase().endsWith( SourceObject.HeaderSourceObject.FILE_EXTENSION ) ) {
 			if( ignoreIfSourcePresent ) {
-				String s = f.substring(
-						f.length() - SourceObject.HeaderSourceObject.FILE_EXTENSION.length() ) + SourceObject.ChoralSourceObject.FILE_EXTENSION;
-				return !Files.exists( Paths.get( s ) );
-			} else {
-				return true;
+				String s = f.substring(f.length() - SourceObject.HeaderSourceObject.FILE_EXTENSION.length() )
+						+ SourceObject.ChoralSourceObject.FILE_EXTENSION;
+				for(File sf : sourceFiles){
+					if( Paths.get(s).compareTo(sf.toPath()) == 0 ) {
+						return false;
+					}
+				}
 			}
+			return true;
 		} else {
 			return false;
 		}
 	}
-
 }

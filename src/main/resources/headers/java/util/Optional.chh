@@ -7,7 +7,7 @@ public final class Optional@A< T@X > {
 
     public static < T@X > Optional@A< T > of( T@A value ) {}
 
-    public static < T@X > Optional@A< T@X > ofNullable( T@A value ) {}
+    public static < T@X > Optional@A< T > ofNullable( T@A value ) {}
 
     public T@A get() {}
 
