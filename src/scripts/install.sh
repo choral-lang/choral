@@ -38,29 +38,35 @@ case "$PROCEED" in
         ;;
 esac
 
-println "===== Downloading Choral ====="
+printHeader "Downloading Choral"
 
 CHORAL_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/choral-lang/choral/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
 CHORAL_URL="https://github.com/choral-lang/choral/releases/download/${CHORAL_LATEST_VERSION}/choral-${CHORAL_LATEST_VERSION}.zip"
 curl -L -o choral.zip $CHORAL_URL
 TMP_DIR=$(mktemp -d -t choral-XXXXXXXX)
 
-println "===== Unpacking Choral =====\n     in $TMP_DIR"
+printHeader "Unpacking Choral"
+echo "in $TMP_DIR"
+
 unzip choral.zip -d $TMP_DIR
 
-println "===== Installing Choral launcher in =====\n     \"$CHORAL_LAUNCHER_DIR\""
+printHeader "Installing Choral launcher"
+echo " in \"$CHORAL_LAUNCHER_DIR\""
+
 mkdir -p $CHORAL_LAUNCHER_DIR
 mv $TMP_DIR/choral/launchers/choral $CHORAL_LAUNCHER_DIR/choral
 chmod +x $CHORAL_LAUNCHER_DIR/choral
 
-println "===== Installing Choral libraries in =====\n     \"$CHORAL_HOME_DIR\""
+printHeader "Installing Choral libraries"
+echo "in \"$CHORAL_HOME_DIR\""
 mkdir -p $CHORAL_HOME_DIR
 mv $TMP_DIR/choral/dist/* $CHORAL_HOME_DIR/
 
-println "===== Cleaning up temporary installation files in =====\n     \"$TMP_DIR\""
+printHeader "Cleaning up temporary installation files"
+echo "in \"$TMP_DIR\""
 rm -rf $TMP_DIR
 
-println "** Installation Terminated"
+printHeader "Installation Terminated"
 
 cat <<EOS
 
@@ -79,17 +85,43 @@ cat <<EOS
 Install script for the Choral language.
 The additional options below may be appended to the launch command.
 
-    -l, --launchers                 Defines a custom path to install the choral 
+    -l, --launchers                 Defines a custom path to install the choral
                                     launchers
-    -b, --binaries                  Defines a custom path to install the choral
+    -ch, --choral-home              Defines a custom path to install the choral
                                     library binaries
     -y, --assume-yes                Automatic yes to prompts
     -h, --help                      Show this message
 EOS
 }
 
-println(){
-  printf "$1\n\n"
+printHeader(){
+	echo ""
+	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' =
+  printCenter "$1"
+  printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' =
+  echo ""
+}
+
+printCenter() {
+     [[ $# == 0 ]] && return 1
+
+     declare -i TERM_COLS="$(tput cols)"
+     declare -i str_len="${#1}"
+     [[ $str_len -ge $TERM_COLS ]] && {
+          echo "$1";
+          return 0;
+     }
+
+     declare -i filler_len="$(( (TERM_COLS - str_len) / 2 ))"
+     [[ $# -ge 2 ]] && ch="${2:0:1}" || ch=" "
+     filler=""
+     for (( i = 0; i < filler_len; i++ )); do
+          filler="${filler}${ch}"
+     done
+
+     printf "%s%s%s" "$filler" "$1" "$filler"
+     [[ $(( (TERM_COLS - str_len) % 2 )) -ne 0 ]] && printf "%s" "${ch}"
+     printf "\n"
 }
 
 parseCommands() {
@@ -103,7 +135,7 @@ case $key in
     shift
     shift
     ;;
-    -b|--binaries)
+    -ch|--choral-home)
     CHORAL_HOME_DIR="$2"
     shift
     shift
