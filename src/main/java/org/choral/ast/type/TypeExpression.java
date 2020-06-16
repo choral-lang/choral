@@ -26,6 +26,7 @@ import org.choral.ast.Node;
 import org.choral.ast.Position;
 import org.choral.ast.WithTypeAnnotation;
 import org.choral.ast.visitors.ChoralVisitorInterface;
+import org.choral.types.DataType;
 import org.choral.types.Type;
 
 import java.util.List;
@@ -35,7 +36,7 @@ import java.util.Optional;
  * HashMap( World1, World2 )< String( World1 ), List( World2 )< Integer > >
  */
 
-public class TypeExpression extends Node implements WithTypeAnnotation< Type > {
+public class TypeExpression extends Node implements WithTypeAnnotation< DataType > {
 	private final Name name;
 	private final List< WorldArgument > worlds;
 	private final List< TypeExpression > parameters;
@@ -60,13 +61,13 @@ public class TypeExpression extends Node implements WithTypeAnnotation< Type > {
 		this.parameters = parameters;
 	}
 
-	private Type typeAnnotation;
+	private DataType typeAnnotation;
 
-	public Optional< ? extends Type > typeAnnotation() {
+	public Optional< ? extends DataType > typeAnnotation() {
 		return Optional.ofNullable( typeAnnotation );
 	}
 
-	public void setTypeAnnotation( Type typeAnnotation ) {
+	public void setTypeAnnotation( DataType typeAnnotation ) {
 		this.typeAnnotation = typeAnnotation;
 	}
 
