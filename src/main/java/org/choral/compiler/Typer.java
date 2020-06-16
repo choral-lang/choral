@@ -40,6 +40,7 @@ import org.choral.utils.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Typer {
 
@@ -49,7 +50,7 @@ public class Typer {
 		BOUND_CHECKS,
 		MEMBER_DECLARATIONS,
 		MEMBER_DEFINITIONS,
-		DEBUG // <-- remove
+		MEMBER_GLOBAL_CHECKS,
 	}
 
 	public static Collection< CompilationUnit > annotate(
@@ -250,6 +251,8 @@ public class Typer {
 						}
 					} );
 				}
+//				Map<Member.HigherConstructor, Member.HigherConstructor> constructorGraph =
+//						new HashMap<>(n.constructors().size());
 				for( ConstructorDefinition nm : n.constructors() ) {
 					EnumSet< Modifier > ms = EnumSet.noneOf( Modifier.class );
 					for( ConstructorModifier m : nm.modifiers() ) {
@@ -275,9 +278,10 @@ public class Typer {
 					tm.innerCallable().finalise();
 					t.innerType().addConstructor( tm );
 					taskQueue.enqueue( Phase.MEMBER_DEFINITIONS,
-							() -> visitConstructorBody( callableScope.getScope(), tm,
-									nm.body() ) );
+							() -> visitConstructorBody( callableScope.getScope(), tm, nm ) );
 				}
+				taskQueue.enqueue( Phase.MEMBER_GLOBAL_CHECKS,
+						() -> { /* ToDo constructor dependency check */} );
 				taskQueue.enqueue( new MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
 					try {
 						t.innerType().finaliseInterface();
@@ -286,7 +290,6 @@ public class Typer {
 					}
 				} ) );
 			} );
-			taskQueue.enqueue( Phase.DEBUG, () -> assertTypeDefinitionFinalised( t ) );
 		}
 
 		private void visitEnum(
@@ -339,7 +342,6 @@ public class Typer {
 					}
 				} ) );
 			} );
-			taskQueue.enqueue( Phase.DEBUG, () -> assertTypeDefinitionFinalised( t ) );
 		}
 
 		private void visitInterface(
@@ -432,7 +434,6 @@ public class Typer {
 					}
 				} ) );
 			} );
-			taskQueue.enqueue( Phase.DEBUG, () -> assertTypeDefinitionFinalised( t ) );
 		}
 
 		private void checkIfSelectionMethod(
@@ -513,7 +514,8 @@ public class Typer {
 		);
 
 		protected abstract void visitConstructorBody(
-				CallableBodyScope bodyScope, Member.HigherConstructor callable, Statement body
+				CallableBodyScope bodyScope, Member.HigherConstructor callable,
+				ConstructorDefinition n
 		);
 
 		private List< World > visitWorldParameters
@@ -737,18 +739,6 @@ public class Typer {
 			}
 		}
 
-		private static void assertTypeDefinitionFinalised( HigherClassOrInterface type ) {
-//			String f = "\n * %-40s [%s]";
-//			System.out.println( type
-//					+ String.format( f, "isInstantiationChecked",
-//					type.innerType().isInstantiationChecked() )
-//					+ String.format( f, "isInheritanceFinalised",
-//					type.innerType().isInheritanceFinalised() )
-//					+ String.format( f, "isInterfaceFinalised  ",
-//					type.innerType().isInterfaceFinalised() )
-//			);
-		}
-
 		< N extends WithTypeAnnotation< ? super T >, T > T annotate( N n, T t ) {
 			n.setTypeAnnotation( t );
 			return t;
@@ -794,8 +784,7 @@ public class Typer {
 
 	}
 
-	private static class HeaderVisitor
-			extends Visitor {
+	private static class HeaderVisitor extends Visitor {
 		public HeaderVisitor( TaskQueue taskQueue, Universe universe ) {
 			super( taskQueue, universe );
 		}
@@ -816,7 +805,8 @@ public class Typer {
 
 		@Override
 		protected void visitConstructorBody(
-				CallableBodyScope bodyScope, Member.HigherConstructor callable, Statement body
+				CallableBodyScope bodyScope, Member.HigherConstructor callable,
+				ConstructorDefinition n
 		) {
 			/* header files may specify constructor bodies but are ignored */
 		}
@@ -873,19 +863,127 @@ public class Typer {
 
 		@Override
 		protected void visitConstructorBody(
-				CallableBodyScope bodyScope, Member.HigherConstructor callable, Statement body
+				CallableBodyScope scope, Member.HigherConstructor callable,
+				ConstructorDefinition d
 		) {
-			new Check( bodyScope, universe().voidType() ).visit( body );
+			if( d.explicitConstructorInvocation().isPresent() ) {
+				MethodCallExpression n = d.explicitConstructorInvocation().get();
+				GroundClass t = ( "this".equals( n.name().identifier() ) )
+						? scope.lookupThis()
+						: scope.lookupSuper();
+				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
+						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
+						.collect( Collectors.toList() );
+				List< ? extends GroundDataType > args = n.arguments().stream()
+						.map( x -> assertNotVoid( synth( scope, x, true ), x.position() ) )
+						.collect( Collectors.toList() );
+				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
+						typeArgs,
+						args,
+						t.constructors().filter( x -> x.isAccessibleFrom( scope.lookupThis() ) )
+				);
+				if( ms.isEmpty() ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException( "cannot resolve constructor '" + t +
+									args.stream().map( Object::toString ).collect( Formatting
+											.joining( ",", "(", ")", "" ) )
+									+ "'" ) );
+				} else if( ms.size() > 1 ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException( "ambiguous constructor invocation, " +
+									ms.stream().map( x -> "'" + t +
+											x.signature().parameters().stream()
+													.map( y -> y.type().toString() )
+													.collect( Formatting.joining( ",", "(", ")",
+															"" ) ) + "'" )
+											.collect( Collectors.collectingAndThen(
+													Collectors.toList(),
+													Formatting.joiningOxfordComma() ) ) ) );
+				}
+				Member.GroundConstructor selected = (Member.GroundConstructor) ms.get( 0 );
+				// n.setMethodAnnotation( selected );
+			}
+			new Check( scope, universe().voidType() ).visit( d.blockStatements() );
+		}
+
+		private List< ? extends Member.GroundCallable > findMostSpecificCallable(
+				List< ? extends HigherReferenceType > typeArgs,
+				List< ? extends GroundDataType > args,
+				Stream< ? extends Member.HigherCallable > callables
+		) {
+			List< ? extends Member.HigherCallable > cs = callables.filter( x ->
+					x.typeParameters().size() == typeArgs.size() && x.arity() == args.size()
+			).collect( Collectors.toList() );
+			// find most specific w/o unboxing
+//	/*DEBUG*/
+//			System.out.println("=================================================");
+//			System.out.println("candidates: " + cs.size());
+			List< Member.GroundCallable > ms = new ArrayList<>( cs.size() );
+			for( Member.HigherCallable x : cs ) {
+//						System.out.println("------------------------------------------------");
+				Member.GroundCallable c;
+				try {
+					c = x.applyTo( typeArgs );
+				} catch( StaticVerificationException e ) {
+//					System.out.println("type parameter compatible: false");
+					continue;
+				}
+//				System.out.println("type parameter compatible: true");
+				List< ? extends Signature.Parameter > cparams = c.signature().parameters();
+//				System.out.println("checking: " + c);
+				// check compatibility of actual parameters and formal ones.
+				boolean incompatible = false;
+				for( int i = 0; i < cparams.size(); i++ ) {
+					if( !args.get( i ).isSubtypeOf( cparams.get( i ).type() ) ) {
+						incompatible = true;
+					}
+				}
+//				System.out.println("actual parameter compatible: " + !incompatible);
+				if( incompatible ) {
+					continue;
+				}
+				// check if most specific w/o unboxing
+				boolean mostSpecific = true;
+				for( Member.GroundCallable m : ms ) {
+					List< ? extends Signature.Parameter > mparams = m.signature().parameters();
+					boolean mcsub = true;
+					boolean cmsub = true;
+					for( int i = 0; i < cparams.size(); i++ ) {
+						GroundDataType cp = cparams.get( i ).type();
+						GroundDataType mp = mparams.get( i ).type();
+						mcsub &= mp.isSubtypeOf( cp );
+						cmsub &= cp.isSubtypeOf( mp );
+					}
+					if( mcsub ) {
+//						System.out.println("subsumed by most specific candidate " + m);
+						mostSpecific = false;
+					} else if( cmsub ) {
+//						System.out.println("subsumes most specific candidate " + m);
+						ms.remove( m );
+					}
+				}
+//						System.out.println("most specific candidate: " + mostSpecific);
+				if( mostSpecific ) {
+					ms.add( c );
+				}
+			}
+//			System.out.println("=================================================");
+			return ms;
 		}
 
 		GroundDataTypeOrVoid synth( VariableDeclarationScope scope, Expression n ) {
 			return new Synth( scope ).visit( n );
 		}
 
-		GroundDataType synthNotVoid( VariableDeclarationScope scope, Expression n ) {
-			GroundDataTypeOrVoid t = new Synth( scope ).visit( n );
+		GroundDataTypeOrVoid synth(
+				VariableDeclarationScope scope, Expression n, boolean explicitConstructorArg
+		) {
+			return new Synth( scope, explicitConstructorArg ).visit( n );
+		}
+
+		GroundDataType assertNotVoid( GroundDataTypeOrVoid t, Position position ) {
 			if( t.isVoid() ) {
-				throw new AstPositionedException( n.position(),
+				throw new AstPositionedException( position,
 						new StaticVerificationException( "data type expected, found 'void'" ) );
 			} else {
 				return (GroundDataType) t;
@@ -1080,13 +1178,18 @@ public class Typer {
 		private final class Synth extends AbstractChoralVisitor< GroundDataTypeOrVoid > {
 
 			public Synth( VariableDeclarationScope scope ) {
+				this( scope, false );
+			}
+
+			public Synth( VariableDeclarationScope scope, boolean explicitConstructorArg ) {
 				this.scope = scope;
+				this.explicitConstructorArg = explicitConstructorArg;
 			}
 
 			private final VariableDeclarationScope scope;
 			private GroundDataTypeOrVoid left = null;
 			private boolean leftStatic = false;
-			private boolean leftAssignable = false;
+			private final boolean explicitConstructorArg;
 
 			@Override
 			public GroundDataTypeOrVoid visit( Expression n ) {
@@ -1203,7 +1306,8 @@ public class Typer {
 							case SHORT_CIRCUITED_AND:
 								pl = ( pl == null ) ? assertUnbox( tl, position ) : pl;
 								pr = ( pr == null ) ? assertUnbox( tr, position ) : pr;
-								if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN && pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
+								if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN
+										&& pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
 									return tl;
 								}
 								break;
@@ -1238,14 +1342,14 @@ public class Typer {
 
 			@Override
 			public GroundDataType visit( AssignExpression n ) {
-				GroundDataTypeOrVoid tvl = synth( scope, n.target() );
+				GroundDataTypeOrVoid tvl = synth( scope, n.target(), explicitConstructorArg );
 				if( tvl.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
 									"expected assignable variable" ) );
 				}
 				GroundDataType tl = (GroundDataType) tvl;
-				GroundDataTypeOrVoid tvr = synth( scope, n.value() );
+				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg );
 				if( tvr.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
@@ -1266,14 +1370,14 @@ public class Typer {
 
 			@Override
 			public GroundDataType visit( BinaryExpression n ) {
-				GroundDataTypeOrVoid tl = synth( scope, n.left() );
-				GroundDataTypeOrVoid tr = synth( scope, n.right() );
+				GroundDataTypeOrVoid tl = synth( scope, n.left(), explicitConstructorArg );
+				GroundDataTypeOrVoid tr = synth( scope, n.right(), explicitConstructorArg );
 				return annotate( n, visitBinaryOp( n.operator(), tl, tr, n.position() ) );
 			}
 
 			@Override
 			public GroundDataTypeOrVoid visit( EnclosedExpression n ) {
-				return synth( scope, n.nestedExpression() );
+				return synth( scope, n.nestedExpression(), explicitConstructorArg );
 			}
 
 			private boolean checkMemberAccess( Member m ) {
@@ -1288,7 +1392,7 @@ public class Typer {
 					result = scope.lookupVariable( identifier );
 					if( result.isEmpty() ) {
 						left = scope.lookupThis();
-						leftStatic = false;
+						leftStatic = explicitConstructorArg;
 					}
 				}
 				if( left instanceof GroundReferenceType ) {
@@ -1321,7 +1425,9 @@ public class Typer {
 							new StaticVerificationException(
 									"unexpected type argument in static member access" ) );
 				}
-				return annotate( n, type.applyTo( worldArgs ) );
+				GroundReferenceType g = type.applyTo( worldArgs );
+				annotate( n.typeExpression(), g );
+				return annotate( n, g );
 			}
 
 			@Override
@@ -1336,54 +1442,15 @@ public class Typer {
 						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
-						.map( x -> synthNotVoid( scope, x ) ).collect( Collectors.toList() );
-				List< Member.HigherConstructor > cs = t.constructors().filter( x ->
-						x.isAccessibleFrom( scope.lookupThis() )
-								&& x.typeParameters().size() == typeArgs.size()
-								&& x.arity() == args.size()
-				).collect( Collectors.toList() );
-				// find most specific w/o unboxing
-				List< Member.GroundConstructor > ms = new ArrayList<>( cs.size() );
-				for( Member.HigherConstructor x : cs ) {
-					Member.GroundConstructor c;
-					try {
-						c = x.applyTo( typeArgs );
-					} catch( StaticVerificationException e ) {
-						continue;
-					}
-					List< ? extends Signature.Parameter > cparams = c.signature().parameters();
-					// check compatibility of actual parameters and formal ones.
-					boolean incompatible = false;
-					for( int i = 0; i < cparams.size(); i++ ) {
-						if( !args.get( i ).isSubtypeOf( cparams.get( i ).type() ) ) {
-							incompatible = true;
-						}
-					}
-					if( incompatible ) {
-						continue;
-					}
-					// check if most specific w/o unboxing
-					boolean mostspecific = true;
-					for( Member.GroundConstructor m : ms ) {
-						List< ? extends Signature.Parameter > mparams = m.signature().parameters();
-						boolean mcsub = true;
-						boolean cmsub = true;
-						for( int i = 0; i < cparams.size(); i++ ) {
-							GroundDataType cp = cparams.get( i ).type();
-							GroundDataType mp = m.signature().parameters().get( i ).type();
-							mcsub &= mp.isSubtypeOf( cp );
-							cmsub &= cp.isSubtypeOf( mp );
-						}
-						if( mcsub ) {
-							mostspecific = false;
-						} else if( cmsub ) {
-							ms.remove( m );
-						}
-					}
-					if( mostspecific ) {
-						ms.add( c );
-					}
-				}
+						.map( x -> assertNotVoid(
+								synth( scope, x, explicitConstructorArg ),
+								x.position() ) )
+						.collect( Collectors.toList() );
+				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
+						typeArgs,
+						args,
+						t.constructors().filter( this::checkMemberAccess )
+				);
 				if( ms.isEmpty() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException( "cannot resolve constructor '" + t +
@@ -1402,7 +1469,7 @@ public class Typer {
 													Collectors.toList(),
 													Formatting.joiningOxfordComma() ) ) ) );
 				}
-				Member.GroundConstructor selected = ms.get( 0 );
+				Member.GroundConstructor selected = (Member.GroundConstructor) ms.get( 0 );
 				n.setConstructorAnnotation( selected );
 				leftStatic = false;
 				return t;
@@ -1412,75 +1479,23 @@ public class Typer {
 			public GroundDataTypeOrVoid visit( MethodCallExpression n ) {
 				if( left == null ) {
 					left = scope.lookupThis();
-					leftStatic = false;
+					leftStatic = explicitConstructorArg;
 				}
 				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
 						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
-						.map( x -> synthNotVoid( scope, x ) ).collect( Collectors.toList() );
+						.map( x -> assertNotVoid(
+								synth( scope, x, explicitConstructorArg ),
+								x.position() ) )
+						.collect( Collectors.toList() );
 				if( left instanceof GroundReferenceType ) {
 					GroundReferenceType t = (GroundReferenceType) left;
-					List< ? extends Member.HigherMethod > cs = t.methods(
-							n.name().identifier() ).filter( x ->
-							x.isAccessibleFrom( scope.lookupThis() )
-									&& x.typeParameters().size() == typeArgs.size()
-									&& x.arity() == args.size()
-					).collect( Collectors.toList() );
-					// find most specific w/o unboxing
-//	/*DEBUG*/   	System.out.println("=================================================");
-//					System.out.println("resolving: " + n.name().identifier() + " in " + left);
-//					System.out.println("candidates: " + cs.size() + " out of " + t.methods().count());
-					List< Member.GroundMethod > ms = new ArrayList<>( cs.size() );
-					for( Member.HigherMethod x : cs ) {
-//						System.out.println("------------------------------------------------");
-						Member.GroundMethod c;
-						try {
-							c = x.applyTo( typeArgs );
-						} catch( StaticVerificationException e ) {
-//							System.out.println("type parameter compatible: false");
-							continue;
-						}
-//						System.out.println("type parameter compatible: true");
-						List< ? extends Signature.Parameter > cparams = c.signature().parameters();
-//						System.out.println("checking: " + c);
-						// check compatibility of actual parameters and formal ones.
-						boolean incompatible = false;
-						for( int i = 0; i < cparams.size(); i++ ) {
-							if( !args.get( i ).isSubtypeOf( cparams.get( i ).type() ) ) {
-								incompatible = true;
-							}
-						}
-//						System.out.println("actual parameter compatible: " + !incompatible);
-						if( incompatible ) {
-							continue;
-						}
-						// check if most specific w/o unboxing
-						boolean mostSpecific = true;
-						for( Member.GroundMethod m : ms ) {
-							List< ? extends Signature.Parameter > mparams = m.signature().parameters();
-							boolean mcsub = true;
-							boolean cmsub = true;
-							for( int i = 0; i < cparams.size(); i++ ) {
-								GroundDataType cp = cparams.get( i ).type();
-								GroundDataType mp = m.signature().parameters().get( i ).type();
-								mcsub &= mp.isSubtypeOf( cp );
-								cmsub &= cp.isSubtypeOf( mp );
-							}
-							if( mcsub ) {
-//								System.out.println("subsumed by most specific candidate " + m);
-								mostSpecific = false;
-							} else if( cmsub ) {
-//								System.out.println("subsumes most specific candidate " + m);
-								ms.remove( m );
-							}
-						}
-//						System.out.println("most specific candidate: " + mostSpecific);
-						if( mostSpecific ) {
-							ms.add( c );
-						}
-					}
-//	/*DEBUG*/   	System.out.println("=================================================");
+					List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
+							typeArgs,
+							args,
+							t.methods( n.name().identifier() ).filter( this::checkMemberAccess )
+					);
 					if( ms.isEmpty() ) {
 						throw new AstPositionedException( n.position(),
 								new StaticVerificationException( "cannot resolve method '"
@@ -1497,7 +1512,7 @@ public class Typer {
 																Collectors.toList(),
 																Formatting.joiningOxfordComma() ) ) ) );
 					}
-					Member.GroundMethod selected = ms.get( 0 );
+					Member.GroundMethod selected = (Member.GroundMethod) ms.get( 0 );
 					n.setMethodAnnotation( selected );
 					leftStatic = false;
 					return selected.returnType();
@@ -1526,11 +1541,13 @@ public class Typer {
 
 			@Override
 			public GroundDataType visit( ThisExpression n ) {
+				leftStatic = explicitConstructorArg;
 				return annotate( n, scope.lookupThis() );
 			}
 
 			@Override
 			public GroundDataType visit( SuperExpression n ) {
+				leftStatic = explicitConstructorArg;
 				return annotate( n, scope.lookupSuper() );
 			}
 

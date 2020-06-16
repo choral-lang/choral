@@ -85,6 +85,10 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				description = "ignore headers in the same folder of the source files, unless specified by -l/--headers." )
 		boolean strictHeaderSearch = false;
 
+		@Option( names = { "--no-projectability" },
+				description = "skip projectability checks." )
+		boolean skipProjectability = false;
+
 		@Parameters( arity = "1..*" )
 		Collection< File > sourceFiles;
 
@@ -103,7 +107,9 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						.collect( Collectors.toList() );
 				Collection< CompilationUnit > annotatedUnits = Typer.annotate( sourceUnits,
 						headerUnits );
-				Compiler.checkProjectiability( annotatedUnits );
+				if(!skipProjectability) {
+					Compiler.checkProjectiability( annotatedUnits );
+				}
 			} catch( AstPositionedException e ) {
 				printNiceErrorMessage( e );
 				if( verbosityOptions.verbosity() == VerbosityOptions.VerbosityLevel.DEBUG ) {
@@ -209,15 +215,29 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		@Mixin
 		PathOption.HeadersPathOption headersPathOption;
 
+		@Option( names = { "--strict-header-search" },
+				description = "ignore headers in the same folder of the source files, unless specified by -l/--headers." )
+		boolean strictHeaderSearch = false;
+
 		@Parameters( arity = "1..*" )
 		List< File > sourceFiles;
 
 		@Override
 		public Integer call() {
 			try {
-				sourceFiles.stream()
-						.map( wrapFunction( Parser::parseSourceFile ) )
-						.map( HeaderCompiler::compile )
+				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
+						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
+				Collection< CompilationUnit > headerUnits = Stream.concat(
+						HeaderLoader.loadStandardProfile(),
+						HeaderLoader.loadFromPath(
+								headersPathOption.getPaths(),
+								sourceFiles,
+								true, strictHeaderSearch )
+				)
+						.collect( Collectors.toList() );
+				Collection< CompilationUnit > annotatedUnits = Typer.annotate( sourceUnits,
+						headerUnits );
+				annotatedUnits.parallelStream().map( HeaderCompiler::compile )
 						.forEach( emissionOptions.isDryRun()
 								? skip()
 								: wrapConsumer( s -> {
@@ -228,7 +248,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 			} catch( AstPositionedException e ) {
 				printNiceErrorMessage( e );
 				return 1;
-			} catch( WrappedException e ) {
+			} catch( Exception e ) {
 				// ToDo error reporting
 				e.printStackTrace();
 				return 1;

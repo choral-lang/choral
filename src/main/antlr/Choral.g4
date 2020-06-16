@@ -422,7 +422,7 @@ chainedClassInstanceCreation
 	;
 
 methodInvocation
-	: typeArguments? ( Identifier | SUPER ) LPAREN argumentList? RPAREN
+	: typeArguments? Identifier LPAREN argumentList? RPAREN
 	;
 
 staticGenericAccess

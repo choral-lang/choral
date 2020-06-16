@@ -1176,7 +1176,7 @@ public class AstOptimizer implements ChoralVisitor {
 	public MethodCallExpression visitMethodInvocation( ChoralParser.MethodInvocationContext mi ) {
 		debugInfo();
 		return new MethodCallExpression(
-				isPresent( mi.Identifier() ) ? getName( mi.Identifier() ) : getName( mi.SUPER() ),
+				getName( mi.Identifier() ),
 				ifPresent( mi.argumentList() ).applyOrElse( this::visitArgumentList,
 						Collections::emptyList ),
 				ifPresent( mi.typeArguments() ).apply( this::visitTypeArguments ).orElse(
