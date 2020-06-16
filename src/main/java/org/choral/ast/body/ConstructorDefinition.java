@@ -100,14 +100,11 @@ public class ConstructorDefinition extends Node {
 	}
 
 	public Statement body() {
-		Statement b;
 		if(explicitConstructorInvocation == null) {
-			b = blockStatements;
+			return blockStatements;
 		} else {
-			b = new ExpressionStatement( explicitConstructorInvocation,blockStatements,explicitConstructorInvocation.position() );
+			return new ExpressionStatement( explicitConstructorInvocation,blockStatements,explicitConstructorInvocation.position() );
 		}
-		return new BlockStatement( b, new NilStatement(), b.position() );
-
 	}
 
 	@Override
