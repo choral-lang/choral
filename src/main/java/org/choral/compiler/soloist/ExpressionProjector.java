@@ -199,7 +199,12 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 							new Name( Utils.getProjectionName(
 									n.typeExpression().name().identifier(),
 									this.world(),
-									n.typeExpression().worldArguments()
+									n.typeExpression().worldArguments(),
+									n.constructorAnnotation().get()
+											.higherCallable().declarationContext().worldArguments()
+											.stream().map(
+											w -> new WorldArgument( new Name( w.identifier() ) ) )
+											.collect( Collectors.toList() )
 							) ),
 							Collections.singletonList( this.world() ),
 							n.typeExpression().typeArguments().stream().map( t -> {

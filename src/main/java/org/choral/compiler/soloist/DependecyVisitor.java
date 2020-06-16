@@ -36,6 +36,8 @@ import org.choral.ast.type.FormalWorldParameter;
 import org.choral.ast.type.TypeExpression;
 import org.choral.ast.type.WorldArgument;
 import org.choral.ast.visitors.ChoralVisitorInterface;
+import org.choral.ast.visitors.PrettyPrinterVisitor;
+import org.choral.types.HigherDataType;
 import org.choral.utils.Pair;
 
 import java.util.*;
@@ -165,7 +167,8 @@ public class DependecyVisitor implements ChoralVisitorInterface< Void > {
 			n.superClass().ifPresent( this::visit );
 			// we add dependencies from implemented interfaces
 			n.implementsInterfaces().forEach( this::visit ); // C@( A, B ) implements D@( B, A )
-			// finally we visit the constructors and the methods
+			// finally we visit the fields, constructors, and methods
+			n.fields().forEach( this::visit );
 			n.constructors().forEach( this::visit );
 			n.methods().forEach( this::visit );
 			visitedTemplates.add( new Pair<>(
@@ -470,9 +473,17 @@ public class DependecyVisitor implements ChoralVisitorInterface< Void > {
 
 	@Override
 	public Void visit( TypeExpression n ) {
-		if( n.worldArguments().contains( this.w ) ) {
+		if( n.worldArguments().contains( this.w ) ) { // this is of kind *
 			this.projectableTemplates.add(
 					new Pair<>( n.name().identifier(), n.worldArguments().indexOf( this.w ) ) );
+		}
+		if( n.worldArguments().size() == 0 && !n.name().identifier().equals( "void" ) ) { // this is of kind @ => ...
+			HigherDataType dataType = (HigherDataType) n.typeAnnotation().get();
+			dataType.worldParameters().forEach( w -> {
+				this.projectableTemplates.add(
+						new Pair<>( n.name().identifier(), dataType.worldParameters().indexOf( w ) )
+				);
+			} );
 		}
 		n.typeArguments().forEach( this::visit );
 		return null;

@@ -31,6 +31,7 @@ import org.choral.ast.type.FormalWorldParameter;
 import org.choral.ast.type.World;
 import org.choral.ast.type.WorldArgument;
 import org.choral.utils.Pair;
+import org.w3c.dom.ls.LSOutput;
 
 import java.util.List;
 import java.util.Optional;
@@ -53,6 +54,14 @@ public class Utils {
 			String name, WorldArgument world, List< WorldArgument > worlds
 	) {
 		return name + ( worlds.size() > 1 ? "_" + world.name().identifier() : "" );
+	}
+
+	static String getProjectionName(
+			String name, WorldArgument world, List< WorldArgument > worlds, List< WorldArgument > referenceWorlds
+	) {
+		int worldIndex = worlds.indexOf( world );
+		WorldArgument referenceWorld = referenceWorlds.get( worldIndex );
+		return name + ( worlds.size() > 1 ? "_" + referenceWorld.name().identifier() : "" );
 	}
 
 	public static void warnIfWorldNotPresent(
