@@ -17,6 +17,7 @@ java/lang/System.chh
 java/lang/Throwable.chh
 java/util/Iterator.chh
 java/util/function/Consumer.chh
+java/util/function/Function.chh
 choral/channels/BiChannel.chh
 choral/channels/BiDataChannel.chh
 choral/channels/DiChannel.chh

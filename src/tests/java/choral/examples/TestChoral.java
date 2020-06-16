@@ -25,6 +25,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.choral.Choral;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -85,22 +86,42 @@ public class TestChoral {
 
 		List< CompilationRequest > compilationRequests = Stream.of(
 
-//				new CompilationRequest( subFolder( sourceFolder, "HelloRoles" ), targetFolder, "HelloRoles", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
+//						targetFolder,
+//						Collections.emptyList(),
+//						"HelloRoles", ALL_WORLDS )
 
-//				new CompilationRequest( subFolder( sourceFolder, "BiPair"), targetFolder, "BiPair", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "BiPair") ),
+//						targetFolder,
+//						Collections.emptyList(),
+//						"BiPair", ALL_WORLDS )
 
-//				new CompilationRequest( subFolder( sourceFolder, "Foo"), targetFolder, "Foo", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "Foo") ),
+//						targetFolder,
+//						Collections.emptyList(),
+//						"Foo", ALL_WORLDS )
 
-//				new CompilationRequest( subFolder( sourceFolder, "ConsumeItems"), targetFolder, "ConsumeItems", ALL_WORLDS )
-
-//				new CompilationRequest( subFolder( sourceFolder, "RemoteFunction"), targetFolder, "RemoteFunction", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "ConsumeItems" ) ),
+//						targetFolder,
+//						Collections.emptyList(),
+//						"ConsumeItems", ALL_WORLDS )
 
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "AuthResult" ),
-								subFolder( sourceFolder, "BiPair" ) ),
+						List.of( subFolder( sourceFolder, "RemoteFunction") ),
 						targetFolder,
-						List.of( "src/tests/choral/examples/BiPair", "src/tests/choral/examples/AuthResult" ),
-						"AuthResult", ALL_WORLDS )
+						Collections.emptyList(),
+						"RemoteFunction", ALL_WORLDS )
+
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "AuthResult" ),
+//								subFolder( sourceFolder, "BiPair" ) ),
+//						targetFolder,
+//						List.of( "src/tests/choral/examples/BiPair", "src/tests/choral/examples/AuthResult" ),
+//						"AuthResult", ALL_WORLDS )
 
 //				new CompilationRequest( subFolder( sourceFolder, "BuyerSellerShipper"), targetFolder, "BuyerSellerShipper", ALL_WORLDS )
 
@@ -146,17 +167,19 @@ public class TestChoral {
 	private static void project( List< CompilationRequest > compilationRequests ){
 		try {
 			for ( CompilationRequest compilationRequest : compilationRequests ) {
-				String[] parameters = ( String[] ) //ArrayUtils.addAll(
-						new String[]{
-								"epp",
-								"--verbosity=DEBUG",
-								"--headers=" + String.join( ":", compilationRequest.headersFolders() ),
-								"-t", compilationRequest.targetFolder(),
-								"-s", String.join( ":", compilationRequest.sourceFolder() ),
-								compilationRequest.symbol() }
-/*						,compilationRequest.worlds().toArray() ) */;
-				System.out.println( "Issuing command " + Arrays.toString( parameters ) );
-				Choral.main( parameters );
+				ArrayList< String > parameters = new ArrayList<>();
+				parameters.add( "epp" );
+				parameters.add( "--verbosity=DEBUG" );
+				if( !compilationRequest.headersFolders().isEmpty() )
+					parameters.add( "--headers=" + String.join( ":", compilationRequest.headersFolders() ) );
+				parameters.add( "-t" );
+				parameters.add( compilationRequest.targetFolder() );
+				parameters.add( "-s" );
+				parameters.add( String.join( ":", compilationRequest.sourceFolder() ) );
+				parameters.add( compilationRequest.symbol() );
+				parameters.addAll( compilationRequest.worlds() );
+				System.out.println( "Issuing command " + String.join( " ", parameters ) );
+				Choral.main( parameters.toArray( new String[ 0 ] ) );
 			}
 		} catch ( Exception e ) {
 			e.printStackTrace();

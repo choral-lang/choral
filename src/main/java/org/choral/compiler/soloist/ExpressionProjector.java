@@ -115,7 +115,7 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 
 	private Optional< Expression > visitScoped( Expression e, Boolean atWorld ) {
 		if( e instanceof FieldAccessExpression ) {
-			return _visitScoped( (FieldAccessExpression) e, atWorld );
+			return _visitScoped( (FieldAccessExpression) e );
 		} else if( e instanceof MethodCallExpression ) {
 			return _visitScoped( (MethodCallExpression) e, atWorld );
 		} else if( e instanceof ScopedExpression ) {
@@ -126,8 +126,8 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 		}
 	}
 
-	private Optional< Expression > _visitScoped( FieldAccessExpression n, Boolean atWorld ) {
-		return atWorld ? Optional.of( n ) : Optional.empty();
+	private Optional< Expression > _visitScoped( FieldAccessExpression n ) {
+		return atWorld( n, this.world() ) ? Optional.of( n ) : Optional.empty();
 	}
 
 	private Optional< Expression > _visitScoped( MethodCallExpression n, Boolean atWorld ) {
@@ -144,7 +144,7 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 		Pair< Expression, Expression > ht = Utils.headAndTail( n );
 		Optional< Expression > scopedExpression;
 		scopedExpression = visitScoped( ht.right(), atWorld && atWorld(
-				worlds( ht.left() ) ) ); // TODO: check if it is worlds( ht.right() ) or ht.left()
+				worlds( ht.left() ) ) );
 		Optional< Expression > scope = visitScoped( ht.left(), atWorld );
 		return scope.isEmpty() ?
 				scopedExpression

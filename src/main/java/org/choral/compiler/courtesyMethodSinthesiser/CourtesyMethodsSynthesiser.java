@@ -262,7 +262,7 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 			syntheticConstructors.add( new ConstructorDefinition(
 					constructorSignature,
 					n.explicitConstructorInvocation().map( this::safeVisit ).orElse( null ),
-					safeVisit( n.blockStatements() ),
+					n.blockStatements(),
 					n.modifiers(),
 					n.position()
 			) );
@@ -277,7 +277,7 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 		return new ConstructorDefinition(
 				visit( n.signature() ),
 				n.explicitConstructorInvocation().map( this::safeVisit ).orElse( null ),
-				safeVisit( n.blockStatements() ),
+				n.blockStatements(),
 				n.modifiers(),
 				n.position()
 		);

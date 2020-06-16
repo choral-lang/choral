@@ -21,6 +21,7 @@
 
 package org.choral;
 
+import com.google.common.collect.Streams;
 import org.choral.ast.CompilationUnit;
 import org.choral.ast.Position;
 import org.choral.compiler.*;
@@ -153,28 +154,19 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						.map( Path::toFile )
 						.collect( Collectors.toList() );
 				// TODO: THIS IS A COPY OF THE CALL FOR CHECK, AGGREGATE INTO A METHOD AND CALL THAT
-//				Collection< File > headerFiles = headersPathOption.getPaths().stream()
-//						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
-//							if( Files.isDirectory( q ) ) return false;
-//							String x = q.toString();
-//							x = x.substring(
-//									x.length() - SourceObject.HeaderSourceObject.FILE_EXTENSION.length() ).toLowerCase();
-//							return x.equals( SourceObject.HeaderSourceObject.FILE_EXTENSION );
-//						}, FileVisitOption.FOLLOW_LINKS ) ) )
-//						.map( Path::toFile )
-//						.filter( f -> !sourceFiles.contains( f ) )
-//						.collect( Collectors.toList() );
-//                Collection<File> headerFiles = Collections.EMPTY_LIST;
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
-//				Collection< CompilationUnit > headerUnits = headerFiles.stream().map(
-//						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList());
 				Collection< CompilationUnit > headerUnits = Stream.concat(
 						HeaderLoader.loadStandardProfile(),
-						HeaderLoader.loadFromPath( headersPathOption.getPaths() ) ).collect(
-						Collectors.toList() );
+						HeaderLoader.loadFromPath(
+								headersPathOption.getPaths(),
+								sourceFiles,
+								true, true ) // TODO: keep this or introduce parameter also in EPP?
+				)
+						.collect( Collectors.toList() );
 				Collection< CompilationUnit > annotatedUnits = Typer.annotate( sourceUnits,
 						headerUnits );
+				Compiler.checkProjectiability( annotatedUnits );
 				// TODO: ... UNTIL HERE (annotatedUnits)
 				if( worlds == null ) {
 					worlds = Collections.emptyList();
