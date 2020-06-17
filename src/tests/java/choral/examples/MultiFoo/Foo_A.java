@@ -1,5 +1,5 @@
 package choral.examples.MultiFoo;
 import org.choral.lang.Unit;
 
-interface Foo_A {
+class Foo_A {
 }

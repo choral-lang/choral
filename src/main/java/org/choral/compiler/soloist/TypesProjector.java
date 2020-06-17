@@ -63,6 +63,9 @@ public class TypesProjector extends AbstractSoloistProjector< List< ? extends No
 		if( ( n.worldArguments().size() == 0 ) // it is a @ => ...
 				|| n.worldArguments().contains( this.world() ) // it is a *
 		) {
+			if( n.typeAnnotation().isEmpty() && n.name().identifier().equals( "void" ) ){
+				return Collections.singletonList( n );
+			}
 			DataType dataType = n.typeAnnotation().get();
 			if( dataType.isHigherType() ){
 				HigherDataType higherDataType = ( HigherDataType ) dataType;

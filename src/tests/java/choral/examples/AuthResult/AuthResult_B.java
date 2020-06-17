@@ -3,10 +3,8 @@ import choral.examples.BiPair.BiPair_B;
 import choral.examples.DistAuthUtils.AuthToken;
 import java.util.Optional;
 import org.choral.lang.Unit;
-import org.choral.annotations.Choreography;
 
-@Choreography( role = "B", name = "AuthResult" )
-public class AuthResult_B extends BiPair_B < Unit, Optional < AuthToken > > {
+public class AuthResult_B extends BiPair_B< Optional < AuthToken >, Optional < AuthToken > > {
 	public AuthResult_B( Unit t1, AuthToken t2 ) {
 		this( t2 );
 	}

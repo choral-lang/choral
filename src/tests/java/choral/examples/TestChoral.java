@@ -90,37 +90,37 @@ public class TestChoral {
 //						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"HelloRoles", ALL_WORLDS ),
+//						"HelloRoles", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "BiPair") ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"BiPair", ALL_WORLDS ),
+//						"BiPair", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "Foo") ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"Foo", ALL_WORLDS ),
+//						"Foo", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "ConsumeItems" ) ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"ConsumeItems", ALL_WORLDS ),
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "MultiFoo") ),
-//						targetFolder,
-//						Collections.emptyList(),
-//						"MultiFoo", ALL_WORLDS )
+//						"ConsumeItems", ALL_WORLDS )
 
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "RemoteFunction") ),
+						List.of( subFolder( sourceFolder, "MultiFoo") ),
 						targetFolder,
 						Collections.emptyList(),
-						"RemoteFunction", ALL_WORLDS )
+						"MultiFoo", ALL_WORLDS )
+
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "RemoteFunction") ),
+//						targetFolder,
+//						Collections.emptyList(),
+//						"RemoteFunction", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "AuthResult" ),

@@ -1,11 +1,24 @@
 package choral.examples.MultiFoo;
 
-interface Foo@( A, B ){}
+class Foo@( A, B ){}
 
 interface Bar@( C, D )< T@( X, Y ) > {}
 
-public class MultiFoo@( E, F ){
+class SingleFoo@( E, F ){
+	public static Foo@( E, F ) staticMethod(){
+		return new Foo@( E, F )();
+	}
+
+	public SingleFoo( Foo@( E, F ) x ){}
+
+}
+
+public class MultiFoo@( E, F ) extends SingleFoo@( E, F ){
 
 	Bar@( E, F )< Foo > x;
+
+	public MultiFoo( SingleFoo@( E, F ) y ){
+		super( super.staticMethod() );
+	}
 
 }

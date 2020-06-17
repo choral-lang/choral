@@ -388,6 +388,7 @@ trailingExpression
 			| methodInvocation
 			| classInstanceCreationExpression
 			| staticGenericAccess
+			| thisOrSuperMethodAccess
 	) ( DOT trailExpression )?
 	;
 
@@ -395,6 +396,10 @@ trailExpression
 	: ( fieldAccess_no_primary
 			| methodInvocation
 	) ( DOT trailExpression )?
+	;
+
+thisOrSuperMethodAccess
+	: ( thisSymbol=THIS | superSymbol=SUPER ) DOT methodInvocation
 	;
 
 chainedExpression
@@ -455,7 +460,7 @@ fieldAccess_no_primary
     ;
 
 argumentList
-	: expression ( COMMA expression )*
+	: trailingExpression ( COMMA trailingExpression )*
 	| literal AT LBRACK worldArgumentList RBRACK
 	;
 

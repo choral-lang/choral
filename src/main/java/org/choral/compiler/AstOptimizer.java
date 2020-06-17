@@ -984,6 +984,8 @@ public class AstOptimizer implements ChoralVisitor {
 			e = visitMethodInvocation( te.methodInvocation() );
 		} else if( isPresent( te.staticGenericAccess() ) ) {
 			e = visitStaticGenericAccess( te.staticGenericAccess() );
+		} else if( isPresent( te.thisOrSuperMethodAccess() ) ){
+			e = visitThisOrSuperMethodAccess( te.thisOrSuperMethodAccess() );
 		} else {
 			e = visitClassInstanceCreationExpression( te.classInstanceCreationExpression() );
 		}
@@ -1037,6 +1039,19 @@ public class AstOptimizer implements ChoralVisitor {
 						e.position() ),
 				() -> e
 		);
+	}
+
+	@Override
+	public Expression visitThisOrSuperMethodAccess(	ChoralParser.ThisOrSuperMethodAccessContext tosma ) {
+		debugInfo();
+		Expression e = new ScopedExpression(
+			tosma.superSymbol != null ?
+					new SuperExpression( getPosition( tosma.superSymbol ) )
+					: new ThisExpression( getPosition( tosma.thisSymbol ) ),
+				visitMethodInvocation( tosma.methodInvocation() )
+		);
+		e.setPosition( getPosition( tosma ) );
+		return e;
 	}
 
 	@Override
@@ -1196,8 +1211,8 @@ public class AstOptimizer implements ChoralVisitor {
 					.map( w -> visitLiteral( al.literal(), w ) )
 					.collect( Collectors.toList() );
 		} else {
-			return al.expression().stream()
-					.map( this::visitExpression )
+			return al.trailingExpression().stream()
+					.map( this::visitTrailingExpression )
 					.collect( Collectors.toList() );
 		}
 	}

@@ -261,7 +261,7 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 							Collections.emptyList() ); // TODO: fix this, we need to have the type parameters of the class
 			syntheticConstructors.add( new ConstructorDefinition(
 					constructorSignature,
-					n.explicitConstructorInvocation().map( this::safeVisit ).orElse( null ),
+					n.explicitConstructorInvocation().orElse( null ),
 					n.blockStatements(),
 					n.modifiers(),
 					n.position()
@@ -276,7 +276,7 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 		}
 		return new ConstructorDefinition(
 				visit( n.signature() ),
-				n.explicitConstructorInvocation().map( this::safeVisit ).orElse( null ),
+				n.explicitConstructorInvocation().orElse( null ),
 				n.blockStatements(),
 				n.modifiers(),
 				n.position()

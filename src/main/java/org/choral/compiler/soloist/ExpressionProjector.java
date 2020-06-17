@@ -194,14 +194,14 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 		List< Expression > arguments = n.arguments().stream().map( this::visit ).collect(
 				Collectors.toList() );
 		if( atWorld( n.typeExpression().worldArguments() ) ) {
+			GroundDataType dataType = (GroundDataType) n.typeExpression().typeAnnotation().get();
 			return new ClassInstantiationExpression(
 					new TypeExpression(
 							new Name( Utils.getProjectionName(
 									n.typeExpression().name().identifier(),
 									this.world(),
 									n.typeExpression().worldArguments(),
-									n.constructorAnnotation().get()
-											.higherCallable().declarationContext().worldArguments()
+									dataType.typeConstructor().worldParameters()
 											.stream().map(
 											w -> new WorldArgument( new Name( w.identifier() ) ) )
 											.collect( Collectors.toList() )
@@ -239,6 +239,11 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 
 	@Override
 	public Expression visit( ThisExpression n ) {
+		return n;
+	}
+
+	@Override
+	public Expression visit( SuperExpression n ) {
 		return n;
 	}
 

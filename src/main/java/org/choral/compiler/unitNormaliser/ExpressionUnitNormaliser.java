@@ -319,6 +319,11 @@ public class ExpressionUnitNormaliser
 	public EUNResult visit( ThisExpression n ) {
 		return EUNResult.unChanged( n );
 	}
+
+	@Override
+	public EUNResult visit( SuperExpression n ) {
+		return EUNResult.unChanged( n );
+	}
 //
 //	@Override
 //	public EUNResult visit( LiteralExpression n ) {
