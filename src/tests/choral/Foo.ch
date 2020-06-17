@@ -1,11 +1,15 @@
 package foo;
 
-class Foo@A {
+abstract class C1@A implements I1@A {
+    abstract void m(int@A x );
+}
 
-    Foo() { this(5@A); }
+class C2@A extends C1@A {
+    public void m () {}
+    void m(int@A x ) {}
+}
 
-    Foo(int@A x) { this(x,x); }
 
-    Foo(int@A x, int@A y) { this(); }
-
+interface I1@A {
+    void m ();
 }
