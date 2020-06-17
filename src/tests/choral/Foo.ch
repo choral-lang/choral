@@ -1,19 +1,15 @@
 package foo;
 
-class Foo@A implements I@A<Integer> {
-
-/*
-    Foo() { this(5@A); }
-
-    Foo(int@A x) { this(x,x); }
-
-    Foo(int@A x, int@A y) { this(); }
-*/
-
+abstract class C1@A implements I1@A {
+    abstract void m(int@A x );
 }
 
-class Bar@A extends Foo@A implements I@A<String> {
-
+class C2@A extends C1@A {
+    public void m () {}
+    void m(int@A x ) {}
 }
 
-interface I@A<T@X> {}
+
+interface I1@A {
+    void m ();
+}

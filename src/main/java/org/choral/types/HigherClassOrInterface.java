@@ -410,10 +410,84 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 								}
 						);
 					} );
+			// inherit fields and methods
+			extendedClassesOrInterfaces().flatMap( GroundReferenceType::fields )
+					.filter( x -> x.isAccessibleFrom( this )
+							&& declaredFields().noneMatch(
+							y -> x.identifier().equals( y.identifier() ) ) )
+					.forEach( inheritedFields::add );
+			extendedClassesOrInterfaces().flatMap( GroundReferenceType::methods )
+					.filter( x -> x.isAccessibleFrom( this ) )
+					.forEach( x -> {
+						boolean inherited = true;
+						for( Member.HigherMethod y : declaredMethods ) {
+							// y overrides x
+							if( y.isOverrideEquivalent( x ) ) {
+								// check both instance or both static
+								if( !y.isStatic() && x.isStatic() ) {
+									throw new StaticVerificationException( "instance method '" + y
+											+ "' in '" + this + "' cannot override static method '"
+											+ x + "' in '" + x.declarationContext() + "'" );
+								}
+								if( y.isStatic() && !x.isStatic() ) {
+									throw new StaticVerificationException( "static method '" + y
+											+ "' in '" + this + "' cannot override instance method '"
+											+ x + "' in '" + x.declarationContext() + "'" );
+								}
+								// check access privileges
+								if( y.isPrivate() || ( x.isPublic() && !y.isPublic() )
+										|| ( x.isProtected() && y.isPackagePrivate() ) ) {
+									throw new StaticVerificationException( "method '" + y
+											+ "' in '" + this + "' clashes with method '"
+											+ x + "' in '" + x.declarationContext()
+											+ "', attempting to assign weaker access privileges '"
+											+ ModifierUtils.prettyAccess( y.modifiers() ) + "' to '"
+											+ ModifierUtils.prettyAccess( x.modifiers() ) + "'" );
+								}
+								// check not final
+								if( x.isFinal() ) {
+									throw new StaticVerificationException( "method '" + y
+											+ "' in '" + this + "' cannot override final method '"
+											+ x + "' in '" + x.declarationContext() + "'" );
+								}
+								// check assignable return type;
+								if( !y.isReturnTypeAssignable( x ) ) {
+									throw new StaticVerificationException( "method '" + y
+											+ "' in '" + this + "' clashes with method '"
+											+ x + "' in '" + x.declarationContext()
+											+ "', attempting to use incompatible return type" );
+								}
+								// inherit selection annotation
+								if( x.isSelectionMethod() ) {
+									y.setSelectionMethod();
+								}
+								inherited = false;
+								break;
+							} else {
+								y.assertNoClash( x );
+							}
+						}
+						if( inherited ) {
+							// check implementation
+							if( !isAbstract() && x.isAbstract() ) {
+								throw new StaticVerificationException( "'" + this + "' must either "
+										+ "be declared as abstract or implement abstract method '"
+										+ x + "' in '" + x.declarationContext() + "'" );
+							}
+							inheritedMethods.add( x );
+						}
+					} );
 			interfaceFinalised = true;
 		}
 
+
+		protected final List< Member.Field > inheritedFields = new LinkedList<>();
+
+		protected final List< Member.HigherMethod > inheritedMethods = new LinkedList<>();
+
 		protected final List< Member.Field > declaredFields = new ArrayList<>();
+
+		protected final List< Member.HigherMethod > declaredMethods = new ArrayList<>();
 
 		@Override
 		public final Stream< Member.Field > declaredFields() {
@@ -430,8 +504,6 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			}
 			declaredFields.add( field );
 		}
-
-		protected final List< Member.HigherMethod > declaredMethods = new ArrayList<>();
 
 		public void addMethod( Member.HigherMethod method ) {
 			assert ( !interfaceFinalised );
