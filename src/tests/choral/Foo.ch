@@ -1,12 +1,11 @@
 package foo;
 
-import bar.Iterator;
-
 class Foo@A {
 
-    void m (Iterator@A<Integer> i) {
-        i.hasNext();
+    Foo() { this(5@A); }
 
-    }
+    Foo(int@A x) { this(x,x); }
+
+    Foo(int@A x, int@A y) { this(); }
 
 }

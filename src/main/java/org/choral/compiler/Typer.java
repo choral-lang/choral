@@ -251,8 +251,10 @@ public class Typer {
 						}
 					} );
 				}
-//				Map<Member.HigherConstructor, Member.HigherConstructor> constructorGraph =
-//						new HashMap<>(n.constructors().size());
+				Map< Member.HigherConstructor, Member.HigherConstructor > constructorDependencies =
+						new HashMap<>( n.constructors().size() );
+				Map< Member.HigherConstructor, Position > explicitConstructorInvocations =
+						new HashMap<>( n.constructors().size() );
 				for( ConstructorDefinition nm : n.constructors() ) {
 					EnumSet< Modifier > ms = EnumSet.noneOf( Modifier.class );
 					for( ConstructorModifier m : nm.modifiers() ) {
@@ -278,10 +280,12 @@ public class Typer {
 					tm.innerCallable().finalise();
 					t.innerType().addConstructor( tm );
 					taskQueue.enqueue( Phase.MEMBER_DEFINITIONS,
-							() -> visitConstructorBody( callableScope.getScope(), tm, nm ) );
+							() -> visitConstructorBody( callableScope.getScope(), tm, nm,
+									constructorDependencies, explicitConstructorInvocations ) );
 				}
 				taskQueue.enqueue( Phase.MEMBER_GLOBAL_CHECKS,
-						() -> { /* ToDo constructor dependency check */} );
+						() -> checkConstructorsDependencies( constructorDependencies,
+								explicitConstructorInvocations ) );
 				taskQueue.enqueue( new MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
 					try {
 						t.innerType().finaliseInterface();
@@ -436,6 +440,11 @@ public class Typer {
 			} );
 		}
 
+		protected abstract void checkConstructorsDependencies(
+				Map< Member.HigherConstructor, Member.HigherConstructor > dependencies,
+				Map< Member.HigherConstructor, Position > positions
+		);
+
 		private void checkIfSelectionMethod(
 				Member.HigherMethod tm, List< Annotation > annotations
 		) {
@@ -510,12 +519,16 @@ public class Typer {
 		}
 
 		protected abstract void visitMethodBody(
-				CallableBodyScope bodyScope, Member.HigherMethod callable, Statement body
+				CallableBodyScope bodyScope,
+				Member.HigherMethod callable,
+				Statement body
 		);
 
 		protected abstract void visitConstructorBody(
 				CallableBodyScope bodyScope, Member.HigherConstructor callable,
-				ConstructorDefinition n
+				ConstructorDefinition n,
+				Map< Member.HigherConstructor, Member.HigherConstructor > dependencies,
+				Map< Member.HigherConstructor, Position > positions
 		);
 
 		private List< World > visitWorldParameters
@@ -797,6 +810,14 @@ public class Typer {
 		}
 
 		@Override
+		protected void checkConstructorsDependencies(
+				Map< Member.HigherConstructor, Member.HigherConstructor > dependencies,
+				Map< Member.HigherConstructor, Position > positions
+		) {
+			/* header files may specify constructor bodies but are ignored */
+		}
+
+		@Override
 		protected void visitMethodBody(
 				CallableBodyScope bodyScope, Member.HigherMethod callable, Statement body
 		) {
@@ -806,7 +827,9 @@ public class Typer {
 		@Override
 		protected void visitConstructorBody(
 				CallableBodyScope bodyScope, Member.HigherConstructor callable,
-				ConstructorDefinition n
+				ConstructorDefinition n,
+				Map< Member.HigherConstructor, Member.HigherConstructor > dependencies,
+				Map< Member.HigherConstructor, Position > positions
 		) {
 			/* header files may specify constructor bodies but are ignored */
 		}
@@ -832,6 +855,29 @@ public class Typer {
 								+ SourceObject.ChoralSourceObject.FILE_EXTENSION + "'" ) );
 			}
 
+		}
+
+		@Override
+		protected void checkConstructorsDependencies(
+				Map< Member.HigherConstructor, Member.HigherConstructor > dependencies,
+				Map< Member.HigherConstructor, Position > positions
+		) {
+			Queue< Member.HigherConstructor > q = new LinkedList<>( dependencies.keySet() );
+			List< Member.HigherConstructor > v = new ArrayList<>( dependencies.keySet() );
+			while( !q.isEmpty() ) {
+				v.clear();
+				Member.HigherConstructor c = q.peek();
+				while( c != null ) {
+					if( v.contains( c ) ) {
+						throw new AstPositionedException( positions.get( c ),
+								new StaticVerificationException(
+										"recursive constructor invocation" ) );
+					}
+					v.add( c );
+					q.remove( c );
+					c = dependencies.get( c );
+				}
+			}
 		}
 
 		@Override
@@ -863,14 +909,34 @@ public class Typer {
 
 		@Override
 		protected void visitConstructorBody(
-				CallableBodyScope scope, Member.HigherConstructor callable,
-				ConstructorDefinition d
+				CallableBodyScope scope,
+				Member.HigherConstructor callable,
+				ConstructorDefinition d,
+				final Map< Member.HigherConstructor, Member.HigherConstructor > dependencies,
+				final Map< Member.HigherConstructor, Position > positions
 		) {
-			if( d.explicitConstructorInvocation().isPresent() ) {
+			if( d.explicitConstructorInvocation().isEmpty() ) {
+				GroundClass t = scope.lookupSuper();
+				if( t != null && t.constructors()
+						.filter( x -> x.isAccessibleFrom( scope.lookupThis() ) )
+						.noneMatch( x -> x.typeParameters().size() == 0 && x.arity() == 0 )
+				) {
+					throw new AstPositionedException( d.position(),
+							new StaticVerificationException(
+									"there is no default constructor available in '" + t + "'" ) );
+				}
+			} else {
 				MethodCallExpression n = d.explicitConstructorInvocation().get();
 				GroundClass t = ( "this".equals( n.name().identifier() ) )
 						? scope.lookupThis()
 						: scope.lookupSuper();
+				if( t == null ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException(
+									"cannot resolve 'super', class '"
+											+ scope.lookupThis().typeConstructor()
+											+ "' does not extend any class" ) );
+				}
 				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
 						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
 						.collect( Collectors.toList() );
@@ -902,6 +968,8 @@ public class Typer {
 				}
 				Member.GroundConstructor selected = (Member.GroundConstructor) ms.get( 0 );
 				// n.setMethodAnnotation( selected );
+				dependencies.put( callable, selected.higherCallable() );
+				positions.put( callable, n.position() );
 			}
 			new Check( scope, universe().voidType() ).visit( d.blockStatements() );
 		}
@@ -1541,13 +1609,23 @@ public class Typer {
 
 			@Override
 			public GroundDataType visit( ThisExpression n ) {
-				leftStatic = explicitConstructorArg;
+				if( explicitConstructorArg ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException(
+									"cannot reference 'this' before constructor has been called" ) );
+
+				}
 				return annotate( n, scope.lookupThis() );
 			}
 
 			@Override
 			public GroundDataType visit( SuperExpression n ) {
-				leftStatic = explicitConstructorArg;
+				if( explicitConstructorArg ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException(
+									"cannot reference 'super' before supertype constructor has been called" ) );
+
+				}
 				return annotate( n, scope.lookupSuper() );
 			}
 
