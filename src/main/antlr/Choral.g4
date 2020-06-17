@@ -460,7 +460,7 @@ fieldAccess_no_primary
     ;
 
 argumentList
-	: trailingExpression ( COMMA trailingExpression )*
+	: expression ( COMMA expression )*
 	| literal AT LBRACK worldArgumentList RBRACK
 	;
 

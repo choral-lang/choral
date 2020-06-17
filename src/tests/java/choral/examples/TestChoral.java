@@ -110,11 +110,11 @@ public class TestChoral {
 //						Collections.emptyList(),
 //						"ConsumeItems", ALL_WORLDS )
 
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "MultiFoo") ),
-						targetFolder,
-						Collections.emptyList(),
-						"MultiFoo", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "MultiFoo") ),
+//						targetFolder,
+//						Collections.emptyList(),
+//						"MultiFoo", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "RemoteFunction") ),
@@ -129,7 +129,12 @@ public class TestChoral {
 //						List.of( "src/tests/choral/examples/BiPair", "src/tests/choral/examples/AuthResult" ),
 //						"AuthResult", ALL_WORLDS )
 
-//				new CompilationRequest( subFolder( sourceFolder, "BuyerSellerShipper"), targetFolder, "BuyerSellerShipper", ALL_WORLDS )
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "DistAuth") ),
+						targetFolder,
+						List.of( "src/tests/examples/BiPair", "src/tests/choral/examples/AuthResult" ),
+						"DistAuth", ALL_WORLDS )
+
 
 //				new CompilationRequest( subFolder( sourceFolder, "DistAuth"), targetFolder, "DistAuth", ALL_WORLDS )
 //				new CompilationRequest( subFolder( sourceFolder, "DistAuth"), targetFolder, "DistAuth5", ALL_WORLDS )
@@ -141,6 +146,11 @@ public class TestChoral {
 
 //				new CompilationRequest( subFolder( sourceFolder, "MergeSort"), targetFolder, "MergeSort", ALL_WORLDS )
 //				new CompilationRequest( subFolder( sourceFolder, "MergeSort"), targetFolder, "MergeSortTest", ALL_WORLDS )
+
+//		new CompilationRequest(
+//				subFolder( sourceFolder, "BuyerSellerShipper"),
+//				targetFolder,
+//				"BuyerSellerShipper", ALL_WORLDS );
 
 //				new CompilationRequest( subFolder( sourceFolder, "QuickSort"), targetFolder, "QuickSort", ALL_WORLDS )
 //				new CompilationRequest( subFolder( sourceFolder, "QuickSort"), targetFolder, "QuickSortTest", ALL_WORLDS )

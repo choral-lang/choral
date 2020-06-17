@@ -1211,8 +1211,8 @@ public class AstOptimizer implements ChoralVisitor {
 					.map( w -> visitLiteral( al.literal(), w ) )
 					.collect( Collectors.toList() );
 		} else {
-			return al.trailingExpression().stream()
-					.map( this::visitTrailingExpression )
+			return al.expression().stream()
+					.map( this::visitExpression )
 					.collect( Collectors.toList() );
 		}
 	}
