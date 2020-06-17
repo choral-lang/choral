@@ -1352,7 +1352,7 @@ public class Typer {
 							case GREATER_EQUALS:
 								pl = assertUnbox( tl, position );
 								pr = assertUnbox( tr, position );
-								if( tl.worldArguments().equals( tr.worldArguments() ) ) {
+								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
 									return universe().primitiveDataType(
 											PrimitiveTypeTag.BOOLEAN ).applyTo(
 											tl.worldArguments() );
