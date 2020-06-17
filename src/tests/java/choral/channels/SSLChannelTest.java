@@ -22,12 +22,12 @@
 package choral.channels;
 
 import org.choral.runtime.Media.PipedByteChannel;
-import org.choral.runtime.TLSByteChannel.TSLByteChannel1;
-import org.choral.runtime.TLSByteChannel.TSLByteChannel2;
+import org.choral.runtime.TLSByteChannel.TSLByteChannel_A;
+import org.choral.runtime.TLSByteChannel.TSLByteChannel_B;
 import org.choral.runtime.Serializers.KryoSerializer;
 import org.choral.lang.Unit;
-import org.choral.runtime.WrapperByteChannel.WrapperByteChannel1;
-import org.choral.runtime.WrapperByteChannel.WrapperByteChannel2;
+import org.choral.runtime.WrapperByteChannel.WrapperByteChannel_A;
+import org.choral.runtime.WrapperByteChannel.WrapperByteChannel_B;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -63,11 +63,11 @@ public class SSLChannelTest {
 		org.choral.utils.Pair< PipedByteChannel, PipedByteChannel > channels = PipedByteChannel.getConnectedChannels();
 
 		new Thread( () -> {
-			TSLByteChannel1 c = new TSLByteChannel1( new WrapperByteChannel1( channels.left() ), sslContext );
+			TSLByteChannel_A c = new TSLByteChannel_A( new WrapperByteChannel_A( channels.left() ), sslContext );
 			c.com( KryoSerializer.getInstance().fromObject( new MyPair<>( "Hello", "World!" ) ) );
 		}).start();
 		new Thread( () -> {
-			TSLByteChannel2 c = new TSLByteChannel2( new WrapperByteChannel2( channels.right() ), sslContext );
+			TSLByteChannel_B c = new TSLByteChannel_B( new WrapperByteChannel_B( channels.right() ), sslContext );
 			MyPair<String, String> p = KryoSerializer.getInstance().toObject( c.com( Unit.id ) );
 			System.out.println( "Server received " + p.left() + " " + p.right() );
 		}).start();

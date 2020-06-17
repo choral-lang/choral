@@ -15,6 +15,11 @@ java/lang/Short.chh
 java/lang/String.chh
 java/lang/System.chh
 java/lang/Throwable.chh
+java/nio/ByteBuffer.chh
+java/nio/charset/StandardCharsets.chh
+java/nio/charset/Charset.chh
+java/security/MessageDigest.chh
+java/security/NoSuchAlgorithmException.chh
 java/util/Iterator.chh
 java/util/function/Consumer.chh
 java/util/function/Function.chh

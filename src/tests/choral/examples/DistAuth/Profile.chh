@@ -1,0 +1,10 @@
+package choral.examples.DistAuthUtils;
+
+public class Profile@A {
+
+	public Profile ( String@A id ) {
+	}
+
+	public String@A id () {
+	}
+}

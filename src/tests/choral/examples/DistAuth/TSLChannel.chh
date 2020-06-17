@@ -1,0 +1,5 @@
+package org.choral.runtime.TLSChannel;
+
+import org.choral.channels.SymChannel;
+
+public interface TLSChannel@( A, B )< T@X > extends SymChannel@( A, B )< T > {}

@@ -19,31 +19,14 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package choral.examples.HealthCareService;
+package org.choral.runtime.LocalChannel;
 
+import org.choral.lang.Channels.SymChannel_B;
+import org.choral.runtime.Media.MessageQueue;
 
-import choral.examples.DistAuth.DistAuth1;
-import choral.examples.DistAuthUtils.Credentials;
-import org.choral.runtime.TLSChannel.TLSChannel_A;
-
-public class HealthCareService {
-	public static void main ( String[] args ) {
-		TLSChannel_A< Object > toIP = HealthIdentityProvider.connect();
-		TLSChannel_A< Object > toStorage = Storage.connect();
-//		AuthResult_A authResult = new DistAuth1( toIP ).authenticate( getCredentials() );
-//		authResult.left().ifPresent( token ->
-//				DeviceRegistry
-//						.parallelStream()
-//						.map( Device::connect )
-//						.map( VitalsStreaming2::new )
-//						.forEach( vs ->
-//								vs.gather( data -> toStorage.< StorageMsg >com( new StorageMsg( token, data ) ) )
-//						)
-//		);
-//		Storage.disconnect();
+public class LocalChannel_B extends LocalChannelImpl implements SymChannel_B< Object > {
+	public LocalChannel_B( MessageQueue queueOut, MessageQueue queueIn ) {
+		super( queueOut, queueIn );
 	}
 
-	private static Credentials getCredentials () {
-		return new Credentials( "john", "doe" );
-	}
 }

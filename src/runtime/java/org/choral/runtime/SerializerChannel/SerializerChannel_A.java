@@ -19,31 +19,17 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package choral.examples.HealthCareService;
+package org.choral.runtime.SerializerChannel;
 
+import org.choral.lang.Channels.SymChannel1;
+import org.choral.lang.DataChannels.SymDataChannelImpl;
+import org.choral.runtime.Serializers.ChoralSerializer;
 
-import choral.examples.DistAuth.DistAuth1;
-import choral.examples.DistAuthUtils.Credentials;
-import org.choral.runtime.TLSChannel.TLSChannel_A;
+import java.nio.ByteBuffer;
 
-public class HealthCareService {
-	public static void main ( String[] args ) {
-		TLSChannel_A< Object > toIP = HealthIdentityProvider.connect();
-		TLSChannel_A< Object > toStorage = Storage.connect();
-//		AuthResult_A authResult = new DistAuth1( toIP ).authenticate( getCredentials() );
-//		authResult.left().ifPresent( token ->
-//				DeviceRegistry
-//						.parallelStream()
-//						.map( Device::connect )
-//						.map( VitalsStreaming2::new )
-//						.forEach( vs ->
-//								vs.gather( data -> toStorage.< StorageMsg >com( new StorageMsg( token, data ) ) )
-//						)
-//		);
-//		Storage.disconnect();
+public class SerializerChannel_A extends SerializerChannelImpl implements SymChannel1< Object > {
+	public SerializerChannel_A( ChoralSerializer< Object, ByteBuffer > serializer, SymDataChannelImpl< ByteBuffer > channel ) {
+		super( serializer, channel );
 	}
 
-	private static Credentials getCredentials () {
-		return new Credentials( "john", "doe" );
-	}
 }

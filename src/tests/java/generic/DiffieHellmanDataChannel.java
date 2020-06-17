@@ -25,8 +25,8 @@ import org.choral.lang.DataChannels.SymDataChannelImpl;
 import org.choral.lang.Unit;
 import org.choral.runtime.ChoralByteChannel.SymByteChannelImpl;
 import org.choral.runtime.Media.PipedByteChannel;
-import org.choral.runtime.WrapperByteChannel.WrapperByteChannel1;
-import org.choral.runtime.WrapperByteChannel.WrapperByteChannel2;
+import org.choral.runtime.WrapperByteChannel.WrapperByteChannel_A;
+import org.choral.runtime.WrapperByteChannel.WrapperByteChannel_B;
 import org.choral.runtime.WrapperByteChannel.WrapperByteChannelImpl;
 import org.choral.utils.Pair;
 
@@ -70,8 +70,8 @@ public class DiffieHellmanDataChannel implements SymDataChannelImpl< String > {
 //		System.out.println( message );
 
 		Pair< PipedByteChannel, PipedByteChannel > channel = PipedByteChannel.getConnectedChannels();
-		WrapperByteChannelImpl channel1 = new WrapperByteChannel1( channel.left() );
-		WrapperByteChannelImpl channel2 = new WrapperByteChannel2( channel.right() );
+		WrapperByteChannelImpl channel1 = new WrapperByteChannel_A( channel.left() );
+		WrapperByteChannelImpl channel2 = new WrapperByteChannel_B( channel.right() );
 		DiffieHellmanDataChannel aliceDHChannel = new DiffieHellmanDataChannel( channel1 );
 		DiffieHellmanDataChannel bobDHChannel = new DiffieHellmanDataChannel( channel2 );
 

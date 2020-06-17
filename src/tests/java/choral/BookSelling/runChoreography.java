@@ -25,8 +25,8 @@ import choral.BookSelling.com.books.Catalogue;
 import choral.channels.SSLChannelTest;
 import choral.BookSelling.com.books.Price;
 import org.choral.runtime.Media.PipedByteChannel;
-import org.choral.runtime.WrapperByteChannel.WrapperByteChannel1;
-import org.choral.runtime.WrapperByteChannel.WrapperByteChannel2;
+import org.choral.runtime.WrapperByteChannel.WrapperByteChannel_A;
+import org.choral.runtime.WrapperByteChannel.WrapperByteChannel_B;
 import org.choral.utils.Pair;
 
 import javax.net.ssl.SSLContext;
@@ -50,13 +50,13 @@ public class runChoreography< T > {
 //		LocalChannel2 c2 = new LocalChannel2( m2, m1 );
 
 		Pair< PipedByteChannel, PipedByteChannel > channels = PipedByteChannel.getConnectedChannels();
-		WrapperByteChannel1 localChannel1 = new WrapperByteChannel1( channels.left() );
-		WrapperByteChannel2 localChannel2 = new WrapperByteChannel2( channels.right() );
+		WrapperByteChannel_A localChannel1 = new WrapperByteChannel_A( channels.left() );
+		WrapperByteChannel_B localChannel2 = new WrapperByteChannel_B( channels.right() );
 		SSLContext sslContext = SSLChannelTest.getSSLContext();
 
 		Pair< PipedByteChannel, PipedByteChannel > channels2 = PipedByteChannel.getConnectedChannels();
-		WrapperByteChannel1 localChannel21 = new WrapperByteChannel1( channels2.left() );
-		WrapperByteChannel2 localChannel22 = new WrapperByteChannel2( channels2.right() );
+		WrapperByteChannel_A localChannel21 = new WrapperByteChannel_A( channels2.left() );
+		WrapperByteChannel_B localChannel22 = new WrapperByteChannel_B( channels2.right() );
 		SSLContext sslContext1 = SSLChannelTest.getSSLContext();
 
 		Catalogue catalogue = new Catalogue();

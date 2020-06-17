@@ -1,18 +1,10 @@
 package choral.examples.DistAuth.ChoralUnit;
 
-import choral.examples.AuthResult.AuthResult1;
-import choral.examples.AuthResult.AuthResult_B;
-import choral.examples.DistAuth.DistAuth1;
-import choral.examples.DistAuth.DistAuth2;
-import choral.examples.DistAuth.DistAuth3;
+import choral.examples.AuthResult.AuthResult;
+import choral.examples.DistAuth.DistAuth;
 import choral.examples.DistAuthUtils.Credentials;
-import org.choral.annotations.Choreography;
-import org.choral.choralUnit.testUtils.TestUtils1;
-import org.choral.choralUnit.testUtils.TestUtils2;
-import org.choral.runtime.TLSChannel.TLSChannel1;
-import org.choral.runtime.TLSChannel.TLSChannel2;
-import org.choral.choralUnit.annotations.Test;
-
+import org.choral.choralUnit.testUtils.TestUtils;
+import org.choral.runtime.TLSChannel.TLSChannel;
 
 public class DistAuthTest@( Client, Service, IP ) {
 

@@ -1,6 +1,7 @@
-package choral.examples.DistAuth;
+package choral.examples.DistAuth5;
 
-import choral.examples.AuthResult.AuthResult;
+import choral.examples.AuthResult.AuthResult1;
+import choral.examples.AuthResult.AuthResult_B;
 import choral.examples.DistAuthUtils.AuthToken;
 import choral.examples.DistAuthUtils.Base64_Encoder;
 import choral.examples.DistAuthUtils.ClientRegistry;
@@ -9,20 +10,25 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import org.choral.runtime.Enum.EnumBoolean;
-import org.choral.runtime.TLSChannel.TLSChannel;
+import org.choral.runtime.TLSChannel.TLSChannel_A;
+import org.choral.runtime.TLSChannel.TLSChannel_B;
 
-enum EnumBoolean@A { True, False }
-
-public class DistAuth@( Client, Service, IP ){
+public class DistAuth5@( Client, Service, S1, S2, IP ){
 	private TLSChannel@( Client, IP )< Object > ch_Client_IP;
 	private TLSChannel@( Service, IP )< Object > ch_Service_IP;
+	private TLSChannel@( S1, IP )< Object > ch_s1;
+	private TLSChannel@( S2, IP )< Object > ch_s2;
 
-	public DistAuth(
+	public DistAuth5(
 		TLSChannel@( Client, IP )< Object > ch_Client_IP,
-		TLSChannel@( Service, IP )< Object > ch_Service_IP
+		TLSChannel@( Service, IP )< Object > ch_Service_IP,
+		TLSChannel@( S1, IP )< Object > ch_s1,
+		TLSChannel@( S2, IP )< Object > ch_s2
 	){
 		this.ch_Client_IP = ch_Client_IP;
 		this.ch_Service_IP = ch_Service_IP;
+		this.ch_s1 = ch_s1;
+		this.ch_s2 = ch_s2;
 	}
 
 	private String@Client calcHash( String@Client salt, String@Client pwd ){
@@ -47,16 +53,20 @@ public class DistAuth@( Client, Service, IP ){
 			>> ch_Client_IP::< String >com
 			>> ClientRegistry@IP::check;
 		if( valid ){
-			ch_Client_IP.< EnumBoolean >select( EnumBoolean@IP.True );
-			ch_Service_IP.< EnumBoolean >select( EnumBoolean@IP.True );
+			select( EnumBoolean@IP.True, ch_Client_IP );
+			select( EnumBoolean@IP.True, ch_Service_IP );
+			select( EnumBoolean@IP.True, ch_s1 );
+			select( EnumBoolean@IP.True, ch_s2 );
 			AuthToken@IP t = AuthToken@IP.create();
 			return new AuthResult@( Client, Service )(
 				ch_Client_IP.< AuthToken >com( t ),
 				ch_Service_IP.< AuthToken >com( t )
 			);
 		} else {
-			ch_Client_IP.< EnumBoolean >select( EnumBoolean@IP.False );
-			ch_Service_IP.< EnumBoolean >select( EnumBoolean@IP.False );
+			select( EnumBoolean@IP.False, ch_Client_IP );
+			select( EnumBoolean@IP.False, ch_Service_IP );
+			select( EnumBoolean@IP.False, ch_s1 );
+			select( EnumBoolean@IP.False, ch_s2 );
 			return new AuthResult@( Client, Service )();
 		}
 	}

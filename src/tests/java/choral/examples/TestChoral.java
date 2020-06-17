@@ -26,7 +26,6 @@ import org.choral.Choral;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -123,18 +122,32 @@ public class TestChoral {
 //						"RemoteFunction", ALL_WORLDS )
 
 //				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "AuthResult" ),
-//								subFolder( sourceFolder, "BiPair" ) ),
+//						List.of( subFolder( sourceFolder, "AuthResult" ) )
 //						targetFolder,
-//						List.of( "src/tests/choral/examples/BiPair", "src/tests/choral/examples/AuthResult" ),
+//						List.of( "src/tests/choral/examples/BiPair", ""src/tests/choral/examples/DistAuth"" ),
 //						"AuthResult", ALL_WORLDS )
 
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "DistAuth") ),
-						targetFolder,
-						List.of( "src/tests/examples/BiPair", "src/tests/choral/examples/AuthResult" ),
-						"DistAuth", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/DistAuth",
+//								"src/tests/choral/examples/AuthResult",
+//								"src/tests/choral/examples/BiPair",
+//								"src/choralUnit/choral/TestUtils.chh"
+//						),
+//						"DistAuth", ALL_WORLDS )
 
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/DistAuth",
+								"src/tests/choral/examples/AuthResult",
+								"src/tests/choral/examples/BiPair",
+								"src/choralUnit/choral/TestUtils.chh"
+						),
+						"DistAuthTest", ALL_WORLDS )
 
 //				new CompilationRequest( subFolder( sourceFolder, "DistAuth"), targetFolder, "DistAuth", ALL_WORLDS )
 //				new CompilationRequest( subFolder( sourceFolder, "DistAuth"), targetFolder, "DistAuth5", ALL_WORLDS )

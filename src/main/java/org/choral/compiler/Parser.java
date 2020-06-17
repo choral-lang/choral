@@ -30,8 +30,6 @@ import org.choral.grammar.ChoralLexer;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
-import java.util.Collection;
 
 public class Parser {
 
@@ -52,7 +50,7 @@ public class Parser {
 		org.choral.grammar.ChoralParser cp = new org.choral.grammar.ChoralParser( tokens );
 		cp.removeErrorListeners();
 		// ToDo: common error messages
-		cp.addErrorListener( new ParsingErrorListener() );
+		cp.addErrorListener( new ParsingErrorListener( file ) );
 		org.choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
 		return AstOptimizer
 				.loadParameters( /* new String[]{ "showDebug" } */ )
@@ -68,7 +66,7 @@ public class Parser {
 		org.choral.grammar.ChoralParser cp = new org.choral.grammar.ChoralParser( tokens );
 		cp.removeErrorListeners();
 		// ToDo: common error messages
-		cp.addErrorListener( new ParsingErrorListener() );
+		cp.addErrorListener( new ParsingErrorListener( file ) );
 		org.choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
 		return AstOptimizer
 				.loadParameters( /* new String[]{ "showDebug" } */ )

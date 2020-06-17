@@ -19,31 +19,28 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package choral.examples.HealthCareService;
+package org.choral.runtime.TLSByteChannel;
 
+import org.choral.lang.DataChannels.SymDataChannel2;
+import org.choral.runtime.ChoralByteChannel.SymByteChannelImpl;
+import org.choral.runtime.TLSByteChannel.tlschannel.ServerTlsChannel;
 
-import choral.examples.DistAuth.DistAuth1;
-import choral.examples.DistAuthUtils.Credentials;
-import org.choral.runtime.TLSChannel.TLSChannel_A;
+import javax.net.ssl.SSLContext;
+import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
 
-public class HealthCareService {
-	public static void main ( String[] args ) {
-		TLSChannel_A< Object > toIP = HealthIdentityProvider.connect();
-		TLSChannel_A< Object > toStorage = Storage.connect();
-//		AuthResult_A authResult = new DistAuth1( toIP ).authenticate( getCredentials() );
-//		authResult.left().ifPresent( token ->
-//				DeviceRegistry
-//						.parallelStream()
-//						.map( Device::connect )
-//						.map( VitalsStreaming2::new )
-//						.forEach( vs ->
-//								vs.gather( data -> toStorage.< StorageMsg >com( new StorageMsg( token, data ) ) )
-//						)
-//		);
-//		Storage.disconnect();
+public class TSLByteChannel_B extends TSLByteChannelImpl implements SymDataChannel2< ByteBuffer > {
+
+	public TSLByteChannel_B( SymByteChannelImpl channel, SSLContext sslContext ) {
+		this.channel = ServerTlsChannel
+			.newBuilder( channel.byteChannel(), sslContext )
+			.build();
 	}
 
-	private static Credentials getCredentials () {
-		return new Credentials( "john", "doe" );
+	public TSLByteChannel_B( ByteChannel channel, SSLContext sslContext ) {
+		this.channel = ServerTlsChannel
+			.newBuilder( channel, sslContext )
+			.build();
 	}
+
 }

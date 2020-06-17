@@ -1,0 +1,14 @@
+package org.choral.choralUnit.testUtils;
+
+import org.choral.channels.SymChannel;
+import org.choral.runtime.TLSChannel.TLSChannel;
+
+public class TestUtils@( A, B ) {
+
+	public static SymChannel@( A, B )< Object > newLocalChannel( String@A idA, String@B idB ){
+	}
+
+	public static TLSChannel@( A, B )< Object > newLocalTLSChannel( String@A idA, String@B idB ){
+	}
+
+}

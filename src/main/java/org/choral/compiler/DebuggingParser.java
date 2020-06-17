@@ -43,7 +43,7 @@ public class DebuggingParser {
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		ChoralParser p = new ChoralParser( tokens );
 		p.removeErrorListeners();
-		p.addErrorListener( new ParsingErrorListener() );
+		p.addErrorListener( new ParsingErrorListener( src ) );
 		p.compilationUnit();
 	}
 }
