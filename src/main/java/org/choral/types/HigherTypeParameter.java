@@ -138,6 +138,8 @@ public final class HigherTypeParameter extends HigherReferenceType {
 	public final class Definition extends HigherReferenceType.Definition
 			implements GroundTypeParameter {
 
+		private Definition(){}
+
 		public String toString() {
 			return typeConstructor().toString() +
 					worldArguments().stream().map( World::toString ).collect(
@@ -286,7 +288,7 @@ public final class HigherTypeParameter extends HigherReferenceType {
 
 	private final class Proxy extends HigherReferenceType.Proxy implements GroundTypeParameter {
 
-		public Proxy( Substitution substitution ) {
+		private Proxy( Substitution substitution ) {
 			super( substitution );
 		}
 

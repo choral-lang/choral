@@ -95,6 +95,8 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 
 	public class Definition extends HigherClassOrInterface.Definition implements GroundClass {
 
+		Definition(){}
+
 		@Override
 		public HigherClass typeConstructor() {
 			return HigherClass.this;
@@ -166,10 +168,11 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 		public void finaliseInterface() {
 			// default empty constructor
 			if( constructors.isEmpty() ) {
-				if ( extendedClass != null
+				if( extendedClass != null
 						&& extendedClass.constructors().filter( x -> x.isAccessibleFrom( this ) )
 						.noneMatch( x -> x.typeParameters().size() == 0 && x.arity() == 0 ) ) {
-					throw new StaticVerificationException( "there is no default constructor available in '" + extendedClass + "'" );
+					throw new StaticVerificationException(
+							"there is no default constructor available in '" + extendedClass + "'" );
 				} else {
 					Member.HigherConstructor c = new Member.HigherConstructor(
 							this,
@@ -180,71 +183,8 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 					addConstructor( c );
 				}
 			}
-			// inherit fields and methods
-			if( extendedClass != null ) {
-				extendedClass.fields().filter( x -> x.isAccessibleFrom( this )
-						&& declaredFields().noneMatch(
-						y -> x.identifier().equals( y.identifier() ) ) )
-						.forEach( inheritedFields::add );
-				extendedClass.methods().filter( x -> x.isAccessibleFrom( this ) ).forEach( x -> {
-					boolean inherited = true;
-					for( HigherMethod y : declaredMethods ) {
-						// y overrides x
-						if( y.isOverrideEquivalent( x ) ) {
-							// check both instance or both static
-							if( !y.isStatic() && x.isStatic() ) {
-								throw new StaticVerificationException( "instance method '" + y
-										+ "' in '" + this + "' cannot override static method '"
-										+ x + "' in '" + extendedClass + "'" );
-							}
-							// check access privileges
-							if( y.isPrivate() || ( x.isPublic() && !y.isPublic() )
-									|| ( x.isProtected() && y.isPackagePrivate() ) ) {
-								throw new StaticVerificationException( "method '" + y
-										+ "' in '" + this + "' clashes with method '"
-										+ x + "' in '" + extendedClass
-										+ "', attempting to assign weaker access privileges '"
-										+ ModifierUtils.prettyAccess( y.modifiers() ) + "' to '"
-										+ ModifierUtils.prettyAccess( x.modifiers() ) + "'" );
-							}
-							// check assignable return type;
-							if( !y.isReturnTypeAssignable( x ) ) {
-								throw new StaticVerificationException( "method '" + y
-										+ "' in '" + this + "' clashes with method '"
-										+ x + "' in '" + extendedClass
-										+ "', attempting to use incompatible return type" );
-							}
-							// inherit selection annotation
-							if( x.isSelectionMethod() ) {
-								y.setSelectionMethod();
-							}
-							inherited = false;
-							break;
-						} else {
-							// check clash
-
-							// check
-						}
-					}
-					if( inherited ) {
-						inheritedMethods.add( x );
-					}
-				} );
-			}
-			// ToDo: check implementations
-			// for( GroundInterface X : extended )
-//					if( needsImplementation ) {
-//						throw new StaticVerificationException( variety().labelSingular + " '"
-//								+ identifier( true ) + "' must either be abstract or "
-//								+ "implement abstract method '" + x + "' in '"
-//								+ x.declarationContext().typeConstructor() + "'" );
-//					}
 			super.finaliseInterface();
 		}
-
-		private final List< Member.Field > inheritedFields = new LinkedList<>();
-
-		private final List< Member.HigherMethod > inheritedMethods = new LinkedList<>();
 
 		private final List< Member.HigherConstructor > constructors = new LinkedList<>();
 
@@ -256,7 +196,9 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 		public void addConstructor( Member.HigherConstructor constructor ) {
 			assert ( !isInterfaceFinalised() );
 			assert ( constructor.declarationContext() == this );
-			// ToDo: checks
+			for( HigherConstructor c : constructors ) {
+				constructor.assertNoClash( c );
+			}
 			constructors.add( constructor );
 		}
 
@@ -274,7 +216,7 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 
 	protected class Proxy extends HigherClassOrInterface.Proxy implements GroundClass {
 
-		public Proxy( Substitution substitution ) {
+		Proxy( Substitution substitution ) {
 			super( substitution );
 		}
 

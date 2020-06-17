@@ -416,7 +416,7 @@ public abstract class Member implements HasSource {
 
 		public abstract class Definition implements GroundCallable {
 
-			public Definition( Signature signature ) {
+			Definition( Signature signature ) {
 				this.signature = signature;
 			}
 
@@ -442,19 +442,11 @@ public abstract class Member implements HasSource {
 				signature().finalise();
 				finalised = true;
 			}
-
-			@Override
-			public final String toString() {
-				return typeArguments().stream().map( Object::toString ).collect(
-						Formatting.joining( ",", "<", ">", "" ) )
-						+ HigherCallable.this.identifier()
-						+ signature();
-			}
 		}
 
 		protected abstract class Proxy implements GroundCallable {
 
-			protected Proxy( Substitution substitution ) {
+			Proxy( Substitution substitution ) {
 				this.substitution = substitution;
 			}
 
@@ -473,14 +465,6 @@ public abstract class Member implements HasSource {
 
 			public Signature signature() {
 				return definition().signature().applySubstitution( substitution() );
-			}
-
-			@Override
-			public final String toString() {
-				return typeArguments().stream().map( Object::toString ).collect(
-						Formatting.joining( ",", "<", ">", "" ) )
-						+ HigherCallable.this.identifier()
-						+ signature();
 			}
 		}
 	}
@@ -517,6 +501,11 @@ public abstract class Member implements HasSource {
 					performChecks );
 			assert ( !HigherCallable.CONSTRUCTOR_NAME.equals( identifier ) );
 			this.innerCallable = new Definition( signature );
+		}
+
+		@Override
+		public String toString() {
+			return identifier() + innerCallable().signature();
 		}
 
 		public boolean isReturnTypeAssignable( HigherMethod other ) {
@@ -614,8 +603,16 @@ public abstract class Member implements HasSource {
 
 		public final class Definition extends HigherCallable.Definition implements GroundMethod {
 
-			public Definition( Signature signature ) {
+			private Definition( Signature signature ) {
 				super( signature );
+			}
+
+			@Override
+			public String toString() {
+				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
+						Formatting.joining( ",", "<", ">", "" ) )
+						+ identifier()
+						+ signature();
 			}
 
 			private GroundDataTypeOrVoid returnType;
@@ -636,10 +633,18 @@ public abstract class Member implements HasSource {
 
 		}
 
-		public final class Proxy extends HigherCallable.Proxy implements GroundMethod {
+		private final class Proxy extends HigherCallable.Proxy implements GroundMethod {
 
-			public Proxy( Substitution substitution ) {
+			private Proxy( Substitution substitution ) {
 				super( substitution );
+			}
+
+			@Override
+			public String toString() {
+				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
+						Formatting.joining( ",", "<", ">", "" ) )
+						+ identifier()
+						+ signature();
 			}
 
 			@Override
@@ -688,6 +693,11 @@ public abstract class Member implements HasSource {
 			super( declarationContext, HigherCallable.CONSTRUCTOR_NAME, Variety.CONSTRUCTOR,
 					modifiers, typeParameters, performChecks );
 			this.innerCallable = new Definition( signature );
+		}
+
+		@Override
+		public String toString() {
+			return declarationContext().typeConstructor().identifier() + innerCallable().signature();
 		}
 
 		public GroundClass declarationContext() {
@@ -751,8 +761,16 @@ public abstract class Member implements HasSource {
 		public final class Definition extends HigherCallable.Definition
 				implements GroundConstructor {
 
-			public Definition( Signature signature ) {
+			private Definition( Signature signature ) {
 				super( signature );
+			}
+
+			@Override
+			public String toString() {
+				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
+						Formatting.joining( ",", "<", ">", "" ) )
+						+ declarationContext().typeConstructor().identifier()
+						+ signature();
 			}
 
 			@Override
@@ -762,10 +780,18 @@ public abstract class Member implements HasSource {
 
 		}
 
-		public final class Proxy extends HigherCallable.Proxy implements GroundConstructor {
+		private final class Proxy extends HigherCallable.Proxy implements GroundConstructor {
 
-			public Proxy( Substitution substitution ) {
+			private Proxy( Substitution substitution ) {
 				super( substitution );
+			}
+
+			@Override
+			public String toString() {
+				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
+						Formatting.joining( ",", "<", ">", "" ) )
+						+ declarationContext().typeConstructor().identifier()
+						+ signature();
 			}
 
 			@Override

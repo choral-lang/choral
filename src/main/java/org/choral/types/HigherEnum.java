@@ -114,6 +114,8 @@ public final class HigherEnum extends HigherClass implements Enum {
 
 	public final class Definition extends HigherClass.Definition implements GroundEnum {
 
+		private Definition(){}
+
 		@Override
 		public void setExtendedClass() {
 			HigherClass t = (HigherClass) universe().specialType( Universe.SpecialTypeTag.ENUM );
@@ -190,9 +192,9 @@ public final class HigherEnum extends HigherClass implements Enum {
 
 	}
 
-	protected final class Proxy extends HigherClass.Proxy implements GroundEnum {
+	private class Proxy extends HigherClass.Proxy implements GroundEnum {
 
-		public Proxy( Substitution substitution ) {
+		private Proxy( Substitution substitution ) {
 			super( substitution );
 		}
 
