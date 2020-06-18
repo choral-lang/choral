@@ -21,6 +21,7 @@
 
 package org.choral.compiler.unitNormaliser;
 
+import org.choral.ast.ImportDeclaration;
 import org.choral.ast.Name;
 import org.choral.ast.expression.*;
 import org.choral.ast.type.TypeExpression;
@@ -33,6 +34,7 @@ public final class UnitRepresentation {
 
 	public static final Name UNIT = new Name( "Unit" );
 	public static final Name UID = new Name( "id" );
+	public static final ImportDeclaration UNIT_IMPORT_DECLARATION = new ImportDeclaration( "org.choral.lang.Unit", null );
 
 	public static ScopedExpression UnitFD( WorldArgument world ) {
 		return new ScopedExpression(

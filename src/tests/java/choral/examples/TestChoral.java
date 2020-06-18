@@ -145,7 +145,7 @@ public class TestChoral {
 								"src/tests/choral/examples/DistAuth",
 								"src/tests/choral/examples/AuthResult",
 								"src/tests/choral/examples/BiPair",
-								"src/choralUnit/choral/TestUtils.chh"
+								"src/choralUnit/choral"
 						),
 						"DistAuthTest", ALL_WORLDS )
 

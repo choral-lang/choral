@@ -35,6 +35,7 @@ import org.choral.exceptions.ChoralException;
 import org.choral.types.DataType;
 import org.choral.types.GroundDataType;
 import org.choral.types.HigherDataType;
+import org.choral.types.Type;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,49 +64,55 @@ public class TypesProjector extends AbstractSoloistProjector< List< ? extends No
 		if( ( n.worldArguments().size() == 0 ) // it is a @ => ...
 				|| n.worldArguments().contains( this.world() ) // it is a *
 		) {
-			if( n.typeAnnotation().isEmpty() && n.name().identifier().equals( "void" ) ){
+			if( n.typeAnnotation().isEmpty() && n.name().identifier().equals( "void" ) ) {
 				return Collections.singletonList( n );
 			}
 			DataType dataType = n.typeAnnotation().get();
-			if( dataType.isHigherType() ){
-				HigherDataType higherDataType = ( HigherDataType ) dataType;
+			if( dataType.isHigherType() ) {
+				HigherDataType higherDataType = (HigherDataType) dataType;
 				return higherDataType.worldParameters().stream()
 						.map( w ->
-							new TypeExpression(
-									new Name( Utils.getProjectionName(
-											n.name().identifier(),
-											new WorldArgument( new Name( w.identifier() ) ),
-											higherDataType.worldParameters().stream()
-													.map( wp -> new WorldArgument( new Name( wp.identifier() ) ) )
+								{
+									TypeExpression e = new TypeExpression(
+											new Name( Utils.getProjectionName(
+													n.name().identifier(),
+													new WorldArgument( new Name( w.identifier() ) ),
+													higherDataType.worldParameters().stream()
+															.map( wp -> new WorldArgument(
+																	new Name( wp.identifier() ) ) )
+															.collect( Collectors.toList() )
+											) ),
+											Collections.singletonList( this.world ),
+											n.typeArguments().stream()
+													.map( this::visit )
+													.flatMap( List::stream )
 													.collect( Collectors.toList() )
-									) ),
-									Collections.singletonList( this.world ),
-									n.typeArguments().stream()
-									.map( this::visit )
-									.flatMap( List::stream )
-									.collect( Collectors.toList() )
-							).< TypeExpression >copyPosition( n )
+									).< TypeExpression >copyPosition( n );
+									e.setTypeAnnotation( higherDataType );
+									return e;
+								}
 						)
 						.collect( Collectors.toList() );
 			} else {
-				GroundDataType groundDataType = ( GroundDataType ) dataType;
-				return Collections.singletonList(
-						new TypeExpression(
-								new Name( Utils.getProjectionName(
-										n.name().identifier(),
-										this.world(),
-										n.worldArguments(),
-										groundDataType.typeConstructor().worldParameters().stream()
-												.map( w -> new WorldArgument( new Name ( w.identifier() ) ) )
-												.collect( Collectors.toList() )
-								) ),
-								Collections.singletonList( this.world() ),
-								n.typeArguments().stream()
+				GroundDataType groundDataType = (GroundDataType) dataType;
+				TypeExpression e = new TypeExpression(
+						new Name( Utils.getProjectionName(
+								n.name().identifier(),
+								this.world(),
+								n.worldArguments(),
+								groundDataType.typeConstructor().worldParameters().stream()
+										.map( w -> new WorldArgument(
+												new Name( w.identifier() ) ) )
+										.collect( Collectors.toList() )
+						) ),
+						Collections.singletonList( this.world() ),
+						n.typeArguments().stream()
 								.map( this::visit )
 								.flatMap( List::stream )
 								.collect( Collectors.toList() )
-						).copyPosition( n )
-				);
+				).copyPosition( n );
+				e.setTypeAnnotation( dataType );
+				return Collections.singletonList( e );
 			}
 		} else {
 			return singletonList( UnitRepresentation.getType( this.world() ) );

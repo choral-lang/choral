@@ -1,23 +1,16 @@
 package choral.examples.DistAuth;
+import org.choral.runtime.TLSChannel.TLSChannel_A;
 import choral.examples.AuthResult.AuthResult_B;
 import choral.examples.DistAuthUtils.AuthToken;
-import choral.examples.DistAuthUtils.Base64_Encoder;
-import choral.examples.DistAuthUtils.ClientRegistry;
-import choral.examples.DistAuthUtils.Credentials;
-import java.nio.charset.StandardCharsets;
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import org.choral.lang.Unit;
-import org.choral.runtime.TLSChannel.TLSChannel_A;
 
 public class DistAuth_Service {
-	private TLSChannel_A< Object > ch_Service_IP;
+	private TLSChannel_A < Object > ch_Service_IP;
 
 	public DistAuth_Service( Unit ch_Client_IP, TLSChannel_A < Object > ch_Service_IP ) {
 		this( ch_Service_IP );
 	}
-
+	
 	public DistAuth_Service( TLSChannel_A < Object > ch_Service_IP ) {
 		this.ch_Service_IP = ch_Service_IP;
 	}
@@ -27,11 +20,11 @@ public class DistAuth_Service {
 			return Unit.id;
 		}
 	}
-
+	
 	public AuthResult_B authenticate( Unit credentials ) {
 		return authenticate();
 	}
-
+	
 	public AuthResult_B authenticate() {
 		calcHash( Unit.id, Unit.id );
 		{

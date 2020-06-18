@@ -35,9 +35,11 @@ import org.choral.ast.body.Interface;
 import org.choral.ast.expression.LiteralExpression;
 import org.choral.ast.type.WorldArgument;
 import org.choral.compiler.soloist.DependecyVisitor;
+import org.choral.compiler.soloist.ImportProjector;
 import org.choral.compiler.soloist.ProjectableTemplate;
 import org.choral.compiler.soloist.SoloistProjector;
 import org.choral.compiler.courtesyMethodSinthesiser.CourtesyMethodsSynthesiser;
+import org.choral.compiler.unitNormaliser.UnitRepresentation;
 import org.choral.grammar.ChoralLexer;
 import org.choral.grammar.ChoralParser;
 import org.choral.exceptions.ChoralException;
@@ -470,8 +472,7 @@ public class Compiler {
 			String pkgDec, List< ImportDeclaration > imports, WorldArgument w, Node node
 	) {
 		ArrayList< ImportDeclaration > _imports = new ArrayList<>( imports );
-		_imports.add( new ImportDeclaration( "org.choral.lang.Unit",
-				null ) ); // TODO: here we should visit the annotated node to get its imports
+		_imports.add( UnitRepresentation.UNIT_IMPORT_DECLARATION );
 		if( node instanceof Interface ) {
 			Interface projectedInterface = new SoloistProjector( w ).visit( ( (Interface) node ) );
 			if( annotate ) {
@@ -480,7 +481,7 @@ public class Compiler {
 			}
 			return new CompilationUnit(
 					pkgDec,
-					_imports, // TODO: here we should visit the annotated node to get its imports
+					new ImportProjector( _imports ).projectImports( projectedInterface ),
 					Collections.singletonList( projectedInterface ),
 					Collections.emptyList(),
 					Collections.emptyList(),
@@ -495,7 +496,7 @@ public class Compiler {
 			}
 			return new CompilationUnit(
 					pkgDec,
-					_imports, // TODO: here we should visit the annotated node to get its imports
+					new ImportProjector( _imports ).projectImports( projectedClass ),
 					Collections.emptyList(),
 					Collections.singletonList( projectedClass ),
 					Collections.emptyList(),
@@ -510,7 +511,7 @@ public class Compiler {
 			}
 			return new CompilationUnit(
 					pkgDec,
-					_imports, // TODO: here we should visit the annotated node to get its imports
+					new ImportProjector( _imports ).projectImports( projectedEnum ),
 					Collections.emptyList(),
 					Collections.emptyList(),
 					Collections.singletonList( projectedEnum ),

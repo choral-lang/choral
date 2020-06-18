@@ -249,7 +249,6 @@ public class DependecyVisitor implements ChoralVisitorInterface< Void > {
 		visit( n.condition() );
 		visit( n.ifBranch() );
 		visit( n.elseBranch() );
-		visit( n.continuation() );
 		return null;
 	}
 

@@ -5,6 +5,7 @@ import choral.examples.DistAuth.DistAuth;
 import choral.examples.DistAuthUtils.Credentials;
 import org.choral.choralUnit.testUtils.TestUtils;
 import org.choral.runtime.TLSChannel.TLSChannel;
+import org.choral.choralUnit.annotations.Test;
 
 public class DistAuthTest@( Client, Service, IP ) {
 

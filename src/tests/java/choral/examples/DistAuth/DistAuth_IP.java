@@ -1,17 +1,11 @@
 package choral.examples.DistAuth;
-import choral.examples.DistAuthUtils.AuthToken;
-import choral.examples.DistAuthUtils.Base64_Encoder;
 import choral.examples.DistAuthUtils.ClientRegistry;
-import choral.examples.DistAuthUtils.Credentials;
-import java.nio.charset.StandardCharsets;
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import org.choral.lang.Unit;
 import org.choral.runtime.TLSChannel.TLSChannel_B;
+import choral.examples.DistAuthUtils.AuthToken;
+import org.choral.lang.Unit;
 
 public class DistAuth_IP {
-	private TLSChannel_B< Object > ch_Client_IP;
+	private TLSChannel_B < Object > ch_Client_IP;
 	private TLSChannel_B < Object > ch_Service_IP;
 
 	public DistAuth_IP( TLSChannel_B < Object > ch_Client_IP, TLSChannel_B < Object > ch_Service_IP ) {
@@ -24,11 +18,11 @@ public class DistAuth_IP {
 			return Unit.id;
 		}
 	}
-
+	
 	public Unit authenticate( Unit credentials ) {
 		return authenticate();
 	}
-
+	
 	public Unit authenticate() {
 		ch_Client_IP.< String >com( ClientRegistry.getSalt( ch_Client_IP.< String >com( Unit.id ) ) );
 		Boolean valid;
@@ -39,7 +33,7 @@ public class DistAuth_IP {
 			AuthToken t;
 			t = AuthToken.create();
 			return Unit.id( ch_Client_IP.< AuthToken >com( t ), ch_Service_IP.< AuthToken >com( t ) );
-		} else {
+		} else { 
 			ch_Client_IP.< EnumBoolean >select( EnumBoolean.False );
 			ch_Service_IP.< EnumBoolean >select( EnumBoolean.False );
 			return Unit.id;

@@ -8,7 +8,6 @@ import choral.examples.DistAuthUtils.Credentials;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import org.choral.runtime.Enum.EnumBoolean;
 import org.choral.runtime.TLSChannel.TLSChannel;
 
 enum EnumBoolean@A { True, False }

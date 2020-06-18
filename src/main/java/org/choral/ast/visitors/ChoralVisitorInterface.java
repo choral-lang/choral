@@ -70,8 +70,6 @@ public interface ChoralVisitorInterface< R > {
 
 	R visit( BinaryExpression n );
 
-	R visit( ClassInstantiationExpression n );
-
 	R visit( EnumCaseInstantiationExpression n );
 
 	R visit( EnclosedExpression n );
@@ -81,6 +79,8 @@ public interface ChoralVisitorInterface< R > {
 	R visit( StaticAccessExpression n );
 
 	R visit( MethodCallExpression n );
+
+	R visit( ClassInstantiationExpression n );
 
 	R visit( Name n );
 
