@@ -80,11 +80,15 @@ public class Typer {
 			this.universe = universe;
 		}
 
+		protected TaskQueue taskQueue() {
+			return taskQueue;
+		}
+
 		protected Universe universe() {
 			return universe;
 		}
 
-		private void visit( org.choral.ast.CompilationUnit n ) {
+		protected void visit( org.choral.ast.CompilationUnit n ) {
 			String[] path = n.packageDeclaration().split( "\\." );
 			Package pkg = universe.rootPackage();
 			for( int i = 0; i < path.length; i++ ) {
@@ -103,7 +107,10 @@ public class Typer {
 				checkPrimaryTemplate( x, n.primaryType(), "interface" );
 				visitInterface( scope, pkg, x );
 			}
+			visitImportDeclarations( scope, n.imports() );
 		}
+
+		protected void visitImportDeclarations(Scope scope, List<ImportDeclaration> ns) { }
 
 		protected abstract void checkPrimaryTemplate(
 				TemplateDeclaration n, String primaryType, String family
@@ -840,6 +847,17 @@ public class Typer {
 			extends Visitor {
 		public SourceVisitor( TaskQueue taskQueue, Universe universe ) {
 			super( taskQueue, universe );
+		}
+
+		@Override
+		protected void visitImportDeclarations( Scope scope, List<ImportDeclaration> imports ) {
+			taskQueue().enqueue( Phase.HIERARCHY, () -> {
+				for( ImportDeclaration n : imports ) {
+					if(!n.isOnDemand()){
+						n.setTypeAnnotation( scope.assertLookupClassOrInterface( n.name() ) );
+					}
+				}
+			});
 		}
 
 		@Override
@@ -1835,7 +1853,7 @@ public class Typer {
 			singleImportStatements = new ArrayList<>( declaredImports.size() );
 			onDemandImportStatements = new ArrayList<>( declaredImports.size() );
 			for( ImportDeclaration ip : declaredImports ) {
-				if( ip.name().endsWith( "*" ) ) {
+				if( ip.isOnDemand() ) {
 					onDemandImportStatements.add( ip );
 				} else {
 					singleImportStatements.add( ip );

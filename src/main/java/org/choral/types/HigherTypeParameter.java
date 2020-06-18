@@ -266,16 +266,17 @@ public final class HigherTypeParameter extends HigherReferenceType {
 
 		@Override
 		public Stream< ? extends Member.Field > fields() {
+			// todo merge
 			return Stream.concat( upperClass.fields(),
 					upperInterfaces().flatMap( GroundReferenceType::fields ) )
-					.filter( Member::isPublic ).distinct();
+					.filter( Member::isPublic );
 		}
 
 		@Override
 		public Stream< ? extends Member.HigherMethod > methods() {
 			return Stream.concat( upperClass.methods(),
 					upperInterfaces().flatMap( GroundReferenceType::methods ) )
-					.filter( Member::isPublic ).distinct();
+					.filter( Member::isPublic );
 		}
 
 		@Override

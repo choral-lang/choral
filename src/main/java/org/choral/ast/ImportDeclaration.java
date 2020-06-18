@@ -22,12 +22,11 @@
 package org.choral.ast;
 
 import org.choral.ast.visitors.ChoralVisitorInterface;
+import org.choral.types.HigherClassOrInterface;
 
-/**
- * An import declaration of the shape `import a.b.c.ClassOrInterfaceName;` or `import a.b.c.*;`
- */
+import java.util.Optional;
 
-public class ImportDeclaration extends Node {
+public class ImportDeclaration extends Node implements WithTypeAnnotation< HigherClassOrInterface> {
 
 	private final String name;
 
@@ -38,6 +37,20 @@ public class ImportDeclaration extends Node {
 
 	public String name() {
 		return name;
+	}
+
+	private HigherClassOrInterface typeAnnotation;
+
+	public Optional< ? extends HigherClassOrInterface > typeAnnotation() {
+		return Optional.ofNullable( typeAnnotation );
+	}
+
+	public void setTypeAnnotation( HigherClassOrInterface typeAnnotation ) {
+		this.typeAnnotation = typeAnnotation;
+	}
+
+	public boolean isOnDemand(){
+		return name.endsWith( "*" );
 	}
 
 	@Override

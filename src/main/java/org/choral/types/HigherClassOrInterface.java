@@ -33,6 +33,23 @@ import java.util.stream.Stream;
 import static org.choral.types.Modifier.*;
 import static org.choral.types.ModifierUtils.*;
 
+//class A implements I1 , I2 {
+//
+//	@Override
+//	public void m( Object x, Object y ) {
+//		new A().<Integer>m( x,5 );
+//	}
+//
+//}
+//
+//interface I1 {
+//	void m (Object x, Object y);
+//}
+//
+//interface I2 {
+//	<T> void m (Object x, T y);
+//}
+
 public abstract class HigherClassOrInterface extends HigherReferenceType
 		implements ClassOrInterface, TypeParameterDeclarationContext {
 

@@ -146,14 +146,14 @@ public abstract class Member implements HasSource {
 
 		public final String label;
 
-		private Variety( String label ) {
+		Variety( String label ) {
 			this.label = label;
 		}
 	}
 
 	private final Variety variety;
 
-	public final Variety family() {
+	public final Variety variety() {
 		return variety;
 	}
 
@@ -524,7 +524,7 @@ public abstract class Member implements HasSource {
 				};
 				GroundDataType g2 = (GroundDataType) other.innerCallable.returnType.applySubstitution(
 						s2 );
-				return ( (GroundDataType) innerCallable().returnType ).isAssignableTo( g2 );
+				return innerCallable().returnType.isAssignableTo( g2 );
 			}
 			return false;
 		}
