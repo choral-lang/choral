@@ -95,6 +95,8 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 
 	public class Definition extends HigherClassOrInterface.Definition implements GroundClass {
 
+		Definition(){}
+
 		@Override
 		public HigherClass typeConstructor() {
 			return HigherClass.this;
@@ -214,7 +216,7 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 
 	protected class Proxy extends HigherClassOrInterface.Proxy implements GroundClass {
 
-		public Proxy( Substitution substitution ) {
+		Proxy( Substitution substitution ) {
 			super( substitution );
 		}
 

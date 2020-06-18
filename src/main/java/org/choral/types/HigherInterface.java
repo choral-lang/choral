@@ -114,6 +114,8 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 	public final class Definition extends HigherClassOrInterface.Definition
 			implements GroundInterface {
 
+		private Definition(){}
+
 		@Override
 		public HigherInterface typeConstructor() {
 			return HigherInterface.this;
@@ -159,9 +161,9 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 
 	}
 
-	protected final class Proxy extends HigherClassOrInterface.Proxy implements GroundInterface {
+	private final class Proxy extends HigherClassOrInterface.Proxy implements GroundInterface {
 
-		public Proxy( Substitution substitution ) {
+		private Proxy( Substitution substitution ) {
 			super( substitution );
 		}
 

@@ -162,9 +162,9 @@ public abstract class HigherDataType extends TypeBase
 		return false;
 	}
 
-	abstract class Definition extends TypeBase implements GroundDataType {
+	protected abstract class Definition extends TypeBase implements GroundDataType {
 
-		public Definition() {
+		Definition() {
 			super( HigherDataType.this.universe() );
 		}
 
@@ -212,11 +212,11 @@ public abstract class HigherDataType extends TypeBase
 
 	}
 
-	abstract class Proxy extends TypeBase implements GroundDataType {
+	protected abstract class Proxy extends TypeBase implements GroundDataType {
 
 		private final Substitution substitution;
 
-		protected Proxy( Substitution substitution ) {
+		Proxy( Substitution substitution ) {
 			super( HigherDataType.this.universe() );
 			this.substitution = substitution;
 		}

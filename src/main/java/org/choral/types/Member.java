@@ -633,7 +633,7 @@ public abstract class Member implements HasSource {
 
 		}
 
-		public final class Proxy extends HigherCallable.Proxy implements GroundMethod {
+		private final class Proxy extends HigherCallable.Proxy implements GroundMethod {
 
 			private Proxy( Substitution substitution ) {
 				super( substitution );
@@ -780,7 +780,7 @@ public abstract class Member implements HasSource {
 
 		}
 
-		public final class Proxy extends HigherCallable.Proxy implements GroundConstructor {
+		private final class Proxy extends HigherCallable.Proxy implements GroundConstructor {
 
 			private Proxy( Substitution substitution ) {
 				super( substitution );

@@ -319,6 +319,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 	public abstract class Definition extends HigherReferenceType.Definition
 			implements GroundClassOrInterface {
 
+		Definition(){}
+
 		public final String toString() {
 			return typeConstructor().toString() +
 					worldArguments().stream().map( World::toString ).collect(
@@ -521,7 +523,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 	protected abstract class Proxy extends HigherReferenceType.Proxy
 			implements GroundClassOrInterface {
 
-		public Proxy( Substitution substitution ) {
+		Proxy( Substitution substitution ) {
 			super( substitution );
 			instantiationChecked = typeConstructor().typeParameters().isEmpty();
 		}
