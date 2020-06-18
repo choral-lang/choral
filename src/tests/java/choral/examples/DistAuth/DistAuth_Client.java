@@ -1,14 +1,16 @@
 package choral.examples.DistAuth;
+import choral.examples.DistAuthUtils.Credentials;
 import org.choral.runtime.TLSChannel.TLSChannel_A;
-import java.security.NoSuchAlgorithmException;
 import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import org.choral.annotations.Choreography;
 import choral.examples.DistAuthUtils.Base64_Encoder;
 import choral.examples.AuthResult.AuthResult_A;
-import choral.examples.DistAuthUtils.Credentials;
-import java.nio.charset.StandardCharsets;
 import choral.examples.DistAuthUtils.AuthToken;
 import org.choral.lang.Unit;
 
+@Choreography( role = "Client", name = "DistAuth" )
 public class DistAuth_Client {
 	private TLSChannel_A < Object > ch_Client_IP;
 

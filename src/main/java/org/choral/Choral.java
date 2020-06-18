@@ -179,6 +179,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				}
 				Compiler.project(
 						emissionOptions.isDryRun(),
+						emissionOptions.isAnnotated(),
 //						emissionOptions.useCanonicalPaths() TODO: implement this
 //						emissionOptions.isOverwritingAllowed() TODO: implement this
 						annotatedUnits,
@@ -451,6 +452,10 @@ class EmissionOptions {
 			description = "Disable any write on disk." )
 	private boolean dryRun = false;
 
+	@Option( names = { "--annotate" },
+			description = "Annotate the projected artefacts with the @Choreography annotation." )
+	private boolean isAnnotated = false;
+
 	@Option( names = { "-p", "--canonical-paths" },
 			description = "Use folders for packages." )
 	boolean useCanonicalPaths;
@@ -462,6 +467,10 @@ class EmissionOptions {
 
 	public boolean isDryRun() {
 		return dryRun;
+	}
+
+	public boolean isAnnotated(){
+		return isAnnotated;
 	}
 
 	public boolean isOverwritingAllowed() {

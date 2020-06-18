@@ -9,7 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import org.choral.runtime.TLSChannel.TLSChannel;
+import org.choral.runtime.Serializers.KryoSerializable;
 
+@KryoSerializable
 enum EnumBoolean@A { True, False }
 
 public class DistAuth@( Client, Service, IP ){

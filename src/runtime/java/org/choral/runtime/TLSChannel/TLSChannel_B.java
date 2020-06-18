@@ -21,13 +21,13 @@
 
 package org.choral.runtime.TLSChannel;
 
-import org.choral.lang.Channels.SymChannel2;
+import org.choral.lang.Channels.SymChannel_B;
 import org.choral.runtime.TLSByteChannel.TSLByteChannelImpl;
 import org.choral.runtime.Serializers.ChoralSerializer;
 
 import java.nio.ByteBuffer;
 
-public class TLSChannel_B< T > extends TLSChannelImpl< T > implements SymChannel2< T > {
+public class TLSChannel_B< T > extends TLSChannelImpl< T > implements SymChannel_B< T > {
 
 	public TLSChannel_B( TSLByteChannelImpl channel, ChoralSerializer< Object, ByteBuffer > serializer ){
 		this.channel = channel;

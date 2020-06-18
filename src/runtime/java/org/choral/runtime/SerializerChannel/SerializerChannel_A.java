@@ -21,13 +21,13 @@
 
 package org.choral.runtime.SerializerChannel;
 
-import org.choral.lang.Channels.SymChannel1;
+import org.choral.lang.Channels.SymChannel_A;
 import org.choral.lang.DataChannels.SymDataChannelImpl;
 import org.choral.runtime.Serializers.ChoralSerializer;
 
 import java.nio.ByteBuffer;
 
-public class SerializerChannel_A extends SerializerChannelImpl implements SymChannel1< Object > {
+public class SerializerChannel_A extends SerializerChannelImpl implements SymChannel_A< Object > {
 	public SerializerChannel_A( ChoralSerializer< Object, ByteBuffer > serializer, SymDataChannelImpl< ByteBuffer > channel ) {
 		super( serializer, channel );
 	}

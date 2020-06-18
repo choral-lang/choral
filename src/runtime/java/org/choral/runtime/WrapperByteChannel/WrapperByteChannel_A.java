@@ -21,12 +21,15 @@
 
 package org.choral.runtime.WrapperByteChannel;
 
-import org.choral.lang.DataChannels.SymDataChannel1;
+import org.choral.lang.DataChannels.DiDataChannel_A;
+import org.choral.lang.DataChannels.DiDataChannel_B;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 
-public class WrapperByteChannel_A extends WrapperByteChannelImpl implements SymDataChannel1< ByteBuffer > {
+public class WrapperByteChannel_A extends WrapperByteChannelImpl implements
+																 DiDataChannel_A< ByteBuffer >,
+																 DiDataChannel_B< ByteBuffer > {
 	public WrapperByteChannel_A( ByteChannel channel ) {
 		super( channel );
 	}

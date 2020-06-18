@@ -145,6 +145,7 @@ public class TestChoral {
 								"src/tests/choral/examples/DistAuth",
 								"src/tests/choral/examples/AuthResult",
 								"src/tests/choral/examples/BiPair",
+								"src/runtime/choral",
 								"src/choralUnit/choral"
 						),
 						"DistAuthTest", ALL_WORLDS )
@@ -207,6 +208,7 @@ public class TestChoral {
 				parameters.add( String.join( ":", compilationRequest.sourceFolder() ) );
 				parameters.add( compilationRequest.symbol() );
 				parameters.addAll( compilationRequest.worlds() );
+				parameters.add( "--annotate" );
 				System.out.println( "Issuing command " + String.join( " ", parameters ) );
 				Choral.main( parameters.toArray( new String[ 0 ] ) );
 			}

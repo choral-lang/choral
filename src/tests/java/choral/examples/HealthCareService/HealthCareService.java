@@ -22,7 +22,6 @@
 package choral.examples.HealthCareService;
 
 
-import choral.examples.DistAuth.DistAuth1;
 import choral.examples.DistAuthUtils.Credentials;
 import org.choral.runtime.TLSChannel.TLSChannel_A;
 

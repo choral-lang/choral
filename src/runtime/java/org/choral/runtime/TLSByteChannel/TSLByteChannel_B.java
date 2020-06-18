@@ -21,7 +21,8 @@
 
 package org.choral.runtime.TLSByteChannel;
 
-import org.choral.lang.DataChannels.SymDataChannel2;
+import org.choral.lang.DataChannels.DiDataChannel_A;
+import org.choral.lang.DataChannels.DiDataChannel_B;
 import org.choral.runtime.ChoralByteChannel.SymByteChannelImpl;
 import org.choral.runtime.TLSByteChannel.tlschannel.ServerTlsChannel;
 
@@ -29,7 +30,9 @@ import javax.net.ssl.SSLContext;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 
-public class TSLByteChannel_B extends TSLByteChannelImpl implements SymDataChannel2< ByteBuffer > {
+public class TSLByteChannel_B extends TSLByteChannelImpl implements
+														 DiDataChannel_B< ByteBuffer >,
+														 DiDataChannel_A< ByteBuffer > {
 
 	public TSLByteChannel_B( SymByteChannelImpl channel, SSLContext sslContext ) {
 		this.channel = ServerTlsChannel

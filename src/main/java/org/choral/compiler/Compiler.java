@@ -135,6 +135,7 @@ public class Compiler {
 
 	public static void project(
 			Boolean isDry,
+			Boolean isAnnotated,
 			Collection< CompilationUnit > annotatedCompilationUnits,
 			String targetSymbol,
 			List< String > targetWorlds,
@@ -144,6 +145,7 @@ public class Compiler {
 		instance.targetCompilationUnits.addAll( annotatedCompilationUnits );
 		instance.projection = true;
 		instance.isDryRun = isDry;
+		instance.annotate = isAnnotated;
 		instance.targetSymbol = targetSymbol;
 		instance.targetWorlds.addAll( targetWorlds );
 		destinationFolder.ifPresent(

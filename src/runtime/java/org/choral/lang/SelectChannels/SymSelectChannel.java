@@ -21,5 +21,6 @@
 
 package org.choral.lang.SelectChannels;
 
-public interface SymSelectChannel extends SymSelectChannel1, SymSelectChannel2{
+public interface SymSelectChannel extends DiSelectChannel_A,
+										  DiSelectChannel_B {
 }

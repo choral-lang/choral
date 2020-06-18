@@ -1,5 +1,0 @@
-package org.choral.runtime.Enum;
-
-public enum EnumBoolean@A {
-	True, False
-}

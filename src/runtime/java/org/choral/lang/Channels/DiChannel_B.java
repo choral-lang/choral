@@ -21,9 +21,9 @@
 
 package org.choral.lang.Channels;
 
-import org.choral.lang.DataChannels.DiDataChannel2;
-import org.choral.lang.SelectChannels.DiSelectChannel2;
+import org.choral.lang.DataChannels.DiDataChannel_B;
+import org.choral.lang.SelectChannels.DiSelectChannel_B;
 
-public interface DiChannel_B< T > extends DiDataChannel2< T >, DiSelectChannel2 {
+public interface DiChannel_B< T > extends DiDataChannel_B< T >, DiSelectChannel_B {
 
 }

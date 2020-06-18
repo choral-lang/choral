@@ -21,7 +21,11 @@
 
 package org.choral.lang.Channels;
 
-import org.choral.lang.SelectChannels.SymSelectChannel1;
+import org.choral.lang.SelectChannels.DiSelectChannel_A;
+import org.choral.lang.SelectChannels.DiSelectChannel_B;
 
-public interface SymChannel_A< T > extends BiChannel1< T, T >, SymSelectChannel1 {
+public interface SymChannel_A< T > extends
+								   org.choral.lang.DataChannels.DiDataChannel_A< T >,
+								   org.choral.lang.DataChannels.DiDataChannel_B< T >,
+								   DiSelectChannel_A, DiSelectChannel_B {
 }

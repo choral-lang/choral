@@ -21,6 +21,6 @@
 
 package org.choral.lang.DataChannels;
 
-public interface BiDataChannel_A< T, R > extends DiDataChannel1< T >, DiDataChannel2< R > {
+public interface BiDataChannel_A< T, R > extends DiDataChannel_A< T >, DiDataChannel_B< R > {
 
 }
