@@ -28,6 +28,8 @@ import choral.examples.DistAuthUtils.Credentials;
 import choral.examples.VitalsStreaming.VitalsStreaming_Gatherer;
 import org.choral.runtime.TLSChannel.TLSChannel_A;
 
+import java.util.ArrayList;
+
 public class HealthCareService {
 	public static void main ( String[] args ) {
 		TLSChannel_A< Object > toIP = HealthIdentityProvider.connect();

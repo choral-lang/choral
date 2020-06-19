@@ -8,6 +8,7 @@ java/lang/Exception.chh
 java/lang/Float.chh
 java/lang/Integer.chh
 java/lang/Long.chh
+java/lang/Math.chh
 java/lang/Number.chh
 java/lang/Object.chh
 java/util/Optional.chh
@@ -20,7 +21,9 @@ java/nio/charset/StandardCharsets.chh
 java/nio/charset/Charset.chh
 java/security/MessageDigest.chh
 java/security/NoSuchAlgorithmException.chh
+java/util/ArrayList.chh
 java/util/Iterator.chh
+java/util/List.chh
 java/util/function/Consumer.chh
 java/util/function/Function.chh
 choral/channels/BiChannel.chh

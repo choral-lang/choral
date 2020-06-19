@@ -1,13 +1,10 @@
 package choral.examples.VitalsStreaming;
-import org.choral.lang.Unit;
-import choral.examples.VitalsStreamingUtils.VitalsMsg;
-import choral.examples.VitalsStreamingUtils.Signature;
-import choral.examples.VitalsStreamingUtils.PatientsRegistry;
-import choral.examples.VitalsStreamingUtils.SignatureRegistry;
-import java.util.function.Consumer;
-import org.choral.channels.SymChannel_B;
-import choral.examples.VitalsStreamingUtils.Vitals;
 import org.choral.annotations.Choreography;
+import org.choral.channels.SymChannel_B;
+import choral.examples.VitalsStreamingUtils.VitalsMsg;
+import choral.examples.VitalsStreamingUtils.Vitals;
+import java.util.function.Consumer;
+import org.choral.lang.Unit;
 
 @Choreography( role = "Gatherer", name = "VitalsStreaming" )
 public class VitalsStreaming_Gatherer {
@@ -21,14 +18,6 @@ public class VitalsStreaming_Gatherer {
 		this.ch = ch;
 	}
 
-	private Vitals pseudonymise( Vitals vitals ) {
-		return new Vitals( PatientsRegistry.getPseudoID( vitals.id() ), vitals.heartRate(), vitals.temperature(), vitals.motion() );
-	}
-	
-	private Boolean checkSignature( Signature signature ) {
-		return SignatureRegistry.isValid( signature );
-	}
-	
 	public void gather( Consumer < Vitals > consumer ) {
 		{
 			switch( ch.< StreamState >select( Unit.id ) ){
@@ -42,12 +31,9 @@ public class VitalsStreaming_Gatherer {
 					VitalsMsg msg;
 					msg = ch.< VitalsMsg >com( Unit.id );
 					Boolean checkSignature;
-					checkSignature = this.checkSignature( msg.signature() );
+					checkSignature = VitalsStreamingHelper.checkSignature( msg.signature() );
 					if( checkSignature ){
-						ch.< CheckSignature >select( CheckSignature.VALID );
-						consumer.accept( this.pseudonymise( msg.content() ) );
-					} else { 
-						ch.< CheckSignature >select( CheckSignature.INVALID );
+						consumer.accept( VitalsStreamingHelper.pseudonymise( msg.content() ) );
 					}
 					gather( consumer );
 				}

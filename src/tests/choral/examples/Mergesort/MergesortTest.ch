@@ -1,15 +1,12 @@
 package choral.examples.Mergesort.ChoralUnit;
 
-import choral.examples.Mergesort.Mergesort1;
-import choral.examples.Mergesort.Mergesort2;
-import choral.examples.Mergesort.Mergesort3;
-import org.choral.annotations.Choreography;
-import org.choral.choralUnit.testUtils.TestUtils1;
-import org.choral.choralUnit.testUtils.TestUtils2;
-import org.choral.lang.Channels.SymChannel1;
-import org.choral.lang.Channels.SymChannel2;
+import choral.examples.Mergesort.Mergesort;
+import org.choral.choralUnit.testUtils.TestUtils;
+import org.choral.channels.SymChannel;
 import org.choral.choralUnit.annotations.Test;
 import java.util.ArrayList;
+import java.util.List;
+import org.choral.choralUnit.Assert;
 
 public class MergesortTest@( A, B, C ) {
 
@@ -20,7 +17,8 @@ public class MergesortTest@( A, B, C ) {
 		SymChannel@( A, B )< Object > ch_AB = TestUtils@( A, B ).newLocalChannel( "ch_AB"@[ A, B ] );
 		SymChannel@( B, C )< Object > ch_BC = TestUtils@( B, C ).newLocalChannel( "ch_BC"@[ B, C ] );
 		SymChannel@( C, A )< Object > ch_CA = TestUtils@( C, A ).newLocalChannel( "ch_CA"@[ C, A ] );
-		System@A.out.println( new Mergesort@( A, B, C )( ch_AB, ch_BC, ch_CA ).sort( a ) );
+		List@A< Integer > sortedList = new Mergesort@( A, B, C )( ch_AB, ch_BC, ch_CA ).sort( a );
+		Assert@A.assertEquals( sortedList.get( 0@A ), 1@A, "success"@A, "failure"@A );
 	}
 
 }

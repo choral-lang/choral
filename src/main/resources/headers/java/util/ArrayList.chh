@@ -1,0 +1,19 @@
+package java.util;
+
+public class ArrayList@A< E@X > implements List@A< E >
+{
+    public Integer@A size(){}
+    public Boolean@A isEmpty(){}
+    public Boolean@A contains( Object@A o ){}
+    public Boolean@A add( E@A e ){}
+    public Boolean@A remove( Object@A o ){}
+    public void clear(){}
+    public E@A get( Integer@A index ){}
+    public E@A set( Integer@A index, E@A element ){}
+    public void add( Integer@A index, E@A element ){}
+    public E@A remove( Integer@A index ){}
+    public Integer@A indexOf( Object@A o ){}
+    public Integer@A lastIndexOf( Object@A o ){}
+	public List@A< E > subList( Integer@A fromIndex, Integer@A toIndex){}
+	public Boolean@A addAll( List@A< E > c ){}
+}

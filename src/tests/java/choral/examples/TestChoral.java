@@ -184,18 +184,37 @@ public class TestChoral {
 //						),
 //						"VitalsStreaming", ALL_WORLDS )
 
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/VitalsStreaming",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"VitalsStreamingTest", ALL_WORLDS )
+
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "Mergesort" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/Mergesort",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"Mergesort", ALL_WORLDS )
+
+
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
+						List.of( subFolder( sourceFolder, "Mergesort" ) ),
 						targetFolder,
 						List.of(
-								"src/tests/choral/examples/VitalsStreaming",
+								"src/tests/choral/examples/Mergesort",
 								"src/runtime/choral",
 								"src/choralUnit/choral"
 						),
-						"VitalsStreamingTest", ALL_WORLDS )
+						"MergesortTest", ALL_WORLDS )
 
-//				new CompilationRequest( subFolder( sourceFolder, "VitalsStreaming"), targetFolder, "VitalsStreaming", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "VitalsStreaming"), targetFolder, "VitalsStreamingTest", ALL_WORLDS )
 
 //				new CompilationRequest( subFolder( sourceFolder, "MergeSort"), targetFolder, "MergeSort", ALL_WORLDS )
 //				new CompilationRequest( subFolder( sourceFolder, "MergeSort"), targetFolder, "MergeSortTest", ALL_WORLDS )

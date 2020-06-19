@@ -1,9 +1,9 @@
 package choral.examples.VitalsStreaming;
-import org.choral.lang.Unit;
-import org.choral.channels.SymChannel_A;
-import choral.examples.VitalsStreamingUtils.Sensor;
-import choral.examples.VitalsStreamingUtils.VitalsMsg;
 import org.choral.annotations.Choreography;
+import choral.examples.VitalsStreamingUtils.VitalsMsg;
+import choral.examples.VitalsStreamingUtils.Sensor;
+import org.choral.channels.SymChannel_A;
+import org.choral.lang.Unit;
 
 @Choreography( role = "Device", name = "VitalsStreaming" )
 public class VitalsStreaming_Device {
@@ -15,14 +15,6 @@ public class VitalsStreaming_Device {
 		this.sensor = sensor;
 	}
 
-	private Unit pseudonymise( Unit vitals ) {
-		return Unit.id;
-	}
-	
-	private Unit checkSignature( Unit signature ) {
-		return Unit.id;
-	}
-	
 	public void gather( Unit consumer ) {
 		gather();
 	}
@@ -31,20 +23,6 @@ public class VitalsStreaming_Device {
 		if( sensor.isOn() ){
 			ch.< StreamState >select( StreamState.ON );
 			ch.< VitalsMsg >com( sensor.next() );
-			this.checkSignature( Unit.id );
-			{
-				switch( ch.< CheckSignature >select( Unit.id ) ){
-					default -> {
-						throw new RuntimeException( "Received unexpected label from select operation" );
-					}
-					case VALID -> {
-						this.pseudonymise( Unit.id );
-					}
-					case INVALID -> {
-						
-					}
-				}
-			}
 			gather( Unit.id );
 		} else { 
 			ch.< StreamState >select( StreamState.OFF );
