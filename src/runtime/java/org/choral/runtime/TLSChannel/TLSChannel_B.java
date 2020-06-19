@@ -21,7 +21,7 @@
 
 package org.choral.runtime.TLSChannel;
 
-import org.choral.lang.Channels.SymChannel_B;
+import org.choral.channels.SymChannel_B;
 import org.choral.runtime.TLSByteChannel.TSLByteChannelImpl;
 import org.choral.runtime.Serializers.ChoralSerializer;
 

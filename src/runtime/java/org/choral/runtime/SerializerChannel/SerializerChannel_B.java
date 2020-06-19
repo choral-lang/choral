@@ -21,16 +21,18 @@
 
 package org.choral.runtime.SerializerChannel;
 
-import org.choral.lang.DataChannels.SymDataChannelImpl;
-import org.choral.lang.SelectChannels.DiSelectChannel_A;
-import org.choral.lang.SelectChannels.DiSelectChannel_B;
+import org.choral.channels.DiDataChannel_A;
+import org.choral.channels.DiDataChannel_B;
+import org.choral.channels.SymDataChannelImpl;
+import org.choral.channels.DiSelectChannel_A;
+import org.choral.channels.DiSelectChannel_B;
 import org.choral.runtime.Serializers.ChoralSerializer;
 
 import java.nio.ByteBuffer;
 
 public class SerializerChannel_B extends SerializerChannelImpl implements
-															   org.choral.lang.DataChannels.DiDataChannel_B< Object >,
-															   org.choral.lang.DataChannels.DiDataChannel_A< Object >,
+															   DiDataChannel_B< Object >,
+															   DiDataChannel_A< Object >,
 															   DiSelectChannel_A,
 															   DiSelectChannel_B {
 	public SerializerChannel_B( ChoralSerializer< Object, ByteBuffer > serializer, SymDataChannelImpl< ByteBuffer > channel ) {

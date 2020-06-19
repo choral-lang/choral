@@ -21,8 +21,8 @@
 
 package org.choral.runtime.TLSByteChannel;
 
-import org.choral.lang.DataChannels.DiDataChannel_A;
-import org.choral.lang.DataChannels.DiDataChannel_B;
+import org.choral.channels.DiDataChannel_A;
+import org.choral.channels.DiDataChannel_B;
 import org.choral.runtime.ChoralByteChannel.SymByteChannelImpl;
 import org.choral.runtime.TLSByteChannel.tlschannel.ClientTlsChannel;
 

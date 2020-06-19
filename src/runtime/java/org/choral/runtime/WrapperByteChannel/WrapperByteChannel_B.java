@@ -21,8 +21,8 @@
 
 package org.choral.runtime.WrapperByteChannel;
 
-import org.choral.lang.DataChannels.DiDataChannel_A;
-import org.choral.lang.DataChannels.DiDataChannel_B;
+import org.choral.channels.DiDataChannel_A;
+import org.choral.channels.DiDataChannel_B;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;

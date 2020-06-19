@@ -28,6 +28,7 @@ import org.choral.ast.type.TypeExpression;
 import org.choral.ast.type.WorldArgument;
 import org.choral.ast.visitors.ChoralVisitorInterface;
 import org.choral.ast.visitors.MergerInterface;
+import org.choral.ast.visitors.PrettyPrinterVisitor;
 import org.choral.exceptions.ChoralException;
 import org.choral.types.Member;
 
@@ -97,7 +98,9 @@ public class MethodCallExpression extends InvocationExpression {
 			return m.merge( this, ( this.getClass().cast( n ) ) );
 		} catch( ClassCastException e ) {
 			throw new ChoralException(
-					"Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
+					this.position().line() + ":"
+							+ this.position().column() + ":"
+							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit( this ) + "\n with " + n.getClass().getSimpleName() );
 		}
 	}
 }

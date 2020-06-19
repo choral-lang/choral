@@ -27,6 +27,7 @@ import org.choral.ast.expression.EnumCaseInstantiationExpression;
 import org.choral.ast.expression.Expression;
 import org.choral.ast.visitors.ChoralVisitorInterface;
 import org.choral.ast.visitors.MergerInterface;
+import org.choral.ast.visitors.PrettyPrinterVisitor;
 import org.choral.exceptions.ChoralException;
 
 public class SelectStatement extends Statement {
@@ -82,7 +83,9 @@ public class SelectStatement extends Statement {
 			return m.merge( this, ( this.getClass().cast( n ) ) );
 		} catch( ClassCastException e ) {
 			throw new ChoralException(
-					"Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
+					this.position().line() + ":"
+							+ this.position().column() + ":"
+							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit( this ) + "\n with " + n.getClass().getSimpleName() );
 		}
 	}
 

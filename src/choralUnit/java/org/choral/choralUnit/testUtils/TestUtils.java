@@ -21,8 +21,8 @@
 
 package org.choral.choralUnit.testUtils;
 
-import org.choral.lang.Channels.SymChannel_A;
-import org.choral.lang.Channels.SymChannel_B;
+import org.choral.channels.SymChannel_A;
+import org.choral.channels.SymChannel_B;
 import org.choral.runtime.LocalChannel.LocalChannel_A;
 import org.choral.runtime.LocalChannel.LocalChannel_B;
 import org.choral.runtime.Media.MessageQueue;

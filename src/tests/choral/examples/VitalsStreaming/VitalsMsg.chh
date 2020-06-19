@@ -1,0 +1,14 @@
+package choral.examples.VitalsStreamingUtils;
+
+import choral.examples.VitalsStreamingUtils.Signature;
+import choral.examples.VitalsStreamingUtils.Vitals;
+
+public class VitalsMsg@A {
+
+	public VitalsMsg ( Signature@A signature, Vitals@A content ) {}
+
+	public Signature@A signature () {}
+
+	public Vitals@A content () {}
+
+}

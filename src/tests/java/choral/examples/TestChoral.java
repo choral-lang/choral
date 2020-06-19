@@ -138,22 +138,61 @@ public class TestChoral {
 //						),
 //						"DistAuth", ALL_WORLDS )
 
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/DistAuth",
+//								"src/tests/choral/examples/AuthResult",
+//								"src/tests/choral/examples/BiPair",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"DistAuthTest", ALL_WORLDS )
+
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/DistAuth",
+//								"src/tests/choral/examples/AuthResult",
+//								"src/tests/choral/examples/BiPair",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"DistAuth5", ALL_WORLDS )
+
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/DistAuth",
+//								"src/tests/choral/examples/AuthResult",
+//								"src/tests/choral/examples/BiPair",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"DistAuth10", ALL_WORLDS )
+
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/VitalsStreaming",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"VitalsStreaming", ALL_WORLDS )
+
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
 						targetFolder,
 						List.of(
-								"src/tests/choral/examples/DistAuth",
-								"src/tests/choral/examples/AuthResult",
-								"src/tests/choral/examples/BiPair",
+								"src/tests/choral/examples/VitalsStreaming",
 								"src/runtime/choral",
 								"src/choralUnit/choral"
 						),
-						"DistAuthTest", ALL_WORLDS )
-
-//				new CompilationRequest( subFolder( sourceFolder, "DistAuth"), targetFolder, "DistAuth", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "DistAuth"), targetFolder, "DistAuth5", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "DistAuth"), targetFolder, "DistAuth10", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "DistAuth"), targetFolder, "DistAuthTest", ALL_WORLDS )
+						"VitalsStreamingTest", ALL_WORLDS )
 
 //				new CompilationRequest( subFolder( sourceFolder, "VitalsStreaming"), targetFolder, "VitalsStreaming", ALL_WORLDS )
 //				new CompilationRequest( subFolder( sourceFolder, "VitalsStreaming"), targetFolder, "VitalsStreamingTest", ALL_WORLDS )

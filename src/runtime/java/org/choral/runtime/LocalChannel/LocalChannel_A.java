@@ -20,7 +20,7 @@
  */
 
 package org.choral.runtime.LocalChannel;
-import org.choral.lang.Channels.SymChannel_A;
+import org.choral.channels.SymChannel_A;
 import org.choral.runtime.Media.MessageQueue;
 
 public class LocalChannel_A extends LocalChannelImpl implements SymChannel_A< Object > {

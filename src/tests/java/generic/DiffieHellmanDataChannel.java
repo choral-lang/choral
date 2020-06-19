@@ -21,7 +21,7 @@
 
 package generic;
 
-import org.choral.lang.DataChannels.SymDataChannelImpl;
+import org.choral.channels.SymDataChannelImpl;
 import org.choral.lang.Unit;
 import org.choral.runtime.ChoralByteChannel.SymByteChannelImpl;
 import org.choral.runtime.Media.PipedByteChannel;
