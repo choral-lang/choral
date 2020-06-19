@@ -24,7 +24,6 @@ public class VitalsStreaming@( Device, Gatherer ) {
 		this.sensor = sensor;
 	}
 
-
 	private Vitals@Gatherer	pseudonymise( Vitals@Gatherer vitals ) {
 		return new Vitals@Gatherer(
 			PatientsRegistry@Gatherer.getPseudoID( vitals.id() ),

@@ -22,24 +22,27 @@
 package choral.examples.HealthCareService;
 
 
+import choral.examples.AuthResult.AuthResult_A;
+import choral.examples.DistAuth.DistAuth_Client;
 import choral.examples.DistAuthUtils.Credentials;
+import choral.examples.VitalsStreaming.VitalsStreaming_Gatherer;
 import org.choral.runtime.TLSChannel.TLSChannel_A;
 
 public class HealthCareService {
 	public static void main ( String[] args ) {
 		TLSChannel_A< Object > toIP = HealthIdentityProvider.connect();
 		TLSChannel_A< Object > toStorage = Storage.connect();
-//		AuthResult_A authResult = new DistAuth1( toIP ).authenticate( getCredentials() );
-//		authResult.left().ifPresent( token ->
-//				DeviceRegistry
-//						.parallelStream()
-//						.map( Device::connect )
-//						.map( VitalsStreaming2::new )
-//						.forEach( vs ->
-//								vs.gather( data -> toStorage.< StorageMsg >com( new StorageMsg( token, data ) ) )
-//						)
-//		);
-//		Storage.disconnect();
+		AuthResult_A authResult = new DistAuth_Client( toIP ).authenticate( getCredentials() );
+		authResult.left().ifPresent( token ->
+				DeviceRegistry
+						.parallelStream()
+						.map( Device::connect )
+						.map( VitalsStreaming_Gatherer::new )
+						.forEach( vs ->
+								vs.gather( data -> toStorage.< StorageMsg >com( new StorageMsg( token, data ) ) )
+						)
+		);
+		Storage.disconnect();
 	}
 
 	private static Credentials getCredentials () {
