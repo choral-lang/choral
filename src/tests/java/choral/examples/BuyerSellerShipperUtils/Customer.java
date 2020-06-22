@@ -19,50 +19,15 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package choral.BookSelling.com.books;
+package choral.examples.BuyerSellerShipperUtils;
 
-import java.util.HashMap;
-import java.util.Map;
+public class Customer {
+	public final String name;
+	public final String address;
 
-public class Catalogue {
-
-	private final Map< String, Price > titles = new HashMap<>();
-
-	public Catalogue(){}
-
-	public void addTitle( String t, Price p ){
-		titles.put( t, p );
-	}
-
-	public Boolean includes( String t ){
-		return titles.containsKey( t );
-	}
-
-	public Price quote( String t ){
-		return titles.get( t );
-	}
-
-	public Shipping ship( String title ){
-		return new Shipping( title );
-	}
-
-	public class Shipping {
-		private String address;
-		private String title;
-
-		private Shipping( String title ){
-			this.title = title;
-		}
-
-		public Shipping to( String address ){
-			this.address = address;
-			return this;
-		}
-
-		public void ship(){
-			System.out.println( "Shipping '" + title + "' to '" +  address + "'" );
-		}
-
+	public Customer( String name, String address ){
+		this.name = name;
+		this.address = address;
 	}
 
 }

@@ -205,30 +205,65 @@ public class TestChoral {
 //						"Mergesort", ALL_WORLDS )
 
 
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "Mergesort" ) ),
-						targetFolder,
-						List.of(
-								"src/tests/choral/examples/Mergesort",
-								"src/runtime/choral",
-								"src/choralUnit/choral"
-						),
-						"MergesortTest", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "Mergesort" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/Mergesort",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"MergesortTest", ALL_WORLDS )
 
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "BuyerSellerShipper" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/BuyerSellerShipper",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"BuyerSellerShipper", ALL_WORLDS )
 
-//				new CompilationRequest( subFolder( sourceFolder, "MergeSort"), targetFolder, "MergeSort", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "MergeSort"), targetFolder, "MergeSortTest", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "Quicksort" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/Quicksort",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"Quicksort", ALL_WORLDS )
+
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "Quicksort" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/Quicksort",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"QuicksortTest", ALL_WORLDS )
+
+		new CompilationRequest(
+				List.of( subFolder( sourceFolder, "Karatsuba" ) ),
+				targetFolder,
+				List.of(
+						"src/tests/choral/examples/Karatsuba",
+						"src/runtime/choral",
+						"src/choralUnit/choral"
+				),
+				"Karatsuba", ALL_WORLDS )
 
 //		new CompilationRequest(
-//				subFolder( sourceFolder, "BuyerSellerShipper"),
+//				List.of( subFolder( sourceFolder, "Karatsuba" ) ),
 //				targetFolder,
-//				"BuyerSellerShipper", ALL_WORLDS );
-
-//				new CompilationRequest( subFolder( sourceFolder, "QuickSort"), targetFolder, "QuickSort", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "QuickSort"), targetFolder, "QuickSortTest", ALL_WORLDS )
-
-//				new CompilationRequest( subFolder( sourceFolder, "Karatsuba"), targetFolder, "Karatsuba", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "Karatsuba"), targetFolder, "KaratsubaTest", ALL_WORLDS )
+//				List.of(
+//						"src/tests/choral/examples/Karatsuba",
+//						"src/runtime/choral",
+//						"src/choralUnit/choral"
+//				),
+//				"KaratsubaTest", ALL_WORLDS )
 
 		).collect( Collectors.toList() );
 
