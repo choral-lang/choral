@@ -2,7 +2,9 @@ package java.util;
 
 public class ArrayList@A< E@X > implements List@A< E >
 {
-    public Integer@A size(){}
+	public ArrayList(){}
+	public ArrayList( List@A< E > e ){}
+	public Integer@A size(){}
     public Boolean@A isEmpty(){}
     public Boolean@A contains( Object@A o ){}
     public Boolean@A add( E@A e ){}

@@ -245,16 +245,6 @@ public class TestChoral {
 //						),
 //						"QuicksortTest", ALL_WORLDS )
 
-		new CompilationRequest(
-				List.of( subFolder( sourceFolder, "Karatsuba" ) ),
-				targetFolder,
-				List.of(
-						"src/tests/choral/examples/Karatsuba",
-						"src/runtime/choral",
-						"src/choralUnit/choral"
-				),
-				"Karatsuba", ALL_WORLDS )
-
 //		new CompilationRequest(
 //				List.of( subFolder( sourceFolder, "Karatsuba" ) ),
 //				targetFolder,
@@ -263,7 +253,17 @@ public class TestChoral {
 //						"src/runtime/choral",
 //						"src/choralUnit/choral"
 //				),
-//				"KaratsubaTest", ALL_WORLDS )
+//				"Karatsuba", ALL_WORLDS )
+
+		new CompilationRequest(
+				List.of( subFolder( sourceFolder, "Karatsuba" ) ),
+				targetFolder,
+				List.of(
+						"src/tests/choral/examples/Karatsuba",
+						"src/runtime/choral",
+						"src/choralUnit/choral"
+				),
+				"KaratsubaTest", ALL_WORLDS )
 
 		).collect( Collectors.toList() );
 

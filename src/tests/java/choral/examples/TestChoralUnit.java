@@ -30,9 +30,9 @@ public class TestChoralUnit {
 
 //		ChoralUnit.main( new String[]{ "DistAuthTest" } );
 //		ChoralUnit.main( new String[]{ "VitalsStreamingTest" } );
-		ChoralUnit.main( new String[]{ "MergesortTest" } );
+//		ChoralUnit.main( new String[]{ "MergesortTest" } );
 //		ChoralUnit.main( new String[]{ "QuicksortTest" } );
-//		ChoralUnit.main( new String[]{ "KaratsubaTest" } );
+		ChoralUnit.main( new String[]{ "KaratsubaTest" } );
 	}
 
 }

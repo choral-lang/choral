@@ -2,7 +2,7 @@ package java.util;
 
 public interface List@A< E@X > {
 
-    Integer@A size();
+	Integer@A size();
 
     Boolean@A isEmpty();
 
