@@ -42,6 +42,24 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+
+//class C2 implements I1, I2 {
+//
+//	public < T > void m( Object y ) {
+//		Integer z = 5;
+//		new C2().< Integer >m( z );
+//	}
+//
+//}
+//
+//interface I1 {
+//	void m( Object y );
+//}
+//
+//interface I2 {
+//	< T > void m( T y );
+//}
+
 public class Typer {
 
 	private enum Phase {
@@ -110,7 +128,8 @@ public class Typer {
 			visitImportDeclarations( scope, n.imports() );
 		}
 
-		protected void visitImportDeclarations(Scope scope, List<ImportDeclaration> ns) { }
+		protected void visitImportDeclarations( Scope scope, List< ImportDeclaration > ns ) {
+		}
 
 		protected abstract void checkPrimaryTemplate(
 				TemplateDeclaration n, String primaryType, String family
@@ -850,14 +869,14 @@ public class Typer {
 		}
 
 		@Override
-		protected void visitImportDeclarations( Scope scope, List<ImportDeclaration> imports ) {
+		protected void visitImportDeclarations( Scope scope, List< ImportDeclaration > imports ) {
 			taskQueue().enqueue( Phase.HIERARCHY, () -> {
 				for( ImportDeclaration n : imports ) {
-					if(!n.isOnDemand()){
+					if( !n.isOnDemand() ) {
 						n.setTypeAnnotation( scope.assertLookupClassOrInterface( n.name() ) );
 					}
 				}
-			});
+			} );
 		}
 
 		@Override
@@ -1005,6 +1024,7 @@ public class Typer {
 //			System.out.println("=================================================");
 //			System.out.println("candidates: " + cs.size());
 			List< Member.GroundCallable > ms = new ArrayList<>( cs.size() );
+			List< Member.GroundCallable > rs = new ArrayList<>( cs.size() );
 			for( Member.HigherCallable x : cs ) {
 //						System.out.println("------------------------------------------------");
 				Member.GroundCallable c;
@@ -1045,9 +1065,11 @@ public class Typer {
 						mostSpecific = false;
 					} else if( cmsub ) {
 //						System.out.println("subsumes most specific candidate " + m);
-						ms.remove( m );
+						rs.add( m );
 					}
 				}
+				ms.removeAll( rs );
+				rs.clear();
 //						System.out.println("most specific candidate: " + mostSpecific);
 				if( mostSpecific ) {
 					ms.add( c );

@@ -338,7 +338,7 @@ public abstract class Member implements HasSource {
 			return newTypeParams;
 		}
 
-		public boolean isSameSignature( HigherCallable other ) {
+		public boolean sameSignatureOf( HigherCallable other ) {
 			if( !this.identifier().equals( other.identifier() )
 					|| this.typeParameters.size() != other.typeParameters.size()
 					|| this.arity() != other.arity() ) {
@@ -385,27 +385,29 @@ public abstract class Member implements HasSource {
 			return true;
 		}
 
-		private boolean isSameErasure( HigherCallable other ) {
+		public boolean isSubSignatureOf( HigherCallable other ) {
+			return this.sameSignatureOf( other ) || this.sameSignatureErasureOf( other );
+		}
+
+		public boolean sameSignatureErasureOf( HigherCallable other ) {
 			if( this.arity() != other.arity() || !this.identifier().equals( other.identifier() ) ) {
 				return false;
 			}
-			return isSameSignature( other );
+			for( int i = 0; i < this.arity(); i++ ) {
+				GroundDataType t1 = this.innerCallable().signature().parameters().get( i ).type();
+				GroundDataType t2 = other.innerCallable().signature().parameters().get( i ).type();
+				if( !t1.isEquivalentToErasureOf( t2 ) ) {
+					return false;
+				}
+			}
+			return true;
 		}
 
-		public boolean isSubSignature( HigherCallable other ) {
-			return isSameSignature( other ) || isSameErasure( other );
-		}
-
-		public boolean isOverrideEquivalent( HigherCallable other ) {
-			return this.isSubSignature( other ) || other.isSameErasure( this );
-		}
-
-		public boolean isProjectionOverloadEquivalent( HigherCallable other ) {
-			return false; //ToDo
-		}
-
-		public void assertNoClash( HigherCallable other ) {
-
+		public boolean isOverrideEquivalentTo( HigherCallable other ) {
+			// (§8.4.2)
+			return this.sameSignatureOf( other ) ||
+					( this.sameSignatureErasureOf( other ) == !other.sameSignatureErasureOf(
+							this ) );
 		}
 
 		public int arity() {
@@ -579,6 +581,38 @@ public abstract class Member implements HasSource {
 				result.innerCallable.finalise();
 				alphaIndex.put( substitution, result );
 			}
+			return result;
+		}
+
+		HigherMethod copyFor( GroundClassOrInterface declarationContext ) {
+			List< HigherTypeParameter > newTypeParams = prepareTypeParameters( Substitution.ID );
+			Substitution newSubstitution = new Substitution() {
+
+				@Override
+				public HigherReferenceType get( HigherTypeParameter placeHolder ) {
+					int i = typeParameters().indexOf( placeHolder );
+					return ( i == -1 )
+							? placeHolder
+							: newTypeParams.get( i );
+				}
+
+			};
+			Signature signature = this.innerCallable.signature().applySubstitution(
+					newSubstitution );
+			HigherMethod result = new HigherMethod(
+					declarationContext,
+					identifier(),
+					modifiers(),
+					newTypeParams,
+					signature,
+					false
+			);
+			result.innerCallable.setReturnType(
+					this.innerCallable.returnType.applySubstitution( newSubstitution ) );
+			if( isSelectionMethod() ) {
+				result.setSelectionMethod();
+			}
+			result.innerCallable.finalise();
 			return result;
 		}
 

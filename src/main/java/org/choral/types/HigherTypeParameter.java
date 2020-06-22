@@ -188,6 +188,8 @@ public final class HigherTypeParameter extends HigherReferenceType {
 
 		private GroundReferenceType upperClass = null;
 
+		private boolean upperClassImplicit = true;
+
 		private void setUpperClass() {
 			assert ( !isBoundFinalised() );
 			upperClass = universe().topReferenceType( worldArguments() );
@@ -196,6 +198,11 @@ public final class HigherTypeParameter extends HigherReferenceType {
 		@Override
 		public GroundReferenceType upperClass() {
 			return upperClass;
+		}
+
+		@Override
+		public boolean isUpperClassImplicit() {
+			return upperClassImplicit;
 		}
 
 		private final List< GroundInterface > upperInterfaces = new ArrayList<>( 10 );
@@ -224,6 +231,7 @@ public final class HigherTypeParameter extends HigherReferenceType {
 			} else {
 				if( upperClass == null ) {
 					upperClass = type;
+					upperClassImplicit = false;
 				} else {
 					String s;
 					if( type instanceof GroundEnum ) {
@@ -313,6 +321,11 @@ public final class HigherTypeParameter extends HigherReferenceType {
 		@Override
 		public boolean isBoundFinalised() {
 			return definition().isBoundFinalised();
+		}
+
+		@Override
+		public boolean isUpperClassImplicit() {
+			return definition().isUpperClassImplicit();
 		}
 
 		@Override

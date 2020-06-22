@@ -22,5 +22,5 @@
 package org.choral.types;
 
 public interface Interface extends ClassOrInterface {
-
+	default boolean isInterface() {return true; }
 }

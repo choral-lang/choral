@@ -24,5 +24,5 @@ package org.choral.types;
 import java.util.Optional;
 
 public interface Class extends ClassOrInterface {
-
+	default boolean isClass() {return true; }
 }

@@ -33,23 +33,6 @@ import java.util.stream.Stream;
 import static org.choral.types.Modifier.*;
 import static org.choral.types.ModifierUtils.*;
 
-//class A implements I1 , I2 {
-//
-//	@Override
-//	public void m( Object x, Object y ) {
-//		new A().<Integer>m( x,5 );
-//	}
-//
-//}
-//
-//interface I1 {
-//	void m (Object x, Object y);
-//}
-//
-//interface I2 {
-//	<T> void m (Object x, T y);
-//}
-
 public abstract class HigherClassOrInterface extends HigherReferenceType
 		implements ClassOrInterface, TypeParameterDeclarationContext {
 
@@ -116,22 +99,6 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 	public Universe.SpecialTypeTag specialTypeTag() {
 		return tag;
 	}
-
-	public enum Variety {
-		CLASS( "class", "classes" ),
-		INTERFACE( "interface", "interfaces" ),
-		ENUM( "enum", "enums" );
-
-		public final String labelSingular;
-		public final String labelPlural;
-
-		Variety( String labelSingular, String labelPlural ) {
-			this.labelSingular = labelSingular;
-			this.labelPlural = labelPlural;
-		}
-	}
-
-	public abstract Variety variety();
 
 	private final EnumSet< Modifier > modifiers;
 
@@ -336,7 +303,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 	public abstract class Definition extends HigherReferenceType.Definition
 			implements GroundClassOrInterface {
 
-		Definition(){}
+		Definition() {
+		}
 
 		public final String toString() {
 			return typeConstructor().toString() +
@@ -359,13 +327,32 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		public void finaliseInheritance() {
-//			extendedClassesOrInterfaces().flatMap( GroundClassOrInterface::allExtendedInterfaces ).forEach(
-//					x ->
-//			);
-			inheritanceFinalised = true;
+			if( !isInheritanceFinalised() ) {
+				allExtendedInterfaces = Stream.concat( extendedInterfaces(),
+						extendedClassesOrInterfaces().flatMap(
+								GroundClassOrInterface::allExtendedInterfaces ) )
+						.collect( Collectors.toList() );
+				extendedClassesOrInterfaces().flatMap(
+						GroundClassOrInterface::allExtendedInterfaces )
+						.forEach( x -> {
+							extendedInterfaces().filter( y ->
+									x.typeConstructor() == y.typeConstructor() &&
+											x.worldArguments().equals( y.worldArguments() ) &&
+											!x.typeArguments().equals( y.typeArguments() )
+							).findAny().ifPresent( y -> {
+										throw new StaticVerificationException(
+												"illegal inheritance, cannot implement both '"
+														+ y + "' and " + x + "'" );
+									}
+							);
+						} );
+				inheritanceFinalised = true;
+			}
 		}
 
 		private final List< GroundInterface > extendedInterfaces = new ArrayList<>();
+
+		private List< GroundInterface > allExtendedInterfaces;
 
 		public void addExtendedInterface( GroundInterface type ) {
 			assert ( !isInheritanceFinalised() );
@@ -384,6 +371,15 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		@Override
 		public final Stream< GroundInterface > extendedInterfaces() {
 			return extendedInterfaces.stream();
+		}
+
+		public final Stream< GroundInterface > allExtendedInterfaces() {
+			if( allExtendedInterfaces == null ) {
+				return Stream.concat( extendedInterfaces(), extendedClassesOrInterfaces().flatMap(
+						GroundClassOrInterface::allExtendedInterfaces ) );
+			} else {
+				return allExtendedInterfaces.stream();
+			}
 		}
 
 		@Override
@@ -416,32 +412,29 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		public void finaliseInterface() {
-			extendedClassesOrInterfaces().flatMap( GroundClassOrInterface::allExtendedInterfaces )
-					.forEach( x -> {
-						extendedInterfaces().filter( y ->
-								x.typeConstructor() == y.typeConstructor() &&
-										x.worldArguments().equals( y.worldArguments() ) &&
-										!x.typeArguments().equals( y.typeArguments() )
-						).findAny().ifPresent( y -> {
-									throw new StaticVerificationException(
-											"illegal inheritance, cannot implement both '"
-													+ y + "' and " + x + "'" );
-								}
-						);
-					} );
-			// inherit fields and methods
+			// inherited fields
 			extendedClassesOrInterfaces().flatMap( GroundReferenceType::fields )
 					.filter( x -> x.isAccessibleFrom( this )
 							&& declaredFields().noneMatch(
 							y -> x.identifier().equals( y.identifier() ) ) )
 					.forEach( inheritedFields::add );
+			// inherited methods (§8.4.8)
 			extendedClassesOrInterfaces().flatMap( GroundReferenceType::methods )
 					.filter( x -> x.isAccessibleFrom( this ) )
 					.forEach( x -> {
 						boolean inherited = true;
+						boolean implemented = false;
+						if( identifier.equals( "C2" ) && x.identifier().equals( "m" ) ) {
+							System.out.println( "=====================================" );
+							System.out.println( this + " <? " + x );
+						}
 						for( Member.HigherMethod y : declaredMethods ) {
-							// y overrides x
-							if( y.isOverrideEquivalent( x ) ) {
+							boolean sameSignature = y.sameSignatureOf( x );
+							boolean sameErasure = y.sameSignatureErasureOf( x );
+							if( identifier.equals( "C1" ) && x.identifier().equals( "m" ) ) {
+								System.out.println( y + " " + sameSignature + " " + sameErasure );
+							}
+							if( sameSignature || sameErasure ) {
 								// check both instance or both static
 								if( !y.isStatic() && x.isStatic() ) {
 									throw new StaticVerificationException( "instance method '" + y
@@ -477,23 +470,40 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 											+ "', attempting to use incompatible return type" );
 								}
 								// inherit selection annotation
-								if( x.isSelectionMethod() ) {
+								if( x.isSelectionMethod() && sameSignature ) {
 									y.setSelectionMethod();
 								}
-								inherited = false;
+								implemented = !y.isAbstract();
+								inherited = sameErasure && !sameSignature;
+								if( inherited ) {
+									for( Member.HigherMethod z : inheritedMethods ) {
+										if( z.isSubSignatureOf( x ) ) {
+											inherited = false;
+											break;
+										}
+									}
+								}
 								break;
 							} else {
-								y.assertNoClash( x );
+								if( x.sameSignatureErasureOf( y ) ) {
+									throw new StaticVerificationException( "method '" + y
+											+ "' in '" + this + "' clashes with method '"
+											+ x + "' in '" + x.declarationContext()
+											+ "', both methods have the same erasure" );
+								}
 							}
+						}
+						if( identifier.equals( "C1" ) && x.identifier().equals( "m" ) ) {
+							System.out.println( inherited );
 						}
 						if( inherited ) {
 							// check implementation
-							if( !isAbstract() && x.isAbstract() ) {
+							if( !implemented && !isAbstract() && x.isAbstract() ) {
 								throw new StaticVerificationException( "'" + this + "' must either "
 										+ "be declared as abstract or implement abstract method '"
 										+ x + "' in '" + x.declarationContext() + "'" );
 							}
-							inheritedMethods.add( x );
+							inheritedMethods.add( x.copyFor( this ) );
 						}
 					} );
 			interfaceFinalised = true;
@@ -527,7 +537,18 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		public void addMethod( Member.HigherMethod method ) {
 			assert ( !interfaceFinalised );
 			assert ( method.declarationContext() == this );
-			declaredMethods().forEach( method::assertNoClash );
+			for( Member.HigherMethod x : declaredMethods ) {
+				if( x.isOverrideEquivalentTo( method ) ) {
+					if( x.sameSignatureOf( method ) ) {
+						throw new StaticVerificationException( "method '" + method
+								+ "' is already defined in '" + typeConstructor() + "'" );
+					} else {
+						throw new StaticVerificationException( "method '" + method
+								+ "' clashes with '" + x
+								+ "', both methods have the same erasure" );
+					}
+				}
+			}
 			declaredMethods.add( method );
 		}
 
@@ -583,8 +604,15 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			return definition().isInheritanceFinalised();
 		}
 
+		@Override
 		public final Stream< GroundInterface > extendedInterfaces() {
 			return definition().extendedInterfaces().map(
+					x -> x.applySubstitution( substitution() ) );
+		}
+
+		@Override
+		public final Stream< GroundInterface > allExtendedInterfaces() {
+			return definition().allExtendedInterfaces().map(
 					x -> x.applySubstitution( substitution() ) );
 		}
 

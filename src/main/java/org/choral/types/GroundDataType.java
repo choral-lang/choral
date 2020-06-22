@@ -56,4 +56,6 @@ public interface GroundDataType extends DataType, GroundDataTypeOrVoid {
 				(GroundDataType) type );
 	}
 
+	boolean isEquivalentToErasureOf( GroundDataType type );
+
 }

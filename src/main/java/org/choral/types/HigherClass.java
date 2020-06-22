@@ -95,7 +95,8 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 
 	public class Definition extends HigherClassOrInterface.Definition implements GroundClass {
 
-		Definition(){}
+		Definition() {
+		}
 
 		@Override
 		public HigherClass typeConstructor() {
@@ -193,11 +194,20 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 			return constructors.stream();
 		}
 
-		public void addConstructor( Member.HigherConstructor constructor ) {
+		public void addConstructor( HigherConstructor constructor ) {
 			assert ( !isInterfaceFinalised() );
 			assert ( constructor.declarationContext() == this );
-			for( HigherConstructor c : constructors ) {
-				constructor.assertNoClash( c );
+			for( HigherConstructor x : constructors ) {
+				if( x.isOverrideEquivalentTo( constructor ) ) {
+					if( x.sameSignatureOf( constructor ) ) {
+						throw new StaticVerificationException( "constructor '" + constructor
+								+ "' is already defined in '" + typeConstructor() + "'" );
+					} else {
+						throw new StaticVerificationException( "constructor '" + constructor
+								+ "' clashes with '"
+								+ x + "', both constructors have the same erasure" );
+					}
+				}
 			}
 			constructors.add( constructor );
 		}

@@ -22,12 +22,16 @@
 package org.choral.types;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 public interface GroundClassOrInterface extends ClassOrInterface, GroundReferenceType {
 
 	HigherClassOrInterface typeConstructor();
+
+	@Override
+	default Variety variety() {
+		return typeConstructor().variety();
+	}
 
 	@Override
 	default Package declarationPackage() {
@@ -46,13 +50,29 @@ public interface GroundClassOrInterface extends ClassOrInterface, GroundReferenc
 
 	Stream< ? extends GroundInterface > extendedInterfaces();
 
-	default Stream< GroundInterface > allExtendedInterfaces() {
-		return Stream.concat( extendedInterfaces(), extendedClassesOrInterfaces().flatMap(
-				GroundClassOrInterface::allExtendedInterfaces ) );
-	}
+	Stream< GroundInterface > allExtendedInterfaces();
 
 	Stream< Member.Field > declaredFields();
 
 	Stream< Member.HigherMethod > declaredMethods();
 
+	@Override
+	default boolean isEquivalentToErasureOf( GroundDataType type ) {
+		// revise when adding RAW types
+		if( type.isClass() || type.isInterface() ) {
+			return typeArguments().isEmpty() && isEquivalentTo( type );
+		}
+		if( type.isTypeParameter() ) {
+			GroundTypeParameter other = (GroundTypeParameter) type;
+			if( isInterface() && !(other.isUpperClassImplicit() && other.isSubtypeOf( this ) ) ) {
+				return false;
+			}
+			if( isClass() && !isEquivalentToErasureOf( other.upperClass() ) ) {
+				return false;
+			}
+			return other.upperInterfaces().allMatch( this::isSubtypeOf ) &&
+					this.extendedInterfaces().allMatch( other::isSubtypeOf );
+		}
+		return false;
+	}
 }

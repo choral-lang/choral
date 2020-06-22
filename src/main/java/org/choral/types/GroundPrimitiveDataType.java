@@ -39,10 +39,15 @@ public interface GroundPrimitiveDataType extends GroundDataType, PrimitiveDataTy
 		if( type instanceof GroundDataType ) {
 			GroundDataType t = (GroundDataType) type;
 			return t.worldArguments().equals( t.worldArguments() )
-					&& ( t.primitiveTypeTag().isAssignableTo(
+					&& ( primitiveTypeTag().isAssignableTo(
 					t.primitiveTypeTag() ) || boxedType().isEquivalentTo( t ) );
 		} else {
 			return false;
 		}
+	}
+
+	@Override
+	default boolean isEquivalentToErasureOf( GroundDataType type ) {
+		return isEquivalentTo( type );
 	}
 }
