@@ -129,8 +129,18 @@ public abstract class Member implements HasSource {
 //		System.out.println("  " + this.isPackagePrivate());
 //		System.out.println("-- result = " + (this.declarationContext == context || this.isPublic() || this.isProtected() || ( this.isPackagePrivate() &&
 //				context.declarationPackage() == this.declarationContext().declarationPackage() )));
-		return this.declarationContext == context || this.isPublic() || this.isProtected() || ( this.isPackagePrivate() &&
-				context.declarationPackage() == this.declarationContext().declarationPackage() );
+		return this.declarationContext == context
+				|| this.isPublic()
+				|| this.isProtected()
+				|| ( this.isPackagePrivate() && this.declarationContext().declarationPackage() ==
+				context.declarationPackage() );
+	}
+
+	public final boolean isAccessibleFrom( GroundTypeParameter context ) {
+		return this.isPublic()
+				|| this.isProtected()
+				|| ( this.isPackagePrivate() && this.declarationContext().declarationPackage() ==
+				context.typeConstructor().declarationContext().declarationPackage() );
 	}
 
 	private final GroundClassOrInterface declarationContext;
@@ -243,6 +253,11 @@ public abstract class Member implements HasSource {
 					names[ i++ ] = x.identifier();
 				}
 			}
+		}
+
+		@Override
+		public Package declarationPackage() {
+			return declarationContext().typeConstructor().declarationPackage();
 		}
 
 		private final ArrayList< HigherTypeParameter > typeParameters;
@@ -390,13 +405,28 @@ public abstract class Member implements HasSource {
 		}
 
 		public boolean sameSignatureErasureOf( HigherCallable other ) {
-			if( this.arity() != other.arity() || !this.identifier().equals( other.identifier() ) ) {
+			if( !this.typeParameters.isEmpty() || this.arity() != other.arity() || !this.identifier().equals(
+					other.identifier() ) ) {
 				return false;
 			}
 			for( int i = 0; i < this.arity(); i++ ) {
 				GroundDataType t1 = this.innerCallable().signature().parameters().get( i ).type();
 				GroundDataType t2 = other.innerCallable().signature().parameters().get( i ).type();
 				if( !t1.isEquivalentToErasureOf( t2 ) ) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		public boolean sameErasureAs( HigherCallable other ) {
+			if( this.arity() != other.arity() || !this.identifier().equals( other.identifier() ) ) {
+				return false;
+			}
+			for( int i = 0; i < this.arity(); i++ ) {
+				GroundDataType t1 = this.innerCallable().signature().parameters().get( i ).type();
+				GroundDataType t2 = other.innerCallable().signature().parameters().get( i ).type();
+				if( !t1.isEquivalentToErasureOf( t2 ) && !t2.isEquivalentToErasureOf( t1 ) ) {
 					return false;
 				}
 			}

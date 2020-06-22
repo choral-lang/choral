@@ -159,7 +159,6 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						}, FileVisitOption.FOLLOW_LINKS ) ) )
 						.map( Path::toFile )
 						.collect( Collectors.toList() );
-				// TODO: THIS IS A COPY OF THE CALL FOR CHECK, AGGREGATE INTO A METHOD AND CALL THAT
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 				Collection< CompilationUnit > headerUnits = Stream.concat(

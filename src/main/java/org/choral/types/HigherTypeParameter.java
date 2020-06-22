@@ -27,11 +27,12 @@ import org.choral.utils.Formatting;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class HigherTypeParameter extends HigherReferenceType {
+public final class HigherTypeParameter extends HigherReferenceType implements TypeParameter {
 
 	public HigherTypeParameter(
 			Universe universe,
@@ -138,7 +139,8 @@ public final class HigherTypeParameter extends HigherReferenceType {
 	public final class Definition extends HigherReferenceType.Definition
 			implements GroundTypeParameter {
 
-		private Definition(){}
+		private Definition() {
+		}
 
 		public String toString() {
 			return typeConstructor().toString() +
@@ -272,25 +274,61 @@ public final class HigherTypeParameter extends HigherReferenceType {
 					|| upperInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) );
 		}
 
-		@Override
-		public Stream< ? extends Member.Field > fields() {
-			// todo merge
-			return Stream.concat( upperClass.fields(),
-					upperInterfaces().flatMap( GroundReferenceType::fields ) )
-					.filter( Member::isPublic );
-		}
-
-		@Override
-		public Stream< ? extends Member.HigherMethod > methods() {
-			return Stream.concat( upperClass.methods(),
-					upperInterfaces().flatMap( GroundReferenceType::methods ) )
-					.filter( Member::isPublic );
-		}
+		private boolean interfaceFinalised = false;
 
 		@Override
 		public final boolean isInterfaceFinalised() {
-			return isBoundFinalised() && upperBound().allMatch(
-					GroundReferenceType::isInterfaceFinalised );
+			return interfaceFinalised;
+		}
+
+		public void finaliseInterface() {
+			assert ( isBoundFinalised() && upperBound().allMatch(
+					GroundReferenceType::isInterfaceFinalised ) );
+			if( interfaceFinalised ) {
+				return;
+			}
+			// inherited fields
+			upperBound().flatMap( GroundReferenceType::fields )
+					.filter( x -> x.isAccessibleFrom( this ) )
+					.forEach( inheritedFields::add );
+			// inherited methods (§8.4.8)
+			upperBound().flatMap( GroundReferenceType::methods )
+					.filter( x -> x.isAccessibleFrom( this ) )
+					.forEach( x -> {
+						boolean inherited = true;
+						for( Member.HigherMethod z : inheritedMethods ) {
+							if( z.isSubSignatureOf( x ) ) {
+								// check assignable return type;
+								if( !z.isReturnTypeAssignable( x ) ) {
+									throw new StaticVerificationException( "method '" + z
+											+ "' in '" + z.declarationContext()
+											+ "' clashes with method '" + x
+											+ "' in '" + x.declarationContext()
+											+ "', attempting to use incompatible return type" );
+								}
+								inherited = false;
+								break;
+							}
+						}
+						if( inherited ) {
+							inheritedMethods.add( x );
+						}
+					} );
+			interfaceFinalised = true;
+		}
+
+		protected final List< Member.Field > inheritedFields = new LinkedList<>();
+
+		@Override
+		public Stream< ? extends Member.Field > fields() {
+			return inheritedFields.stream();
+		}
+
+		protected final List< Member.HigherMethod > inheritedMethods = new LinkedList<>();
+
+		@Override
+		public Stream< ? extends Member.HigherMethod > methods() {
+			return inheritedMethods.stream();
 		}
 
 	}

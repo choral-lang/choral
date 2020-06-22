@@ -33,6 +33,8 @@ public abstract class HigherReferenceType extends HigherDataType implements Refe
 		super( universe, worldParameters );
 	}
 
+//	public abstract HigherReferenceType.Definition innerType();
+
 	public abstract GroundReferenceType applyTo( List< ? extends World > args );
 
 	protected abstract class Definition extends HigherDataType.Definition

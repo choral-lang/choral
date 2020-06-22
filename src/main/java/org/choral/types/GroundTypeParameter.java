@@ -49,10 +49,10 @@ public interface GroundTypeParameter extends GroundReferenceType, TypeParameter 
 		}
 		if( type.isClass() || type.isInterface() ) {
 			GroundClassOrInterface other = (GroundClassOrInterface) type;
-			if( other.isInterface() && ( isUpperClassImplicit() && isSubtypeOf( other ) ) ) {
+			if( other.isInterface() && !( isUpperClassImplicit() && isSubtypeOf( other ) ) ) {
 				return false;
 			}
-			if( other.isClass() && other.isEquivalentToErasureOf( upperClass() ) ) {
+			if( other.isClass() && !other.isEquivalentToErasureOf( upperClass() ) ) {
 				return false;
 			}
 			return upperInterfaces().allMatch( other::isSubtypeOf ) &&

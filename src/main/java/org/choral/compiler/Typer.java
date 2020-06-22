@@ -42,24 +42,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-
-//class C2 implements I1, I2 {
-//
-//	public < T > void m( Object y ) {
-//		Integer z = 5;
-//		new C2().< Integer >m( z );
-//	}
-//
-//}
-//
-//interface I1 {
-//	void m( Object y );
-//}
-//
-//interface I2 {
-//	< T > void m( T y );
-//}
-
 public class Typer {
 
 	private enum Phase {
@@ -266,8 +248,12 @@ public class Typer {
 										nm.signature().returnType(), false ) );
 					}
 					checkIfSelectionMethod( tm, nm.annotations() );
-					tm.innerCallable().finalise();
-					t.innerType().addMethod( tm );
+					try {
+						tm.innerCallable().finalise();
+						t.innerType().addMethod( tm );
+					} catch( StaticVerificationException e ) {
+						throw new AstPositionedException( nm.position(), e );
+					}
 					taskQueue.enqueue( Phase.MEMBER_DEFINITIONS, () -> {
 						try {
 							visitMethodBody( callableScope.getScope(), tm,
@@ -303,8 +289,12 @@ public class Typer {
 								visitGroundDataTypeExpression( callableScope, x.type(),
 										false ) );
 					}
-					tm.innerCallable().finalise();
-					t.innerType().addConstructor( tm );
+					try {
+						tm.innerCallable().finalise();
+						t.innerType().addConstructor( tm );
+					} catch( StaticVerificationException e ) {
+						throw new AstPositionedException( nm.position(), e );
+					}
 					taskQueue.enqueue( Phase.MEMBER_DEFINITIONS,
 							() -> visitConstructorBody( callableScope.getScope(), tm, nm,
 									constructorDependencies, explicitConstructorInvocations ) );
@@ -597,6 +587,13 @@ public class Typer {
 							visitGroundReferenceTypeExpression( scope, m, delayBoundChecks ) );
 				}
 				p.innerType().finaliseBound();
+				taskQueue.enqueue( new MemberTask( Phase.MEMBER_DECLARATIONS, p, () -> {
+					try {
+						p.innerType().finaliseInterface();
+					} catch( StaticVerificationException e ) {
+						throw new AstPositionedException( n.position(), e );
+					}
+				} ) );
 			}
 		}
 
@@ -786,9 +783,9 @@ public class Typer {
 		private static class MemberTask
 				extends TaskQueue.Task {
 
-			private final HigherClassOrInterface type;
+			private final HigherReferenceType type;
 
-			public MemberTask( Phase phase, HigherClassOrInterface type, Runnable task ) {
+			public MemberTask( Phase phase, HigherReferenceType type, Runnable task ) {
 				super( phase, task );
 				this.type = type;
 			}
@@ -803,7 +800,7 @@ public class Typer {
 					} else if( this.type.isStrictSubtypeOf( m.type ) ) {
 						i = -1;
 					} else {
-						i = 0; // m.type.toString().compareTo(this.type.toString());
+						i = 0;
 					}
 				}
 				return i;
@@ -814,8 +811,14 @@ public class Typer {
 			@Override
 			protected boolean isReady() {
 				if( !dependenciesReady ) {
-					dependenciesReady = type.innerType().extendedClassesOrInterfaces().allMatch(
-							GroundReferenceType::isInterfaceFinalised );
+					if( type instanceof HigherTypeParameter ) {
+						dependenciesReady = ( (HigherTypeParameter) type ).innerType()
+								.upperBound().allMatch( GroundReferenceType::isInterfaceFinalised );
+					} else {
+						dependenciesReady = ( (HigherClassOrInterface) type ).innerType()
+								.extendedClassesOrInterfaces()
+								.allMatch( GroundReferenceType::isInterfaceFinalised );
+					}
 				}
 				return super.isReady() && dependenciesReady;
 			}

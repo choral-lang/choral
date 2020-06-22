@@ -412,6 +412,11 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		public void finaliseInterface() {
+			assert ( isInheritanceFinalised() && extendedClassesOrInterfaces()
+					.allMatch( GroundReferenceType::isInterfaceFinalised ) );
+			if( interfaceFinalised ) {
+				return;
+			}
 			// inherited fields
 			extendedClassesOrInterfaces().flatMap( GroundReferenceType::fields )
 					.filter( x -> x.isAccessibleFrom( this )
@@ -424,16 +429,9 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 					.forEach( x -> {
 						boolean inherited = true;
 						boolean implemented = false;
-						if( identifier.equals( "C2" ) && x.identifier().equals( "m" ) ) {
-							System.out.println( "=====================================" );
-							System.out.println( this + " <? " + x );
-						}
 						for( Member.HigherMethod y : declaredMethods ) {
 							boolean sameSignature = y.sameSignatureOf( x );
 							boolean sameErasure = y.sameSignatureErasureOf( x );
-							if( identifier.equals( "C1" ) && x.identifier().equals( "m" ) ) {
-								System.out.println( y + " " + sameSignature + " " + sameErasure );
-							}
 							if( sameSignature || sameErasure ) {
 								// check both instance or both static
 								if( !y.isStatic() && x.isStatic() ) {
@@ -478,6 +476,14 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 								if( inherited ) {
 									for( Member.HigherMethod z : inheritedMethods ) {
 										if( z.isSubSignatureOf( x ) ) {
+											// check assignable return type;
+											if( !z.isReturnTypeAssignable( x ) ) {
+												throw new StaticVerificationException( "method '" + z
+														+ "' in '" + z.declarationContext()
+														+ "' clashes with method '" + x
+														+ "' in '" + x.declarationContext()
+														+ "', attempting to use incompatible return type" );
+											}
 											inherited = false;
 											break;
 										}
@@ -485,16 +491,13 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 								}
 								break;
 							} else {
-								if( x.sameSignatureErasureOf( y ) ) {
+								if( x.sameErasureAs( y ) ) {
 									throw new StaticVerificationException( "method '" + y
 											+ "' in '" + this + "' clashes with method '"
 											+ x + "' in '" + x.declarationContext()
 											+ "', both methods have the same erasure" );
 								}
 							}
-						}
-						if( identifier.equals( "C1" ) && x.identifier().equals( "m" ) ) {
-							System.out.println( inherited );
 						}
 						if( inherited ) {
 							// check implementation
@@ -538,7 +541,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			assert ( !interfaceFinalised );
 			assert ( method.declarationContext() == this );
 			for( Member.HigherMethod x : declaredMethods ) {
-				if( x.isOverrideEquivalentTo( method ) ) {
+				if( x.sameErasureAs( method ) ) {
 					if( x.sameSignatureOf( method ) ) {
 						throw new StaticVerificationException( "method '" + method
 								+ "' is already defined in '" + typeConstructor() + "'" );

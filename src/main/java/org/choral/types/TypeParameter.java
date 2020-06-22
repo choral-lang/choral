@@ -26,4 +26,5 @@ public interface TypeParameter extends ReferenceType {
 	default boolean isTypeParameter() {
 		return true;
 	}
+
 }
