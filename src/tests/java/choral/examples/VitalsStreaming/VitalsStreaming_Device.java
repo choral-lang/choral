@@ -1,9 +1,9 @@
 package choral.examples.VitalsStreaming;
 import org.choral.annotations.Choreography;
-import choral.examples.VitalsStreamingUtils.VitalsMsg;
+import org.choral.lang.Unit;
 import choral.examples.VitalsStreamingUtils.Sensor;
 import org.choral.channels.SymChannel_A;
-import org.choral.lang.Unit;
+import choral.examples.VitalsStreamingUtils.VitalsMsg;
 
 @Choreography( role = "Device", name = "VitalsStreaming" )
 public class VitalsStreaming_Device {

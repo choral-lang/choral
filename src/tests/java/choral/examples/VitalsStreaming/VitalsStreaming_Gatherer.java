@@ -1,10 +1,10 @@
 package choral.examples.VitalsStreaming;
-import org.choral.annotations.Choreography;
-import org.choral.channels.SymChannel_B;
-import choral.examples.VitalsStreamingUtils.VitalsMsg;
 import choral.examples.VitalsStreamingUtils.Vitals;
-import java.util.function.Consumer;
 import org.choral.lang.Unit;
+import org.choral.annotations.Choreography;
+import java.util.function.Consumer;
+import choral.examples.VitalsStreamingUtils.VitalsMsg;
+import org.choral.channels.SymChannel_B;
 
 @Choreography( role = "Gatherer", name = "VitalsStreaming" )
 public class VitalsStreaming_Gatherer {

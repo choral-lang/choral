@@ -1,9 +1,9 @@
 package choral.examples.Mergesort;
-import java.util.ArrayList;
 import org.choral.lang.Unit;
-import org.choral.channels.SymChannel_B;
-import org.choral.channels.SymChannel_A;
 import org.choral.annotations.Choreography;
+import org.choral.channels.SymChannel_A;
+import org.choral.channels.SymChannel_B;
+import java.util.ArrayList;
 import java.util.List;
 
 @Choreography( role = "A", name = "Mergesort" )

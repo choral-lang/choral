@@ -1,6 +1,8 @@
 package choral.examples.BiPair;
 import org.choral.lang.Unit;
+import org.choral.annotations.Choreography;
 
+@Choreography( role = "B", name = "BiPair" )
 public class BiPair_B< L, R > {
 	private R right;
 

@@ -14,11 +14,6 @@ public class DistAuthTest@( Client, Service, IP ) {
 		TLSChannel@( Client, IP )< Object > c1 = TestUtils@( Client, IP ).newLocalTLSChannel( "DistAuthTest1"@[ Client, IP ] );
 		TLSChannel@( Service, IP )< Object > c2 = TestUtils@( Service, IP ).newLocalTLSChannel( "DistAuthTest2"@[ Service, IP ] );
 		AuthResult@( Client, Service ) authResult = new DistAuth@( Client, Service, IP )( c1, c2 ).authenticate( new Credentials@Client( "john"@Client, "doe"@Client ) );
-		if( profile.isEmpty() ){
-			System@Service.out.println( "Profile empty"@Service );
-		} else {
-			System@Service.out.println( "Profile id: "@Service + profile.get().id() );
-		}
 	}
 
 }

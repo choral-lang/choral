@@ -1,8 +1,8 @@
 package choral.examples.VitalsStreaming;
-import choral.examples.VitalsStreamingUtils.SignatureRegistry;
-import choral.examples.VitalsStreamingUtils.PatientsRegistry;
 import choral.examples.VitalsStreamingUtils.Vitals;
+import choral.examples.VitalsStreamingUtils.SignatureRegistry;
 import org.choral.annotations.Choreography;
+import choral.examples.VitalsStreamingUtils.PatientsRegistry;
 import choral.examples.VitalsStreamingUtils.Signature;
 
 @Choreography( role = "A", name = "VitalsStreamingHelper" )

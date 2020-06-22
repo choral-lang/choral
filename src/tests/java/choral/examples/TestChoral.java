@@ -89,37 +89,37 @@ public class TestChoral {
 //						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"HelloRoles", ALL_WORLDS )
+//						"HelloRoles", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "BiPair") ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"BiPair", ALL_WORLDS )
+//						"BiPair", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "Foo") ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"Foo", ALL_WORLDS )
+//						"Foo", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "ConsumeItems" ) ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"ConsumeItems", ALL_WORLDS )
+//						"ConsumeItems", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "MultiFoo") ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"MultiFoo", ALL_WORLDS )
+//						"MultiFoo", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "RemoteFunction") ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"RemoteFunction", ALL_WORLDS )
+//						"RemoteFunction", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "AuthResult" ) )
@@ -134,9 +134,10 @@ public class TestChoral {
 //								"src/tests/choral/examples/DistAuth",
 //								"src/tests/choral/examples/AuthResult",
 //								"src/tests/choral/examples/BiPair",
-//								"src/choralUnit/choral/TestUtils.chh"
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
 //						),
-//						"DistAuth", ALL_WORLDS )
+//						"DistAuth", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "DistAuth" ) ),
@@ -148,7 +149,7 @@ public class TestChoral {
 //								"src/runtime/choral",
 //								"src/choralUnit/choral"
 //						),
-//						"DistAuthTest", ALL_WORLDS )
+//						"DistAuthTest", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "DistAuth" ) ),
@@ -160,7 +161,7 @@ public class TestChoral {
 //								"src/runtime/choral",
 //								"src/choralUnit/choral"
 //						),
-//						"DistAuth5", ALL_WORLDS )
+//						"DistAuth5", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "DistAuth" ) ),
@@ -172,7 +173,7 @@ public class TestChoral {
 //								"src/runtime/choral",
 //								"src/choralUnit/choral"
 //						),
-//						"DistAuth10", ALL_WORLDS )
+//						"DistAuth10", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
@@ -182,7 +183,7 @@ public class TestChoral {
 //								"src/runtime/choral",
 //								"src/choralUnit/choral"
 //						),
-//						"VitalsStreaming", ALL_WORLDS )
+//						"VitalsStreaming", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
@@ -202,7 +203,7 @@ public class TestChoral {
 //								"src/runtime/choral",
 //								"src/choralUnit/choral"
 //						),
-//						"Mergesort", ALL_WORLDS )
+//						"Mergesort", ALL_WORLDS ),
 
 
 //				new CompilationRequest(
@@ -225,15 +226,15 @@ public class TestChoral {
 //						),
 //						"BuyerSellerShipper", ALL_WORLDS )
 
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "Quicksort" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/Quicksort",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"Quicksort", ALL_WORLDS )
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "Quicksort" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/Quicksort",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"Quicksort", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "Quicksort" ) ),
