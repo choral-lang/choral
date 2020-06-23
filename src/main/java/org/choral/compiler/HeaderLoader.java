@@ -21,13 +21,9 @@
 
 package org.choral.compiler;
 
-import com.google.common.collect.Streams;
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.choral.Choral;
 import org.choral.ast.CompilationUnit;
 
 import java.io.*;
-import java.net.URL;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,7 +40,9 @@ public class HeaderLoader {
 		loadStandardProfile();
 	}
 
-	public static Stream< CompilationUnit > loadProfile( String profile ) throws IOException {
+	public static Stream< CompilationUnit > loadProfile(
+			String profile
+	) throws IOException {
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		List< String > files = new LinkedList<>();
 		try(
@@ -56,7 +54,6 @@ public class HeaderLoader {
 			}
 		}
 		List< CompilationUnit > headers = new ArrayList<>( files.size() );
-		// "choral://"
 		for( String file : files ) {
 			try( InputStream in = cl.getResourceAsStream( "headers/" + file ) ) {
 				headers.add( Parser.parseSourceFile( cl.getResourceAsStream( "headers/" + file ),

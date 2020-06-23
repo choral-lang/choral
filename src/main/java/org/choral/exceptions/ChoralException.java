@@ -23,6 +23,9 @@ package org.choral.exceptions;
 
 public class ChoralException extends RuntimeException {
 
+	public ChoralException() {
+	}
+
 	public ChoralException( String message ) {
 		super( message );
 	}

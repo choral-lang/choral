@@ -97,11 +97,11 @@ public class TestChoral {
 //						Collections.emptyList(),
 //						"BiPair", ALL_WORLDS ),
 
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "Foo") ),
-//						targetFolder,
-//						Collections.emptyList(),
-//						"Foo", ALL_WORLDS ),
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "Foo") ),
+						targetFolder,
+						List.of( "src/tests/choral/examples/Foo" ),
+						"Foo", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "ConsumeItems" ) ),
@@ -226,15 +226,15 @@ public class TestChoral {
 //						),
 //						"BuyerSellerShipper", ALL_WORLDS )
 
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "Quicksort" ) ),
-						targetFolder,
-						List.of(
-								"src/tests/choral/examples/Quicksort",
-								"src/runtime/choral",
-								"src/choralUnit/choral"
-						),
-						"Quicksort", ALL_WORLDS ),
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "Quicksort" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/Quicksort",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"Quicksort", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "Quicksort" ) ),
@@ -255,16 +255,16 @@ public class TestChoral {
 //						"src/choralUnit/choral"
 //				),
 //				"Karatsuba", ALL_WORLDS )
-
-		new CompilationRequest(
-				List.of( subFolder( sourceFolder, "Karatsuba" ) ),
-				targetFolder,
-				List.of(
-						"src/tests/choral/examples/Karatsuba",
-						"src/runtime/choral",
-						"src/choralUnit/choral"
-				),
-				"KaratsubaTest", ALL_WORLDS )
+//
+//		new CompilationRequest(
+//				List.of( subFolder( sourceFolder, "Karatsuba" ) ),
+//				targetFolder,
+//				List.of(
+//						"src/tests/choral/examples/Karatsuba",
+//						"src/runtime/choral",
+//						"src/choralUnit/choral"
+//				),
+//				"KaratsubaTest", ALL_WORLDS )
 
 		).collect( Collectors.toList() );
 

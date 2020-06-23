@@ -25,11 +25,13 @@ import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.choral.ast.CompilationUnit;
+import org.choral.exceptions.ChoralCompoundException;
 import org.choral.grammar.ChoralLexer;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.stream.Collectors;
 
 public class Parser {
 
@@ -39,22 +41,30 @@ public class Parser {
         throw new UnsupportedOperationException();
     } */
 
-	public static CompilationUnit parseSourceFile( File file ) throws IOException {
+	public static CompilationUnit parseSourceFile(
+			File file
+	) throws IOException {
 		return parseSourceFile( file.getCanonicalPath() );
 	}
 
-	public static CompilationUnit parseSourceFile( String file ) throws IOException {
+	public static CompilationUnit parseSourceFile(
+			String file
+	) throws IOException {
 		ANTLRInputStream input = new ANTLRFileStream( file );
 		ChoralLexer lexer = new ChoralLexer( input );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		org.choral.grammar.ChoralParser cp = new org.choral.grammar.ChoralParser( tokens );
 		cp.removeErrorListeners();
-		// ToDo: common error messages
-		cp.addErrorListener( new ParsingErrorListener( file ) );
+		ParsingErrorListener errorListener = new ParsingErrorListener( file );
+		cp.addErrorListener( errorListener );
 		org.choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
-		return AstOptimizer
-				.loadParameters( /* new String[]{ "showDebug" } */ )
-				.optimise( ctx, file );
+		if( errorListener.getErrors().isEmpty() ) {
+			return AstOptimizer
+					.loadParameters( /* new String[]{ "showDebug" } */ )
+					.optimise( ctx, file );
+		} else {
+			throw new ChoralCompoundException( errorListener.getErrors() );
+		}
 	}
 
 	public static CompilationUnit parseSourceFile(
@@ -65,11 +75,20 @@ public class Parser {
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		org.choral.grammar.ChoralParser cp = new org.choral.grammar.ChoralParser( tokens );
 		cp.removeErrorListeners();
-		// ToDo: common error messages
-		cp.addErrorListener( new ParsingErrorListener( file ) );
-		org.choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
-		return AstOptimizer
-				.loadParameters( /* new String[]{ "showDebug" } */ )
-				.optimise( ctx, file );
+		ParsingErrorListener errorListener = new ParsingErrorListener( file );
+		cp.addErrorListener( errorListener );
+		if( errorListener.getErrors().isEmpty() ) {
+			org.choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
+			return AstOptimizer
+					.loadParameters( /* new String[]{ "showDebug" } */ )
+					.optimise( ctx, file );
+		} else {
+			throw new ChoralCompoundException( errorListener.getErrors() );
+		}
+//		cp.addErrorListener( new ParsingErrorListener( file ) );
+//		org.choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
+//		return AstOptimizer
+//				.loadParameters( /* new String[]{ "showDebug" } */ )
+//				.optimise( ctx, file );
 	}
 }

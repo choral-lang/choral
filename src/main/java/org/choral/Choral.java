@@ -27,6 +27,8 @@ import org.choral.ast.Position;
 import org.choral.compiler.*;
 import org.choral.compiler.Compiler;
 import org.choral.exceptions.AstPositionedException;
+import org.choral.exceptions.ChoralCompoundException;
+import org.choral.exceptions.ChoralException;
 import org.choral.exceptions.StaticVerificationException;
 
 import static org.choral.utils.Streams.*;
@@ -110,17 +112,10 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				if( !skipProjectability ) {
 					Compiler.checkProjectiability( annotatedUnits );
 				}
-			} catch( AstPositionedException e ) {
-				printNiceErrorMessage( e );
-				if( verbosityOptions.verbosity() == VerbosityOptions.VerbosityLevel.DEBUG ) {
-					e.printStackTrace();
-				}
-				return 1;
 			} catch( Exception e ) {
-				System.err.println( e.getMessage() );
-				if( verbosityOptions.verbosity() == VerbosityOptions.VerbosityLevel.DEBUG ) {
-					e.printStackTrace();
-				}
+				printNiceErrorMessage( e, verbosityOptions.verbosity() );
+				System.out.println( "compilation failed." );
+				return 1;
 			}
 			return 0;
 		}
@@ -188,17 +183,10 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 								Collectors.toList() ),
 						emissionOptions.targetpath()
 				);
-			} catch( AstPositionedException e ) {
-				printNiceErrorMessage( e );
-				if( verbosityOptions.verbosity() == VerbosityOptions.VerbosityLevel.DEBUG ) {
-					e.printStackTrace();
-				}
-				return 1;
 			} catch( Exception e ) {
-				System.err.println( e.getMessage() );
-				if( verbosityOptions.verbosity() == VerbosityOptions.VerbosityLevel.DEBUG ) {
-					e.printStackTrace();
-				}
+				printNiceErrorMessage( e, verbosityOptions.verbosity() );
+				System.out.println( "compilation failed." );
+				return 1;
 			}
 			return 0;
 		}
@@ -245,19 +233,42 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 									emissionOptions.useCanonicalPaths(),
 									emissionOptions.isOverwritingAllowed() );
 						} ) );
-			} catch( AstPositionedException e ) {
-				printNiceErrorMessage( e );
-				return 1;
 			} catch( Exception e ) {
-				// ToDo error reporting
-				e.printStackTrace();
+				printNiceErrorMessage( e, verbosityOptions.verbosity() );
+				System.out.println( "compilation failed." );
 				return 1;
 			}
 			return 0;
 		}
 	}
 
-	private static void printNiceErrorMessage( AstPositionedException e ) {
+	private static void printNiceErrorMessage(
+			Throwable e, VerbosityOptions.VerbosityLevel verbosity
+	) {
+		if( e instanceof AstPositionedException ) {
+			printNiceErrorMessage( (AstPositionedException) e, verbosity );
+		} else if( e instanceof ChoralCompoundException ) {
+			for( ChoralException c : ( (ChoralCompoundException) e ).getCauses() ) {
+				printNiceErrorMessage( c, verbosity );
+			}
+		} else if( e instanceof WrappedException ) {
+			printNiceErrorMessage( e.getCause(), verbosity );
+		} else if( e instanceof IOException ) {
+			System.out.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
+			if( verbosity == VerbosityOptions.VerbosityLevel.DEBUG ) {
+				e.printStackTrace();
+			}
+		} else {
+			System.out.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
+			if( verbosity == VerbosityOptions.VerbosityLevel.DEBUG ) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private static void printNiceErrorMessage(
+			AstPositionedException e, VerbosityOptions.VerbosityLevel verbosity
+	) {
 		// -- parameters ---------------
 		int tabSize = 2;       // size of soft tabs
 		int contextLines = 1;  // number lines to display before and after the error line
@@ -300,6 +311,9 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				capitalizeFirst( e.getInnerMessage() ),
 				formattedSnippet
 		);
+		if( verbosity == VerbosityOptions.VerbosityLevel.DEBUG ) {
+			e.printStackTrace();
+		}
 	}
 
 	public static String relativizePath( String path ) {
