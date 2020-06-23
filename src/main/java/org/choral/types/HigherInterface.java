@@ -114,7 +114,8 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 	public final class Definition extends HigherClassOrInterface.Definition
 			implements GroundInterface {
 
-		private Definition(){}
+		private Definition() {
+		}
 
 		@Override
 		public HigherInterface typeConstructor() {

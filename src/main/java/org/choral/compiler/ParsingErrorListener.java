@@ -25,6 +25,9 @@ import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
+import org.choral.ast.Position;
+import org.choral.exceptions.AstPositionedException;
+import org.choral.exceptions.SyntaxException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,14 +38,14 @@ import static org.choral.Choral.relativizePath;
 public class ParsingErrorListener extends BaseErrorListener {
 
 	private final String file;
-	private final List< String > errors;
+	private final List< AstPositionedException > errors;
 
 	public ParsingErrorListener( String file ) {
 		this.file = file;
 		this.errors = new ArrayList<>();
 	}
 
-	public List< String > getErrors(){
+	public List< ? extends AstPositionedException > getErrors() {
 		return this.errors;
 	}
 
@@ -57,15 +60,9 @@ public class ParsingErrorListener extends BaseErrorListener {
 	) {
 		List< String > stack = ( (Parser) recognizer ).getRuleInvocationStack();
 		Collections.reverse( stack );
-		String file = relativizePath( recognizer.getInputStream().getSourceName() ).equals( "<unknown>" ) ?
-		this.file : relativizePath( recognizer.getInputStream().getSourceName() );
-		errors.add( file
-					+ ":" + line
-					+ ":" + charPositionInLine
-					+ ": " + "error: " + msg );
-//		System.err.println( file
-//						+ ":" + line
-//						+ ":" + charPositionInLine
-//						+ ": " + "error: " + msg );
+		String file = relativizePath( recognizer.getInputStream().getSourceName() ).equals(
+				"<unknown>" ) ?
+				this.file : relativizePath( recognizer.getInputStream().getSourceName() );
+		errors.add( new SyntaxException( new Position( file, line, charPositionInLine ), msg ) );
 	}
 }

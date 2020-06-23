@@ -72,7 +72,8 @@ public final class HigherPrimitiveDataType extends HigherDataType implements Pri
 	private final class Definition extends HigherDataType.Definition
 			implements GroundPrimitiveDataType {
 
-		private Definition(){}
+		private Definition() {
+		}
 
 		@Override
 		public final String toString() {

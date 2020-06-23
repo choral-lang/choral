@@ -64,7 +64,7 @@ public interface GroundClassOrInterface extends ClassOrInterface, GroundReferenc
 		}
 		if( type.isTypeParameter() ) {
 			GroundTypeParameter other = (GroundTypeParameter) type;
-			if( isInterface() && !(other.isUpperClassImplicit() && other.isSubtypeOf( this ) ) ) {
+			if( isInterface() && !( other.isUpperClassImplicit() && other.isSubtypeOf( this ) ) ) {
 				return false;
 			}
 			if( isClass() && !isEquivalentToErasureOf( other.upperClass() ) ) {

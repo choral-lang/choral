@@ -37,7 +37,9 @@ public class ImportProjector implements ChoralVisitorInterface< Void > {
 		for( ImportDeclaration i : cImports ) {
 			if( i.typeAnnotation().isPresent() && i.typeAnnotation().get().worldParameters().size() > 1 ) {
 				for( World worldParameter : i.typeAnnotation().get().worldParameters() ) {
-					pImports.add( new ImportDeclaration( i.name() + "_" + worldParameter.identifier(), i.position() ) );
+					pImports.add(
+							new ImportDeclaration( i.name() + "_" + worldParameter.identifier(),
+									i.position() ) );
 				}
 			} else {
 				pImports.add( i );
@@ -392,10 +394,11 @@ public class ImportProjector implements ChoralVisitorInterface< Void > {
 		usedImports.addAll(
 				imports.stream()
 						.filter( i ->
-							i.name().endsWith( "*" )
-									|| ( i.name().contains( "." )
-									&& i.name().substring( i.name().lastIndexOf( "." )+1 ).equals( name ) )
-									|| i.name().equals( name )
+								i.name().endsWith( "*" )
+										|| ( i.name().contains( "." )
+										&& i.name().substring(
+										i.name().lastIndexOf( "." ) + 1 ).equals( name ) )
+										|| i.name().equals( name )
 						).collect( Collectors.toSet() )
 		);
 		imports.removeAll( usedImports );

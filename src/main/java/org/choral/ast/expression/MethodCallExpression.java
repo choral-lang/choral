@@ -100,7 +100,8 @@ public class MethodCallExpression extends InvocationExpression {
 			throw new ChoralException(
 					this.position().line() + ":"
 							+ this.position().column() + ":"
-							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit( this ) + "\n with " + n.getClass().getSimpleName() );
+							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
+							this ) + "\n with " + n.getClass().getSimpleName() );
 		}
 	}
 }

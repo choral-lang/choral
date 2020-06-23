@@ -117,7 +117,7 @@ public class Universe {
 		}
 
 		public boolean isAssignableTo( PrimitiveTypeTag target ) {
-			if(target == null) {
+			if( target == null ) {
 				return false;
 			}
 			switch( this ) {
@@ -358,7 +358,7 @@ public class Universe {
 
 			@Override
 			public boolean isEquivalentToErasureOf( GroundDataType type ) {
-				return isEquivalentTo(type);
+				return isEquivalentTo( type );
 			}
 		}
 

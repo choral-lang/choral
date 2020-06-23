@@ -478,11 +478,12 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 										if( z.isSubSignatureOf( x ) ) {
 											// check assignable return type;
 											if( !z.isReturnTypeAssignable( x ) ) {
-												throw new StaticVerificationException( "method '" + z
-														+ "' in '" + z.declarationContext()
-														+ "' clashes with method '" + x
-														+ "' in '" + x.declarationContext()
-														+ "', attempting to use incompatible return type" );
+												throw new StaticVerificationException(
+														"method '" + z
+																+ "' in '" + z.declarationContext()
+																+ "' clashes with method '" + x
+																+ "' in '" + x.declarationContext()
+																+ "', attempting to use incompatible return type" );
 											}
 											inherited = false;
 											break;

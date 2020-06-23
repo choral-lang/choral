@@ -91,7 +91,7 @@ public class ConstructorDefinition extends Node {
 		return signature;
 	}
 
-	public Optional<MethodCallExpression> explicitConstructorInvocation() {
+	public Optional< MethodCallExpression > explicitConstructorInvocation() {
 		return Optional.ofNullable( explicitConstructorInvocation );
 	}
 
@@ -100,10 +100,11 @@ public class ConstructorDefinition extends Node {
 	}
 
 	public Statement body() {
-		if(explicitConstructorInvocation == null) {
+		if( explicitConstructorInvocation == null ) {
 			return blockStatements;
 		} else {
-			return new ExpressionStatement( explicitConstructorInvocation,blockStatements,explicitConstructorInvocation.position() );
+			return new ExpressionStatement( explicitConstructorInvocation, blockStatements,
+					explicitConstructorInvocation.position() );
 		}
 	}
 

@@ -66,8 +66,9 @@ public class ExpressionStatement extends Statement {
 		} catch( ClassCastException e ) {
 			throw new ChoralException(
 					this.position().line() + ":"
-					+ this.position().column() + ":"
-					+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit( this ) + "\n with " + n.getClass().getSimpleName() );
+							+ this.position().column() + ":"
+							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
+							this ) + "\n with " + n.getClass().getSimpleName() );
 		}
 	}
 

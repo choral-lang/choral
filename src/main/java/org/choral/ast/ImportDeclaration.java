@@ -26,7 +26,8 @@ import org.choral.types.HigherClassOrInterface;
 
 import java.util.Optional;
 
-public class ImportDeclaration extends Node implements WithTypeAnnotation< HigherClassOrInterface> {
+public class ImportDeclaration extends Node
+		implements WithTypeAnnotation< HigherClassOrInterface > {
 
 	private final String name;
 
@@ -49,7 +50,7 @@ public class ImportDeclaration extends Node implements WithTypeAnnotation< Highe
 		this.typeAnnotation = typeAnnotation;
 	}
 
-	public boolean isOnDemand(){
+	public boolean isOnDemand() {
 		return name.endsWith( "*" );
 	}
 

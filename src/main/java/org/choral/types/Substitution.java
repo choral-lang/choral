@@ -38,7 +38,8 @@ public abstract class Substitution {
 		return placeHolder;
 	}
 
-	public static Substitution ID = new Substitution() { };
+	public static Substitution ID = new Substitution() {
+	};
 
 	Substitution andThen( Substitution s ) {
 		return new Substitution() {

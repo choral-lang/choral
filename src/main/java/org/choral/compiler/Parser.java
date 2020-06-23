@@ -25,6 +25,7 @@ import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.choral.ast.CompilationUnit;
+import org.choral.exceptions.ChoralCompoundException;
 import org.choral.grammar.ChoralLexer;
 
 import java.io.File;
@@ -42,13 +43,13 @@ public class Parser {
 
 	public static CompilationUnit parseSourceFile(
 			File file
-	) throws IOException, ChoralParserException {
+	) throws IOException {
 		return parseSourceFile( file.getCanonicalPath() );
 	}
 
 	public static CompilationUnit parseSourceFile(
 			String file
-	) throws IOException, ChoralParserException {
+	) throws IOException {
 		ANTLRInputStream input = new ANTLRFileStream( file );
 		ChoralLexer lexer = new ChoralLexer( input );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
@@ -62,13 +63,13 @@ public class Parser {
 					.loadParameters( /* new String[]{ "showDebug" } */ )
 					.optimise( ctx, file );
 		} else {
-			throw new ChoralParserException( String.join( "\n", errorListener.getErrors() ) );
+			throw new ChoralCompoundException( errorListener.getErrors() );
 		}
 	}
 
 	public static CompilationUnit parseSourceFile(
 			InputStream in, String file
-	) throws IOException, ChoralParserException {
+	) throws IOException {
 		ANTLRInputStream input = new ANTLRInputStream( in );
 		ChoralLexer lexer = new ChoralLexer( input );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
@@ -82,7 +83,7 @@ public class Parser {
 					.loadParameters( /* new String[]{ "showDebug" } */ )
 					.optimise( ctx, file );
 		} else {
-			throw new ChoralParserException( String.join( "\n", errorListener.getErrors() ) );
+			throw new ChoralCompoundException( errorListener.getErrors() );
 		}
 //		cp.addErrorListener( new ParsingErrorListener( file ) );
 //		org.choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();

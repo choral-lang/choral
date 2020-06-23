@@ -476,7 +476,8 @@ public class DependecyVisitor implements ChoralVisitorInterface< Void > {
 			this.projectableTemplates.add(
 					new Pair<>( n.name().identifier(), n.worldArguments().indexOf( this.w ) ) );
 		}
-		if( n.worldArguments().size() == 0 && !n.name().identifier().equals( "void" ) ) { // this is of kind @ => ...
+		if( n.worldArguments().size() == 0 && !n.name().identifier().equals(
+				"void" ) ) { // this is of kind @ => ...
 			HigherDataType dataType = (HigherDataType) n.typeAnnotation().get();
 			dataType.worldParameters().forEach( w -> {
 				this.projectableTemplates.add(

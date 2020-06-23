@@ -1,5 +1,9 @@
 package foo;
 
+public class Foo@A<T> {
+
+}
+
 abstract class C0@A{
 
 	public abstract <T@X> void m (Object@A y);

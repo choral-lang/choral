@@ -114,7 +114,8 @@ public final class HigherEnum extends HigherClass implements Enum {
 
 	public final class Definition extends HigherClass.Definition implements GroundEnum {
 
-		private Definition(){}
+		private Definition() {
+		}
 
 		@Override
 		public void setExtendedClass() {

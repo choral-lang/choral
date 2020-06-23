@@ -723,7 +723,7 @@ public class AstOptimizer implements ChoralVisitor {
 			ChoralParser.ExplicitConstructorInvocationContext ctx
 	) {
 		return new MethodCallExpression(
-				getName( (ctx.SUPER() == null) ? ctx.THIS() : ctx.SUPER()),
+				getName( ( ctx.SUPER() == null ) ? ctx.THIS() : ctx.SUPER() ),
 				ifPresent( ctx.argumentList() )
 						.apply( this::visitArgumentList )
 						.orElse( List.of() ),
@@ -984,7 +984,7 @@ public class AstOptimizer implements ChoralVisitor {
 			e = visitMethodInvocation( te.methodInvocation() );
 		} else if( isPresent( te.staticGenericAccess() ) ) {
 			e = visitStaticGenericAccess( te.staticGenericAccess() );
-		} else if( isPresent( te.thisOrSuperMethodAccess() ) ){
+		} else if( isPresent( te.thisOrSuperMethodAccess() ) ) {
 			e = visitThisOrSuperMethodAccess( te.thisOrSuperMethodAccess() );
 		} else {
 			e = visitClassInstanceCreationExpression( te.classInstanceCreationExpression() );
@@ -1042,12 +1042,14 @@ public class AstOptimizer implements ChoralVisitor {
 	}
 
 	@Override
-	public Expression visitThisOrSuperMethodAccess(	ChoralParser.ThisOrSuperMethodAccessContext tosma ) {
+	public Expression visitThisOrSuperMethodAccess(
+			ChoralParser.ThisOrSuperMethodAccessContext tosma
+	) {
 		debugInfo();
 		Expression e = new ScopedExpression(
-			tosma.superSymbol != null ?
-					new SuperExpression( getPosition( tosma.superSymbol ) )
-					: new ThisExpression( getPosition( tosma.thisSymbol ) ),
+				tosma.superSymbol != null ?
+						new SuperExpression( getPosition( tosma.superSymbol ) )
+						: new ThisExpression( getPosition( tosma.thisSymbol ) ),
 				visitMethodInvocation( tosma.methodInvocation() )
 		);
 		e.setPosition( getPosition( tosma ) );

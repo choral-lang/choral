@@ -57,7 +57,8 @@ public class Utils {
 	}
 
 	static String getProjectionName(
-			String name, WorldArgument world, List< WorldArgument > worlds, List< WorldArgument > referenceWorlds
+			String name, WorldArgument world, List< WorldArgument > worlds,
+			List< WorldArgument > referenceWorlds
 	) {
 		int worldIndex = worlds.indexOf( world );
 		WorldArgument referenceWorld = referenceWorlds.get( worldIndex );

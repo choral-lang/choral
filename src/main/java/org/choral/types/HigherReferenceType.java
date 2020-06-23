@@ -40,7 +40,8 @@ public abstract class HigherReferenceType extends HigherDataType implements Refe
 	protected abstract class Definition extends HigherDataType.Definition
 			implements GroundReferenceType {
 
-		Definition(){}
+		Definition() {
+		}
 
 		public final Optional< ? extends Member.Field > field( String name ) {
 			return fields()

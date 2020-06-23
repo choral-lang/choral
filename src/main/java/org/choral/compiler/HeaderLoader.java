@@ -36,11 +36,13 @@ import static org.choral.utils.Streams.*;
 
 public class HeaderLoader {
 
-	public static void test() throws IOException, ChoralParserException {
+	public static void test() throws IOException {
 		loadStandardProfile();
 	}
 
-	public static Stream< CompilationUnit > loadProfile( String profile ) throws IOException, ChoralParserException {
+	public static Stream< CompilationUnit > loadProfile(
+			String profile
+	) throws IOException {
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		List< String > files = new LinkedList<>();
 		try(
@@ -52,7 +54,6 @@ public class HeaderLoader {
 			}
 		}
 		List< CompilationUnit > headers = new ArrayList<>( files.size() );
-		// "choral://"
 		for( String file : files ) {
 			try( InputStream in = cl.getResourceAsStream( "headers/" + file ) ) {
 				headers.add( Parser.parseSourceFile( cl.getResourceAsStream( "headers/" + file ),
@@ -62,26 +63,26 @@ public class HeaderLoader {
 		return headers.stream();
 	}
 
-	public static Stream< CompilationUnit > loadStandardProfile() throws IOException, ChoralParserException {
+	public static Stream< CompilationUnit > loadStandardProfile() throws IOException {
 		return loadProfile( "standard" );
 	}
 
 	public static Stream< CompilationUnit > loadFromPath(
 			Collection< Path > folders
-	) throws IOException, ChoralParserException {
+	) throws IOException {
 		return loadFromPath( folders, true );
 	}
 
 	public static Stream< CompilationUnit > loadFromPath(
 			Collection< Path > folders, boolean ignoreIfSourcePresent
-	) throws IOException, ChoralParserException {
+	) throws IOException {
 		return loadFromPath( folders, List.of(), ignoreIfSourcePresent, true );
 	}
 
 	public static Stream< CompilationUnit > loadFromPath(
 			Collection< Path > headersPaths, Collection< File > sourceFiles,
 			boolean ignoreIfSourcePresent, boolean strictHeaderSearch
-	) throws IOException, ChoralParserException {
+	) throws IOException {
 		Stream< Path > pathsFromHeaders = headersPaths.stream().flatMap(
 				wrapFunction( p -> Files.find( p, 999,
 						( q, a ) -> !a.isDirectory() && keepHeaderFile( q, sourceFiles,
