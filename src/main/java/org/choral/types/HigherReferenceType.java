@@ -26,15 +26,22 @@ import java.util.stream.Stream;
 
 public abstract class HigherReferenceType extends HigherDataType implements ReferenceType {
 
-	HigherReferenceType( Types universe,
-						 List< World > worldParameters
+	HigherReferenceType(
+			Universe universe,
+			List< World > worldParameters
 	) {
 		super( universe, worldParameters );
 	}
 
+//	public abstract HigherReferenceType.Definition innerType();
+
 	public abstract GroundReferenceType applyTo( List< ? extends World > args );
 
-	protected abstract class Definition extends HigherDataType.Definition implements GroundReferenceType {
+	protected abstract class Definition extends HigherDataType.Definition
+			implements GroundReferenceType {
+
+		Definition() {
+		}
 
 		public final Optional< ? extends Member.Field > field( String name ) {
 			return fields()
@@ -50,7 +57,7 @@ public abstract class HigherReferenceType extends HigherDataType implements Refe
 
 	protected abstract class Proxy extends HigherDataType.Proxy implements GroundReferenceType {
 
-		public Proxy( Substitution substitution ) {
+		Proxy( Substitution substitution ) {
 			super( substitution );
 		}
 

@@ -1,0 +1,13 @@
+package java.lang;
+
+public final class Math@A {
+
+    public static Double@A floor( Double@A a) {}
+
+    public static Double@A log10( Long@A a ){}
+
+    public static Double@A max( Double@A a, Double@A b ){}
+
+    public static Double@A pow( int@A a, Integer@A b ){}
+
+}

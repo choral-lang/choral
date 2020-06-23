@@ -27,6 +27,7 @@ import org.choral.ast.expression.EnumCaseInstantiationExpression;
 import org.choral.ast.expression.Expression;
 import org.choral.ast.visitors.ChoralVisitorInterface;
 import org.choral.ast.visitors.MergerInterface;
+import org.choral.ast.visitors.PrettyPrinterVisitor;
 import org.choral.exceptions.ChoralException;
 
 public class SelectStatement extends Statement {
@@ -34,13 +35,20 @@ public class SelectStatement extends Statement {
 	private final EnumCaseInstantiationExpression enumConstructor;
 	private final Expression channelExpression;
 
-	public SelectStatement( final EnumCaseInstantiationExpression enumConstructor, final Expression channelExpression, final Statement continuation ) {
+	public SelectStatement(
+			final EnumCaseInstantiationExpression enumConstructor,
+			final Expression channelExpression, final Statement continuation
+	) {
 		super( continuation );
 		this.enumConstructor = enumConstructor;
 		this.channelExpression = channelExpression;
 	}
 
-	public SelectStatement( final EnumCaseInstantiationExpression enumConstructor, final Expression channelExpression, final Statement continuation, final Position position ) {
+	public SelectStatement(
+			final EnumCaseInstantiationExpression enumConstructor,
+			final Expression channelExpression, final Statement continuation,
+			final Position position
+	) {
 		super( continuation, position );
 		this.enumConstructor = enumConstructor;
 		this.channelExpression = channelExpression;
@@ -59,7 +67,8 @@ public class SelectStatement extends Statement {
 		return new SelectStatement(
 				this.enumConstructor(),
 				this.channelExpression(),
-				this.continuation() == null ? continuation : continuation().cloneWithContinuation( continuation ),
+				this.continuation() == null ? continuation : continuation().cloneWithContinuation(
+						continuation ),
 				this.position() );
 	}
 
@@ -70,10 +79,14 @@ public class SelectStatement extends Statement {
 
 	@Override
 	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try{
+		try {
 			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ){
-			throw new ChoralException( "Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
+		} catch( ClassCastException e ) {
+			throw new ChoralException(
+					this.position().line() + ":"
+							+ this.position().column() + ":"
+							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
+							this ) + "\n with " + n.getClass().getSimpleName() );
 		}
 	}
 

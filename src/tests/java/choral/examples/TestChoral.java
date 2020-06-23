@@ -25,6 +25,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.choral.Choral;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,22 +34,24 @@ import java.util.stream.Stream;
 public class TestChoral {
 
 	private static class CompilationRequest {
-		private final String sourceFolder;
+		private final List< String > sourceFolder;
 		private final String targetFolder;
+		private final List< String > headersFolders;
 		private final String symbol;
 		private final List< String > worlds;
 
 		public CompilationRequest(
-				String sourceFolder, String targetFolder, String symbol,
+				List< String > sourceFolder, String targetFolder, List< String > headersFolders, String symbol,
 				List< String > worlds
 		) {
 			this.sourceFolder = sourceFolder;
 			this.targetFolder = targetFolder;
+			this.headersFolders = headersFolders;
 			this.symbol = symbol;
 			this.worlds = worlds;
 		}
 
-		public String sourceFolder() {
+		public List< String > sourceFolder() {
 			return sourceFolder;
 		}
 
@@ -63,6 +66,10 @@ public class TestChoral {
 		public List< String > worlds() {
 			return worlds;
 		}
+
+		public List< String > headersFolders() {
+			return headersFolders;
+		}
 	}
 
 	static final List< String > ALL_WORLDS = Collections.singletonList( "" );
@@ -71,48 +78,200 @@ public class TestChoral {
 		return sourceFolder + File.separator + subFolder;
 	}
 
-	public static void main ( String[] args ) {
+	static String sourceFolder = "src/tests/choral/examples";
+	static String targetFolder = "src/tests/java/";
 
-		String sourceFolder = "src/tests/choral/examples";
-		String targetFolder = "src/tests/java/";
+	public static void main ( String[] args ) {
 
 		List< CompilationRequest > compilationRequests = Stream.of(
 
-//				new CompilationRequest( subFolder( sourceFolder, "HelloRoles" ), targetFolder, "HelloRoles", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
+//						targetFolder,
+//						Collections.emptyList(),
+//						"HelloRoles", ALL_WORLDS ),
 
-//				new CompilationRequest( subFolder( sourceFolder, "BiPair"), targetFolder, "BiPair", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "BiPair") ),
+//						targetFolder,
+//						Collections.emptyList(),
+//						"BiPair", ALL_WORLDS ),
 
-//				new CompilationRequest( subFolder( sourceFolder, "Foo"), targetFolder, "Foo", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "Foo") ),
+//						targetFolder,
+//						Collections.emptyList(),
+//						"Foo", ALL_WORLDS ),
 
-				new CompilationRequest( subFolder( sourceFolder, "ConsumeItems"), targetFolder, "ConsumeItems", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "ConsumeItems" ) ),
+//						targetFolder,
+//						Collections.emptyList(),
+//						"ConsumeItems", ALL_WORLDS ),
 
-//				new CompilationRequest( subFolder( sourceFolder, "RemoteFunction"), targetFolder, "RemoteFunction", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "MultiFoo") ),
+//						targetFolder,
+//						Collections.emptyList(),
+//						"MultiFoo", ALL_WORLDS ),
 
-//				new CompilationRequest( subFolder( sourceFolder, "AuthResult"), targetFolder, "AuthResult", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "RemoteFunction") ),
+//						targetFolder,
+//						Collections.emptyList(),
+//						"RemoteFunction", ALL_WORLDS ),
 
-//				new CompilationRequest( subFolder( sourceFolder, "BuyerSellerShipper"), targetFolder, "BuyerSellerShipper", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "AuthResult" ) )
+//						targetFolder,
+//						List.of( "src/tests/choral/examples/BiPair", ""src/tests/choral/examples/DistAuth"" ),
+//						"AuthResult", ALL_WORLDS )
 
-//				new CompilationRequest( subFolder( sourceFolder, "DistAuth"), targetFolder, "DistAuth", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "DistAuth"), targetFolder, "DistAuth5", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "DistAuth"), targetFolder, "DistAuth10", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "DistAuth"), targetFolder, "DistAuthTest", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/DistAuth",
+//								"src/tests/choral/examples/AuthResult",
+//								"src/tests/choral/examples/BiPair",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"DistAuth", ALL_WORLDS ),
 
-//				new CompilationRequest( subFolder( sourceFolder, "VitalsStreaming"), targetFolder, "VitalsStreaming", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "VitalsStreaming"), targetFolder, "VitalsStreamingTest", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/DistAuth",
+//								"src/tests/choral/examples/AuthResult",
+//								"src/tests/choral/examples/BiPair",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"DistAuthTest", ALL_WORLDS ),
 
-//				new CompilationRequest( subFolder( sourceFolder, "MergeSort"), targetFolder, "MergeSort", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "MergeSort"), targetFolder, "MergeSortTest", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/DistAuth",
+//								"src/tests/choral/examples/AuthResult",
+//								"src/tests/choral/examples/BiPair",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"DistAuth5", ALL_WORLDS ),
 
-//				new CompilationRequest( subFolder( sourceFolder, "QuickSort"), targetFolder, "QuickSort", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "QuickSort"), targetFolder, "QuickSortTest", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/DistAuth",
+//								"src/tests/choral/examples/AuthResult",
+//								"src/tests/choral/examples/BiPair",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"DistAuth10", ALL_WORLDS ),
 
-//				new CompilationRequest( subFolder( sourceFolder, "Karatsuba"), targetFolder, "Karatsuba", ALL_WORLDS )
-//				new CompilationRequest( subFolder( sourceFolder, "Karatsuba"), targetFolder, "KaratsubaTest", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/VitalsStreaming",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"VitalsStreaming", ALL_WORLDS ),
+
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/VitalsStreaming",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"VitalsStreamingTest", ALL_WORLDS )
+
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "Mergesort" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/Mergesort",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"Mergesort", ALL_WORLDS ),
+
+
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "Mergesort" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/Mergesort",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"MergesortTest", ALL_WORLDS )
+
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "BuyerSellerShipper" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/BuyerSellerShipper",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"BuyerSellerShipper", ALL_WORLDS )
+
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "Quicksort" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/Quicksort",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"Quicksort", ALL_WORLDS ),
+
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "Quicksort" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/Quicksort",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"QuicksortTest", ALL_WORLDS )
+
+//		new CompilationRequest(
+//				List.of( subFolder( sourceFolder, "Karatsuba" ) ),
+//				targetFolder,
+//				List.of(
+//						"src/tests/choral/examples/Karatsuba",
+//						"src/runtime/choral",
+//						"src/choralUnit/choral"
+//				),
+//				"Karatsuba", ALL_WORLDS )
+
+		new CompilationRequest(
+				List.of( subFolder( sourceFolder, "Karatsuba" ) ),
+				targetFolder,
+				List.of(
+						"src/tests/choral/examples/Karatsuba",
+						"src/runtime/choral",
+						"src/choralUnit/choral"
+				),
+				"KaratsubaTest", ALL_WORLDS )
 
 		).collect( Collectors.toList() );
 
-//		check( compilationRequests );
-		project( compilationRequests );
+//		generateCHH( headersRequest ); // use exclusively because they call exit
+//		check( compilationRequests ); // use exclusively because they call exit
+		project( compilationRequests ); // use exclusively because they call exit
+		System.out.println( "Projected Classes" );
 	}
 
 	private static void check( List< CompilationRequest > compilationRequests ){
@@ -121,7 +280,7 @@ public class TestChoral {
 					new String[]{
 							"check",
 							"--verbosity=DEBUG",
-							"--headers=src/tests/choral/Prelude",
+//							"--headers=src/tests/choral/Prelude",
 							compilationRequest.sourceFolder() + File.separator + compilationRequest.symbol + ".ch"
 					},
 					new String[]{}
@@ -132,18 +291,20 @@ public class TestChoral {
 	private static void project( List< CompilationRequest > compilationRequests ){
 		try {
 			for ( CompilationRequest compilationRequest : compilationRequests ) {
-				Choral.main( ( String[] ) //ArrayUtils.addAll(
-						new String[]{
-								"epp",
-								"--verbosity=DEBUG",
-								"--headers=src/tests/choral/Prelude",
-								"-t", compilationRequest.targetFolder(),
-								"-s", compilationRequest.sourceFolder(),
-								compilationRequest.symbol() }
-//								,
-//						compilationRequest.worlds().toArray()
-//				)
-			);
+				ArrayList< String > parameters = new ArrayList<>();
+				parameters.add( "epp" );
+				parameters.add( "--verbosity=DEBUG" );
+				if( !compilationRequest.headersFolders().isEmpty() )
+					parameters.add( "--headers=" + String.join( ":", compilationRequest.headersFolders() ) );
+				parameters.add( "-t" );
+				parameters.add( compilationRequest.targetFolder() );
+				parameters.add( "-s" );
+				parameters.add( String.join( ":", compilationRequest.sourceFolder() ) );
+				parameters.add( compilationRequest.symbol() );
+				parameters.addAll( compilationRequest.worlds() );
+				parameters.add( "--annotate" );
+				System.out.println( "Issuing command " + String.join( " ", parameters ) );
+				Choral.main( parameters.toArray( new String[ 0 ] ) );
 			}
 		} catch ( Exception e ) {
 			e.printStackTrace();

@@ -60,7 +60,7 @@ public abstract class SwitchArgument< T > extends Node {
 
 		@Override
 		public boolean equals( Object obj ) {
-			if( obj instanceof SwitchArgumentLiteral ){
+			if( obj instanceof SwitchArgumentLiteral ) {
 				return this.argument().equals( ( (SwitchArgumentLiteral) obj ).argument() );
 			}
 			return false;
@@ -85,7 +85,7 @@ public abstract class SwitchArgument< T > extends Node {
 
 		@Override
 		public boolean equals( Object obj ) {
-			if( obj instanceof SwitchArgumentLabel ){
+			if( obj instanceof SwitchArgumentLabel ) {
 				return this.argument().equals( ( (SwitchArgumentLabel) obj ).argument() );
 			}
 			return false;

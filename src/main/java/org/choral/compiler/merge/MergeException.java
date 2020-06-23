@@ -47,7 +47,7 @@ public class MergeException extends ChoralException {
 	}
 
 	public static void check( boolean check, String errorMessage, Node n1, Node n2 ) {
-		if( check ){
+		if( check ) {
 			throw new MergeException( errorMessage, n1, n2 );
 		}
 	}

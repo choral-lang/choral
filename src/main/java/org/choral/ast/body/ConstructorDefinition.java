@@ -23,6 +23,10 @@ package org.choral.ast.body;
 
 import org.choral.ast.Node;
 import org.choral.ast.Position;
+import org.choral.ast.expression.MethodCallExpression;
+import org.choral.ast.statement.BlockStatement;
+import org.choral.ast.statement.ExpressionStatement;
+import org.choral.ast.statement.NilStatement;
 import org.choral.ast.statement.Statement;
 import org.choral.ast.visitors.ChoralVisitorInterface;
 import org.choral.types.Member;
@@ -34,18 +38,21 @@ import java.util.Optional;
 
 public class ConstructorDefinition extends Node {
 	private final ConstructorSignature signature;
-	private final Statement body;
+	private final MethodCallExpression explicitConstructorInvocation;
+	private final Statement blockStatements;
 	private final EnumSet< ConstructorModifier > modifiers;
 
 	public ConstructorDefinition(
 			final ConstructorSignature signature,
-			final Statement body,
+			final MethodCallExpression explicitConstructorInvocation,
+			final Statement blockStatements,
 			final EnumSet< ConstructorModifier > modifiers,
 			final Position position
 	) {
 		super( position );
 		this.signature = signature;
-		this.body = body;
+		this.explicitConstructorInvocation = explicitConstructorInvocation;
+		this.blockStatements = blockStatements;
 		this.modifiers = modifiers;
 	}
 
@@ -84,8 +91,21 @@ public class ConstructorDefinition extends Node {
 		return signature;
 	}
 
+	public Optional< MethodCallExpression > explicitConstructorInvocation() {
+		return Optional.ofNullable( explicitConstructorInvocation );
+	}
+
+	public Statement blockStatements() {
+		return blockStatements;
+	}
+
 	public Statement body() {
-		return body;
+		if( explicitConstructorInvocation == null ) {
+			return blockStatements;
+		} else {
+			return new ExpressionStatement( explicitConstructorInvocation, blockStatements,
+					explicitConstructorInvocation.position() );
+		}
 	}
 
 	@Override

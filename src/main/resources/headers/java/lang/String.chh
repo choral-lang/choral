@@ -1,6 +1,8 @@
 /* Choral Header Version 0.1 */
 package java.lang;
 
+import java.nio.charset.Charset;
+
 public final class String@A {
 
     public String() { }
@@ -70,5 +72,7 @@ public final class String@A {
     public static String@A valueOf(float@A f) { }
 
     public static String@A valueOf(double@A d) { }
+
+    public Object@A getBytes( Charset@A c ){}
 
 }

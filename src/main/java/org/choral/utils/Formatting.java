@@ -43,10 +43,12 @@ public final class Formatting {
 				list.get( last ) );
 	}
 
-	public static Collector< CharSequence, ?, String > joining( CharSequence delimiter,
-																CharSequence prefix,
-																CharSequence suffix,
-																String emptyValue ) {
+	public static Collector< CharSequence, ?, String > joining(
+			CharSequence delimiter,
+			CharSequence prefix,
+			CharSequence suffix,
+			String emptyValue
+	) {
 		return Collector.of(
 				() -> new StringJoiner( delimiter, prefix, suffix ).setEmptyValue( emptyValue ),
 				StringJoiner::add, StringJoiner::merge,

@@ -34,9 +34,9 @@ public class StaticVerificationException extends ChoralException {
 
 	public static ChoralException of( String message, Optional< ? extends Node > p ) {
 		StaticVerificationException e = new StaticVerificationException( message );
-		if( p.isPresent() ){
+		if( p.isPresent() ) {
 			return new AstPositionedException( p.get(), e );
-		} else{
+		} else {
 			return e;
 		}
 	}

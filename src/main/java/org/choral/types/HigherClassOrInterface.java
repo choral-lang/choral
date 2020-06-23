@@ -23,7 +23,7 @@ package org.choral.types;
 
 import org.choral.ast.Node;
 import org.choral.exceptions.StaticVerificationException;
-import org.choral.kinds.Kind;
+import org.choral.types.kinds.Kind;
 import org.choral.utils.Formatting;
 
 import java.util.*;
@@ -93,35 +93,19 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		this.tag = universe().registerSpecialType( this );
 	}
 
-	private final Types.SpecialTypeTag tag;
+	private final Universe.SpecialTypeTag tag;
 
 	@Override
-	public Types.SpecialTypeTag specialTypeTag() {
+	public Universe.SpecialTypeTag specialTypeTag() {
 		return tag;
 	}
-
-	public enum Variety {
-		CLASS( "class", "classes" ),
-		INTERFACE( "interface", "interfaces" ),
-		ENUM( "enum", "enums" );
-
-		public final String labelSingular;
-		public final String labelPlural;
-
-		Variety( String labelSingular, String labelPlural ) {
-			this.labelSingular = labelSingular;
-			this.labelPlural = labelPlural;
-		}
-	}
-
-	public abstract Variety variety();
 
 	private final EnumSet< Modifier > modifiers;
 
 	protected void assertModifiers( EnumSet< Modifier > modifiers ) {
 		assertLegalModifiers( legalOuterModifiers, modifiers, "for " + variety().labelPlural );
 		assertAccessModifiers( modifiers );
-		// for nested only
+		// for nested types only
 		//   assertIllegalCombinationOfModifiers(modifiers,ABSTRACT,STATIC);
 		//   assertIllegalCombinationOfModifiers(modifiers,ABSTRACT,PRIVATE);
 		//   assertIllegalCombinationOfModifiers(modifiers,ABSTRACT,FINAL);
@@ -211,8 +195,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 
 	@Override
 	public GroundClassOrInterface applyTo( List< ? extends World > args ) {
-		return applyTo( args,
-				List.of() ); // fails if there are type parameters, raw types are not supported
+		return applyTo( args, List.of() );
 	}
 
 	@Override
@@ -320,6 +303,9 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 	public abstract class Definition extends HigherReferenceType.Definition
 			implements GroundClassOrInterface {
 
+		Definition() {
+		}
+
 		public final String toString() {
 			return typeConstructor().toString() +
 					worldArguments().stream().map( World::toString ).collect(
@@ -341,13 +327,32 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		public void finaliseInheritance() {
-//			extendedClassesOrInterfaces().flatMap( GroundClassOrInterface::allExtendedInterfaces ).forEach(
-//					x ->
-//			);
-			inheritanceFinalised = true;
+			if( !isInheritanceFinalised() ) {
+				allExtendedInterfaces = Stream.concat( extendedInterfaces(),
+						extendedClassesOrInterfaces().flatMap(
+								GroundClassOrInterface::allExtendedInterfaces ) )
+						.collect( Collectors.toList() );
+				extendedClassesOrInterfaces().flatMap(
+						GroundClassOrInterface::allExtendedInterfaces )
+						.forEach( x -> {
+							extendedInterfaces().filter( y ->
+									x.typeConstructor() == y.typeConstructor() &&
+											x.worldArguments().equals( y.worldArguments() ) &&
+											!x.typeArguments().equals( y.typeArguments() )
+							).findAny().ifPresent( y -> {
+										throw new StaticVerificationException(
+												"illegal inheritance, cannot implement both '"
+														+ y + "' and " + x + "'" );
+									}
+							);
+						} );
+				inheritanceFinalised = true;
+			}
 		}
 
 		private final List< GroundInterface > extendedInterfaces = new ArrayList<>();
+
+		private List< GroundInterface > allExtendedInterfaces;
 
 		public void addExtendedInterface( GroundInterface type ) {
 			assert ( !isInheritanceFinalised() );
@@ -366,6 +371,15 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		@Override
 		public final Stream< GroundInterface > extendedInterfaces() {
 			return extendedInterfaces.stream();
+		}
+
+		public final Stream< GroundInterface > allExtendedInterfaces() {
+			if( allExtendedInterfaces == null ) {
+				return Stream.concat( extendedInterfaces(), extendedClassesOrInterfaces().flatMap(
+						GroundClassOrInterface::allExtendedInterfaces ) );
+			} else {
+				return allExtendedInterfaces.stream();
+			}
 		}
 
 		@Override
@@ -398,11 +412,115 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		public void finaliseInterface() {
-			// ToDo: checks
+			assert ( isInheritanceFinalised() && extendedClassesOrInterfaces()
+					.allMatch( GroundReferenceType::isInterfaceFinalised ) );
+			if( interfaceFinalised ) {
+				return;
+			}
+			// inherited fields
+			extendedClassesOrInterfaces().flatMap( GroundReferenceType::fields )
+					.filter( x -> x.isAccessibleFrom( this )
+							&& declaredFields().noneMatch(
+							y -> x.identifier().equals( y.identifier() ) ) )
+					.forEach( inheritedFields::add );
+			// inherited methods (§8.4.8)
+			extendedClassesOrInterfaces().flatMap( GroundReferenceType::methods )
+					.filter( x -> x.isAccessibleFrom( this ) )
+					.forEach( x -> {
+						boolean inherited = true;
+						boolean implemented = false;
+						for( Member.HigherMethod y : declaredMethods ) {
+							boolean sameSignature = y.sameSignatureOf( x );
+							boolean sameErasure = y.sameSignatureErasureOf( x );
+							if( sameSignature || sameErasure ) {
+								// check both instance or both static
+								if( !y.isStatic() && x.isStatic() ) {
+									throw new StaticVerificationException( "instance method '" + y
+											+ "' in '" + this + "' cannot override static method '"
+											+ x + "' in '" + x.declarationContext() + "'" );
+								}
+								if( y.isStatic() && !x.isStatic() ) {
+									throw new StaticVerificationException( "static method '" + y
+											+ "' in '" + this + "' cannot override instance method '"
+											+ x + "' in '" + x.declarationContext() + "'" );
+								}
+								// check access privileges
+								if( y.isPrivate() || ( x.isPublic() && !y.isPublic() )
+										|| ( x.isProtected() && y.isPackagePrivate() ) ) {
+									throw new StaticVerificationException( "method '" + y
+											+ "' in '" + this + "' clashes with method '"
+											+ x + "' in '" + x.declarationContext()
+											+ "', attempting to assign weaker access privileges '"
+											+ ModifierUtils.prettyAccess( y.modifiers() ) + "' to '"
+											+ ModifierUtils.prettyAccess( x.modifiers() ) + "'" );
+								}
+								// check not final
+								if( x.isFinal() ) {
+									throw new StaticVerificationException( "method '" + y
+											+ "' in '" + this + "' cannot override final method '"
+											+ x + "' in '" + x.declarationContext() + "'" );
+								}
+								// check assignable return type;
+								if( !y.isReturnTypeAssignable( x ) ) {
+									throw new StaticVerificationException( "method '" + y
+											+ "' in '" + this + "' clashes with method '"
+											+ x + "' in '" + x.declarationContext()
+											+ "', attempting to use incompatible return type" );
+								}
+								// inherit selection annotation
+								if( x.isSelectionMethod() && sameSignature ) {
+									y.setSelectionMethod();
+								}
+								implemented = !y.isAbstract();
+								inherited = sameErasure && !sameSignature;
+								if( inherited ) {
+									for( Member.HigherMethod z : inheritedMethods ) {
+										if( z.isSubSignatureOf( x ) ) {
+											// check assignable return type;
+											if( !z.isReturnTypeAssignable( x ) ) {
+												throw new StaticVerificationException(
+														"method '" + z
+																+ "' in '" + z.declarationContext()
+																+ "' clashes with method '" + x
+																+ "' in '" + x.declarationContext()
+																+ "', attempting to use incompatible return type" );
+											}
+											inherited = false;
+											break;
+										}
+									}
+								}
+								break;
+							} else {
+								if( x.sameErasureAs( y ) ) {
+									throw new StaticVerificationException( "method '" + y
+											+ "' in '" + this + "' clashes with method '"
+											+ x + "' in '" + x.declarationContext()
+											+ "', both methods have the same erasure" );
+								}
+							}
+						}
+						if( inherited ) {
+							// check implementation
+							if( !implemented && !isAbstract() && x.isAbstract() ) {
+								throw new StaticVerificationException( "'" + this + "' must either "
+										+ "be declared as abstract or implement abstract method '"
+										+ x + "' in '" + x.declarationContext() + "'" );
+							}
+							inheritedMethods.add( x.copyFor( this ) );
+						}
+					} );
 			interfaceFinalised = true;
 		}
 
+
+		protected final List< Member.Field > inheritedFields = new LinkedList<>();
+
+		protected final List< Member.HigherMethod > inheritedMethods = new LinkedList<>();
+
 		protected final List< Member.Field > declaredFields = new ArrayList<>();
+
+		protected final List< Member.HigherMethod > declaredMethods = new ArrayList<>();
 
 		@Override
 		public final Stream< Member.Field > declaredFields() {
@@ -420,12 +538,21 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			declaredFields.add( field );
 		}
 
-		protected final List< Member.HigherMethod > declaredMethods = new ArrayList<>();
-
 		public void addMethod( Member.HigherMethod method ) {
 			assert ( !interfaceFinalised );
 			assert ( method.declarationContext() == this );
-			declaredMethods().forEach( method::assertNoClash );
+			for( Member.HigherMethod x : declaredMethods ) {
+				if( x.sameErasureAs( method ) ) {
+					if( x.sameSignatureOf( method ) ) {
+						throw new StaticVerificationException( "method '" + method
+								+ "' is already defined in '" + typeConstructor() + "'" );
+					} else {
+						throw new StaticVerificationException( "method '" + method
+								+ "' clashes with '" + x
+								+ "', both methods have the same erasure" );
+					}
+				}
+			}
 			declaredMethods.add( method );
 		}
 
@@ -438,7 +565,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 	protected abstract class Proxy extends HigherReferenceType.Proxy
 			implements GroundClassOrInterface {
 
-		public Proxy( Substitution substitution ) {
+		Proxy( Substitution substitution ) {
 			super( substitution );
 			instantiationChecked = typeConstructor().typeParameters().isEmpty();
 		}
@@ -481,8 +608,15 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			return definition().isInheritanceFinalised();
 		}
 
+		@Override
 		public final Stream< GroundInterface > extendedInterfaces() {
 			return definition().extendedInterfaces().map(
+					x -> x.applySubstitution( substitution() ) );
+		}
+
+		@Override
+		public final Stream< GroundInterface > allExtendedInterfaces() {
+			return definition().allExtendedInterfaces().map(
 					x -> x.applySubstitution( substitution() ) );
 		}
 

@@ -60,8 +60,9 @@ public final class KryoSerializer implements ChoralSerializer< Object, ByteBuffe
 	}
 
 	private static void lazyLoad() {
-		try ( ScanResult scanResult = new ClassGraph().enableClassInfo().enableAnnotationInfo().scan() ) {
-			scanResult.getClassesWithAnnotation( KryoSerializable.class.getName() )
+		try ( ScanResult scanResult = new ClassGraph().enableAllInfo().scan() ) {
+			scanResult.getAllClasses()
+				.filter( c -> c.hasAnnotation( KryoSerializable.class.getName() ) )
 				.filter( c -> !registeredClasses.contains( c.hashCode() ) )
 				.forEach( c -> {
 					try {

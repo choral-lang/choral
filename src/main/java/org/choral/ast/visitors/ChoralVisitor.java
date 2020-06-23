@@ -34,6 +34,7 @@ import org.choral.ast.type.FormalTypeParameter;
 import org.choral.ast.type.FormalWorldParameter;
 import org.choral.ast.type.TypeExpression;
 import org.choral.ast.type.WorldArgument;
+import org.choral.compiler.soloist.Utils;
 import org.choral.utils.Pair;
 
 import java.util.*;
@@ -436,7 +437,8 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 	public Node visit( ConstructorDefinition n ) {
 		return new ConstructorDefinition(
 				safeVisit( n.signature() ),
-				safeVisit( n.body() ),
+				n.explicitConstructorInvocation().map( this::safeVisit ).orElse( null ),
+				safeVisit( n.blockStatements() ),
 				n.modifiers(), n.position()
 		);
 	}

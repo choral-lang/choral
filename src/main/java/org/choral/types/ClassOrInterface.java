@@ -25,4 +25,20 @@ public interface ClassOrInterface extends ReferenceType {
 
 	Package declarationPackage();
 
+	enum Variety {
+		CLASS( "class", "classes" ),
+		INTERFACE( "interface", "interfaces" ),
+		ENUM( "enum", "enums" );
+
+		public final String labelSingular;
+		public final String labelPlural;
+
+		Variety( String labelSingular, String labelPlural ) {
+			this.labelSingular = labelSingular;
+			this.labelPlural = labelPlural;
+		}
+	}
+
+	Variety variety();
+
 }

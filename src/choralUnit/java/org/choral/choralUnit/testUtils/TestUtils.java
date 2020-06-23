@@ -21,19 +21,19 @@
 
 package org.choral.choralUnit.testUtils;
 
-import org.choral.lang.Channels.SymChannel1;
-import org.choral.lang.Channels.SymChannel2;
-import org.choral.runtime.LocalChannel.LocalChannel1;
-import org.choral.runtime.LocalChannel.LocalChannel2;
+import org.choral.channels.SymChannel_A;
+import org.choral.channels.SymChannel_B;
+import org.choral.runtime.LocalChannel.LocalChannel_A;
+import org.choral.runtime.LocalChannel.LocalChannel_B;
 import org.choral.runtime.Media.MessageQueue;
 import org.choral.runtime.Media.PipedByteChannel;
-import org.choral.runtime.TLSByteChannel.TSLByteChannel1;
-import org.choral.runtime.TLSByteChannel.TSLByteChannel2;
+import org.choral.runtime.TLSByteChannel.TSLByteChannel_A;
+import org.choral.runtime.TLSByteChannel.TSLByteChannel_B;
 import org.choral.runtime.Serializers.KryoSerializer;
-import org.choral.runtime.TLSChannel.TLSChannel1;
-import org.choral.runtime.TLSChannel.TLSChannel2;
-import org.choral.runtime.WrapperByteChannel.WrapperByteChannel1;
-import org.choral.runtime.WrapperByteChannel.WrapperByteChannel2;
+import org.choral.runtime.TLSChannel.TLSChannel_A;
+import org.choral.runtime.TLSChannel.TLSChannel_B;
+import org.choral.runtime.WrapperByteChannel.WrapperByteChannel_A;
+import org.choral.runtime.WrapperByteChannel.WrapperByteChannel_B;
 import org.choral.utils.Pair;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -48,30 +48,30 @@ import java.util.Map;
 
 public class TestUtils {
 
-	private final static Map< String, Pair< SymChannel1< Object >, SymChannel2< Object > > > channels = new HashMap<>();
-	private final static Map< String, Pair< TLSChannel1< Object >, TLSChannel2< Object > > > tlsChannels = new HashMap<>();
+	private final static Map< String, Pair< SymChannel_A< Object >, SymChannel_B< Object > > > channels = new HashMap<>();
+	private final static Map< String, Pair< TLSChannel_A< Object >, TLSChannel_B< Object > > > tlsChannels = new HashMap<>();
 
-	public static synchronized Pair< SymChannel1< Object >, SymChannel2< Object > > newLocalChannel( String id ){
+	public static synchronized Pair< SymChannel_A< Object >, SymChannel_B< Object > > newLocalChannel( String id ){
 		if( ! channels.containsKey( id ) ){
 			MessageQueue m1 = new MessageQueue();
 			MessageQueue m2 = new MessageQueue();
-			channels.put( id, new Pair<>( new LocalChannel1( m1, m2 ), new LocalChannel2( m2, m1 ) ) );
+			channels.put( id, new Pair<>( new LocalChannel_A( m1, m2 ), new LocalChannel_B( m2, m1 ) ) );
 			return channels.get( id );
 		} else {
 			return channels.remove( id );
 		}
 	}
 
-	public static synchronized Pair< TLSChannel1< Object >, TLSChannel2< Object > > newLocalTLSChannel( String id ){
+	public static synchronized Pair< TLSChannel_A< Object >, TLSChannel_B< Object > > newLocalTLSChannel( String id ){
 		if( ! tlsChannels.containsKey( id ) ){
 			try {
 				Pair< PipedByteChannel, PipedByteChannel > localChannels = PipedByteChannel.getConnectedChannels();
-				WrapperByteChannel1 localChannel1 = new WrapperByteChannel1( localChannels.left() );
-				WrapperByteChannel2 localChannel2 = new WrapperByteChannel2( localChannels.right() );
+				WrapperByteChannel_A localChannel1 = new WrapperByteChannel_A( localChannels.left() );
+				WrapperByteChannel_B localChannel2 = new WrapperByteChannel_B( localChannels.right() );
 				SSLContext sslContext = getSSLContext();
 				tlsChannels.put( id, new Pair<>(
-						new TLSChannel1<>( new TSLByteChannel1( localChannel1, sslContext ), KryoSerializer.getInstance() ),
-						new TLSChannel2<>( new TSLByteChannel2( localChannel2, sslContext ), KryoSerializer.getInstance() )
+						new TLSChannel_A<>( new TSLByteChannel_A( localChannel1, sslContext ), KryoSerializer.getInstance() ),
+						new TLSChannel_B<>( new TSLByteChannel_B( localChannel2, sslContext ), KryoSerializer.getInstance() )
 				) );
 			} catch ( IOException | CertificateException | NoSuchAlgorithmException
 					| UnrecoverableKeyException | KeyStoreException | KeyManagementException e ) {

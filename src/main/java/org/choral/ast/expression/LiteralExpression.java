@@ -26,6 +26,7 @@ import org.choral.ast.Position;
 import org.choral.ast.type.WorldArgument;
 import org.choral.ast.visitors.ChoralVisitorInterface;
 import org.choral.ast.visitors.MergerInterface;
+import org.choral.ast.visitors.PrettyPrinterVisitor;
 import org.choral.exceptions.ChoralException;
 
 import java.util.Collections;
@@ -49,7 +50,9 @@ public abstract class LiteralExpression< T > extends Expression {
 		this.world = world;
 	}
 
-	protected LiteralExpression( final T content, final WorldArgument world, final Position position ) {
+	protected LiteralExpression(
+			final T content, final WorldArgument world, final Position position
+	) {
 		super( position );
 		this.content = content;
 		this.world = world;
@@ -77,7 +80,9 @@ public abstract class LiteralExpression< T > extends Expression {
 			super( content, world );
 		}
 
-		public BooleanLiteralExpression( final Boolean content, final WorldArgument world, final Position position ) {
+		public BooleanLiteralExpression(
+				final Boolean content, final WorldArgument world, final Position position
+		) {
 			super( content, world, position );
 		}
 
@@ -88,10 +93,14 @@ public abstract class LiteralExpression< T > extends Expression {
 
 		@Override
 		public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-			try{
+			try {
 				return m.merge( this, ( this.getClass().cast( n ) ) );
-			} catch( ClassCastException e ){
-				throw new ChoralException( "Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
+			} catch( ClassCastException e ) {
+				throw new ChoralException(
+						this.position().line() + ":"
+								+ this.position().column() + ":"
+								+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
+								this ) + "\n with " + n.getClass().getSimpleName() );
 			}
 		}
 
@@ -102,7 +111,7 @@ public abstract class LiteralExpression< T > extends Expression {
 
 		@Override
 		public boolean equals( Object obj ) {
-			if( obj instanceof BooleanLiteralExpression ){
+			if( obj instanceof BooleanLiteralExpression ) {
 				return ( (BooleanLiteralExpression) obj ).content().equals( this.content() );
 			}
 			return false;
@@ -116,7 +125,9 @@ public abstract class LiteralExpression< T > extends Expression {
 			super( content, world );
 		}
 
-		public IntegerLiteralExpression( final Integer content, final WorldArgument world, final Position position ) {
+		public IntegerLiteralExpression(
+				final Integer content, final WorldArgument world, final Position position
+		) {
 			super( content, world, position );
 		}
 
@@ -127,10 +138,14 @@ public abstract class LiteralExpression< T > extends Expression {
 
 		@Override
 		public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-			try{
+			try {
 				return m.merge( this, ( this.getClass().cast( n ) ) );
-			} catch( ClassCastException e ){
-				throw new ChoralException( "Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
+			} catch( ClassCastException e ) {
+				throw new ChoralException(
+						this.position().line() + ":"
+								+ this.position().column() + ":"
+								+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
+								this ) + "\n with " + n.getClass().getSimpleName() );
 			}
 		}
 
@@ -141,7 +156,7 @@ public abstract class LiteralExpression< T > extends Expression {
 
 		@Override
 		public boolean equals( Object obj ) {
-			if( obj instanceof IntegerLiteralExpression ){
+			if( obj instanceof IntegerLiteralExpression ) {
 				return ( (IntegerLiteralExpression) obj ).content().equals( this.content() );
 			}
 			return false;
@@ -155,7 +170,9 @@ public abstract class LiteralExpression< T > extends Expression {
 			super( content, world );
 		}
 
-		public DoubleLiteralExpression( final Double content, final WorldArgument world, final Position position ) {
+		public DoubleLiteralExpression(
+				final Double content, final WorldArgument world, final Position position
+		) {
 			super( content, world, position );
 		}
 
@@ -166,10 +183,14 @@ public abstract class LiteralExpression< T > extends Expression {
 
 		@Override
 		public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-			try{
+			try {
 				return m.merge( this, ( this.getClass().cast( n ) ) );
-			} catch( ClassCastException e ){
-				throw new ChoralException( "Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
+			} catch( ClassCastException e ) {
+				throw new ChoralException(
+						this.position().line() + ":"
+								+ this.position().column() + ":"
+								+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
+								this ) + "\n with " + n.getClass().getSimpleName() );
 			}
 		}
 
@@ -180,7 +201,7 @@ public abstract class LiteralExpression< T > extends Expression {
 
 		@Override
 		public boolean equals( Object obj ) {
-			if( obj instanceof DoubleLiteralExpression ){
+			if( obj instanceof DoubleLiteralExpression ) {
 				return ( (DoubleLiteralExpression) obj ).content().equals( this.content() );
 			}
 			return false;
@@ -194,7 +215,9 @@ public abstract class LiteralExpression< T > extends Expression {
 			super( content, world );
 		}
 
-		public StringLiteralExpression( final String content, final WorldArgument world, final Position position ) {
+		public StringLiteralExpression(
+				final String content, final WorldArgument world, final Position position
+		) {
 			super( content, world, position );
 		}
 
@@ -205,10 +228,14 @@ public abstract class LiteralExpression< T > extends Expression {
 
 		@Override
 		public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-			try{
+			try {
 				return m.merge( this, ( this.getClass().cast( n ) ) );
-			} catch( ClassCastException e ){
-				throw new ChoralException( "Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
+			} catch( ClassCastException e ) {
+				throw new ChoralException(
+						this.position().line() + ":"
+								+ this.position().column() + ":"
+								+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
+								this ) + "\n with " + n.getClass().getSimpleName() );
 			}
 		}
 
@@ -219,7 +246,7 @@ public abstract class LiteralExpression< T > extends Expression {
 
 		@Override
 		public boolean equals( Object obj ) {
-			if( obj instanceof StringLiteralExpression ){
+			if( obj instanceof StringLiteralExpression ) {
 				return ( (StringLiteralExpression) obj ).content().equals( this.content() );
 			}
 			return false;

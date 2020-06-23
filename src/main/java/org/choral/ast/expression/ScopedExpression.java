@@ -25,6 +25,7 @@ import org.choral.ast.Node;
 import org.choral.ast.Position;
 import org.choral.ast.visitors.ChoralVisitorInterface;
 import org.choral.ast.visitors.MergerInterface;
+import org.choral.ast.visitors.PrettyPrinterVisitor;
 import org.choral.exceptions.ChoralException;
 
 public class ScopedExpression extends Expression {
@@ -36,7 +37,9 @@ public class ScopedExpression extends Expression {
 		this.scopedExpression = scopedExpression;
 	}
 
-	public ScopedExpression( final Expression scope, final Expression scopedExpression, final Position position ) {
+	public ScopedExpression(
+			final Expression scope, final Expression scopedExpression, final Position position
+	) {
 		super( position );
 		this.scope = scope;
 		this.scopedExpression = scopedExpression;
@@ -57,10 +60,14 @@ public class ScopedExpression extends Expression {
 
 	@Override
 	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try{
+		try {
 			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ){
-			throw new ChoralException( "Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
+		} catch( ClassCastException e ) {
+			throw new ChoralException(
+					this.position().line() + ":"
+							+ this.position().column() + ":"
+							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
+							this ) + "\n with " + n.getClass().getSimpleName() );
 		}
 	}
 }

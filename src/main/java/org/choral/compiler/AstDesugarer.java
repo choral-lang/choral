@@ -37,22 +37,23 @@ public class AstDesugarer extends ChoralVisitor {
 	}
 
 	public static CompilationUnit desugar( Node n ) {
-		if( n instanceof CompilationUnit ){
+		if( n instanceof CompilationUnit ) {
 			return (CompilationUnit) new AstDesugarer().visit( (CompilationUnit) n );
-		} else{
-			throw new UnsupportedOperationException( "desugaring only available from a CompilationUnit node" );
+		} else {
+			throw new UnsupportedOperationException(
+					"desugaring only available from a CompilationUnit node" );
 		}
 	}
 
 	@Override
 	public Node visit( VariableDeclarationStatement n ) {
-		if( n.variables().size() > 1 ){
+		if( n.variables().size() > 1 ) {
 			VariableDeclarationStatement s = new VariableDeclarationStatement(
 					Collections.singletonList( n.variables().get( n.variables().size() - 1 ) ),
 					(Statement) visit( n.continuation() ),
 					n.variables().get( n.variables().size() - 1 ).position()
 			);
-			for( int i = n.variables().size() - 2; i >= 0; i-- ){
+			for( int i = n.variables().size() - 2; i >= 0; i-- ) {
 				s = new VariableDeclarationStatement(
 						Collections.singletonList( n.variables().get( i ) ),
 						s,
@@ -60,7 +61,7 @@ public class AstDesugarer extends ChoralVisitor {
 				);
 			}
 			return s;
-		} else{
+		} else {
 			return new VariableDeclarationStatement(
 					n.variables(),
 					(Statement) visit( n.continuation() ),

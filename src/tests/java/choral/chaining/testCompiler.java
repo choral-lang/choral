@@ -43,7 +43,7 @@ public class testCompiler {
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		ChoralParser cp = new ChoralParser(tokens);
 		cp.removeErrorListeners();
-		cp.addErrorListener(new ParsingErrorListener());
+		cp.addErrorListener(new ParsingErrorListener( file ));
 		ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
 		CompilationUnit cu = AstOptimizer
 				.loadParameters()

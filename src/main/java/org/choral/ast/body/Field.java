@@ -38,7 +38,10 @@ public class Field extends Node {
 	private final TypeExpression type;
 	private final EnumSet< FieldModifier > modifiers;
 
-	public Field( final Name name, final TypeExpression type, final EnumSet< FieldModifier > modifiers, final Position position ) {
+	public Field(
+			final Name name, final TypeExpression type, final EnumSet< FieldModifier > modifiers,
+			final Position position
+	) {
 		super( position );
 		this.name = name;
 		this.type = type;

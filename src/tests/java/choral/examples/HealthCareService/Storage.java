@@ -21,13 +21,13 @@
 
 package choral.examples.HealthCareService;
 
-import choral.examples.AuthResult.AuthResult2;
-import choral.examples.DistAuth.DistAuth2;
+import choral.examples.AuthResult.AuthResult_B;
+import choral.examples.DistAuth.DistAuth_Service;
 import choral.examples.DistAuthUtils.AuthToken;
-import org.choral.choralUnit.testUtils.TestUtils1;
-import org.choral.choralUnit.testUtils.TestUtils2;
-import org.choral.runtime.TLSChannel.TLSChannel1;
-import org.choral.runtime.TLSChannel.TLSChannel2;
+import org.choral.choralUnit.testUtils.TestUtils_A;
+import org.choral.choralUnit.testUtils.TestUtils_B;
+import org.choral.runtime.TLSChannel.TLSChannel_A;
+import org.choral.runtime.TLSChannel.TLSChannel_B;
 import org.choral.lang.Unit;
 
 import java.util.UUID;
@@ -35,11 +35,11 @@ import java.util.UUID;
 public class Storage {
 
 	private static final String STORAGE_CHANNEL = UUID.randomUUID().toString();
-	private static final TLSChannel1< Object > forClients = TestUtils1.newLocalTLSChannel( STORAGE_CHANNEL, Unit.id );
-	private static final TLSChannel2< Object > recvChannel = TestUtils2.newLocalTLSChannel( Unit.id, STORAGE_CHANNEL );
+	private static final TLSChannel_A< Object > forClients = TestUtils_A.newLocalTLSChannel( STORAGE_CHANNEL, Unit.id );
+	private static final TLSChannel_B< Object > recvChannel = TestUtils_B.newLocalTLSChannel( Unit.id, STORAGE_CHANNEL );
 	private static boolean keepRunning = false;
 
-	public static TLSChannel1< Object> connect () {
+	public static TLSChannel_A< Object> connect () {
 		keepRunning = true;
 		return forClients;
 	}
@@ -49,8 +49,8 @@ public class Storage {
 		forClients.< StorageMsg >com( new StorageMsg( AuthToken.create(), null ) );
 	}
 
-	public void authenticate( TLSChannel1< Object > channel ){
-		AuthResult2 authResult = new DistAuth2( channel ).authenticate();
+	public void authenticate( TLSChannel_A< Object > channel ){
+		AuthResult_B authResult = new DistAuth_Service( channel ).authenticate();
 		authResult.right().ifPresent( this::loop );
 	}
 

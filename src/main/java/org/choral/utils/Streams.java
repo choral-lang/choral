@@ -43,7 +43,7 @@ public class Streams {
 		}
 	}
 
-	public  static < T, R > Function< T, R > wrapFunction(
+	public static < T, R > Function< T, R > wrapFunction(
 			CheckedFunction< T, R > checkedFunction
 	) {
 		return t -> {

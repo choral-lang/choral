@@ -21,8 +21,8 @@
 
 package org.choral.runtime.SerializerChannel;
 
-import org.choral.lang.Channels.SymChannelImpl;
-import org.choral.lang.DataChannels.SymDataChannelImpl;
+import org.choral.channels.SymChannelImpl;
+import org.choral.channels.SymDataChannelImpl;
 import org.choral.runtime.Serializers.ChoralSerializer;
 import org.choral.lang.Unit;
 

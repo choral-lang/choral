@@ -95,6 +95,9 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 
 	public class Definition extends HigherClassOrInterface.Definition implements GroundClass {
 
+		Definition() {
+		}
+
 		@Override
 		public HigherClass typeConstructor() {
 			return HigherClass.this;
@@ -126,11 +129,11 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 				throw new StaticVerificationException(
 						"illegal inheritance, cannot inherit from final '" + type + "'" );
 			}
-			if( type.typeConstructor() == universe().specialType( Types.SpecialTypeTag.ENUM )
+			if( type.typeConstructor() == universe().specialType( Universe.SpecialTypeTag.ENUM )
 					&& variety() != Variety.ENUM ) {
 				throw new StaticVerificationException(
 						"illegal inheritance, only enum types can inherit from '" + universe().specialType(
-								Types.SpecialTypeTag.ENUM ) + "'" );
+								Universe.SpecialTypeTag.ENUM ) + "'" );
 			}
 			if( type.worldArguments().size() != worldArguments().size() ||
 					!type.worldArguments().containsAll( worldParameters ) ) {
@@ -165,83 +168,24 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 		@Override
 		public void finaliseInterface() {
 			// default empty constructor
-			if( constructors.isEmpty() && ( extendedClass == null // top class
-					|| extendedClass.constructors().filter( x -> x.isAccessibleFrom( this ) )
-					.anyMatch( x -> x.typeParameters().size() == 0 && x.arity() == 0 ) )
-			) {
-				Member.HigherConstructor c = new Member.HigherConstructor(
-						this,
-						EnumSet.of( PUBLIC ),
-						List.of()
-				);
-				c.innerCallable().finalise();
-				addConstructor( c );
+			if( constructors.isEmpty() ) {
+				if( extendedClass != null
+						&& extendedClass.constructors().filter( x -> x.isAccessibleFrom( this ) )
+						.noneMatch( x -> x.typeParameters().size() == 0 && x.arity() == 0 ) ) {
+					throw new StaticVerificationException(
+							"there is no default constructor available in '" + extendedClass + "'" );
+				} else {
+					Member.HigherConstructor c = new Member.HigherConstructor(
+							this,
+							EnumSet.of( PUBLIC ),
+							List.of()
+					);
+					c.innerCallable().finalise();
+					addConstructor( c );
+				}
 			}
-			// inherit fields and methods
-			if( extendedClass != null ) {
-				extendedClass.fields().filter( x -> x.isAccessibleFrom( this )
-						&& declaredFields().noneMatch(
-						y -> x.identifier().equals( y.identifier() ) ) )
-						.forEach( inheritedFields::add );
-				extendedClass.methods().filter( x -> x.isAccessibleFrom( this ) ).forEach( x -> {
-					boolean inherited = true;
-					for( HigherMethod y : declaredMethods ) {
-						// y overrides x
-						if( y.isOverrideEquivalent( x ) ) {
-							// check both instance or both static
-							if( !y.isStatic() && x.isStatic() ) {
-								throw new StaticVerificationException( "instance method '" + y
-										+ "' in '" + this + "' cannot override static method '"
-										+ x + "' in '" + extendedClass + "'" );
-							}
-							// check access privileges
-							if( y.isPrivate() || ( x.isPublic() && !y.isPublic() )
-									|| ( x.isProtected() && y.isPackagePrivate() ) ) {
-								throw new StaticVerificationException( "method '" + y
-										+ "' in '" + this + "' clashes with method '"
-										+ x + "' in '" + extendedClass
-										+ "', attempting to assign weaker access privileges '"
-										+ ModifierUtils.prettyAccess( y.modifiers() ) + "' to '"
-										+ ModifierUtils.prettyAccess( x.modifiers() ) + "'" );
-							}
-							// check assignable return type;
-							if( !y.isReturnTypeAssignable(x) ){
-								throw new StaticVerificationException( "method '" + y
-										+ "' in '" + this + "' clashes with method '"
-										+ x + "' in '" + extendedClass
-										+ "', attempting to use incompatible return type" );
-							}
-							// inherit selection annotation
-							if( x.isSelectionMethod() ) {
-								y.setSelectionMethod();
-							}
-							inherited = false;
-							break;
-						} else {
-							// check clash
-
-							// check
-						}
-					}
-					if( inherited ) {
-						inheritedMethods.add( x );
-					}
-				} );
-			}
-			// ToDo: check implementations
-			// for( GroundInterface X : extended )
-//					if( needsImplementation ) {
-//						throw new StaticVerificationException( variety().labelSingular + " '"
-//								+ identifier( true ) + "' must either be abstract or "
-//								+ "implement abstract method '" + x + "' in '"
-//								+ x.declarationContext().typeConstructor() + "'" );
-//					}
 			super.finaliseInterface();
 		}
-
-		private final List< Member.Field > inheritedFields = new LinkedList<>();
-
-		private final List< Member.HigherMethod > inheritedMethods = new LinkedList<>();
 
 		private final List< Member.HigherConstructor > constructors = new LinkedList<>();
 
@@ -250,10 +194,21 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 			return constructors.stream();
 		}
 
-		public void addConstructor( Member.HigherConstructor constructor ) {
+		public void addConstructor( HigherConstructor constructor ) {
 			assert ( !isInterfaceFinalised() );
 			assert ( constructor.declarationContext() == this );
-			// ToDo: checks
+			for( HigherConstructor x : constructors ) {
+				if( x.sameErasureAs( constructor ) ) {
+					if( x.sameSignatureOf( constructor ) ) {
+						throw new StaticVerificationException( "constructor '" + constructor
+								+ "' is already defined in '" + typeConstructor() + "'" );
+					} else {
+						throw new StaticVerificationException( "constructor '" + constructor
+								+ "' clashes with '"
+								+ x + "', both constructors have the same erasure" );
+					}
+				}
+			}
 			constructors.add( constructor );
 		}
 
@@ -271,7 +226,7 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 
 	protected class Proxy extends HigherClassOrInterface.Proxy implements GroundClass {
 
-		public Proxy( Substitution substitution ) {
+		Proxy( Substitution substitution ) {
 			super( substitution );
 		}
 

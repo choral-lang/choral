@@ -1,7 +1,6 @@
 package choral.examples.DistAuth5;
 
-import choral.examples.AuthResult.AuthResult1;
-import choral.examples.AuthResult.AuthResult2;
+import choral.examples.AuthResult.AuthResult;
 import choral.examples.DistAuthUtils.AuthToken;
 import choral.examples.DistAuthUtils.Base64_Encoder;
 import choral.examples.DistAuthUtils.ClientRegistry;
@@ -9,9 +8,8 @@ import choral.examples.DistAuthUtils.Credentials;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import org.choral.runtime.Enum.EnumBoolean;
-import org.choral.runtime.TLSChannel.TLSChannel1;
-import org.choral.runtime.TLSChannel.TLSChannel2;
+import org.choral.runtime.TLSChannel.TLSChannel;
+import org.choral.DistAuth.EnumBoolean;
 
 public class DistAuth5@( Client, Service, S1, S2, IP ){
 	private TLSChannel@( Client, IP )< Object > ch_Client_IP;
@@ -53,20 +51,20 @@ public class DistAuth5@( Client, Service, S1, S2, IP ){
 			>> ch_Client_IP::< String >com
 			>> ClientRegistry@IP::check;
 		if( valid ){
-			select( EnumBoolean@IP.True, ch_Client_IP );
-			select( EnumBoolean@IP.True, ch_Service_IP );
-			select( EnumBoolean@IP.True, ch_s1 );
-			select( EnumBoolean@IP.True, ch_s2 );
+			ch_Client_IP.< EnumBoolean >select( EnumBoolean@IP.True );
+			ch_Service_IP.< EnumBoolean >select( EnumBoolean@IP.True );
+			ch_s1.< EnumBoolean >select( EnumBoolean@IP.True );
+			ch_s2.< EnumBoolean >select( EnumBoolean@IP.True );
 			AuthToken@IP t = AuthToken@IP.create();
 			return new AuthResult@( Client, Service )(
 				ch_Client_IP.< AuthToken >com( t ),
 				ch_Service_IP.< AuthToken >com( t )
 			);
 		} else {
-			select( EnumBoolean@IP.False, ch_Client_IP );
-			select( EnumBoolean@IP.False, ch_Service_IP );
-			select( EnumBoolean@IP.False, ch_s1 );
-			select( EnumBoolean@IP.False, ch_s2 );
+			ch_Client_IP.< EnumBoolean >select( EnumBoolean@IP.False );
+			ch_Service_IP.< EnumBoolean >select( EnumBoolean@IP.False );
+			ch_s1.< EnumBoolean >select( EnumBoolean@IP.False );
+			ch_s2.< EnumBoolean >select( EnumBoolean@IP.False );
 			return new AuthResult@( Client, Service )();
 		}
 	}

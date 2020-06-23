@@ -35,9 +35,9 @@ public abstract class SourceObject {
 	}
 
 	static String combineName( String qualifier, String name ) {
-		if( qualifier == null || qualifier.isBlank() ){
+		if( qualifier == null || qualifier.isBlank() ) {
 			return name;
-		} else{
+		} else {
 			return qualifier + "." + name;
 		}
 	}

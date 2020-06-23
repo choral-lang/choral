@@ -22,22 +22,24 @@
 package choral.examples.HealthCareService;
 
 
-import choral.examples.AuthResult.AuthResult1;
-import choral.examples.DistAuth.DistAuth1;
+import choral.examples.AuthResult.AuthResult_A;
+import choral.examples.DistAuth.DistAuth_Client;
 import choral.examples.DistAuthUtils.Credentials;
-import choral.examples.VitalsStreaming.VitalsStreaming2;
-import org.choral.runtime.TLSChannel.TLSChannel1;
+import choral.examples.VitalsStreaming.VitalsStreaming_Gatherer;
+import org.choral.runtime.TLSChannel.TLSChannel_A;
+
+import java.util.ArrayList;
 
 public class HealthCareService {
 	public static void main ( String[] args ) {
-		TLSChannel1< Object > toIP = HealthIdentityProvider.connect();
-		TLSChannel1< Object > toStorage = Storage.connect();
-		AuthResult1 authResult = new DistAuth1( toIP ).authenticate( getCredentials() );
+		TLSChannel_A< Object > toIP = HealthIdentityProvider.connect();
+		TLSChannel_A< Object > toStorage = Storage.connect();
+		AuthResult_A authResult = new DistAuth_Client( toIP ).authenticate( getCredentials() );
 		authResult.left().ifPresent( token ->
 				DeviceRegistry
 						.parallelStream()
 						.map( Device::connect )
-						.map( VitalsStreaming2::new )
+						.map( VitalsStreaming_Gatherer::new )
 						.forEach( vs ->
 								vs.gather( data -> toStorage.< StorageMsg >com( new StorageMsg( token, data ) ) )
 						)

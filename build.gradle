@@ -103,16 +103,39 @@ generateGrammarSource {
 	doLast({ println("Done " + tasks[name].description.toString()) })
 }
 
-compileJava {
-	dependsOn generateGrammarSource
-}
-
 task testParsing( type: JavaExec ){
 	classpath = sourceSets.main.runtimeClasspath
 	main = 'org.choral.compiler.DebuggingParser'
 }
 
-task runSingle( type: JavaExec, dependsOn: compileJava ) {
+task compile11( type: JavaCompile ) {
+	sourceCompatibility = 11
+	targetCompatibility = 11
+	classpath = sourceSets.choralUnit.runtimeClasspath
+	destinationDir = compileJava.destinationDir
+	def sources = layout.files()
+	sources += sourceSets.main.java.sourceDirectories
+	sources += sourceSets.base.java.sourceDirectories
+	sources += sourceSets.runtime.java.sourceDirectories
+	sources += sourceSets.choralUnit.java.sourceDirectories
+	source = sources
+}
+
+task compile14( type: JavaCompile, dependsOn: compile11 ) {
+	sourceCompatibility = 14
+	targetCompatibility = 14
+	classpath = sourceSets.test.runtimeClasspath
+	destinationDir = compileJava.destinationDir
+	source = sourceSets.tests.java.sourceDirectories
+}
+
+task compileAll{
+	dependsOn generateGrammarSource
+	dependsOn compile11
+	dependsOn compile14
+}
+
+task runSingle( type: JavaExec, dependsOn: compileAll ) {
 	classpath = sourceSets.main.runtimeClasspath
 	doFirst({ println("Starting " + tasks[name].description.toString() ) })
 
@@ -135,7 +158,7 @@ jar {
 	}
 }
 
-task jarBase ( type: Jar, dependsOn: compileJava ) {
+task jarBase ( type: Jar, dependsOn: compile11 ) {
 	manifest {
 		attributes "Implementation-Title": "Choral Base Jar Package",
 		"Implementation-Version": "0.1"
@@ -145,7 +168,7 @@ task jarBase ( type: Jar, dependsOn: compileJava ) {
 	from sourceSets.base.output
 }
 
-task jarRuntime ( type: Jar, dependsOn: compileJava ) {
+task jarRuntime ( type: Jar, dependsOn: compile11 ) {
 	manifest {
 		attributes "Implementation-Title": "Choral Runtime Jar Package",
 				"Implementation-Version": "0.1"
@@ -158,7 +181,7 @@ task jarRuntime ( type: Jar, dependsOn: compileJava ) {
 	}
 }
 
-task jarChoralUnit ( type: Jar, dependsOn: compileJava ) {
+task jarChoralUnit ( type: Jar, dependsOn: compile11 ) {
 	manifest {
 		attributes "Implementation-Title": "ChoralUnit Jar Package",
 				"Implementation-Version": "0.1"
@@ -171,7 +194,14 @@ task jarChoralUnit ( type: Jar, dependsOn: compileJava ) {
 	}
 }
 
-task makeRelease( type: Zip, dependsOn: jar ) {
+task jarAll {
+	dependsOn jar
+	dependsOn jarBase
+	dependsOn jarRuntime
+	dependsOn jarChoralUnit
+}
+
+task makeRelease( type: Zip, dependsOn: jarAll ) {
 	def destDir = file( jarOutputFolder )
 	from ( destDir ) {
 		include "*.jar"

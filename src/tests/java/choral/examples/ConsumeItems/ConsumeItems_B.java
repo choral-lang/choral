@@ -1,16 +1,16 @@
 package choral.examples.ConsumeItems;
-import java.util.function.Consumer;
-import java.util.Iterator;
-
-import org.choral.lang.Channels.DiChannel2;
+import org.choral.annotations.Choreography;
+import org.choral.channels.DiChannel_B;
 import org.choral.lang.Unit;
+import java.util.function.Consumer;
 
+@Choreography( role = "B", name = "ConsumeItems" )
 public class ConsumeItems_B {
-	public static void consumeItems( DiChannel2< Integer > ch, Unit it, Consumer < Integer > consumer ) {
+	public static void consumeItems( DiChannel_B < Integer > ch, Unit it, Consumer < Integer > consumer ) {
 		consumeItems( ch, consumer );
 	}
-
-	public static void consumeItems( DiChannel2 < Integer > ch, Consumer < Integer > consumer ) {
+	
+	public static void consumeItems( DiChannel_B < Integer > ch, Consumer < Integer > consumer ) {
 		ch.< Integer >com( Unit.id );
 		{
 			switch( ch.< ConsumeChoice >select( Unit.id ) ){
@@ -22,7 +22,7 @@ public class ConsumeItems_B {
 					consumeItems( ch, Unit.id, consumer );
 				}
 				case STOP -> {
-
+					
 				}
 			}
 		}

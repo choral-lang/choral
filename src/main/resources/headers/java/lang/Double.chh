@@ -3,4 +3,8 @@ package java.lang;
 
 public final class Double@A extends Number@A {
 
+	public static Double@A valueOf( Double@A x ){}
+
+	public Integer@A intValue(){}
+
 }

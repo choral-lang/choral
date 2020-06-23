@@ -35,12 +35,17 @@ public class ClassInstantiationExpression extends InvocationExpression {
 
 	private final TypeExpression type;
 
-	public ClassInstantiationExpression( TypeExpression type, List< Expression > arguments, List< TypeExpression > typeArguments) {
+	public ClassInstantiationExpression(
+			TypeExpression type, List< Expression > arguments, List< TypeExpression > typeArguments
+	) {
 		super( arguments, typeArguments );
 		this.type = type;
 	}
 
-	public ClassInstantiationExpression( TypeExpression type, List< Expression > arguments, List< TypeExpression > typeArguments, final Position position ) {
+	public ClassInstantiationExpression(
+			TypeExpression type, List< Expression > arguments, List< TypeExpression > typeArguments,
+			final Position position
+	) {
 		super( arguments, typeArguments, position );
 		this.type = type;
 	}

@@ -31,6 +31,7 @@ import org.choral.ast.type.FormalWorldParameter;
 import org.choral.ast.type.World;
 import org.choral.ast.type.WorldArgument;
 import org.choral.utils.Pair;
+import org.w3c.dom.ls.LSOutput;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,30 +41,46 @@ import java.util.stream.Collectors;
 public class Utils {
 
 	public static Pair< Expression, Expression > headAndTail( ScopedExpression e ) {
-		if( e.scope() instanceof ScopedExpression ){
+		if( e.scope() instanceof ScopedExpression ) {
 			Pair< Expression, Expression > head = headAndTail( (ScopedExpression) e.scope() );
-			return new Pair<>( head.left(), new ScopedExpression( head.right(), e.scopedExpression() ) );
-		} else{
+			return new Pair<>( head.left(),
+					new ScopedExpression( head.right(), e.scopedExpression() ) );
+		} else {
 			return new Pair<>( e.scope(), e.scopedExpression() );
 		}
 	}
 
-	static String getProjectionName( String name, WorldArgument world, List< WorldArgument > worlds ) {
-		return name + ( worlds.size() > 1 ?	"_" + world.name().identifier()	: "" );
+	static String getProjectionName(
+			String name, WorldArgument world, List< WorldArgument > worlds
+	) {
+		return name + ( worlds.size() > 1 ? "_" + world.name().identifier() : "" );
 	}
 
-	public static void warnIfWorldNotPresent( List< FormalWorldParameter > worlds, WorldArgument world, Node n ) {
+	static String getProjectionName(
+			String name, WorldArgument world, List< WorldArgument > worlds,
+			List< WorldArgument > referenceWorlds
+	) {
+		int worldIndex = worlds.indexOf( world );
+		WorldArgument referenceWorld = referenceWorlds.get( worldIndex );
+		return name + ( worlds.size() > 1 ? "_" + referenceWorld.name().identifier() : "" );
+	}
+
+	public static void warnIfWorldNotPresent(
+			List< FormalWorldParameter > worlds, WorldArgument world, Node n
+	) {
 		String templateName;
-		if( n instanceof Interface ){
+		if( n instanceof Interface ) {
 			templateName = "Interface " + ( (Interface) n ).name();
-		} else if( n instanceof Class ){
+		} else if( n instanceof Class ) {
 			templateName = "Class " + ( (Class) n ).name();
-		} else if( n instanceof Enum ){
+		} else if( n instanceof Enum ) {
 			templateName = "Enum " + ( (Enum) n ).name();
-		} else{
-			throw new SoloistProjectorException( "method warnIfWorldNotPresent called on a node different from an Inteface, a Class, or an Enum" );
+		} else {
+			throw new SoloistProjectorException(
+					"method warnIfWorldNotPresent called on a node different from an Inteface, a Class, or an Enum" );
 		}
-		if( !worlds.stream().map( FormalWorldParameter::toWorldArgument ).collect( Collectors.toList() ).contains( world ) ){
+		if( !worlds.stream().map( FormalWorldParameter::toWorldArgument ).collect(
+				Collectors.toList() ).contains( world ) ) {
 			System.out.println(
 					"WARNING: compilation launched on world: '" + world + "' "
 							+ "but missing in " + templateName
@@ -81,16 +98,17 @@ public class Utils {
 		private final Optional< T > o;
 
 		private IfPresent( List< T > o ) {
-			if( o == null || o.isEmpty() ){
+			if( o == null || o.isEmpty() ) {
 				this.o = Optional.empty();
-			} else{
+			} else {
 				this.o = Optional.of( o.get( 0 ) );
 			}
 		}
 
 		T getOrElse( Supplier< T > e ) {
-			if( e == null ){
-				throw new RuntimeException( "Both application and alternative functions must be not null" );
+			if( e == null ) {
+				throw new RuntimeException(
+						"Both application and alternative functions must be not null" );
 			}
 			return o.orElseGet( e );
 		}

@@ -1,12 +1,12 @@
 package choral.examples.Quicksort;
 
-import org.choral.lang.Channels.SymChannel1;
-import org.choral.lang.Channels.SymChannel2;
+import org.choral.channels.SymChannel;
 import java.util.List;
 import java.util.ArrayList;
+import org.choral.runtime.Serializers.KryoSerializable;
 
-public enum Loop@R{ STOP, GO }
-public enum Recv@R{ B, C }
+enum Loop@R{ STOP, GO }
+enum Recv@R{ B, C }
 
 public class Quicksort@( A, B, C ){
 	SymChannel@( A, B )< Object > ch_AB;
@@ -25,7 +25,8 @@ public class Quicksort@( A, B, C ){
 
 	public List@A< Integer > sort ( List@A< Integer > a ){
 			if( a.size() > 1@A ){
-				select( Loop@A.GO, ch_AB ); select( Loop@A.GO, ch_CA );
+				ch_AB.< Loop >select( Loop@A.GO );
+				ch_CA.< Loop >select( Loop@A.GO );
 				Double@A index = a.size() / 2@A
 					>> Math@A::floor
 					>> Double@A::valueOf;
@@ -47,7 +48,8 @@ public class Quicksort@( A, B, C ){
 					>> orderedList::addAll;
 				return orderedList;
 			} else {
-				select( Loop@A.STOP, ch_AB ); select( Loop@A.STOP, ch_CA );
+				ch_AB.< Loop >select( Loop@A.STOP );
+				ch_CA.< Loop >select( Loop@A.STOP );
 				return a;
 			}
 		}
@@ -57,18 +59,22 @@ public class Quicksort@( A, B, C ){
 				List@B< Integer > greater, List@C< Integer > lower
 		){
 			if( a.size() > 0@A ){
-				select( Loop@A.GO, ch_AB ); select( Loop@A.GO, ch_CA );
+				ch_AB.< Loop >select( Loop@A.GO );
+				ch_CA.< Loop >select( Loop@A.GO );
 				Integer@A i = a.remove( 0@A );
 				if ( i > pivot ){
-					select( Recv@A.B, ch_AB ); select( Recv@A.B, ch_CA );
+					ch_AB.< Recv >select( Recv@A.B );
+					ch_CA.< Recv >select( Recv@A.B );
 					i >> ch_AB::< Integer >com >> greater::add;
 				} else {
-					select( Recv@A.C, ch_AB ); select( Recv@A.C, ch_CA );
+					ch_AB.< Recv >select( Recv@A.C );
+					ch_CA.< Recv >select( Recv@A.C );
 					i >> ch_CA::< Integer >com >> lower::add;
 				}
 				partition( a, pivot, greater, lower );
 			} else {
-				select( Loop@A.STOP, ch_AB ); select( Loop@A.STOP, ch_CA );
+				ch_AB.< Loop >select( Loop@A.STOP );
+				ch_CA.< Loop >select( Loop@A.STOP );
 			}
 		}
 }

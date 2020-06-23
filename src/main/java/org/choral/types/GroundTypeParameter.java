@@ -36,4 +36,29 @@ public interface GroundTypeParameter extends GroundReferenceType, TypeParameter 
 
 	Stream< ? extends GroundInterface > upperInterfaces();
 
+	boolean isUpperClassImplicit();
+
+	@Override
+	default boolean isEquivalentToErasureOf( GroundDataType type ) {
+		// revise when adding RAW types
+		if( type.isTypeParameter() ) {
+			GroundTypeParameter other = (GroundTypeParameter) type;
+			return ( this.isUpperClassImplicit() == other.isUpperClassImplicit() )
+					&& this.upperBound().allMatch( other::isSubtypeOf )
+					&& other.upperBound().allMatch( this::isSubtypeOf );
+		}
+		if( type.isClass() || type.isInterface() ) {
+			GroundClassOrInterface other = (GroundClassOrInterface) type;
+			if( other.isInterface() && !( isUpperClassImplicit() && isSubtypeOf( other ) ) ) {
+				return false;
+			}
+			if( other.isClass() && !other.isEquivalentToErasureOf( upperClass() ) ) {
+				return false;
+			}
+			return upperInterfaces().allMatch( other::isSubtypeOf ) &&
+					other.extendedInterfaces().allMatch( this::isSubtypeOf );
+		}
+		return false;
+	}
+
 }

@@ -37,7 +37,10 @@ public abstract class RefType extends Node {
 	private final List< FormalWorldParameter > worldparameters;
 	private final List< FormalTypeParameter > typeparameters;
 
-	protected RefType( final Name name, final List< FormalWorldParameter > worldparameters, final List< FormalTypeParameter > typeparameters, final Position position ) {
+	protected RefType(
+			final Name name, final List< FormalWorldParameter > worldparameters,
+			final List< FormalTypeParameter > typeparameters, final Position position
+	) {
 		super( position );
 		this.name = name;
 		this.worldparameters = worldparameters;

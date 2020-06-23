@@ -40,7 +40,9 @@ public class Annotation extends Node {
 	}
 
 
-	public Annotation( Name name, Map< Name, LiteralExpression< String > > values, final Position position ) {
+	public Annotation(
+			Name name, Map< Name, LiteralExpression< String > > values, final Position position
+	) {
 		super( position );
 		this.name = name;
 		this.values = values;

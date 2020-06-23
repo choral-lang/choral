@@ -27,4 +27,6 @@ public class PrintStream@A {
 
     public void println(String@A s) { }
 
+    public void println(Object@A s) { }
+
 }

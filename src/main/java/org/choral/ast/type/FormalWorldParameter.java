@@ -37,7 +37,8 @@ public class FormalWorldParameter extends World {
 
 	@Override
 	public boolean equals( final Object o ) {
-		return ( o instanceof FormalWorldParameter ) && this.name.equals( ( (FormalWorldParameter) o ).name() );
+		return ( o instanceof FormalWorldParameter ) && this.name.equals(
+				( (FormalWorldParameter) o ).name() );
 	}
 
 	public WorldArgument toWorldArgument() {

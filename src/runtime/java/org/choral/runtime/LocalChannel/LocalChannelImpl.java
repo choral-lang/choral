@@ -21,7 +21,7 @@
 
 package org.choral.runtime.LocalChannel;
 
-import org.choral.lang.Channels.SymChannelImpl;
+import org.choral.channels.SymChannelImpl;
 import org.choral.runtime.Media.MessageQueue;
 import org.choral.lang.Unit;
 

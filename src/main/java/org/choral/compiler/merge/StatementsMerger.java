@@ -39,9 +39,9 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 	}
 
 	public static Statement merge( List< Statement > n ) {
-		if( n.size() < 2 ){
+		if( n.size() < 2 ) {
 			return StatementsUnitNormaliser.visitStatement( n.get( 0 ) );
-		} else{
+		} else {
 			return new StatementsMerger().merge(
 					StatementsUnitNormaliser.visitStatement( n.get( 0 ) ),
 					merge( n.subList( 1, n.size() ) ) );
@@ -50,9 +50,9 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 
 	@Override
 	public Statement merge( Statement n1, Statement n2 ) {
-		try{
+		try {
 			return n1.merge( this, n2 );
-		} catch( ChoralException e ){
+		} catch( ChoralException e ) {
 			throw new MergeException( e.getMessage(), n1, n2 );
 		}
 	}
@@ -68,8 +68,10 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 	@Override
 	public Statement merge( SelectStatement n1, SelectStatement n2 ) {
 		return new SelectStatement(
-				(EnumCaseInstantiationExpression) ExpressionsMerger.mergeExpressions( n1.enumConstructor(), n2.enumConstructor() ),
-				ExpressionsMerger.mergeExpressions( n1.channelExpression(), n2.channelExpression() ),
+				(EnumCaseInstantiationExpression) ExpressionsMerger.mergeExpressions(
+						n1.enumConstructor(), n2.enumConstructor() ),
+				ExpressionsMerger.mergeExpressions( n1.channelExpression(),
+						n2.channelExpression() ),
 				merge( n1.continuation(), n2.continuation() )
 		);
 	}
@@ -91,7 +93,7 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 						+ n1.variables().size() + " and " + n2.variables().size(), n1, n2
 		);
 		List< VariableDeclaration > v = new ArrayList<>();
-		for( int i = 0; i < n1.variables().size(); i++ ){
+		for( int i = 0; i < n1.variables().size(); i++ ) {
 			v.add( VariableDeclarationMerger.mergeVariableDeclarations(
 					n1.variables().get( i ),
 					n2.variables().get( i ) )
@@ -113,18 +115,19 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 	@Override
 	public Statement merge( SwitchStatement n1, SwitchStatement n2 ) {
 		Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
-		for( SwitchArgument key : n1.cases().keySet() ){
+		for( SwitchArgument key : n1.cases().keySet() ) {
 			// we merge the cases present also in n2
-			if( n2.cases().containsKey( key ) ){
+			if( n2.cases().containsKey( key ) ) {
 				cases.put( key, merge( n1.cases().get( key ), n2.cases().get( key ) )
 				);
-			} else{
+			} else {
 				// we include the cases present only in n1
 				cases.put( key, n1.cases().get( key ) );
 			}
 		}
 		// we include the cases present only in n2
-		for( SwitchArgument key : n2.cases().keySet().stream().filter( k -> !cases.containsKey( k ) ).collect( Collectors.toSet() ) ){
+		for( SwitchArgument key : n2.cases().keySet().stream().filter(
+				k -> !cases.containsKey( k ) ).collect( Collectors.toSet() ) ) {
 			cases.put( key, n2.cases().get( key ) );
 		}
 		return new SwitchStatement(
@@ -140,10 +143,12 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 						+ n1.catches().size() + " and " + n2.catches().size(), n1, n2
 		);
 		List< Pair< VariableDeclaration, Statement > > mergedCatches = new ArrayList<>();
-		for( int i = 0; i < n1.catches().size(); i++ ){
+		for( int i = 0; i < n1.catches().size(); i++ ) {
 			MergeException._assert(
-					n1.catches().get( i ).left().type().equals( n2.catches().get( i ).left().type() ),
-					"Cannot merge try-catch statements with non-corresponding catch clauses: ", n1, n2
+					n1.catches().get( i ).left().type().equals(
+							n2.catches().get( i ).left().type() ),
+					"Cannot merge try-catch statements with non-corresponding catch clauses: ", n1,
+					n2
 			);
 			mergedCatches.add( new Pair<>(
 					n1.catches().get( i ).left(),

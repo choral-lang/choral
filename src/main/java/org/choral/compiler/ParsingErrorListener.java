@@ -33,19 +33,29 @@ import static org.choral.Choral.relativizePath;
 
 public class ParsingErrorListener extends BaseErrorListener {
 
+	private final String file;
+
+	public ParsingErrorListener( String file ) {
+		this.file = file;
+	}
+
 	@Override
-	public void syntaxError( Recognizer< ?, ? > recognizer,
-							 Object offendingSymbol,
-							 int line,
-							 int charPositionInLine,
-							 String msg,
-							 RecognitionException e ) {
+	public void syntaxError(
+			Recognizer< ?, ? > recognizer,
+			Object offendingSymbol,
+			int line,
+			int charPositionInLine,
+			String msg,
+			RecognitionException e
+	) {
 		List< String > stack = ( (Parser) recognizer ).getRuleInvocationStack();
 		Collections.reverse( stack );
-		System.err.println(
-				relativizePath( recognizer.getInputStream().getSourceName() )
-						+ ":" + line
-						+ ":" + charPositionInLine
-						+ ": " + "error: " + msg );
+		String file = relativizePath( recognizer.getInputStream().getSourceName() ).equals(
+				"<unknown>" ) ?
+				this.file : relativizePath( recognizer.getInputStream().getSourceName() );
+		System.err.println( file
+				+ ":" + line
+				+ ":" + charPositionInLine
+				+ ": " + "error: " + msg );
 	}
 }

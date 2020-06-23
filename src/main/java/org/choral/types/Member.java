@@ -129,8 +129,18 @@ public abstract class Member implements HasSource {
 //		System.out.println("  " + this.isPackagePrivate());
 //		System.out.println("-- result = " + (this.declarationContext == context || this.isPublic() || this.isProtected() || ( this.isPackagePrivate() &&
 //				context.declarationPackage() == this.declarationContext().declarationPackage() )));
-		return this.declarationContext == context || this.isPublic() || this.isProtected() || ( this.isPackagePrivate() &&
-				context.declarationPackage() == this.declarationContext().declarationPackage() ) ;
+		return this.declarationContext == context
+				|| this.isPublic()
+				|| this.isProtected()
+				|| ( this.isPackagePrivate() && this.declarationContext().declarationPackage() ==
+				context.declarationPackage() );
+	}
+
+	public final boolean isAccessibleFrom( GroundTypeParameter context ) {
+		return this.isPublic()
+				|| this.isProtected()
+				|| ( this.isPackagePrivate() && this.declarationContext().declarationPackage() ==
+				context.typeConstructor().declarationContext().declarationPackage() );
 	}
 
 	private final GroundClassOrInterface declarationContext;
@@ -146,14 +156,14 @@ public abstract class Member implements HasSource {
 
 		public final String label;
 
-		private Variety( String label ) {
+		Variety( String label ) {
 			this.label = label;
 		}
 	}
 
 	private final Variety variety;
 
-	public final Variety family() {
+	public final Variety variety() {
 		return variety;
 	}
 
@@ -245,6 +255,11 @@ public abstract class Member implements HasSource {
 			}
 		}
 
+		@Override
+		public Package declarationPackage() {
+			return declarationContext().typeConstructor().declarationPackage();
+		}
+
 		private final ArrayList< HigherTypeParameter > typeParameters;
 
 		@Override
@@ -275,7 +290,7 @@ public abstract class Member implements HasSource {
 				throw new StaticVerificationException(
 						"illegal type instantiation: expected " + typeParameters.size() + " type arguments but found " + typeArgs.size() );
 			}
-			Substitution substitution =  new Substitution() {
+			Substitution substitution = new Substitution() {
 				@Override
 				public HigherReferenceType get( HigherTypeParameter placeHolder ) {
 					int i = typeParameters.indexOf( placeHolder );
@@ -294,7 +309,7 @@ public abstract class Member implements HasSource {
 		protected final List< HigherTypeParameter > prepareTypeParameters(
 				Substitution substitution
 		) {
-			Types universe = declarationContext().universe();
+			Universe universe = declarationContext().universe();
 			List< HigherTypeParameter > newTypeParams = new ArrayList<>();
 			for( HigherTypeParameter t : typeParameters() ) {
 				newTypeParams.add( new HigherTypeParameter(
@@ -338,7 +353,7 @@ public abstract class Member implements HasSource {
 			return newTypeParams;
 		}
 
-		public boolean isSameSignature( HigherCallable other ) {
+		public boolean sameSignatureOf( HigherCallable other ) {
 			if( !this.identifier().equals( other.identifier() )
 					|| this.typeParameters.size() != other.typeParameters.size()
 					|| this.arity() != other.arity() ) {
@@ -385,27 +400,44 @@ public abstract class Member implements HasSource {
 			return true;
 		}
 
-		private boolean isSameErasure( HigherCallable other ) {
+		public boolean isSubSignatureOf( HigherCallable other ) {
+			return this.sameSignatureOf( other ) || this.sameSignatureErasureOf( other );
+		}
+
+		public boolean sameSignatureErasureOf( HigherCallable other ) {
+			if( !this.typeParameters.isEmpty() || this.arity() != other.arity() || !this.identifier().equals(
+					other.identifier() ) ) {
+				return false;
+			}
+			for( int i = 0; i < this.arity(); i++ ) {
+				GroundDataType t1 = this.innerCallable().signature().parameters().get( i ).type();
+				GroundDataType t2 = other.innerCallable().signature().parameters().get( i ).type();
+				if( !t1.isEquivalentToErasureOf( t2 ) ) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		public boolean sameErasureAs( HigherCallable other ) {
 			if( this.arity() != other.arity() || !this.identifier().equals( other.identifier() ) ) {
 				return false;
 			}
-			return isSameSignature( other );
+			for( int i = 0; i < this.arity(); i++ ) {
+				GroundDataType t1 = this.innerCallable().signature().parameters().get( i ).type();
+				GroundDataType t2 = other.innerCallable().signature().parameters().get( i ).type();
+				if( !t1.isEquivalentToErasureOf( t2 ) && !t2.isEquivalentToErasureOf( t1 ) ) {
+					return false;
+				}
+			}
+			return true;
 		}
 
-		public boolean isSubSignature( HigherCallable other ) {
-			return isSameSignature( other ) || isSameErasure( other );
-		}
-
-		public boolean isOverrideEquivalent( HigherCallable other ) {
-			return this.isSubSignature( other ) || other.isSameErasure( this );
-		}
-
-		public boolean isProjectionOverloadEquivalent( HigherCallable other){
-			return false; //ToDo
-		}
-
-		public void assertNoClash( HigherCallable other){
-
+		public boolean isOverrideEquivalentTo( HigherCallable other ) {
+			// (§8.4.2)
+			return this.sameSignatureOf( other ) ||
+					( this.sameSignatureErasureOf( other ) == !other.sameSignatureErasureOf(
+							this ) );
 		}
 
 		public int arity() {
@@ -416,7 +448,7 @@ public abstract class Member implements HasSource {
 
 		public abstract class Definition implements GroundCallable {
 
-			public Definition( Signature signature ) {
+			Definition( Signature signature ) {
 				this.signature = signature;
 			}
 
@@ -442,19 +474,11 @@ public abstract class Member implements HasSource {
 				signature().finalise();
 				finalised = true;
 			}
-
-			@Override
-			public final String toString() {
-				return typeArguments().stream().map( Object::toString ).collect(
-						Formatting.joining( ",", "<", ">", "" ) )
-						+ HigherCallable.this.identifier()
-						+ signature();
-			}
 		}
 
 		protected abstract class Proxy implements GroundCallable {
 
-			protected Proxy( Substitution substitution ) {
+			Proxy( Substitution substitution ) {
 				this.substitution = substitution;
 			}
 
@@ -473,14 +497,6 @@ public abstract class Member implements HasSource {
 
 			public Signature signature() {
 				return definition().signature().applySubstitution( substitution() );
-			}
-
-			@Override
-			public final String toString() {
-				return typeArguments().stream().map( Object::toString ).collect(
-						Formatting.joining( ",", "<", ">", "" ) )
-						+ HigherCallable.this.identifier()
-						+ signature();
 			}
 		}
 	}
@@ -519,6 +535,11 @@ public abstract class Member implements HasSource {
 			this.innerCallable = new Definition( signature );
 		}
 
+		@Override
+		public String toString() {
+			return identifier() + innerCallable().signature();
+		}
+
 		public boolean isReturnTypeAssignable( HigherMethod other ) {
 			if( this.innerCallable().returnType.isVoid() && other.innerCallable().returnType.isVoid() ) {
 				return true;
@@ -535,7 +556,7 @@ public abstract class Member implements HasSource {
 				};
 				GroundDataType g2 = (GroundDataType) other.innerCallable.returnType.applySubstitution(
 						s2 );
-				return ( (GroundDataType) innerCallable().returnType ).isAssignableTo( g2 );
+				return innerCallable().returnType.isAssignableTo( g2 );
 			}
 			return false;
 		}
@@ -593,6 +614,38 @@ public abstract class Member implements HasSource {
 			return result;
 		}
 
+		HigherMethod copyFor( GroundClassOrInterface declarationContext ) {
+			List< HigherTypeParameter > newTypeParams = prepareTypeParameters( Substitution.ID );
+			Substitution newSubstitution = new Substitution() {
+
+				@Override
+				public HigherReferenceType get( HigherTypeParameter placeHolder ) {
+					int i = typeParameters().indexOf( placeHolder );
+					return ( i == -1 )
+							? placeHolder
+							: newTypeParams.get( i );
+				}
+
+			};
+			Signature signature = this.innerCallable.signature().applySubstitution(
+					newSubstitution );
+			HigherMethod result = new HigherMethod(
+					declarationContext,
+					identifier(),
+					modifiers(),
+					newTypeParams,
+					signature,
+					false
+			);
+			result.innerCallable.setReturnType(
+					this.innerCallable.returnType.applySubstitution( newSubstitution ) );
+			if( isSelectionMethod() ) {
+				result.setSelectionMethod();
+			}
+			result.innerCallable.finalise();
+			return result;
+		}
+
 		private final HashMap< List< ? extends HigherReferenceType >, GroundMethod > instIndex = new HashMap<>();
 
 		@Override
@@ -614,8 +667,16 @@ public abstract class Member implements HasSource {
 
 		public final class Definition extends HigherCallable.Definition implements GroundMethod {
 
-			public Definition( Signature signature ) {
+			private Definition( Signature signature ) {
 				super( signature );
+			}
+
+			@Override
+			public String toString() {
+				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
+						Formatting.joining( ",", "<", ">", "" ) )
+						+ identifier()
+						+ signature();
 			}
 
 			private GroundDataTypeOrVoid returnType;
@@ -636,10 +697,18 @@ public abstract class Member implements HasSource {
 
 		}
 
-		public final class Proxy extends HigherCallable.Proxy implements GroundMethod {
+		private final class Proxy extends HigherCallable.Proxy implements GroundMethod {
 
-			public Proxy( Substitution substitution ) {
+			private Proxy( Substitution substitution ) {
 				super( substitution );
+			}
+
+			@Override
+			public String toString() {
+				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
+						Formatting.joining( ",", "<", ">", "" ) )
+						+ identifier()
+						+ signature();
 			}
 
 			@Override
@@ -688,6 +757,11 @@ public abstract class Member implements HasSource {
 			super( declarationContext, HigherCallable.CONSTRUCTOR_NAME, Variety.CONSTRUCTOR,
 					modifiers, typeParameters, performChecks );
 			this.innerCallable = new Definition( signature );
+		}
+
+		@Override
+		public String toString() {
+			return declarationContext().typeConstructor().identifier() + innerCallable().signature();
 		}
 
 		public GroundClass declarationContext() {
@@ -751,8 +825,16 @@ public abstract class Member implements HasSource {
 		public final class Definition extends HigherCallable.Definition
 				implements GroundConstructor {
 
-			public Definition( Signature signature ) {
+			private Definition( Signature signature ) {
 				super( signature );
+			}
+
+			@Override
+			public String toString() {
+				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
+						Formatting.joining( ",", "<", ">", "" ) )
+						+ declarationContext().typeConstructor().identifier()
+						+ signature();
 			}
 
 			@Override
@@ -762,10 +844,18 @@ public abstract class Member implements HasSource {
 
 		}
 
-		public final class Proxy extends HigherCallable.Proxy implements GroundConstructor {
+		private final class Proxy extends HigherCallable.Proxy implements GroundConstructor {
 
-			public Proxy( Substitution substitution ) {
+			private Proxy( Substitution substitution ) {
 				super( substitution );
+			}
+
+			@Override
+			public String toString() {
+				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
+						Formatting.joining( ",", "<", ">", "" ) )
+						+ declarationContext().typeConstructor().identifier()
+						+ signature();
 			}
 
 			@Override

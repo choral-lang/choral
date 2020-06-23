@@ -37,7 +37,9 @@ public class VariableDeclaration extends Node {
 		this.type = type;
 	}
 
-	public VariableDeclaration( final Name name, final TypeExpression type, final Position position ) {
+	public VariableDeclaration(
+			final Name name, final TypeExpression type, final Position position
+	) {
 		super( position );
 		this.name = name;
 		this.type = type;

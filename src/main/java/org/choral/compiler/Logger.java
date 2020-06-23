@@ -39,9 +39,9 @@ public class Logger {
 	}
 
 	public static String getFormattedPosition( String file, int line, int column ) {
-		if( file == null || file.isBlank() ){
+		if( file == null || file.isBlank() ) {
 			return String.format( "line %d column %d", line, column );
-		} else{
+		} else {
 			return String.format( "'%s' line %d column %d", file, line, column );
 		}
 	}
@@ -79,7 +79,7 @@ public class Logger {
 
 	public Logger( Logger logger ) {
 		this.filterLevels.clear();
-		for( Level l : logger.filterLevels ){
+		for( Level l : logger.filterLevels ) {
 			this.filterLevels.add( l );
 		}
 		setFile( logger.file );
@@ -92,7 +92,7 @@ public class Logger {
 
 	public Logger( Level... filterLevels ) {
 		this.filterLevels.clear();
-		for( Level l : filterLevels ){
+		for( Level l : filterLevels ) {
 			this.filterLevels.add( l );
 		}
 	}
@@ -109,17 +109,22 @@ public class Logger {
 		log( level, String.format( format, args ) );
 	}
 
-	public void logfWithPosition( Level level, int line, int column, String format, Object... args ) {
+	public void logfWithPosition(
+			Level level, int line, int column, String format, Object... args
+	) {
 		logfWithPosition( level, file(), line, column, format, args );
 	}
 
-	public void logfWithPosition( Level level, String file, int line, int column, String format, Object... args ) {
-		log( level, addFormattedPosition( getFormattedPosition( file, line, column ), String.format( format, args ) ) );
+	public void logfWithPosition(
+			Level level, String file, int line, int column, String format, Object... args
+	) {
+		log( level, addFormattedPosition( getFormattedPosition( file, line, column ),
+				String.format( format, args ) ) );
 	}
 
 	public void log( Level level, String message ) {
-		if( filterLevels.contains( level ) ){
-			switch( level ){
+		if( filterLevels.contains( level ) ) {
+			switch( level ) {
 				case ERROR:
 					this.errors = true;
 					System.err.println( "[ERROR] " + message );

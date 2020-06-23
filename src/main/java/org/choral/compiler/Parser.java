@@ -30,8 +30,6 @@ import org.choral.grammar.ChoralLexer;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
-import java.util.Collection;
 
 public class Parser {
 
@@ -52,21 +50,23 @@ public class Parser {
 		org.choral.grammar.ChoralParser cp = new org.choral.grammar.ChoralParser( tokens );
 		cp.removeErrorListeners();
 		// ToDo: common error messages
-		cp.addErrorListener( new ParsingErrorListener() );
+		cp.addErrorListener( new ParsingErrorListener( file ) );
 		org.choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
 		return AstOptimizer
 				.loadParameters( /* new String[]{ "showDebug" } */ )
 				.optimise( ctx, file );
 	}
 
-	public static CompilationUnit parseSourceFile( InputStream in, String file) throws IOException {
+	public static CompilationUnit parseSourceFile(
+			InputStream in, String file
+	) throws IOException {
 		ANTLRInputStream input = new ANTLRInputStream( in );
 		ChoralLexer lexer = new ChoralLexer( input );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		org.choral.grammar.ChoralParser cp = new org.choral.grammar.ChoralParser( tokens );
 		cp.removeErrorListeners();
 		// ToDo: common error messages
-		cp.addErrorListener( new ParsingErrorListener() );
+		cp.addErrorListener( new ParsingErrorListener( file ) );
 		org.choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
 		return AstOptimizer
 				.loadParameters( /* new String[]{ "showDebug" } */ )

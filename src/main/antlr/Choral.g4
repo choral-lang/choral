@@ -263,16 +263,13 @@ constructorDeclarator
 	;
 
 constructorBody
-    : block
-//    :	LBRACE  explicitConstructorInvocation? blockStatements? RBRACE
+    : LBRACE  explicitConstructorInvocation? blockStatements? RBRACE
     ;
 
-//explicitConstructorInvocation
-//    :	typeArguments? 'this' '(' argumentList? ')' ';'
-//    |	typeArguments? 'super' '(' argumentList? ')' ';'
-//    |	expressionName '.' typeArguments? 'super' '(' argumentList? ')' ';'
-//    |	primary '.' typeArguments? 'super' '(' argumentList? ')' ';'
-//    ;
+explicitConstructorInvocation
+    :	typeArguments? THIS LPAREN argumentList? RPAREN SEMI
+    |	typeArguments? SUPER LPAREN argumentList? RPAREN SEMI
+    ;
 
 /*
  * Productions from §9 (Interfaces), added enums
@@ -391,6 +388,7 @@ trailingExpression
 			| methodInvocation
 			| classInstanceCreationExpression
 			| staticGenericAccess
+			| thisOrSuperMethodAccess
 	) ( DOT trailExpression )?
 	;
 
@@ -398,6 +396,10 @@ trailExpression
 	: ( fieldAccess_no_primary
 			| methodInvocation
 	) ( DOT trailExpression )?
+	;
+
+thisOrSuperMethodAccess
+	: ( thisSymbol=THIS | superSymbol=SUPER ) DOT methodInvocation
 	;
 
 chainedExpression
@@ -425,7 +427,7 @@ chainedClassInstanceCreation
 	;
 
 methodInvocation
-	: typeArguments? ( Identifier | SUPER ) LPAREN argumentList? RPAREN
+	: typeArguments? Identifier LPAREN argumentList? RPAREN
 	;
 
 staticGenericAccess

@@ -27,6 +27,22 @@ public interface DataType extends Type, DataTypeOrVoid {
 		return primitiveTypeTag() != null;
 	}
 
+	default boolean isTypeParameter() {
+		return false;
+	}
+
+	default boolean isClass() {
+		return false;
+	}
+
+	default boolean isInterface() {
+		return false;
+	}
+
+	default boolean isEnum() {
+		return false;
+	}
+
 	boolean isHigherType();
 
 	@Override

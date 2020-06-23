@@ -21,12 +21,14 @@
 
 package org.choral;
 
+import com.google.common.collect.Streams;
 import org.choral.ast.CompilationUnit;
 import org.choral.ast.Position;
 import org.choral.compiler.*;
 import org.choral.compiler.Compiler;
 import org.choral.exceptions.AstPositionedException;
 import org.choral.exceptions.StaticVerificationException;
+
 import static org.choral.utils.Streams.*;
 
 import picocli.AutoComplete;
@@ -79,6 +81,14 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		@Mixin
 		PathOption.HeadersPathOption headersPathOption;
 
+		@Option( names = { "--strict-header-search" },
+				description = "ignore headers in the same folder of the source files, unless specified by -l/--headers." )
+		boolean strictHeaderSearch = false;
+
+		@Option( names = { "--no-projectability" },
+				description = "skip projectability checks." )
+		boolean skipProjectability = false;
+
 		@Parameters( arity = "1..*" )
 		Collection< File > sourceFiles;
 
@@ -86,13 +96,20 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		public Integer call() {
 			try {
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
-						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList());
-				Collection< CompilationUnit > headerUnits = Stream.concat( HeaderLoader.loadStandardProfile(),
-						HeaderLoader.loadFromPath( headersPathOption.getPaths(true) )).collect(
-						Collectors.toList());
+						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
+				Collection< CompilationUnit > headerUnits = Stream.concat(
+						HeaderLoader.loadStandardProfile(),
+						HeaderLoader.loadFromPath(
+								headersPathOption.getPaths(),
+								sourceFiles,
+								true, strictHeaderSearch )
+				)
+						.collect( Collectors.toList() );
 				Collection< CompilationUnit > annotatedUnits = Typer.annotate( sourceUnits,
 						headerUnits );
-				Compiler.checkProjectiability( annotatedUnits );
+				if( !skipProjectability ) {
+					Compiler.checkProjectiability( annotatedUnits );
+				}
 			} catch( AstPositionedException e ) {
 				printNiceErrorMessage( e );
 				if( verbosityOptions.verbosity() == VerbosityOptions.VerbosityLevel.DEBUG ) {
@@ -132,7 +149,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		@Override
 		public Integer call() {
 			try {
-				Collection< File > sourceFiles = sourcesPathOption.getPaths(true).stream()
+				Collection< File > sourceFiles = sourcesPathOption.getPaths( true ).stream()
 						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
 							if( Files.isDirectory( q ) ) return false;
 							String x = q.toString();
@@ -142,34 +159,26 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						}, FileVisitOption.FOLLOW_LINKS ) ) )
 						.map( Path::toFile )
 						.collect( Collectors.toList() );
-				// TODO: THIS IS A COPY OF THE CALL FOR CHECK, AGGREGATE INTO A METHOD AND CALL THAT
-//				Collection< File > headerFiles = headersPathOption.getPaths().stream()
-//						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
-//							if( Files.isDirectory( q ) ) return false;
-//							String x = q.toString();
-//							x = x.substring(
-//									x.length() - SourceObject.HeaderSourceObject.FILE_EXTENSION.length() ).toLowerCase();
-//							return x.equals( SourceObject.HeaderSourceObject.FILE_EXTENSION );
-//						}, FileVisitOption.FOLLOW_LINKS ) ) )
-//						.map( Path::toFile )
-//						.filter( f -> !sourceFiles.contains( f ) )
-//						.collect( Collectors.toList() );
-//                Collection<File> headerFiles = Collections.EMPTY_LIST;
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
-						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList());
-//				Collection< CompilationUnit > headerUnits = headerFiles.stream().map(
-//						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList());
-				Collection< CompilationUnit > headerUnits = Stream.concat( HeaderLoader.loadStandardProfile(),
-						HeaderLoader.loadFromPath(  headersPathOption.getPaths() )).collect(
-						Collectors.toList());
+						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
+				Collection< CompilationUnit > headerUnits = Stream.concat(
+						HeaderLoader.loadStandardProfile(),
+						HeaderLoader.loadFromPath(
+								headersPathOption.getPaths(),
+								sourceFiles,
+								true, true ) // TODO: keep this or introduce parameter also in EPP?
+				)
+						.collect( Collectors.toList() );
 				Collection< CompilationUnit > annotatedUnits = Typer.annotate( sourceUnits,
 						headerUnits );
+				Compiler.checkProjectiability( annotatedUnits );
 				// TODO: ... UNTIL HERE (annotatedUnits)
-				if( worlds == null ){
+				if( worlds == null ) {
 					worlds = Collections.emptyList();
 				}
 				Compiler.project(
 						emissionOptions.isDryRun(),
+						emissionOptions.isAnnotated(),
 //						emissionOptions.useCanonicalPaths() TODO: implement this
 //						emissionOptions.isOverwritingAllowed() TODO: implement this
 						annotatedUnits,
@@ -206,15 +215,29 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		@Mixin
 		PathOption.HeadersPathOption headersPathOption;
 
+		@Option( names = { "--strict-header-search" },
+				description = "ignore headers in the same folder of the source files, unless specified by -l/--headers." )
+		boolean strictHeaderSearch = false;
+
 		@Parameters( arity = "1..*" )
 		List< File > sourceFiles;
 
 		@Override
 		public Integer call() {
 			try {
-				sourceFiles.stream()
-						.map( wrapFunction( Parser::parseSourceFile ) )
-						.map( HeaderCompiler::compile )
+				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
+						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
+				Collection< CompilationUnit > headerUnits = Stream.concat(
+						HeaderLoader.loadStandardProfile(),
+						HeaderLoader.loadFromPath(
+								headersPathOption.getPaths(),
+								sourceFiles,
+								true, strictHeaderSearch )
+				)
+						.collect( Collectors.toList() );
+				Collection< CompilationUnit > annotatedUnits = Typer.annotate( sourceUnits,
+						headerUnits );
+				annotatedUnits.parallelStream().map( HeaderCompiler::compile )
 						.forEach( emissionOptions.isDryRun()
 								? skip()
 								: wrapConsumer( s -> {
@@ -225,7 +248,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 			} catch( AstPositionedException e ) {
 				printNiceErrorMessage( e );
 				return 1;
-			} catch( WrappedException e ) {
+			} catch( Exception e ) {
 				// ToDo error reporting
 				e.printStackTrace();
 				return 1;
@@ -378,20 +401,20 @@ abstract class PathOption {
 	}
 
 	public final List< Path > getPaths() {
-		return getPaths(false);
+		return getPaths( false );
 	}
 
-	public final List< Path > getPaths(boolean cwdIfEmpty) {
+	public final List< Path > getPaths( boolean cwdIfEmpty ) {
 		if( paths == null ) {
 			paths = new LinkedList<>();
-			if(value != null) {
+			if( value != null ) {
 				for( String p : value().split( File.pathSeparator ) ) {
 					paths.add( Paths.get( p ) );
 				}
 			}
 		}
-		if(cwdIfEmpty && paths.isEmpty()){
-			paths.add( Paths.get("") );
+		if( cwdIfEmpty && paths.isEmpty() ) {
+			paths.add( Paths.get( "" ) );
 		}
 		return paths;
 	}
@@ -428,6 +451,10 @@ class EmissionOptions {
 			description = "Disable any write on disk." )
 	private boolean dryRun = false;
 
+	@Option( names = { "--annotate" },
+			description = "Annotate the projected artefacts with the @Choreography annotation." )
+	private boolean isAnnotated = false;
+
 	@Option( names = { "-p", "--canonical-paths" },
 			description = "Use folders for packages." )
 	boolean useCanonicalPaths;
@@ -439,6 +466,10 @@ class EmissionOptions {
 
 	public boolean isDryRun() {
 		return dryRun;
+	}
+
+	public boolean isAnnotated() {
+		return isAnnotated;
 	}
 
 	public boolean isOverwritingAllowed() {

@@ -1,0 +1,11 @@
+package choral.examples.VitalsStreamingUtils;
+
+public class Sensor@A {
+
+	public Sensor() {}
+
+	public Boolean@A isOn () {}
+
+	public VitalsMsg@A next () {}
+
+}

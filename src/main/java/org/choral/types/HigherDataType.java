@@ -22,7 +22,7 @@
 package org.choral.types;
 
 import org.choral.exceptions.StaticVerificationException;
-import org.choral.kinds.Kind;
+import org.choral.types.kinds.Kind;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public abstract class HigherDataType extends TypeBase
 		implements DataType, WorldParameterDeclarationContext {
 
-	HigherDataType( Types universe, List< World > worldParameters ) {
+	HigherDataType( Universe universe, List< World > worldParameters ) {
 		super( universe );
 		this.worldParameters = List.copyOf( worldParameters );
 		String[] names = new String[ worldParameters.size() ];
@@ -162,9 +162,9 @@ public abstract class HigherDataType extends TypeBase
 		return false;
 	}
 
-	abstract class Definition extends TypeBase implements GroundDataType {
+	protected abstract class Definition extends TypeBase implements GroundDataType {
 
-		public Definition() {
+		Definition() {
 			super( HigherDataType.this.universe() );
 		}
 
@@ -212,11 +212,11 @@ public abstract class HigherDataType extends TypeBase
 
 	}
 
-	abstract class Proxy extends TypeBase implements GroundDataType {
+	protected abstract class Proxy extends TypeBase implements GroundDataType {
 
 		private final Substitution substitution;
 
-		protected Proxy( Substitution substitution ) {
+		Proxy( Substitution substitution ) {
 			super( HigherDataType.this.universe() );
 			this.substitution = substitution;
 		}

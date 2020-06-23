@@ -26,17 +26,17 @@ import java.util.List;
 public interface GroundDataType extends DataType, GroundDataTypeOrVoid {
 
 	@Override
-	default boolean isHigherType(){
+	default boolean isHigherType() {
 		return false;
 	}
 
 	@Override
-	default Types.SpecialTypeTag specialTypeTag() {
+	default Universe.SpecialTypeTag specialTypeTag() {
 		return typeConstructor().specialTypeTag();
 	}
 
 	@Override
-	default Types.PrimitiveTypeTag primitiveTypeTag() {
+	default Universe.PrimitiveTypeTag primitiveTypeTag() {
 		return typeConstructor().primitiveTypeTag();
 	}
 
@@ -52,7 +52,10 @@ public interface GroundDataType extends DataType, GroundDataTypeOrVoid {
 	GroundDataType applySubstitution( Substitution substitution );
 
 	default boolean isAssignableTo( GroundDataTypeOrVoid type ) {
-		return !type.isVoid() && (type instanceof GroundDataType) && isSubtypeOf( (GroundDataType) type );
+		return !type.isVoid() && ( type instanceof GroundDataType ) && isSubtypeOf(
+				(GroundDataType) type );
 	}
+
+	boolean isEquivalentToErasureOf( GroundDataType type );
 
 }

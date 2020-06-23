@@ -33,7 +33,10 @@ public class ProjectableTemplate {
 	private final List< ImportDeclaration > imports;
 	private final Node node;
 
-	public ProjectableTemplate( String packageDeclaration, List< ImportDeclaration > imports, Node node, WorldArgument worldArgument ) {
+	public ProjectableTemplate(
+			String packageDeclaration, List< ImportDeclaration > imports, Node node,
+			WorldArgument worldArgument
+	) {
 		this.worldArgument = worldArgument;
 		this.packageDeclaration = packageDeclaration;
 		this.imports = imports;

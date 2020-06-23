@@ -49,37 +49,45 @@ class ModifierUtils {
 	public static void assertAccessModifiers( EnumSet< Modifier > modifiers ) {
 		EnumSet< Modifier > access = EnumSet.of( PUBLIC, PRIVATE, PROTECTED );
 		access.removeAll( modifiers );
-		if( access.size() < 2 ){
+		if( access.size() < 2 ) {
 			EnumSet< Modifier > used = EnumSet.of( PUBLIC, PRIVATE, PROTECTED );
 			used.remove( access );
-			throw new StaticVerificationException( "illegal combination of modifiers " + prettyModifierList( used ) + "" );
+			throw new StaticVerificationException(
+					"illegal combination of modifiers " + prettyModifierList( used ) + "" );
 		}
 	}
 
-	public static void assertLegalModifiers( EnumSet< Modifier > allowed, EnumSet< Modifier > toCheck, String where ) {
+	public static void assertLegalModifiers(
+			EnumSet< Modifier > allowed, EnumSet< Modifier > toCheck, String where
+	) {
 		EnumSet< Modifier > copy = EnumSet.copyOf( toCheck );
 		copy.removeAll( allowed );
-		if( copy.size() > 0 ){ // Illegal modifiers
+		if( copy.size() > 0 ) { // Illegal modifiers
 			String ms = ( copy.size() > 1 ) ? "modifier " : "modifiers ";
-			throw new StaticVerificationException( ms + prettyModifierList( copy ) + " not allowed " + where + "" );
+			throw new StaticVerificationException(
+					ms + prettyModifierList( copy ) + " not allowed " + where + "" );
 		}
 	}
 
-	public static void assertIllegalCombinationOfModifiers( EnumSet< Modifier > modifiers, Modifier m1, Modifier m2 ) {
-		if( modifiers.contains( m1 ) && modifiers.contains( m2 ) ){
-			throw new StaticVerificationException( "illegal combination of modifiers '" + m1.label + "' and '" + m2.label + "'" );
+	public static void assertIllegalCombinationOfModifiers(
+			EnumSet< Modifier > modifiers, Modifier m1, Modifier m2
+	) {
+		if( modifiers.contains( m1 ) && modifiers.contains( m2 ) ) {
+			throw new StaticVerificationException(
+					"illegal combination of modifiers '" + m1.label + "' and '" + m2.label + "'" );
 		}
 	}
 
 	public static String prettyModifierList( EnumSet< Modifier > modifiers ) {
 		return modifiers.stream().map( x -> "'" + x.label + "'" )
-				.collect( Collectors.collectingAndThen( Collectors.toList(), Formatting.joiningOxfordComma() ) );
+				.collect( Collectors.collectingAndThen( Collectors.toList(),
+						Formatting.joiningOxfordComma() ) );
 	}
 
-	public static String prettyAccess( EnumSet< Modifier > modifiers ){
+	public static String prettyAccess( EnumSet< Modifier > modifiers ) {
 		String r = "package-private";
-		for(Modifier m : EnumSet.of( PUBLIC, PRIVATE, PROTECTED )) {
-			if(modifiers.contains( m )) {
+		for( Modifier m : EnumSet.of( PUBLIC, PRIVATE, PROTECTED ) ) {
+			if( modifiers.contains( m ) ) {
 				r = m.label;
 				break;
 			}

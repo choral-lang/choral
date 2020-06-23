@@ -11,3 +11,8 @@ gradlew.bat
 # antlr generated files
 src/main/java/org/choral/grammar/
 
+.idea/gradle.xml
+.idea/gradle.xml
+.idea/misc.xml
+gradle/wrapper/gradle-wrapper.jar
+gradle/wrapper/gradle-wrapper.properties

@@ -29,7 +29,7 @@ import org.choral.types.Member;
 
 import java.util.Optional;
 
-public abstract class World extends Node implements WithTypeAnnotation<org.choral.types.World> {
+public abstract class World extends Node implements WithTypeAnnotation< org.choral.types.World > {
 	protected final Name name;
 
 	protected World( final Name name ) {
@@ -57,9 +57,9 @@ public abstract class World extends Node implements WithTypeAnnotation<org.chora
 
 	@Override
 	public boolean equals( final Object o ) {
-		if( o instanceof World ){
+		if( o instanceof World ) {
 			return this.name.equals( ( (World) o ).name() );
-		} else{
+		} else {
 			return false;
 		}
 	}

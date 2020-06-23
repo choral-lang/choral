@@ -36,11 +36,13 @@ import static org.choral.types.ModifierUtils.*;
 
 public final class HigherInterface extends HigherClassOrInterface implements Interface {
 
-	public HigherInterface( Package declarationContext,
-							EnumSet< Modifier > modifiers,
-							String identifier,
-							List< World > worldsParameters,
-							List< HigherTypeParameter > typeParameters ) {
+	public HigherInterface(
+			Package declarationContext,
+			EnumSet< Modifier > modifiers,
+			String identifier,
+			List< World > worldsParameters,
+			List< HigherTypeParameter > typeParameters
+	) {
 		super( declarationContext,
 				setImplicitModifiers( modifiers ),
 				identifier,
@@ -48,12 +50,14 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 				typeParameters );
 	}
 
-	public HigherInterface( Package declarationContext,
-							EnumSet< Modifier > modifiers,
-							String identifier,
-							List< World > worldsParameters,
-							List< HigherTypeParameter > typeParameters,
-							Node sourceCode ) {
+	public HigherInterface(
+			Package declarationContext,
+			EnumSet< Modifier > modifiers,
+			String identifier,
+			List< World > worldsParameters,
+			List< HigherTypeParameter > typeParameters,
+			Node sourceCode
+	) {
 		super( declarationContext,
 				setImplicitModifiers( modifiers ),
 				identifier,
@@ -67,7 +71,8 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 		return Variety.INTERFACE;
 	}
 
-	private static final EnumSet< Modifier > legalModifiers = EnumSet.of( PUBLIC, ABSTRACT, STATIC );
+	private static final EnumSet< Modifier > legalModifiers = EnumSet.of( PUBLIC, ABSTRACT,
+			STATIC );
 
 	@Override
 	protected void assertModifiers( EnumSet< Modifier > modifiers ) {
@@ -82,11 +87,15 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 
 	@Override
 	public GroundInterface applyTo( List< ? extends World > args ) {
-		return applyTo( args, typeParameters.stream().map( HigherTypeParameter::getRawType ).collect( Collectors.toList() ) );
+		return applyTo( args,
+				typeParameters.stream().map( HigherTypeParameter::getRawType ).collect(
+						Collectors.toList() ) );
 	}
 
 	@Override
-	public GroundInterface applyTo( List< ? extends World > worldArgs, List< ? extends HigherReferenceType > typeArgs ) {
+	public GroundInterface applyTo(
+			List< ? extends World > worldArgs, List< ? extends HigherReferenceType > typeArgs
+	) {
 		return innerType().applySubstitution( getApplicationSubstitution( worldArgs, typeArgs ) );
 	}
 
@@ -97,12 +106,16 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 		return innerType;
 	}
 
-	public void addImplicitMethodModifiers(EnumSet<Modifier> modifiers) {
+	public void addImplicitMethodModifiers( EnumSet< Modifier > modifiers ) {
 		modifiers.add( ABSTRACT );
 		modifiers.add( PUBLIC );
 	}
 
-	public final class Definition extends HigherClassOrInterface.Definition implements GroundInterface {
+	public final class Definition extends HigherClassOrInterface.Definition
+			implements GroundInterface {
+
+		private Definition() {
+		}
 
 		@Override
 		public HigherInterface typeConstructor() {
@@ -114,7 +127,7 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 		@Override
 		public GroundInterface applySubstitution( Substitution substitution ) {
 			GroundInterface result = alphaIndex.get( substitution );
-			if( result == null ){
+			if( result == null ) {
 				result = new Proxy( substitution );
 				alphaIndex.put( substitution, result );
 			}
@@ -123,22 +136,24 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 
 		@Override
 		public Stream< ? extends Member.Field > fields() {
-			return Stream.concat( declaredFields(), extendedInterfaces().flatMap( x -> x.fields() ) );
+			return Stream.concat( declaredFields(),
+					extendedInterfaces().flatMap( x -> x.fields() ) );
 		}
 
 		@Override
 		public Stream< ? extends Member.HigherMethod > methods() {
-			return Stream.concat( declaredMethods(), extendedInterfaces().flatMap( x -> x.methods() ) );
+			return Stream.concat( declaredMethods(),
+					extendedInterfaces().flatMap( x -> x.methods() ) );
 		}
 
 		public void addField( Member.Field field ) {
-			throw new UnsupportedOperationException("interfaces cannot have fields");
+			throw new UnsupportedOperationException( "interfaces cannot have fields" );
 		}
 
 		protected final List< Member.HigherMethod > declaredMethods = new ArrayList<>();
 
 		public void addMethod( Member.HigherMethod method ) {
-			assert( method.isPublic() && method.isAbstract());
+			assert ( method.isPublic() && method.isAbstract() );
 //			if(!method.isPublic() || !method.isAbstract()){
 //				throw new IllegalArgumentException("interface methods must be public and abstract");
 //			}
@@ -147,9 +162,9 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 
 	}
 
-	protected final class Proxy extends HigherClassOrInterface.Proxy implements GroundInterface {
+	private final class Proxy extends HigherClassOrInterface.Proxy implements GroundInterface {
 
-		public Proxy( Substitution substitution ) {
+		private Proxy( Substitution substitution ) {
 			super( substitution );
 		}
 

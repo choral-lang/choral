@@ -1,10 +1,8 @@
 package choral.examples.Karatsuba;
 
-import org.choral.lang.Channels.SymChannel1;
-import org.choral.lang.Channels.SymChannel2;
-import org.choral.lang.Unit;
+import org.choral.channels.SymChannel;
 
-public enum Choice@R { RECUR, DONE }
+enum Choice@R { RECUR, DONE }
 
 public class Karatsuba@( A, B, C ) {
 
@@ -13,10 +11,12 @@ public class Karatsuba@( A, B, C ) {
 		SymChannel@( B, C )< Object > ch_BC,
 		SymChannel@( C, A )< Object > ch_CA ) {
 		if ( n1 < 10@A || n2 < 10@A ) {
-			select( Choice@A.DONE, ch_AB ); select( Choice@A.DONE, ch_CA );
+			ch_AB.< Choice >select( Choice@A.DONE );
+			ch_CA.< Choice >select( Choice@A.DONE );
 			return n1 * n2;
 		} else {
-			select( Choice@A.RECUR, ch_AB ); select( Choice@A.RECUR, ch_CA );
+			ch_AB.< Choice >select( Choice@A.RECUR );
+			ch_CA.< Choice >select( Choice@A.RECUR );
 			Double@A m = Math@A.max( Math@A.log10( n1 ), Math@A.log10( n2 ) ) + 1@A;
 			Integer@A m2 = Double@A.valueOf( m / 2@A ).intValue();
 			Integer@A splitter = Double@A.valueOf( Math@A.pow( 10@A, m2 ) ).intValue();

@@ -24,10 +24,12 @@ package org.choral.compiler.soloist;
 import org.choral.ast.Name;
 import org.choral.ast.Node;
 import org.choral.ast.body.*;
+import org.choral.ast.expression.MethodCallExpression;
 import org.choral.ast.statement.NilStatement;
 import org.choral.ast.type.TypeExpression;
 import org.choral.ast.type.WorldArgument;
 import org.choral.ast.visitors.AbstractSoloistProjector;
+import org.choral.compiler.unitNormaliser.ExpressionUnitNormaliser;
 import org.choral.compiler.unitNormaliser.StatementsUnitNormaliser;
 import org.choral.compiler.unitNormaliser.UnitRepresentation;
 
@@ -48,14 +50,14 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 
 	@Override
 	public Field visit( Field n ) {
-		if( n.typeExpression().worldArguments().contains( this.world() ) ){
+		if( n.typeExpression().worldArguments().contains( this.world() ) ) {
 			return new Field(
 					n.name(),
 					TypesProjector.visit( this.world(), n.typeExpression() ).get( 0 ),
 					n.modifiers(),
 					n.position()
 			);
-		} else{
+		} else {
 			return null; // these are removed by the visitAndCollect method
 		}
 	}
@@ -70,7 +72,8 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 						.getOrElse( () ->
 								new TypeExpression(
 										UnitRepresentation.UNIT,
-										Collections.singletonList( this.world() ), Collections.emptyList()
+										Collections.singletonList( this.world() ),
+										Collections.emptyList()
 								)
 						),
 				n.position()
@@ -83,7 +86,7 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 				new Name( Utils.getProjectionName( n.name().identifier(), this.world(),
 						n.typeAnnotation().get().declarationContext().worldArguments().stream()
 								.map( w -> new WorldArgument( new Name( w.identifier() ) ) )
-								.collect( Collectors.toList())
+								.collect( Collectors.toList() )
 				) ),
 				TypesProjector.visitAndCollect( this.world(), n.typeParameters() ),
 				n.parameters().stream()
@@ -112,7 +115,8 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 		ClassMethodDefinition m = new ClassMethodDefinition(
 				visit( n.signature() ),
 				n.body().isPresent() ?
-						StatementsUnitNormaliser.visitStatement( StatementsProjector.visit( this.world(), n.body().get() ) )
+						StatementsUnitNormaliser.visitStatement(
+								StatementsProjector.visit( this.world(), n.body().get() ) )
 						: null,
 				visitAndCollect( n.annotations() ),
 				n.modifiers(),
@@ -137,7 +141,11 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 	public ConstructorDefinition visit( ConstructorDefinition n ) {
 		ConstructorDefinition c = new ConstructorDefinition(
 				visit( n.signature() ),
-				StatementsUnitNormaliser.visitStatement( StatementsProjector.visit( this.world(), n.body() ) ),
+				n.explicitConstructorInvocation().map(
+						x -> (MethodCallExpression) ExpressionUnitNormaliser.visitExpression(
+								ExpressionProjector.visit( this.world(), x ) ) ).orElse( null ),
+				StatementsUnitNormaliser.visitStatement(
+						StatementsProjector.visit( this.world(), n.blockStatements() ) ),
 				n.modifiers(),
 				n.position()
 		);
@@ -149,7 +157,8 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 		return l.isEmpty() ?
 				new FormalMethodParameter(
 						p.name(),
-						new TypeExpression( UnitRepresentation.UNIT, Collections.singletonList( this.world() ),
+						new TypeExpression( UnitRepresentation.UNIT,
+								Collections.singletonList( this.world() ),
 								Collections.emptyList() ),
 						p.position()
 				)
@@ -157,7 +166,8 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 	}
 
 	private < T extends Node > List< T > visitAndCollect( List< T > n ) {
-		return n.stream().map( this::safeVisit ).filter( Objects::nonNull ).collect( Collectors.toList() );
+		return n.stream().map( this::safeVisit ).filter( Objects::nonNull ).collect(
+				Collectors.toList() );
 	}
 
 	@SuppressWarnings( "unchecked cast" )

@@ -66,7 +66,8 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 
 	@Override
 	public Statement visit( VariableDeclarationStatement n ) {
-		VariableDeclaration v = n.variables().get( 0 ); // there is only one variable after desugaring
+		VariableDeclaration v = n.variables().get(
+				0 ); // there is only one variable after desugaring
 		return new VariableDeclarationStatement(
 				Collections.singletonList(
 						new VariableDeclaration(
@@ -81,9 +82,9 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 	@Override
 	public Statement visit( ExpressionStatement n ) {
 		Expression e = ExpressionUnitNormaliser.visitExpression( n.expression() );
-		if( ExpressionUnitNormaliser.isNoop( e ) ){
+		if( ExpressionUnitNormaliser.isNoop( e ) ) {
 			return visit( n.continuation() );
-		} else{
+		} else {
 			return new ExpressionStatement( e, visit( n.continuation() ) ).copyPosition( n );
 		}
 	}
@@ -101,7 +102,8 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 	@Override
 	public Statement visit( SwitchStatement n ) {
 		return new SwitchStatement(
-				ExpressionUnitNormaliser.visitExpression( n.guard() ), // this should be always present
+				ExpressionUnitNormaliser.visitExpression( n.guard() ),
+				// this should be always present
 				n.cases().entrySet().stream().map( e ->
 						new AbstractMap.SimpleEntry<>( e.getKey(), visit( e.getValue() ) )
 				).collect( Collectors.toMap( Map.Entry::getKey, Map.Entry::getValue ) ),

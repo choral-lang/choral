@@ -40,8 +40,8 @@ public interface GroundClass extends GroundClassOrInterface, Class {
 	GroundClass applySubstitution( Substitution substitution );
 
 	default Stream< ? extends GroundClassOrInterface > extendedClassesOrInterfaces() {
-		if(extendedClass().isPresent()) {
-			return Streams.concat( Stream.of(extendedClass().get()), extendedInterfaces());
+		if( extendedClass().isPresent() ) {
+			return Streams.concat( Stream.of( extendedClass().get() ), extendedInterfaces() );
 		} else {
 			return extendedInterfaces();
 		}

@@ -35,9 +35,11 @@ import org.choral.ast.body.Interface;
 import org.choral.ast.expression.LiteralExpression;
 import org.choral.ast.type.WorldArgument;
 import org.choral.compiler.soloist.DependecyVisitor;
+import org.choral.compiler.soloist.ImportProjector;
 import org.choral.compiler.soloist.ProjectableTemplate;
 import org.choral.compiler.soloist.SoloistProjector;
 import org.choral.compiler.courtesyMethodSinthesiser.CourtesyMethodsSynthesiser;
+import org.choral.compiler.unitNormaliser.UnitRepresentation;
 import org.choral.grammar.ChoralLexer;
 import org.choral.grammar.ChoralParser;
 import org.choral.exceptions.ChoralException;
@@ -109,16 +111,21 @@ public class Compiler {
 		generateJavaFiles();
 	}
 
-	public static void checkProjectiability( Collection< CompilationUnit > annotatedCompilationUnits ) {
+	public static void checkProjectiability(
+			Collection< CompilationUnit > annotatedCompilationUnits
+	) {
 		Compiler instance = new Compiler();
 		instance.targetCompilationUnits.addAll( annotatedCompilationUnits );
 		instance.projection = true;
 
-		for( CompilationUnit targetCompilationUnit : annotatedCompilationUnits ){
-			List< String > targets = targetCompilationUnit.classes().stream().map( e -> e.name().identifier() ).collect( Collectors.toList() );
-			targets.addAll( targetCompilationUnit.interfaces().stream().map( e -> e.name().identifier() ).collect( Collectors.toList() ) );
-			targets.addAll( targetCompilationUnit.enums().stream().map( e -> e.name().identifier() ).collect( Collectors.toList() ) );
-			for( String target : targets ){
+		for( CompilationUnit targetCompilationUnit : annotatedCompilationUnits ) {
+			List< String > targets = targetCompilationUnit.classes().stream().map(
+					e -> e.name().identifier() ).collect( Collectors.toList() );
+			targets.addAll( targetCompilationUnit.interfaces().stream().map(
+					e -> e.name().identifier() ).collect( Collectors.toList() ) );
+			targets.addAll( targetCompilationUnit.enums().stream().map(
+					e -> e.name().identifier() ).collect( Collectors.toList() ) );
+			for( String target : targets ) {
 				instance.targetSymbol = target;
 				instance.project();
 				instance.decoupleUnits();
@@ -128,6 +135,7 @@ public class Compiler {
 
 	public static void project(
 			Boolean isDry,
+			Boolean isAnnotated,
 			Collection< CompilationUnit > annotatedCompilationUnits,
 			String targetSymbol,
 			List< String > targetWorlds,
@@ -137,9 +145,11 @@ public class Compiler {
 		instance.targetCompilationUnits.addAll( annotatedCompilationUnits );
 		instance.projection = true;
 		instance.isDryRun = isDry;
+		instance.annotate = isAnnotated;
 		instance.targetSymbol = targetSymbol;
 		instance.targetWorlds.addAll( targetWorlds );
-		destinationFolder.ifPresent( dF -> instance.destinationFolder = dF.toAbsolutePath().toString() );
+		destinationFolder.ifPresent(
+				dF -> instance.destinationFolder = dF.toAbsolutePath().toString() );
 		instance.project();
 		instance.decoupleUnits();
 		instance.generateJavaFiles();
@@ -156,7 +166,8 @@ public class Compiler {
 		options.addOption( version );
 		Option quiet = new Option( "quiet", "Print nothing" );
 		options.addOption( quiet );
-		Option verbose = new Option( "verbose", "Output messages about what the compiler is doing" );
+		Option verbose = new Option( "verbose",
+				"Output messages about what the compiler is doing" );
 		options.addOption( verbose );
 		Option debug = new Option( "debug", "Print debugging information" );
 		options.addOption( debug );
@@ -164,13 +175,17 @@ public class Compiler {
 		options.addOption( dryRun );
 		Option noepp = new Option( "noepp", "Skip EndPoint Projection" );
 		options.addOption( noepp );
-		Option annotateOption = new Option( "annotate", "Annotates the compiled classes with metadata" );
+		Option annotateOption = new Option( "annotate",
+				"Annotates the compiled classes with metadata" );
 		options.addOption( annotateOption );
-		Option destinationOption = new Option( "d", "destination", true, "The destination folder of the compilation" );
+		Option destinationOption = new Option( "d", "destination", true,
+				"The destination folder of the compilation" );
 		options.addOption( destinationOption );
-		Option classpathOption = new Option( "cp", "classpath", true, "A semicolon-separated list of paths containing files defining Choral templates" );
+		Option classpathOption = new Option( "cp", "classpath", true,
+				"A semicolon-separated list of paths containing files defining Choral templates" );
 		options.addOption( classpathOption );
-		Option targetFolderOption = new Option( "t", "targetPath", true, "The path to the source file containing the compilation target" );
+		Option targetFolderOption = new Option( "t", "targetPath", true,
+				"The path to the source file containing the compilation target" );
 		options.addOption( targetFolderOption );
 		// Option optimistic = new Option("optimistic", "Try to recover from errors and give up only on files with unrecoverable errors");
 		// options.addOption(noepp);
@@ -180,13 +195,13 @@ public class Compiler {
 		CommandLineParser cmdParser = new DefaultParser();
 		HelpFormatter helpFormatter = new HelpFormatter();
 		CommandLine cmd;
-		try{
+		try {
 			cmd = cmdParser.parse( options, args );
-			if( cmd.hasOption( help.getOpt() ) ){
+			if( cmd.hasOption( help.getOpt() ) ) {
 				helpFormatter.printHelp( USAGE, options );
 				System.exit( 0 );
 			}
-			if( cmd.hasOption( version.getOpt() ) ){
+			if( cmd.hasOption( version.getOpt() ) ) {
 				String v = NAME + " version ";
 				String format = String.format( "%%%ds(%%s)\n", v.length() );
 				System.out.printf( format, "", "\\ /" );
@@ -194,56 +209,58 @@ public class Compiler {
 				System.out.printf( format, "", "> <" );
 				System.exit( 0 );
 			}
-			if( cmd.hasOption( debug.getOpt() ) ){
+			if( cmd.hasOption( debug.getOpt() ) ) {
 				LOGGER.filterLevels.add( Level.DEBUG );
 				debugging = true;
 			}
-			if( cmd.hasOption( verbose.getOpt() ) ){
+			if( cmd.hasOption( verbose.getOpt() ) ) {
 				LOGGER.filterLevels.add( Level.INFO );
 			}
-			if( cmd.hasOption( quiet.getOpt() ) ){
+			if( cmd.hasOption( quiet.getOpt() ) ) {
 				// preempts debug and verbose
 				LOGGER.filterLevels.clear();
 			}
-			if( cmd.hasOption( dryRun.getOpt() ) ){
+			if( cmd.hasOption( dryRun.getOpt() ) ) {
 				log( Level.INFO, "this is a dry run." );
 				isDryRun = true;
 			}
-			if( cmd.hasOption( noepp.getOpt() ) ){
+			if( cmd.hasOption( noepp.getOpt() ) ) {
 				projection = false;
 			}
-			if( cmd.hasOption( annotateOption.getOpt() ) ){
+			if( cmd.hasOption( annotateOption.getOpt() ) ) {
 				annotate = true;
 			}
-			if( cmd.hasOption( destinationOption.getOpt() ) ){
+			if( cmd.hasOption( destinationOption.getOpt() ) ) {
 				destinationFolder = cmd.getOptionValue( destinationOption.getOpt() );
 			}
-			if( cmd.hasOption( classpathOption.getOpt() ) ){
-				classpath.addAll( Arrays.asList( cmd.getOptionValue( classpathOption.getOpt() ).split( ";" ) ) );
+			if( cmd.hasOption( classpathOption.getOpt() ) ) {
+				classpath.addAll( Arrays.asList(
+						cmd.getOptionValue( classpathOption.getOpt() ).split( ";" ) ) );
 			}
-			if( cmd.hasOption( targetFolderOption.getOpt() ) ){
+			if( cmd.hasOption( targetFolderOption.getOpt() ) ) {
 				targetFolder = Path.of( cmd.getOptionValue( targetFolderOption.getOpt() ) );
-				if( Files.exists( targetFolder ) ){
-					if( Files.isRegularFile( targetFolder ) ){ // if the user passed a file, we just get the enclosing folder
+				if( Files.exists( targetFolder ) ) {
+					if( Files.isRegularFile(
+							targetFolder ) ) { // if the user passed a file, we just get the enclosing folder
 						targetFolder = targetFolder.getParent();
 					}
-				} else{
+				} else {
 					System.out.println( "Error: target path " + targetFolder + " does not exist." );
 					System.exit( 1 );
 				}
 			}
-			if( cmd.getArgs().length < 2 && !USE_TEST_FILES ){
+			if( cmd.getArgs().length < 2 && !USE_TEST_FILES ) {
 				helpFormatter.printHelp( USAGE, options );
 				System.exit( 0 );
 			}
 			targetSymbol = cmd.getArgs()[ 0 ];
-			for( int i = 1; i < cmd.getArgs().length; i++ ){
-				if( cmd.getArgs()[ i ].trim().length() > 0 ){
+			for( int i = 1; i < cmd.getArgs().length; i++ ) {
+				if( cmd.getArgs()[ i ].trim().length() > 0 ) {
 					targetWorlds.add( cmd.getArgs()[ i ] );
 				}
 			}
 
-		} catch( ParseException e ){
+		} catch( ParseException e ) {
 			System.out.println( e.getMessage() );
 			helpFormatter.printHelp( USAGE, options );
 			System.exit( 1 );
@@ -254,20 +271,24 @@ public class Compiler {
 		// we load the sources within the classpath	...
 		sourceFiles.addAll( getChoralSourceFiles( classpath ) );
 		// we load the sources within the targetFolder ..
-		targetSourceFiles.addAll( getChoralSourceFiles( targetFolder.toAbsolutePath().toString() ) );
+		targetSourceFiles.addAll(
+				getChoralSourceFiles( targetFolder.toAbsolutePath().toString() ) );
 		// and we add them to the classpath sources (omitting duplicates)
-		targetSourceFiles.stream().filter( f -> !sourceFiles.contains( f ) ).forEach( sourceFiles::add );
+		targetSourceFiles.stream().filter( f -> !sourceFiles.contains( f ) ).forEach(
+				sourceFiles::add );
 		// remove the corresponding headers
 		List< String > headerFiles = sourceFiles.stream()
-				.map( ( f ) -> f.substring( 0, f.length() - SOURCE_FILE_EXTENSION.length() ) + HEADER_FILE_EXTENSION )
+				.map( ( f ) -> f.substring( 0,
+						f.length() - SOURCE_FILE_EXTENSION.length() ) + HEADER_FILE_EXTENSION )
 				.collect( Collectors.toList() );
-		for( String headerFile : headerFiles ){
-			if( isDryRun ){
-				if( Files.exists( Paths.get( headerFile ) ) ){
-					logf( Level.DEBUG, "deletion of header file '%s' skipped (dry-run).", headerFile );
+		for( String headerFile : headerFiles ) {
+			if( isDryRun ) {
+				if( Files.exists( Paths.get( headerFile ) ) ) {
+					logf( Level.DEBUG, "deletion of header file '%s' skipped (dry-run).",
+							headerFile );
 				}
-			} else{
-				if( Files.deleteIfExists( Paths.get( headerFile ) ) ){
+			} else {
+				if( Files.deleteIfExists( Paths.get( headerFile ) ) ) {
 					logf( Level.DEBUG, "deleted '%s'.", headerFile );
 				}
 			}
@@ -281,7 +302,7 @@ public class Compiler {
 					logf( Level.DEBUG, "parsing source file '%s'", t );
 					CompilationUnit cu = null;
 					Logger logger = new Logger( LOGGER, t );
-					try{
+					try {
 						ANTLRInputStream input = new ANTLRFileStream( t );
 						ChoralLexer lexer = new ChoralLexer( input );
 						CommonTokenStream tokens = new CommonTokenStream( lexer );
@@ -289,20 +310,21 @@ public class Compiler {
 						cp.removeErrorListeners();
 						cp.addErrorListener( new ParsingErrorListener( logger ) );
 						ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
-						if( !logger.hasErrors() ){
+						if( !logger.hasErrors() ) {
 							cu = AstOptimizer
 									.loadParameters( /* new String[]{ "showDebug" } */ )
 									.optimise( ctx, t );
 							cu = AstDesugarer.desugar( cu );
 						}
-					} catch( ChoralException | IOException e ){
+					} catch( ChoralException | IOException e ) {
 						logger.logf( Level.ERROR, "%s: %s", t, e.getMessage() );
 						cu = null;
 					}
 					if( cu == null )
 						logf( Level.ERROR, "compilation of '%s' failed (see details above).", t );
-					if( targetSourceFiles.contains( t ) ){
-						targetCompilationUnits.add( cu ); // we add this CU to the list of the target compilation units
+					if( targetSourceFiles.contains( t ) ) {
+						targetCompilationUnits.add(
+								cu ); // we add this CU to the list of the target compilation units
 					}
 					return cu;
 				} ).collect( Collectors.toList() )
@@ -315,7 +337,7 @@ public class Compiler {
 
 	private void project() {
 		// projection --------------------------------------------------------------------------------------------------
-		if( projection ){
+		if( projection ) {
 			// TODO: update to have the main file/CU and the classpath, e.g., we launched choral with `choral MyFile SomeWorld`
 			//		 but we have the user-classes with MyFile1, MyFile2, etc. as a list of CUs
 			// 		 then we pass both elements to SoloistProjector
@@ -323,29 +345,32 @@ public class Compiler {
 			// we collect all projectable templates from the target compilation units
 //			Set< Pair< Pair< String, Node >, WorldArgument > > projectableTemplates = new HashSet<>();
 			Set< ProjectableTemplate > projectableTemplates = new HashSet<>();
-			if( targetWorlds.size() > 0 ){
-				for( String targetWorld : targetWorlds ){
+			if( targetWorlds.size() > 0 ) {
+				for( String targetWorld : targetWorlds ) {
 					projectableTemplates.addAll(
-							new DependecyVisitor( targetCompilationUnits, new WorldArgument( new Name( targetWorld ) ) )
+							new DependecyVisitor( targetCompilationUnits,
+									new WorldArgument( new Name( targetWorld ) ) )
 									.collectTemplates( targetSymbol )
 					);
 				}
 
-			} else{
+			} else {
 				// we project for all worlds in the target template
 				logf( Level.DEBUG, "Projecting for all worlds" );
-				for( WorldArgument targetWorld : DependecyVisitor.getWorldArguments( targetCompilationUnits,
-						targetSymbol ) ){
-					logf( Level.DEBUG, "Projecting for world: %s", targetWorld.name().identifier() );
+				for( WorldArgument targetWorld : DependecyVisitor.getWorldArguments(
+						targetCompilationUnits,
+						targetSymbol ) ) {
+					logf( Level.DEBUG, "Projecting for world: %s",
+							targetWorld.name().identifier() );
 					projectableTemplates.addAll(
-							new DependecyVisitor( targetCompilationUnits, targetWorld ).collectTemplates(
+							new DependecyVisitor( targetCompilationUnits,
+									targetWorld ).collectTemplates(
 									targetSymbol )
 					);
 				}
 			}
 
 			// we project them into different lists
-
 			projectableTemplates.forEach( pt ->
 					compilableCUs.add( projectAndEncloseInCompilationUnit(
 							pt.packageDeclaration(),
@@ -355,26 +380,30 @@ public class Compiler {
 							)
 					)
 			);
-		} else{
+		} else {
 			log( Level.INFO, "EndPoint Projection skipped." );
 		}
-		if( LOGGER.hasErrors() ){
+		if( LOGGER.hasErrors() ) {
 			die();
 		}
 	}
 
 	private void decoupleUnits() {
-		compilableCUs = compilableCUs.stream().map( CourtesyMethodsSynthesiser::visitCompilationUnit ).collect( Collectors.toList() );
+		compilableCUs = compilableCUs.stream().map(
+				CourtesyMethodsSynthesiser::visitCompilationUnit ).collect( Collectors.toList() );
 	}
 
 	private void generateJavaFiles() throws IOException {
-		if( !isDryRun ){
-			Collection< ? extends SourceObject > sources = compilableCUs.stream().map( JavaCompiler::compile ).flatMap( Collection::stream ).collect( Collectors.toList() );
-			for( SourceObject source : sources ){
+		if( !isDryRun ) {
+			Collection< ? extends SourceObject > sources = compilableCUs.stream().map(
+					JavaCompiler::compile ).flatMap( Collection::stream ).collect(
+					Collectors.toList() );
+			for( SourceObject source : sources ) {
 				SourceWriter.writeSource( source, Paths.get( destinationFolder ) );
 			}
-		} else{
-			logf( Level.INFO, "The compiler has been run in 'dry' mode, skipping production of Java classes" );
+		} else {
+			logf( Level.INFO,
+					"The compiler has been run in 'dry' mode, skipping production of Java classes" );
 		}
 
 	}
@@ -388,20 +417,22 @@ public class Compiler {
 				.stream()
 				.filter( cpString -> Files.isDirectory( Path.of( cpString ) ) )
 				.flatMap( cpString -> {
-					try{
+					try {
 						return Files.walk( Path.of( cpString ) );
-					} catch( IOException e ){
+					} catch( IOException e ) {
 						logf( Level.INFO, "Path '%s' in classpath does not exist", cpString );
 					}
 					return null;
 				} )
 				.filter( ( cpPath ) -> {
 					// check file extension
-					if( !cpPath.toAbsolutePath().toString().endsWith( SOURCE_FILE_EXTENSION ) ){
-						logf( Level.INFO, "ignoring file '%s': Choral source files must have extension '%s'.", cpPath.toAbsolutePath(), SOURCE_FILE_EXTENSION );
+					if( !cpPath.toAbsolutePath().toString().endsWith( SOURCE_FILE_EXTENSION ) ) {
+						logf( Level.INFO,
+								"ignoring file '%s': Choral source files must have extension '%s'.",
+								cpPath.toAbsolutePath(), SOURCE_FILE_EXTENSION );
 						return false;
 					}
-					if( Files.notExists( cpPath ) ){
+					if( Files.notExists( cpPath ) ) {
 						logf( Level.ERROR, "file '%s' does not exists.", cpPath.toAbsolutePath() );
 						return false;
 					}
@@ -420,67 +451,77 @@ public class Compiler {
 		return "\"" + s + "\"";
 	}
 
-	private static void addChoreographyAnnotation( Node node, String name, String role, List< ImportDeclaration > imports ) {
+	private static void addChoreographyAnnotation(
+			Node node, String name, String role, List< ImportDeclaration > imports
+	) {
 		imports.add( new ImportDeclaration( "org.choral.annotations.Choreography", null ) );
 		Map< Name, LiteralExpression< String > > values = new HashMap<>();
-		values.put( new Name( "name" ), new LiteralExpression.StringLiteralExpression( escapeString( name ), null ) );
-		values.put( new Name( "role" ), new LiteralExpression.StringLiteralExpression( escapeString( role ), null ) );
+		values.put( new Name( "name" ),
+				new LiteralExpression.StringLiteralExpression( escapeString( name ), null ) );
+		values.put( new Name( "role" ),
+				new LiteralExpression.StringLiteralExpression( escapeString( role ), null ) );
 		Annotation a = new Annotation( new Name( "Choreography" ), values );
-		if( node instanceof Interface ){
+		if( node instanceof Interface ) {
 			( (Interface) node ).annotations().add( a );
-		} else if( node instanceof Class ){
+		} else if( node instanceof Class ) {
 			( (Class) node ).annotations().add( a );
-		} else if( node instanceof Enum ){
+		} else if( node instanceof Enum ) {
 			( (Enum) node ).annotations().add( a );
 		}
 	}
 
-	private CompilationUnit projectAndEncloseInCompilationUnit( String pkgDec, List< ImportDeclaration > imports, WorldArgument w, Node node ) {
+	private CompilationUnit projectAndEncloseInCompilationUnit(
+			String pkgDec, List< ImportDeclaration > imports, WorldArgument w, Node node
+	) {
 		ArrayList< ImportDeclaration > _imports = new ArrayList<>( imports );
-		_imports.add( new ImportDeclaration( "org.choral.lang.Unit", null ) ); // TODO: here we should visit the annotated node to get its imports
-		if( node instanceof Interface ){
+		_imports.add( UnitRepresentation.UNIT_IMPORT_DECLARATION );
+		if( node instanceof Interface ) {
 			Interface projectedInterface = new SoloistProjector( w ).visit( ( (Interface) node ) );
-			if( annotate ){
-				addChoreographyAnnotation( projectedInterface, ( (Interface) node ).name().identifier(), w.name().identifier(), _imports );
+			if( annotate ) {
+				addChoreographyAnnotation( projectedInterface,
+						( (Interface) node ).name().identifier(), w.name().identifier(), _imports );
 			}
 			return new CompilationUnit(
 					pkgDec,
-					_imports, // TODO: here we should visit the annotated node to get its imports
+					new ImportProjector( _imports ).projectImports( projectedInterface ),
 					Collections.singletonList( projectedInterface ),
 					Collections.emptyList(),
 					Collections.emptyList(),
 					node.position().sourceFile()
 			);
 		}
-		if( node instanceof Class ){
+		if( node instanceof Class ) {
 			Class projectedClass = new SoloistProjector( w ).visit( ( (Class) node ) );
-			if( annotate ){
-				addChoreographyAnnotation( projectedClass, ( (Class) node ).name().identifier(), w.name().identifier(), _imports );
+			if( annotate ) {
+				addChoreographyAnnotation( projectedClass, ( (Class) node ).name().identifier(),
+						w.name().identifier(), _imports );
 			}
 			return new CompilationUnit(
 					pkgDec,
-					_imports, // TODO: here we should visit the annotated node to get its imports
+					new ImportProjector( _imports ).projectImports( projectedClass ),
 					Collections.emptyList(),
 					Collections.singletonList( projectedClass ),
 					Collections.emptyList(),
 					node.position().sourceFile()
 			);
 		}
-		if( node instanceof Enum ){
+		if( node instanceof Enum ) {
 			Enum projectedEnum = new SoloistProjector( w ).visit( ( (Enum) node ) );
-			if( annotate ){
-				addChoreographyAnnotation( projectedEnum, ( (Enum) node ).name().identifier(), w.name().identifier(), _imports );
+			if( annotate ) {
+				addChoreographyAnnotation( projectedEnum, ( (Enum) node ).name().identifier(),
+						w.name().identifier(), _imports );
 			}
 			return new CompilationUnit(
 					pkgDec,
-					_imports, // TODO: here we should visit the annotated node to get its imports
+					new ImportProjector( _imports ).projectImports( projectedEnum ),
 					Collections.emptyList(),
 					Collections.emptyList(),
 					Collections.singletonList( projectedEnum ),
 					node.position().sourceFile()
 			);
 		}
-		throw new ChoralException( "projectAndEncloseInCompilationUnit launched on a node different from an Interface, Class, or Enum" );
+		throw new ChoralException(
+				"projectAndEncloseInCompilationUnit launched on a node different from an Interface, Class, or Enum" );
 	}
 
 	private void die() {
@@ -518,9 +559,9 @@ public class Compiler {
 		Map< String, Long > performance = new HashMap<>();
 		performance.put( "read commands", trackPerformance( () -> readCommands( args ) ) );
 		performance.put( "load sources", trackPerformance( () -> {
-			try{
+			try {
 				loadSourceFiles();
-			} catch( Exception e ){
+			} catch( Exception e ) {
 				e.printStackTrace();
 			}
 		} ) );
@@ -528,9 +569,9 @@ public class Compiler {
 		performance.put( "project", trackPerformance( this::project ) );
 		performance.put( "decouple units", trackPerformance( this::decoupleUnits ) );
 		performance.put( "write files", trackPerformance( () -> {
-			try{
+			try {
 				generateJavaFiles();
-			} catch( Exception e ){
+			} catch( Exception e ) {
 				e.printStackTrace();
 			}
 		} ) );
@@ -554,12 +595,14 @@ public class Compiler {
 		}
 
 		@Override
-		public void syntaxError( Recognizer< ?, ? > recognizer,
-								 Object offendingSymbol,
-								 int line,
-								 int charPositionInLine,
-								 String msg,
-								 RecognitionException e ) {
+		public void syntaxError(
+				Recognizer< ?, ? > recognizer,
+				Object offendingSymbol,
+				int line,
+				int charPositionInLine,
+				String msg,
+				RecognitionException e
+		) {
 			List< String > stack = ( (Parser) recognizer ).getRuleInvocationStack();
 			Collections.reverse( stack );
 			logger.logfWithPosition( Logger.Level.ERROR, line, charPositionInLine, "%s", msg );

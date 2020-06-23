@@ -29,15 +29,15 @@ import java.util.Map;
 
 public final class HigherPrimitiveDataType extends HigherDataType implements PrimitiveDataType {
 
-	HigherPrimitiveDataType( Types universe, Types.PrimitiveTypeTag tag ) {
+	HigherPrimitiveDataType( Universe universe, Universe.PrimitiveTypeTag tag ) {
 		super( universe, List.of( new World( universe, World.DEFAULT_NAME ) ) );
 		this.tag = tag;
 	}
 
-	private final Types.PrimitiveTypeTag tag;
+	private final Universe.PrimitiveTypeTag tag;
 
 	@Override
-	public Types.PrimitiveTypeTag primitiveTypeTag() {
+	public Universe.PrimitiveTypeTag primitiveTypeTag() {
 		return tag;
 	}
 
@@ -69,8 +69,11 @@ public final class HigherPrimitiveDataType extends HigherDataType implements Pri
 		return applyTo( List.of( arg ) );
 	}
 
-	protected final class Definition extends HigherDataType.Definition
+	private final class Definition extends HigherDataType.Definition
 			implements GroundPrimitiveDataType {
+
+		private Definition() {
+		}
 
 		@Override
 		public final String toString() {
@@ -116,9 +119,9 @@ public final class HigherPrimitiveDataType extends HigherDataType implements Pri
 
 	}
 
-	protected final class Proxy extends HigherDataType.Proxy implements GroundPrimitiveDataType {
+	private final class Proxy extends HigherDataType.Proxy implements GroundPrimitiveDataType {
 
-		public Proxy( Substitution substitution ) {
+		private Proxy( Substitution substitution ) {
 			super( substitution );
 		}
 

@@ -115,7 +115,7 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 
 	private Optional< Expression > visitScoped( Expression e, Boolean atWorld ) {
 		if( e instanceof FieldAccessExpression ) {
-			return _visitScoped( (FieldAccessExpression) e, atWorld );
+			return _visitScoped( (FieldAccessExpression) e );
 		} else if( e instanceof MethodCallExpression ) {
 			return _visitScoped( (MethodCallExpression) e, atWorld );
 		} else if( e instanceof ScopedExpression ) {
@@ -126,8 +126,8 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 		}
 	}
 
-	private Optional< Expression > _visitScoped( FieldAccessExpression n, Boolean atWorld ) {
-		return atWorld ? Optional.of( n ) : Optional.empty();
+	private Optional< Expression > _visitScoped( FieldAccessExpression n ) {
+		return atWorld( n, this.world() ) ? Optional.of( n ) : Optional.empty();
 	}
 
 	private Optional< Expression > _visitScoped( MethodCallExpression n, Boolean atWorld ) {
@@ -143,7 +143,8 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 	private Optional< Expression > _visitScoped( ScopedExpression n, Boolean atWorld ) {
 		Pair< Expression, Expression > ht = Utils.headAndTail( n );
 		Optional< Expression > scopedExpression;
-		scopedExpression = visitScoped( ht.right(), atWorld && atWorld( worlds( ht.left() ) ) ); // TODO: check if it is worlds( ht.right() ) or ht.left()
+		scopedExpression = visitScoped( ht.right(), atWorld && atWorld(
+				worlds( ht.left() ) ) );
 		Optional< Expression > scope = visitScoped( ht.left(), atWorld );
 		return scope.isEmpty() ?
 				scopedExpression
@@ -193,12 +194,17 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 		List< Expression > arguments = n.arguments().stream().map( this::visit ).collect(
 				Collectors.toList() );
 		if( atWorld( n.typeExpression().worldArguments() ) ) {
+			GroundDataType dataType = (GroundDataType) n.typeExpression().typeAnnotation().get();
 			return new ClassInstantiationExpression(
 					new TypeExpression(
 							new Name( Utils.getProjectionName(
 									n.typeExpression().name().identifier(),
 									this.world(),
-									n.typeExpression().worldArguments()
+									n.typeExpression().worldArguments(),
+									dataType.typeConstructor().worldParameters()
+											.stream().map(
+											w -> new WorldArgument( new Name( w.identifier() ) ) )
+											.collect( Collectors.toList() )
 							) ),
 							Collections.singletonList( this.world() ),
 							n.typeExpression().typeArguments().stream().map( t -> {
@@ -233,6 +239,11 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 
 	@Override
 	public Expression visit( ThisExpression n ) {
+		return n;
+	}
+
+	@Override
+	public Expression visit( SuperExpression n ) {
 		return n;
 	}
 
@@ -346,7 +357,7 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 		if( e.typeAnnotation().isPresent() && !e.typeAnnotation().get().isVoid() ) {
 			return ( (GroundDataType) e.typeAnnotation().get() ).worldArguments().stream();
 		} else {
-			if( e.typeAnnotation().isEmpty() ){
+			if( e.typeAnnotation().isEmpty() ) {
 				System.out.println( new PrettyPrinterVisitor().visit( e ) + " is not annotated" );
 			}
 			return Stream.of();

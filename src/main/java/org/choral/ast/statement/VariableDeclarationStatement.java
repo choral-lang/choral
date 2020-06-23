@@ -26,6 +26,7 @@ import org.choral.ast.Position;
 import org.choral.ast.body.VariableDeclaration;
 import org.choral.ast.visitors.ChoralVisitorInterface;
 import org.choral.ast.visitors.MergerInterface;
+import org.choral.ast.visitors.PrettyPrinterVisitor;
 import org.choral.exceptions.ChoralException;
 
 import java.util.List;
@@ -38,12 +39,17 @@ public class VariableDeclarationStatement extends Statement {
 
 	private final List< VariableDeclaration > variables;
 
-	public VariableDeclarationStatement( final List< VariableDeclaration > variables, Statement continuation ) {
+	public VariableDeclarationStatement(
+			final List< VariableDeclaration > variables, Statement continuation
+	) {
 		super( continuation );
 		this.variables = variables;
 	}
 
-	public VariableDeclarationStatement( final List< VariableDeclaration > variables, Statement continuation, final Position position ) {
+	public VariableDeclarationStatement(
+			final List< VariableDeclaration > variables, Statement continuation,
+			final Position position
+	) {
 		super( continuation, position );
 		this.variables = variables;
 	}
@@ -61,16 +67,21 @@ public class VariableDeclarationStatement extends Statement {
 	public VariableDeclarationStatement cloneWithContinuation( Statement continuation ) {
 		return new VariableDeclarationStatement(
 				this.variables(),
-				this.continuation() == null ? continuation : continuation().cloneWithContinuation( continuation ),
+				this.continuation() == null ? continuation : continuation().cloneWithContinuation(
+						continuation ),
 				this.position() );
 	}
 
 	@Override
 	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try{
+		try {
 			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ){
-			throw new ChoralException( "Could not merge " + this.getClass().getSimpleName() + " with " + n.getClass().getSimpleName() );
+		} catch( ClassCastException e ) {
+			throw new ChoralException(
+					this.position().line() + ":"
+							+ this.position().column() + ":"
+							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
+							this ) + "\n with " + n.getClass().getSimpleName() );
 		}
 	}
 

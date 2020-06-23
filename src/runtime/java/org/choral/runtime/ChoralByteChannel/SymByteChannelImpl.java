@@ -21,7 +21,7 @@
 
 package org.choral.runtime.ChoralByteChannel;
 
-import org.choral.lang.DataChannels.SymDataChannelImpl;
+import org.choral.channels.SymDataChannelImpl;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;

@@ -30,4 +30,6 @@ public interface TypeParameterDeclarationContext {
 	Optional< ? extends HigherTypeParameter > typeParameter( int index );
 
 	Optional< ? extends HigherTypeParameter > typeParameter( String name );
+
+	Package declarationPackage();
 }

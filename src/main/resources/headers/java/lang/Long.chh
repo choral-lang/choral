@@ -3,4 +3,6 @@ package java.lang;
 
 public final class Long@A extends Number@A {
 
+	public static Long@A valueOf( Integer@A a ){}
+
 }

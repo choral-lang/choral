@@ -35,7 +35,7 @@ public class Benchmark {
 
 	public static void main ( String[] args ) {
 
-		String targetFolder = "src/tests/choral/OOPSLA";
+		String targetFolder = "src/tests/choral/examples";
 		String destinationFolder = "src/tests/java/";
 
 		Map< String, List< String > > targetTemplates = Stream.of(
