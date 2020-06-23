@@ -26,6 +26,7 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,9 +35,15 @@ import static org.choral.Choral.relativizePath;
 public class ParsingErrorListener extends BaseErrorListener {
 
 	private final String file;
+	private final List< String > errors;
 
 	public ParsingErrorListener( String file ) {
 		this.file = file;
+		this.errors = new ArrayList<>();
+	}
+
+	public List< String > getErrors(){
+		return this.errors;
 	}
 
 	@Override
@@ -51,10 +58,14 @@ public class ParsingErrorListener extends BaseErrorListener {
 		List< String > stack = ( (Parser) recognizer ).getRuleInvocationStack();
 		Collections.reverse( stack );
 		String file = relativizePath( recognizer.getInputStream().getSourceName() ).equals( "<unknown>" ) ?
-				this.file : relativizePath( recognizer.getInputStream().getSourceName() );
-		System.err.println( file
-						+ ":" + line
-						+ ":" + charPositionInLine
-						+ ": " + "error: " + msg );
+		this.file : relativizePath( recognizer.getInputStream().getSourceName() );
+		errors.add( file
+					+ ":" + line
+					+ ":" + charPositionInLine
+					+ ": " + "error: " + msg );
+//		System.err.println( file
+//						+ ":" + line
+//						+ ":" + charPositionInLine
+//						+ ": " + "error: " + msg );
 	}
 }

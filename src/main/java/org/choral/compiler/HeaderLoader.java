@@ -21,13 +21,9 @@
 
 package org.choral.compiler;
 
-import com.google.common.collect.Streams;
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.choral.Choral;
 import org.choral.ast.CompilationUnit;
 
 import java.io.*;
-import java.net.URL;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,11 +36,11 @@ import static org.choral.utils.Streams.*;
 
 public class HeaderLoader {
 
-	public static void test() throws IOException {
+	public static void test() throws IOException, ChoralParserException {
 		loadStandardProfile();
 	}
 
-	public static Stream< CompilationUnit > loadProfile( String profile ) throws IOException {
+	public static Stream< CompilationUnit > loadProfile( String profile ) throws IOException, ChoralParserException {
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		List< String > files = new LinkedList<>();
 		try(
@@ -66,26 +62,26 @@ public class HeaderLoader {
 		return headers.stream();
 	}
 
-	public static Stream< CompilationUnit > loadStandardProfile() throws IOException {
+	public static Stream< CompilationUnit > loadStandardProfile() throws IOException, ChoralParserException {
 		return loadProfile( "standard" );
 	}
 
 	public static Stream< CompilationUnit > loadFromPath(
 			Collection< Path > folders
-	) throws IOException {
+	) throws IOException, ChoralParserException {
 		return loadFromPath( folders, true );
 	}
 
 	public static Stream< CompilationUnit > loadFromPath(
 			Collection< Path > folders, boolean ignoreIfSourcePresent
-	) throws IOException {
+	) throws IOException, ChoralParserException {
 		return loadFromPath( folders, List.of(), ignoreIfSourcePresent, true );
 	}
 
 	public static Stream< CompilationUnit > loadFromPath(
 			Collection< Path > headersPaths, Collection< File > sourceFiles,
 			boolean ignoreIfSourcePresent, boolean strictHeaderSearch
-	) throws IOException {
+	) throws IOException, ChoralParserException {
 		Stream< Path > pathsFromHeaders = headersPaths.stream().flatMap(
 				wrapFunction( p -> Files.find( p, 999,
 						( q, a ) -> !a.isDirectory() && keepHeaderFile( q, sourceFiles,
