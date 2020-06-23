@@ -41,7 +41,8 @@ public class TestChoral {
 		private final List< String > worlds;
 
 		public CompilationRequest(
-				List< String > sourceFolder, String targetFolder, List< String > headersFolders, String symbol,
+				List< String > sourceFolder, String targetFolder, List< String > headersFolders,
+				String symbol,
 				List< String > worlds
 		) {
 			this.sourceFolder = sourceFolder;
@@ -74,14 +75,14 @@ public class TestChoral {
 
 	static final List< String > ALL_WORLDS = Collections.singletonList( "" );
 
-	public static String subFolder( String sourceFolder, String subFolder ){
+	public static String subFolder( String sourceFolder, String subFolder ) {
 		return sourceFolder + File.separator + subFolder;
 	}
 
 	static String sourceFolder = "src/tests/choral/examples";
 	static String targetFolder = "src/tests/java/";
 
-	public static void main ( String[] args ) {
+	public static void main( String[] args ) {
 
 		List< CompilationRequest > compilationRequests = Stream.of(
 
@@ -98,7 +99,7 @@ public class TestChoral {
 //						"BiPair", ALL_WORLDS ),
 
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "Foo") ),
+						List.of( subFolder( sourceFolder, "Foo" ) ),
 						targetFolder,
 						List.of( "src/tests/choral/examples/Foo" ),
 						"Foo", ALL_WORLDS )
@@ -271,31 +272,32 @@ public class TestChoral {
 //		generateCHH( headersRequest ); // use exclusively because they call exit
 //		check( compilationRequests ); // use exclusively because they call exit
 		project( compilationRequests ); // use exclusively because they call exit
-		System.out.println( "Projected Classes" );
+//		version();
 	}
 
-	private static void check( List< CompilationRequest > compilationRequests ){
-		for ( CompilationRequest compilationRequest : compilationRequests ) {
-			Choral.main( ( String[] ) ArrayUtils.addAll(
-					new String[]{
+	private static void check( List< CompilationRequest > compilationRequests ) {
+		for( CompilationRequest compilationRequest : compilationRequests ) {
+			Choral.main( (String[]) ArrayUtils.addAll(
+					new String[] {
 							"check",
 							"--verbosity=DEBUG",
 //							"--headers=src/tests/choral/Prelude",
 							compilationRequest.sourceFolder() + File.separator + compilationRequest.symbol + ".ch"
 					},
-					new String[]{}
+					new String[] {}
 			) );
 		}
 	}
 
-	private static void project( List< CompilationRequest > compilationRequests ){
+	private static void project( List< CompilationRequest > compilationRequests ) {
 		try {
-			for ( CompilationRequest compilationRequest : compilationRequests ) {
+			for( CompilationRequest compilationRequest : compilationRequests ) {
 				ArrayList< String > parameters = new ArrayList<>();
 				parameters.add( "epp" );
 				parameters.add( "--verbosity=DEBUG" );
 				if( !compilationRequest.headersFolders().isEmpty() )
-					parameters.add( "--headers=" + String.join( ":", compilationRequest.headersFolders() ) );
+					parameters.add( "--headers=" + String.join( ":",
+							compilationRequest.headersFolders() ) );
 				parameters.add( "-t" );
 				parameters.add( compilationRequest.targetFolder() );
 				parameters.add( "-s" );
@@ -306,9 +308,15 @@ public class TestChoral {
 				System.out.println( "Issuing command " + String.join( " ", parameters ) );
 				Choral.main( parameters.toArray( new String[ 0 ] ) );
 			}
-		} catch ( Exception e ) {
+		} catch( Exception e ) {
 			e.printStackTrace();
 		}
+	}
+
+	private static void version() {
+		ArrayList< String > parameters = new ArrayList<>();
+		parameters.add( "--version" );
+		Choral.main( parameters.toArray( new String[ 0 ] ) );
 	}
 
 }

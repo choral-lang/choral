@@ -21,7 +21,6 @@
 
 package org.choral;
 
-import com.google.common.collect.Streams;
 import org.choral.ast.CompilationUnit;
 import org.choral.ast.Position;
 import org.choral.compiler.*;
@@ -29,7 +28,6 @@ import org.choral.compiler.Compiler;
 import org.choral.exceptions.AstPositionedException;
 import org.choral.exceptions.ChoralCompoundException;
 import org.choral.exceptions.ChoralException;
-import org.choral.exceptions.StaticVerificationException;
 
 import static org.choral.utils.Streams.*;
 
@@ -37,16 +35,13 @@ import picocli.AutoComplete;
 import picocli.CommandLine;
 import picocli.CommandLine.*;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -331,7 +326,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 }
 
 @Command(
-		version = "${COMMAND-FULL-NAME} version 0.1-beta",
+		versionProvider = ChoralVersionProvider.class,
 		sortOptions = false,
 		descriptionHeading = "%nDescription:%n",
 		parameterListHeading = "%nParameters:%n",
@@ -496,5 +491,16 @@ class EmissionOptions {
 
 	public Optional< Path > targetpath() {
 		return Optional.ofNullable( targetpath );
+	}
+}
+
+class ChoralVersionProvider implements IVersionProvider {
+	public String[] getVersion() throws Exception {
+		Properties properties = new Properties();
+		InputStream is = getClass().getClassLoader().getResourceAsStream( "version.properties" );
+		properties.load( is );
+		return new String[] {
+				"${COMMAND-FULL-NAME} v" + properties.getProperty( "choral.version" )
+		};
 	}
 }

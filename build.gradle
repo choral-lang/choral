@@ -211,7 +211,9 @@ task makeRelease( type: Zip, dependsOn: jarAll ) {
 		include "choral"
 		into "choral/launchers"
 	}
-	archiveFileName = "choral.zip"
+	def props = new Properties()
+	file( "src/main/resources/version.properties" ).withInputStream { props.load(it) }
+	archiveFileName = "choral-v" + props.getProperty( "choral.version" ) + ".zip"
 	destinationDirectory = file( "release" )
 }
 
