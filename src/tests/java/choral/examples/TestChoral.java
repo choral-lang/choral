@@ -86,11 +86,11 @@ public class TestChoral {
 
 		List< CompilationRequest > compilationRequests = Stream.of(
 
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
-//						targetFolder,
-//						Collections.emptyList(),
-//						"HelloRoles", ALL_WORLDS ),
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
+						targetFolder,
+						Collections.emptyList(),
+						"HelloRoles", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "BiPair") ),
@@ -98,11 +98,11 @@ public class TestChoral {
 //						Collections.emptyList(),
 //						"BiPair", ALL_WORLDS ),
 
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "Foo" ) ),
-						targetFolder,
-						List.of( "src/tests/choral/examples/Foo" ),
-						"Foo", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "Foo" ) ),
+//						targetFolder,
+//						List.of( "src/tests/choral/examples/Foo" ),
+//						"Foo", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "ConsumeItems" ) ),
@@ -270,22 +270,44 @@ public class TestChoral {
 		).collect( Collectors.toList() );
 
 //		generateCHH( headersRequest ); // use exclusively because they call exit
-//		check( compilationRequests ); // use exclusively because they call exit
-		project( compilationRequests ); // use exclusively because they call exit
+		check( compilationRequests ); // use exclusively because they call exit
+//		project( compilationRequests ); // use exclusively because they call exit
 //		version();
 	}
 
+//	private static void check( List< CompilationRequest > compilationRequests ) {
+//		for( CompilationRequest compilationRequest : compilationRequests ) {
+//			Choral.main( (String[]) ArrayUtils.addAll(
+//					new String[] {
+//							"check",
+//							"--verbosity=DEBUG",
+////							"--headers=src/tests/choral/Prelude",
+//							compilationRequest.sourceFolder().get( 0 ) + File.separator + compilationRequest.symbol + ".ch"
+//					},
+//					new String[] {}
+//			) );
+//		}
+//	}
+
 	private static void check( List< CompilationRequest > compilationRequests ) {
-		for( CompilationRequest compilationRequest : compilationRequests ) {
-			Choral.main( (String[]) ArrayUtils.addAll(
-					new String[] {
-							"check",
-							"--verbosity=DEBUG",
-//							"--headers=src/tests/choral/Prelude",
-							compilationRequest.sourceFolder() + File.separator + compilationRequest.symbol + ".ch"
-					},
-					new String[] {}
-			) );
+		try {
+			for( CompilationRequest compilationRequest : compilationRequests ) {
+				ArrayList< String > parameters = new ArrayList<>();
+				parameters.add( "check" );
+				parameters.add( "--verbosity=DEBUG" );
+				if( !compilationRequest.headersFolders().isEmpty() )
+					parameters.add( "--headers=" + String.join( ":",
+							compilationRequest.headersFolders() ) );
+					parameters.add(
+						compilationRequest.sourceFolder().get( 0 )
+						+ File.separator
+						+ compilationRequest.symbol + ".ch"
+					);
+					System.out.println( "Issuing command " + String.join( " ", parameters ) );
+					Choral.main( parameters.toArray( new String[ 0 ] ) );
+			}
+		} catch( Exception e ) {
+			e.printStackTrace();
 		}
 	}
 
