@@ -93,7 +93,9 @@ public class HeaderLoader {
 			pathsFromSources = Stream.of();
 		} else {
 			pathsFromSources = sourceFiles.stream().map(
-					x -> Paths.get( ( x.isDirectory() ) ? x.getPath() : x.getParent() ) )
+					x -> Paths.get( ( x.isDirectory() )
+							? x.getPath()
+							: ( x.getParent() == null ? "" : x.getParent() ) ) )
 					.flatMap( wrapFunction( p -> Files.find( p, 1,
 							( q, a ) -> !a.isDirectory() && keepHeaderFile( q, sourceFiles,
 									ignoreIfSourcePresent )
