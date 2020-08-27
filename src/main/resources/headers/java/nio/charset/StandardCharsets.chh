@@ -1,3 +1,4 @@
+/* Choral Header Version 0.1 */
 package java.nio.charset;
 
 import java.nio.charset.Charset;

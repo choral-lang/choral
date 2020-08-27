@@ -1,7 +1,10 @@
 java/io/PrintStream.chh
+java/io/Serializable.chh
 java/lang/Boolean.chh
 java/lang/Byte.chh
 java/lang/Character.chh
+java/lang/Class.chh
+java/lang/Comparable.chh
 java/lang/Double.chh
 java/lang/Enum.chh
 java/lang/Exception.chh

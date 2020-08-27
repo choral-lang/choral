@@ -1,6 +1,6 @@
 package foo;
 
-public class Foo@A<T> {
+public class Foo@A<T@A> {
 
 }
 
