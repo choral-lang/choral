@@ -56,8 +56,8 @@ public class HeaderLoader {
 		List< CompilationUnit > headers = new ArrayList<>( files.size() );
 		for( String file : files ) {
 			try( InputStream in = cl.getResourceAsStream( "headers/" + file ) ) {
-				headers.add( Parser.parseSourceFile( cl.getResourceAsStream( "headers/" + file ),
-						file ) );
+				headers.add( Parser.parseSourceFile( in,
+						"headers/" + file ) );
 			}
 		}
 		return headers.stream();

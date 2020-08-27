@@ -52,4 +52,8 @@ public class Position {
 		return String.format( "file '%s' line %d column %d", relativePath, line, column );
 	}
 
+	public String toString() {
+		return formattedPosition();
+	}
+
 }

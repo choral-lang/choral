@@ -590,7 +590,6 @@ public class AstOptimizer implements ChoralVisitor {
 	@Override
 	public Node visitMethodDeclaration( ChoralParser.MethodDeclarationContext md ) {
 		debugInfo();
-
 		// Retrieve modifiers
 		EnumSet< ClassMethodModifier > modifiers = EnumSet.noneOf( ClassMethodModifier.class );
 		for( ChoralParser.MethodModifierContext ctx : md.methodModifier() ) {

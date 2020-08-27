@@ -60,9 +60,9 @@ public class ParsingErrorListener extends BaseErrorListener {
 	) {
 		List< String > stack = ( (Parser) recognizer ).getRuleInvocationStack();
 		Collections.reverse( stack );
-		String file = relativizePath( recognizer.getInputStream().getSourceName() ).equals(
-				"<unknown>" ) ?
-				this.file : relativizePath( recognizer.getInputStream().getSourceName() );
+		String file = recognizer.getInputStream().getSourceName().equals( "<unknown>" )
+				? this.file
+				: relativizePath( recognizer.getInputStream().getSourceName() );
 		errors.add( new SyntaxException( new Position( file, line, charPositionInLine ), msg ) );
 	}
 }
