@@ -42,6 +42,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -159,24 +160,35 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 								true, true ) // TODO: keep this or introduce parameter also in EPP?
 				)
 						.collect( Collectors.toList() );
-				Collection< CompilationUnit > annotatedUnits = Typer.annotate( sourceUnits,
-						headerUnits );
-				Compiler.checkProjectiability( annotatedUnits );
+				AtomicReference< Collection< CompilationUnit > > annotatedUnits = new AtomicReference<>();
+				profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( sourceUnits,
+						headerUnits ) ) );
+
+				profilerLog( "projectability check", () -> Compiler.checkProjectiability( annotatedUnits.get() ) );
+
 				// TODO: ... UNTIL HERE (annotatedUnits)
 				if( worlds == null ) {
 					worlds = Collections.emptyList();
 				}
-				Compiler.project(
-						emissionOptions.isDryRun(),
-						emissionOptions.isAnnotated(),
-//						emissionOptions.useCanonicalPaths() TODO: implement this
-//						emissionOptions.isOverwritingAllowed() TODO: implement this
-						annotatedUnits,
-						symbol,
-						worlds.stream().map( String::trim ).filter(
-								w -> !( w.isBlank() || w.isEmpty() ) ).collect(
-								Collectors.toList() ),
-						emissionOptions.targetpath()
+				profilerLog( "compilation", () ->
+						{
+							try {
+								Compiler.project(
+									emissionOptions.isDryRun(),
+									emissionOptions.isAnnotated(),
+			//						emissionOptions.useCanonicalPaths() TODO: implement this
+			//						emissionOptions.isOverwritingAllowed() TODO: implement this
+									annotatedUnits.get(),
+									symbol,
+									worlds.stream().map( String::trim ).filter(
+											w -> !( w.isBlank() || w.isEmpty() ) ).collect(
+											Collectors.toList() ),
+									emissionOptions.targetpath()
+								);
+							} catch( IOException e ) {
+								throw new RuntimeException( e );
+							}
+						}
 				);
 			} catch( Exception e ) {
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
@@ -323,6 +335,36 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 
 		return str.substring( 0, 1 ).toUpperCase() + str.substring( 1 );
 	}
+
+	// - - - - - - PROFILING VARIABLES, METHODS, AND UTILITIES
+
+	private static Map< String, ArrayList< Long > >  profilingLog;
+
+	public static void mainProfiler( String[] args, Map< String, ArrayList< Long > >  profilingLog ) {
+		Choral c = new Choral();
+		c.profilingLog = profilingLog;
+		CommandLine cl = new CommandLine( c );
+		cl.setToggleBooleanFlags( true );
+		cl.setCaseInsensitiveEnumValuesAllowed( true );
+		cl.execute( args );
+	}
+
+	protected static void profilerLog( String action, Runnable r ) throws Exception {
+		if( profilingLog != null ) {
+			Long start = System.nanoTime();
+			try {
+				r.run();
+			} catch( RuntimeException e ){
+				throw new Exception( e );
+			}
+			Long finish = System.nanoTime();
+			profilingLog.putIfAbsent( action, new ArrayList<>() );
+			profilingLog.get( action ).add( finish - start );
+		} else {
+			r.run();
+		}
+	}
+
 }
 
 @Command(

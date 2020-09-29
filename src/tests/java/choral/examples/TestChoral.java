@@ -25,9 +25,8 @@ import org.apache.commons.lang.ArrayUtils;
 import org.choral.Choral;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.security.Permission;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -86,17 +85,17 @@ public class TestChoral {
 
 		List< CompilationRequest > compilationRequests = Stream.of(
 
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
-						targetFolder,
-						Collections.emptyList(),
-						"HelloRoles", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
+//						targetFolder,
+//						Collections.emptyList(),
+//						"HelloRoles", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "BiPair") ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"BiPair", ALL_WORLDS ),
+//						"BiPair", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "Foo" ) ),
@@ -108,7 +107,7 @@ public class TestChoral {
 //						List.of( subFolder( sourceFolder, "ConsumeItems" ) ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"ConsumeItems", ALL_WORLDS ),
+//						"ConsumeItems", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "MultiFoo") ),
@@ -138,7 +137,7 @@ public class TestChoral {
 //								"src/runtime/choral",
 //								"src/choralUnit/choral"
 //						),
-//						"DistAuth", ALL_WORLDS ),
+//						"DistAuth", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "DistAuth" ) ),
@@ -162,19 +161,19 @@ public class TestChoral {
 //								"src/runtime/choral",
 //								"src/choralUnit/choral"
 //						),
-//						"DistAuth5", ALL_WORLDS ),
+//						"DistAuth5", ALL_WORLDS )
 
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/DistAuth",
-//								"src/tests/choral/examples/AuthResult",
-//								"src/tests/choral/examples/BiPair",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"DistAuth10", ALL_WORLDS ),
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/DistAuth",
+								"src/tests/choral/examples/AuthResult",
+								"src/tests/choral/examples/BiPair",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"DistAuth10", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
@@ -184,7 +183,7 @@ public class TestChoral {
 //								"src/runtime/choral",
 //								"src/choralUnit/choral"
 //						),
-//						"VitalsStreaming", ALL_WORLDS ),
+//						"VitalsStreaming", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
@@ -204,7 +203,7 @@ public class TestChoral {
 //								"src/runtime/choral",
 //								"src/choralUnit/choral"
 //						),
-//						"Mergesort", ALL_WORLDS ),
+//						"Mergesort", ALL_WORLDS )
 
 
 //				new CompilationRequest(
@@ -235,7 +234,7 @@ public class TestChoral {
 //								"src/runtime/choral",
 //								"src/choralUnit/choral"
 //						),
-//						"Quicksort", ALL_WORLDS ),
+//						"Quicksort", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "Quicksort" ) ),
@@ -270,9 +269,17 @@ public class TestChoral {
 		).collect( Collectors.toList() );
 
 //		generateCHH( headersRequest ); // use exclusively because they call exit
-		check( compilationRequests ); // use exclusively because they call exit
+//		check( compilationRequests ); // use exclusively because they call exit
 //		project( compilationRequests ); // use exclusively because they call exit
 //		version();
+		Map< String, ArrayList< Long > > log = new HashMap<>();
+		for( int i = 0; i < 2000; i++ ) {
+			project( compilationRequests, log ); // use exclusively because they call exit
+		}
+		log.forEach( ( key, values ) -> {
+			System.out.println( key + ": " + values.stream().skip( 1000 ).mapToLong( i -> i ).average().orElse( 0 ) / Math.pow( 10, 6 ) );
+		} );
+
 	}
 
 //	private static void check( List< CompilationRequest > compilationRequests ) {
@@ -311,7 +318,7 @@ public class TestChoral {
 		}
 	}
 
-	private static void project( List< CompilationRequest > compilationRequests ) {
+	private static void project( List< CompilationRequest > compilationRequests, Map< String, ArrayList< Long > > log ) {
 		try {
 			for( CompilationRequest compilationRequest : compilationRequests ) {
 				ArrayList< String > parameters = new ArrayList<>();
@@ -327,8 +334,9 @@ public class TestChoral {
 				parameters.add( compilationRequest.symbol() );
 				parameters.addAll( compilationRequest.worlds() );
 				parameters.add( "--annotate" );
-				System.out.println( "Issuing command " + String.join( " ", parameters ) );
-				Choral.main( parameters.toArray( new String[ 0 ] ) );
+				parameters.add( "--dry-run" );
+//				System.out.println( "Issuing command " + String.join( " ", parameters ) );
+				Choral.mainProfiler( parameters.toArray( new String[ 0 ] ), log );
 			}
 		} catch( Exception e ) {
 			e.printStackTrace();

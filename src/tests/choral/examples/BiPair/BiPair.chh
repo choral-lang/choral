@@ -1,7 +1,6 @@
 package choral.examples.BiPair;
 
 public class BiPair@( A, B )< L@X, R@Y > {
-
 	public BiPair( L@A left, R@B right ) {
 	}
 

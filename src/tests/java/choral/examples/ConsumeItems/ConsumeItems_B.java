@@ -1,8 +1,8 @@
 package choral.examples.ConsumeItems;
 import org.choral.annotations.Choreography;
+import java.util.function.Consumer;
 import org.choral.channels.DiChannel_B;
 import org.choral.lang.Unit;
-import java.util.function.Consumer;
 
 @Choreography( role = "B", name = "ConsumeItems" )
 public class ConsumeItems_B {

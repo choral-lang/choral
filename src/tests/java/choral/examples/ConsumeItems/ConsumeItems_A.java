@@ -1,6 +1,6 @@
 package choral.examples.ConsumeItems;
-import org.choral.annotations.Choreography;
 import org.choral.channels.DiChannel_A;
+import org.choral.annotations.Choreography;
 import java.util.Iterator;
 import org.choral.lang.Unit;
 
