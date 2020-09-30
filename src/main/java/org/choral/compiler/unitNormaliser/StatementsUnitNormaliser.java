@@ -96,7 +96,7 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 				visit( n.ifBranch() ),
 				visit( n.elseBranch() ),
 				visit( n.continuation() )
-		);
+		).copyPosition( n );
 	}
 
 	@Override
