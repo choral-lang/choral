@@ -47,6 +47,7 @@ configurations {
 	choralUnit
 	choralRuntime.extendsFrom choralUnit
 	runtime.extendsFrom choralRuntime
+	runtime.extendsFrom compare
 }
 
 
@@ -65,6 +66,9 @@ dependencies {
 	// runtime dependencies
 	choralRuntime 'com.esotericsoftware:kryo:5.0.0-RC4'
 	choralRuntime 'com.google.code.gson:gson:2.8.6'
+
+	// compare dependencies
+	compare 'com.typesafe.akka:akka-actor-typed_2.13:2.6.9'
 }
 
 repositories {
@@ -90,6 +94,10 @@ sourceSets {
 	tests {
 		java.srcDir 'src/tests/java'
 		runtimeClasspath += compileClasspath += sourceSets.main.runtimeClasspath + sourceSets.choralUnit.output + sourceSets.base.output + sourceSets.runtime.output
+	}
+	compare {
+		java.srcDir 'src/compare/java'
+		runtimeClasspath += compileClasspath += sourceSets.main.runtimeClasspath
 	}
 }
 
