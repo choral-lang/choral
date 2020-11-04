@@ -14,6 +14,7 @@ java/lang/Long.chh
 java/lang/Math.chh
 java/lang/Number.chh
 java/lang/Object.chh
+java/math/BigInteger.chh
 java/util/Optional.chh
 java/lang/Short.chh
 java/lang/String.chh
