@@ -22,7 +22,7 @@
 package choral.examples;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.choral.Choral;
+import choral.Choral;
 
 import java.io.File;
 import java.security.Permission;

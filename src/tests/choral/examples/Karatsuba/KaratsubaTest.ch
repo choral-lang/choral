@@ -1,9 +1,9 @@
 package choral.examples.Karatsuba.ChoralUnit;
 
 import choral.examples.Karatsuba.Karatsuba;
-import org.choral.choralUnit.testUtils.TestUtils;
-import org.choral.channels.SymChannel;
-import org.choral.choralUnit.annotations.Test;
+import choral.choralUnit.testUtils.TestUtils;
+import choral.channels.SymChannel;
+import choral.choralUnit.annotations.Test;
 
 public class KaratsubaTest@( A, B, C ) {
 

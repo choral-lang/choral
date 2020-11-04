@@ -3,9 +3,9 @@ package choral.examples.DistAuth.ChoralUnit;
 import choral.examples.AuthResult.AuthResult;
 import choral.examples.DistAuth.DistAuth;
 import choral.examples.DistAuthUtils.Credentials;
-import org.choral.choralUnit.testUtils.TestUtils;
-import org.choral.runtime.TLSChannel.TLSChannel;
-import org.choral.choralUnit.annotations.Test;
+import choral.choralUnit.testUtils.TestUtils;
+import choral.runtime.TLSChannel.TLSChannel;
+import choral.choralUnit.annotations.Test;
 
 public class DistAuthTest@( Client, Service, IP ) {
 

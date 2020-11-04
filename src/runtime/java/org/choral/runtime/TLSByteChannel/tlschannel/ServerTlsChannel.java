@@ -19,7 +19,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package org.choral.runtime.TLSByteChannel.tlschannel;
+package choral.runtime.TLSByteChannel.tlschannel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -41,11 +41,11 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.StandardConstants;
 
-import org.choral.runtime.TLSByteChannel.tlschannel.impl.BufferHolder;
-import org.choral.runtime.TLSByteChannel.tlschannel.impl.ByteBufferSet;
-import org.choral.runtime.TLSByteChannel.tlschannel.impl.TlsChannelImpl;
-import org.choral.runtime.TLSByteChannel.tlschannel.impl.TlsExplorer;
-import org.choral.runtime.TLSByteChannel.tlschannel.util.TlsChannelCallbackException;
+import choral.runtime.TLSByteChannel.tlschannel.impl.BufferHolder;
+import choral.runtime.TLSByteChannel.tlschannel.impl.ByteBufferSet;
+import choral.runtime.TLSByteChannel.tlschannel.impl.TlsChannelImpl;
+import choral.runtime.TLSByteChannel.tlschannel.impl.TlsExplorer;
+import choral.runtime.TLSByteChannel.tlschannel.util.TlsChannelCallbackException;
 
 /**
  * A server-side {@link TlsChannel}.

@@ -21,13 +21,13 @@
 
 package choral.channels;
 
-import org.choral.runtime.Media.PipedByteChannel;
-import org.choral.runtime.TLSByteChannel.TSLByteChannel_A;
-import org.choral.runtime.TLSByteChannel.TSLByteChannel_B;
-import org.choral.runtime.Serializers.KryoSerializer;
-import org.choral.lang.Unit;
-import org.choral.runtime.WrapperByteChannel.WrapperByteChannel_A;
-import org.choral.runtime.WrapperByteChannel.WrapperByteChannel_B;
+import choral.runtime.Media.PipedByteChannel;
+import choral.runtime.TLSByteChannel.TSLByteChannel_A;
+import choral.runtime.TLSByteChannel.TSLByteChannel_B;
+import choral.runtime.Serializers.KryoSerializer;
+import choral.lang.Unit;
+import choral.runtime.WrapperByteChannel.WrapperByteChannel_A;
+import choral.runtime.WrapperByteChannel.WrapperByteChannel_B;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -60,7 +60,7 @@ public class SSLChannelTest {
 
 		SSLContext sslContext = getSSLContext();
 
-		org.choral.utils.Pair< PipedByteChannel, PipedByteChannel > channels = PipedByteChannel.getConnectedChannels();
+		choral.utils.Pair< PipedByteChannel, PipedByteChannel > channels = PipedByteChannel.getConnectedChannels();
 
 		new Thread( () -> {
 			TSLByteChannel_A c = new TSLByteChannel_A( new WrapperByteChannel_A( channels.left() ), sslContext );

@@ -21,7 +21,7 @@
 
 package choral.examples;
 
-import org.choral.choralUnit.ChoralUnit;
+import choral.choralUnit.ChoralUnit;
 
 
 public class TestChoralUnit {

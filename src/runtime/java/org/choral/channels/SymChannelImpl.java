@@ -19,7 +19,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package org.choral.channels;
+package choral.channels;
 
 public interface SymChannelImpl< T > extends SymChannel_A< T >,
 											 DiDataChannel_B< T >,

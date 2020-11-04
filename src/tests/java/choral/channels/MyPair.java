@@ -21,7 +21,7 @@
 
 package choral.channels;
 
-import org.choral.runtime.Serializers.KryoSerializable;
+import choral.runtime.Serializers.KryoSerializable;
 
 @KryoSerializable
 public class MyPair< L, R > {

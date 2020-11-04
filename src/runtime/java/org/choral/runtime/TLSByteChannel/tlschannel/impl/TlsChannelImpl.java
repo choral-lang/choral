@@ -19,7 +19,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package org.choral.runtime.TLSByteChannel.tlschannel.impl;
+package choral.runtime.TLSByteChannel.tlschannel.impl;
 
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 
@@ -40,9 +40,9 @@ import static javax.net.ssl.SSLEngineResult.HandshakeStatus.*;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 
-import org.choral.runtime.TLSByteChannel.tlschannel.*;
-import org.choral.runtime.TLSByteChannel.tlschannel.util.TlsChannelCallbackException;
-import org.choral.runtime.TLSByteChannel.tlschannel.util.Util;
+import choral.runtime.TLSByteChannel.tlschannel.*;
+import choral.runtime.TLSByteChannel.tlschannel.util.TlsChannelCallbackException;
+import choral.runtime.TLSByteChannel.tlschannel.util.Util;
 
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;

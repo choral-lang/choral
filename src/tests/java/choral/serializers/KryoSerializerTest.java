@@ -21,7 +21,7 @@
 
 package choral.serializers;
 
-import org.choral.runtime.Serializers.KryoSerializer;
+import choral.runtime.Serializers.KryoSerializer;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;

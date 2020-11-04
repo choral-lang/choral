@@ -1,7 +1,7 @@
 package choral.examples.VitalsStreaming;
 import choral.examples.VitalsStreamingUtils.Vitals;
 import choral.examples.VitalsStreamingUtils.SignatureRegistry;
-import org.choral.annotations.Choreography;
+import choral.annotations.Choreography;
 import choral.examples.VitalsStreamingUtils.PatientsRegistry;
 import choral.examples.VitalsStreamingUtils.Signature;
 

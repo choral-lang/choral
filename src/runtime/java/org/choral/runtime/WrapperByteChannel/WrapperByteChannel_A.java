@@ -19,10 +19,10 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package org.choral.runtime.WrapperByteChannel;
+package choral.runtime.WrapperByteChannel;
 
-import org.choral.channels.DiDataChannel_A;
-import org.choral.channels.DiDataChannel_B;
+import choral.channels.DiDataChannel_A;
+import choral.channels.DiDataChannel_B;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;

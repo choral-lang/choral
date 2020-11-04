@@ -21,7 +21,7 @@
 
 package choral.examples.DistAuthUtils;
 
-import org.choral.runtime.Serializers.KryoSerializable;
+import choral.runtime.Serializers.KryoSerializable;
 
 import java.util.Objects;
 import java.util.UUID;

@@ -23,7 +23,7 @@ package choral.examples.HealthCareService;
 
 import choral.examples.DistAuthUtils.AuthToken;
 import choral.examples.VitalsStreamingUtils.Vitals;
-import org.choral.runtime.Serializers.KryoSerializable;
+import choral.runtime.Serializers.KryoSerializable;
 
 @KryoSerializable
 public class StorageMsg {

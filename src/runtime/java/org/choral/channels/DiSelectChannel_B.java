@@ -19,9 +19,9 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package org.choral.channels;
+package choral.channels;
 
-import org.choral.lang.Unit;
+import choral.lang.Unit;
 
 public interface DiSelectChannel_B {
 	< T extends Enum< T > > T select( Unit m );

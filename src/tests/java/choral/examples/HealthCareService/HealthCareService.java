@@ -26,7 +26,7 @@ import choral.examples.AuthResult.AuthResult_A;
 import choral.examples.DistAuth.DistAuth_Client;
 import choral.examples.DistAuthUtils.Credentials;
 import choral.examples.VitalsStreaming.VitalsStreaming_Gatherer;
-import org.choral.runtime.TLSChannel.TLSChannel_A;
+import choral.runtime.TLSChannel.TLSChannel_A;
 
 import java.util.ArrayList;
 

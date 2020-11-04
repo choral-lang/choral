@@ -29,4 +29,4 @@
  * for plaintext, just like OpenSSL does for C, only for Java, filling a specially painful missing feature of the
  * standard Java library.</p>
  */
-package org.choral.runtime.TLSByteChannel.tlschannel;
+package choral.runtime.TLSByteChannel.tlschannel;

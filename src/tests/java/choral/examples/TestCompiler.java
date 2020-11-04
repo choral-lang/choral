@@ -22,7 +22,7 @@
 package choral.examples;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.choral.compiler.Compiler;
+import choral.compiler.Compiler;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -1,6 +1,6 @@
 package choral.examples.VitalsStreaming;
 
-import org.choral.channels.SymChannel;
+import choral.channels.SymChannel;
 import java.util.function.Consumer;
 import choral.examples.VitalsStreamingUtils.PatientsRegistry;
 import choral.examples.VitalsStreamingUtils.Sensor;

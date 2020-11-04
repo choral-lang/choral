@@ -1,5 +1,5 @@
 package choral.examples.Mergesort;
-import org.choral.annotations.Choreography;
+import choral.annotations.Choreography;
 
 @Choreography( role = "R", name = "MChoice" )
 enum MChoice {

@@ -1,7 +1,7 @@
-package org.choral.choralUnit.testUtils;
+package choral.choralUnit.testUtils;
 
-import org.choral.channels.SymChannel;
-import org.choral.runtime.TLSChannel.TLSChannel;
+import choral.channels.SymChannel;
+import choral.runtime.TLSChannel.TLSChannel;
 
 public class TestUtils@( A, B ) {
 

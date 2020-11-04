@@ -19,10 +19,10 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package org.choral.runtime.LocalChannel;
+package choral.runtime.LocalChannel;
 
-import org.choral.channels.SymChannel_B;
-import org.choral.runtime.Media.MessageQueue;
+import choral.channels.SymChannel_B;
+import choral.runtime.Media.MessageQueue;
 
 public class LocalChannel_B extends LocalChannelImpl implements SymChannel_B< Object > {
 	public LocalChannel_B( MessageQueue queueOut, MessageQueue queueIn ) {

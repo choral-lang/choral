@@ -1,5 +1,5 @@
 package choral.examples.ConsumeItems;
-import org.choral.annotations.Choreography;
+import choral.annotations.Choreography;
 
 @Choreography( role = "R", name = "ConsumeChoice" )
 public enum ConsumeChoice {

@@ -1,15 +1,15 @@
 package choral.examples.Mergesort.ChoralUnit;
-import org.choral.lang.Unit;
-import org.choral.choralUnit.annotations.Test;
-import org.choral.channels.SymChannel_B;
-import org.choral.channels.SymChannel_A;
+import choral.lang.Unit;
+import choral.choralUnit.annotations.Test;
+import choral.channels.SymChannel_B;
+import choral.channels.SymChannel_A;
 import choral.examples.Mergesort.Mergesort_A;
-import org.choral.choralUnit.testUtils.TestUtils_B;
+import choral.choralUnit.testUtils.TestUtils_B;
 import java.util.List;
-import org.choral.annotations.Choreography;
+import choral.annotations.Choreography;
 import java.util.ArrayList;
-import org.choral.choralUnit.Assert;
-import org.choral.choralUnit.testUtils.TestUtils_A;
+import choral.choralUnit.Assert;
+import choral.choralUnit.testUtils.TestUtils_A;
 
 @Choreography( role = "A", name = "MergesortTest" )
 public class MergesortTest_A {

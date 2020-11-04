@@ -1,9 +1,9 @@
 package choral.examples.Quicksort;
 
-import org.choral.channels.SymChannel;
+import choral.channels.SymChannel;
 import java.util.List;
 import java.util.ArrayList;
-import org.choral.runtime.Serializers.KryoSerializable;
+import choral.runtime.Serializers.KryoSerializable;
 
 enum Loop@R{ STOP, GO }
 enum Recv@R{ B, C }

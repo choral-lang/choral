@@ -37,7 +37,7 @@ apply plugin: 'application'
 sourceCompatibility = 14
 targetCompatibility = 14
 
-mainClassName = 'org.choral.compiler.Compiler'
+mainClassName = 'choral.compiler.Compiler'
 def jarOutputFolder = "dist"
 
 configurations {
@@ -105,15 +105,15 @@ gradle.startParameter.showStacktrace = ShowStacktrace.ALWAYS
 
 generateGrammarSource {
 	description "Compilation of the Antlr grammar to Java Sources"
-	outputDirectory file('src/main/java/org/choral/grammar')
-	arguments += ['-package', 'org.choral.grammar', "-visitor"]
+	outputDirectory file('src/main/java/choral/grammar')
+	arguments += ['-package', 'choral.grammar', "-visitor"]
 	doFirst({ println("Starting " + tasks[name].description.toString()) })
 	doLast({ println("Done " + tasks[name].description.toString()) })
 }
 
 task testParsing( type: JavaExec ){
 	classpath = sourceSets.main.runtimeClasspath
-	main = 'org.choral.compiler.DebuggingParser'
+	main = 'choral.compiler.DebuggingParser'
 }
 
 task compile11( type: JavaCompile ) {
@@ -160,7 +160,7 @@ clean {
 
 jar {
 	destinationDirectory = file( jarOutputFolder )
-	manifest.attributes 'Main-Class': 'org.choral.Choral'
+	manifest.attributes 'Main-Class': 'choral.Choral'
 	from {
 		configurations.choral.collect { it.isDirectory() ? it : zipTree(it) }
 	}
@@ -226,6 +226,6 @@ task makeRelease( type: Zip, dependsOn: jarAll ) {
 }
 
 graal {
-	mainClass 'org.choral.Choral'
+	mainClass 'choral.Choral'
 	outputName 'choral'
 }

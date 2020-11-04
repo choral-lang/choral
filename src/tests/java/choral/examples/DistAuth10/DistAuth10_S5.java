@@ -1,8 +1,8 @@
 package choral.examples.DistAuth10;
-import org.choral.annotations.Choreography;
-import org.choral.runtime.TLSChannel.TLSChannel_A;
-import org.choral.DistAuth.EnumBoolean;
-import org.choral.lang.Unit;
+import choral.annotations.Choreography;
+import choral.runtime.TLSChannel.TLSChannel_A;
+import choral.DistAuth.EnumBoolean;
+import choral.lang.Unit;
 
 @Choreography( role = "S5", name = "DistAuth10" )
 public class DistAuth10_S5 {

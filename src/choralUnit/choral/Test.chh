@@ -1,3 +1,3 @@
-package org.choral.choralUnit.annotations;
+package choral.choralUnit.annotations;
 
 public interface Test@( A ) {}

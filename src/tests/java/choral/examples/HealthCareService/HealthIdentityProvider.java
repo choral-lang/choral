@@ -23,10 +23,10 @@ package choral.examples.HealthCareService;
 
 import choral.examples.DistAuth.DistAuth_IP;
 import choral.examples.DistAuth.DistAuth_Service;
-import org.choral.choralUnit.testUtils.TestUtils_A;
-import org.choral.choralUnit.testUtils.TestUtils_B;
-import org.choral.runtime.TLSChannel.TLSChannel_A;
-import org.choral.lang.Unit;
+import choral.choralUnit.testUtils.TestUtils_A;
+import choral.choralUnit.testUtils.TestUtils_B;
+import choral.runtime.TLSChannel.TLSChannel_A;
+import choral.lang.Unit;
 
 import java.util.UUID;
 

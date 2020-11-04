@@ -3,8 +3,8 @@ package choral.examples.BuyerSellerShipper;
 import choral.examples.BuyerSellerShipperUtils.Customer;
 import choral.examples.BuyerSellerShipperUtils.Price;
 import choral.examples.BuyerSellerShipperUtils.Catalogue;
-import org.choral.channels.SymChannel;
-import org.choral.runtime.UI.Panel;
+import choral.channels.SymChannel;
+import choral.runtime.UI.Panel;
 
 enum EnumBoolean@A{ True, False }
 

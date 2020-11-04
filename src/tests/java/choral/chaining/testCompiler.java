@@ -24,11 +24,11 @@ package choral.chaining;
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.choral.ast.CompilationUnit;
-import org.choral.ast.visitors.PrettyPrinterVisitor;
-import org.choral.compiler.*;
-import org.choral.grammar.ChoralLexer;
-import org.choral.grammar.ChoralParser;
+import choral.ast.CompilationUnit;
+import choral.ast.visitors.PrettyPrinterVisitor;
+import choral.compiler.*;
+import choral.grammar.ChoralLexer;
+import choral.grammar.ChoralParser;
 
 import java.io.IOException;
 

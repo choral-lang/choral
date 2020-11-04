@@ -2,7 +2,7 @@ package choral.examples.AuthResult;
 import choral.examples.BiPair.BiPair_A;
 import choral.examples.DistAuthUtils.AuthToken;
 import java.util.Optional;
-import org.choral.lang.Unit;
+import choral.lang.Unit;
 
 public class AuthResult_A extends BiPair_A< Optional < AuthToken >, Optional < AuthToken > > {
 	public AuthResult_A( AuthToken t1, Unit t2 ) {

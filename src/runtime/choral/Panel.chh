@@ -1,4 +1,4 @@
-package org.choral.runtime.UI;
+package choral.runtime.UI;
 
 public class Panel@A {
 

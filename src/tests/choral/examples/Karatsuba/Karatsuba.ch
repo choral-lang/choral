@@ -1,6 +1,6 @@
 package choral.examples.Karatsuba;
 
-import org.choral.channels.SymChannel;
+import choral.channels.SymChannel;
 
 enum Choice@R { RECUR, DONE }
 

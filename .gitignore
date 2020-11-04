@@ -9,7 +9,7 @@ gradlew
 gradlew.bat
 
 # antlr generated files
-src/main/java/org/choral/grammar/
+src/main/java/choral/grammar/
 
 .idea/gradle.xml
 .idea/gradle.xml

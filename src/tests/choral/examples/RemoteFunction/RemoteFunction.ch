@@ -1,6 +1,6 @@
 package choral.examples.RemoteFunction;
 
-import org.choral.channels.BiDataChannel;
+import choral.channels.BiDataChannel;
 import java.util.function.Function;
 
 class RemoteFunction@( Client, Server )< T@X, R@Y > {

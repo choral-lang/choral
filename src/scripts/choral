@@ -1,2 +1,2 @@
 #!/bin/sh
-java -cp $CHORAL_HOME/lib/*:$CHORAL_HOME/choral.jar org.choral.Choral "$@"
+java -cp $CHORAL_HOME/lib/*:$CHORAL_HOME/choral.jar choral.Choral "$@"

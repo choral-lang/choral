@@ -21,14 +21,14 @@
 
 package generic;
 
-import org.choral.channels.SymDataChannelImpl;
-import org.choral.lang.Unit;
-import org.choral.runtime.ChoralByteChannel.SymByteChannelImpl;
-import org.choral.runtime.Media.PipedByteChannel;
-import org.choral.runtime.WrapperByteChannel.WrapperByteChannel_A;
-import org.choral.runtime.WrapperByteChannel.WrapperByteChannel_B;
-import org.choral.runtime.WrapperByteChannel.WrapperByteChannelImpl;
-import org.choral.utils.Pair;
+import choral.channels.SymDataChannelImpl;
+import choral.lang.Unit;
+import choral.runtime.ChoralByteChannel.SymByteChannelImpl;
+import choral.runtime.Media.PipedByteChannel;
+import choral.runtime.WrapperByteChannel.WrapperByteChannel_A;
+import choral.runtime.WrapperByteChannel.WrapperByteChannel_B;
+import choral.runtime.WrapperByteChannel.WrapperByteChannelImpl;
+import choral.utils.Pair;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;

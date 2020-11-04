@@ -19,11 +19,11 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package org.choral.runtime.TLSByteChannel;
+package choral.runtime.TLSByteChannel;
 
-import org.choral.runtime.ChoralByteChannel.SymByteChannelImpl;
-import org.choral.runtime.TLSByteChannel.tlschannel.TlsChannel;
-import org.choral.lang.Unit;
+import choral.runtime.ChoralByteChannel.SymByteChannelImpl;
+import choral.runtime.TLSByteChannel.tlschannel.TlsChannel;
+import choral.lang.Unit;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

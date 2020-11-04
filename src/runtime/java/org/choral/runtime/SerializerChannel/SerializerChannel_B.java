@@ -19,14 +19,14 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package org.choral.runtime.SerializerChannel;
+package choral.runtime.SerializerChannel;
 
-import org.choral.channels.DiDataChannel_A;
-import org.choral.channels.DiDataChannel_B;
-import org.choral.channels.SymDataChannelImpl;
-import org.choral.channels.DiSelectChannel_A;
-import org.choral.channels.DiSelectChannel_B;
-import org.choral.runtime.Serializers.ChoralSerializer;
+import choral.channels.DiDataChannel_A;
+import choral.channels.DiDataChannel_B;
+import choral.channels.SymDataChannelImpl;
+import choral.channels.DiSelectChannel_A;
+import choral.channels.DiSelectChannel_B;
+import choral.runtime.Serializers.ChoralSerializer;
 
 import java.nio.ByteBuffer;
 

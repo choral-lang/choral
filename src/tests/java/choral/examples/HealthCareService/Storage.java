@@ -24,11 +24,11 @@ package choral.examples.HealthCareService;
 import choral.examples.AuthResult.AuthResult_B;
 import choral.examples.DistAuth.DistAuth_Service;
 import choral.examples.DistAuthUtils.AuthToken;
-import org.choral.choralUnit.testUtils.TestUtils_A;
-import org.choral.choralUnit.testUtils.TestUtils_B;
-import org.choral.runtime.TLSChannel.TLSChannel_A;
-import org.choral.runtime.TLSChannel.TLSChannel_B;
-import org.choral.lang.Unit;
+import choral.choralUnit.testUtils.TestUtils_A;
+import choral.choralUnit.testUtils.TestUtils_B;
+import choral.runtime.TLSChannel.TLSChannel_A;
+import choral.runtime.TLSChannel.TLSChannel_B;
+import choral.lang.Unit;
 
 import java.util.UUID;
 

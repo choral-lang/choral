@@ -21,7 +21,7 @@
 
 package choral.serializers;
 
-import org.choral.runtime.Serializers.KryoSerializable;
+import choral.runtime.Serializers.KryoSerializable;
 
 @KryoSerializable
 public class Price {

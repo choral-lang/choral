@@ -1,9 +1,9 @@
 package choral.examples.Quicksort.ChoralUnit;
 
 import choral.examples.Quicksort.Quicksort;
-import org.choral.choralUnit.testUtils.TestUtils;
-import org.choral.channels.SymChannel;
-import org.choral.choralUnit.annotations.Test;
+import choral.choralUnit.testUtils.TestUtils;
+import choral.channels.SymChannel;
+import choral.choralUnit.annotations.Test;
 import java.util.ArrayList;
 
 public class QuicksortTest@( A, B, C ) {

@@ -19,11 +19,11 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package org.choral.runtime.LocalChannel;
+package choral.runtime.LocalChannel;
 
-import org.choral.channels.SymChannelImpl;
-import org.choral.runtime.Media.MessageQueue;
-import org.choral.lang.Unit;
+import choral.channels.SymChannelImpl;
+import choral.runtime.Media.MessageQueue;
+import choral.lang.Unit;
 
 import java.util.concurrent.ExecutionException;
 

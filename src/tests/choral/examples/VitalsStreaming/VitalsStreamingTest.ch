@@ -3,11 +3,11 @@ package choral.examples.VitalsStreaming.ChoralUnit;
 import choral.examples.VitalsStreaming.VitalsStreaming;
 import choral.examples.VitalsStreamingUtils.Sensor;
 import choral.examples.VitalsStreamingUtils.Vitals;
-import org.choral.choralUnit.Assert;
-import org.choral.choralUnit.testUtils.TestUtils;
-import org.choral.channels.SymChannel;
+import choral.choralUnit.Assert;
+import choral.choralUnit.testUtils.TestUtils;
+import choral.channels.SymChannel;
 import java.util.function.Consumer;
-import org.choral.choralUnit.annotations.Test;
+import choral.choralUnit.annotations.Test;
 
 public class VitalsStreamingTest@( Device, Gatherer ) {
 

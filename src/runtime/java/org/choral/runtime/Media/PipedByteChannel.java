@@ -19,9 +19,9 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package org.choral.runtime.Media;
+package choral.runtime.Media;
 
-import org.choral.utils.Pair;
+import choral.utils.Pair;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

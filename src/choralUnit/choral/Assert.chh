@@ -1,4 +1,4 @@
-package org.choral.choralUnit;
+package choral.choralUnit;
 
 public class Assert@A {
 

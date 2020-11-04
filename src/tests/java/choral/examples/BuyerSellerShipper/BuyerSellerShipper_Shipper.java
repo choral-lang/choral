@@ -1,8 +1,8 @@
 package choral.examples.BuyerSellerShipper;
-import org.choral.annotations.Choreography;
-import org.choral.lang.Unit;
-import org.choral.runtime.UI.Panel;
-import org.choral.channels.SymChannel_A;
+import choral.annotations.Choreography;
+import choral.lang.Unit;
+import choral.runtime.UI.Panel;
+import choral.channels.SymChannel_A;
 
 @Choreography( role = "Shipper", name = "BuyerSellerShipper" )
 class BuyerSellerShipper_Shipper {

@@ -8,8 +8,8 @@ import choral.examples.DistAuthUtils.Credentials;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import org.choral.runtime.TLSChannel.TLSChannel;
-import org.choral.DistAuth.EnumBoolean;
+import choral.runtime.TLSChannel.TLSChannel;
+import choral.DistAuth.EnumBoolean;
 
 public class DistAuth@( Client, Service, IP ){
 	private TLSChannel@( Client, IP )< Object > ch_Client_IP;

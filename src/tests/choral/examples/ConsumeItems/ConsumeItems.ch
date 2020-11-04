@@ -1,6 +1,6 @@
 package choral.examples.ConsumeItems;
 
-import org.choral.channels.DiChannel;
+import choral.channels.DiChannel;
 import java.util.function.Consumer;
 import java.util.Iterator;
 

@@ -1,9 +1,9 @@
 package choral.examples.DistAuth.ChoralUnit;
-import org.choral.choralUnit.annotations.Test;
-import org.choral.annotations.Choreography;
-import org.choral.lang.Unit;
-import org.choral.runtime.TLSChannel.TLSChannel_A;
-import org.choral.choralUnit.testUtils.TestUtils_A;
+import choral.choralUnit.annotations.Test;
+import choral.annotations.Choreography;
+import choral.lang.Unit;
+import choral.runtime.TLSChannel.TLSChannel_A;
+import choral.choralUnit.testUtils.TestUtils_A;
 import choral.examples.AuthResult.AuthResult_B;
 import choral.examples.DistAuth.DistAuth_Service;
 

@@ -21,8 +21,8 @@
 
 package name_mangling.Utils;
 
-import org.choral.ast.Name;
-import org.choral.ast.type.WorldArgument;
+import choral.ast.Name;
+import choral.ast.type.WorldArgument;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -25,8 +25,8 @@ import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.RuntimeSingleton;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.node.SimpleNode;
-import org.choral.ast.expression.FieldAccessExpression;
-import org.choral.ast.Name;
+import choral.ast.expression.FieldAccessExpression;
+import choral.ast.Name;
 
 import java.io.StringReader;
 import java.io.StringWriter;

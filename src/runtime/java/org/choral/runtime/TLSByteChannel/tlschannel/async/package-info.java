@@ -22,4 +22,4 @@
 /**
  * <p> This package enables the usage of TLS Channel as an {@link java.nio.channels.AsynchronousByteChannel}.</p>
  */
-package org.choral.runtime.TLSByteChannel.tlschannel.async;
+package choral.runtime.TLSByteChannel.tlschannel.async;

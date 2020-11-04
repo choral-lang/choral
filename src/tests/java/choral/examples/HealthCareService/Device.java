@@ -23,10 +23,10 @@ package choral.examples.HealthCareService;
 
 import choral.examples.VitalsStreaming.VitalsStreaming_Device;
 import choral.examples.VitalsStreamingUtils.Sensor;
-import org.choral.channels.SymChannel_A;
-import org.choral.channels.SymChannel_B;
-import org.choral.choralUnit.testUtils.TestUtils;
-import org.choral.utils.Pair;
+import choral.channels.SymChannel_A;
+import choral.channels.SymChannel_B;
+import choral.choralUnit.testUtils.TestUtils;
+import choral.utils.Pair;
 
 import java.util.UUID;
 

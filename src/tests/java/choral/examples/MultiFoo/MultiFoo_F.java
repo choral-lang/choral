@@ -1,5 +1,5 @@
 package choral.examples.MultiFoo;
-import org.choral.lang.Unit;
+import choral.lang.Unit;
 
 public class MultiFoo_F extends SingleFoo_F {
 	Bar_D < Foo_A, Foo_B > x;

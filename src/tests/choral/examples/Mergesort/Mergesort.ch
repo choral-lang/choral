@@ -1,6 +1,6 @@
 package choral.examples.Mergesort;
 
-import org.choral.channels.SymChannel;
+import choral.channels.SymChannel;
 import java.util.ArrayList;
 import java.util.List;
 

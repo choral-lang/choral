@@ -1,8 +1,8 @@
 package choral.examples.DistAuth10;
-import org.choral.annotations.Choreography;
-import org.choral.DistAuth.EnumBoolean;
-import org.choral.runtime.TLSChannel.TLSChannel_B;
-import org.choral.lang.Unit;
+import choral.annotations.Choreography;
+import choral.DistAuth.EnumBoolean;
+import choral.runtime.TLSChannel.TLSChannel_B;
+import choral.lang.Unit;
 import choral.examples.DistAuthUtils.ClientRegistry;
 import choral.examples.DistAuthUtils.AuthToken;
 

@@ -1,5 +1,5 @@
 package choral.examples.MultiFoo;
-import org.choral.lang.Unit;
+import choral.lang.Unit;
 
 class SingleFoo_E {
 	public SingleFoo_E( Foo_A x ) {
