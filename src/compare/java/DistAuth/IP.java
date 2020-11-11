@@ -41,11 +41,6 @@ public class IP extends AbstractBehavior< Message > {
 	}
 
 	private Behavior< Message > onMessage( AuthRequest request ) {
-		try {
-			Thread.sleep( 10000 );
-		} catch( InterruptedException e ) {
-			e.printStackTrace();
-		}
 		this.client = request.client();
 		this.service = request.service();
 		String salt = ClientRegistry.getSalt( request.username() );
