@@ -89,7 +89,7 @@ public class TestChoral {
 //						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"HelloRoles", ALL_WORLDS )
+//						"HelloRoles", ALL_WORLDS ),
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "BiPair") ),
@@ -163,17 +163,17 @@ public class TestChoral {
 //						),
 //						"DistAuth5", ALL_WORLDS )
 
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "DistAuth" ) ),
-						targetFolder,
-						List.of(
-								"src/tests/choral/examples/DistAuth",
-								"src/tests/choral/examples/AuthResult",
-								"src/tests/choral/examples/BiPair",
-								"src/runtime/choral",
-								"src/choralUnit/choral"
-						),
-						"DistAuth10", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/DistAuth",
+//								"src/tests/choral/examples/AuthResult",
+//								"src/tests/choral/examples/BiPair",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"DistAuth10", ALL_WORLDS )
 
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
@@ -266,20 +266,45 @@ public class TestChoral {
 //				),
 //				"KaratsubaTest", ALL_WORLDS )
 
+		new CompilationRequest(
+				List.of( subFolder( sourceFolder, "DiffieHellman" ) ),
+				targetFolder,
+				List.of(
+						"src/tests/choral/examples/DiffieHellman"
+				),
+				"DiffieHellman", ALL_WORLDS )
+
 		).collect( Collectors.toList() );
 
-//		generateCHH( headersRequest ); // use exclusively because they call exit
-//		check( compilationRequests ); // use exclusively because they call exit
-//		project( compilationRequests ); // use exclusively because they call exit
+//		generateCHH( headersRequest );
+//		check( compilationRequests );
+		project( compilationRequests.get( 0 ) );
 //		version();
-		Map< String, ArrayList< Long > > log = new HashMap<>();
-		for( int i = 0; i < 2000; i++ ) {
-			project( compilationRequests, log ); // use exclusively because they call exit
-		}
-		log.forEach( ( key, values ) -> {
-			System.out.println( key + ": " + values.stream().skip( 1000 ).mapToLong( i -> i ).average().orElse( 0 ) / Math.pow( 10, 6 ) );
-		} );
+//		projectionPerformance( compilationRequests );
 
+	}
+
+	private static void projectionPerformance( List< CompilationRequest > compilationRequests ){
+		boolean firstRun = true;
+		for( CompilationRequest compilationRequest : compilationRequests ) {
+			int runs = firstRun ? 2000 : 1000;
+			int skip = firstRun ? 1000 : 0;
+			int interval = runs/100;
+			firstRun = false;
+			Map< String, ArrayList< Long > > log = new HashMap<>();
+			System.out.println( "Compilation performance for symbol: " + compilationRequest.symbol );
+			for( int i = 0; i < runs; i++ ) {
+				if( i % interval == 0 )
+					System.out.print( "\rRun: " + i + " of " + runs + " (" + ( 100 * i / runs ) + "%)" );
+				performanceProject( Collections.singletonList( compilationRequest ), log );
+			}
+			System.out.print( "\rDone\n" );
+			log.forEach( ( key, values ) -> {
+				System.out.println( key + ": " + values.stream().skip( skip ).mapToLong(
+						i -> i ).average().orElse( 0 ) / Math.pow( 10, 6 ) );
+			} );
+			System.out.println( "- - - - - - - - - - - - - - - -" );
+		}
 	}
 
 //	private static void check( List< CompilationRequest > compilationRequests ) {
@@ -318,7 +343,29 @@ public class TestChoral {
 		}
 	}
 
-	private static void project( List< CompilationRequest > compilationRequests, Map< String, ArrayList< Long > > log ) {
+	private static void project( CompilationRequest compilationRequest ) {
+		try {
+				ArrayList< String > parameters = new ArrayList<>();
+				parameters.add( "epp" );
+				parameters.add( "--verbosity=DEBUG" );
+				if( !compilationRequest.headersFolders().isEmpty() )
+					parameters.add( "--headers=" + String.join( ":",
+							compilationRequest.headersFolders() ) );
+				parameters.add( "-t" );
+				parameters.add( compilationRequest.targetFolder() );
+				parameters.add( "-s" );
+				parameters.add( String.join( ":", compilationRequest.sourceFolder() ) );
+				parameters.add( compilationRequest.symbol() );
+				parameters.addAll( compilationRequest.worlds() );
+				parameters.add( "--annotate" );
+//				System.out.println( "Issuing command " + String.join( " ", parameters ) );
+				Choral.main( parameters.toArray( new String[ 0 ] ) );
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void performanceProject( List< CompilationRequest > compilationRequests, Map< String, ArrayList< Long > > log ) {
 		try {
 			for( CompilationRequest compilationRequest : compilationRequests ) {
 				ArrayList< String > parameters = new ArrayList<>();

@@ -2,7 +2,7 @@ package choral.examples.diffieHellman;
 
 import java.math.BigInteger;
 import choral.channels.SymDataChannel;
-import choral.examples.biPair.BiPair;
+import choral.examples.BiPair.BiPair;
 
 public class DiffieHellman@(Alice,Bob) {
 
@@ -26,5 +26,4 @@ public class DiffieHellman@(Alice,Bob) {
         BigInteger@Bob   bSharedKey = bSharedGenerator.modPow( bRecvKey, bSharedPrime );
         return new BiPair@(Alice,Bob)<BigInteger,BigInteger>( aSharedKey,bSharedKey );
     }
-
 }
