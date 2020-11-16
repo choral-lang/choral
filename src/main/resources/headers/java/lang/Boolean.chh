@@ -9,11 +9,7 @@ public final class Boolean@A implements Serializable@A, Comparable@A<Boolean> {
 
     public static final Boolean@A FALSE;
 
-    /* public static final Class@A<Boolean> TYPE */
-
     private final boolean@A value;
-
-    private static final long@A serialVersionUID;
 
     public Boolean(boolean@A value) {  }
 
@@ -34,7 +30,5 @@ public final class Boolean@A implements Serializable@A, Comparable@A<Boolean> {
     public int@A compareTo(Boolean@A b) {  }
 
     public static int@A compare(boolean@A x, boolean@A y) {  }
-
-    private static boolean@A toBoolean(String@A name) {  }
 
 }
