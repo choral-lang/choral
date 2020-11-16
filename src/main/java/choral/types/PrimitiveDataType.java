@@ -23,6 +23,11 @@ package choral.types;
 
 public interface PrimitiveDataType extends DataType {
 
+	@Override
+	default boolean isPrimitive() {
+		return true;
+	}
+
 	Class boxedType();
 
 }

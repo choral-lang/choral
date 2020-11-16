@@ -25,10 +25,6 @@ buildscript {
 	}
 }
 
-plugins {
-	id 'com.palantir.graal' version '0.6.0'
-}
-
 apply plugin: 'java'
 apply plugin: 'java-library'
 apply plugin: 'antlr'
@@ -223,9 +219,4 @@ task makeRelease( type: Zip, dependsOn: jarAll ) {
 	file( "src/main/resources/version.properties" ).withInputStream { props.load(it) }
 	archiveFileName = "choral-v" + props.getProperty( "choral.version" ) + ".zip"
 	destinationDirectory = file( "release" )
-}
-
-graal {
-	mainClass 'choral.Choral'
-	outputName 'choral'
 }

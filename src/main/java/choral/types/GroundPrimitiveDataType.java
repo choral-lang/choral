@@ -38,9 +38,9 @@ public interface GroundPrimitiveDataType extends GroundDataType, PrimitiveDataTy
 	default boolean isAssignableTo( GroundDataTypeOrVoid type ) {
 		if( type instanceof GroundDataType ) {
 			GroundDataType t = (GroundDataType) type;
-			return t.worldArguments().equals( t.worldArguments() )
-					&& ( primitiveTypeTag().isAssignableTo(
-					t.primitiveTypeTag() ) || boxedType().isEquivalentTo( t ) );
+			return this.worldArguments().equals( t.worldArguments() )
+					&& ( this.primitiveTypeTag().isAssignableTo( t.primitiveTypeTag() )
+					|| this.boxedType().isEquivalentTo( t ) );
 		} else {
 			return false;
 		}

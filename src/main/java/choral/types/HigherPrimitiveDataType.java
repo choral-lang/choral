@@ -114,7 +114,7 @@ public final class HigherPrimitiveDataType extends HigherDataType implements Pri
 
 		@Override
 		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
-			return ( !strict || isEquivalentTo( type ) );
+			return ( !strict && isEquivalentTo( type ) );
 		}
 
 	}
@@ -162,7 +162,7 @@ public final class HigherPrimitiveDataType extends HigherDataType implements Pri
 
 		@Override
 		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
-			return ( !strict || isEquivalentTo( type ) );
+			return ( !strict && isEquivalentTo( type ) );
 		}
 
 	}

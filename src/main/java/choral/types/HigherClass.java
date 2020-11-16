@@ -73,6 +73,16 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 	}
 
 	@Override
+	public boolean isBoxedType() {
+		return universe().isBoxedType(this);
+	}
+
+	@Override
+	public HigherPrimitiveDataType unboxedType() {
+		return universe().unboxedType(this);
+	}
+
+	@Override
 	public GroundClass applyTo( List< ? extends World > args ) {
 		return applyTo( args,
 				typeParameters.stream().map( HigherTypeParameter::getRawType ).collect(

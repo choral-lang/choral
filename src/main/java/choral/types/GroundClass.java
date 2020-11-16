@@ -34,10 +34,34 @@ public interface GroundClass extends GroundClassOrInterface, Class {
 	}
 
 	@Override
+	default boolean isBoxedType() {
+		return typeConstructor().isBoxedType();
+	}
+
+	@Override
+	default GroundPrimitiveDataType unboxedType() {
+		if( isBoxedType() ) {
+			return typeConstructor().unboxedType().applyTo( worldArguments() );
+		} else {
+			return null;
+		}
+	}
+
+	@Override
 	HigherClass typeConstructor();
 
 	@Override
 	GroundClass applySubstitution( Substitution substitution );
+
+	@Override
+	default boolean isAssignableTo( GroundDataTypeOrVoid type ) {
+		if( isBoxedType() && type instanceof GroundPrimitiveDataType ) {
+			return unboxedType().isAssignableTo( (GroundPrimitiveDataType) type );
+		} else {
+			return !type.isVoid() && ( type instanceof GroundDataType )
+					&& isSubtypeOf( (GroundDataType) type );
+		}
+	}
 
 	default Stream< ? extends GroundClassOrInterface > extendedClassesOrInterfaces() {
 		if( extendedClass().isPresent() ) {

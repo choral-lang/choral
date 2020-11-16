@@ -81,6 +81,8 @@ public class Universe {
 
 	private static final HashMap< String, PrimitiveTypeTag > primitiveTypesConversionMap = new HashMap<>(
 			8 );
+	private static final Map< SpecialTypeTag, PrimitiveTypeTag > unboxingMap = new EnumMap<>(
+			SpecialTypeTag.class );
 
 	public enum PrimitiveTypeTag {
 		BOOLEAN( "boolean", SpecialTypeTag.BOOLEAN ),
@@ -134,6 +136,7 @@ public class Universe {
 			this.identifier = identifier;
 			this.boxedType = boxedType;
 			primitiveTypesConversionMap.put( identifier, this );
+			unboxingMap.put( boxedType, this );
 		}
 
 		@Override
@@ -157,6 +160,14 @@ public class Universe {
 		} else {
 			return Optional.of( primitiveTypes.get( key ) );
 		}
+	}
+
+	public boolean isBoxedType( HigherClass type ) {
+		return unboxingMap.containsKey( type.specialTypeTag() );
+	}
+
+	public HigherPrimitiveDataType unboxedType( HigherClass type ) {
+		return primitiveDataType( unboxingMap.get( type.specialTypeTag() ) );
 	}
 
 	private final Map< SpecialTypeTag, HigherClassOrInterface > specialClasses = new EnumMap<>(
@@ -376,8 +387,53 @@ public class Universe {
 		}
 
 		@Override
+		public SpecialTypeTag specialTypeTag() {
+			return null;
+		}
+
+		@Override
+		public PrimitiveTypeTag primitiveTypeTag() {
+			return null;
+		}
+
+		@Override
 		public boolean isVoid() {
 			return true;
+		}
+
+		@Override
+		public boolean isPrimitive() {
+			return false;
+		}
+
+		@Override
+		public boolean isTypeParameter() {
+			return false;
+		}
+
+		@Override
+		public boolean isClass() {
+			return false;
+		}
+
+		@Override
+		public boolean isInterface() {
+			return false;
+		}
+
+		@Override
+		public boolean isEnum() {
+			return false;
+		}
+
+		@Override
+		public boolean isHigherType() {
+			return false;
+		}
+
+		@Override
+		public String toString(){
+			return "void";
 		}
 	};
 

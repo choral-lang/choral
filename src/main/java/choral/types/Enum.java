@@ -22,7 +22,9 @@
 package choral.types;
 
 public interface Enum extends Class {
+
 	default boolean isEnum() {
 		return true;
 	}
+
 }

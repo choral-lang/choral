@@ -23,28 +23,6 @@ package choral.types;
 
 public interface DataType extends Type, DataTypeOrVoid {
 
-	default boolean isPrimitive() {
-		return primitiveTypeTag() != null;
-	}
-
-	default boolean isTypeParameter() {
-		return false;
-	}
-
-	default boolean isClass() {
-		return false;
-	}
-
-	default boolean isInterface() {
-		return false;
-	}
-
-	default boolean isEnum() {
-		return false;
-	}
-
-	boolean isHigherType();
-
 	@Override
 	default boolean isVoid() {
 		return false;

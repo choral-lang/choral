@@ -1024,61 +1024,86 @@ public class Typer {
 			).collect( Collectors.toList() );
 			// find most specific w/o unboxing
 //	/*DEBUG*/
-//			System.out.println("=================================================");
-//			System.out.println("candidates: " + cs.size());
+//			System.out.println( "=================================================" );
+//			System.out.println( args.stream().map( Type::toString ).collect(
+//					Formatting.joining( ",", "(", ")", "()" ) ) );
+//			System.out.println( "candidates: " + cs.size() );
 			List< Member.GroundCallable > ms = new ArrayList<>( cs.size() );
 			List< Member.GroundCallable > rs = new ArrayList<>( cs.size() );
-			for( Member.HigherCallable x : cs ) {
-//						System.out.println("------------------------------------------------");
-				Member.GroundCallable c;
-				try {
-					c = x.applyTo( typeArgs );
-				} catch( StaticVerificationException e ) {
-//					System.out.println("type parameter compatible: false");
-					continue;
-				}
-//				System.out.println("type parameter compatible: true");
-				List< ? extends Signature.Parameter > cparams = c.signature().parameters();
-//				System.out.println("checking: " + c);
-				// check compatibility of actual parameters and formal ones.
-				boolean incompatible = false;
-				for( int i = 0; i < cparams.size(); i++ ) {
-					if( !args.get( i ).isSubtypeOf( cparams.get( i ).type() ) ) {
-						incompatible = true;
+			int phase = 1; /* phase 1 w/o boxing conversions, phase 2 boxing conversions*/
+			do {
+				ms.clear();
+				for( Member.HigherCallable x : cs ) {
+//					System.out.println( "------------------------------------------------" );
+					Member.GroundCallable c;
+					try {
+						c = x.applyTo( typeArgs );
+					} catch( StaticVerificationException e ) {
+//						System.out.println( "type parameter compatible: false" );
+						continue;
 					}
-				}
-//				System.out.println("actual parameter compatible: " + !incompatible);
-				if( incompatible ) {
-					continue;
-				}
-				// check if most specific w/o unboxing
-				boolean mostSpecific = true;
-				for( Member.GroundCallable m : ms ) {
-					List< ? extends Signature.Parameter > mparams = m.signature().parameters();
-					boolean mcsub = true;
-					boolean cmsub = true;
+//					System.out.println( "type parameter compatible: true" );
+					List< ? extends Signature.Parameter > cparams = c.signature().parameters();
+//					System.out.println( "checking: " + c );
+					// check compatibility of actual parameters and formal ones.
+					boolean incompatible = false;
 					for( int i = 0; i < cparams.size(); i++ ) {
-						GroundDataType cp = cparams.get( i ).type();
-						GroundDataType mp = mparams.get( i ).type();
-						mcsub &= mp.isSubtypeOf( cp );
-						cmsub &= cp.isSubtypeOf( mp );
+						GroundDataType a = args.get( i );
+						GroundDataType p = cparams.get( i ).type();
+//						System.out.printf( "'%s' isSubtypeOf '%s': %s\n", a,p, a.isSubtypeOf( p ) );
+						if( phase == 1 ) {
+							incompatible = !args.get( i ).isSubtypeOf( cparams.get( i ).type() );
+						} else {
+							if (p instanceof GroundClass && ( (GroundClass) p ).isBoxedType()) {
+									p = ( (GroundClass) p ).unboxedType();
+							}
+							if (a instanceof GroundClass && ( (GroundClass) a ).isBoxedType()) {
+								a = ( (GroundClass) a ).unboxedType();
+							}
+//							System.out.printf( "'%s' isAssignableTo '%s': %s\n", a,p,a.isAssignableTo( p ) );
+							incompatible = !a.isAssignableTo( p );
+						}
+						if( incompatible ) {
+							break;
+						}
 					}
-					if( mcsub ) {
-//						System.out.println("subsumed by most specific candidate " + m);
-						mostSpecific = false;
-					} else if( cmsub ) {
-//						System.out.println("subsumes most specific candidate " + m);
-						rs.add( m );
+//					System.out.println( "actual parameter compatible: " + !incompatible );
+					if( incompatible ) {
+						continue;
+					}
+					// check if most specific w/o unboxing
+					boolean mostSpecific = true;
+					for( Member.GroundCallable m : ms ) {
+						List< ? extends Signature.Parameter > mparams = m.signature().parameters();
+						boolean mcsub = true;
+						boolean cmsub = true;
+						for( int i = 0; i < cparams.size(); i++ ) {
+							GroundDataType cp = cparams.get( i ).type();
+							GroundDataType mp = mparams.get( i ).type();
+							mcsub &= mp.isSubtypeOf( cp );
+							cmsub &= cp.isSubtypeOf( mp );
+						}
+						if( mcsub ) {
+//							System.out.println( "subsumed by most specific candidate " + m );
+							mostSpecific = false;
+						} else if( cmsub ) {
+//							System.out.println( "subsumes most specific candidate " + m );
+							rs.add( m );
+						}
+					}
+					ms.removeAll( rs );
+					rs.clear();
+//					System.out.println( "most specific candidate: " + mostSpecific );
+					if( mostSpecific ) {
+						ms.add( c );
 					}
 				}
-				ms.removeAll( rs );
-				rs.clear();
-//						System.out.println("most specific candidate: " + mostSpecific);
-				if( mostSpecific ) {
-					ms.add( c );
-				}
-			}
-//			System.out.println("=================================================");
+//				System.out.println( "------------------------------------------------" );
+//				System.out.println( "end of phase: " + phase );
+//				System.out.println( "found: " + ms.size() );
+				phase++;
+			} while( ms.isEmpty() && phase < 3 );
+//			System.out.println( "=================================================" );
 			return ms;
 		}
 
@@ -1250,19 +1275,19 @@ public class Typer {
 
 			@Override
 			public Boolean visit( ReturnStatement n ) {
-				if( expected == null ) {
-					if( n.returnExpression() == null ) {
+				if( n.returnExpression() == null ) {
+					if( expected == universe().voidType() ) {
 						return true;
 					} else {
-						throw new AstPositionedException( n.returnExpression().position(),
-								new StaticVerificationException(
-										"cannot return a value from a method with 'void' result type" ) );
-					}
-				} else {
-					if( n.returnExpression() == null ) {
 						throw new AstPositionedException( n.position(),
 								new StaticVerificationException(
 										"missing return value" ) );
+					}
+				} else {
+					if( expected == universe().voidType() ) {
+						throw new AstPositionedException( n.returnExpression().position(),
+								new StaticVerificationException(
+										"cannot return a value from a method with 'void' result type" ) );
 					} else {
 						GroundDataTypeOrVoid found = synth( scope, n.returnExpression() );
 						if( !found.isAssignableTo( expected ) ) {
