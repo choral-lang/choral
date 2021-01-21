@@ -1052,13 +1052,16 @@ public class Typer {
 						GroundDataType p = cparams.get( i ).type();
 //						System.out.printf( "'%s' isSubtypeOf '%s': %s\n", a,p, a.isSubtypeOf( p ) );
 						if( phase == 1 ) {
-							incompatible = !args.get( i ).isSubtypeOf( cparams.get( i ).type() );
+							incompatible = !a.isSubtypeOf( p );
 						} else {
-							if (p instanceof GroundClass && ( (GroundClass) p ).isBoxedType()) {
-									p = ( (GroundClass) p ).unboxedType();
-							}
-							if (a instanceof GroundClass && ( (GroundClass) a ).isBoxedType()) {
-								a = ( (GroundClass) a ).unboxedType();
+							if (p.isPrimitive()) {
+								if ( a instanceof GroundClass && ( (GroundClass) a ).isBoxedType()) {
+									a = ( (GroundClass) a ).unboxedType();
+								}
+							} else {
+								if ( a.isPrimitive() ) {
+									a = ((GroundPrimitiveDataType) a).boxedType();
+								}
 							}
 //							System.out.printf( "'%s' isAssignableTo '%s': %s\n", a,p,a.isAssignableTo( p ) );
 							incompatible = !a.isAssignableTo( p );

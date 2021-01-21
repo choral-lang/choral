@@ -14,9 +14,15 @@ public class AutoBoxing@( A, B ) {
             // unboxing in invocations
             f2( Integer@A.valueOf( 2@A ) );
 
-            // boxing in overloaded invocation
+            // boxing in role-overloaded invocation
             f3( 2@B );
             f4( Integer@A.valueOf( 2@A ) );
+
+            // overload resolution
+            f5( Integer@A.valueOf( 2@A ), Integer@A.valueOf( 2@A ) );
+            f5( 2@A, 2@A );
+            // this is an ambiguous invocation
+            // f5( Integer@A.valueOf( 2@A ), 2@A );
         }
 
         public Integer@A f1( Integer@A i ) { return i; }
@@ -29,4 +35,7 @@ public class AutoBoxing@( A, B ) {
 
         public void f4( int@A i ) { }
         public void f4( int@B i ) { }
+
+        public void f5( Object@A o1, Object@A o2 ) { }
+        public void f5( int@A i1, int@A i2 ) { }
 }
