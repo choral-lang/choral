@@ -1,8 +1,8 @@
 package choral.examples.BuyerSellerShipper;
-import choral.channels.SymChannel_B;
 import choral.lang.Unit;
 import choral.examples.BuyerSellerShipperUtils.Customer;
 import choral.annotations.Choreography;
+import choral.channels.SymChannel_B;
 import choral.runtime.UI.Panel;
 import choral.examples.BuyerSellerShipperUtils.Price;
 

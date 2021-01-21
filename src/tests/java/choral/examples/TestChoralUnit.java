@@ -28,10 +28,10 @@ public class TestChoralUnit {
 
 	public static void main ( String[] args ) {
 
-//		ChoralUnit.main( new String[]{ "DistAuthTest" } );
-//		ChoralUnit.main( new String[]{ "VitalsStreamingTest" } );
-//		ChoralUnit.main( new String[]{ "MergesortTest" } );
-//		ChoralUnit.main( new String[]{ "QuicksortTest" } );
+		ChoralUnit.main( new String[]{ "DistAuthTest" } );
+		ChoralUnit.main( new String[]{ "VitalsStreamingTest" } );
+		ChoralUnit.main( new String[]{ "MergesortTest" } );
+		ChoralUnit.main( new String[]{ "QuicksortTest" } );
 		ChoralUnit.main( new String[]{ "KaratsubaTest" } );
 	}
 

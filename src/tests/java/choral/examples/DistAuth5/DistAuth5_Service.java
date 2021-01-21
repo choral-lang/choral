@@ -1,9 +1,9 @@
 package choral.examples.DistAuth5;
-import choral.lang.Unit;
 import choral.examples.DistAuthUtils.AuthToken;
-import choral.annotations.Choreography;
+import choral.lang.Unit;
 import choral.examples.AuthResult.AuthResult_B;
 import choral.DistAuth.EnumBoolean;
+import choral.annotations.Choreography;
 import choral.runtime.TLSChannel.TLSChannel_A;
 
 @Choreography( role = "Service", name = "DistAuth5" )

@@ -1,10 +1,10 @@
 package choral.examples.VitalsStreaming.ChoralUnit;
-import choral.choralUnit.annotations.Test;
-import choral.channels.SymChannel_B;
-import choral.examples.VitalsStreaming.VitalsStreaming_Gatherer;
 import choral.annotations.Choreography;
 import choral.choralUnit.testUtils.TestUtils_B;
 import choral.lang.Unit;
+import choral.channels.SymChannel_B;
+import choral.choralUnit.annotations.Test;
+import choral.examples.VitalsStreaming.VitalsStreaming_Gatherer;
 
 @Choreography( role = "Gatherer", name = "VitalsStreamingTest" )
 public class VitalsStreamingTest_Gatherer {

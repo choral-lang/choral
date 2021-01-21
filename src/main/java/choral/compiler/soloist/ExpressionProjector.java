@@ -88,6 +88,17 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 
 	@Override
 	public Expression visit( BinaryExpression n ) {
+		// check for multi-world objects on the RHS of the short-cicuited expression
+		if(
+				( n.operator().equals( BinaryExpression.Operator.SHORT_CIRCUITED_AND )
+				|| n.operator().equals( BinaryExpression.Operator.SHORT_CIRCUITED_OR ) )
+				&& collectAllWorlds( n.right() ).size() > 1
+		){
+			throw new ChoralException(
+					"Found unprojectable expression. Right-hand side of short-circuited " +
+						"boolean expression contains multi-role objects: "
+							+ new PrettyPrinterVisitor().visit( n ) );
+		}
 		if( atWorld( worlds( n.left() ) ) && atWorld( worlds( n.right() ) ) ) {
 			return new BinaryExpression( visit( n.left() ), visit( n.right() ), n.operator() );
 		} else {
@@ -353,12 +364,75 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 		}
 	}
 
+	private static List< WorldArgument > collectAllWorlds( Expression e ) {
+		if( e instanceof AssignExpression ) {
+			return Stream.concat(
+					collectAllWorlds( ( (AssignExpression) e ).target() ).stream(),
+					collectAllWorlds( ( (AssignExpression) e ).value() ).stream()
+					).distinct().collect( Collectors.toList() );
+		} else if( e instanceof BinaryExpression ) {
+			return Stream.concat(
+					collectAllWorlds( ( (BinaryExpression) e ).left() ).stream(),
+					collectAllWorlds( ( (BinaryExpression) e ).right() ).stream()
+			).distinct().collect( Collectors.toList() );
+		} else if( e instanceof BlankExpression ) {
+			throw new UnsupportedOperationException(
+					"worlds( Expression e ) should not be called on a BlankExpression" );
+		} else if( e instanceof ClassInstantiationExpression ) {
+			return ( (ClassInstantiationExpression) e ).typeExpression().worldArguments();
+		} else if( e instanceof EnclosedExpression ) {
+			return collectAllWorlds( ( (EnclosedExpression) e ).nestedExpression() );
+		} else if( e instanceof EnumCaseInstantiationExpression ) {
+			return Collections.singletonList( ( (EnumCaseInstantiationExpression) e ).world() );
+		} else if( e instanceof FieldAccessExpression ) {
+			List< WorldArgument > worlds = worldsFromAnnotation( e ).map(
+					w -> new WorldArgument( new Name( w.identifier() ) ) )
+					.collect( Collectors.toList() );
+			return worlds;
+		} else if( e instanceof LiteralExpression ) {
+			return Collections.singletonList( ( (LiteralExpression) e ).world() );
+		} else if( e instanceof MethodCallExpression ) {
+			if( !( (MethodCallExpression) e ).methodAnnotation().get().returnType().isVoid() ) {
+				GroundDataTypeOrVoid t = ( (MethodCallExpression) e ).methodAnnotation().get().returnType();
+				if( !t.isVoid() ) {
+					return ( (GroundDataType) t ).worldArguments().stream().map(
+							w -> new WorldArgument( new Name( w.identifier() ) ) )
+							.collect( Collectors.toList() );
+				} else {
+					return List.of();
+				}
+			} else {
+				return Collections.emptyList();
+			}
+		} else if( e instanceof NotExpression ) {
+			return collectAllWorlds( ( (NotExpression) e ).expression() );
+		} else if( e instanceof NullExpression ) {
+			return ( (NullExpression) e ).worlds();
+		} else if( e instanceof ScopedExpression ) {
+			Pair< Expression, Expression > ht = Utils.headAndTail( ( (ScopedExpression) e ) );
+			return Stream.concat(
+					collectAllWorlds( ht.right() ).stream(),
+					collectAllWorlds( ht.left() ).stream()
+			).distinct().collect( Collectors.toList() );
+		} else if( e instanceof StaticAccessExpression ) {
+			return ( (StaticAccessExpression) e ).typeExpression().worldArguments();
+		} else { // if ( e instanceof SuperExpression || e instanceof ThisExpression ) {
+			List< WorldArgument > worlds;
+			worlds = worldsFromAnnotation( e )
+					.map( w -> new WorldArgument( new Name( w.identifier() ) ) )
+					.collect( Collectors.toList() );
+//			System.out.println( new PrettyPrinterVisitor().visit( e ) + " at worlds " +
+//					worlds.stream().map( w -> w.name().identifier() ).collect( Collectors.joining( ", " ) ) ); // TODO: remove this
+			return worlds;
+		}
+	}
+
 	private static Stream< ? extends World > worldsFromAnnotation( Expression e ) {
 		if( e.typeAnnotation().isPresent() && !e.typeAnnotation().get().isVoid() ) {
 			return ( (GroundDataType) e.typeAnnotation().get() ).worldArguments().stream();
 		} else {
 			if( e.typeAnnotation().isEmpty() ) {
-				System.out.println( new PrettyPrinterVisitor().visit( e ) + " is not annotated" );
+				throw new ChoralException( new PrettyPrinterVisitor().visit( e ) + " is not annotated" );
 			}
 			return Stream.of();
 		}

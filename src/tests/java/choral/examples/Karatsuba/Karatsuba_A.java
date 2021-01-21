@@ -1,8 +1,8 @@
 package choral.examples.Karatsuba;
 import choral.lang.Unit;
-import choral.annotations.Choreography;
-import choral.channels.SymChannel_A;
 import choral.channels.SymChannel_B;
+import choral.channels.SymChannel_A;
+import choral.annotations.Choreography;
 
 @Choreography( role = "A", name = "Karatsuba" )
 public class Karatsuba_A {

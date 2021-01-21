@@ -1,10 +1,10 @@
 package choral.examples.DistAuth.ChoralUnit;
-import choral.choralUnit.annotations.Test;
-import choral.choralUnit.testUtils.TestUtils_B;
 import choral.lang.Unit;
 import choral.runtime.TLSChannel.TLSChannel_B;
 import choral.examples.DistAuth.DistAuth_IP;
 import choral.annotations.Choreography;
+import choral.choralUnit.testUtils.TestUtils_B;
+import choral.choralUnit.annotations.Test;
 
 @Choreography( role = "IP", name = "DistAuthTest" )
 public class DistAuthTest_IP {

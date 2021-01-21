@@ -1,12 +1,12 @@
 package choral.examples.Mergesort.ChoralUnit;
-import choral.channels.SymChannel_B;
+import choral.choralUnit.annotations.Test;
+import choral.choralUnit.testUtils.TestUtils_A;
 import choral.lang.Unit;
 import choral.annotations.Choreography;
-import choral.choralUnit.annotations.Test;
-import choral.channels.SymChannel_A;
-import choral.choralUnit.testUtils.TestUtils_A;
-import choral.choralUnit.testUtils.TestUtils_B;
 import choral.examples.Mergesort.Mergesort_B;
+import choral.channels.SymChannel_A;
+import choral.channels.SymChannel_B;
+import choral.choralUnit.testUtils.TestUtils_B;
 
 @Choreography( role = "B", name = "MergesortTest" )
 public class MergesortTest_B {

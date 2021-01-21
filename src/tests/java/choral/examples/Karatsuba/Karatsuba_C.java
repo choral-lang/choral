@@ -1,6 +1,6 @@
 package choral.examples.Karatsuba;
-import choral.lang.Unit;
 import choral.annotations.Choreography;
+import choral.lang.Unit;
 import choral.channels.SymChannel_A;
 import choral.channels.SymChannel_B;
 

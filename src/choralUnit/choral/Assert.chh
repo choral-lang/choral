@@ -4,6 +4,8 @@ public class Assert@A {
 
 	public static void assertEquals ( Object@A o1, Object@A o2, String@A successMessage, String@A failureMessage ) {}
 
+    public static void assertEquals ( Object@A o1, int@A o2, String@A successMessage, String@A failureMessage ) {}
+
 	public static void assertNotNull ( Object@A o1, String@A successMessage, String@A failureMessage ) {}
 
 	private static String@A indent ( String@A s ) {}

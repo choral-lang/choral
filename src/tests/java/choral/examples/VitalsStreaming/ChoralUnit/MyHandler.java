@@ -1,7 +1,7 @@
 package choral.examples.VitalsStreaming.ChoralUnit;
-import choral.examples.VitalsStreamingUtils.Vitals;
 import choral.annotations.Choreography;
 import choral.choralUnit.Assert;
+import choral.examples.VitalsStreamingUtils.Vitals;
 import java.util.function.Consumer;
 
 @Choreography( role = "Role", name = "MyHandler" )

@@ -1,12 +1,12 @@
 package choral.examples.Karatsuba.ChoralUnit;
 import choral.lang.Unit;
-import choral.examples.Karatsuba.Karatsuba_C;
-import choral.choralUnit.annotations.Test;
+import choral.choralUnit.testUtils.TestUtils_A;
 import choral.channels.SymChannel_B;
 import choral.choralUnit.testUtils.TestUtils_B;
-import choral.channels.SymChannel_A;
-import choral.choralUnit.testUtils.TestUtils_A;
 import choral.annotations.Choreography;
+import choral.choralUnit.annotations.Test;
+import choral.examples.Karatsuba.Karatsuba_C;
+import choral.channels.SymChannel_A;
 
 @Choreography( role = "C", name = "KaratsubaTest" )
 public class KaratsubaTest_C {

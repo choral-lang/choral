@@ -85,200 +85,202 @@ public class TestChoral {
 
 		List< CompilationRequest > compilationRequests = Stream.of(
 
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
-//						targetFolder,
-//						Collections.emptyList(),
-//						"HelloRoles", ALL_WORLDS ),
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "BiPair") ),
-//						targetFolder,
-//						Collections.emptyList(),
-//						"BiPair", ALL_WORLDS )
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "Foo" ) ),
-//						targetFolder,
-//						List.of( "src/tests/choral/examples/Foo" ),
-//						"Foo", ALL_WORLDS )
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "ConsumeItems" ) ),
-//						targetFolder,
-//						Collections.emptyList(),
-//						"ConsumeItems", ALL_WORLDS )
-
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
+						targetFolder,
+						Collections.emptyList(),
+						"HelloRoles", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "BiPair") ),
+						targetFolder,
+						Collections.emptyList(),
+						"BiPair", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "ConsumeItems" ) ),
+						targetFolder,
+						Collections.emptyList(),
+						"ConsumeItems", ALL_WORLDS )
+				,
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "MultiFoo") ),
 //						targetFolder,
 //						Collections.emptyList(),
-//						"MultiFoo", ALL_WORLDS ),
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "RemoteFunction") ),
-//						targetFolder,
-//						Collections.emptyList(),
-//						"RemoteFunction", ALL_WORLDS ),
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "AuthResult" ) )
-//						targetFolder,
-//						List.of( "src/tests/choral/examples/BiPair", ""src/tests/choral/examples/DistAuth"" ),
-//						"AuthResult", ALL_WORLDS )
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/DistAuth",
-//								"src/tests/choral/examples/AuthResult",
-//								"src/tests/choral/examples/BiPair",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"DistAuth", ALL_WORLDS )
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/DistAuth",
-//								"src/tests/choral/examples/AuthResult",
-//								"src/tests/choral/examples/BiPair",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"DistAuthTest", ALL_WORLDS ),
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/DistAuth",
-//								"src/tests/choral/examples/AuthResult",
-//								"src/tests/choral/examples/BiPair",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"DistAuth5", ALL_WORLDS )
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/DistAuth",
-//								"src/tests/choral/examples/AuthResult",
-//								"src/tests/choral/examples/BiPair",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"DistAuth10", ALL_WORLDS )
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/VitalsStreaming",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"VitalsStreaming", ALL_WORLDS )
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/VitalsStreaming",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"VitalsStreamingTest", ALL_WORLDS )
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "Mergesort" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/Mergesort",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"Mergesort", ALL_WORLDS )
-
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "Mergesort" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/Mergesort",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"MergesortTest", ALL_WORLDS )
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "BuyerSellerShipper" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/BuyerSellerShipper",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"BuyerSellerShipper", ALL_WORLDS )
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "Quicksort" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/Quicksort",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"Quicksort", ALL_WORLDS )
-
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "Quicksort" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/Quicksort",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"QuicksortTest", ALL_WORLDS )
-
-//		new CompilationRequest(
-//				List.of( subFolder( sourceFolder, "Karatsuba" ) ),
-//				targetFolder,
-//				List.of(
-//						"src/tests/choral/examples/Karatsuba",
-//						"src/runtime/choral",
-//						"src/choralUnit/choral"
-//				),
-//				"Karatsuba", ALL_WORLDS )
-//
-//		new CompilationRequest(
-//				List.of( subFolder( sourceFolder, "Karatsuba" ) ),
-//				targetFolder,
-//				List.of(
-//						"src/tests/choral/examples/Karatsuba",
-//						"src/runtime/choral",
-//						"src/choralUnit/choral"
-//				),
-//				"KaratsubaTest", ALL_WORLDS )
-
-		new CompilationRequest(
-				List.of( subFolder( sourceFolder, "DiffieHellman" ) ),
+//						"MultiFoo", ALL_WORLDS )
+//				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "RemoteFunction") ),
+						targetFolder,
+						Collections.emptyList(),
+						"RemoteFunction", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "AuthResult" ) ),
+						targetFolder,
+						List.of( "src/tests/choral/examples/BiPair", "src/tests/choral/examples/DistAuth" ),
+						"AuthResult", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/DistAuth",
+								"src/tests/choral/examples/AuthResult",
+								"src/tests/choral/examples/BiPair",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"DistAuth", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/DistAuth",
+								"src/tests/choral/examples/AuthResult",
+								"src/tests/choral/examples/BiPair",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"DistAuthTest", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/DistAuth",
+								"src/tests/choral/examples/AuthResult",
+								"src/tests/choral/examples/BiPair",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"DistAuth5", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "DistAuth" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/DistAuth",
+								"src/tests/choral/examples/AuthResult",
+								"src/tests/choral/examples/BiPair",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"DistAuth10", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/VitalsStreaming",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"VitalsStreaming", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/VitalsStreaming",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"VitalsStreamingTest", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "Mergesort" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/Mergesort",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"Mergesort", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "Mergesort" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/Mergesort",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"MergesortTest", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "BuyerSellerShipper" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/BuyerSellerShipper",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"BuyerSellerShipper", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "Quicksort" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/Quicksort",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"Quicksort", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "Quicksort" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/Quicksort",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"QuicksortTest", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "Karatsuba" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/Karatsuba",
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"Karatsuba", ALL_WORLDS )
+				,
+				new CompilationRequest(
+				List.of( subFolder( sourceFolder, "Karatsuba" ) ),
 				targetFolder,
 				List.of(
-						"src/tests/choral/examples/DiffieHellman"
+						"src/tests/choral/examples/Karatsuba",
+						"src/runtime/choral",
+						"src/choralUnit/choral"
 				),
-				"DiffieHellman", ALL_WORLDS )
+				"KaratsubaTest", ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "DiffieHellman" ) ),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/BiPair",
+								"src/tests/choral/examples/DiffieHellman"
+						),
+						"DiffieHellman", ALL_WORLDS )
+				,
+				new CompilationRequest(
+					List.of( "src/tests/choral/MustFail" ),
+					targetFolder,
+					List.of(
+							"src/runtime/choral"
+					),
+					"If_MultiWorld", ALL_WORLDS )
 
 		).collect( Collectors.toList() );
 
 //		generateCHH( headersRequest );
 //		check( compilationRequests );
-		project( compilationRequests.get( 0 ) );
+		compilationRequests.forEach( TestChoral::project );
 //		version();
 //		projectionPerformance( compilationRequests );
 
@@ -358,8 +360,8 @@ public class TestChoral {
 				parameters.add( compilationRequest.symbol() );
 				parameters.addAll( compilationRequest.worlds() );
 				parameters.add( "--annotate" );
-//				System.out.println( "Issuing command " + String.join( " ", parameters ) );
-				Choral.main( parameters.toArray( new String[ 0 ] ) );
+				System.out.println( "Issuing command " + String.join( " ", parameters ) );
+				Choral._testMain( parameters.toArray( new String[ 0 ] ) );
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}
