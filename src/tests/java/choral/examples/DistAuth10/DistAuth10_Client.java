@@ -1,15 +1,15 @@
 package choral.examples.DistAuth10;
+import java.security.MessageDigest;
 import choral.lang.Unit;
-import choral.examples.DistAuthUtils.Credentials;
-import choral.runtime.TLSChannel.TLSChannel_A;
-import choral.examples.DistAuthUtils.AuthToken;
-import choral.annotations.Choreography;
-import choral.examples.AuthResult.AuthResult_A;
-import java.security.NoSuchAlgorithmException;
-import choral.DistAuth.EnumBoolean;
 import choral.examples.DistAuthUtils.Base64_Encoder;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
+import choral.DistAuth.EnumBoolean;
+import choral.examples.DistAuthUtils.AuthToken;
+import choral.annotations.Choreography;
+import choral.runtime.TLSChannel.TLSChannel_A;
+import choral.examples.AuthResult.AuthResult_A;
+import java.security.NoSuchAlgorithmException;
+import choral.examples.DistAuthUtils.Credentials;
 
 @Choreography( role = "Client", name = "DistAuth10" )
 public class DistAuth10_Client {

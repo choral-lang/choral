@@ -1,7 +1,7 @@
 package choral.examples.DistAuth10;
 import choral.lang.Unit;
-import choral.runtime.TLSChannel.TLSChannel_A;
 import choral.annotations.Choreography;
+import choral.runtime.TLSChannel.TLSChannel_A;
 import choral.DistAuth.EnumBoolean;
 
 @Choreography( role = "S1", name = "DistAuth10" )

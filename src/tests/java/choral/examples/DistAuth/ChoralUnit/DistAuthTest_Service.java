@@ -1,11 +1,11 @@
 package choral.examples.DistAuth.ChoralUnit;
-import choral.lang.Unit;
-import choral.choralUnit.testUtils.TestUtils_A;
-import choral.examples.AuthResult.AuthResult_B;
 import choral.examples.DistAuth.DistAuth_Service;
+import choral.lang.Unit;
+import choral.choralUnit.annotations.Test;
+import choral.examples.AuthResult.AuthResult_B;
 import choral.annotations.Choreography;
 import choral.runtime.TLSChannel.TLSChannel_A;
-import choral.choralUnit.annotations.Test;
+import choral.choralUnit.testUtils.TestUtils_A;
 
 @Choreography( role = "Service", name = "DistAuthTest" )
 public class DistAuthTest_Service {

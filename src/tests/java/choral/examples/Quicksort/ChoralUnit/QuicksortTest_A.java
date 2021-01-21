@@ -1,13 +1,13 @@
 package choral.examples.Quicksort.ChoralUnit;
-import choral.choralUnit.annotations.Test;
 import choral.lang.Unit;
+import choral.choralUnit.annotations.Test;
 import choral.annotations.Choreography;
-import choral.channels.SymChannel_A;
 import java.util.ArrayList;
 import choral.choralUnit.testUtils.TestUtils_B;
-import choral.examples.Quicksort.Quicksort_A;
-import choral.channels.SymChannel_B;
 import choral.choralUnit.testUtils.TestUtils_A;
+import choral.channels.SymChannel_A;
+import choral.channels.SymChannel_B;
+import choral.examples.Quicksort.Quicksort_A;
 
 @Choreography( role = "A", name = "QuicksortTest" )
 public class QuicksortTest_A {

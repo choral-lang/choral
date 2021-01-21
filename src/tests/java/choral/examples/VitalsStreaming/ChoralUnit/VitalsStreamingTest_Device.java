@@ -1,11 +1,11 @@
 package choral.examples.VitalsStreaming.ChoralUnit;
-import choral.examples.VitalsStreaming.VitalsStreaming_Device;
-import choral.lang.Unit;
-import choral.choralUnit.testUtils.TestUtils_A;
 import choral.annotations.Choreography;
-import choral.channels.SymChannel_A;
+import choral.lang.Unit;
 import choral.choralUnit.annotations.Test;
 import choral.examples.VitalsStreamingUtils.Sensor;
+import choral.choralUnit.testUtils.TestUtils_A;
+import choral.examples.VitalsStreaming.VitalsStreaming_Device;
+import choral.channels.SymChannel_A;
 
 @Choreography( role = "Device", name = "VitalsStreamingTest" )
 public class VitalsStreamingTest_Device {

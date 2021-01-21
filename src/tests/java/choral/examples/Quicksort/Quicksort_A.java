@@ -1,10 +1,10 @@
 package choral.examples.Quicksort;
 import choral.lang.Unit;
+import choral.channels.SymChannel_A;
 import choral.annotations.Choreography;
 import java.util.List;
-import java.util.ArrayList;
-import choral.channels.SymChannel_A;
 import choral.channels.SymChannel_B;
+import java.util.ArrayList;
 
 @Choreography( role = "A", name = "Quicksort" )
 public class Quicksort_A {

@@ -1,8 +1,8 @@
 package choral.examples.VitalsStreaming.ChoralUnit;
-import choral.annotations.Choreography;
-import choral.choralUnit.Assert;
 import choral.examples.VitalsStreamingUtils.Vitals;
 import java.util.function.Consumer;
+import choral.annotations.Choreography;
+import choral.choralUnit.Assert;
 
 @Choreography( role = "Role", name = "MyHandler" )
 class MyHandler implements Consumer < Vitals > {
