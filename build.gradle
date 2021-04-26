@@ -81,15 +81,15 @@ sourceSets {
 	}
 	runtime {
 		java.srcDir 'src/runtime/java'
-		runtimeClasspath += compileClasspath += sourceSets.main.runtimeClasspath + sourceSets.base.output
+		runtimeClasspath += compileClasspath += sourceSets.main.runtimeClasspath + sourceSets.base.output + configurations.choralRuntime
 	}
 	choralUnit {
 		java.srcDir 'src/choralUnit/java'
-		runtimeClasspath += compileClasspath += sourceSets.main.runtimeClasspath + sourceSets.base.output + sourceSets.runtime.output
+		runtimeClasspath += compileClasspath += sourceSets.main.runtimeClasspath + sourceSets.runtime.runtimeClasspath + sourceSets.base.output + sourceSets.runtime.output + configurations.choralUnit
 	}
 	tests {
 		java.srcDir 'src/tests/java'
-		runtimeClasspath += compileClasspath += sourceSets.main.runtimeClasspath + sourceSets.choralUnit.output + sourceSets.base.output + sourceSets.runtime.output
+		runtimeClasspath += compileClasspath += sourceSets.main.runtimeClasspath + sourceSets.choralUnit.runtimeClasspath + sourceSets.choralUnit.output + sourceSets.base.output + sourceSets.runtime.output
 	}
 	compare {
 		java.srcDir 'src/compare/java'
@@ -128,7 +128,7 @@ task compile11( type: JavaCompile ) {
 task compile14( type: JavaCompile, dependsOn: compile11 ) {
 	sourceCompatibility = 14
 	targetCompatibility = 14
-	classpath = sourceSets.test.runtimeClasspath
+	classpath = sourceSets.tests.runtimeClasspath
 	destinationDir = compileJava.destinationDir
 	source = sourceSets.tests.java.sourceDirectories
 }
@@ -157,6 +157,7 @@ clean {
 jar {
 	destinationDirectory = file( jarOutputFolder )
 	manifest.attributes 'Main-Class': 'choral.Choral'
+	setDuplicatesStrategy( DuplicatesStrategy.WARN )
 	from {
 		configurations.choral.collect { it.isDirectory() ? it : zipTree(it) }
 	}
