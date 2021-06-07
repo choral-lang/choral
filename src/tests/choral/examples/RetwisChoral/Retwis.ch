@@ -127,7 +127,7 @@ public class Retwis@( Client, Server, Repository ){
                 } else {
                     chSR.< Result >select( Result@Repository.ERROR );
                     chCS.< Result >select( Result@Server.ERROR );
-                    cli.showErrorMessage( "Error, user " + cli.getUsername() + " already follows " + cli.getFollowTarget() );
+                    cli.showErrorMessage( "Error, user " + cli.getUsername() + " already follows " + cli.getFollowTarget() + "." );
                 }
             } else {
                 chSR.< Result >select( Result@Repository.ERROR );
@@ -158,7 +158,7 @@ public class Retwis@( Client, Server, Repository ){
            } else {
                chSR.< Result >select( Result@Repository.ERROR );
                chCS.< Result >select( Result@Server.ERROR );
-               cli.showErrorMessage( "Error, user " + cli.getUsername() + " does not follow " + cli.getStopFollowTarget() );
+               cli.showErrorMessage( "Error, user " + cli.getUsername() + " does not follow " + cli.getStopFollowTarget() + "." );
            }
         } else {
            chSR.< Result >select( Result@Repository.ERROR );
