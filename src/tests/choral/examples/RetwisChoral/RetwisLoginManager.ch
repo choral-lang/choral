@@ -1,14 +1,14 @@
 public class RetwisLoginManager@( Client, Server, Repository ) extends LoginManager@( Client, Server, Repository ){
 
-     private SymChannel< Object >@( Client, S ) chCS;
-     private SymChannel< Object >@( S, R ) chSR;
+     private SymChannel< Object >@( Client, Server ) chCS;
+     private SymChannel< Object >@( Server, Repository ) chSR;
      private CLI@Client cli;
      private DatabaseConnection@Repository db;
      private SessionManager@Server sessionManager;
 
      public RetwisLoginManager(
-         SymChannel< Object >@( Client, S ) chCS,
-         SymChannel< Object >@( S, R ) chSR,
+         SymChannel< Object >@( Client, Server ) chCS,
+         SymChannel< Object >@( Server, Repository ) chSR,
          CLI@Client cli,
          DatabaseConnection@Repository db,
          SessionManager@Server sessionManager
