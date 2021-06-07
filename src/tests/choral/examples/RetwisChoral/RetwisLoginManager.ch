@@ -32,7 +32,7 @@ public class RetwisLoginManager@( Client, Server, Repository ) extends LoginMana
             String pswd@Repository = cli.promptPassword() >> chCS::< String >com >> chSR::< String >com;
             db.addUser( name >> chSR::< String >com, pswd );
         return sessionManager.createSession( name )
-            >> ch::< Token >com
+            >> chCS::< Token >com
             >> Optional::< Token >of;
         } else {
             chCS.< Result >select( Result@R.ERROR );
@@ -49,7 +49,7 @@ public class RetwisLoginManager@( Client, Server, Repository ) extends LoginMana
             chSR.< Result >select( Result@R.OK );
             chCS.< Result >select( Result@S.OK );
         return sessionManager.createSession( name )
-            >> ch::< Token >com
+            >> chCS::< Token >com
             >> Optional::< Token >of;
         } else {
             chSR.< Result >select( Result@R.ERROR );
