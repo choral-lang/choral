@@ -140,6 +140,7 @@ public class Retwis@( Client, Server, Repository ){
         }
     }
 
+    // TODO: we can reduce the nested ifs into a three-case section
     private void stopFollow(){
         String@Server name = cli.getUsername() >> chCS::< String >com;
         String@Server stopFollowTarget = cli.getStopFollowTarget() >> chCS::< String >com;
