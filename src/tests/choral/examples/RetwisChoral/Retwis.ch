@@ -106,6 +106,8 @@ public class Retwis@( Client, Server, Repository ){
         }
     }
 
+    // we can use e.g., a static class between the Server and the Repository
+    // to reduce the amount selections the client is involved into
     private void follow(){
         String@Server name = cli.getUsername() >> chCS::< String >com;
         String@Server followTarget = cli.getFollowTarget() >> chCS::< String >com;
