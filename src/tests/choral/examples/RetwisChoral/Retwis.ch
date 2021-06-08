@@ -66,7 +66,6 @@ public class Retwis@( Client, Server, Repository ){
                 clientLoginManager.logout();
             }
         }
-
     }
 
     private void posts(){
@@ -81,7 +80,7 @@ public class Retwis@( Client, Server, Repository ){
                 databaseConnection.getPostsPage( name, page >> chSR::< Integer >com )
             ) >> chSR::< Posts >com
               >> chCS::< Posts >com
-              >> cli::showPosts( posts );
+              >> cli::showPosts;
         } else {
             chSR.< Result >select( Result@Server.ERROR );
             chCS.< Result >select( Result@Server.ERROR );
