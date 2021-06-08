@@ -212,11 +212,11 @@ public class Retwis@( Client, Server, Repository ){
     }
 
     private Boolean@Server checkPost( String@Server postID ){
-            return postID
-            >> chSR::< String >com
-            >> databaseConnection.isPostValid
-            >> chSR::< Boolean >com
-        }
+        return postID
+        >> chSR::< String >com
+        >> databaseConnection.isPostValid
+        >> chSR::< Boolean >com
+    }
 
     private Boolean@Server checkFollow( String@Server name, String@Server followTarget ){
         return databaseConnection.isFollower(
