@@ -178,7 +178,7 @@ public class Retwis@( Client, Server, Repository ){
                 name.equals( mentionsName ) >> chSR::< Boolean >com // if the logged user is the mentionsName, we add their personal info
             ) >> chSR::< Mentions >com
               >> chCS::< Mentions >com
-              >> cli::showMentions
+              >> cli::showMentions;
         } else {
             chSR.< Result >select( Result@Server.ERROR );
             chCS.< Result >select( Result@Server.ERROR );
