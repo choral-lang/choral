@@ -19,7 +19,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package choral.channels;
+package choral.channels.TLSPipeChannel;
 
 import choral.runtime.Media.PipedByteChannel;
 import choral.runtime.TLSByteChannel.TSLByteChannel_A;

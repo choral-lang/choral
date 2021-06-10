@@ -1,3 +1,4 @@
+
 public class Retwis@( Client, Server, Repository ){
 
     private SymChannel@( Client, Server )< Object > chCS;
@@ -19,47 +20,47 @@ public class Retwis@( Client, Server, Repository ){
         this.sessionManager = sessionManager;
     }
 
-    public loop(){
+    public void loop(){
         switch( cli.action() ){
             case POSTS      -> {
-                chCS.< Result >select( Action@Client.POSTS );
-                chSR.< Result >select( Action@Server.POSTS );
+                chCS.< RetwisAction >select( RetwisAction@Client.POSTS );
+                chSR.< RetwisAction >select( RetwisAction@Server.POSTS );
                 posts();
                 loop();
             }
             case POST       -> {
-                chCS.< Result >select( Action@Client.POST );
-                chSR.< Result >select( Action@Server.POST );
+                chCS.< RetwisAction >select( RetwisAction@Client.POST );
+                chSR.< RetwisAction >select( RetwisAction@Server.POST );
                 post();
                 loop();
             }
             case FOLLOW     -> {
-                chCS.< Result >select( Action@Client.FOLLOW );
-                chSR.< Result >select( Action@Server.FOLLOW );
+                chCS.< RetwisAction >select( RetwisAction@Client.FOLLOW );
+                chSR.< RetwisAction >select( RetwisAction@Server.FOLLOW );
                 follow();
                 loop();
             }
             case STOPFOLLOW -> {
-                chCS.< Result >select( Action@Client.STOPFOLLOW );
-                chSR.< Result >select( Action@Server.STOPFOLLOW );
+                chCS.< RetwisAction >select( RetwisAction@Client.STOPFOLLOW );
+                chSR.< RetwisAction >select( RetwisAction@Server.STOPFOLLOW );
                 stopFollow();
                 loop();
             }
             case MENTIONS   -> {
-                chCS.< Result >select( Action@Client.MENTIONS );
-                chSR.< Result >select( Action@Server.MENTIONS );
+                chCS.< RetwisAction >select( RetwisAction@Client.MENTIONS );
+                chSR.< RetwisAction >select( RetwisAction@Server.MENTIONS );
                 mentions();
                 loop();
             }
             case STATUS     -> {
-                chCS.< Result >select( Action@Client.STATUS );
-                chSR.< Result >select( Action@Server.STATUS );
+                chCS.< RetwisAction >select( RetwisAction@Client.STATUS );
+                chSR.< RetwisAction >select( RetwisAction@Server.STATUS );
                 timeline();
                 loop();
             }
             case LOGOUT     -> {
-                chCS.< Result >select( Action@Client.LOGOUT );
-                chSR.< Result >select( Action@Server.LOGOUT );
+                chCS.< RetwisAction >select( RetwisAction@Client.LOGOUT );
+                chSR.< RetwisAction >select( RetwisAction@Server.LOGOUT );
             }
         }
     }
@@ -85,10 +86,10 @@ public class Retwis@( Client, Server, Repository ){
     }
 
     private void post(){
-        String@Server name = cli.getUsername() >> chCS::< String >com;
+        Token@Server userToken = cli.getSessionToken() >> chCS::< Token >com;
         String@Server post = cli.getPost() >> chCS::< String >com;
-        if( sessionManager.checkLoggedUser( name ) ){
-            chSR.< Result >select( Result@Repository.OK );
+        if( sessionManager.checkLoggedUser( userToken ) ){
+            chSR.< Result >select( Result@Server.OK );
             chCS.< Result >select( Result@Server.OK );
             databaseConnection.post(
                 name >> chSR::< String >com,
@@ -96,25 +97,26 @@ public class Retwis@( Client, Server, Repository ){
             );
             cli.showSuccessMessage( "Tweet posted successfully." );
         } else {
-            chSR.< Result >select( Result@Repository.ERROR );
+            chSR.< Result >select( Result@Server.ERROR );
             chCS.< Result >select( Result@Server.ERROR );
-            cli.showErrorMessage( "Error, could not post tweet, user " + cli.getUsername() + " is logged out." );
+            cli.showErrorMessage( "Error, the client is not logged in." );
         }
     }
 
     // we can use e.g., a static class between the Server and the Repository
     // to reduce the amount selections the client is involved into
     private void follow(){
-        String@Server name = cli.getUsername() >> chCS::< String >com;
+        Token@Server token = cli.getSessionToken() >> chCS::< String >com;
         String@Server followTarget = cli.getFollowTarget() >> chCS::< String >com;
-        if( sessionManager.checkLoggedUser( name ) ){
-            chSR.< Result >select( Result@Repository.OK );
+        if( sessionManager.checkLoggedUser( token ) ){
+            chSR.< Result >select( Result@Server.OK );
             chCS.< Result >select( Result@Server.OK );
             if( checkUser( followTarget ) ){
                 chSR.< Result >select( Result@Repository.OK );
                 chCS.< Result >select( Result@Server.OK );
+                String@Server name = sessionManager.getUsernameFromToken( token );
                 if( checkFollow( name, followTarget ) ){
-                    chSR.< Result >select( Result@Repository.OK );
+                    chSR.< Result >select( Result@Server.OK );
                     chCS.< Result >select( Result@Server.OK );
                     databaseConnection.follow(
                         name >> chSR::< String >com,
@@ -122,31 +124,32 @@ public class Retwis@( Client, Server, Repository ){
                     );
                     cli.showSuccessMessage( "You now follow " + cli.getFollowTarget() );
                 } else {
-                    chSR.< Result >select( Result@Repository.ERROR );
+                    chSR.< Result >select( Result@Server.ERROR );
                     chCS.< Result >select( Result@Server.ERROR );
                     cli.showErrorMessage( "Error, user " + cli.getUsername() + " already follows " + cli.getFollowTarget() + "." );
                 }
             } else {
-                chSR.< Result >select( Result@Repository.ERROR );
+                chSR.< Result >select( Result@Server.ERROR );
                 chCS.< Result >select( Result@Server.ERROR );
                 cli.showErrorMessage( "Error, could not find user " + cli.getFollowTarget() + " to follow." );
             }
         } else {
-            chSR.< Result >select( Result@Repository.ERROR );
+            chSR.< Result >select( Result@Server.ERROR );
             chCS.< Result >select( Result@Server.ERROR );
-            cli.showErrorMessage( "Error, user " + cli.getUsername() + " is logged out." );
+            cli.showErrorMessage( "Error, the client is not logged in." );
         }
     }
 
     // TODO: we can reduce the nested ifs into a three-case section
     private void stopFollow(){
-        String@Server name = cli.getUsername() >> chCS::< String >com;
+        Token@Server token = cli.getSessionToken() >> chCS::< String >com;
         String@Server stopFollowTarget = cli.getStopFollowTarget() >> chCS::< String >com;
-        if( sessionManager.checkLoggedUser( name ) ){
-           chSR.< Result >select( Result@Repository.OK );
+        if( sessionManager.checkLoggedUser( token ) ){
+           chSR.< Result >select( Result@Server.OK );
            chCS.< Result >select( Result@Server.OK );
+           String@Server name = sessionManager.getUsernameFromToken( token );
            if( checkFollow( name, stopFollowTarget ) ){
-               chSR.< Result >select( Result@Repository.OK );
+               chSR.< Result >select( Result@Server.OK );
                chCS.< Result >select( Result@Server.OK );
                databaseConnection.stopFollow(
                    name >> chSR::< String >com,
@@ -154,26 +157,29 @@ public class Retwis@( Client, Server, Repository ){
                );
                cli.showSuccessMessage( "You now do not follow " + cli.getUnfollowTarget() + " anymore." );
            } else {
-               chSR.< Result >select( Result@Repository.ERROR );
+               chSR.< Result >select( Result@Server.ERROR );
                chCS.< Result >select( Result@Server.ERROR );
                cli.showErrorMessage( "Error, user " + cli.getUsername() + " does not follow " + cli.getStopFollowTarget() + "." );
            }
         } else {
-           chSR.< Result >select( Result@Repository.ERROR );
+           chSR.< Result >select( Result@Server.ERROR );
            chCS.< Result >select( Result@Server.ERROR );
-           cli.showErrorMessage( "Error, user " + cli.getUsername() + " is logged out." );
+           cli.showErrorMessage( "Error, the client is not logged in" );
         }
     }
 
     private void mentions(){
-        String@Server name = cli.getUsername() >> chCS::< String >com;
+        String@Token token = cli.getSessionToken() >> chCS::< String >com;
         String@Server mentionsName = cli.getMentionsUsername() >> chCS::< String >com;
         if( checkUser( mentionsName ) ){
             chSR.< Result >select( Result@Server.OK );
             chCS.< Result >select( Result@Server.OK );
+            Boolean selfMentions =
+                sessionManager.getUsernameFromToken( token )
+                >> mentionsName::equals;
             databaseConnection.mentions(
                 mentionsName >> chSR::< String >com,
-                name.equals( mentionsName ) >> chSR::< Boolean >com // if the logged user is the mentionsName, we add their personal info
+                selfMentions >> chSR::< Boolean >com // if the user is logged and the user is the mentionsName, we add their personal info
             ) >> chSR::< Mentions >com
               >> chCS::< Mentions >com
               >> cli::showMentions;
