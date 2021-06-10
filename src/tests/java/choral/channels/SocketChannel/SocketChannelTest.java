@@ -8,10 +8,8 @@ import choral.runtime.WrapperByteChannel.WrapperByteChannel_A;
 import choral.runtime.WrapperByteChannel.WrapperByteChannel_B;
 
 import java.io.IOException;
-import java.nio.channels.AsynchronousCloseException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class SocketChannelTest {
