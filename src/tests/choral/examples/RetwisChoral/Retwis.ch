@@ -5,21 +5,18 @@ public class Retwis@( Client, Server, Repository ){
     private CLI@Client cli;
     private DatabaseConnection@Repository databaseConnection;
     private SessionManager@Server sessionManager;
-    private LoginManager@Client clientLoginManager;
 
     public Retwis( SymChannel@( Client, Server )< Object > chCS,
                    SymChannel@( Server, Repository )< Object > chSR,
                    CLI@Client cli,
                    DatabaseConnection@Repository databaseConnection,
-                   SessionManager@Server sessionManager,
-                   LoginManager@Client clientLoginManager
+                   SessionManager@Server sessionManager
     ){
         this.chCS = chCS;
         this.chSR = chSR;
         this.cli = cli;
         this.databaseConnection = databaseConnection;
         this.sessionManager = sessionManager;
-        this.loginManager = loginManager;
     }
 
     public loop(){
@@ -63,7 +60,6 @@ public class Retwis@( Client, Server, Repository ){
             case LOGOUT     -> {
                 chCS.< Result >select( Action@Client.LOGOUT );
                 chSR.< Result >select( Action@Server.LOGOUT );
-                clientLoginManager.logout();
             }
         }
     }
