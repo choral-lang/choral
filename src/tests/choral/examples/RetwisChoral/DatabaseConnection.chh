@@ -1,5 +1,7 @@
 package choral.examples.RetwisChoral;
 
+import java.util.List;
+
 public class DatabaseConnection@R{
 
     List@R< String > getFollowers( String@R name );
@@ -14,9 +16,9 @@ public class DatabaseConnection@R{
 
     void stopFollow( String@R name, String@R stopFollowTarget );
 
-    List@R< Mention > mentions( String@R mentionsName, Boolean@R selfMentions );
+    Mentions@R mentions( String@R mentionsName, Boolean@R selfMentions );
 
-    Post@R getPost( String postId );
+    Post@R getPost( String@R postId );
 
     Boolean@R isUserValid( String@R username );
 

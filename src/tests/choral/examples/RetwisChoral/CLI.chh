@@ -8,9 +8,11 @@ public class CLI@R {
 
     String@R getUsername();
 
-    Integer@R getPostsPage()
+    Integer@R getPostsPage();
 
     void showPosts( Posts@R posts );
+
+    void showPost( Post@R post );
 
     void showErrorMessage( String@R message );
 
@@ -27,5 +29,9 @@ public class CLI@R {
     String@R getStatusPostID();
 
     String@R promptPassword();
+
+    String@R getMentionsUsername();
+
+    String@R getStopFollowTarget();
 
 }

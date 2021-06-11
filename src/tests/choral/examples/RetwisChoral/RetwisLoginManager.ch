@@ -1,16 +1,19 @@
 package choral.examples.RetwisChoral;
 
+import choral.channels.SymChannel;
+import java.util.Optional;
+
 public class RetwisLoginManager@( Client, Server, Repository ) {
 
-     private SymChannel< Object >@( Client, Server ) chCS;
-     private SymChannel< Object >@( Server, Repository ) chSR;
+     private SymChannel@( Client, Server )< Object > chCS;
+     private SymChannel@( Server, Repository )< Object > chSR;
      private CLI@Client cli;
      private DatabaseConnection@Repository db;
      private SessionManager@Server sessionManager;
 
      public RetwisLoginManager(
-         SymChannel< Object >@( Client, Server ) chCS,
-         SymChannel< Object >@( Server, Repository ) chSR,
+         SymChannel@( Client, Server )< Object > chCS,
+         SymChannel@( Server, Repository )< Object > chSR,
          CLI@Client cli,
          DatabaseConnection@Repository db,
          SessionManager@Server sessionManager
@@ -22,6 +25,7 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
         this.sessionManager = sessionManager;
      }
 
+/*
      public Optional@Client< Token > main( LoginAction@Client action ) {
          switch( action ){
              case SIGNUP      -> {
@@ -40,46 +44,47 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
                  logout();
                  return Optional@Client.<Token>empty();
              }
-             defaults -> {
+             default -> {
                  return Optional@Client.<Token>empty(); //this happens only if action is null
              }
          }
      }
+*/
 
     public Optional@Client< Token > signUp(){
         String@Server name = cli.getUsername() >> chCS::< String >com;
-        Boolean@Server isValidUsername
+        Boolean@Server isValidUsername = name
             >> chSR::< String >com
-            >> db::isValidUsername
+            >> db::isUserValid
             >> chSR::< Boolean >com;
         if( isValidUsername ){ // this check that the name is valid within the system
-            chCS.< Result >select( Result@R.OK );
-            chSR.< Result >select( Result@R.OK );
-            String pswd@Repository = cli.promptPassword() >> chCS::< String >com >> chSR::< String >com;
-            db.addUser( name >> chSR::< String >com, pswd );
+            chSR.< Result >select( Result@Server.OK );
+            chCS.< Result >select( Result@Server.OK );
+            String@Repository pswd = cli.promptPassword() >> chCS::< String >com >> chSR::< String >com;
+            db.addUser( chSR.< String >com( name ), pswd );
             return sessionManager.createSession( name )
-                >> Optional@Client::< Token >of
-                >> chCS::< Token >com;
+                >> chCS::< Token >com
+                >> Optional@Client::< Token >of;
         } else {
-            chCS.< Result >select( Result@R.ERROR );
-            chSR.< Result >select( Result@R.ERROR );
+            chSR.< Result >select( Result@Server.ERROR );
+            chCS.< Result >select( Result@Server.ERROR );
             return Optional@Client.< Token >empty();
         }
     }
 
     public Optional@Client< Token > signIn() {
         String@Server username = cli.getUsername() >> chCS::< String >com;
-        String@Repository name = name >> chSR::< String >com;
+        String@Repository name = username >> chSR::< String >com;
         String@Repository pswd = cli.promptPassword() >> chCS::< String >com >> chSR::< String >com;
-        if( db.auth( name, pswd ) {
-            chSR.< Result >select( Result@R.OK );
-            chCS.< Result >select( Result@S.OK );
-        return sessionManager.createSession( name )
+        if( db.auth( name, pswd ) ) {
+            chSR.< Result >select( Result@Repository.OK );
+            chCS.< Result >select( Result@Server.OK );
+        return sessionManager.createSession( username )
             >> chCS::< Token >com
             >> Optional@Client::< Token >of;
         } else {
-            chSR.< Result >select( Result@R.ERROR );
-            chCS.< Result >select( Result@S.ERROR );
+            chSR.< Result >select( Result@Repository.ERROR );
+            chCS.< Result >select( Result@Server.ERROR );
             return Optional@Client.< Token >empty();
         }
     }

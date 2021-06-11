@@ -1,5 +1,5 @@
 package choral.examples.RetwisChoral;
 
-public enum LoginAction@Role {
+public enum LoginAction@R {
        SIGNIN, SIGNUP, LOGIN
 }

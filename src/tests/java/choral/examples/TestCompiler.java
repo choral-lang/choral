@@ -38,7 +38,7 @@ public class TestCompiler {
 		String destinationFolder = "src/tests/java/";
 
 		Map< String, List< String > > targetTemplates = Stream.of(
-				new AbstractMap.SimpleEntry<>( "HelloRoles", ALL_WORLDS )
+//				new AbstractMap.SimpleEntry<>( "HelloRoles", ALL_WORLDS )
 //				new AbstractMap.SimpleEntry<>( "BiPair", ALL_WORLDS )
 //				new AbstractMap.SimpleEntry<>( "RemoteFunction", ALL_WORLDS ),
 //				new AbstractMap.SimpleEntry<>( "ConsumeItems", ALL_WORLDS )
@@ -55,6 +55,8 @@ public class TestCompiler {
 //				new AbstractMap.SimpleEntry<>( "QuicksortTest", ALL_WORLDS ),
 //				new AbstractMap.SimpleEntry<>( "Karatsuba", ALL_WORLDS )
 //				new AbstractMap.SimpleEntry<>( "KaratsubaTest", ALL_WORLDS )
+				new AbstractMap.SimpleEntry<>( "HelloRoles", ALL_WORLDS )
+
 		).collect( Collectors.toMap( Map.Entry::getKey, Map.Entry::getValue ) );
 		try {
 			for ( Map.Entry< String, List< String > > targetTemplate : targetTemplates.entrySet() ) {

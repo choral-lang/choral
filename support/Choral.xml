@@ -10,7 +10,7 @@
       <option name="HAS_BRACKETS" value="true" />
       <option name="HAS_PARENS" value="true" />
     </options>
-    <keywords keywords="case;catch;else;if;new;null;return;select;static;switch;try" ignore_case="false" />
+    <keywords keywords="case;default;catch;else;if;new;null;return;select;static;switch;try" ignore_case="false" />
     <keywords2 keywords="class;enum;import;interface;package" />
     <keywords3 keywords="@;extends;implements" />
     <keywords4 keywords="private;public;static" />
