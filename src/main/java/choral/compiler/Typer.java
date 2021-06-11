@@ -1202,8 +1202,8 @@ public class Typer {
 			public Boolean visit( SwitchStatement n ) {
 				GroundDataTypeOrVoid g = synth( scope, n.guard() );
 				if( !legalSwitchPrimitiveTypes.contains( g.primitiveTypeTag() )
-						|| !legalSwitchSpecialTypes.contains( g.specialTypeTag() )
-						|| !( g instanceof GroundEnum ) ) {
+						&& !legalSwitchSpecialTypes.contains( g.specialTypeTag() )
+						&& !g.isEnum() ) {
 					throw new AstPositionedException( n.guard().position(),
 							new StaticVerificationException( "incompatible types, found '" + g
 									+ "', required an instance of '" + PrimitiveTypeTag.CHAR
