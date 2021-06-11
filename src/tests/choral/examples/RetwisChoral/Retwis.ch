@@ -1,3 +1,4 @@
+package choral.examples.RetwisChoral;
 
 public class Retwis@( Client, Server, Repository ){
 
@@ -67,7 +68,7 @@ public class Retwis@( Client, Server, Repository ){
 
     private void posts(){
         String@Server name = cli.getPostsUsername() >> chCS::< String >com;
-        Integer@Server page = cli.getPostsPage() >> chCS::< String >com;
+        Integer@Server page = cli.getPostsPage() >> chCS::< Integer >com;
         if( checkUser( name ) ){
             chSR.< Result >select( Result@Server.OK );
             chCS.< Result >select( Result@Server.OK );
@@ -86,9 +87,9 @@ public class Retwis@( Client, Server, Repository ){
     }
 
     private void post(){
-        Token@Server userToken = cli.getSessionToken() >> chCS::< Token >com;
+        Token@Server token = cli.getSessionToken() >> chCS::< Token >com;
         String@Server post = cli.getPost() >> chCS::< String >com;
-        if( sessionManager.checkLoggedUser( userToken ) ){
+        if( sessionManager.checkLoggedUser( token ) ){
             chSR.< Result >select( Result@Server.OK );
             chCS.< Result >select( Result@Server.OK );
             databaseConnection.post(

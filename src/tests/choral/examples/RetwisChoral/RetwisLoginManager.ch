@@ -1,3 +1,4 @@
+package choral.examples.RetwisChoral;
 
 public class RetwisLoginManager@( Client, Server, Repository ) {
 
@@ -24,18 +25,18 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
      public Optional@Client< Token > main( LoginAction@Client action ) {
          switch( action ){
              case SIGNUP      -> {
-                 chCS.< Result >select( LoginAction@Client.SIGNUP );
-                 chSR.< Result >select( LoginAction@Server.SIGNUP );
+                 chCS.< LoginAction >select( LoginAction@Client.SIGNUP );
+                 chSR.< LoginAction >select( LoginAction@Server.SIGNUP );
                  return signUp();
              }
              case SIGNIN      -> {
-                 chCS.< Result >select( LoginAction@Client.SIGNIN );
-                 chSR.< Result >select( LoginAction@Server.SIGNIN );
+                 chCS.< LoginAction >select( LoginAction@Client.SIGNIN );
+                 chSR.< LoginAction >select( LoginAction@Server.SIGNIN );
                  return signUp();
              }
              case LOGOUT      -> {
-                 chCS.< Result >select( LoginAction@Client.LOGOUT );
-                 chSR.< Result >select( LoginAction@Server.LOGOUT );
+                 chCS.< LoginAction >select( LoginAction@Client.LOGOUT );
+                 chSR.< LoginAction >select( LoginAction@Server.LOGOUT );
                  logout();
                  return Optional@Client.<Token>empty();
              }
@@ -45,7 +46,7 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
          }
      }
 
-    public Optional< Token > signUp(){
+    public Optional@Client< Token > signUp(){
         String@Server name = cli.getUsername() >> chCS::< String >com;
         Boolean@Server isValidUsername
             >> chSR::< String >com
@@ -57,29 +58,29 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
             String pswd@Repository = cli.promptPassword() >> chCS::< String >com >> chSR::< String >com;
             db.addUser( name >> chSR::< String >com, pswd );
             return sessionManager.createSession( name )
-            >> Optional::< Token >of
-            >> chCS::< Token >com;
+                >> Optional@Client::< Token >of
+                >> chCS::< Token >com;
         } else {
             chCS.< Result >select( Result@R.ERROR );
             chSR.< Result >select( Result@R.ERROR );
-            return Optional@C.empty();
+            return Optional@Client.< Token >empty();
         }
     }
 
-    public Optional< Token > signIn() {
+    public Optional@Client< Token > signIn() {
         String@Server username = cli.getUsername() >> chCS::< String >com;
         String@Repository name = name >> chSR::< String >com;
-        String@Repository pswd = cli.pswd() >> chCS::< String >com >> chSR::< String >com;
+        String@Repository pswd = cli.promptPassword() >> chCS::< String >com >> chSR::< String >com;
         if( db.auth( name, pswd ) {
             chSR.< Result >select( Result@R.OK );
             chCS.< Result >select( Result@S.OK );
         return sessionManager.createSession( name )
             >> chCS::< Token >com
-            >> Optional::< Token >of;
+            >> Optional@Client::< Token >of;
         } else {
             chSR.< Result >select( Result@R.ERROR );
             chCS.< Result >select( Result@S.ERROR );
-            return Optional@C.empty();
+            return Optional@Client.< Token >empty();
         }
     }
 

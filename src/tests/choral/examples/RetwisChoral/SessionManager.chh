@@ -1,0 +1,13 @@
+package choral.examples.RetwisChoral;
+
+public class SessionManager@R{
+
+    Token@R createSession( String@R name );
+
+    void closeSession( Token@R token );
+
+    Boolean@R checkLoggedUser( Token@R token );
+
+    String@R getUsernameFromToken( Token@R token );
+
+}

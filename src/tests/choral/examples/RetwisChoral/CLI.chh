@@ -1,0 +1,31 @@
+package choral.examples.RetwisChoral;
+
+public class CLI@R {
+
+    RetwisAction@R action();
+
+    String@R getPostsUsername();
+
+    String@R getUsername();
+
+    Integer@R getPostsPage()
+
+    void showPosts( Posts@R posts );
+
+    void showErrorMessage( String@R message );
+
+    void showSuccessMessage( String@R message );
+
+    Token@R getSessionToken();
+
+    String@R getPost();
+
+    String@R getFollowTarget();
+
+    void showMentions( Mentions@R mentions );
+
+    String@R getStatusPostID();
+
+    String@R promptPassword();
+
+}
