@@ -74,6 +74,11 @@ public abstract class LiteralExpression< T > extends Expression {
 		return world != null ? Set.of( world() ) : Collections.emptySet();
 	}
 
+	@Override
+	public String toString() {
+		return content + "@" + world;
+	}
+
 	public static class BooleanLiteralExpression extends LiteralExpression< Boolean > {
 
 		public BooleanLiteralExpression( final Boolean content, final WorldArgument world ) {

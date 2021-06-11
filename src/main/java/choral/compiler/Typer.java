@@ -1054,13 +1054,13 @@ public class Typer {
 						if( phase == 1 ) {
 							incompatible = !a.isSubtypeOf( p );
 						} else {
-							if (p.isPrimitive()) {
-								if ( a instanceof GroundClass && ( (GroundClass) a ).isBoxedType()) {
+							if( p.isPrimitive() ) {
+								if( a instanceof GroundClass && ( (GroundClass) a ).isBoxedType() ) {
 									a = ( (GroundClass) a ).unboxedType();
 								}
 							} else {
-								if ( a.isPrimitive() ) {
-									a = ((GroundPrimitiveDataType) a).boxedType();
+								if( a.isPrimitive() ) {
+									a = ( (GroundPrimitiveDataType) a ).boxedType();
 								}
 							}
 //							System.out.printf( "'%s' isAssignableTo '%s': %s\n", a,p,a.isAssignableTo( p ) );
@@ -1182,7 +1182,7 @@ public class Typer {
 					throw new AstPositionedException( n.condition().position(),
 							new StaticVerificationException( "required an instance of type '"
 									+ PrimitiveTypeTag.BOOLEAN
-									+ "' required, found '" + type + "'" ) );
+									+ "', found '" + type + "'" ) );
 				}
 				boolean returnChecked = visitAsInBlock( n.ifBranch() );
 				returnChecked &= visitAsInBlock( n.elseBranch() );
@@ -1217,27 +1217,54 @@ public class Typer {
 									+ "', or an enum type" ) );
 				}
 				boolean returnChecked = true;
+				boolean hasDefault = false;
+				List< String > casesFound = new ArrayList<>( n.cases().size() );
 				for( Map.Entry< SwitchArgument< ? >, Statement > e : n.cases().entrySet() ) {
 					if( e.getKey() instanceof SwitchArgument.SwitchArgumentLabel ) {
 						SwitchArgument.SwitchArgumentLabel l = (SwitchArgument.SwitchArgumentLabel) e.getKey();
-						GroundDataType a = scope.assertLookupVariableOrField(
-								l.argument().identifier() );
-						if( !a.isAssignableTo( g ) ) {
-							throw new AstPositionedException( l.position(),
-									new StaticVerificationException( "required type '" + g
-											+ "' required, found '" + g + "'" ) );
+						if( g.isEnum() ) {
+							GroundEnum ge = (GroundEnum) g;
+							String id = l.argument().identifier();
+							if( ge.field( id ).isEmpty() ) {
+								throw new AstPositionedException( l.argument().position(),
+										new UnresolvedSymbolException( id ) );
+							} else {
+								if( casesFound.contains( id ) ) {
+									throw new AstPositionedException( l.argument().position(),
+											new StaticVerificationException(
+													"duplicate case '" + id + "'" ) );
+								} else {
+									casesFound.add( id );
+								}
+							}
+						} else {
+							throw new AstPositionedException( l.argument().position(),
+									new StaticVerificationException(
+											"required a literal of type '" + g + "', found a label" ) );
 						}
 					} else if( e.getKey() instanceof SwitchArgument.SwitchArgumentLiteral ) {
 						SwitchArgument.SwitchArgumentLiteral l = (SwitchArgument.SwitchArgumentLiteral) e.getKey();
 						GroundDataTypeOrVoid a = synth( scope, l.argument() );
+						String s = l.argument().content().toString();
 						if( !a.isAssignableTo( g ) ) {
 							throw new AstPositionedException( l.position(),
 									new StaticVerificationException( "required type '" + g
-											+ "' required, found '" + g + "'" ) );
+											+ "', found '" + g + "'" ) );
 						}
+						if( casesFound.contains( s ) ) {
+							throw new AstPositionedException( l.argument().position(),
+									new StaticVerificationException(
+											"duplicate case '" + s + "'" ) );
+						} else {
+							casesFound.add( s );
+						}
+					} else {
+						hasDefault = true;
 					}
 					returnChecked &= visitAsInBlock( e.getValue() );
 				}
+				returnChecked &= hasDefault;
+				returnChecked |= visit( n.continuation() );
 				return returnChecked;
 			}
 
@@ -1255,9 +1282,8 @@ public class Typer {
 						throw new AstPositionedException( c.left().type().position(),
 								new StaticVerificationException( "required an instance of type '"
 										+ SpecialTypeTag.EXCEPTION
-										+ "' required, found '" + te + "'" ) );
+										+ "', found '" + te + "'" ) );
 					}
-
 					openBlock();  // ---
 					try {
 						scope.declareVariable( c.left().name().identifier(), te );
