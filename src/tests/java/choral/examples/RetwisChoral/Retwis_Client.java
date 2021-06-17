@@ -1,7 +1,7 @@
 package choral.examples.RetwisChoral;
+import choral.lang.Unit;
 import choral.annotations.Choreography;
 import choral.channels.SymChannel_A;
-import choral.lang.Unit;
 
 @Choreography( role = "Client", name = "Retwis" )
 public class Retwis_Client {
@@ -17,6 +17,44 @@ public class Retwis_Client {
 		this.cli = cli;
 	}
 
+	public void loop() {
+		switch( cli.action() ){
+			case STOPFOLLOW -> {
+				chCS.< RetwisAction >select( RetwisAction.STOPFOLLOW );
+				stopFollow();
+				loop();
+			}
+			case FOLLOW -> {
+				chCS.< RetwisAction >select( RetwisAction.FOLLOW );
+				follow();
+				loop();
+			}
+			case LOGOUT -> {
+				chCS.< RetwisAction >select( RetwisAction.LOGOUT );
+			}
+			case STATUS -> {
+				chCS.< RetwisAction >select( RetwisAction.STATUS );
+				status();
+				loop();
+			}
+			case POST -> {
+				chCS.< RetwisAction >select( RetwisAction.POST );
+				post();
+				loop();
+			}
+			case MENTIONS -> {
+				chCS.< RetwisAction >select( RetwisAction.MENTIONS );
+				mentions();
+				loop();
+			}
+			case POSTS -> {
+				chCS.< RetwisAction >select( RetwisAction.POSTS );
+				posts();
+				loop();
+			}
+		}
+	}
+	
 	private void posts() {
 		chCS.< String >com( cli.getPostsUsername() );
 		chCS.< Integer >com( cli.getPostsPage() );

@@ -1,7 +1,7 @@
 package choral.examples.RetwisChoral;
-import java.util.Optional;
-import choral.channels.SymChannel_A;
 import choral.annotations.Choreography;
+import choral.channels.SymChannel_A;
+import java.util.Optional;
 import choral.lang.Unit;
 
 @Choreography( role = "Client", name = "RetwisLoginManager" )
@@ -18,6 +18,25 @@ public class RetwisLoginManager_Client {
 		this.cli = cli;
 	}
 
+	public Optional < Token > main( LoginAction action ) {
+		switch( action ){
+			case SIGNUP -> {
+				chCS.< LoginAction >select( LoginAction.SIGNUP );
+				return signUp();
+			}
+			case LOGOUT -> {
+				chCS.< LoginAction >select( LoginAction.LOGOUT );
+				logout();
+				return Optional.< Token >empty();
+			}
+			case SIGNIN -> {
+				chCS.< LoginAction >select( LoginAction.SIGNIN );
+				return signIn();
+			}
+		}
+		return Optional.< Token >empty();
+	}
+	
 	public Optional < Token > signUp() {
 		chCS.< String >com( cli.getUsername() );
 		{
@@ -54,8 +73,8 @@ public class RetwisLoginManager_Client {
 		}
 	}
 	
-	public void logout( Token token ) {
-		chCS.< Token >com( token );
+	public void logout() {
+		chCS.< Token >com( cli.getSessionToken() );
 	}
 
 }

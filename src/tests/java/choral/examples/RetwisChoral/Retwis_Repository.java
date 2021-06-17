@@ -1,7 +1,7 @@
 package choral.examples.RetwisChoral;
-import choral.annotations.Choreography;
 import choral.channels.SymChannel_B;
 import choral.lang.Unit;
+import choral.annotations.Choreography;
 
 @Choreography( role = "Repository", name = "Retwis" )
 public class Retwis_Repository {
@@ -17,6 +17,40 @@ public class Retwis_Repository {
 		this.databaseConnection = databaseConnection;
 	}
 
+	public void loop() {
+		{
+			switch( chSR.< RetwisAction >select( Unit.id ) ){
+				case STOPFOLLOW -> {
+					stopFollow();
+					loop();
+				}
+				case FOLLOW -> {
+					follow();
+					loop();
+				}
+				case LOGOUT -> {
+					
+				}
+				case STATUS -> {
+					status();
+					loop();
+				}
+				case POST -> {
+					post();
+					loop();
+				}
+				case MENTIONS -> {
+					mentions();
+					loop();
+				}
+				case POSTS -> {
+					posts();
+					loop();
+				}
+			}
+		}
+	}
+	
 	private void posts() {
 		{
 			checkUser( Unit.id );

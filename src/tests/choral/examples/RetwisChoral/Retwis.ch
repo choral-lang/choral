@@ -23,7 +23,6 @@ public class Retwis@( Client, Server, Repository ){
         this.sessionManager = sessionManager;
     }
 
-/*
     public void loop(){
         switch( cli.action() ){
             case POSTS      -> {
@@ -59,7 +58,7 @@ public class Retwis@( Client, Server, Repository ){
             case STATUS     -> {
                 chCS.< RetwisAction >select( RetwisAction@Client.STATUS );
                 chSR.< RetwisAction >select( RetwisAction@Server.STATUS );
-                timeline();
+                status();
                 loop();
             }
             case LOGOUT     -> {
@@ -68,8 +67,6 @@ public class Retwis@( Client, Server, Repository ){
             }
         }
     }
-
-    */
 
     private void posts(){
         String@Server name = cli.getPostsUsername() >> chCS::< String >com;
