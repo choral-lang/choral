@@ -18,7 +18,9 @@ public class Retwis_Client {
 	}
 
 	public void loop() {
-		switch( cli.action() ){
+		RetwisAction action = cli.action();
+		System.out.println( action );
+		switch( action ){
 			case STOPFOLLOW -> {
 				chCS.< RetwisAction >select( RetwisAction.STOPFOLLOW );
 				stopFollow();
@@ -76,7 +78,9 @@ public class Retwis_Client {
 	
 	private void post() {
 		chCS.< Token >com( cli.getSessionToken() );
+		System.out.println( "Sent session token" );
 		chCS.< String >com( cli.getPost() );
+		System.out.println( "Sent post" );
 		{
 			switch( chCS.< Result >select( Unit.id ) ){
 				default -> {

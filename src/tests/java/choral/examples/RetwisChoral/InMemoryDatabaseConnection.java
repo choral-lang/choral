@@ -62,6 +62,7 @@ public class InMemoryDatabaseConnection implements DatabaseConnection {
 
 	@Override
 	public Boolean isUserValid( String username ) {
+		System.out.println("checking isUserValid " + username );
 		return users.containsKey( username );
 	}
 

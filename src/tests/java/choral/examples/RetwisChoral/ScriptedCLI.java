@@ -1,17 +1,15 @@
 package choral.examples.RetwisChoral;
 
-import com.sun.jdi.NativeMethodException;
-import name_mangling.example.A;
-
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class ScriptedCLI implements CLI {
 
-	private final HashMap< String, Token > sessions;
-	private HashMap< String, Object > currentAction = new HashMap<>();
-	static private final List< HashMap< String, Object > > actions = new LinkedList<>();
+	private final Map< String, Token > sessions;
+	private Map< String, Object > currentAction = new HashMap<>();
+	static private final List< Map< String, Object > > actions = new LinkedList<>();
 
 	public ScriptedCLI() {
 		this.sessions = new HashMap<>();
@@ -27,20 +25,31 @@ public class ScriptedCLI implements CLI {
 	private static final String PASSWORD = "password";
 	private static final String PAGE_NUM = "page";
 	private static final String POST = "post";
-	private static final String FOLLOW_TARGET = "followtarget";
-	private static final String STOP_FOLLOW_TARGET = "followtarget";
+	private static final String FOLLOW_TARGET = "follow_target";
+	private static final String STOP_FOLLOW_TARGET = "stop_follow_target";
 	private static final String POST_ID = "post_id";
 
 	static {
-		HashMap< String, Object > postAction = new HashMap<>();
-		postAction.put( ACTION_KEY, RetwisAction.POST );
-		postAction.put( USERNAME, "Save" );
-		postAction.put( POST, "This is a simple post." );
-		actions.add( postAction );
+		actions.add( MapBuilder.< String, Object >of( new HashMap<>() )
+				.put( ACTION_KEY, RetwisAction.POST )
+				.put( USERNAME, "Save" )
+				.put( POST, "This is a simple post." )
+				.done()
+		);
 
-		HashMap< String, Object > logoutAction = new HashMap<>();
-		postAction.put( ACTION_KEY, RetwisAction.LOGOUT );
-		actions.add( logoutAction );
+		actions.add( MapBuilder.< String, Object >of( new HashMap<>() )
+				.put( ACTION_KEY, RetwisAction.POSTS )
+				.put( USERNAME, "Save" )
+				.put( PAGE_NUM, 0 )
+				.put( POST, "This is a simple post." )
+				.done()
+		);
+
+		actions.add( MapBuilder.< String, Object >of( new HashMap<>() )
+				.put( ACTION_KEY, RetwisAction.LOGOUT )
+				.done()
+		);
+
 	}
 
 	@Override
@@ -51,7 +60,7 @@ public class ScriptedCLI implements CLI {
 
 	@Override
 	public String getPostsUsername() {
-		return "Save";
+		return (String) currentAction.get( USERNAME );
 	}
 
 	@Override
@@ -123,4 +132,28 @@ public class ScriptedCLI implements CLI {
 	public String getStopFollowTarget() {
 		return (String) currentAction.get( STOP_FOLLOW_TARGET );
 	}
+
+	static class MapBuilder< KEY, VALUE > {
+
+		private final Map< KEY, VALUE > map;
+
+		private MapBuilder( Map< KEY, VALUE > map ) {
+			this.map = map;
+		}
+
+		public static < BKEY, BVALUE > MapBuilder< BKEY, BVALUE > of( Map< BKEY, BVALUE > map ) {
+			return new MapBuilder<>( map );
+		}
+
+		MapBuilder< KEY, VALUE > put( KEY key, VALUE value ) {
+			map.put( key, value );
+			return this;
+		}
+
+		Map< KEY, VALUE > done() {
+			return map;
+		}
+
+	}
+
 }

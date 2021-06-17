@@ -79,13 +79,17 @@ public class Retwis_Server {
 	private void post() {
 		Token token;
 		token = chCS.< Token >com( Unit.id );
+		System.out.println( "received token");
 		String post;
 		post = chCS.< String >com( Unit.id );
+		System.out.println( "received post");
 		if( sessionManager.checkLoggedUser( token ) ){
+			System.out.println( "user logged");
 			chSR.< Result >select( Result.OK );
 			chCS.< Result >select( Result.OK );
 			Unit.id( chSR.< String >com( sessionManager.getUsernameFromToken( token ) ), chSR.< String >com( post ) );
-		} else { 
+		} else {
+			System.out.println( "user not logged");
 			chSR.< Result >select( Result.ERROR );
 			chCS.< Result >select( Result.ERROR );
 		}
