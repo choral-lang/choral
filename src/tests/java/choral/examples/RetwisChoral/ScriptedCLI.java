@@ -38,10 +38,23 @@ public class ScriptedCLI implements CLI {
 		);
 
 		actions.add( MapBuilder.< String, Object >of( new HashMap<>() )
+				.put( ACTION_KEY, RetwisAction.FOLLOW )
+				.put( USERNAME, "Fabrizio" )
+				.put( FOLLOW_TARGET, "Save" )
+				.done()
+		);
+
+		actions.add( MapBuilder.< String, Object >of( new HashMap<>() )
+				.put( ACTION_KEY, RetwisAction.FOLLOW )
+				.put( USERNAME, "Save" )
+				.put( FOLLOW_TARGET, "Marco" )
+				.done()
+		);
+
+		actions.add( MapBuilder.< String, Object >of( new HashMap<>() )
 				.put( ACTION_KEY, RetwisAction.POSTS )
 				.put( USERNAME, "Save" )
 				.put( PAGE_NUM, 0 )
-				.put( POST, "This is a simple post." )
 				.done()
 		);
 

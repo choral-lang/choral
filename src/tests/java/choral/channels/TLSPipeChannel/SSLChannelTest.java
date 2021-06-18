@@ -43,8 +43,8 @@ public class SSLChannelTest {
 			KeyStore keyStore = KeyStore.getInstance( KeyStore.getDefaultType() );
 			KeyStore trustStore = KeyStore.getInstance( KeyStore.getDefaultType() );
 			String password = "password";
-			String keyStoreFile = "src/tests/java/choral/channels/keystore.jks";
-			String trustStoreFile = "src/tests/java/choral/channels/truststore.ts";
+			String keyStoreFile = "src/tests/java/choral/channels/TLSPipeChannel/keystore.jks";
+			String trustStoreFile = "src/tests/java/choral/channels/TLSPipeChannel/truststore.ts";
 			keyStore.load( new FileInputStream( keyStoreFile ), password.toCharArray() );
 			trustStore.load( new FileInputStream( trustStoreFile ), password.toCharArray() );
 			KeyManagerFactory kmf = KeyManagerFactory.getInstance( "SunX509" );

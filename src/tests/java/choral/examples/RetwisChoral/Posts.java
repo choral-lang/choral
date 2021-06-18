@@ -2,19 +2,22 @@ package choral.examples.RetwisChoral;
 
 import choral.runtime.Serializers.KryoSerializable;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.StringJoiner;
 
 @KryoSerializable
 public class Posts {
 
-	private final List< String > followers;
-	private final List< String > followed;
-	private final List< Post > posts;
+	// here we need to group implementation for kryo
+	private final LinkedList< String > followers;
+	private final LinkedList< String > followed;
+	private final LinkedList< Post > posts;
 
 	private Posts(
-			List< String > followers, List< String > followed,
-			List< Post > posts
+			LinkedList< String > followers,
+			LinkedList< String > followed,
+			LinkedList< Post > posts
 	) {
 		this.followers = followers;
 		this.followed = followed;
@@ -34,18 +37,24 @@ public class Posts {
 	}
 
 	static Posts of( List< String > followers, List< String > followed, List< Post > posts ) {
-		return new Posts( followers, followed, posts );
+		return new Posts( new LinkedList<>( followers ), new LinkedList<>( followed ), new LinkedList<>( posts ) );
 	}
 
 	@Override
 	public String toString() {
 		StringJoiner joiner = new StringJoiner( "\n" );
-		joiner.add( "Followers: " );
-		followers().forEach( f -> joiner.add( " - " + f ) );
-		System.out.println( "Followed: " );
-		followed().forEach( f -> joiner.add( " - " + f ) );
-		System.out.println( "Posts" );
-		posts().forEach( p -> joiner.add( " - " + p ) );
+		joiner.add( "Followers:" );
+		for( String f : followers() ){
+			joiner.add( " - " + f );
+		}
+		joiner.add( "Followed:" );
+		for( String f : followed() ){
+			joiner.add( " - " + f );
+		}
+		joiner.add( "Posts:" );
+		for( Post p : posts() ){
+			joiner.add( " - " + p );
+		}
 		return joiner.toString();
 	}
 }

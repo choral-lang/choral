@@ -23,6 +23,8 @@ package choral.runtime.WrapperByteChannel;
 
 import choral.runtime.ChoralByteChannel.SymByteChannelImpl;
 import choral.lang.Unit;
+import choral.runtime.Media.BlockingByteChannel;
+import choral.runtime.Media.SocketByteChannel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -30,10 +32,10 @@ import java.nio.channels.ByteChannel;
 
 public class WrapperByteChannelImpl implements SymByteChannelImpl {
 
-	private final ByteChannel channel;
+	private final BlockingByteChannel channel;
 	private final int BUFFER_SIZE = 10000;
 
-	public WrapperByteChannelImpl ( ByteChannel channel ) {
+	public WrapperByteChannelImpl( BlockingByteChannel channel ) {
 		this.channel = channel;
 	}
 
@@ -43,12 +45,15 @@ public class WrapperByteChannelImpl implements SymByteChannelImpl {
 	}
 
 	@Override
-	public < T extends ByteBuffer > T com () {
-		ByteBuffer recv = ByteBuffer.allocate( BUFFER_SIZE );
+	public < T extends ByteBuffer > T com() {
 		try {
-			channel.read( recv );
-			return ( T ) recv;
-		} catch ( IOException e ) {
+			synchronized( channel ) {
+				int transmissionLength = channel.recvTransmissionLength();
+				ByteBuffer recv = ByteBuffer.allocate( transmissionLength );
+				channel.read( recv );
+				return (T) recv;
+			}
+		} catch( IOException e ) {
 			throw new RuntimeException( e.getMessage() );
 		}
 	}
@@ -56,8 +61,11 @@ public class WrapperByteChannelImpl implements SymByteChannelImpl {
 	@Override
 	public < T extends ByteBuffer > Unit com( T m ) {
 		try {
-			channel.write( m );
-		} catch ( IOException e ) {
+			synchronized( channel ) {
+				channel.sendTransmissionLength( m.limit() );
+				channel.write( m );
+			}
+		} catch( IOException e ) {
 			e.printStackTrace();
 		}
 		return Unit.id;

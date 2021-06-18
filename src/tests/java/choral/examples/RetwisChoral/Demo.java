@@ -32,7 +32,11 @@ public class Demo {
 							KryoSerializer.getInstance(),
 							new WrapperByteChannel_B( listener.getNext() ) );
 					executor.submit( () -> {
-						new Retwis_Repository( chSR, InMemoryDatabaseConnection.instance() ).loop();
+						try {
+							new Retwis_Repository( chSR, InMemoryDatabaseConnection.instance() ).loop();
+						} catch( Exception e ){
+							e.printStackTrace();
+						}
 					} );
 				} catch( IOException ignored ) {
 				}
@@ -60,7 +64,11 @@ public class Demo {
 								new WrapperByteChannel_A(
 										SocketByteChannel.connect( "localhost", REPOSITORY_PORT ) )
 						);
-						new Retwis_Server( chCS, chSR, SimpleSessionManager.instance() ).loop();
+						try {
+							new Retwis_Server( chCS, chSR, SimpleSessionManager.instance() ).loop();
+						} catch( Exception e ){
+							e.printStackTrace();
+						}
 					} );
 				} catch( IOException ignored ) {
 				}
@@ -72,8 +80,13 @@ public class Demo {
 
 	public static void main( String[] args ) throws InterruptedException, ExecutionException {
 
-		Token token = SimpleSessionManager.instance().createSession( "Save" );
+		Token t1 = SimpleSessionManager.instance().createSession( "Save" );
+		Token t2 = SimpleSessionManager.instance().createSession( "Marco" );
+		Token t3 = SimpleSessionManager.instance().createSession( "Fabrizio" );
+
 		InMemoryDatabaseConnection.instance().addUser( "Save", "pswd" );
+		InMemoryDatabaseConnection.instance().addUser( "Marco", "pswd" );
+		InMemoryDatabaseConnection.instance().addUser( "Fabrizio", "pswd" );
 
 		ServerSocketByteChannel repositoryListener = ServerSocketByteChannel
 				.at( "localhost", REPOSITORY_PORT );
@@ -91,7 +104,13 @@ public class Demo {
 						SocketByteChannel.connect( "localhost", SERVER_PORT ) )
 		);
 
-		new Retwis_Client( chCS, new ScriptedCLI().addSession( "Save", token ) ).loop();
+		new Retwis_Client(
+				chCS,
+				new ScriptedCLI()
+						.addSession( "Save", t1 )
+						.addSession( "Marco", t2 )
+						.addSession( "Fabrizio", t3 )
+		).loop();
 
 		System.out.println( "Loop done, closing" );
 

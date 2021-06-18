@@ -119,7 +119,7 @@ public class Retwis@( Client, Server, Repository ){
                 chSR.< Result >select( Result@Server.OK );
                 chCS.< Result >select( Result@Server.OK );
                 String@Server name = sessionManager.getUsernameFromToken( token );
-                if( checkFollow( name, followTarget ) ){
+                if( ! checkFollow( name, followTarget ) ){
                     chSR.< Result >select( Result@Server.OK );
                     chCS.< Result >select( Result@Server.OK );
                     databaseConnection.follow(

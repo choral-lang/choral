@@ -30,7 +30,7 @@ import java.nio.channels.Pipe;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
-public class PipedByteChannel implements ByteChannel {
+public class PipedByteChannel implements BlockingByteChannel {
 
 	private final ReadableByteChannel in;
 	private final WritableByteChannel out;
@@ -69,5 +69,18 @@ public class PipedByteChannel implements ByteChannel {
 	public void close() throws IOException {
 		out.close();
 		isOpen = false;
+	}
+
+	@Override
+	public int recvTransmissionLength() throws IOException {
+		ByteBuffer recv = ByteBuffer.allocate( 4 );
+		in.read( recv );
+		return recv.asIntBuffer().get();
+	}
+
+	@Override
+	public void sendTransmissionLength( int length ) throws IOException {
+		ByteBuffer snd = ByteBuffer.allocate( 4 ).putInt( length );
+		out.write( snd );
 	}
 }

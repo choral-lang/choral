@@ -29,28 +29,31 @@ import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
-public final class KryoSerializer implements ChoralSerializer< Object, ByteBuffer >{
+public final class KryoSerializer implements ChoralSerializer< Object, ByteBuffer > {
 	private static final KryoSerializer INSTANCE = new KryoSerializer();
 	private static final Kryo kryo = new Kryo();
 	private static final Set< Integer > registeredClasses = new HashSet<>();
+	private boolean preloadDone = false;
 
 	static {
 		kryo.setInstantiatorStrategy(
-			new DefaultInstantiatorStrategy( // <-- the default initiator uses the empty-params constructor
-				new StdInstantiatorStrategy() // <-- if the default fails, use JVM APIs to create
-													// an instance of a class without calling any constructor at all.
-			)
+				new DefaultInstantiatorStrategy(
+						// <-- the default initiator uses the empty-params constructor
+						new StdInstantiatorStrategy()
+						// <-- if the default fails, use JVM APIs to create
+						// an instance of a class without calling any constructor at all.
+				)
 		);
 	}
 
-	private KryoSerializer() {}
+	private KryoSerializer() {
+	}
 
-	public static KryoSerializer getInstance(){
+	public static KryoSerializer getInstance() {
 		return INSTANCE;
 	}
 
@@ -59,29 +62,38 @@ public final class KryoSerializer implements ChoralSerializer< Object, ByteBuffe
 		registeredClasses.add( c.hashCode() );
 	}
 
-	private static void lazyLoad() {
-		try ( ScanResult scanResult = new ClassGraph().enableAllInfo().scan() ) {
+	private static void preload() {
+		if( getInstance().preloadDone ) {
+			return;
+		} else {
+			getInstance().preloadDone = true;
+		}
+		try( ScanResult scanResult = new ClassGraph().enableAllInfo().scan() ) {
 			scanResult.getAllClasses()
-				.filter( c -> c.hasAnnotation( KryoSerializable.class.getName() ) )
-				.filter( c -> !registeredClasses.contains( c.hashCode() ) )
-				.forEach( c -> {
-					try {
-						KryoSerializer.register( Class.forName( c.getName() ) );
-					} catch ( ClassNotFoundException e ) {
-						e.printStackTrace();
-					}
-				} );
+					.filter( c -> c.hasAnnotation( KryoSerializable.class.getName() ) )
+					.filter( c -> !registeredClasses.contains( c.hashCode() ) )
+					.forEach( c -> {
+						try {
+							KryoSerializer.register( Class.forName( c.getName() ) );
+							Class< ? > _class = Class.forName( c.getName() );
+							for( Field field : _class.getDeclaredFields() ) {
+								KryoSerializer.register( field.getType() );
+							}
+						} catch( ClassNotFoundException e ) {
+							e.printStackTrace();
+						}
+					} );
 		}
 	}
 
 	@Override
 	public < M > ByteBuffer fromObject( M o ) {
-		lazyLoad();
+		preload();
 		Output output = new Output( 4096 );
-		if( o instanceof Optional ){
+		if( o instanceof Optional ) {
 			kryo.register( Optional.class );
-			if( ( ( Optional ) o ).isPresent() ){
-				kryo.register( ( ( Optional ) o ).get().getClass() );
+			if( ( (Optional) o ).isPresent() ) {
+				kryo.register( ( (Optional) o ).get().getClass() );
 			}
 		}
 		kryo.writeClassAndObject( output, o );
@@ -91,9 +103,9 @@ public final class KryoSerializer implements ChoralSerializer< Object, ByteBuffe
 
 	@Override
 	public < M > M toObject( ByteBuffer b ) {
-		lazyLoad();
+		preload();
 		Input input = new Input( b.array() );
-		M o = ( M ) kryo.readClassAndObject( input );
+		M o = (M) kryo.readClassAndObject( input );
 		input.close();
 		return o;
 	}

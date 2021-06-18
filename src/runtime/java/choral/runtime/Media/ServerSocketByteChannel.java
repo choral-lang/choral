@@ -3,6 +3,7 @@ package choral.runtime.Media;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 
 public class ServerSocketByteChannel {
 
@@ -23,7 +24,9 @@ public class ServerSocketByteChannel {
 	}
 
 	public SocketByteChannel getNext() throws IOException {
-		return new SocketByteChannel( listeningChannel.accept() );
+		SocketChannel channel = listeningChannel.accept();
+		channel.configureBlocking( true );
+		return new SocketByteChannel( channel );
 	}
 
 	public void close(){

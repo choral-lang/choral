@@ -62,7 +62,6 @@ public class InMemoryDatabaseConnection implements DatabaseConnection {
 
 	@Override
 	public Boolean isUserValid( String username ) {
-		System.out.println("checking isUserValid " + username );
 		return users.containsKey( username );
 	}
 
@@ -90,7 +89,6 @@ public class InMemoryDatabaseConnection implements DatabaseConnection {
 	public Boolean auth( String name, String pswd ) {
 		return users.get( name ).password().equals( pswd );
 	}
-
 
 	private static class User {
 
@@ -144,7 +142,7 @@ public class InMemoryDatabaseConnection implements DatabaseConnection {
 
 		public Post addPost( String content ) {
 			Post post = new Post( content, UUID.randomUUID().toString(), username() );
-			if( posts.get( posts.size() - 1 ).size() <= POST_PAGE_CAPACITY ) {
+			if( posts.size() > 0 && posts.get( posts.size() - 1 ).size() <= POST_PAGE_CAPACITY ) {
 				posts.get( posts.size() - 1 ).add( post );
 			} else {
 				posts.add( new LinkedList<>( List.of( post ) ) );
@@ -152,5 +150,17 @@ public class InMemoryDatabaseConnection implements DatabaseConnection {
 			return post;
 		}
 
+		@Override
+		public String toString() {
+			return "User{" +
+					"POST_PAGE_CAPACITY=" + POST_PAGE_CAPACITY +
+					", userId='" + userId + '\'' +
+					", username='" + username + '\'' +
+					", password='" + password + '\'' +
+					", followers=" + followers +
+					", followed=" + followed +
+					", posts=" + posts +
+					'}';
+		}
 	}
 }
