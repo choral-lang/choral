@@ -31,6 +31,7 @@ import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.exceptions.AstPositionedException;
+import choral.exceptions.ChoralException;
 import choral.exceptions.StaticVerificationException;
 import choral.types.*;
 import choral.types.Package;
@@ -1164,8 +1165,7 @@ public class Typer {
 			@Override
 			public Boolean visit( BlockStatement n ) {
 				boolean returnChecked = visitAsInBlock( n.enclosedStatement() );
-				returnChecked |= visit( n.continuation() );
-				return returnChecked;
+				return assertReachableContinuation(returnChecked, n);
 			}
 
 			@Override
@@ -1186,8 +1186,7 @@ public class Typer {
 				}
 				boolean returnChecked = visitAsInBlock( n.ifBranch() );
 				returnChecked &= visitAsInBlock( n.elseBranch() );
-				returnChecked |= visit( n.continuation() );
-				return returnChecked;
+				return assertReachableContinuation(returnChecked, n);
 			}
 
 			private final EnumSet< PrimitiveTypeTag > legalSwitchPrimitiveTypes = EnumSet.of(
@@ -1252,9 +1251,9 @@ public class Typer {
 											+ "', found '" + g + "'" ) );
 						}
 						if( casesFound.contains( s ) ) {
-							throw new AstPositionedException( l.argument().position(),
-									new StaticVerificationException(
-											"duplicate case '" + s + "'" ) );
+							throw StaticVerificationException.of(
+									"duplicate case '" + s + "'",
+									l.argument().position() );
 						} else {
 							casesFound.add( s );
 						}
@@ -1264,8 +1263,7 @@ public class Typer {
 					returnChecked &= visitAsInBlock( e.getValue() );
 				}
 				returnChecked &= hasDefault;
-				returnChecked |= visit( n.continuation() );
-				return returnChecked;
+				return assertReachableContinuation(returnChecked, n);
 			}
 
 			@Override
@@ -1293,8 +1291,7 @@ public class Typer {
 					returnChecked &= visit( c.right() );
 					closeBlock(); // ---
 				}
-				returnChecked |= visit( n.continuation() );
-				return returnChecked;
+				return assertReachableContinuation(returnChecked, n);
 			}
 
 			@Override
@@ -1338,6 +1335,14 @@ public class Typer {
 				return visit( n.continuation() );
 			}
 
+			public boolean assertReachableContinuation(boolean returnChecked, Statement n){
+				if( returnChecked && n.hasContinuation() ) {
+					throw StaticVerificationException.of(
+							"unreachable statement",
+							n.continuation().position() );
+				}
+				return returnChecked || visit( n.continuation() );
+			}
 		}
 
 		private final class Synth extends AbstractChoralVisitor< GroundDataTypeOrVoid > {
@@ -2386,7 +2391,7 @@ public class Typer {
 
 	}
 
-	private static final class BlockScope extends ChildScope
+	private static class BlockScope extends ChildScope
 			implements VariableDeclarationScope {
 
 		private BlockScope( VariableDeclarationScope parent ) {

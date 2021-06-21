@@ -46,6 +46,10 @@ public abstract class Statement extends Node {
 		return continuation;
 	}
 
+	public boolean hasContinuation() {
+		return continuation() == null || !(continuation() instanceof NilStatement);
+	}
+
 	public abstract Statement cloneWithContinuation( Statement continuation );
 
 	public abstract < R, T extends Node > R merge( MergerInterface< R > m, T n );
