@@ -1,59 +1,37 @@
 package choral.examples.RetwisChoral;
 
-public class CLI {
+interface CLI {
 
-    RetwisAction action(){
-		return null;
-	};
+    RetwisAction action();
 
-    String getPostsUsername(){
-		return null;
-	};
+    String getPostsUsername();
 
-    String getUsername(){
-		return null;
-	};
+    String getUsername();
 
-    Integer getPostsPage(){
-		return null;
-	};
+    Integer getPostsPage();
 
-    void showPosts( Posts posts ){};
+    void showPosts( Posts posts );
 
-    void showPost( Post post ){};
+    void showPost( Post post );
 
-    void showErrorMessage( String message ){};
+    void showErrorMessage( String message );
 
-    void showSuccessMessage( String message ){};
+    void showSuccessMessage( String message );
 
-    Token getSessionToken(){
-		return null;
-	};
+    Token getSessionToken();
 
-    String getPost(){
-		return null;
-	};
+    String getPost();
 
-    String getFollowTarget(){
-		return null;
-	};
+    String getFollowTarget();
 
-    void showMentions( Mentions mentions ){};
+    void showMentions( Mentions mentions );
 
-    String getStatusPostID(){
-		return null;
-	};
+    String getStatusPostID();
 
-    String promptPassword(){
-		return null;
-	};
+    String promptPassword();
 
-    String getMentionsUsername(){
-		return null;
-	};
+    String getMentionsUsername();
 
-    String getStopFollowTarget(){
-		return null;
-	};
+    String getStopFollowTarget();
 
 }

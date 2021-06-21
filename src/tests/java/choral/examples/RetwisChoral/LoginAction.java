@@ -2,9 +2,8 @@ package choral.examples.RetwisChoral;
 import choral.annotations.Choreography;
 import choral.runtime.Serializers.KryoSerializable;
 
-@Choreography( role = "R", name = "Result" )
+@Choreography( role = "R", name = "LoginAction" )
 @KryoSerializable
-public enum Result {
-	OK, ERROR
+public enum LoginAction {
+	SIGNIN, SIGNUP, LOGOUT
 }
-

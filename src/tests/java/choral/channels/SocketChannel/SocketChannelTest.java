@@ -3,6 +3,7 @@ package choral.channels.SocketChannel;
 import choral.lang.Unit;
 import choral.runtime.Media.ServerSocketByteChannel;
 import choral.runtime.Media.SocketByteChannel;
+import choral.runtime.SerializerChannel.SerializerChannel_B;
 import choral.runtime.Serializers.KryoSerializer;
 import choral.runtime.WrapperByteChannel.WrapperByteChannel_A;
 import choral.runtime.WrapperByteChannel.WrapperByteChannel_B;
@@ -25,13 +26,12 @@ public class SocketChannelTest {
 					ServerSocketByteChannel.at( "localhost", 12345 );
 			while( connectionListener.isOpen() ) {
 				try {
-					WrapperByteChannel_B channel = new WrapperByteChannel_B(
-							connectionListener.getNext() );
+					SerializerChannel_B channel = new SerializerChannel_B(
+							KryoSerializer.getInstance(),
+							new WrapperByteChannel_B( connectionListener.getNext() ) );
 					server.submit( () -> {
-						channel.com(
-								KryoSerializer.getInstance().fromObject( "You are connected!" ) );
-						String command = KryoSerializer.getInstance().< String >toObject(
-								channel.com( Unit.id ) );
+						channel.com( "You are connected!" );
+						String command = channel.com( Unit.id );
 						if( command.equalsIgnoreCase( "close" ) ) {
 							System.out.println( "closing the server" );
 							connectionListener.close();
@@ -46,11 +46,11 @@ public class SocketChannelTest {
 
 		Function< String, Runnable > clientBehaviour = ( command ) -> () -> {
 			System.out.println( "Connecting" );
-			WrapperByteChannel_A channel = new WrapperByteChannel_A(
-					SocketByteChannel.connect( "localhost", 12345 ) );
-			System.out.println(
-					KryoSerializer.getInstance().< String >toObject( channel.com( Unit.id ) ) );
-			channel.com( KryoSerializer.getInstance().< String >fromObject( command ) );
+			SerializerChannel_B channel = new SerializerChannel_B(
+					KryoSerializer.getInstance(),
+					new WrapperByteChannel_B( SocketByteChannel.connect( "localhost", 12345 ) ) );
+			System.out.println( channel.< String >com( Unit.id ) );
+			channel.com( command );
 		};
 
 		client.submit( clientBehaviour.apply( "close" ) );

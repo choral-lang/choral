@@ -1,7 +1,7 @@
 package choral.examples.RetwisChoral;
-import choral.annotations.Choreography;
 import choral.channels.SymChannel_B;
 import choral.lang.Unit;
+import choral.annotations.Choreography;
 
 @Choreography( role = "Repository", name = "RetwisLoginManager" )
 public class RetwisLoginManager_Repository {
@@ -17,6 +17,10 @@ public class RetwisLoginManager_Repository {
 		this.db = db;
 	}
 
+	public Unit main( Unit action ) {
+		return main();
+	}
+	
 	public Unit signUp() {
 		chSR.< Boolean >com( db.isUserValid( chSR.< String >com( Unit.id ) ) );
 		{
@@ -51,12 +55,26 @@ public class RetwisLoginManager_Repository {
 		}
 	}
 	
-	public void logout( Unit token ) {
-		logout();
-	}
-	
 	public void logout() {
 		
+	}
+	
+	public Unit main() {
+		{
+			switch( chSR.< LoginAction >select( Unit.id ) ){
+				case SIGNUP -> {
+					return signUp();
+				}
+				case LOGOUT -> {
+					logout();
+					return Unit.id;
+				}
+				case SIGNIN -> {
+					return signIn();
+				}
+			}
+		}
+		return Unit.id;
 	}
 
 }

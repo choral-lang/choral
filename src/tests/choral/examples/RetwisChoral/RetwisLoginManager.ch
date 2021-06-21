@@ -25,7 +25,6 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
         this.sessionManager = sessionManager;
      }
 
-/*
      public Optional@Client< Token > main( LoginAction@Client action ) {
          switch( action ){
              case SIGNUP      -> {
@@ -36,7 +35,7 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
              case SIGNIN      -> {
                  chCS.< LoginAction >select( LoginAction@Client.SIGNIN );
                  chSR.< LoginAction >select( LoginAction@Server.SIGNIN );
-                 return signUp();
+                 return signIn();
              }
              case LOGOUT      -> {
                  chCS.< LoginAction >select( LoginAction@Client.LOGOUT );
@@ -44,12 +43,9 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
                  logout();
                  return Optional@Client.<Token>empty();
              }
-             default -> {
-                 return Optional@Client.<Token>empty(); //this happens only if action is null
-             }
          }
+         return Optional@Client.<Token>empty(); //this happens only if action is null
      }
-*/
 
     public Optional@Client< Token > signUp(){
         String@Server name = cli.getUsername() >> chCS::< String >com;
@@ -89,8 +85,8 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
         }
     }
 
-    public void logout( Token@Client token ){
-        token
+    public void logout(){
+        cli.getSessionToken()
             >> chCS::< Token >com
             >> sessionManager::closeSession;
     }

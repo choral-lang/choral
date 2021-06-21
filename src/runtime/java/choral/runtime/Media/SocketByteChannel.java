@@ -1,14 +1,13 @@
 package choral.runtime.Media;
 
-import choral.utils.Pair;
-
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 
-public class SocketByteChannel implements ByteChannel {
+public class SocketByteChannel implements BlockingByteChannel {
 
 	private final SocketChannel channel;
 
@@ -16,10 +15,11 @@ public class SocketByteChannel implements ByteChannel {
 		this.channel = channel;
 	}
 
-	public static SocketByteChannel connect( String hostname, int portNumber ){
+	public static SocketByteChannel connect( String hostname, int portNumber ) {
 		try {
 			SocketChannel channel = SocketChannel.open();
 			channel.connect( new InetSocketAddress( hostname, portNumber ) );
+			channel.configureBlocking( true );
 			return new SocketByteChannel( channel );
 		} catch( IOException e ) {
 			e.printStackTrace();
@@ -46,4 +46,17 @@ public class SocketByteChannel implements ByteChannel {
 	public void close() throws IOException {
 		channel.close();
 	}
+
+	@Override
+	public int recvTransmissionLength() throws IOException {
+		DataInputStream dis = new DataInputStream( channel.socket().getInputStream() );
+		return dis.readInt();
+	}
+
+	@Override
+	public void sendTransmissionLength( int length ) throws IOException {
+		DataOutputStream dos = new DataOutputStream( channel.socket().getOutputStream() );
+		dos.writeInt( length );
+	}
+
 }

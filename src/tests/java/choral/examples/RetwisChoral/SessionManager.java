@@ -1,19 +1,13 @@
 package choral.examples.RetwisChoral;
 
-public class SessionManager{
+interface SessionManager{
 
-    Token createSession( String name ){
-    	return null;
-	};
+	Token createSession( String name );
 
-    void closeSession( Token token ){};
+    void closeSession( Token token );
 
-    Boolean checkLoggedUser( Token token ){
-		return null;
-	};
+    Boolean checkLoggedUser( Token token );
 
-    String getUsernameFromToken( Token token ){
-		return null;
-	};
+    String getUsernameFromToken( Token token );
 
 }

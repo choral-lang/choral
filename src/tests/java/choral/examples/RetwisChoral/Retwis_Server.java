@@ -1,8 +1,8 @@
 package choral.examples.RetwisChoral;
 import choral.channels.SymChannel_B;
+import choral.lang.Unit;
 import choral.channels.SymChannel_A;
 import choral.annotations.Choreography;
-import choral.lang.Unit;
 
 @Choreography( role = "Server", name = "Retwis" )
 public class Retwis_Server {
@@ -20,6 +20,46 @@ public class Retwis_Server {
 		this.sessionManager = sessionManager;
 	}
 
+	public void loop() {
+		{
+			switch( chCS.< RetwisAction >select( Unit.id ) ){
+				case STOPFOLLOW -> {
+					chSR.< RetwisAction >select( RetwisAction.STOPFOLLOW );
+					stopFollow();
+					loop();
+				}
+				case FOLLOW -> {
+					chSR.< RetwisAction >select( RetwisAction.FOLLOW );
+					follow();
+					loop();
+				}
+				case LOGOUT -> {
+					chSR.< RetwisAction >select( RetwisAction.LOGOUT );
+				}
+				case STATUS -> {
+					chSR.< RetwisAction >select( RetwisAction.STATUS );
+					status();
+					loop();
+				}
+				case POST -> {
+					chSR.< RetwisAction >select( RetwisAction.POST );
+					post();
+					loop();
+				}
+				case MENTIONS -> {
+					chSR.< RetwisAction >select( RetwisAction.MENTIONS );
+					mentions();
+					loop();
+				}
+				case POSTS -> {
+					chSR.< RetwisAction >select( RetwisAction.POSTS );
+					posts();
+					loop();
+				}
+			}
+		}
+	}
+	
 	private void posts() {
 		String name;
 		name = chCS.< String >com( Unit.id );
@@ -45,7 +85,7 @@ public class Retwis_Server {
 			chSR.< Result >select( Result.OK );
 			chCS.< Result >select( Result.OK );
 			Unit.id( chSR.< String >com( sessionManager.getUsernameFromToken( token ) ), chSR.< String >com( post ) );
-		} else { 
+		} else {
 			chSR.< Result >select( Result.ERROR );
 			chCS.< Result >select( Result.ERROR );
 		}
@@ -64,7 +104,7 @@ public class Retwis_Server {
 				chCS.< Result >select( Result.OK );
 				String name;
 				name = sessionManager.getUsernameFromToken( token );
-				if( checkFollow( name, followTarget ) ){
+				if( ! checkFollow( name, followTarget ) ){
 					chSR.< Result >select( Result.OK );
 					chCS.< Result >select( Result.OK );
 					Unit.id( chSR.< String >com( name ), chSR.< String >com( followTarget ) );
