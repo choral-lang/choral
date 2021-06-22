@@ -1,6 +1,6 @@
 package choral.examples.RetwisChoral;
-import choral.lang.Unit;
 import choral.annotations.Choreography;
+import choral.lang.Unit;
 import choral.channels.SymChannel_A;
 
 @Choreography( role = "Client", name = "Retwis" )
@@ -18,8 +18,7 @@ public class Retwis_Client {
 	}
 
 	public void loop() {
-		RetwisAction action = cli.action();
-		switch( action ){
+		switch( cli.action() ){
 			case STOPFOLLOW -> {
 				chCS.< RetwisAction >select( RetwisAction.STOPFOLLOW );
 				stopFollow();
@@ -62,9 +61,6 @@ public class Retwis_Client {
 		{
 			checkUser( Unit.id );
 			switch( chCS.< Result >select( Unit.id ) ){
-				default -> {
-					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
 				case ERROR -> {
 					cli.showErrorMessage( "Error, could not find user " + cli.getPostsUsername() + "." );
 				}
@@ -80,9 +76,6 @@ public class Retwis_Client {
 		chCS.< String >com( cli.getPost() );
 		{
 			switch( chCS.< Result >select( Unit.id ) ){
-				default -> {
-					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
 				case ERROR -> {
 					cli.showErrorMessage( "Error, the client is not logged in." );
 				}
@@ -98,9 +91,6 @@ public class Retwis_Client {
 		chCS.< String >com( cli.getFollowTarget() );
 		{
 			switch( chCS.< Result >select( Unit.id ) ){
-				default -> {
-					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
 				case ERROR -> {
 					cli.showErrorMessage( "Error, the client is not logged in." );
 				}
@@ -108,9 +98,6 @@ public class Retwis_Client {
 					{
 						checkUser( Unit.id );
 						switch( chCS.< Result >select( Unit.id ) ){
-							default -> {
-								throw new RuntimeException( "Received unexpected label from select operation" );
-							}
 							case ERROR -> {
 								cli.showErrorMessage( "Error, could not find user " + cli.getFollowTarget() + " to follow." );
 							}
@@ -118,9 +105,6 @@ public class Retwis_Client {
 								{
 									checkFollow( Unit.id, Unit.id );
 									switch( chCS.< Result >select( Unit.id ) ){
-										default -> {
-											throw new RuntimeException( "Received unexpected label from select operation" );
-										}
 										case ERROR -> {
 											cli.showErrorMessage( "Error, user " + cli.getUsername() + " already follows " + cli.getFollowTarget() + "." );
 										}
@@ -142,9 +126,6 @@ public class Retwis_Client {
 		chCS.< String >com( cli.getStopFollowTarget() );
 		{
 			switch( chCS.< Result >select( Unit.id ) ){
-				default -> {
-					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
 				case ERROR -> {
 					cli.showErrorMessage( "Error, the client is not logged in" );
 				}
@@ -152,9 +133,6 @@ public class Retwis_Client {
 					{
 						checkFollow( Unit.id, Unit.id );
 						switch( chCS.< Result >select( Unit.id ) ){
-							default -> {
-								throw new RuntimeException( "Received unexpected label from select operation" );
-							}
 							case ERROR -> {
 								cli.showErrorMessage( "Error, user " + cli.getUsername() + " does not follow " + cli.getStopFollowTarget() + "." );
 							}
@@ -174,9 +152,6 @@ public class Retwis_Client {
 		{
 			checkUser( Unit.id );
 			switch( chCS.< Result >select( Unit.id ) ){
-				default -> {
-					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
 				case ERROR -> {
 					cli.showErrorMessage( "Error, could not find user " + cli.getMentionsUsername() + "." );
 				}
@@ -192,9 +167,6 @@ public class Retwis_Client {
 		{
 			checkPost( Unit.id );
 			switch( chCS.< Result >select( Unit.id ) ){
-				default -> {
-					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
 				case ERROR -> {
 					cli.showErrorMessage( "Error, could not find post with ID " + cli.getStatusPostID() + "." );
 				}

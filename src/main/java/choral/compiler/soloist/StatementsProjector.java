@@ -88,7 +88,7 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 	@Override
 	public Statement visit( VariableDeclarationStatement n ) {
 		VariableDeclaration v = n.variables().get(
-				0 ); // there is only one variable after desugaring
+				0 ); // there is only one variable after de-sugaring
 		if( v.type().worldArguments().contains( this.world() ) ) {
 			return new VariableDeclarationStatement(
 					Collections.singletonList(
@@ -150,8 +150,10 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 	public Statement visit( ExpressionStatement n ) {
 		if( isSelectionMethodAtWorld( n.expression() ) ) {
 			Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
-			cases.put( SELECT_DEFAULT,
-					new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
+//			if( ! n.returns() ){
+//				cases.put( SELECT_DEFAULT,
+//						new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
+//			}
 			cases.put( new SwitchArgument.SwitchArgumentLabel(
 					getSelectionMethodEnum( n.expression() ) ), visit( n.continuation() ) );
 			return new SwitchStatement(
@@ -177,11 +179,25 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 					visit( n.continuation() )
 			).copyPosition( n );
 		} else {
+			List< Statement > cases = List.of( visit( n.ifBranch() ), visit( n.elseBranch() ) );
+			if( n.returns() && ! n.hasContinuation() ){
+				Statement firstSwitchStatement = cases.get( 0 );
+				boolean continueSearch = true;
+				while( continueSearch ){
+					if( firstSwitchStatement instanceof SwitchStatement ){
+						continueSearch = false;
+						// we add the default case
+						( ( SwitchStatement ) firstSwitchStatement ).cases().put( SELECT_DEFAULT,
+								new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
+					} else {
+						firstSwitchStatement = firstSwitchStatement.continuation();
+					}
+				}
+			}
 			return new BlockStatement(
 					new ExpressionStatement(
 							ExpressionProjector.visit( this.world(), n.condition() ),
-							StatementsMerger.merge( Arrays.asList( visit( n.ifBranch() ),
-									visit( n.elseBranch() ) ) ) ),
+							StatementsMerger.merge( cases ) ),
 					visit( n.continuation() )
 			).copyPosition( n );
 		}
@@ -199,13 +215,28 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 					visit( n.continuation() )
 			).copyPosition( n );
 		} else {
+			// we collect the "normal" cases
+			List< Statement > cases = n.cases().values().stream()
+					.map( this::visit ).collect( Collectors.toList() );
+			// if we have cases, the body "returns", and it does not have a continuation (which would then be reachable)
+			if( cases.size() > 0 && n.returns() && ! n.hasContinuation() ){
+				Statement firstSwitchStatement = cases.get( 0 );
+				boolean continueSearch = true;
+				while( continueSearch ){
+					if( firstSwitchStatement instanceof SwitchStatement ){
+						continueSearch = false;
+						// we add the default case
+						( ( SwitchStatement ) firstSwitchStatement ).cases().put( SELECT_DEFAULT,
+								new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
+					} else {
+						firstSwitchStatement = firstSwitchStatement.continuation();
+					}
+				}
+			}
 			return new BlockStatement(
 					new ExpressionStatement(
 							ExpressionProjector.visit( this.world(), n.guard() ),
-							StatementsMerger.merge(
-									n.cases().values().stream()
-											.map( this::visit ).collect( Collectors.toList() )
-							)
+							StatementsMerger.merge( cases )
 					),
 					visit( n.continuation() )
 			).copyPosition( n );

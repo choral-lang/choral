@@ -1,10 +1,9 @@
 package choral.examples.RetwisChoral;
-import choral.annotations.Choreography;
 import choral.runtime.Serializers.KryoSerializable;
+import choral.annotations.Choreography;
 
-@Choreography( role = "R", name = "Result" )
 @KryoSerializable
+@Choreography( role = "R", name = "Result" )
 public enum Result {
 	OK, ERROR
 }
-

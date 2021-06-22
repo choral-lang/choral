@@ -43,6 +43,11 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
                  logout();
                  return Optional@Client.<Token>empty();
              }
+//             default -> {
+//                chCS.< LoginAction >select( LoginAction@Client.ERROR );
+//                chSR.< LoginAction >select( LoginAction@Server.ERROR );
+//                return Optional@Client.<Token>empty();
+//             }
          }
          return Optional@Client.<Token>empty(); //this happens only if action is null
      }

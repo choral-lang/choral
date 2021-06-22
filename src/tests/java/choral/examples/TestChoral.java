@@ -272,14 +272,17 @@ public class TestChoral {
 //						List.of( subFolder( sourceFolder, "RetwisChoral" ) ),
 //						targetFolder,
 //						List.of(
-//								"src/tests/choral/examples/RetwisChoral"
+//								"src/tests/choral/examples/RetwisChoral",
+//								"src/runtime/choral"
 //						),
-//						"RetwisLoginManager", ALL_WORLDS ),
+//						"RetwisLoginManager", ALL_WORLDS )
+//				,
 				new CompilationRequest(
 						List.of( subFolder( sourceFolder, "RetwisChoral" ) ),
 						targetFolder,
 						List.of(
-								"src/tests/choral/examples/RetwisChoral"
+								"src/tests/choral/examples/RetwisChoral",
+								"src/runtime/choral"
 						),
 						"Retwis", ALL_WORLDS )
 //				new CompilationRequest(

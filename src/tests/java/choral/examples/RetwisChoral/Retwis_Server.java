@@ -1,7 +1,7 @@
 package choral.examples.RetwisChoral;
-import choral.channels.SymChannel_B;
-import choral.lang.Unit;
 import choral.channels.SymChannel_A;
+import choral.lang.Unit;
+import choral.channels.SymChannel_B;
 import choral.annotations.Choreography;
 
 @Choreography( role = "Server", name = "Retwis" )
@@ -85,7 +85,7 @@ public class Retwis_Server {
 			chSR.< Result >select( Result.OK );
 			chCS.< Result >select( Result.OK );
 			Unit.id( chSR.< String >com( sessionManager.getUsernameFromToken( token ) ), chSR.< String >com( post ) );
-		} else {
+		} else { 
 			chSR.< Result >select( Result.ERROR );
 			chCS.< Result >select( Result.ERROR );
 		}
@@ -104,7 +104,7 @@ public class Retwis_Server {
 				chCS.< Result >select( Result.OK );
 				String name;
 				name = sessionManager.getUsernameFromToken( token );
-				if( ! checkFollow( name, followTarget ) ){
+				if( !checkFollow( name, followTarget ) ){
 					chSR.< Result >select( Result.OK );
 					chCS.< Result >select( Result.OK );
 					Unit.id( chSR.< String >com( name ), chSR.< String >com( followTarget ) );

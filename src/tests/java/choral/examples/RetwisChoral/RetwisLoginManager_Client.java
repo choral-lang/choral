@@ -1,6 +1,6 @@
 package choral.examples.RetwisChoral;
-import choral.annotations.Choreography;
 import choral.channels.SymChannel_A;
+import choral.annotations.Choreography;
 import java.util.Optional;
 import choral.lang.Unit;
 
