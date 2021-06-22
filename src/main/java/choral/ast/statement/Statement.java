@@ -23,15 +23,18 @@ package choral.ast.statement;
 
 import choral.ast.Node;
 import choral.ast.Position;
+import choral.ast.WithReturnAnnotation;
 import choral.ast.visitors.MergerInterface;
 
 /**
  * Generic statement, always with a continuation.
  */
 
-public abstract class Statement extends Node {
+public abstract class Statement extends Node implements WithReturnAnnotation {
 
 	final private Statement continuation;
+
+	private WithReturnAnnotation.ReturnAnnotation returnAnnotation = ReturnAnnotation.NotSet;
 
 	public Statement( final Statement continuation ) {
 		this.continuation = continuation;
@@ -47,10 +50,20 @@ public abstract class Statement extends Node {
 	}
 
 	public boolean hasContinuation() {
-		return continuation() == null || !(continuation() instanceof NilStatement);
+		return continuation() == null || !( continuation() instanceof NilStatement );
 	}
 
 	public abstract Statement cloneWithContinuation( Statement continuation );
+
+	@Override
+	public ReturnAnnotation returnAnnotation() {
+		return returnAnnotation;
+	}
+
+	@Override
+	public void setReturnAnnotation( ReturnAnnotation a ) {
+		returnAnnotation = a;
+	}
 
 	public abstract < R, T extends Node > R merge( MergerInterface< R > m, T n );
 

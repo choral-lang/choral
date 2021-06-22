@@ -23,8 +23,30 @@ package choral.ast;
 
 import java.util.Optional;
 
-public interface WithTypeAnnotation< T > {
-	Optional< ? extends T > typeAnnotation();
+public interface WithReturnAnnotation {
+	public enum ReturnAnnotation {
+		Returns,
+		DoesNotReturn,
+		NotSet
+	}
 
-	void setTypeAnnotation( T typeAnnotation );
+	ReturnAnnotation returnAnnotation();
+
+	void setReturnAnnotation( ReturnAnnotation a );
+
+	default boolean returns() {
+		return returnAnnotation() == ReturnAnnotation.Returns;
+	}
+
+	default void setReturns() {
+		setReturnAnnotation( ReturnAnnotation.Returns );
+	}
+
+	default void setDoesNotReturns() {
+		setReturnAnnotation( ReturnAnnotation.DoesNotReturn );
+	}
+
+	default void setReturnAnnotation( boolean returns ) {
+		setReturnAnnotation( returns ? ReturnAnnotation.Returns : ReturnAnnotation.DoesNotReturn );
+	}
 }

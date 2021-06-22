@@ -31,7 +31,6 @@ import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.exceptions.AstPositionedException;
-import choral.exceptions.ChoralException;
 import choral.exceptions.StaticVerificationException;
 import choral.types.*;
 import choral.types.Package;
@@ -1165,13 +1164,13 @@ public class Typer {
 			@Override
 			public Boolean visit( BlockStatement n ) {
 				boolean returnChecked = visitAsInBlock( n.enclosedStatement() );
-				return assertReachableContinuation(returnChecked, n);
+				return assertReachableContinuation( n, returnChecked );
 			}
 
 			@Override
 			public Boolean visit( ExpressionStatement n ) {
 				synth( scope, n.expression() );
-				return visit( n.continuation() );
+				return assertReachableContinuation( n, false );
 			}
 
 			@Override
@@ -1186,14 +1185,14 @@ public class Typer {
 				}
 				boolean returnChecked = visitAsInBlock( n.ifBranch() );
 				returnChecked &= visitAsInBlock( n.elseBranch() );
-				return assertReachableContinuation(returnChecked, n);
+				return assertReachableContinuation( n, returnChecked );
 			}
 
-			private final EnumSet< PrimitiveTypeTag > legalSwitchPrimitiveTypes = EnumSet.of(
+			private /* static */ final EnumSet< PrimitiveTypeTag > legalSwitchPrimitiveTypes = EnumSet.of(
 					PrimitiveTypeTag.CHAR, PrimitiveTypeTag.BYTE, PrimitiveTypeTag.SHORT,
 					PrimitiveTypeTag.INT );
 
-			private final EnumSet< SpecialTypeTag > legalSwitchSpecialTypes = EnumSet.of(
+			private /* static */ final EnumSet< SpecialTypeTag > legalSwitchSpecialTypes = EnumSet.of(
 					SpecialTypeTag.BYTE, SpecialTypeTag.SHORT, SpecialTypeTag.INTEGER,
 					SpecialTypeTag.STRING );
 
@@ -1263,7 +1262,7 @@ public class Typer {
 					returnChecked &= visitAsInBlock( e.getValue() );
 				}
 				returnChecked &= hasDefault;
-				return assertReachableContinuation(returnChecked, n);
+				return assertReachableContinuation( n, returnChecked );
 			}
 
 			@Override
@@ -1291,7 +1290,7 @@ public class Typer {
 					returnChecked &= visit( c.right() );
 					closeBlock(); // ---
 				}
-				return assertReachableContinuation(returnChecked, n);
+				return assertReachableContinuation( n, returnChecked );
 			}
 
 			@Override
@@ -1303,7 +1302,7 @@ public class Typer {
 			public Boolean visit( ReturnStatement n ) {
 				if( n.returnExpression() == null ) {
 					if( expected == universe().voidType() ) {
-						return true;
+						return assertReachableContinuation( n, true );
 					} else {
 						throw new AstPositionedException( n.position(),
 								new StaticVerificationException(
@@ -1321,7 +1320,7 @@ public class Typer {
 									new StaticVerificationException(
 											"required type '" + expected + "', found '" + found + "'" ) );
 						}
-						return true;
+						return assertReachableContinuation( n, true );
 					}
 				}
 			}
@@ -1332,16 +1331,18 @@ public class Typer {
 					GroundDataType type = visitGroundDataTypeExpression( scope, x.type(), false );
 					scope.declareVariable( x.name().identifier(), type );
 				}
-				return visit( n.continuation() );
+				return assertReachableContinuation( n, false );
 			}
 
-			public boolean assertReachableContinuation(boolean returnChecked, Statement n){
+			public boolean assertReachableContinuation( Statement n, boolean returnChecked ) {
 				if( returnChecked && n.hasContinuation() ) {
 					throw StaticVerificationException.of(
 							"unreachable statement",
 							n.continuation().position() );
 				}
-				return returnChecked || visit( n.continuation() );
+				returnChecked |= visit( n.continuation() );
+				n.setReturnAnnotation( returnChecked );
+				return returnChecked;
 			}
 		}
 
