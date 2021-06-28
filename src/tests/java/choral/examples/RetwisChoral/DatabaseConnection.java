@@ -2,7 +2,7 @@ package choral.examples.RetwisChoral;
 
 import java.util.List;
 
-interface DatabaseConnection{
+public interface DatabaseConnection{
 
     List< String > getFollowers( String name );
 

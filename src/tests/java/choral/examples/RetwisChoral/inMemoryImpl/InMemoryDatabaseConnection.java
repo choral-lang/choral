@@ -1,4 +1,8 @@
-package choral.examples.RetwisChoral;
+package choral.examples.RetwisChoral.inMemoryImpl;
+
+import choral.examples.RetwisChoral.DatabaseConnection;
+import choral.examples.RetwisChoral.Mentions;
+import choral.examples.RetwisChoral.Post;
 
 import java.util.*;
 

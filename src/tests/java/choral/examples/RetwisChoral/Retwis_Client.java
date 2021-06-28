@@ -6,19 +6,19 @@ import choral.channels.SymChannel_A;
 @Choreography( role = "Client", name = "Retwis" )
 public class Retwis_Client {
 	private SymChannel_A < Object > chCS;
-	private CLI cli;
+	private CommandInterface commandInterface;
 
-	public Retwis_Client( SymChannel_A < Object > chCS, Unit chSR, CLI cli, Unit databaseConnection, Unit sessionManager ) {
-		this( chCS, cli );
+	public Retwis_Client( SymChannel_A < Object > chCS, Unit chSR, CommandInterface commandInterface, Unit databaseConnection, Unit sessionManager ) {
+		this( chCS, commandInterface );
 	}
 	
-	public Retwis_Client( SymChannel_A < Object > chCS, CLI cli ) {
+	public Retwis_Client( SymChannel_A < Object > chCS, CommandInterface commandInterface ) {
 		this.chCS = chCS;
-		this.cli = cli;
+		this.commandInterface = commandInterface;
 	}
 
 	public void loop() {
-		switch( cli.action() ){
+		switch( commandInterface.action() ){
 			case STOPFOLLOW -> {
 				chCS.< RetwisAction >select( RetwisAction.STOPFOLLOW );
 				stopFollow();
@@ -56,60 +56,60 @@ public class Retwis_Client {
 	}
 	
 	private void posts() {
-		chCS.< String >com( cli.getPostsUsername() );
-		chCS.< Integer >com( cli.getPostsPage() );
+		chCS.< String >com( commandInterface.getPostsUsername() );
+		chCS.< Integer >com( commandInterface.getPostsPage() );
 		{
 			checkUser( Unit.id );
 			switch( chCS.< Result >select( Unit.id ) ){
 				case ERROR -> {
-					cli.showErrorMessage( "Error, could not find user " + cli.getPostsUsername() + "." );
+					commandInterface.showErrorMessage( "Error, could not find user " + commandInterface.getPostsUsername() + "." );
 				}
 				case OK -> {
-					cli.showPosts( chCS.< Posts >com( Unit.id ) );
+					commandInterface.showPosts( chCS.< Posts >com( Unit.id ) );
 				}
 			}
 		}
 	}
 	
 	private void post() {
-		chCS.< Token >com( cli.getSessionToken() );
-		chCS.< String >com( cli.getPost() );
+		chCS.< Token >com( commandInterface.getSessionToken() );
+		chCS.< String >com( commandInterface.getPost() );
 		{
 			switch( chCS.< Result >select( Unit.id ) ){
 				case ERROR -> {
-					cli.showErrorMessage( "Error, the client is not logged in." );
+					commandInterface.showErrorMessage( "Error, the client is not logged in." );
 				}
 				case OK -> {
-					cli.showSuccessMessage( "Tweet posted successfully." );
+					commandInterface.showSuccessMessage( "Tweet posted successfully." );
 				}
 			}
 		}
 	}
 	
 	private void follow() {
-		chCS.< Token >com( cli.getSessionToken() );
-		chCS.< String >com( cli.getFollowTarget() );
+		chCS.< Token >com( commandInterface.getSessionToken() );
+		chCS.< String >com( commandInterface.getFollowTarget() );
 		{
 			switch( chCS.< Result >select( Unit.id ) ){
 				case ERROR -> {
-					cli.showErrorMessage( "Error, the client is not logged in." );
+					commandInterface.showErrorMessage( "Error, the client is not logged in." );
 				}
 				case OK -> {
 					{
 						checkUser( Unit.id );
 						switch( chCS.< Result >select( Unit.id ) ){
 							case ERROR -> {
-								cli.showErrorMessage( "Error, could not find user " + cli.getFollowTarget() + " to follow." );
+								commandInterface.showErrorMessage( "Error, could not find user " + commandInterface.getFollowTarget() + " to follow." );
 							}
 							case OK -> {
 								{
 									checkFollow( Unit.id, Unit.id );
 									switch( chCS.< Result >select( Unit.id ) ){
 										case ERROR -> {
-											cli.showErrorMessage( "Error, user " + cli.getUsername() + " already follows " + cli.getFollowTarget() + "." );
+											commandInterface.showErrorMessage( "Error, user " + commandInterface.getUsername() + " already follows " + commandInterface.getFollowTarget() + "." );
 										}
 										case OK -> {
-											cli.showSuccessMessage( "You now follow " + cli.getFollowTarget() );
+											commandInterface.showSuccessMessage( "You now follow " + commandInterface.getFollowTarget() );
 										}
 									}
 								}
@@ -122,22 +122,22 @@ public class Retwis_Client {
 	}
 	
 	private void stopFollow() {
-		chCS.< Token >com( cli.getSessionToken() );
-		chCS.< String >com( cli.getStopFollowTarget() );
+		chCS.< Token >com( commandInterface.getSessionToken() );
+		chCS.< String >com( commandInterface.getStopFollowTarget() );
 		{
 			switch( chCS.< Result >select( Unit.id ) ){
 				case ERROR -> {
-					cli.showErrorMessage( "Error, the client is not logged in" );
+					commandInterface.showErrorMessage( "Error, the client is not logged in" );
 				}
 				case OK -> {
 					{
 						checkFollow( Unit.id, Unit.id );
 						switch( chCS.< Result >select( Unit.id ) ){
 							case ERROR -> {
-								cli.showErrorMessage( "Error, user " + cli.getUsername() + " does not follow " + cli.getStopFollowTarget() + "." );
+								commandInterface.showErrorMessage( "Error, user " + commandInterface.getUsername() + " does not follow " + commandInterface.getStopFollowTarget() + "." );
 							}
 							case OK -> {
-								cli.showSuccessMessage( "You now do not follow " + cli.getStopFollowTarget() + " anymore." );
+								commandInterface.showSuccessMessage( "You now do not follow " + commandInterface.getStopFollowTarget() + " anymore." );
 							}
 						}
 					}
@@ -147,31 +147,31 @@ public class Retwis_Client {
 	}
 	
 	private void mentions() {
-		chCS.< Token >com( cli.getSessionToken() );
-		chCS.< String >com( cli.getMentionsUsername() );
+		chCS.< Token >com( commandInterface.getSessionToken() );
+		chCS.< String >com( commandInterface.getMentionsUsername() );
 		{
 			checkUser( Unit.id );
 			switch( chCS.< Result >select( Unit.id ) ){
 				case ERROR -> {
-					cli.showErrorMessage( "Error, could not find user " + cli.getMentionsUsername() + "." );
+					commandInterface.showErrorMessage( "Error, could not find user " + commandInterface.getMentionsUsername() + "." );
 				}
 				case OK -> {
-					cli.showMentions( chCS.< Mentions >com( Unit.id ) );
+					commandInterface.showMentions( chCS.< Mentions >com( Unit.id ) );
 				}
 			}
 		}
 	}
 	
 	private void status() {
-		chCS.< String >com( cli.getStatusPostID() );
+		chCS.< String >com( commandInterface.getStatusPostID() );
 		{
 			checkPost( Unit.id );
 			switch( chCS.< Result >select( Unit.id ) ){
 				case ERROR -> {
-					cli.showErrorMessage( "Error, could not find post with ID " + cli.getStatusPostID() + "." );
+					commandInterface.showErrorMessage( "Error, could not find post with ID " + commandInterface.getStatusPostID() + "." );
 				}
 				case OK -> {
-					cli.showPost( chCS.< Post >com( Unit.id ) );
+					commandInterface.showPost( chCS.< Post >com( Unit.id ) );
 				}
 			}
 		}

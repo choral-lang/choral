@@ -6,25 +6,25 @@ public class Retwis@( Client, Server, Repository ){
 
     private SymChannel@( Client, Server )< Object > chCS;
     private SymChannel@( Server, Repository )< Object > chSR;
-    private CLI@Client cli;
+    private CommandInterface@Client commandInterface;
     private DatabaseConnection@Repository databaseConnection;
     private SessionManager@Server sessionManager;
 
     public Retwis( SymChannel@( Client, Server )< Object > chCS,
                    SymChannel@( Server, Repository )< Object > chSR,
-                   CLI@Client cli,
+                   CommandInterface@Client commandInterface,
                    DatabaseConnection@Repository databaseConnection,
                    SessionManager@Server sessionManager
     ){
         this.chCS = chCS;
         this.chSR = chSR;
-        this.cli = cli;
+        this.commandInterface = commandInterface;
         this.databaseConnection = databaseConnection;
         this.sessionManager = sessionManager;
     }
 
     public void loop(){
-        switch( cli.action() ){
+        switch( commandInterface.action() ){
             case POSTS      -> {
                 chCS.< RetwisAction >select( RetwisAction@Client.POSTS );
                 chSR.< RetwisAction >select( RetwisAction@Server.POSTS );
@@ -69,8 +69,8 @@ public class Retwis@( Client, Server, Repository ){
     }
 
     private void posts(){
-        String@Server name = cli.getPostsUsername() >> chCS::< String >com;
-        Integer@Server page = cli.getPostsPage() >> chCS::< Integer >com;
+        String@Server name = commandInterface.getPostsUsername() >> chCS::< String >com;
+        Integer@Server page = commandInterface.getPostsPage() >> chCS::< Integer >com;
         if( checkUser( name ) ){
             chSR.< Result >select( Result@Server.OK );
             chCS.< Result >select( Result@Server.OK );
@@ -81,17 +81,17 @@ public class Retwis@( Client, Server, Repository ){
                 databaseConnection.getPostsPage( username, chSR.< Integer >com( page ) )
             ) >> chSR::< Posts >com
               >> chCS::< Posts >com
-              >> cli::showPosts;
+              >> commandInterface::showPosts;
         } else {
             chSR.< Result >select( Result@Server.ERROR );
             chCS.< Result >select( Result@Server.ERROR );
-            cli.showErrorMessage( "Error, could not find user "@Client + cli.getPostsUsername() + "."@Client );
+            commandInterface.showErrorMessage( "Error, could not find user "@Client + commandInterface.getPostsUsername() + "."@Client );
         }
     }
 
     private void post(){
-        Token@Server token = cli.getSessionToken() >> chCS::< Token >com;
-        String@Server post = cli.getPost() >> chCS::< String >com;
+        Token@Server token = commandInterface.getSessionToken() >> chCS::< Token >com;
+        String@Server post = commandInterface.getPost() >> chCS::< String >com;
         if( sessionManager.checkLoggedUser( token ) ){
             chSR.< Result >select( Result@Server.OK );
             chCS.< Result >select( Result@Server.OK );
@@ -99,19 +99,19 @@ public class Retwis@( Client, Server, Repository ){
                 chSR.< String >com( sessionManager.getUsernameFromToken( token ) ),
                 chSR.< String >com( post )
             );
-            cli.showSuccessMessage( "Tweet posted successfully."@Client );
+            commandInterface.showSuccessMessage( "Tweet posted successfully."@Client );
         } else {
             chSR.< Result >select( Result@Server.ERROR );
             chCS.< Result >select( Result@Server.ERROR );
-            cli.showErrorMessage( "Error, the client is not logged in."@Client );
+            commandInterface.showErrorMessage( "Error, the client is not logged in."@Client );
         }
     }
 
     // we can use e.g., a static class between the Server and the Repository
     // to reduce the amount selections the client is involved into
     private void follow(){
-        Token@Server token = cli.getSessionToken() >> chCS::< Token >com;
-        String@Server followTarget = cli.getFollowTarget() >> chCS::< String >com;
+        Token@Server token = commandInterface.getSessionToken() >> chCS::< Token >com;
+        String@Server followTarget = commandInterface.getFollowTarget() >> chCS::< String >com;
         if( sessionManager.checkLoggedUser( token ) ){
             chSR.< Result >select( Result@Server.OK );
             chCS.< Result >select( Result@Server.OK );
@@ -126,28 +126,28 @@ public class Retwis@( Client, Server, Repository ){
                         chSR.< String >com( name ),
                         chSR.< String >com( followTarget )
                     );
-                    cli.showSuccessMessage( "You now follow "@Client + cli.getFollowTarget() );
+                    commandInterface.showSuccessMessage( "You now follow "@Client + commandInterface.getFollowTarget() );
                 } else {
                     chSR.< Result >select( Result@Server.ERROR );
                     chCS.< Result >select( Result@Server.ERROR );
-                    cli.showErrorMessage( "Error, user "@Client + cli.getUsername() + " already follows "@Client + cli.getFollowTarget() + "."@Client );
+                    commandInterface.showErrorMessage( "Error, user "@Client + commandInterface.getUsername() + " already follows "@Client + commandInterface.getFollowTarget() + "."@Client );
                 }
             } else {
                 chSR.< Result >select( Result@Server.ERROR );
                 chCS.< Result >select( Result@Server.ERROR );
-                cli.showErrorMessage( "Error, could not find user "@Client + cli.getFollowTarget() + " to follow."@Client );
+                commandInterface.showErrorMessage( "Error, could not find user "@Client + commandInterface.getFollowTarget() + " to follow."@Client );
             }
         } else {
             chSR.< Result >select( Result@Server.ERROR );
             chCS.< Result >select( Result@Server.ERROR );
-            cli.showErrorMessage( "Error, the client is not logged in."@Client );
+            commandInterface.showErrorMessage( "Error, the client is not logged in."@Client );
         }
     }
 
     // TODO: we can reduce the nested ifs into a three-case section
     private void stopFollow(){
-        Token@Server token = cli.getSessionToken() >> chCS::< Token >com;
-        String@Server stopFollowTarget = cli.getStopFollowTarget() >> chCS::< String >com;
+        Token@Server token = commandInterface.getSessionToken() >> chCS::< Token >com;
+        String@Server stopFollowTarget = commandInterface.getStopFollowTarget() >> chCS::< String >com;
         if( sessionManager.checkLoggedUser( token ) ){
            chSR.< Result >select( Result@Server.OK );
            chCS.< Result >select( Result@Server.OK );
@@ -159,22 +159,22 @@ public class Retwis@( Client, Server, Repository ){
                    chSR.< String >com( name ),
                    chSR.< String >com( stopFollowTarget )
                );
-               cli.showSuccessMessage( "You now do not follow "@Client + cli.getStopFollowTarget() + " anymore."@Client );
+               commandInterface.showSuccessMessage( "You now do not follow "@Client + commandInterface.getStopFollowTarget() + " anymore."@Client );
            } else {
                chSR.< Result >select( Result@Server.ERROR );
                chCS.< Result >select( Result@Server.ERROR );
-               cli.showErrorMessage( "Error, user "@Client + cli.getUsername() + " does not follow "@Client + cli.getStopFollowTarget() + "."@Client );
+               commandInterface.showErrorMessage( "Error, user "@Client + commandInterface.getUsername() + " does not follow "@Client + commandInterface.getStopFollowTarget() + "."@Client );
            }
         } else {
            chSR.< Result >select( Result@Server.ERROR );
            chCS.< Result >select( Result@Server.ERROR );
-           cli.showErrorMessage( "Error, the client is not logged in"@Client );
+           commandInterface.showErrorMessage( "Error, the client is not logged in"@Client );
         }
     }
 
     private void mentions(){
-        Token@Server token = cli.getSessionToken() >> chCS::< Token >com;
-        String@Server mentionsName = cli.getMentionsUsername() >> chCS::< String >com;
+        Token@Server token = commandInterface.getSessionToken() >> chCS::< Token >com;
+        String@Server mentionsName = commandInterface.getMentionsUsername() >> chCS::< String >com;
         if( checkUser( mentionsName ) ){
             chSR.< Result >select( Result@Server.OK );
             chCS.< Result >select( Result@Server.OK );
@@ -186,16 +186,16 @@ public class Retwis@( Client, Server, Repository ){
                 chSR.< Boolean >com( selfMentions ) // if the user is logged and the user is the mentionsName, we add their personal info
             ) >> chSR::< Mentions >com
               >> chCS::< Mentions >com
-              >> cli::showMentions;
+              >> commandInterface::showMentions;
         } else {
             chSR.< Result >select( Result@Server.ERROR );
             chCS.< Result >select( Result@Server.ERROR );
-            cli.showErrorMessage( "Error, could not find user "@Client + cli.getMentionsUsername() + "."@Client );
+            commandInterface.showErrorMessage( "Error, could not find user "@Client + commandInterface.getMentionsUsername() + "."@Client );
         }
     }
 
     private void status(){
-        String@Server postID = cli.getStatusPostID() >> chCS::< String >com;
+        String@Server postID = commandInterface.getStatusPostID() >> chCS::< String >com;
         if( checkPost( postID ) ){
             chSR.< Result >select( Result@Server.OK );
             chCS.< Result >select( Result@Server.OK );
@@ -204,11 +204,11 @@ public class Retwis@( Client, Server, Repository ){
                 >> databaseConnection::getPost
                 >> chSR::< Post >com
                 >> chCS::< Post >com
-                >> cli::showPost;
+                >> commandInterface::showPost;
         } else {
             chSR.< Result >select( Result@Server.ERROR );
             chCS.< Result >select( Result@Server.ERROR );
-            cli.showErrorMessage( "Error, could not find post with ID "@Client + cli.getStatusPostID() + "."@Client );
+            commandInterface.showErrorMessage( "Error, could not find post with ID "@Client + commandInterface.getStatusPostID() + "."@Client );
         }
     }
 

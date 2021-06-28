@@ -7,20 +7,20 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
 
      private SymChannel@( Client, Server )< Object > chCS;
      private SymChannel@( Server, Repository )< Object > chSR;
-     private CLI@Client cli;
+     private CommandInterface@Client commandInterface;
      private DatabaseConnection@Repository db;
      private SessionManager@Server sessionManager;
 
      public RetwisLoginManager(
          SymChannel@( Client, Server )< Object > chCS,
          SymChannel@( Server, Repository )< Object > chSR,
-         CLI@Client cli,
+         CommandInterface@Client commandInterface,
          DatabaseConnection@Repository db,
          SessionManager@Server sessionManager
      ) {
         this.chCS = chCS;
         this.chSR = chSR;
-        this.cli = cli;
+        this.commandInterface = commandInterface;
         this.db = db;
         this.sessionManager = sessionManager;
      }
@@ -53,7 +53,7 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
      }
 
     public Optional@Client< Token > signUp(){
-        String@Server name = cli.getUsername() >> chCS::< String >com;
+        String@Server name = commandInterface.getUsername() >> chCS::< String >com;
         Boolean@Server isValidUsername = name
             >> chSR::< String >com
             >> db::isUserValid
@@ -61,7 +61,7 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
         if( isValidUsername ){ // this check that the name is valid within the system
             chSR.< Result >select( Result@Server.OK );
             chCS.< Result >select( Result@Server.OK );
-            String@Repository pswd = cli.promptPassword() >> chCS::< String >com >> chSR::< String >com;
+            String@Repository pswd = commandInterface.promptPassword() >> chCS::< String >com >> chSR::< String >com;
             db.addUser( chSR.< String >com( name ), pswd );
             return sessionManager.createSession( name )
                 >> chCS::< Token >com
@@ -74,9 +74,9 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
     }
 
     public Optional@Client< Token > signIn() {
-        String@Server username = cli.getUsername() >> chCS::< String >com;
+        String@Server username = commandInterface.getUsername() >> chCS::< String >com;
         String@Repository name = username >> chSR::< String >com;
-        String@Repository pswd = cli.promptPassword() >> chCS::< String >com >> chSR::< String >com;
+        String@Repository pswd = commandInterface.promptPassword() >> chCS::< String >com >> chSR::< String >com;
         if( db.auth( name, pswd ) ) {
             chSR.< Result >select( Result@Repository.OK );
             chCS.< Result >select( Result@Server.OK );
@@ -91,7 +91,7 @@ public class RetwisLoginManager@( Client, Server, Repository ) {
     }
 
     public void logout(){
-        cli.getSessionToken()
+        commandInterface.getSessionToken()
             >> chCS::< Token >com
             >> sessionManager::closeSession;
     }

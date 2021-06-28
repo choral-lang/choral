@@ -1,4 +1,7 @@
-package choral.examples.RetwisChoral;
+package choral.examples.RetwisChoral.inMemoryImpl;
+
+import choral.examples.RetwisChoral.SessionManager;
+import choral.examples.RetwisChoral.Token;
 
 import java.util.HashMap;
 import java.util.UUID;

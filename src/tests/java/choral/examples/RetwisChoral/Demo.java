@@ -1,5 +1,11 @@
 package choral.examples.RetwisChoral;
 
+import choral.examples.RetwisChoral.emitters.Emitter;
+import choral.examples.RetwisChoral.inMemoryImpl.InMemoryCommandInterface;
+import choral.examples.RetwisChoral.emitters.InMemoryEmitter;
+import choral.examples.RetwisChoral.emitters.ScriptedEmitter;
+import choral.examples.RetwisChoral.inMemoryImpl.InMemoryDatabaseConnection;
+import choral.examples.RetwisChoral.inMemoryImpl.SimpleSessionManager;
 import choral.runtime.Media.ServerSocketByteChannel;
 import choral.runtime.Media.SocketByteChannel;
 import choral.runtime.SerializerChannel.SerializerChannel_A;
@@ -9,6 +15,8 @@ import choral.runtime.WrapperByteChannel.WrapperByteChannel_A;
 import choral.runtime.WrapperByteChannel.WrapperByteChannel_B;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -26,15 +34,18 @@ public class Demo {
 		executor.submit( () -> {
 			System.out.println( "Repository accepting connections" );
 			while( listener.isOpen() ) {
-				if( ! f.isDone() ){ f.complete( null ); }
+				if( !f.isDone() ) {
+					f.complete( null );
+				}
 				try {
 					SerializerChannel_B chSR = new SerializerChannel_B(
 							KryoSerializer.getInstance(),
 							new WrapperByteChannel_B( listener.getNext() ) );
 					executor.submit( () -> {
 						try {
-							new Retwis_Repository( chSR, InMemoryDatabaseConnection.instance() ).loop();
-						} catch( Exception e ){
+							new Retwis_Repository( chSR,
+									InMemoryDatabaseConnection.instance() ).loop();
+						} catch( Exception e ) {
 							e.printStackTrace();
 						}
 					} );
@@ -53,7 +64,9 @@ public class Demo {
 		executor.submit( () -> {
 			System.out.println( "Server accepting connections" );
 			while( listener.isOpen() ) {
-				if( ! f.isDone() ){ f.complete( null ); }
+				if( !f.isDone() ) {
+					f.complete( null );
+				}
 				try {
 					SerializerChannel_B chCS = new SerializerChannel_B(
 							KryoSerializer.getInstance(),
@@ -66,7 +79,7 @@ public class Demo {
 						);
 						try {
 							new Retwis_Server( chCS, chSR, SimpleSessionManager.instance() ).loop();
-						} catch( Exception e ){
+						} catch( Exception e ) {
 							e.printStackTrace();
 						}
 					} );
@@ -80,9 +93,9 @@ public class Demo {
 
 	public static void main( String[] args ) throws InterruptedException, ExecutionException {
 
-		Token t1 = SimpleSessionManager.instance().createSession( "Save" );
-		Token t2 = SimpleSessionManager.instance().createSession( "Marco" );
-		Token t3 = SimpleSessionManager.instance().createSession( "Fabrizio" );
+		Token sToken = SimpleSessionManager.instance().createSession( "Save" );
+		Token mToken = SimpleSessionManager.instance().createSession( "Marco" );
+		Token fToken = SimpleSessionManager.instance().createSession( "Fabrizio" );
 
 		InMemoryDatabaseConnection.instance().addUser( "Save", "pswd" );
 		InMemoryDatabaseConnection.instance().addUser( "Marco", "pswd" );
@@ -104,13 +117,17 @@ public class Demo {
 						SocketByteChannel.connect( "localhost", SERVER_PORT ) )
 		);
 
-		new Retwis_Client(
-				chCS,
-				new ScriptedCLI()
-						.addSession( "Save", t1 )
-						.addSession( "Marco", t2 )
-						.addSession( "Fabrizio", t3 )
-		).loop();
+		InMemoryCommandInterface imci = new InMemoryCommandInterface();
+		ScriptedEmitter.use( InMemoryEmitter.use( imci ) )
+				.start( new LinkedList<>( List.of(
+						new Emitter.Post( sToken, "Save" ),
+						new Emitter.Follow( fToken, "Save", "Fabrizio" ),
+						new Emitter.Follow( sToken, "Marco", "Save" ),
+						new Emitter.Posts( "Save", 0 ),
+						new Emitter.Logout()
+				) ) );
+
+		new Retwis_Client( chCS, imci ).loop();
 
 		System.out.println( "Loop done, closing" );
 

@@ -7,15 +7,15 @@ import choral.lang.Unit;
 @Choreography( role = "Client", name = "RetwisLoginManager" )
 public class RetwisLoginManager_Client {
 	private SymChannel_A < Object > chCS;
-	private CLI cli;
+	private CommandInterface commandInterface;
 
-	public RetwisLoginManager_Client( SymChannel_A < Object > chCS, Unit chSR, CLI cli, Unit db, Unit sessionManager ) {
-		this( chCS, cli );
+	public RetwisLoginManager_Client( SymChannel_A < Object > chCS, Unit chSR, CommandInterface commandInterface, Unit db, Unit sessionManager ) {
+		this( chCS, commandInterface );
 	}
 	
-	public RetwisLoginManager_Client( SymChannel_A < Object > chCS, CLI cli ) {
+	public RetwisLoginManager_Client( SymChannel_A < Object > chCS, CommandInterface commandInterface ) {
 		this.chCS = chCS;
-		this.cli = cli;
+		this.commandInterface = commandInterface;
 	}
 
 	public Optional < Token > main( LoginAction action ) {
@@ -38,7 +38,7 @@ public class RetwisLoginManager_Client {
 	}
 	
 	public Optional < Token > signUp() {
-		chCS.< String >com( cli.getUsername() );
+		chCS.< String >com( commandInterface.getUsername() );
 		{
 			switch( chCS.< Result >select( Unit.id ) ){
 				default -> {
@@ -48,7 +48,7 @@ public class RetwisLoginManager_Client {
 					return Optional.< Token >empty();
 				}
 				case OK -> {
-					chCS.< String >com( cli.promptPassword() );
+					chCS.< String >com( commandInterface.promptPassword() );
 					return Optional.< Token >of( chCS.< Token >com( Unit.id ) );
 				}
 			}
@@ -56,8 +56,8 @@ public class RetwisLoginManager_Client {
 	}
 	
 	public Optional < Token > signIn() {
-		chCS.< String >com( cli.getUsername() );
-		chCS.< String >com( cli.promptPassword() );
+		chCS.< String >com( commandInterface.getUsername() );
+		chCS.< String >com( commandInterface.promptPassword() );
 		{
 			switch( chCS.< Result >select( Unit.id ) ){
 				default -> {
@@ -74,7 +74,7 @@ public class RetwisLoginManager_Client {
 	}
 	
 	public void logout() {
-		chCS.< Token >com( cli.getSessionToken() );
+		chCS.< Token >com( commandInterface.getSessionToken() );
 	}
 
 }

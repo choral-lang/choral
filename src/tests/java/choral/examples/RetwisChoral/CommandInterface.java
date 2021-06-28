@@ -1,6 +1,6 @@
 package choral.examples.RetwisChoral;
 
-interface CLI {
+public interface CommandInterface {
 
     RetwisAction action();
 

@@ -1,6 +1,6 @@
 package choral.examples.RetwisChoral;
 
-interface SessionManager{
+public interface SessionManager{
 
 	Token createSession( String name );
 
