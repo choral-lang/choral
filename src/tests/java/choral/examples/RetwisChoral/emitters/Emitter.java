@@ -5,7 +5,7 @@ import choral.examples.RetwisChoral.Token;
 
 public interface Emitter {
 
-	void emit( Action action );
+	Emitter emit( Action action );
 
 	interface Action {
 		RetwisAction action();
@@ -19,6 +19,19 @@ public interface Emitter {
 		default String 	username(){ 		throw new UnsupportedOperationException(); }
 		default String 	mentionsUsername(){ throw new UnsupportedOperationException(); }
 		default String 	statusPostID(){ 	throw new UnsupportedOperationException(); }
+
+		enum Fields {
+			postsUsername,
+			postsPage,
+			post,
+			sessionToken,
+			followTarget,
+			stopFollowTarget,
+			username,
+			mentionsUsername,
+			statusPostID
+		}
+
 	}
 
 	class Posts implements Action {

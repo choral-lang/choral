@@ -30,4 +30,9 @@ public class Token{
 		Token token = (Token) o;
 		return id.equals( token.id );
 	}
+
+	public String id(){
+		return this.id;
+	}
+
 }

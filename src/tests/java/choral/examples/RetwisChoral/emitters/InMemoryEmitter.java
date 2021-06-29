@@ -14,8 +14,9 @@ public class InMemoryEmitter implements Emitter {
 		return new InMemoryEmitter( commandInterface );
 	}
 
-	public void emit( Action action ){
+	public Emitter emit( Action action ){
 		commandInterface.addAction( action );
+		return this;
 	}
 
 }

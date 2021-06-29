@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Demo {
+public class DemoDistributed {
 
 	private static final int SERVER_PORT = 12345;
 	private static final int REPOSITORY_PORT = 54321;
@@ -119,7 +119,7 @@ public class Demo {
 
 		InMemoryCommandInterface imci = new InMemoryCommandInterface();
 		ScriptedEmitter.use( InMemoryEmitter.use( imci ) )
-				.start( new LinkedList<>( List.of(
+				.emit( new LinkedList<>( List.of(
 						new Emitter.Post( sToken, "Save" ),
 						new Emitter.Follow( fToken, "Save", "Fabrizio" ),
 						new Emitter.Follow( sToken, "Marco", "Save" ),
