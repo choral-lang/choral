@@ -153,6 +153,7 @@ task runSingle( type: JavaExec, dependsOn: compileAll ) {
 
 clean {
 	delete += jarOutputFolder
+	delete += "release"
 }
 
 jar {
