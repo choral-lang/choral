@@ -34,7 +34,6 @@ import choral.ast.type.FormalTypeParameter;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
-import choral.compiler.soloist.Utils;
 import choral.utils.Pair;
 
 import java.util.*;

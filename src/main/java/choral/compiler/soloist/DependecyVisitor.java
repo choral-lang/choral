@@ -36,7 +36,6 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.ChoralVisitorInterface;
-import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.types.HigherDataType;
 import choral.utils.Pair;
 

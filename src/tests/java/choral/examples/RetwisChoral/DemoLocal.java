@@ -11,7 +11,6 @@ import choral.examples.RetwisChoral.inMemoryImpl.InMemoryDatabaseConnection;
 import choral.examples.RetwisChoral.inMemoryImpl.SimpleSessionManager;
 import choral.utils.Pair;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;

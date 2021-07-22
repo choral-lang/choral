@@ -28,8 +28,6 @@ import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractSoloistProjector;
 import choral.ast.visitors.PrettyPrinterVisitor;
-import choral.compiler.Compiler;
-import choral.compiler.Logger;
 import choral.compiler.unitNormaliser.UnitRepresentation;
 import choral.exceptions.ChoralException;
 import choral.types.GroundDataType;

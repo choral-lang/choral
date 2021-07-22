@@ -72,12 +72,13 @@ repositories {
 }
 
 sourceSets {
+	base {
+		java.srcDir 'src/base/java'
+	}
 	main {
 		java.srcDir 'src/main/java'
 		antlr.srcDir 'src/main/antlr'
-	}
-	base {
-		java.srcDir 'src/base/java'
+		runtimeClasspath += compileClasspath += sourceSets.base.output
 	}
 	runtime {
 		java.srcDir 'src/runtime/java'

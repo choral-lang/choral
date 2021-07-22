@@ -28,10 +28,8 @@ import choral.ast.body.Interface;
 import choral.ast.expression.Expression;
 import choral.ast.expression.ScopedExpression;
 import choral.ast.type.FormalWorldParameter;
-import choral.ast.type.World;
 import choral.ast.type.WorldArgument;
 import choral.utils.Pair;
-import org.w3c.dom.ls.LSOutput;
 
 import java.util.List;
 import java.util.Optional;
