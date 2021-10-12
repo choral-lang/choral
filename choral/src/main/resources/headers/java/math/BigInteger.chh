@@ -1,0 +1,88 @@
+/* Choral Header Version 0.1 */
+package java.math;
+
+public final class BigInteger@A extends Number@A implements Comparable@A<BigInteger> {
+
+    public BigInteger(String@A val, int@A radix) { }
+
+    public BigInteger(String@A val) { }
+
+    public BigInteger@A nextProbablePrime() { }
+
+    public static BigInteger@A valueOf(long@A val) { }
+
+    public static final BigInteger@A ZERO;
+
+    public static final BigInteger@A ONE;
+
+    public static final BigInteger@A TEN;
+
+    public BigInteger@A add(BigInteger@A val) { }
+
+    public BigInteger@A subtract(BigInteger@A val) { }
+
+    public BigInteger@A multiply(BigInteger@A val) { }
+
+    public BigInteger@A divide(BigInteger@A val) { }
+
+    public BigInteger@A remainder(BigInteger@A val) { }
+
+    public BigInteger@A pow(int@A exponent) { }
+
+    public BigInteger@A gcd(BigInteger@A val) {
+
+    public BigInteger@A abs() { }
+
+    public BigInteger@A negate() { }
+
+    public int@A signum() { }
+
+    public BigInteger@A mod(BigInteger@A m) { }
+
+    public BigInteger@A modPow(BigInteger@A exponent, BigInteger@A m) { }
+
+    public BigInteger@A modInverse(BigInteger@A m) { }
+
+    public BigInteger@A shiftLeft(int@A n) { }
+
+    public BigInteger@A shiftRight(int@A n) { }
+
+    public BigInteger@A and(BigInteger@A val) { }
+
+    public BigInteger@A not() { }
+
+    public BigInteger@A andNot(BigInteger@A val) { }
+
+    public boolean@A testBit(int@A n) { }
+
+    public BigInteger@A setBit(int@A n) { }
+
+    public BigInteger@A clearBit(int@A n) { }
+
+    public BigInteger@A flipBit(int@A n) { }
+
+    public int@A getLowestSetBit() { }
+
+    public int@A bitLength() { }
+
+    public int@A bitCount() { }
+
+    public boolean@A isProbablePrime(int@A certainty) { }
+
+    public int@A compareTo(BigInteger@A val) { }
+
+    public BigInteger@A min(BigInteger@A val) { }
+
+    public BigInteger@A max(BigInteger@A val) { }
+
+    public String@A toString(int@A radix) { }
+
+    public int@A intValue() { }
+
+    public long@A longValue() { }
+
+    public float@A floatValue() { }
+
+    public double@A doubleValue() { }
+
+}

@@ -1,0 +1,6 @@
+package bar;
+
+public interface Iterator@A < E@X > {
+   boolean@A hasNext();
+   E@A next();
+}

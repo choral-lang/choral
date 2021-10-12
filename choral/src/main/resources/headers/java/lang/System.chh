@@ -1,0 +1,14 @@
+/* Choral Header Version 0.1 */
+package java.lang;
+
+import java.io.*;
+
+public final class System@A {
+
+    private System() { }
+
+    public static final PrintStream@A out;
+
+    public final static PrintStream@A err;
+
+}
