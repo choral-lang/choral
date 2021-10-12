@@ -1,0 +1,78 @@
+/* Choral Header Version 0.1 */
+package java.lang;
+
+import java.nio.charset.Charset;
+
+public final class String@A {
+
+    public String() { }
+
+    public String(String@A original) { }
+
+    public char@A charAt(int@A index) { }
+
+    public boolean@A equalsIgnoreCase(String@A anotherString) { }
+
+    public int@A compareTo(String@A anotherString) { }
+
+    public int@A compareToIgnoreCase(String@A str) { }
+
+    public boolean@A startsWith(String@A prefix, int@A toffset) { }
+
+    public boolean@A startsWith(String@A prefix) { }
+
+    public boolean@A endsWith(String@A suffix) { }
+
+    public int@A indexOf(int@A ch) { }
+
+    public int@A indexOf(int@A ch, int@A fromIndex) { }
+
+    public int@A lastIndexOf(int@A ch) { }
+
+    public int@A lastIndexOf(int@A ch, int@A fromIndex) { }
+
+    public int@A indexOf(String@A ch) { }
+
+    public int@A indexOf(String@A ch, int@A fromIndex) { }
+
+    public int@A lastIndexOf(String@A ch) { }
+
+    public int@A lastIndexOf(String@A ch, int@A fromIndex) { }
+
+    public String@A substring(int@A beginIndex) { }
+
+    public String@A substring(int@A beginIndex, int@A endIndex) { }
+
+    public String@A concat(String@A str) { }
+
+    public String@A replace(char@A oldChar, char@A newChar) { }
+
+    public boolean@A matches(String@A regex) { }
+
+    public String@A replaceFirst(String@A regex, String@A replacement) { }
+
+    public String@A replaceAll(String@A regex, String@A replacement) { }
+
+    public String@A toLowerCase() { }
+
+    public String@A toUpperCase() { }
+
+    public String@A trim() { }
+
+    public static String@A valueOf(Object@A obj) { }
+
+    public static String@A valueOf(boolean@A b) { }
+
+    public static String@A valueOf(char@A c) { }
+
+    public static String@A valueOf(int@A i) { }
+
+    public static String@A valueOf(long@A l) { }
+
+    public static String@A valueOf(float@A f) { }
+
+    public static String@A valueOf(double@A d) { }
+
+    public Object@A getBytes( Charset@A c ){}
+
+}

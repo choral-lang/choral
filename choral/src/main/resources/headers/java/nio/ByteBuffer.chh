@@ -1,0 +1,8 @@
+/* Choral Header Version 0.1 */
+package java.nio;
+
+public class ByteBuffer@A {
+
+    public static ByteBuffer@A wrap( Object@A array ) {  }
+
+}

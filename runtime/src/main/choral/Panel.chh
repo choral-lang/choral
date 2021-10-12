@@ -1,0 +1,13 @@
+package choral.runtime.UI;
+
+public class Panel@A {
+
+	private Panel(){}
+
+	public static String@A prompt( String@A world, String@A prompt ) {
+	}
+
+	public static void show( String@A world, Object@A text ) {
+	}
+
+}

@@ -1,0 +1,78 @@
+/* Choral Header Version 0.1 */
+package java.lang;
+
+public final class Integer@A extends Number@A {
+
+    public static final int@A MIN_VALUE;
+
+    public static final int@A MAX_VALUE;
+
+    public static String@A toString(int@A i, int@A radix) { }
+
+    public static String@A toHexString(int@A i) { }
+
+    public static String@A toOctalString(int@A i) { }
+
+    public static String@A toBinaryString(int@A i) { }
+
+    public static String@A toString(int@A i) { }
+
+    public static int@A parseInt(String@A s, int@A radix) /* throws NumberFormatException */ { }
+
+    public static int@A parseInt(String@A s) /* throws NumberFormatException */ { }
+
+    public static Integer@A valueOf(String@A s, int@A radix) /* throws NumberFormatException */ { }
+
+    public static Integer@A valueOf(String@A s) /* throws NumberFormatException */ { }
+
+    public static Integer@A valueOf(int@A i) { }
+
+    public Integer(int@A value) { }
+
+    public Integer(String@A s) /* throws NumberFormatException */ { }
+
+    public byte@A byteValue() { }
+
+    public short@A shortValue() { }
+
+    public int@A intValue() { }
+
+    public long@A longValue() { }
+
+    public float@A floatValue() { }
+
+    public double@A doubleValue() { }
+
+    public static Integer@A getInteger(String@A nm) { }
+
+    public static Integer@A getInteger(String@A nm, int@A val) { }
+
+    public static Integer@A getInteger(String@A nm, Integer@A val) { }
+
+    public static Integer@A decode(String@A nm) /* throws NumberFormatException */ { }
+
+    public int@A compareTo(Integer@A anotherInteger) { }
+
+    public static int@A compare(int@A x, int@A y) { }
+
+    public static final int@A SIZE;
+
+    public static int@A highestOneBit(int@A i) { }
+
+    public static int@A lowestOneBit(int@A i) { }
+
+    public static int@A numberOfTrailingZeros(int@A i) { }
+
+    public static int@A bitCount(int@A i) { }
+
+    public static int@A rotateLeft(int@A i, int@A distance) { }
+
+    public static int@A rotateRight(int@A i, int@A distance) { }
+
+    public static int@A reverse(int@A i) { }
+
+    public static int@A signum(int@A i) { }
+
+    public static int@A reverseBytes(int@A i) { }
+
+}

@@ -1,0 +1,13 @@
+/* Choral Header Version 0.1 */
+package java.nio.charset;
+
+import java.nio.charset.Charset;
+
+public class StandardCharsets@A {
+    public static final Charset@A US_ASCII;
+    public static final Charset@A ISO_8859_1;
+    public static final Charset@A UTF_8;
+    public static final Charset@A UTF_16BE;
+    public static final Charset@A UTF_16LE;
+    public static final Charset@A UTF_16;
+}

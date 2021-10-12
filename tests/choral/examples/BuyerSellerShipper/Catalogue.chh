@@ -1,0 +1,17 @@
+package choral.examples.BuyerSellerShipperUtils;
+
+public class Catalogue@A {
+
+	public void addTitle( String@A t, Price@A p ){
+	}
+
+	public Boolean@A includes( String@A t ){
+	}
+
+	public Price@A quote( String@A t ){
+	}
+
+	public Shipping@A ship( String@A title ){
+	}
+
+}

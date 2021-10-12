@@ -1,0 +1,175 @@
+package java.lang;
+
+public final class Math@A {
+
+    private Math() { }
+
+    public static final double@A E;
+
+    public static final double@A PI;
+
+    public static double@A sin(double@A a) { }
+
+    public static double@A cos(double@A a) { }
+
+    public static double@A tan(double@A a) { }
+
+    public static double@A asin(double@A a) { }
+
+    public static double@A acos(double@A a) { }
+
+    public static double@A atan(double@A a) { }
+
+    public static double@A toRadians(double@A angdeg) { }
+
+    public static double@A toDegrees(double@A angrad) { }
+
+    public static double@A exp(double@A a) { }
+
+    public static double@A log(double@A a) { }
+
+    public static double@A log10(double@A a) { }
+
+    public static double@A sqrt(double@A a) { }
+
+    public static double@A cbrt(double@A a) { }
+
+    public static double@A IEEEremainder(double@A f1, double@A f2) { }
+
+    public static double@A ceil(double@A a) { }
+
+    public static double@A floor(double@A a) { }
+
+    public static double@A rint(double@A a) { }
+
+    public static double@A atan2(double@A y, double@A x) { }
+
+    public static double@A pow(double@A a, double@A b) { }
+
+    public static int@A round(float@A a) { }
+
+    public static long@A round(double@A a) { }
+
+    public static double@A random() { }
+
+    public static int@A addExact(int@A x, int@A y) { }
+
+    public static long@A addExact(long@A x, long@A y) { }
+
+    public static int@A subtractExact(int@A x, int@A y) { }
+
+    public static long@A subtractExact(long@A x, long@A y) { }
+
+    public static int@A multiplyExact(int@A x, int@A y) { }
+
+    public static long@A multiplyExact(long@A x, int@A y) { }
+
+    public static long@A multiplyExact(long@A x, long@A y) { }
+
+    public static int@A incrementExact(int@A a) { }
+
+    public static long@A incrementExact(long@A a) { }
+
+    public static int@A decrementExact(int@A a) { }
+
+    public static long@A decrementExact(long@A a) { }
+
+    public static int@A negateExact(int@A a) { }
+
+    public static long@A negateExact(long@A a) { }
+
+    public static int@A toIntExact(long@A value) { }
+
+    public static long@A multiplyFull(int@A x, int@A y) { }
+
+    public static long@A multiplyHigh(long@A x, long@A y) { }
+
+    public static int@A floorDiv(int@A x, int@A y) { }
+
+    public static long@A floorDiv(long@A x, int@A y) { }
+
+    public static long@A floorDiv(long@A x, long@A y) { }
+
+    public static int@A floorMod(int@A x, int@A y) { }
+
+    public static int@A floorMod(long@A x, int@A y) { }
+
+    public static long@A floorMod(long@A x, long@A y) { }
+
+    public static int@A abs(int@A a) { }
+
+    public static int@A absExact(int@A a) { }
+
+    public static long@A abs(long@A a) { }
+
+    public static long@A absExact(long@A a) { }
+
+    public static float@A abs(float@A a) { }
+
+    public static double@A abs(double@A a) { }
+
+    public static int@A max(int@A a, int@A b) { }
+
+    public static long@A max(long@A a, long@A b) { }
+
+    public static float@A max(float@A a, float@A b) { }
+
+    public static double@A max(double@A a, double@A b) { }
+
+    public static int@A min(int@A a, int@A b) { }
+
+    public static long@A min(long@A a, long@A b) { }
+
+    public static float@A min(float@A a, float@A b) { }
+
+    public static double@A min(double@A a, double@A b) { }
+
+    public static double@A fma(double@A a, double@A b, double@A c) { }
+
+    public static float@A fma(float@A a, float@A b, float@A c) { }
+
+    public static double@A ulp(double@A d) { }
+
+    public static float@A ulp(float@A f) { }
+
+    public static double@A signum(double@A d) { }
+
+    public static float@A signum(float@A f) { }
+
+    public static double@A sinh(double@A x) { }
+
+    public static double@A cosh(double@A x) { }
+
+    public static double@A tanh(double@A x) { }
+
+    public static double@A hypot(double@A x, double@A y) { }
+
+    public static double@A expm1(double@A x) { }
+
+    public static double@A log1p(double@A x) { }
+
+    public static double@A copySign(double@A magnitude, double@A sign) { }
+
+    public static float@A copySign(float@A magnitude, float@A sign) { }
+
+    public static int@A getExponent(float@A f) { }
+
+    public static int@A getExponent(double@A d) { }
+
+    public static double@A nextAfter(double@A start, double@A direction) { }
+
+    public static float@A nextAfter(float@A start, double@A direction) { }
+
+    public static double@A nextUp(double@A d) { }
+
+    public static float@A nextUp(float@A f) { }
+
+    public static double@A nextDown(double@A d) { }
+
+    public static float@A nextDown(float@A f) { }
+
+    public static double@A scalb(double@A d, int@A scaleFactor) { }
+
+    public static float@A scalb(float@A f, int@A scaleFactor) { }
+
+}

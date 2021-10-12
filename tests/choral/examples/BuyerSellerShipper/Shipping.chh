@@ -1,0 +1,13 @@
+package choral.examples.BuyerSellerShipperUtils;
+
+public class Shipping@A {
+
+		private Shipping( String@A title ){
+		}
+
+		public Shipping@A to( String@A address ){
+		}
+
+		public void ship(){
+		}
+}

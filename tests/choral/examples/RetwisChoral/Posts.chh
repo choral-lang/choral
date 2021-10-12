@@ -1,0 +1,9 @@
+package choral.examples.RetwisChoral;
+
+import java.util.List;
+
+public class Posts@R{
+
+    static Posts@R of( List@R< String > followers, List@R< String > followed, List@R< Post > posts );
+
+}
