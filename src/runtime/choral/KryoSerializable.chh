@@ -1,3 +1,0 @@
-package choral.runtime.Serializers;
-
-public interface KryoSerializable@( A ){}

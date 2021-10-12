@@ -1,8 +1,0 @@
-package choral.examples.VitalsStreamingUtils;
-
-public class SignatureRegistry@A {
-
-	public static Boolean@A isValid( Signature@A signature ){
-	}
-
-}

@@ -1,7 +1,0 @@
-package choral.examples.VitalsStreamingUtils;
-
-public class PatientsRegistry@A {
-
-	public static String@A getPseudoID( String@A name ){}
-
-}

@@ -1,7 +1,0 @@
-/* Choral Header Version 0.1 */
-
-package java.io;
-
-public interface Serializable@A {
-
-}

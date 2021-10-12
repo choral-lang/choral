@@ -1,5 +1,0 @@
-package choral.runtime.TLSChannel;
-
-import choral.channels.SymChannel;
-
-public interface TLSChannel@( A, B )< T@X > extends SymChannel@( A, B )< T > {}

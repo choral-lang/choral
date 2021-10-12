@@ -1,2 +1,0 @@
-#!/bin/sh
-java -cp $CHORAL_HOME/choral.jar:$CHORAL_HOME/choral-base.jar choral.Choral "$@"

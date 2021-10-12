@@ -1,7 +1,0 @@
-package choral.examples.VitalsStreamingUtils;
-
-public class Signature@A {
-
-	public Signature( String@A signature ){}
-
-}
