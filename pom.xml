@@ -13,11 +13,11 @@
 
     <modules>
         <module>dist</module>
-		<module>base</module>
+	<module>base</module>
         <module>choral</module>
         <module>choral-unit</module>
         <module>compare</module>
         <module>runtime</module>
-	</modules>
+    </modules>
 
 </project>
