@@ -1,9 +1,0 @@
-package java.security;
-
-public class MessageDigest@A {
-
-    public static MessageDigest@A getInstance( String@A algorithm ){}
-
-    public Object@A digest( Object@A input) {}
-
-}

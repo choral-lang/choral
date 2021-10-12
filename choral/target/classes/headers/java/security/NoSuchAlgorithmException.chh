@@ -1,6 +1,0 @@
-package java.security;
-
-public class NoSuchAlgorithmException@A {
-
-	public void printStackTrace(){}
-}
