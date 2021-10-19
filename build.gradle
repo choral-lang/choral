@@ -94,7 +94,7 @@ sourceSets {
 	}
 	compare {
 		java.srcDir 'src/compare/java'
-		runtimeClasspath += compileClasspath += sourceSets.main.runtimeClasspath
+		runtimeClasspath += compileClasspath += sourceSets.main.runtimeClasspath + configurations.compare + sourceSets.choralUnit.runtimeClasspath + sourceSets.choralUnit.output + sourceSets.base.output + sourceSets.runtime.output
 	}
 }
 
