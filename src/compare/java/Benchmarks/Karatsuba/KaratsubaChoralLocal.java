@@ -30,6 +30,7 @@ public class KaratsubaChoralLocal {
 			List< Path > num_files = Files.list( Path.of( CoupleGenerator.filepath ) ).collect(
 					Collectors.toList());
 			ExecutorService executors = Executors.newFixedThreadPool( 3 );
+			int i = 0;
 			for( Path numbers : num_files ){
 				int idx = Integer.parseInt(
 						numbers.getFileName().toString().split( "numbers_" )[1].split( ".csv" )[0] );
@@ -44,10 +45,11 @@ public class KaratsubaChoralLocal {
 					Pair< SymChannel_A< Object >, SymChannel_B< Object > > ch_CA = TestUtils.newLocalChannel( "ch_CA" );
 					long start = System.nanoTime();
 					Future< ? > f1 = executors.submit( () -> { Karatsuba_A.multiply( left, right, ch_AB.left(), ch_CA.right() ); } );
-					Future< ? > f2 = executors.submit( () -> { Karatsuba_B.multiply( ch_AB.right(), ch_BC.left() ); } );
-					Future< ? > f3 = executors.submit( () -> { Karatsuba_C.multiply( ch_BC.right(), ch_CA.left() ); } );
-					f1.get(); f2.get(); f3.get(); // wait for termination of the runnables
+					executors.submit( () -> { Karatsuba_B.multiply( ch_AB.right(), ch_BC.left() ); } );
+					executors.submit( () -> { Karatsuba_C.multiply( ch_BC.right(), ch_CA.left() ); } );
+					f1.get();
 					times.add( System.nanoTime() - start );
+//					System.out.println( "done " + i++ );
 				}
 				try {
 					Files.createDirectories( Path.of( filepath + folder ) );

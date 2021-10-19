@@ -30,8 +30,8 @@ apply plugin: 'java-library'
 apply plugin: 'antlr'
 apply plugin: 'application'
 
-sourceCompatibility = 14
-targetCompatibility = 14
+sourceCompatibility = 16
+targetCompatibility = 16
 
 mainClassName = 'choral.compiler.Compiler'
 def jarOutputFolder = "dist"
@@ -65,6 +65,7 @@ dependencies {
 
 	// compare dependencies
 	compare 'com.typesafe.akka:akka-actor-typed_2.13:2.6.9'
+	compare 'org.apache.commons:commons-math3:3.6.1'
 }
 
 repositories {

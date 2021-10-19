@@ -9,12 +9,6 @@ import akka.actor.typed.javadsl.Receive;
 
 public class Karatsuba extends AbstractBehavior< KaratsubaMessage > {
 
-	private static final ActorSystem< KaratsubaMessage > system = ActorSystem.create( Karatsuba.create(), "KaratsubaTest" );
-
-//	public static void main( String[] args ) {
-//		system.tell( new KaratsubaOperation( 1241243L, 15214123L ) );
-//	}
-
 	public static Behavior< KaratsubaMessage > create(){
 		return Behaviors.setup( Karatsuba::new );
 	}
@@ -35,11 +29,13 @@ public class Karatsuba extends AbstractBehavior< KaratsubaMessage > {
 	KaratsubaRequest requestMessage;
 
 	private Behavior< KaratsubaMessage > onReceive( KaratsubaOperation n ) {
+//		System.out.println( "onStart" );
 		getContext().getSelf().tell( new KaratsubaRequest( n, getContext().getSelf() , new KaratsubaResponse() ) );
 		return this;
 	}
 
 	private Behavior< KaratsubaMessage > onReceive( KaratsubaRequest n ) {
+//		System.out.println( "onReceive" );
 		Long left = n.operation().left();
 		Long right = n.operation().right();
 		if( left > 10 || right > 10 ){
@@ -93,6 +89,7 @@ public class Karatsuba extends AbstractBehavior< KaratsubaMessage > {
 	}
 
 	private Behavior< KaratsubaMessage > onReceive( KaratsubaResponse n ){
+//		System.out.println( "Multiplication response: " + n.response() );
 		return Behaviors.stopped();
 	}
 

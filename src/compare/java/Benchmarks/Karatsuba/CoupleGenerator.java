@@ -15,7 +15,7 @@ public class CoupleGenerator {
 
 		for( int idx = 0; idx < series.length; idx++ ) {
 			StringBuilder content = new StringBuilder();
-			for( int i = 0; i < 100; i++ ) {
+			for( int i = 0; i < 1000; i++ ) {
 				long left = rnd( series[ idx ] );
 				long right = rnd( series[ idx ] );
 				long prod = left * right;

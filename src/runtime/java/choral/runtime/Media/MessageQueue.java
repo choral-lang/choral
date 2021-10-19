@@ -21,6 +21,7 @@
 
 package choral.runtime.Media;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -28,13 +29,15 @@ import java.util.concurrent.ExecutionException;
 public class MessageQueue {
 
 	private final LinkedList< CompletableFuture< Object > > sendQueue = new LinkedList<>();
-	private final LinkedList< CompletableFuture< Object > > recvQueue = new LinkedList<>();
+	private final ArrayList< CompletableFuture< Object > > recvQueue = new ArrayList<>();
 
-	public MessageQueue(){}
+	public MessageQueue() {
+	}
 
-	public synchronized void send( Object message ){
-			for ( int i = 0; i < recvQueue.size(); i++ ) {
-				if ( !recvQueue.get( i ).isDone() ) {
+	public void send( Object message ) {
+		synchronized( this ) {
+			for( int i = 0; i < recvQueue.size(); i++ ) {
+				if( !recvQueue.get( i ).isDone() ) {
 					recvQueue.remove( i ).complete( message );
 					return;
 				}
@@ -42,19 +45,20 @@ public class MessageQueue {
 			CompletableFuture< Object > c = new CompletableFuture<>();
 			c.complete( message );
 			sendQueue.add( c );
+		}
 	}
 
 	public < T > T recv() throws ExecutionException, InterruptedException {
 		CompletableFuture< Object > c;
-		synchronized ( this ){
-			if( sendQueue.isEmpty() ){
+		synchronized( this ) {
+			if( sendQueue.isEmpty() ) {
 				c = new CompletableFuture<>();
 				recvQueue.add( c );
 			} else {
 				c = sendQueue.removeFirst();
 			}
 		}
-		return ( T ) c.get();
+		return (T) c.get();
 	}
 
 
