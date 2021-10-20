@@ -20,10 +20,14 @@ public class KaratsubaAkkaLocal {
 	public static final String folder = "akka_local/";
 
 	public static void main( String[] args ) {
+		runBenchmarks( false );
+		runBenchmarks( true );
+	}
+
+	public static void runBenchmarks( boolean write ) {
 		try {
 			List< Path > num_files = Files.list( Path.of( CoupleGenerator.filepath ) ).collect(
 					Collectors.toList() );
-			int i = 0;
 			for( Path numbers : num_files ) {
 				int idx = Integer.parseInt(
 						numbers.getFileName().toString()
@@ -35,23 +39,19 @@ public class KaratsubaAkkaLocal {
 					String[] couple = line.split( "," );
 					long left = Long.parseLong( couple[ 0 ] );
 					long right = Long.parseLong( couple[ 1 ] );
+					long start = System.nanoTime();
 					ActorSystem< KaratsubaMessage > system =
 							ActorSystem.create( Karatsuba.create(), "KaratsubaTest" );
-					long start = System.nanoTime();
 					system.tell( new KaratsubaOperation( left, right ) );
 					system.getWhenTerminated();
 					system.terminate();
 					times.add( System.nanoTime() - start );
-					System.out.println( "done " + i++ );
 				}
-				try {
+				if( write ) {
 					Files.createDirectories( Path.of( filepath + folder ) );
 					FileWriter w = new FileWriter( filepath + folder + "results_" + idx + ".csv" );
 					w.write( times.toString() );
 					w.close();
-				} catch( IOException e ) {
-					System.out.println( "An error occurred." );
-					e.printStackTrace();
 				}
 			}
 		} catch( IOException e ) {

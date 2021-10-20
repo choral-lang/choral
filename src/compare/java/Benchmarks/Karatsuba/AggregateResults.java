@@ -19,9 +19,9 @@ public class AggregateResults {
 		map.put( "sequential", "sequential" );
 		map.put( "choral_local", "choral" );
 		map.put( "akka_local", "akka" );
-		map.put( "choral_socket", "d" );
+		map.put( "choral_socket", "choralSock" );
 
-		List< String > tiers = List.of( new String[] { "sequential", "choral_local", "akka_local", "choral_socket" } );
+		List< String > tiers = List.of( new String[] { "sequential", "choral_local", "choral_socket", "akka_local" } );
 
 		for( int tier_idx = 0; tier_idx < 6; tier_idx++ ){
 			System.out.println( " - - - TIER: " + tier_idx + " - - - " );

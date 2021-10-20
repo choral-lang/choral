@@ -77,10 +77,12 @@ public class TestUtils {
 		ServerSocketByteChannel serverListener =
 				ServerSocketByteChannel.at( "localhost", server_port );
 		CompletableFuture< SerializerChannel_B > f = new CompletableFuture<>();
+		CompletableFuture< Void > listenerReady = new CompletableFuture<>();
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		executor.submit( () -> {
 			while( serverListener.isOpen() ) {
 				try {
+					listenerReady.complete( null );
 					f.complete(
 							new SerializerChannel_B(
 									KryoSerializer.getInstance(),
@@ -93,7 +95,7 @@ public class TestUtils {
 				}
 			}
 		} );
-
+		listenerReady.get();
 		SerializerChannel_A ch_A = new SerializerChannel_A( KryoSerializer.getInstance(),
 				new WrapperByteChannel_A( SocketByteChannel.connect( "localhost", server_port ) )
 		);
