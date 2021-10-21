@@ -116,22 +116,25 @@ public class TestChoral {
 //						"RemoteFunction", ALL_WORLDS )
 //				,
 //				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "AuthResult" ) ),
+//						List.of( subFolder( sourceFolder, "AuthResult" ), subFolder( sourceFolder, "BiPair" ) ),
 //						targetFolder,
 //						List.of( "src/tests/choral/examples/BiPair", "src/tests/choral/examples/DistAuth" ),
 //						"AuthResult", ALL_WORLDS )
 //				,
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "DistAuth" ) ),
-//						targetFolder,
-//						List.of(
-//								"src/tests/choral/examples/DistAuth",
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "DistAuth" ),
+								subFolder( sourceFolder, "AuthResult" ),
+								subFolder( sourceFolder, "BiPair" )
+						),
+						targetFolder,
+						List.of(
+								"src/tests/choral/examples/DistAuth",
 //								"src/tests/choral/examples/AuthResult",
 //								"src/tests/choral/examples/BiPair",
-//								"src/runtime/choral",
-//								"src/choralUnit/choral"
-//						),
-//						"DistAuth", ALL_WORLDS )
+								"src/runtime/choral",
+								"src/choralUnit/choral"
+						),
+						"DistAuth", ALL_WORLDS )
 //				,
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "DistAuth" ) ),
@@ -277,14 +280,14 @@ public class TestChoral {
 //						),
 //						"RetwisLoginManager", ALL_WORLDS )
 //				,
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "RetwisChoral" ) ),
-						targetFolder,
-						List.of(
-								"src/tests/choral/examples/RetwisChoral",
-								"src/runtime/choral"
-						),
-						"Retwis", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "RetwisChoral" ) ),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/RetwisChoral",
+//								"src/runtime/choral"
+//						),
+//						"Retwis", ALL_WORLDS )
 //				new CompilationRequest(
 //					List.of( "src/tests/choral/MustFail" ),
 //					targetFolder,
@@ -298,8 +301,8 @@ public class TestChoral {
 //		generateCHH( headersRequest );
 //		check( compilationRequests );
 		compilationRequests.forEach( TestChoral::project );
-//		version();
 //		projectionPerformance( compilationRequests );
+//		version();
 
 	}
 
