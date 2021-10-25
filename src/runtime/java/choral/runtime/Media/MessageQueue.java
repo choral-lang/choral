@@ -29,38 +29,59 @@ import java.util.concurrent.*;
 
 public class MessageQueue {
 
-	private final LinkedList< CompletableFuture< Object > > sendQueue = new LinkedList<>();
-	private final ArrayList< CompletableFuture< Object > > recvQueue = new ArrayList<>();
+	private final LinkedList< Object > sendQueue = new LinkedList<>();
+	private CompletableFuture< Object > recvFuture = new CompletableFuture<>();
 
-	public MessageQueue() {
-	}
+	public MessageQueue() {}
 
 	public void send( Object message ) {
-		synchronized( this ) {
-			for( int i = 0; i < recvQueue.size(); i++ ) {
-				if( !recvQueue.get( i ).isDone() ) {
-					recvQueue.remove( i ).complete( message );
-					return;
-				}
+		synchronized( this ){
+			if ( recvFuture.isDone() ){
+				sendQueue.add( message );
+			} else {
+				recvFuture.complete( message );
 			}
-			CompletableFuture< Object > c = new CompletableFuture<>();
-			c.complete( message );
-			sendQueue.add( c );
 		}
 	}
 
 	public < T > T recv() throws ExecutionException, InterruptedException {
 		CompletableFuture< Object > c;
 		synchronized( this ) {
-			if( sendQueue.isEmpty() ) {
-				c = new CompletableFuture<>();
-				recvQueue.add( c );
-			} else {
-				c = sendQueue.removeFirst();
+			c = recvFuture;
+			recvFuture = new CompletableFuture<>();
+			if( !sendQueue.isEmpty() ){
+				recvFuture.complete( sendQueue.removeFirst() );
 			}
 		}
 		return (T) c.get();
 	}
+
+//	public void send( Object message ) {
+//		synchronized( this ) {
+//			for( int i = 0; i < recvQueue.size(); i++ ) {
+//				if( !recvQueue.get( i ).isDone() ) {
+//					recvQueue.remove( i ).complete( message );
+//					return;
+//				}
+//			}
+//			CompletableFuture< Object > c = new CompletableFuture<>();
+//			c.complete( message );
+//			sendQueue.add( c );
+//		}
+//	}
+//
+//	public < T > T recv() throws ExecutionException, InterruptedException {
+//		CompletableFuture< Object > c;
+//		synchronized( this ) {
+//			if( sendQueue.isEmpty() ) {
+//				c = new CompletableFuture<>();
+//				recvQueue.add( c );
+//			} else {
+//				c = sendQueue.removeFirst();
+//			}
+//		}
+//		return (T) c.get();
+//	}
 
 
 }

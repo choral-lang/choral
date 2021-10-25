@@ -28,7 +28,6 @@ public class KaratsubaChoralLocal {
 
 	public static void main( String[] args ) {
 		runBenchmarks( false );
-		runBenchmarks( false );
 		runBenchmarks( true );
 	}
 
