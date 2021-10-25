@@ -6,13 +6,17 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
+import java.util.concurrent.CompletableFuture;
+
 public class Karatsuba extends AbstractBehavior< KaratsubaMessage > {
 
-	public static Behavior< KaratsubaMessage > create(){
+	public static Behavior< KaratsubaMessage > create() {
 		return Behaviors.setup( Karatsuba::new );
 	}
 
-	private Karatsuba( ActorContext< KaratsubaMessage > context ){ super( context ); }
+	private Karatsuba( ActorContext< KaratsubaMessage > context ) {
+		super( context );
+	}
 
 	@Override
 	public Receive< KaratsubaMessage > createReceive() {
@@ -26,10 +30,13 @@ public class Karatsuba extends AbstractBehavior< KaratsubaMessage > {
 	Long z0, z1, z2;
 	Integer splitter;
 	KaratsubaRequest requestMessage;
+	CompletableFuture< Long > result;
 
 	private Behavior< KaratsubaMessage > onReceive( KaratsubaOperation n ) {
 //		System.out.println( "onStart" );
-		getContext().getSelf().tell( new KaratsubaRequest( n, getContext().getSelf() , new KaratsubaResponse() ) );
+		result = n.result();
+		getContext().getSelf().tell(
+				new KaratsubaRequest( n, getContext().getSelf(), new KaratsubaResponse() ) );
 		return this;
 	}
 
@@ -37,26 +44,31 @@ public class Karatsuba extends AbstractBehavior< KaratsubaMessage > {
 //		System.out.println( "onReceive" );
 		Long left = n.operation().left();
 		Long right = n.operation().right();
-		if( left > 10 || right > 10 ){
+		if( left > 10 || right > 10 ) {
 			n.sender().tell( n.response().complete( left * right ) );
 		} else {
 			requestMessage = n; // we will respond asynchronously
 			Double m = Math.max( Math.log10( left ), Math.log10( right ) ) + 1;
 			Integer m2 = Double.valueOf( m / 2 ).intValue();
 			splitter = Double.valueOf( Math.pow( 10, m2 ) ).intValue();
-			Long left_h = left / splitter; Long left_l = left % splitter;
-			Long right_h = right / splitter; Long right_l = right % splitter;
+			Long left_h = left / splitter;
+			Long left_l = left % splitter;
+			Long right_h = right / splitter;
+			Long right_l = right % splitter;
 			getContext().spawn( Karatsuba.create(), "Z0" )
 					.tell( new KaratsubaRequest(
-							new KaratsubaOperation( left_l, right_l ), getContext().getSelf(), new Z0_KaratsubaResponse() )
+							new KaratsubaOperation( left_l, right_l, n.operation().result() ), getContext().getSelf(),
+							new Z0_KaratsubaResponse() )
 					);
 			getContext().spawn( Karatsuba.create(), "Z2" )
 					.tell( new KaratsubaRequest(
-							new KaratsubaOperation( left_h, right_h ), getContext().getSelf(), new Z2_KaratsubaResponse() )
+							new KaratsubaOperation( left_h, right_h, n.operation().result() ), getContext().getSelf(),
+							new Z2_KaratsubaResponse() )
 					);
 			getContext().spawn( Karatsuba.create(), "Z1" )
 					.tell( new KaratsubaRequest(
-							new KaratsubaOperation( left_l + left_h, right_l + right_h ), getContext().getSelf(), new Z2_KaratsubaResponse() )
+							new KaratsubaOperation( left_l + left_h, right_l + right_h, n.operation().result() ),
+							getContext().getSelf(), new Z2_KaratsubaResponse() )
 					);
 		}
 		return this;
@@ -80,15 +92,17 @@ public class Karatsuba extends AbstractBehavior< KaratsubaMessage > {
 		return this;
 	}
 
-	private void checkResponse(){
-		if( z0 != null && z1 != null & z2 != null ){
+	private void checkResponse() {
+		if( z0 != null && z1 != null & z2 != null ) {
 			z1 = z1 - z2 - z0;
-			requestMessage.sender().tell( requestMessage.response().complete( z2 * splitter * splitter + z1 * splitter + z0 ) );
+			requestMessage.sender().tell( requestMessage.response().complete(
+					z2 * splitter * splitter + z1 * splitter + z0 ) );
 		}
 	}
 
-	private Behavior< KaratsubaMessage > onReceive( KaratsubaResponse n ){
+	private Behavior< KaratsubaMessage > onReceive( KaratsubaResponse n ) {
 //		System.out.println( "Multiplication response: " + n.response() );
+		result.complete( n.response() );
 		return Behaviors.stopped();
 	}
 

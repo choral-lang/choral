@@ -35,9 +35,13 @@ public class KaratsubaSequential {
 					String[] couple = line.split( "," );
 					long left = Long.parseLong( couple[ 0 ] );
 					long right = Long.parseLong( couple[ 1 ] );
+					long result = Long.parseLong( couple[ 2 ] );
 					long start = System.nanoTime();
-					Karatsuba.multiply( left, right );
+					long thisResult = Karatsuba.multiply( left, right );
 					times.add( System.nanoTime() - start );
+					if( thisResult != result ){
+						throw new RuntimeException( "The procedure returned an unexpected result, expected: " + result + ", computed: " + thisResult );
+					}
 				}
 				if( write ){
 					Files.createDirectories( Path.of( filepath + folder ) );

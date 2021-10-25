@@ -35,17 +35,18 @@ public class KaratsubaChoralLocal {
 		try {
 			List< Path > num_files = Files.list( Path.of( CoupleGenerator.filepath ) ).collect(
 					Collectors.toList() );
+			ExecutorService executors = Executors.newFixedThreadPool( 3 );
 			for( Path numbers : num_files ) {
 				int idx = Integer.parseInt(
 						numbers.getFileName().toString().split( "numbers_" )[ 1 ].split(
 								".csv" )[ 0 ] );
 				String[] num_lines = Files.readString( numbers ).split( "\n" );
 				List< Long > times = new LinkedList<>();
-				ExecutorService executors = Executors.newFixedThreadPool( 3 );
 				for( String line : num_lines ) {
 					String[] couple = line.split( "," );
 					long left = Long.parseLong( couple[ 0 ] );
 					long right = Long.parseLong( couple[ 1 ] );
+					long result = Long.parseLong( couple[ 2 ] );
 					Pair< SymChannel_A< Object >, SymChannel_B< Object > > ch_AB = TestUtils.newLocalChannel(
 							"ch_AB" );
 					Pair< SymChannel_A< Object >, SymChannel_B< Object > > ch_BC = TestUtils.newLocalChannel(
@@ -53,17 +54,14 @@ public class KaratsubaChoralLocal {
 					Pair< SymChannel_A< Object >, SymChannel_B< Object > > ch_CA = TestUtils.newLocalChannel(
 							"ch_CA" );
 					long start = System.nanoTime();
-					Future< ? > f1 = executors.submit( () -> {
-						Karatsuba_A.multiply( left, right, ch_AB.left(), ch_CA.right() );
-					} );
-					executors.submit( () -> {
-						Karatsuba_B.multiply( ch_AB.right(), ch_BC.left() );
-					} );
-					executors.submit( () -> {
-						Karatsuba_C.multiply( ch_BC.right(), ch_CA.left() );
-					} );
-					f1.get();
+					Future< ? > f1 = executors.submit( () -> Karatsuba_A.multiply( left, right, ch_AB.left(), ch_CA.right() ) );
+					executors.submit( () -> Karatsuba_B.multiply( ch_AB.right(), ch_BC.left() ) );
+					executors.submit( () -> Karatsuba_C.multiply( ch_BC.right(), ch_CA.left() ) );
+					boolean correct = f1.get().equals( result );
 					times.add( System.nanoTime() - start );
+					if( ! correct ){
+						throw new RuntimeException( "The procedure returned an unexpected result, expected: " + result + ", computed: " + f1.get() );
+					}
 				}
 				if( write ){
 					Files.createDirectories( Path.of( filepath + folder ) );
@@ -71,8 +69,8 @@ public class KaratsubaChoralLocal {
 					w.write( times.toString() );
 					w.close();
 				}
-				executors.shutdown();
 			}
+			executors.shutdown();
 		} catch( IOException | ExecutionException | InterruptedException e ) {
 			e.printStackTrace();
 		}

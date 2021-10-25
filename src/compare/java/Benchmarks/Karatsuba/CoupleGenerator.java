@@ -22,7 +22,7 @@ public class CoupleGenerator {
 				int pow = (int) Math.log10( prod );
 				if( prod > 0 && power[ idx ] == pow ) {
 					//System.out.println( left + " * " + right + " = " + prod + "(" + pow + ")" );
-					content.append( left ).append( "," ).append( right ).append( "\n" );
+					content.append( left ).append( "," ).append( right ).append(",").append( left*right ).append( "\n" );
 				} else {
 					i--;
 				}

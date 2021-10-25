@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 public class KaratsubaAkkaLocal {
@@ -28,6 +30,7 @@ public class KaratsubaAkkaLocal {
 		try {
 			List< Path > num_files = Files.list( Path.of( CoupleGenerator.filepath ) ).collect(
 					Collectors.toList() );
+			int i = 1;
 			for( Path numbers : num_files ) {
 				int idx = Integer.parseInt(
 						numbers.getFileName().toString()
@@ -39,13 +42,21 @@ public class KaratsubaAkkaLocal {
 					String[] couple = line.split( "," );
 					long left = Long.parseLong( couple[ 0 ] );
 					long right = Long.parseLong( couple[ 1 ] );
+					long result = Long.parseLong( couple[ 2 ] );
 					ActorSystem< KaratsubaMessage > system =
 							ActorSystem.create( Karatsuba.create(), "KaratsubaTest" );
 					long start = System.nanoTime();
-					system.tell( new KaratsubaOperation( left, right ) );
+					CompletableFuture< Long > thisResult = new CompletableFuture<>();
+					system.tell( new KaratsubaOperation( left, right, thisResult ) );
+					thisResult.get();
 					system.getWhenTerminated();
 					system.terminate();
 					times.add( System.nanoTime() - start );
+					if( ! thisResult.get().equals( result ) ){
+						throw new RuntimeException( "The procedure returned an unexpected result, expected: " + result + ", computed: " + thisResult.get() );
+					} else {
+						System.out.println( "done " + i++);
+					}
 				}
 				if( write ) {
 					Files.createDirectories( Path.of( filepath + folder ) );
@@ -54,7 +65,7 @@ public class KaratsubaAkkaLocal {
 					w.close();
 				}
 			}
-		} catch( IOException e ) {
+		} catch( IOException | ExecutionException | InterruptedException e ) {
 			e.printStackTrace();
 		}
 	}
