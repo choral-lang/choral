@@ -540,8 +540,8 @@ public class Compiler {
 	}
 
     /*public static void printInLispFormat(String src) {
-        // 😱😱😱😱 toStringTree modifies the shape of the tree
-        // 😱😱😱😱 and it cannot be used by other visitors!
+        // toStringTree modifies the shape of the tree
+        // and it cannot be used by other visitors!
         System.out.println("\n\n* * * * * * LISP Format * * * * * *");
         ChoralParser p = parseSource(src);
         System.out.println(p.compilationUnit().toStringTree(p));
