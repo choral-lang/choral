@@ -39,9 +39,9 @@ public class KaratsubaAkkaLocal {
 					String[] couple = line.split( "," );
 					long left = Long.parseLong( couple[ 0 ] );
 					long right = Long.parseLong( couple[ 1 ] );
-					long start = System.nanoTime();
 					ActorSystem< KaratsubaMessage > system =
 							ActorSystem.create( Karatsuba.create(), "KaratsubaTest" );
+					long start = System.nanoTime();
 					system.tell( new KaratsubaOperation( left, right ) );
 					system.getWhenTerminated();
 					system.terminate();

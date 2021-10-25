@@ -28,6 +28,7 @@ public class KaratsubaChoralLocal {
 
 	public static void main( String[] args ) {
 		runBenchmarks( false );
+		runBenchmarks( false );
 		runBenchmarks( true );
 	}
 
@@ -35,13 +36,13 @@ public class KaratsubaChoralLocal {
 		try {
 			List< Path > num_files = Files.list( Path.of( CoupleGenerator.filepath ) ).collect(
 					Collectors.toList() );
-			ExecutorService executors = Executors.newFixedThreadPool( 3 );
 			for( Path numbers : num_files ) {
 				int idx = Integer.parseInt(
 						numbers.getFileName().toString().split( "numbers_" )[ 1 ].split(
 								".csv" )[ 0 ] );
 				String[] num_lines = Files.readString( numbers ).split( "\n" );
 				List< Long > times = new LinkedList<>();
+				ExecutorService executors = Executors.newFixedThreadPool( 3 );
 				for( String line : num_lines ) {
 					String[] couple = line.split( "," );
 					long left = Long.parseLong( couple[ 0 ] );
@@ -71,8 +72,8 @@ public class KaratsubaChoralLocal {
 					w.write( times.toString() );
 					w.close();
 				}
+				executors.shutdown();
 			}
-			executors.shutdown();
 		} catch( IOException | ExecutionException | InterruptedException e ) {
 			e.printStackTrace();
 		}
