@@ -20,22 +20,34 @@ class KaratsubaRequest implements KaratsubaMessage {
 }
 
 // complete response
-class KaratsubaResponse implements KaratsubaMessage {
-	private Long response;
+abstract class KaratsubaResponse implements KaratsubaMessage {
+	protected Long result;
 	public KaratsubaResponse() {}
-	public KaratsubaResponse complete( Long response ){
-		this.response = response;
-		return this;
-	}
-	public Long response() { return response; }
+	public abstract KaratsubaResponse complete( Long result );
+	public Long result() { return result; }
 }
 
 // partial responses
-class Z0_KaratsubaResponse extends KaratsubaResponse {}
+class Z0_KaratsubaResponse extends KaratsubaResponse {
+	public Z0_KaratsubaResponse complete( Long result ) {
+		this.result = result;
+		return this;
+	}
+}
 
-class Z1_KaratsubaResponse extends KaratsubaResponse {}
+class Z1_KaratsubaResponse extends KaratsubaResponse {
+	public Z1_KaratsubaResponse complete( Long result ) {
+		this.result = result;
+		return this;
+	}
+}
 
-class Z2_KaratsubaResponse extends KaratsubaResponse {}
+class Z2_KaratsubaResponse extends KaratsubaResponse {
+	public Z2_KaratsubaResponse complete( Long result ) {
+		this.result = result;
+		return this;
+	}
+}
 
 
 

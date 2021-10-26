@@ -3,6 +3,7 @@ package Benchmarks.Karatsuba;
 import Benchmarks.Karatsuba.Akka.Karatsuba;
 import Benchmarks.Karatsuba.Akka.KaratsubaMessage;
 import Benchmarks.Karatsuba.Akka.KaratsubaOperation;
+import Benchmarks.Karatsuba.Akka.KaratsubaRootRequest;
 import akka.actor.typed.ActorSystem;
 
 import java.io.FileWriter;
@@ -46,14 +47,15 @@ public class KaratsubaAkkaLocal {
 					ActorSystem< KaratsubaMessage > system =
 							ActorSystem.create( Karatsuba.create(), "KaratsubaTest" );
 					long start = System.nanoTime();
-					CompletableFuture< Long > thisResult = new CompletableFuture<>();
-					system.tell( new KaratsubaOperation( left, right, thisResult ) );
-					thisResult.get();
+					KaratsubaRootRequest request = new KaratsubaRootRequest( new KaratsubaOperation( left, right ) );
+					system.tell( request );
+					request.resultFuture().get();
 					system.getWhenTerminated();
 					system.terminate();
 					times.add( System.nanoTime() - start );
-					if( ! thisResult.get().equals( result ) ){
-						throw new RuntimeException( "The procedure returned an unexpected result, expected: " + result + ", computed: " + thisResult.get() );
+					if( !request.resultFuture().get().equals( result ) ){
+						System.out.println( "azz " + request.resultFuture().get() + " instead of " + result );
+//						throw new RuntimeException( "The procedure returned an unexpected result, expected: " + result + ", computed: " + request.resultFuture().get() );
 					} else {
 						System.out.println( "done " + i++);
 					}
