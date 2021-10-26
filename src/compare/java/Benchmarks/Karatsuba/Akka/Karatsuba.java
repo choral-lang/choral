@@ -56,15 +56,15 @@ public class Karatsuba extends AbstractBehavior< KaratsubaMessage > {
 							new KaratsubaOperation( left_l, right_l ), getContext().getSelf(),
 							new Z0_KaratsubaResponse() )
 					);
-			getContext().spawn( Karatsuba.create(), "Z1" )
-					.tell( new KaratsubaRequest(
-							new KaratsubaOperation( left_h, right_h ), getContext().getSelf(),
-							new Z1_KaratsubaResponse() )
-					);
 			getContext().spawn( Karatsuba.create(), "Z2" )
 					.tell( new KaratsubaRequest(
+							new KaratsubaOperation( left_h, right_h ), getContext().getSelf(),
+							new Z2_KaratsubaResponse() )
+					);
+			getContext().spawn( Karatsuba.create(), "Z1" )
+					.tell( new KaratsubaRequest(
 							new KaratsubaOperation( left_l + left_h, right_l + right_h ),
-							getContext().getSelf(), new Z2_KaratsubaResponse() )
+							getContext().getSelf(), new Z1_KaratsubaResponse() )
 					);
 		}
 		return this;
@@ -91,7 +91,7 @@ public class Karatsuba extends AbstractBehavior< KaratsubaMessage > {
 	private void checkResponse() {
 //		System.out.println( "checkResponse" );
 		if( z0 != null && z1 != null & z2 != null ) {
-			System.out.println( "checkResponse 2" );
+//			System.out.println( "checkResponse 2" );
 			z1 = z1 - z2 - z0;
 			sendResponse( z2 * splitter * splitter + z1 * splitter + z0 );
 		}
