@@ -29,6 +29,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+// 				DO NOT USE THIS
+// 		DEPRECATED, DO NOT USE THIS CLASS,
+//      USE THE BENCHMARK METHODS OF
+//      		   TESTCHORAL
+//
+
 public class Benchmark {
 
 	static final List< String > ALL_WORLDS = Collections.singletonList( "" );
@@ -39,17 +45,16 @@ public class Benchmark {
 		String destinationFolder = "src/tests/java/";
 
 		Map< String, List< String > > targetTemplates = Stream.of(
-				new AbstractMap.SimpleEntry<>( "HelloRoles1", ALL_WORLDS ),
-				new AbstractMap.SimpleEntry<>( "HelloRoles", ALL_WORLDS ),
-				new AbstractMap.SimpleEntry<>( "ConsumeItems", ALL_WORLDS ),
-				new AbstractMap.SimpleEntry<>( "BuyerSellerShipper", ALL_WORLDS ),
-				new AbstractMap.SimpleEntry<>( "DistAuth", ALL_WORLDS ),
-				new AbstractMap.SimpleEntry<>( "DistAuth5", ALL_WORLDS ),
-				new AbstractMap.SimpleEntry<>( "DistAuth10", ALL_WORLDS ),
-				new AbstractMap.SimpleEntry<>( "VitalsStreaming", ALL_WORLDS ),
-				new AbstractMap.SimpleEntry<>( "Mergesort", ALL_WORLDS ),
-				new AbstractMap.SimpleEntry<>( "Quicksort", ALL_WORLDS ),
-				new AbstractMap.SimpleEntry<>( "Karatsuba", ALL_WORLDS )
+				new AbstractMap.SimpleEntry<>( "HelloRoles", ALL_WORLDS )
+//				new AbstractMap.SimpleEntry<>( "ConsumeItems", ALL_WORLDS ),
+//				new AbstractMap.SimpleEntry<>( "BuyerSellerShipper", ALL_WORLDS ),
+//				new AbstractMap.SimpleEntry<>( "DistAuth", ALL_WORLDS ),
+//				new AbstractMap.SimpleEntry<>( "DistAuth5", ALL_WORLDS ),
+//				new AbstractMap.SimpleEntry<>( "DistAuth10", ALL_WORLDS ),
+//				new AbstractMap.SimpleEntry<>( "VitalsStreaming", ALL_WORLDS ),
+//				new AbstractMap.SimpleEntry<>( "Mergesort", ALL_WORLDS ),
+//				new AbstractMap.SimpleEntry<>( "Quicksort", ALL_WORLDS ),
+//				new AbstractMap.SimpleEntry<>( "Karatsuba", ALL_WORLDS )
 		).collect( Collectors.toMap( Map.Entry::getKey, Map.Entry::getValue ) );
 		// WARM UP
 //		Arrays.stream( new Boolean[ 100 ] ).forEach( e -> {
@@ -71,7 +76,7 @@ public class Benchmark {
 
 		for ( Map.Entry< String, List< String > > targetTemplate : targetTemplates.entrySet() ) {
 			AtomicInteger i = new AtomicInteger( 0 );
-			OptionalDouble average = Arrays.stream( new Boolean[ 1000 ] ).mapToLong( e -> {
+			OptionalDouble average = Arrays.stream( new Boolean[ 2 ] ).mapToLong( e -> {
 				try {
 					if( i.addAndGet( 1 ) % 10 == 0 )
 						System.out.print( "." );
@@ -80,8 +85,9 @@ public class Benchmark {
 							new String[]{
 //									"-dry",
 //									"-debug",
+									"epp",
 									"-d", destinationFolder,
-									"-t", targetFolder,
+									"-t", targetFolder + "/" + targetTemplate.getKey(),
 									targetTemplate.getKey() },
 							targetTemplate.getValue().toArray()
 					) );

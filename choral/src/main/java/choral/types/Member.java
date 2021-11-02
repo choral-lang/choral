@@ -434,7 +434,7 @@ public abstract class Member implements HasSource {
 		}
 
 		public boolean isOverrideEquivalentTo( HigherCallable other ) {
-			// (§8.4.2)
+			// (sec. 8.4.2)
 			return this.sameSignatureOf( other ) ||
 					( this.sameSignatureErasureOf( other ) == !other.sameSignatureErasureOf(
 							this ) );

@@ -423,7 +423,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 							&& declaredFields().noneMatch(
 							y -> x.identifier().equals( y.identifier() ) ) )
 					.forEach( inheritedFields::add );
-			// inherited methods (§8.4.8)
+			// inherited methods (sec. 8.4.8)
 			extendedClassesOrInterfaces().flatMap( GroundReferenceType::methods )
 					.filter( x -> x.isAccessibleFrom( this ) )
 					.forEach( x -> {

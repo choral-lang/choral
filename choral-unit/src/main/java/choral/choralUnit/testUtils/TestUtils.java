@@ -27,6 +27,10 @@ import choral.runtime.LocalChannel.LocalChannel_A;
 import choral.runtime.LocalChannel.LocalChannel_B;
 import choral.runtime.Media.MessageQueue;
 import choral.runtime.Media.PipedByteChannel;
+import choral.runtime.Media.ServerSocketByteChannel;
+import choral.runtime.Media.SocketByteChannel;
+import choral.runtime.SerializerChannel.SerializerChannel_A;
+import choral.runtime.SerializerChannel.SerializerChannel_B;
 import choral.runtime.TLSByteChannel.TSLByteChannel_A;
 import choral.runtime.TLSByteChannel.TSLByteChannel_B;
 import choral.runtime.Serializers.KryoSerializer;
@@ -45,6 +49,7 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.*;
 
 public class TestUtils {
 
@@ -60,6 +65,43 @@ public class TestUtils {
 		} else {
 			return channels.remove( id );
 		}
+	}
+	public static Pair< SerializerChannel_A, SerializerChannel_B > newSocketChannel()
+			throws ExecutionException, InterruptedException {
+		return newSocketChannel( 0 );
+	}
+
+	public static Pair< SerializerChannel_A, SerializerChannel_B > newSocketChannel( int server_port )
+			throws ExecutionException, InterruptedException {
+		server_port = server_port == 0 ? ThreadLocalRandom.current().nextInt( 10000, 65000 ) : server_port;
+		ServerSocketByteChannel serverListener =
+				ServerSocketByteChannel.at( "localhost", server_port );
+		CompletableFuture< SerializerChannel_B > f = new CompletableFuture<>();
+		CompletableFuture< Void > listenerReady = new CompletableFuture<>();
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+		executor.submit( () -> {
+			while( serverListener.isOpen() ) {
+				try {
+					listenerReady.complete( null );
+					f.complete(
+							new SerializerChannel_B(
+									KryoSerializer.getInstance(),
+									new WrapperByteChannel_B( serverListener.getNext() )
+							)
+					);
+					serverListener.close();
+				} catch( IOException e ) {
+					e.printStackTrace();
+				}
+			}
+		} );
+		listenerReady.get();
+		SerializerChannel_A ch_A = new SerializerChannel_A( KryoSerializer.getInstance(),
+				new WrapperByteChannel_A( SocketByteChannel.connect( "localhost", server_port ) )
+		);
+		SerializerChannel_B ch_B = f.get();
+		executor.shutdown();
+		return Pair.of( ch_A, ch_B );
 	}
 
 	public static synchronized Pair< TLSChannel_A< Object >, TLSChannel_B< Object > > newLocalTLSChannel( String id ){
@@ -90,8 +132,8 @@ public class TestUtils {
 		KeyStore ks = KeyStore.getInstance( "JKS" );
 		KeyStore ts = KeyStore.getInstance( "JKS" );
 		String password = "password";
-		String keyStoreFile = "src/tests/java/choral/channels/keystore.jks";
-		String trustStoreFile = "src/tests/java/choral/channels/truststore.ts";
+		String keyStoreFile = "src/tests/java/choral/channels/TLSPipeChannel/keystore.jks";
+		String trustStoreFile = "src/tests/java/choral/channels/TLSPipeChannel/truststore.ts";
 		ks.load( new FileInputStream( keyStoreFile ), password.toCharArray() );
 		ts.load( new FileInputStream( trustStoreFile ), password.toCharArray() );
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance( "SunX509" );

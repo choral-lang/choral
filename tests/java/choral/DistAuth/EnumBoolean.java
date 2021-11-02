@@ -1,6 +1,6 @@
 package choral.DistAuth;
-import choral.annotations.Choreography;
 import choral.runtime.Serializers.KryoSerializable;
+import choral.annotations.Choreography;
 
 @KryoSerializable
 @Choreography( role = "A", name = "EnumBoolean" )

@@ -291,7 +291,7 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 			upperBound().flatMap( GroundReferenceType::fields )
 					.filter( x -> x.isAccessibleFrom( this ) )
 					.forEach( inheritedFields::add );
-			// inherited methods (§8.4.8)
+			// inherited methods (sec. 8.4.8)
 			upperBound().flatMap( GroundReferenceType::methods )
 					.filter( x -> x.isAccessibleFrom( this ) )
 					.forEach( x -> {

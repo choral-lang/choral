@@ -21,41 +21,67 @@
 
 package choral.runtime.Media;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedList;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 
 public class MessageQueue {
 
-	private final LinkedList< CompletableFuture< Object > > sendQueue = new LinkedList<>();
-	private final LinkedList< CompletableFuture< Object > > recvQueue = new LinkedList<>();
+	private final LinkedList< Object > sendQueue = new LinkedList<>();
+	private CompletableFuture< Object > recvFuture = new CompletableFuture<>();
 
-	public MessageQueue(){}
+	public MessageQueue() {}
 
-	public synchronized void send( Object message ){
-			for ( int i = 0; i < recvQueue.size(); i++ ) {
-				if ( !recvQueue.get( i ).isDone() ) {
-					recvQueue.remove( i ).complete( message );
-					return;
-				}
+	public void send( Object message ) {
+		synchronized( this ){
+			if ( recvFuture.isDone() ){
+				sendQueue.add( message );
+			} else {
+				recvFuture.complete( message );
 			}
-			CompletableFuture< Object > c = new CompletableFuture<>();
-			c.complete( message );
-			sendQueue.add( c );
+		}
 	}
 
 	public < T > T recv() throws ExecutionException, InterruptedException {
 		CompletableFuture< Object > c;
-		synchronized ( this ){
-			if( sendQueue.isEmpty() ){
-				c = new CompletableFuture<>();
-				recvQueue.add( c );
-			} else {
-				c = sendQueue.removeFirst();
+		synchronized( this ) {
+			c = recvFuture;
+			recvFuture = new CompletableFuture<>();
+			if( !sendQueue.isEmpty() ){
+				recvFuture.complete( sendQueue.removeFirst() );
 			}
 		}
-		return ( T ) c.get();
+		return (T) c.get();
 	}
+
+//	public void send( Object message ) {
+//		synchronized( this ) {
+//			for( int i = 0; i < recvQueue.size(); i++ ) {
+//				if( !recvQueue.get( i ).isDone() ) {
+//					recvQueue.remove( i ).complete( message );
+//					return;
+//				}
+//			}
+//			CompletableFuture< Object > c = new CompletableFuture<>();
+//			c.complete( message );
+//			sendQueue.add( c );
+//		}
+//	}
+//
+//	public < T > T recv() throws ExecutionException, InterruptedException {
+//		CompletableFuture< Object > c;
+//		synchronized( this ) {
+//			if( sendQueue.isEmpty() ) {
+//				c = new CompletableFuture<>();
+//				recvQueue.add( c );
+//			} else {
+//				c = sendQueue.removeFirst();
+//			}
+//		}
+//		return (T) c.get();
+//	}
 
 
 }
