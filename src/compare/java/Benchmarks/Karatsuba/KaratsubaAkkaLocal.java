@@ -44,9 +44,9 @@ public class KaratsubaAkkaLocal {
 					long left = Long.parseLong( couple[ 0 ] );
 					long right = Long.parseLong( couple[ 1 ] );
 					long result = Long.parseLong( couple[ 2 ] );
+					long start = System.nanoTime();
 					ActorSystem< KaratsubaMessage > system =
 							ActorSystem.create( Karatsuba.create(), "KaratsubaTest" );
-					long start = System.nanoTime();
 					KaratsubaRootRequest request = new KaratsubaRootRequest( new KaratsubaOperation( left, right ) );
 					system.tell( request );
 					request.resultFuture().get();

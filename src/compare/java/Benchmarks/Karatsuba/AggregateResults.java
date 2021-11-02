@@ -16,12 +16,12 @@ public class AggregateResults {
 
 	public static void main( String[] args ) throws IOException {
 		HashMap< String, String > map = new HashMap<>();
-		map.put( "sequential", "sequential" );
-		map.put( "choral_local", "choral" );
-		map.put( "akka_local", "akka" );
-		map.put( "choral_socket", "choralSock" );
+		map.put( "sequential", "seq" );
+		map.put( "choral_local", "cSetup" );
+		map.put( "akka_local", "aSetup" );
+//		map.put( "choral_socket", "choralSock" );
 
-		List< String > tiers = List.of( new String[] { "sequential", "choral_local", "choral_socket", "akka_local" } );
+		List< String > tiers = List.of( new String[] { "sequential", "choral_local", "akka_local" } );
 
 		for( int tier_idx = 0; tier_idx < 6; tier_idx++ ){
 			System.out.println( " - - - TIER: " + tier_idx + " - - - " );
