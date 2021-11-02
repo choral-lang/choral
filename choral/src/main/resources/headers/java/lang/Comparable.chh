@@ -1,0 +1,8 @@
+/* Choral Header Version 0.1 */
+package java.lang;
+
+public interface Comparable@A<T@X> {
+
+    public int@A compareTo(T@A o);
+
+}
