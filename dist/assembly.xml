@@ -1,0 +1,57 @@
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+
+  <id>dist-assembly</id>
+
+  <formats>
+      <format>zip</format>
+  </formats>
+  <fileSets>
+        <fileSet>
+            <directory>../choral/target</directory>
+            <includes>
+                <include>choral-${choral.version}.jar</include>
+            </includes>
+            <outputDirectory>choral/dist</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>../base/target</directory>
+            <includes>
+                <include>base-${choral.version}.jar</include>
+            </includes>
+            <outputDirectory>choral/dist</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>../choral-unit/target</directory>
+            <includes>
+                <include>choral-unit-${choral.version}.jar</include>
+            </includes>
+            <outputDirectory>choral/dist</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>../runtime/target</directory>
+            <includes>
+                <include>runtime-${choral.version}.jar</include>
+            </includes>
+            <outputDirectory>choral/dist</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>../scripts</directory>
+            <includes>
+                <include>choral</include>
+            </includes>
+            <outputDirectory>choral/launchers</outputDirectory>
+        </fileSet>
+    </fileSets>
+
+  <includeBaseDirectory>false</includeBaseDirectory>
+
+  <!--<dependencySets>
+      <dependencySet>
+          <outputDirectory>choral/dist</outputDirectory>
+          <useProjectArtifact>false</useProjectArtifact>
+          <unpack>false</unpack>
+      </dependencySet>
+  </dependencySets>-->
+</assembly>

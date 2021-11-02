@@ -1,6 +1,0 @@
-/* Choral Header Version 0.1 */
-package java.lang;
-
-public final class Short@A extends Number@A {
-
-}
