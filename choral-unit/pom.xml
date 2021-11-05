@@ -62,7 +62,7 @@
         <dependency>
             <groupId>org.choral-lang</groupId>
             <artifactId>runtime</artifactId>
-            <version>1.0.0</version>
+            <version>${choral.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.classgraph</groupId>
