@@ -51,7 +51,7 @@
         <dependency>
             <groupId>org.choral-lang</groupId>
             <artifactId>base</artifactId>
-            <version>1.0.0</version>
+            <version>${choral.version}</version>
         </dependency>
 		<dependency>
             <groupId>org.antlr</groupId>
