@@ -3,10 +3,13 @@ build/
 dist/
 release/
 out/
+target/
 .idea/workspace.xml
 .idea/modules.xml
 gradlew
 gradlew.bat
+.classpath
+.settings
 
 # antlr generated files
 src/main/java/choral/grammar/
