@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding">
-    <file url="file://$PROJECT_DIR$/src/compare/java/Benchmarks/Karatsuba/KaratsubaChoralLocal.java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/src/main/java/choral/types/HigherClassOrInterface.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/base/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/choral-unit/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/choral/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/choral/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/compare/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/runtime/src/main/java" charset="UTF-8" />
   </component>
 </project>

@@ -1,4 +1,3 @@
-.gradle/
 build/
 dist/
 release/
@@ -6,16 +5,9 @@ out/
 target/
 .idea/workspace.xml
 .idea/modules.xml
-gradlew
-gradlew.bat
 .classpath
-.settings
+.settings/
+.project
 
 # antlr generated files
-src/main/java/choral/grammar/
-
-.idea/gradle.xml
-.idea/gradle.xml
-.idea/misc.xml
-gradle/wrapper/gradle-wrapper.jar
-gradle/wrapper/gradle-wrapper.properties
+choral/src/main/java/choral/grammar/

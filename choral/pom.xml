@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.choral-lang</groupId>
-		<artifactId>distribution</artifactId>
-		<relativePath>../pom.xml</relativePath>
-		<version>0.1.1</version>
-	</parent>
-	<version>${choral.version}</version>
-	<groupId>org.choral-lang</groupId>
-	<artifactId>choral</artifactId>
-	<name>Choral</name>
-	<url>${choral.url}</url>
-	<packaging>jar</packaging>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.choral-lang</groupId>
+        <artifactId>distribution</artifactId>
+        <relativePath>../pom.xml</relativePath>
+        <version>0.1.1</version>
+    </parent>
+    <version>${choral.version}</version>
+    <groupId>org.choral-lang</groupId>
+    <artifactId>choral</artifactId>
+    <name>Choral</name>
+    <url>${choral.url}</url>
+    <packaging>jar</packaging>
 
     <properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>14</maven.compiler.source>
-		<maven.compiler.target>14</maven.compiler.target>
-	</properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>14</maven.compiler.source>
+        <maven.compiler.target>14</maven.compiler.target>
+    </properties>
 
     <build>
         <plugins>
@@ -30,8 +30,8 @@
                 <configuration>
                     <archive>
                         <manifest>
-                        <addClasspath>true</addClasspath>
-                        <mainClass>choral.Choral</mainClass>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>choral.Choral</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -43,7 +43,27 @@
                 <configuration>
                     <mainClass>choral.compiler.DebuggingParser</mainClass>
                 </configuration>
-        </plugin>
+            </plugin>
+            <plugin>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-maven-plugin</artifactId>
+                <version>4.3</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>
+                                <argument>-package</argument>
+                                <argument>choral.grammar</argument>
+                            </arguments>
+                            <outputDirectory>${basedir}/src/main/java/choral/grammar</outputDirectory>
+                            <visitor>true</visitor>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -53,7 +73,7 @@
             <artifactId>base</artifactId>
             <version>${choral.version}</version>
         </dependency>
-		<dependency>
+        <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4</artifactId>
             <version>4.5.3</version>
@@ -88,5 +108,5 @@
             <artifactId>google-collect</artifactId>
             <version>1.0</version>
         </dependency> -->
-	</dependencies>
+    </dependencies>
 </project>
