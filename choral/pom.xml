@@ -59,6 +59,7 @@
                                 <argument>choral.grammar</argument>
                             </arguments>
                             <outputDirectory>${basedir}/src/main/java/choral/grammar</outputDirectory>
+                            <visitor>true</visitor>
                         </configuration>
                     </execution>
                 </executions>
