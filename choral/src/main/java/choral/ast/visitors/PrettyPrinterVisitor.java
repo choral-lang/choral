@@ -162,7 +162,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		}
 		if( !n.typeParameters().isEmpty() ) {
 			s.append( '<' );
-			s.append( visitAndCollect( n.worldParameters(), SPACED_COMMA ) );
+			s.append( visitAndCollect( n.typeParameters(), SPACED_COMMA ) );
 			s.append( '>' );
 		}
 		return s.toString();
