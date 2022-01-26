@@ -21,14 +21,11 @@
 
 package choral.ast.body;
 
-import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.visitors.ChoralVisitorInterface;
-import choral.types.Member;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 
 public class InterfaceMethodDefinition extends MethodDefinition {
 	private final EnumSet< InterfaceMethodModifier > modifiers;

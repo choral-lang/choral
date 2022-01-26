@@ -21,7 +21,7 @@
 
 package choral.ast.visitors;
 
-import choral.ast.type.*;
+import choral.ast.type.WorldArgument;
 
 public abstract class AbstractSoloistProjector< T > extends AbstractChoralVisitor< T > {
 

@@ -23,7 +23,6 @@ package choral.exceptions;
 
 import choral.ast.Node;
 import choral.ast.Position;
-import choral.types.Type;
 
 import java.util.Optional;
 

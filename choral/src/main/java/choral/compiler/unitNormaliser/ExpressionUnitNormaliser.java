@@ -28,7 +28,9 @@ import choral.compiler.soloist.Utils;
 import choral.exceptions.ChoralException;
 import choral.utils.Pair;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ExpressionUnitNormaliser

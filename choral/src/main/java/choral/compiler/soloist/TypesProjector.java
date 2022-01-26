@@ -29,15 +29,12 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractSoloistProjector;
-import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.unitNormaliser.UnitRepresentation;
 import choral.exceptions.ChoralException;
 import choral.types.DataType;
 import choral.types.GroundDataType;
 import choral.types.HigherDataType;
-import choral.types.Type;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;

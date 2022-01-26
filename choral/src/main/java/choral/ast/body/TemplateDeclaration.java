@@ -25,13 +25,10 @@ import choral.ast.Name;
 import choral.ast.Position;
 import choral.ast.type.FormalTypeParameter;
 import choral.ast.type.FormalWorldParameter;
-import choral.types.HigherClass;
 import choral.types.HigherClassOrInterface;
 
 import java.util.List;
 import java.util.Optional;
-
-import static choral.ast.body.ClassModifier.*;
 
 public abstract class TemplateDeclaration extends RefType {
 

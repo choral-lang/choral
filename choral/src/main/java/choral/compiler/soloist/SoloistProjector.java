@@ -22,9 +22,9 @@
 package choral.compiler.soloist;
 
 import choral.ast.Name;
-import choral.ast.body.*;
 import choral.ast.body.Class;
 import choral.ast.body.Enum;
+import choral.ast.body.Interface;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.ChoralVisitor;

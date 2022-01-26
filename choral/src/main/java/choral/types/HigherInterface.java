@@ -22,7 +22,6 @@
 package choral.types;
 
 import choral.ast.Node;
-import choral.exceptions.StaticVerificationException;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -32,7 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static choral.types.Modifier.*;
-import static choral.types.ModifierUtils.*;
+import static choral.types.ModifierUtils.assertLegalModifiers;
 
 public final class HigherInterface extends HigherClassOrInterface implements Interface {
 

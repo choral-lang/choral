@@ -22,14 +22,12 @@
 package choral.compiler;
 
 import choral.ast.CompilationUnit;
-import choral.ast.Name;
 import choral.ast.Node;
-import choral.ast.statement.*;
+import choral.ast.statement.Statement;
+import choral.ast.statement.VariableDeclarationStatement;
 import choral.ast.visitors.ChoralVisitor;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 public class AstDesugarer extends ChoralVisitor {
 

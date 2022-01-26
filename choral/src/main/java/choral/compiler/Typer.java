@@ -32,9 +32,10 @@ import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.StaticVerificationException;
-import choral.types.*;
 import choral.types.Package;
-import choral.types.Universe.*;
+import choral.types.*;
+import choral.types.Universe.PrimitiveTypeTag;
+import choral.types.Universe.SpecialTypeTag;
 import choral.utils.Formatting;
 import choral.utils.Pair;
 

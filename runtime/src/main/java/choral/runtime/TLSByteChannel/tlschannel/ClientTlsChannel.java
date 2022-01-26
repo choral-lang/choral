@@ -21,17 +21,15 @@
 
 package choral.runtime.TLSByteChannel.tlschannel;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import java.nio.channels.ByteChannel;
-import javax.net.ssl.SSLSession;
-
 import choral.runtime.TLSByteChannel.tlschannel.impl.ByteBufferSet;
 import choral.runtime.TLSByteChannel.tlschannel.impl.TlsChannelImpl;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSession;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
 import java.nio.channels.Channel;
 import java.util.Optional;
 import java.util.function.Consumer;

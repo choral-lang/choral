@@ -21,31 +21,28 @@
 
 package choral.runtime.TLSByteChannel.tlschannel.impl;
 
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-
-import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLEngineResult.Status;
-import javax.net.ssl.SSLEngine;
-
-import java.nio.channels.ByteChannel;
-import java.nio.channels.ClosedChannelException;
-
-import static javax.net.ssl.SSLEngineResult.HandshakeStatus.*;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
-
 import choral.runtime.TLSByteChannel.tlschannel.*;
 import choral.runtime.TLSByteChannel.tlschannel.util.TlsChannelCallbackException;
 import choral.runtime.TLSByteChannel.tlschannel.util.Util;
 
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult;
+import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+import javax.net.ssl.SSLEngineResult.Status;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
+
+import static javax.net.ssl.SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING;
 
 public class TlsChannelImpl implements ByteChannel {
 

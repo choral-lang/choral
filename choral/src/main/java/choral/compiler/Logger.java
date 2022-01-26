@@ -21,8 +21,6 @@
 
 package choral.compiler;
 
-import choral.ast.Node;
-
 import java.util.EnumSet;
 
 public class Logger {

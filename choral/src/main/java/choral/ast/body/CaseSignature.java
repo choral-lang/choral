@@ -21,12 +21,12 @@
 
 package choral.ast.body;
 
-import java.util.List;
-
 import choral.ast.Name;
 import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.visitors.ChoralVisitorInterface;
+
+import java.util.List;
 
 /**
  * enum E (W1,...)<T1(W1,...),T2,...> {

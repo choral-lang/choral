@@ -25,7 +25,6 @@ import choral.ast.Name;
 import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.WithTypeAnnotation;
-import choral.types.Member;
 
 import java.util.Optional;
 

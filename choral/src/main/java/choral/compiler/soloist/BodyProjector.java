@@ -25,7 +25,6 @@ import choral.ast.Name;
 import choral.ast.Node;
 import choral.ast.body.*;
 import choral.ast.expression.MethodCallExpression;
-import choral.ast.statement.NilStatement;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractSoloistProjector;
