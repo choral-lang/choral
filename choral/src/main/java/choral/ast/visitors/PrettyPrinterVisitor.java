@@ -94,12 +94,10 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		m.put( "modifiers", visitModifiers( n.modifiers() ) );
 		m.put( "annotations", visitAndCollect( n.annotations(), NEWLINE, NEWLINE ) );
 
-		StringBuilder template = new StringBuilder();
-		template.append( "${annotations}$modifiers$interface $type$extends {" + NEWLINE +
+		String template = "${annotations}$modifiers$interface $type$extends {" + NEWLINE +
 				"#if( $!{methods.trim()} != '')$methods" + NEWLINE + "#end" +
-				"}" + NEWLINE
-		);
-		return Utils.createVelocityTemplate( template.toString() ).render( m );
+				"}" + NEWLINE;
+		return Utils.createVelocityTemplate( template ).render( m );
 	}
 
 	@Override
@@ -120,14 +118,12 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		m.put( "modifiers", visitModifiers( n.modifiers() ) );
 		m.put( "annotations", visitAndCollect( n.annotations(), NEWLINE, NEWLINE ) );
 
-		StringBuilder template = new StringBuilder();
-		template.append( "${annotations}$modifiers$class $type$extends$implements {" + NEWLINE +
+		String template = "${annotations}$modifiers$class $type$extends$implements {" + NEWLINE +
 				"#if( $!{fields.trim()} != '' )$fields" + _2NEWLINE + "#end" +
 				"#if( $!{constructors.trim()} != '' )$constructors" + _2NEWLINE + "#end" +
 				"#if( $!{methods.trim()} != '')$methods" + _2NEWLINE + "#end" +
-				"}" + NEWLINE
-		);
-		return Utils.createVelocityTemplate( template.toString() ).render( m );
+				"}" + NEWLINE;
+		return Utils.createVelocityTemplate( template ).render( m );
 	}
 
 	@Override
@@ -138,12 +134,10 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		m.put( "cases", indent( visitAndCollect( n.cases(), SPACED_COMMA, NEWLINE ) ) );
 		m.put( "modifiers", visitModifiers( n.modifiers() ) );
 		m.put( "annotations", visitAndCollect( n.annotations(), NEWLINE, NEWLINE ) );
-		StringBuilder template = new StringBuilder();
-		template.append( "${annotations}$modifiers$enum $type {" + NEWLINE +
+		String template = "${annotations}$modifiers$enum $type {" + NEWLINE +
 				"#if( $!{cases.trim()} != '' )$cases" + NEWLINE + "#end" +
-				"}" + NEWLINE
-		);
-		return Utils.createVelocityTemplate( template.toString() ).render( m );
+				"}" + NEWLINE;
+		return Utils.createVelocityTemplate( template ).render( m );
 	}
 
 
@@ -196,10 +190,9 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 	@Override
 	public String visit( SwitchStatement n ) {
 		HashMap< String, Object > m = new HashMap<>();
-		StringBuilder template = new StringBuilder();
-		template.append( "switch( $guard ){" + NEWLINE +
+		String template = "switch( $guard ){" + NEWLINE +
 				"$cases" + NEWLINE +
-				"}" );
+				"}";
 		m.put( "guard", visit( n.guard() ) );
 		String cases = n.cases().entrySet().stream().map(
 				e -> {
@@ -211,17 +204,16 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		).collect( Collectors.joining( NEWLINE ) );
 		m.put( "cases", indent( cases ) );
 
-		return Utils.createVelocityTemplate( template.toString() )
+		return Utils.createVelocityTemplate( template )
 				.render( m ) + getContinuation( n, "" );
 	}
 
 	@Override
 	public String visit( TryCatchStatement n ) {
 		HashMap< String, Object > m = new HashMap<>();
-		StringBuilder template = new StringBuilder();
-		template.append( "try {" + NEWLINE +
+		String template = "try {" + NEWLINE +
 				"$body" + NEWLINE +
-				"}" + NEWLINE + "$catches" );
+				"}" + NEWLINE + "$catches";
 		m.put( "body", indent( visit( n.body() ) ) );
 		String catches = n.catches().stream().map( e ->
 				"catch ( " + visit( e.left() ) + " ) { " + NEWLINE +
@@ -229,7 +221,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		).collect( Collectors.joining( NEWLINE ) );
 		m.put( "catches", catches );
 
-		return Utils.createVelocityTemplate( template.toString() )
+		return Utils.createVelocityTemplate( template )
 				.render( m ) + getContinuation( n, "" );
 	}
 
