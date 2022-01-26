@@ -36,7 +36,7 @@ public enum FieldModifier {
 		return this.label;
 	}
 
-	private FieldModifier( String label ) {
+	FieldModifier( String label ) {
 		this.label = label;
 	}
 }

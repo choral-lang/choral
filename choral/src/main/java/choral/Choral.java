@@ -281,7 +281,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		int tabSize = 2;       // size of soft tabs
 		int contextLines = 1;  // number lines to display before and after the error line
 		// -----------------------------
-		String formattedSnippet = "";
+		StringBuilder formattedSnippet = new StringBuilder();
 		Position p = e.position();
 		try( Stream< String > allLines = Files.lines( Paths.get( p.sourceFile() ) ) ) {
 			int lineDigits = (int) Math.ceil( Math.log10( p.line() ) ) + 1;
@@ -294,8 +294,8 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 					.collect( Collectors.toList() );
 			for( int i = 1; i <= snippetLines.size(); i++ ) {
 				String line = snippetLines.get( i - 1 );
-				formattedSnippet += String.format( format, baseLine + i,
-						line.replace( "\t", " ".repeat( tabSize ) ) );
+				formattedSnippet.append( String.format( format, baseLine + i,
+						line.replace( "\t", " ".repeat( tabSize ) ) ) );
 				if( i == errorLine ) {
 					// get the column with tabs (2 spaces)
 					int length = p.column();
@@ -304,8 +304,9 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 							length += tabSize - 1;
 						}
 					}
-					formattedSnippet += " ".repeat( lineDigits + 2 ) + " | " + "-".repeat(
-							length ) + "^\n";
+					formattedSnippet.append( " ".repeat( lineDigits + 2 ) ).append( " | " ).append(
+							"-".repeat(
+									length ) ).append( "^\n" );
 				}
 			}
 		} catch( IOException ex ) {

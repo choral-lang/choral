@@ -75,6 +75,4 @@ public class ClassInstantiationExpression extends InvocationExpression {
 		return m.merge( this, (ClassInstantiationExpression) n );
 	}
 
-	;
-
 }

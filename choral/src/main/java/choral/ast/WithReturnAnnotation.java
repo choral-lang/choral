@@ -22,7 +22,7 @@
 package choral.ast;
 
 public interface WithReturnAnnotation {
-	public enum ReturnAnnotation {
+	enum ReturnAnnotation {
 		Returns,
 		DoesNotReturn,
 		NotSet

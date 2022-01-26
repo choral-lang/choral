@@ -36,7 +36,7 @@ public enum InterfaceMethodModifier {
 		return this.label;
 	}
 
-	private InterfaceMethodModifier( String label ) {
+	InterfaceMethodModifier( String label ) {
 		this.label = label;
 	}
 }

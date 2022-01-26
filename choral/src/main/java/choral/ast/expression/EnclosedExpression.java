@@ -58,5 +58,4 @@ public class EnclosedExpression extends Expression {
 		return m.merge( this, (EnclosedExpression) n );
 	}
 
-	;
 }

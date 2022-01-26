@@ -56,7 +56,7 @@ public interface GroundClass extends GroundClassOrInterface, Class {
 	@Override
 	default boolean isAssignableTo( GroundDataTypeOrVoid type ) {
 		if( isBoxedType() && type instanceof GroundPrimitiveDataType ) {
-			return unboxedType().isAssignableTo( (GroundPrimitiveDataType) type );
+			return unboxedType().isAssignableTo( type );
 		} else {
 			return !type.isVoid() && ( type instanceof GroundDataType )
 					&& isSubtypeOf( (GroundDataType) type );

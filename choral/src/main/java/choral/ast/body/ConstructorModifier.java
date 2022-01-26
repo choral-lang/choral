@@ -33,7 +33,7 @@ public enum ConstructorModifier {
 		return this.label;
 	}
 
-	private ConstructorModifier( String label ) {
+	ConstructorModifier( String label ) {
 		this.label = label;
 	}
 }
