@@ -113,12 +113,11 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 				return "";
 			}
 			HashMap< String, Object > m = new HashMap<>();
-			StringBuilder template = new StringBuilder();
-			template.append( "{" + NEWLINE +
+			String template = "{" + NEWLINE +
 					"$body" + NEWLINE +
-					"}" );
+					"}";
 			m.put( "body", indent( visit( n.body() ) ) );
-			return Utils.createVelocityTemplate( template.toString() )
+			return Utils.createVelocityTemplate( template )
 					.render( m ) + getContinuation( n, "" );
 		} else {
 			return super.visit( n );
