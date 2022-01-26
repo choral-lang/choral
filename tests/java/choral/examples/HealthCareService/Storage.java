@@ -35,31 +35,33 @@ import java.util.UUID;
 public class Storage {
 
 	private static final String STORAGE_CHANNEL = UUID.randomUUID().toString();
-	private static final TLSChannel_A< Object > forClients = TestUtils_A.newLocalTLSChannel( STORAGE_CHANNEL, Unit.id );
-	private static final TLSChannel_B< Object > recvChannel = TestUtils_B.newLocalTLSChannel( Unit.id, STORAGE_CHANNEL );
+	private static final TLSChannel_A< Object > forClients = TestUtils_A.newLocalTLSChannel(
+			STORAGE_CHANNEL, Unit.id );
+	private static final TLSChannel_B< Object > recvChannel = TestUtils_B.newLocalTLSChannel(
+			Unit.id, STORAGE_CHANNEL );
 	private static boolean keepRunning = false;
 
-	public static TLSChannel_A< Object> connect () {
+	public static TLSChannel_A< Object > connect() {
 		keepRunning = true;
 		return forClients;
 	}
 
-	public static void disconnect(){
+	public static void disconnect() {
 		keepRunning = false;
 		forClients.< StorageMsg >com( new StorageMsg( AuthToken.create(), null ) );
 	}
 
-	public void authenticate( TLSChannel_A< Object > channel ){
+	public void authenticate( TLSChannel_A< Object > channel ) {
 		AuthResult_B authResult = new DistAuth_Service( channel ).authenticate();
 		authResult.right().ifPresent( this::loop );
 	}
 
-	public void loop( AuthToken token ){
+	public void loop( AuthToken token ) {
 		StorageMsg m = recvChannel.< StorageMsg >com( Unit.id );
-		if( m.token.equals( token ) ){
+		if( m.token.equals( token ) ) {
 			Database.store( m.token.id(), m.data );
 		}
-		if( keepRunning ){
+		if( keepRunning ) {
 			loop( token );
 		}
 	}

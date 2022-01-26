@@ -30,7 +30,7 @@ public class StorageMsg {
 	AuthToken token;
 	Vitals data;
 
-	public StorageMsg ( AuthToken token, Vitals data ) {
+	public StorageMsg( AuthToken token, Vitals data ) {
 		this.token = token;
 		this.data = data;
 	}

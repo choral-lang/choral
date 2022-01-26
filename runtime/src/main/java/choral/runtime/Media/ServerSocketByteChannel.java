@@ -9,7 +9,7 @@ public class ServerSocketByteChannel {
 
 	private final ServerSocketChannel listeningChannel;
 
-	private ServerSocketByteChannel( String hostname, int portNumber ){
+	private ServerSocketByteChannel( String hostname, int portNumber ) {
 		try {
 			this.listeningChannel = ServerSocketChannel.open();
 			listeningChannel.socket().bind( new InetSocketAddress( hostname, portNumber ) );
@@ -19,7 +19,7 @@ public class ServerSocketByteChannel {
 		}
 	}
 
-	public static ServerSocketByteChannel at( String hostname, int portNumber ){
+	public static ServerSocketByteChannel at( String hostname, int portNumber ) {
 		return new ServerSocketByteChannel( hostname, portNumber );
 	}
 
@@ -29,7 +29,7 @@ public class ServerSocketByteChannel {
 		return new SocketByteChannel( channel );
 	}
 
-	public void close(){
+	public void close() {
 		try {
 			listeningChannel.close();
 		} catch( IOException e ) {
@@ -38,7 +38,7 @@ public class ServerSocketByteChannel {
 		}
 	}
 
-	public boolean isOpen(){
+	public boolean isOpen() {
 		return listeningChannel.isOpen();
 	}
 

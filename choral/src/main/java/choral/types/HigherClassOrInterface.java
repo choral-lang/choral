@@ -330,11 +330,11 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		public void finaliseInheritance() {
 			if( !isInheritanceFinalised() ) {
 				allExtendedInterfaces = Stream.concat( extendedInterfaces(),
-						extendedClassesOrInterfaces().flatMap(
-								GroundClassOrInterface::allExtendedInterfaces ) )
+								extendedClassesOrInterfaces().flatMap(
+										GroundClassOrInterface::allExtendedInterfaces ) )
 						.collect( Collectors.toList() );
 				extendedClassesOrInterfaces().flatMap(
-						GroundClassOrInterface::allExtendedInterfaces )
+								GroundClassOrInterface::allExtendedInterfaces )
 						.forEach( x -> {
 							extendedInterfaces().filter( y ->
 									x.typeConstructor() == y.typeConstructor() &&

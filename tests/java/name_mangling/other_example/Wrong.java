@@ -52,8 +52,8 @@ class Wrong@( D, E, F, G ){
 
 public class Wrong {
 	public static class _1_2_3 {
-		public static void main ( String[] args ) {
-		 // HOW DO WE KNOW WHAT INNER CLASS WE SHOULD USE HERE?
+		public static void main( String[] args ) {
+			// HOW DO WE KNOW WHAT INNER CLASS WE SHOULD USE HERE?
 //          THE INSTANTIATION BELOW IS WRONG,
 //          HOW DO WE KNOW WHAT NESTED CLASS
 //          WE SHOULD USE AT INSTANTIATION SITE?
@@ -64,13 +64,41 @@ public class Wrong {
 			X._3_1_2 fde = new X._3_1_2();
 			X._3_2_1 fed = new X._3_2_1();
 			X._1_2_3 gde = new X._1_2_3(); // ????
-			def.m$3$1( "", "" ); def.m$1$2( "", "" ); def.m$3$2( "", "" ); def.m$2$3( "", "" ); def.m$1$3( "", "" );
-			dfe.m$2$1( "", "" ); dfe.m$1$3( "", "" ); dfe.m$2$3( "", "" ); dfe.m$3$2( "", "" ); def.m$1$2( "", "" );
-			edf.m$3$2( "", "" ); edf.m$2$3( "", "" ); edf.m$3$1( "", "" ); edf.m$1$3( "", "" ); edf.m$2$3( "", "" );
-			efd.m$1$2( "", "" ); efd.m$2$1( "", "" ); efd.m$1$3( "", "" ); efd.m$3$1( "", "" ); efd.m$2$1( "", "" );
-			fde.m$2$3( "", "" ); fde.m$3$1( "", "" ); fde.m$2$1( "", "" ); fde.m$1$2( "", "" ); fde.m$3$2( "", "" );
-			fed.m$1$3( "", "" ); fed.m$3$2( "", "" ); fed.m$1$2( "", "" ); fed.m$2$1( "", "" ); fed.m$3$1( "", "" );
-			gde.m$3$1( "", "" ); gde.m$1$2( "", "" ); gde.m$3$2( "", "" ); gde.m$2$3( "", "" ); gde.m$1$3( "", "" ); // ???
+			def.m$3$1( "", "" );
+			def.m$1$2( "", "" );
+			def.m$3$2( "", "" );
+			def.m$2$3( "", "" );
+			def.m$1$3( "", "" );
+			dfe.m$2$1( "", "" );
+			dfe.m$1$3( "", "" );
+			dfe.m$2$3( "", "" );
+			dfe.m$3$2( "", "" );
+			def.m$1$2( "", "" );
+			edf.m$3$2( "", "" );
+			edf.m$2$3( "", "" );
+			edf.m$3$1( "", "" );
+			edf.m$1$3( "", "" );
+			edf.m$2$3( "", "" );
+			efd.m$1$2( "", "" );
+			efd.m$2$1( "", "" );
+			efd.m$1$3( "", "" );
+			efd.m$3$1( "", "" );
+			efd.m$2$1( "", "" );
+			fde.m$2$3( "", "" );
+			fde.m$3$1( "", "" );
+			fde.m$2$1( "", "" );
+			fde.m$1$2( "", "" );
+			fde.m$3$2( "", "" );
+			fed.m$1$3( "", "" );
+			fed.m$3$2( "", "" );
+			fed.m$1$2( "", "" );
+			fed.m$2$1( "", "" );
+			fed.m$3$1( "", "" );
+			gde.m$3$1( "", "" );
+			gde.m$1$2( "", "" );
+			gde.m$3$2( "", "" );
+			gde.m$2$3( "", "" );
+			gde.m$1$3( "", "" ); // ???
 
 		}
 	}

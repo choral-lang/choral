@@ -34,13 +34,13 @@ class BiPair@( A, B )< T >{
 }
 */
 
-public class BiPair{
+public class BiPair {
 
 	public static class _1_2< T > {
 		private T left;
 		private T right;
 
-		public _1_2 ( T left, T right ) {
+		public _1_2( T left, T right ) {
 			this.left = left;
 			this.right = right;
 		}
@@ -58,7 +58,7 @@ public class BiPair{
 		private T left;
 		private T right;
 
-		public _2_1 ( T left, T right ) {
+		public _2_1( T left, T right ) {
 			this.left = left;
 			this.right = right;
 		}

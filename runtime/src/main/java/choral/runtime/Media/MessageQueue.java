@@ -30,11 +30,12 @@ public class MessageQueue {
 	private final LinkedList< Object > sendQueue = new LinkedList<>();
 	private CompletableFuture< Object > recvFuture = new CompletableFuture<>();
 
-	public MessageQueue() {}
+	public MessageQueue() {
+	}
 
 	public void send( Object message ) {
-		synchronized( this ){
-			if ( recvFuture.isDone() ){
+		synchronized( this ) {
+			if( recvFuture.isDone() ) {
 				sendQueue.add( message );
 			} else {
 				recvFuture.complete( message );
@@ -47,7 +48,7 @@ public class MessageQueue {
 		synchronized( this ) {
 			c = recvFuture;
 			recvFuture = new CompletableFuture<>();
-			if( !sendQueue.isEmpty() ){
+			if( !sendQueue.isEmpty() ) {
 				recvFuture.complete( sendQueue.removeFirst() );
 			}
 		}

@@ -493,7 +493,7 @@ public class AstOptimizer implements ChoralVisitor {
 
 		List< Node > bodyMembers = ifPresent( cb.classBodyDeclaration() ).applyOrElse(
 				el -> el.stream().flatMap(
-						e -> visitClassBodyDeclaration( e ).stream() )
+								e -> visitClassBodyDeclaration( e ).stream() )
 						.collect( Collectors.toList() ),
 				Collections::emptyList );
 		List< Field > fields = bodyMembers.stream()

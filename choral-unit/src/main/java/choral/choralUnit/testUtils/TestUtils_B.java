@@ -27,19 +27,19 @@ import choral.runtime.TLSChannel.TLSChannel_B;
 
 public class TestUtils_B {
 
-	public static SymChannel_B< Object > newLocalChannel( String id ){
+	public static SymChannel_B< Object > newLocalChannel( String id ) {
 		return TestUtils.newLocalChannel( id ).right();
 	}
 
-	public static TLSChannel_B< Object > newLocalTLSChannel( String id ){
+	public static TLSChannel_B< Object > newLocalTLSChannel( String id ) {
 		return TestUtils.newLocalTLSChannel( id ).right();
 	}
 
-	public static SymChannel_B< Object > newLocalChannel( Unit o, String id ){
+	public static SymChannel_B< Object > newLocalChannel( Unit o, String id ) {
 		return newLocalChannel( id );
 	}
 
-	public static TLSChannel_B< Object > newLocalTLSChannel( Unit o, String id ){
+	public static TLSChannel_B< Object > newLocalTLSChannel( Unit o, String id ) {
 		return newLocalTLSChannel( id );
 	}
 

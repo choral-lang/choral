@@ -19,7 +19,9 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package generic;import org.apache.velocity.Template;
+package generic;
+
+import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.RuntimeSingleton;
@@ -60,5 +62,5 @@ public class TestVelocity {
 
 		return t;
 	}
-	
+
 }

@@ -39,7 +39,7 @@ public class Benchmark {
 
 	static final List< String > ALL_WORLDS = Collections.singletonList( "" );
 
-	public static void main ( String[] args ) {
+	public static void main( String[] args ) {
 
 		String targetFolder = "src/tests/choral/examples";
 		String destinationFolder = "src/tests/java/";
@@ -74,15 +74,15 @@ public class Benchmark {
 //		} );
 		// BENCHMARK
 
-		for ( Map.Entry< String, List< String > > targetTemplate : targetTemplates.entrySet() ) {
+		for( Map.Entry< String, List< String > > targetTemplate : targetTemplates.entrySet() ) {
 			AtomicInteger i = new AtomicInteger( 0 );
 			OptionalDouble average = Arrays.stream( new Boolean[ 2 ] ).mapToLong( e -> {
 				try {
 					if( i.addAndGet( 1 ) % 10 == 0 )
 						System.out.print( "." );
 					Long start = System.currentTimeMillis();
-					Compiler.main( ( String[] ) ArrayUtils.addAll(
-							new String[]{
+					Compiler.main( (String[]) ArrayUtils.addAll(
+							new String[] {
 //									"-dry",
 //									"-debug",
 									"epp",
@@ -94,7 +94,7 @@ public class Benchmark {
 					Long finish = System.currentTimeMillis();
 					//System.out.println( "Done in: " + ( finish - start ) );
 					return finish - start;
-				} catch ( Exception ex ) {
+				} catch( Exception ex ) {
 					ex.printStackTrace();
 					return 0;
 				}

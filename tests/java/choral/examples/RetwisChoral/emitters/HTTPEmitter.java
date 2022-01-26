@@ -9,6 +9,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+
 import static choral.examples.RetwisChoral.emitters.Emitter.Action.Fields;
 
 public class HTTPEmitter implements Emitter {

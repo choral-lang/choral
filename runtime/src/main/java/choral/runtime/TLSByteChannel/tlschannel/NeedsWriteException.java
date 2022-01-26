@@ -44,7 +44,7 @@ import java.nio.channels.SocketChannel;
  * OpenSSL.
  *
  * @see <a href="https://www.openssl.org/docs/man1.1.0/ssl/SSL_get_error.html">
- *      OpenSSL error documentation</a>
+ * OpenSSL error documentation</a>
  */
 
 public class NeedsWriteException extends WouldBlockException {

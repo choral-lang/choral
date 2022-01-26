@@ -23,7 +23,8 @@ package choral.matchProjection.switchBased;
 
 public abstract class EnumExample< T > {
 
-	private EnumExample(){}
+	private EnumExample() {
+	}
 
 	public static final class EnumOption1< T > extends EnumExample< T > {
 
@@ -37,7 +38,8 @@ public abstract class EnumExample< T > {
 
 	public static final class EnumOption2< T > extends EnumExample< T > {
 
-		public EnumOption2(){}
+		public EnumOption2() {
+		}
 
 	}
 
@@ -45,7 +47,9 @@ public abstract class EnumExample< T > {
 
 		final int error;
 
-		public EnumOption3( int error ){ this.error = error; }
+		public EnumOption3( int error ) {
+			this.error = error;
+		}
 
 	}
 

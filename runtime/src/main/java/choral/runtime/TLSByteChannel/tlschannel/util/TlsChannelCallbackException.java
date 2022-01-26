@@ -30,8 +30,8 @@ import javax.net.ssl.SSLException;
  */
 public class TlsChannelCallbackException extends SSLException {
 
-    public TlsChannelCallbackException(String message, Throwable throwable) {
-        super(message, throwable);
-    }
+	public TlsChannelCallbackException( String message, Throwable throwable ) {
+		super( message, throwable );
+	}
 
 }

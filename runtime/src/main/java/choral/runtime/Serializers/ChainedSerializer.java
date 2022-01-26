@@ -26,7 +26,9 @@ public class ChainedSerializer< S, M, D > implements ChoralSerializer< S, D > {
 	private final ChoralSerializer< M, D > dstSerializer;
 	private final ChoralSerializer< S, M > srcSerializer;
 
-	public ChainedSerializer( ChoralSerializer< S, M > srcSerializer, ChoralSerializer< M, D > dstSerializer ){
+	public ChainedSerializer(
+			ChoralSerializer< S, M > srcSerializer, ChoralSerializer< M, D > dstSerializer
+	) {
 		this.srcSerializer = srcSerializer;
 		this.dstSerializer = dstSerializer;
 	}

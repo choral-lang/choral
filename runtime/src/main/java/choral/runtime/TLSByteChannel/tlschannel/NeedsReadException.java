@@ -43,7 +43,7 @@ import java.nio.channels.SocketChannel;
  * This exception is akin to the SSL_ERROR_WANT_READ error code used by OpenSSL.
  *
  * @see <a href="https://www.openssl.org/docs/man1.1.0/ssl/SSL_get_error.html">
- *      OpenSSL error documentation</a>
+ * OpenSSL error documentation</a>
  */
 public class NeedsReadException extends WouldBlockException {
 

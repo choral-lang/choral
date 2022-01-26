@@ -1,27 +1,31 @@
 package choral.examples.Quicksort;
+
 import choral.lang.Unit;
 import choral.channels.SymChannel_A;
 import choral.annotations.Choreography;
+
 import java.util.List;
+
 import choral.channels.SymChannel_B;
+
 import java.util.ArrayList;
 
 @Choreography( role = "A", name = "Quicksort" )
 public class Quicksort_A {
-	SymChannel_A < Object > ch_AB;
-	SymChannel_B < Object > ch_CA;
+	SymChannel_A< Object > ch_AB;
+	SymChannel_B< Object > ch_CA;
 
-	public Quicksort_A( SymChannel_A < Object > ch_AB, Unit ch_BC, SymChannel_B < Object > ch_CA ) {
+	public Quicksort_A( SymChannel_A< Object > ch_AB, Unit ch_BC, SymChannel_B< Object > ch_CA ) {
 		this( ch_AB, ch_CA );
 	}
-	
-	public Quicksort_A( SymChannel_A < Object > ch_AB, SymChannel_B < Object > ch_CA ) {
+
+	public Quicksort_A( SymChannel_A< Object > ch_AB, SymChannel_B< Object > ch_CA ) {
 		this.ch_AB = ch_AB;
 		this.ch_CA = ch_CA;
 	}
 
-	public List < Integer > sort( List < Integer > a ) {
-		if( a.size() > 1 ){
+	public List< Integer > sort( List< Integer > a ) {
+		if( a.size() > 1 ) {
 			ch_AB.< Loop >select( Loop.GO );
 			ch_CA.< Loop >select( Loop.GO );
 			Double index;
@@ -33,35 +37,36 @@ public class Quicksort_A {
 			qc = new Quicksort_B( ch_CA, ch_AB, Unit.id );
 			Quicksort_C qb;
 			qb = new Quicksort_C( Unit.id, ch_CA, ch_AB );
-			List < Integer > orderedList;
-			orderedList = new ArrayList < Integer >( ch_CA.< List < Integer > >com( qc.sort( Unit.id ) ) );
+			List< Integer > orderedList;
+			orderedList = new ArrayList< Integer >(
+					ch_CA.< List< Integer > >com( qc.sort( Unit.id ) ) );
 			orderedList.add( pivot );
-			orderedList.addAll( ch_AB.< List < Integer > >com( qb.sort( Unit.id ) ) );
+			orderedList.addAll( ch_AB.< List< Integer > >com( qb.sort( Unit.id ) ) );
 			return orderedList;
-		} else { 
+		} else {
 			ch_AB.< Loop >select( Loop.STOP );
 			ch_CA.< Loop >select( Loop.STOP );
 			return a;
 		}
 	}
-	
-	private void partition( List < Integer > a, Integer pivot, Unit greater, Unit lower ) {
-		if( a.size() > 0 ){
+
+	private void partition( List< Integer > a, Integer pivot, Unit greater, Unit lower ) {
+		if( a.size() > 0 ) {
 			ch_AB.< Loop >select( Loop.GO );
 			ch_CA.< Loop >select( Loop.GO );
 			Integer i;
 			i = a.remove( 0 );
-			if( i > pivot ){
+			if( i > pivot ) {
 				ch_AB.< Recv >select( Recv.B );
 				ch_CA.< Recv >select( Recv.B );
 				ch_AB.< Integer >com( i );
-			} else { 
+			} else {
 				ch_AB.< Recv >select( Recv.C );
 				ch_CA.< Recv >select( Recv.C );
 				ch_CA.< Integer >com( i );
 			}
 			partition( a, pivot, Unit.id, Unit.id );
-		} else { 
+		} else {
 			ch_AB.< Loop >select( Loop.STOP );
 			ch_CA.< Loop >select( Loop.STOP );
 		}

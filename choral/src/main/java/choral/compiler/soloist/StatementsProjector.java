@@ -181,14 +181,14 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 			).copyPosition( n );
 		} else {
 			List< Statement > cases = List.of( visit( n.ifBranch() ), visit( n.elseBranch() ) );
-			if( n.returns() && ! n.hasContinuation() ){
+			if( n.returns() && !n.hasContinuation() ) {
 				Statement firstSwitchStatement = cases.get( 0 );
 				boolean continueSearch = true;
-				while( continueSearch ){
-					if( firstSwitchStatement instanceof SwitchStatement ){
+				while( continueSearch ) {
+					if( firstSwitchStatement instanceof SwitchStatement ) {
 						continueSearch = false;
 						// we add the default case
-						( ( SwitchStatement ) firstSwitchStatement ).cases().put( SELECT_DEFAULT,
+						( (SwitchStatement) firstSwitchStatement ).cases().put( SELECT_DEFAULT,
 								new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
 					} else {
 						firstSwitchStatement = firstSwitchStatement.continuation();
@@ -220,14 +220,14 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 			List< Statement > cases = n.cases().values().stream()
 					.map( this::visit ).collect( Collectors.toList() );
 			// if we have cases, the body "returns", and it does not have a continuation (which would then be reachable)
-			if( cases.size() > 0 && n.returns() && ! n.hasContinuation() ){
+			if( cases.size() > 0 && n.returns() && !n.hasContinuation() ) {
 				Statement firstSwitchStatement = cases.get( 0 );
 				boolean continueSearch = true;
-				while( continueSearch ){
-					if( firstSwitchStatement instanceof SwitchStatement ){
+				while( continueSearch ) {
+					if( firstSwitchStatement instanceof SwitchStatement ) {
 						continueSearch = false;
 						// we add the default case
-						( ( SwitchStatement ) firstSwitchStatement ).cases().put( SELECT_DEFAULT,
+						( (SwitchStatement) firstSwitchStatement ).cases().put( SELECT_DEFAULT,
 								new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
 					} else {
 						firstSwitchStatement = firstSwitchStatement.continuation();

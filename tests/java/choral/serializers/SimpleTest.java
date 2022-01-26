@@ -24,6 +24,7 @@ package choral.serializers;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import java.io.FileNotFoundException;
 
 public class SimpleTest {
@@ -51,7 +52,7 @@ public class SimpleTest {
 
 	void recv( Output out ) throws FileNotFoundException {
 		// RECEIVER
-		Kryo k =	new Kryo();
+		Kryo k = new Kryo();
 		k.register( A.class );
 //		Input input = new Input( new FileInputStream( "file.bin" ) );
 		Input input = new Input( out.toBytes() );

@@ -1,4 +1,5 @@
 package choral.examples.ConsumeItems;
+
 import choral.annotations.Choreography;
 
 @Choreography( role = "R", name = "ConsumeChoice" )

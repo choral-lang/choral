@@ -39,8 +39,8 @@ public class PipedByteChannel implements BlockingByteChannel {
 		Pipe p1 = Pipe.open();
 		Pipe p2 = Pipe.open();
 		return new Pair<>(
-			new PipedByteChannel( p1.source(), p2.sink() ),
-			new PipedByteChannel( p2.source(), p1.sink() )
+				new PipedByteChannel( p1.source(), p2.sink() ),
+				new PipedByteChannel( p2.source(), p1.sink() )
 		);
 	}
 

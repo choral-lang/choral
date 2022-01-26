@@ -43,7 +43,7 @@ public class Example@( A, B, C ){
 public class Example {
 
 	public static class _1_2_3 {
-		public static void main$1( String args ){
+		public static void main$1( String args ) {
 			LocalChannel._1_2 c1 = new LocalChannel._1_2(); // <--\
 			LocalChannel._1_2 c2 = new LocalChannel._1_2(); // <---| How do we know the if constructor is _12 or _21?
 			LocalChannel._1_2 c3 = new LocalChannel._1_2(); // <---| Here it is symmetric, but what happens if it is not the case (see other_example)?
@@ -51,39 +51,40 @@ public class Example {
 
 			Integer int_b = c1.< Integer >com$1( 5 );
 			Integer int_c = c2.< Integer >com$1( int_b );
-			Integer int_a = c3.< Integer >com$2( int_c ); // <--- e.g., we need to know the type of int_c (Integer@B)
-			                                               // and c3 (LocalChannel@( A, B )) to know that it's
-			                                               // com_12
+			Integer int_a = c3.< Integer >com$2(
+					int_c ); // <--- e.g., we need to know the type of int_c (Integer@B)
+			// and c3 (LocalChannel@( A, B )) to know that it's
+			// com_12
 			int_c = c4.< Integer >com$2( int_a );
 		}
 	}
 
 	public static class _1_3_2 {
-		public static void main$1( String args ){
+		public static void main$1( String args ) {
 			Example._1_2_3.main$1( args );
 		}
 	}
 
 	public static class _2_1_3 {
-		public static void main$2( String args ){
+		public static void main$2( String args ) {
 			Example._1_2_3.main$1( args );
 		}
 	}
 
 	public static class _2_3_1 {
-		public static void main$2( String args ){
+		public static void main$2( String args ) {
 			Example._1_2_3.main$1( args );
 		}
 	}
 
 	public static class _312 {
-		public static void main$3( String args ){
+		public static void main$3( String args ) {
 			Example._1_2_3.main$1( args );
 		}
 	}
 
 	public static class _3_2_1 {
-		public static void main$3( String args ){
+		public static void main$3( String args ) {
 			Example._1_2_3.main$1( args );
 		}
 	}

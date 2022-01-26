@@ -80,7 +80,7 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 			return new HigherReferenceType( universe(),
 					this.worldParameters.stream()
 							.map( x -> new World( universe(), x.identifier() ) ).collect(
-							Collectors.toList() ) ) {
+									Collectors.toList() ) ) {
 				@Override
 				public GroundReferenceType applyTo( List< ? extends World > args ) {
 					return HigherTypeParameter.this.applyTo( args );

@@ -30,59 +30,75 @@ interface Ip@( A, B, C ){
 */
 
 public interface Ip {
-// 					  ABC
+	// 					  ABC
 	public interface _1_2_3 {
-//		String@A m( String@B _1, String@C _2 );
+		//		String@A m( String@B _1, String@C _2 );
 		String m$2$3( String _1, String _2 );
-//		String@B m( String@C _1, String@A _2 );
+
+		//		String@B m( String@C _1, String@A _2 );
 		String m$3$1( String _1, String _2 );
-//		String@C m( String@B _1, String@A _2 );
+
+		//		String@C m( String@B _1, String@A _2 );
 		String m$2$1( String _1, String _2 );
 	}
-// 					  ACB
+
+	// 					  ACB
 	public interface _1_3_2 {
-//		String@A m( String@C _1, String@B _2 );
+		//		String@A m( String@C _1, String@B _2 );
 		String m$3$2( String _1, String _2 );
-//		String@C m( String@B _1, String@A _2 );
+
+		//		String@C m( String@B _1, String@A _2 );
 		String m$2$1( String _1, String _2 );
-//		String@B m( String@C _1, String@A _2 );
+
+		//		String@B m( String@C _1, String@A _2 );
 		String m$3$1( String _1, String _2 );
 	}
-//					  BAC
+
+	//					  BAC
 	public interface _2_1_3 {
-//		String@B m( String@A _1, String@C _2 );
+		//		String@B m( String@A _1, String@C _2 );
 		String m$1$3( String _1, String _2 );
-//		String@A m( String@C _1, String@B _2 );
+
+		//		String@A m( String@C _1, String@B _2 );
 		String m$3$2( String _1, String _2 );
-//		String@C m( String@A _1, String@B _2 );
+
+		//		String@C m( String@A _1, String@B _2 );
 		String m$1$2( String _1, String _2 );
 	}
-//					  BCA
+
+	//					  BCA
 	public interface _2_3_1 {
-//		String@B m( String@C _1, String@A _2 );
-		String m$3$1 ( String _1, String _2 );
-//		String@C m( String@A _1, String@B _2 );
+		//		String@B m( String@C _1, String@A _2 );
+		String m$3$1( String _1, String _2 );
+
+		//		String@C m( String@A _1, String@B _2 );
 		String m$1$2( String _1, String _2 );
-//		String@A m( String@C _1, String@B _2 );
+
+		//		String@A m( String@C _1, String@B _2 );
 		String m$3$2( String _1, String _2 );
 	}
 
-//                    CAB
+	//                    CAB
 	public interface _3_1_2 {
-//		String@C m( String@A _1, String@B _2 );
+		//		String@C m( String@A _1, String@B _2 );
 		String m$1$2( String _1, String _2 );
-//		String@A m( String@B _1, String@C _2 );
+
+		//		String@A m( String@B _1, String@C _2 );
 		String m$2$3( String _1, String _2 );
-//		String@B m( String@A _1, String@C _2 );
+
+		//		String@B m( String@A _1, String@C _2 );
 		String m$1$3( String _1, String _2 );
 	}
-//  				  CBA
+
+	//  				  CBA
 	public interface _3_2_1 {
-//		String@C m( String@B _1, String@A _2 );
+		//		String@C m( String@B _1, String@A _2 );
 		String m$2$1( String _1, String _2 );
-//		String@B m( String@A _1, String@C _2 );
+
+		//		String@B m( String@A _1, String@C _2 );
 		String m$1$3( String _1, String _2 );
-//		String@A m( String@B _1, String@C _2 );
+
+		//		String@A m( String@B _1, String@C _2 );
 		String m$2$3( String _1, String _2 );
 	}
 

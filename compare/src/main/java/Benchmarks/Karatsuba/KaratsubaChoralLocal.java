@@ -54,17 +54,20 @@ public class KaratsubaChoralLocal {
 							"ch_BC" );
 					Pair< SymChannel_A< Object >, SymChannel_B< Object > > ch_CA = TestUtils.newLocalChannel(
 							"ch_CA" );
-					Future< ? > f1 = executors.submit( () -> Karatsuba_A.multiply( left, right, ch_AB.left(), ch_CA.right() ) );
+					Future< ? > f1 = executors.submit(
+							() -> Karatsuba_A.multiply( left, right, ch_AB.left(),
+									ch_CA.right() ) );
 					executors.submit( () -> Karatsuba_B.multiply( ch_AB.right(), ch_BC.left() ) );
 					executors.submit( () -> Karatsuba_C.multiply( ch_BC.right(), ch_CA.left() ) );
 					boolean correct = f1.get().equals( result );
 					executors.shutdown();
 					times.add( System.nanoTime() - start );
-					if( ! correct ){
-						throw new RuntimeException( "The procedure returned an unexpected result, expected: " + result + ", computed: " + f1.get() );
+					if( !correct ) {
+						throw new RuntimeException(
+								"The procedure returned an unexpected result, expected: " + result + ", computed: " + f1.get() );
 					}
 				}
-				if( write ){
+				if( write ) {
 					Files.createDirectories( Path.of( filepath + folder ) );
 					FileWriter w = new FileWriter( filepath + folder + "results_" + idx + ".csv" );
 					w.write( times.toString() );

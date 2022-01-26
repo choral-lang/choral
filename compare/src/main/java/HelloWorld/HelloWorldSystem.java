@@ -10,7 +10,8 @@ import akka.actor.typed.javadsl.Receive;
 
 public class HelloWorldSystem extends AbstractBehavior< HelloName > {
 
-	private static final ActorSystem< HelloName > system = ActorSystem.create( HelloWorldSystem.create(), "hello" );
+	private static final ActorSystem< HelloName > system = ActorSystem.create(
+			HelloWorldSystem.create(), "hello" );
 
 	public static void main( String[] args ) {
 		system.tell( new HelloName( "World" ) );
@@ -18,13 +19,13 @@ public class HelloWorldSystem extends AbstractBehavior< HelloName > {
 		system.tell( new HelloName( "Save" ) );
 	}
 
-	public static Behavior< HelloName > create(){
+	public static Behavior< HelloName > create() {
 		return Behaviors.setup( HelloWorldSystem::new );
 	}
 
 	private final ActorRef< GreetMessage > greetSender;
 
-	private HelloWorldSystem( ActorContext< HelloName > context ){
+	private HelloWorldSystem( ActorContext< HelloName > context ) {
 		super( context );
 		greetSender = context.spawn( GreetSender.create(), "HelloWorld.GreetSender" );
 	}

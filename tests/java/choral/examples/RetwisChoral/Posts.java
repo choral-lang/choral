@@ -37,22 +37,23 @@ public class Posts {
 	}
 
 	static Posts of( List< String > followers, List< String > followed, List< Post > posts ) {
-		return new Posts( new LinkedList<>( followers ), new LinkedList<>( followed ), new LinkedList<>( posts ) );
+		return new Posts( new LinkedList<>( followers ), new LinkedList<>( followed ),
+				new LinkedList<>( posts ) );
 	}
 
 	@Override
 	public String toString() {
 		StringJoiner joiner = new StringJoiner( "\n" );
 		joiner.add( "Followers:" );
-		for( String f : followers() ){
+		for( String f : followers() ) {
 			joiner.add( " - " + f );
 		}
 		joiner.add( "Followed:" );
-		for( String f : followed() ){
+		for( String f : followed() ) {
 			joiner.add( " - " + f );
 		}
 		joiner.add( "Posts:" );
-		for( Post p : posts() ){
+		for( Post p : posts() ) {
 			joiner.add( " - " + p );
 		}
 		return joiner.toString();

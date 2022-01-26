@@ -21,7 +21,7 @@ public class KaratsubaSequential {
 		runBenchmarks( true );
 	}
 
-	public static void runBenchmarks( boolean write ){
+	public static void runBenchmarks( boolean write ) {
 		try {
 			List< Path > num_files = Files.list( Path.of( CoupleGenerator.filepath ) ).collect(
 					Collectors.toList() );
@@ -39,11 +39,12 @@ public class KaratsubaSequential {
 					long start = System.nanoTime();
 					long thisResult = Karatsuba.multiply( left, right );
 					times.add( System.nanoTime() - start );
-					if( thisResult != result ){
-						throw new RuntimeException( "The procedure returned an unexpected result, expected: " + result + ", computed: " + thisResult );
+					if( thisResult != result ) {
+						throw new RuntimeException(
+								"The procedure returned an unexpected result, expected: " + result + ", computed: " + thisResult );
 					}
 				}
-				if( write ){
+				if( write ) {
 					Files.createDirectories( Path.of( filepath + folder ) );
 					FileWriter w = new FileWriter( filepath + folder + "results_" + idx + ".csv" );
 					w.write( times.toString() );

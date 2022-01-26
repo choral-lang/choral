@@ -1,4 +1,5 @@
 package choral.DistAuth;
+
 import choral.runtime.Serializers.KryoSerializable;
 import choral.annotations.Choreography;
 

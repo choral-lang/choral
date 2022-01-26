@@ -374,10 +374,10 @@ public class Compiler {
 			// we project them into different lists
 			projectableTemplates.forEach( pt ->
 					compilableCUs.add( projectAndEncloseInCompilationUnit(
-							pt.packageDeclaration(),
-							pt.imports(),
-							pt.worldArgument(),
-							pt.node()
+									pt.packageDeclaration(),
+									pt.imports(),
+									pt.worldArgument(),
+									pt.node()
 							)
 					)
 			);

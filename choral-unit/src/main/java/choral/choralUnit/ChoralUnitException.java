@@ -22,7 +22,7 @@
 package choral.choralUnit;
 
 public class ChoralUnitException extends RuntimeException {
-	public ChoralUnitException ( String s ) {
+	public ChoralUnitException( String s ) {
 		super( s );
 	}
 }

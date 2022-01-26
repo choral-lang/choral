@@ -128,10 +128,10 @@ public class DiffieHellmanDataChannel implements SymDataChannelImpl< String > {
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}
-		return ( S ) message;
+		return (S) message;
 	}
 
-	private PublicKey buildPublicKey( ByteBuffer bytePublicKey ){
+	private PublicKey buildPublicKey( ByteBuffer bytePublicKey ) {
 		X509EncodedKeySpec ks = new X509EncodedKeySpec( bytePublicKey.array() );
 		KeyFactory keyFactory = null;
 		PublicKey publicKey = null;

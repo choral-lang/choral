@@ -46,7 +46,7 @@ public class Z {
 
 	public static class _1_2_3_4 {
 
-		public static void main$1 ( String[] args ) {
+		public static void main$1( String[] args ) {
 			X._1_2_3 def = new X._1_2_3();
 			X._1_2_3 dfe = new X._1_2_3();
 			X._1_2_3 edf = new X._1_2_3();
@@ -54,147 +54,179 @@ public class Z {
 			X._1_2_3 fde = new X._1_2_3();
 			X._1_2_3 fed = new X._1_2_3();
 			X._1_2_3 gde = new X._1_2_3();
-			def.m$3$1( "", "" ); def.m$1$2( "", "" ); def.m$3$2( "", "" ); def.m$2$3( "", "" ); def.m$1$3( "", "" );
-			dfe.m$3$1( "", "" ); dfe.m$1$2( "", "" ); dfe.m$3$2( "", "" ); dfe.m$2$3( "", "" ); dfe.m$1$3( "", "" );
-			edf.m$3$1( "", "" ); edf.m$1$2( "", "" ); edf.m$3$2( "", "" ); edf.m$2$3( "", "" ); edf.m$1$3( "", "" );
-			efd.m$3$1( "", "" ); efd.m$1$2( "", "" ); efd.m$3$2( "", "" ); efd.m$2$3( "", "" ); efd.m$1$3( "", "" );
-			fde.m$3$1( "", "" ); fde.m$1$2( "", "" ); fde.m$3$2( "", "" ); fde.m$2$3( "", "" ); fde.m$1$3( "", "" );
-			fed.m$3$1( "", "" ); fed.m$1$2( "", "" ); fed.m$3$2( "", "" ); fed.m$2$3( "", "" ); fed.m$1$3( "", "" );
-			gde.m$3$1( "", "" ); gde.m$1$2( "", "" ); gde.m$3$2( "", "" ); gde.m$2$3( "", "" ); gde.m$1$3( "", "" );
+			def.m$3$1( "", "" );
+			def.m$1$2( "", "" );
+			def.m$3$2( "", "" );
+			def.m$2$3( "", "" );
+			def.m$1$3( "", "" );
+			dfe.m$3$1( "", "" );
+			dfe.m$1$2( "", "" );
+			dfe.m$3$2( "", "" );
+			dfe.m$2$3( "", "" );
+			dfe.m$1$3( "", "" );
+			edf.m$3$1( "", "" );
+			edf.m$1$2( "", "" );
+			edf.m$3$2( "", "" );
+			edf.m$2$3( "", "" );
+			edf.m$1$3( "", "" );
+			efd.m$3$1( "", "" );
+			efd.m$1$2( "", "" );
+			efd.m$3$2( "", "" );
+			efd.m$2$3( "", "" );
+			efd.m$1$3( "", "" );
+			fde.m$3$1( "", "" );
+			fde.m$1$2( "", "" );
+			fde.m$3$2( "", "" );
+			fde.m$2$3( "", "" );
+			fde.m$1$3( "", "" );
+			fed.m$3$1( "", "" );
+			fed.m$1$2( "", "" );
+			fed.m$3$2( "", "" );
+			fed.m$2$3( "", "" );
+			fed.m$1$3( "", "" );
+			gde.m$3$1( "", "" );
+			gde.m$1$2( "", "" );
+			gde.m$3$2( "", "" );
+			gde.m$2$3( "", "" );
+			gde.m$1$3( "", "" );
 
 		}
 	}
 
 	public static class _1_2_4_3 {
-		public static void main$1 ( String[] args ) {
+		public static void main$1( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _1_3_2_4 {
-		public static void main$1 ( String[] args ) {
+		public static void main$1( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _1_3_4_2 {
-		public static void main$1 ( String[] args ) {
+		public static void main$1( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _1_4_2_3 {
-		public static void main$1 ( String[] args ) {
+		public static void main$1( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _1_4_3_2 {
-		public static void main$1 ( String[] args ) {
+		public static void main$1( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _2_1_3_4 {
-		public static void main$2 ( String[] args ) {
+		public static void main$2( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _2_1_4_3 {
-		public static void main$2 ( String[] args ) {
+		public static void main$2( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _2_3_1_4 {
-		public static void main$2 ( String[] args ) {
+		public static void main$2( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _2_3_4_1 {
-		public static void main$2 ( String[] args ) {
+		public static void main$2( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _2_4_1_3 {
-		public static void main$2 ( String[] args ) {
+		public static void main$2( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _2_4_3_1 {
-		public static void main$2 ( String[] args ) {
+		public static void main$2( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _3_1_2_4 {
-		public static void main$3 ( String[] args ) {
+		public static void main$3( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _3_1_4_2 {
-		public static void main$3 ( String[] args ) {
+		public static void main$3( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _3_2_1_4 {
-		public static void main$3 ( String[] args ) {
+		public static void main$3( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _3_2_4_1 {
-		public static void main$3 ( String[] args ) {
+		public static void main$3( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _3_4_1_2 {
-		public static void main$3 ( String[] args ) {
+		public static void main$3( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _3_4_2_1 {
-		public static void main$3 ( String[] args ) {
+		public static void main$3( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _4_1_2_3 {
-		public static void main$4 ( String[] args ) {
+		public static void main$4( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
 
 	public static class _4_1_3_2 {
-		public static void main$4 ( String[] args ) {
+		public static void main$4( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
+
 	public static class _4_2_1_3 {
-		public static void main$4 ( String[] args ) {
+		public static void main$4( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
+
 	public static class _4_2_3_1 {
-		public static void main$4 ( String[] args ) {
+		public static void main$4( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
+
 	public static class _4_3_1_2 {
-		public static void main$4 ( String[] args ) {
+		public static void main$4( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}
+
 	public static class _4_3_2_1 {
-		public static void main$4 ( String[] args ) {
+		public static void main$4( String[] args ) {
 			_1_2_3_4.main$1( args );
 		}
 	}

@@ -28,21 +28,22 @@ public class Catalogue {
 
 	private final Map< String, Price > titles = new HashMap<>();
 
-	public Catalogue(){}
+	public Catalogue() {
+	}
 
-	public void addTitle( String t, Price p ){
+	public void addTitle( String t, Price p ) {
 		titles.put( t, p );
 	}
 
-	public Boolean includes( String t ){
+	public Boolean includes( String t ) {
 		return titles.containsKey( t );
 	}
 
-	public Price quote( String t ){
+	public Price quote( String t ) {
 		return titles.get( t );
 	}
 
-	public Shipping ship( String title ){
+	public Shipping ship( String title ) {
 		return new Shipping( title );
 	}
 

@@ -21,7 +21,7 @@ public class InMemoryCommandInterface implements CommandInterface {
 	public RetwisAction action() {
 		CompletableFuture< Emitter.Action > cc;
 		synchronized( actions ) {
-			if( ! actions.isEmpty() && actions.get( 0 ).isDone() ){
+			if( !actions.isEmpty() && actions.get( 0 ).isDone() ) {
 				cc = actions.remove( 0 );
 			} else {
 				cc = new CompletableFuture<>();
@@ -38,7 +38,7 @@ public class InMemoryCommandInterface implements CommandInterface {
 
 	public void addAction( Emitter.Action action ) {
 		synchronized( actions ) {
-			if( actions.isEmpty() || actions.get( 0 ).isDone() ){
+			if( actions.isEmpty() || actions.get( 0 ).isDone() ) {
 				CompletableFuture< Emitter.Action > cc = new CompletableFuture<>();
 				cc.complete( action );
 				actions.add( cc );

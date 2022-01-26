@@ -27,39 +27,38 @@ import java.util.stream.IntStream;
 
 public class EnumExampleTest {
 
-		public static void main( String[] args ) {
+	public static void main( String[] args ) {
 
-			IntStream.range( 1,10 ).forEach( (e) -> {
-					String s = new EnumExampleTest().m();
-					System.out.println( s );
-			} );
+		IntStream.range( 1, 10 ).forEach( ( e ) -> {
+			String s = new EnumExampleTest().m();
+			System.out.println( s );
+		} );
+	}
+
+
+	String m() {
+		String outer = "MONDO!";
+
+		EnumExample< String > c;
+		if( new Random().nextBoolean() ) {
+			c = new EnumExample.EnumOption1<>( "CIAO" );
+		} else {
+			c = new EnumExample.EnumOption2<>();
 		}
 
 
-		String m(){
-			String outer = "MONDO!";
-
-			EnumExample< String > c;
-			if( new Random().nextBoolean() ){
-				 c = new EnumExample.EnumOption1<>( "CIAO" );
-			} else {
-				 c = new EnumExample.EnumOption2<>();
-			}
-
-
-			{ // <--- SCOPE FOR VARIABLE HIDING IN CASE CONTINUATIONS
-				Optional< String > o = c.match(
-								( o1 ) -> Optional.of( o1.msg() + " " + outer ),
-								( enumOption2 ) -> Optional.empty()
-				);
-				if ( o.isPresent() )
-					return o.get();
-			} // <--- SCOPE FOR VARIABLE HIDING IN CASE CONTINUATIONS
-			String r;
-			r = outer;
-			return r;
-		}
-
+		{ // <--- SCOPE FOR VARIABLE HIDING IN CASE CONTINUATIONS
+			Optional< String > o = c.match(
+					( o1 ) -> Optional.of( o1.msg() + " " + outer ),
+					( enumOption2 ) -> Optional.empty()
+			);
+			if( o.isPresent() )
+				return o.get();
+		} // <--- SCOPE FOR VARIABLE HIDING IN CASE CONTINUATIONS
+		String r;
+		r = outer;
+		return r;
+	}
 
 
 }

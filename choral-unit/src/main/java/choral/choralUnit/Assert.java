@@ -31,26 +31,28 @@ public class Assert {
 	private static final String SUCCESS = "ChoralUnit Test Success:";
 	private static final String FAILURE = "ChoralUnit Test Failure:";
 
-	public static void assertEquals ( Object o1, Object o2, String successMessage, String failureMessage ) {
-		if ( o1 == null ) {
+	public static void assertEquals(
+			Object o1, Object o2, String successMessage, String failureMessage
+	) {
+		if( o1 == null ) {
 			throw new AssertException(
 					FAILURE + failureMessage + NEWLINE
 							+ "the first object of assertEquals cannot be not null" );
 		}
-		if ( !o1.equals( o2 ) ) {
+		if( !o1.equals( o2 ) ) {
 			throw new AssertException(
 					FAILURE + failureMessage + NEWLINE
 							+ "assertion negated: "
 							+ o1 + " of class " + o1.getClass()
 							+ " is not equal to object "
 							+ o2 + " of class " + o2.getClass()
-					);
+			);
 		}
 		System.out.println( SUCCESS + NEWLINE + indent( successMessage ) );
 	}
 
-	public static void assertNotNull ( Object o1, String successMessage, String failureMessage ) {
-		if ( o1 == null ) {
+	public static void assertNotNull( Object o1, String successMessage, String failureMessage ) {
+		if( o1 == null ) {
 			throw new AssertException(
 					FAILURE + failureMessage + NEWLINE
 							+ "assertion negated: object is null"
@@ -59,7 +61,8 @@ public class Assert {
 		System.out.println( SUCCESS + NEWLINE + indent( successMessage ) );
 	}
 
-	private static String indent ( String s ) {
-		return Stream.of( s.split( NEWLINE ) ).map( l -> TAB + l ).collect( Collectors.joining( NEWLINE ) );
+	private static String indent( String s ) {
+		return Stream.of( s.split( NEWLINE ) ).map( l -> TAB + l ).collect(
+				Collectors.joining( NEWLINE ) );
 	}
 }

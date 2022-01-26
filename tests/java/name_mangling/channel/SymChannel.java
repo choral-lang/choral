@@ -28,7 +28,10 @@ public interface SymChannel@( A, B )< T@X > extends BiChannel@( A, B )< T, T > {
 
 public interface SymChannel {
 
-	public interface _1_2< T > extends BiChannel._1_2< T, T >{}
-	public interface _2_1< T > extends BiChannel._2_1< T, T >{}
+	public interface _1_2< T > extends BiChannel._1_2< T, T > {
+	}
+
+	public interface _2_1< T > extends BiChannel._2_1< T, T > {
+	}
 
 }

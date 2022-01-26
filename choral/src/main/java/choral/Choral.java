@@ -97,12 +97,12 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 				Collection< CompilationUnit > headerUnits = Stream.concat(
-						HeaderLoader.loadStandardProfile(),
-						HeaderLoader.loadFromPath(
-								headersPathOption.getPaths(),
-								sourceFiles,
-								true, strictHeaderSearch )
-				)
+								HeaderLoader.loadStandardProfile(),
+								HeaderLoader.loadFromPath(
+										headersPathOption.getPaths(),
+										sourceFiles,
+										true, strictHeaderSearch )
+						)
 						.collect( Collectors.toList() );
 				Collection< CompilationUnit > annotatedUnits = Typer.annotate( sourceUnits,
 						headerUnits );
@@ -154,18 +154,19 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 				Collection< CompilationUnit > headerUnits = Stream.concat(
-						HeaderLoader.loadStandardProfile(),
-						HeaderLoader.loadFromPath(
-								headersPathOption.getPaths(),
-								sourceFiles,
-								true, true ) // TODO: keep this or introduce parameter also in EPP?
-				)
+								HeaderLoader.loadStandardProfile(),
+								HeaderLoader.loadFromPath(
+										headersPathOption.getPaths(),
+										sourceFiles,
+										true, true ) // TODO: keep this or introduce parameter also in EPP?
+						)
 						.collect( Collectors.toList() );
 				AtomicReference< Collection< CompilationUnit > > annotatedUnits = new AtomicReference<>();
 				profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( sourceUnits,
 						headerUnits ) ) );
 
-				profilerLog( "projectability check", () -> Compiler.checkProjectiability( annotatedUnits.get() ) );
+				profilerLog( "projectability check",
+						() -> Compiler.checkProjectiability( annotatedUnits.get() ) );
 
 				// TODO: ... UNTIL HERE (annotatedUnits)
 				if( worlds == null ) {
@@ -175,16 +176,16 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						{
 							try {
 								Compiler.project(
-									emissionOptions.isDryRun(),
-									emissionOptions.isAnnotated(),
-			//						emissionOptions.useCanonicalPaths() TODO: implement this
-			//						emissionOptions.isOverwritingAllowed() TODO: implement this
-									annotatedUnits.get(),
-									symbol,
-									worlds.stream().map( String::trim ).filter(
-											w -> !( w.isBlank() || w.isEmpty() ) ).collect(
-											Collectors.toList() ),
-									emissionOptions.targetpath()
+										emissionOptions.isDryRun(),
+										emissionOptions.isAnnotated(),
+										//						emissionOptions.useCanonicalPaths() TODO: implement this
+										//						emissionOptions.isOverwritingAllowed() TODO: implement this
+										annotatedUnits.get(),
+										symbol,
+										worlds.stream().map( String::trim ).filter(
+												w -> !( w.isBlank() || w.isEmpty() ) ).collect(
+												Collectors.toList() ),
+										emissionOptions.targetpath()
 								);
 							} catch( IOException e ) {
 								throw new RuntimeException( e );
@@ -224,12 +225,12 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 				Collection< CompilationUnit > headerUnits = Stream.concat(
-						HeaderLoader.loadStandardProfile(),
-						HeaderLoader.loadFromPath(
-								headersPathOption.getPaths(),
-								sourceFiles,
-								true, strictHeaderSearch )
-				)
+								HeaderLoader.loadStandardProfile(),
+								HeaderLoader.loadFromPath(
+										headersPathOption.getPaths(),
+										sourceFiles,
+										true, strictHeaderSearch )
+						)
 						.collect( Collectors.toList() );
 				Collection< CompilationUnit > annotatedUnits = Typer.annotate( sourceUnits,
 						headerUnits );
@@ -340,9 +341,11 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 
 	// - - - - - - PROFILING VARIABLES, METHODS, AND UTILITIES
 
-	private static Map< String, ArrayList< Long > >  profilingLog;
+	private static Map< String, ArrayList< Long > > profilingLog;
 
-	public static void mainProfiler( String[] args, Map< String, ArrayList< Long > >  profilingLog ) {
+	public static void mainProfiler(
+			String[] args, Map< String, ArrayList< Long > > profilingLog
+	) {
 		Choral c = new Choral();
 		c.profilingLog = profilingLog;
 		CommandLine cl = new CommandLine( c );
@@ -356,7 +359,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 			Long start = System.nanoTime();
 			try {
 				r.run();
-			} catch( RuntimeException e ){
+			} catch( RuntimeException e ) {
 				throw new Exception( e );
 			}
 			Long finish = System.nanoTime();

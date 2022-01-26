@@ -33,15 +33,14 @@ public interface BufferAllocator {
 	/**
 	 * Allocate a {@link ByteBuffer} with the given initial capacity.
 	 */
-	ByteBuffer allocate(int size);
+	ByteBuffer allocate( int size );
 
 	/**
 	 * Deallocate the given {@link ByteBuffer}.
 	 *
-	 * @param buffer
-	 *            the buffer to deallocate, that should have been allocated using
-	 *            the same {@link BufferAllocator} instance
+	 * @param buffer the buffer to deallocate, that should have been allocated using
+	 *               the same {@link BufferAllocator} instance
 	 */
-	void free(ByteBuffer buffer);
+	void free( ByteBuffer buffer );
 
 }
