@@ -41,13 +41,13 @@ public class BiPair implements Flippable {
 		private T left;
 		private T right;
 
-		public _1_2( T left, T right ){
+		public _1_2( T left, T right ) {
 			this.left = left;
 			this.right = right;
 		}
 
 		@Override
-		public _2_1< T > flip () {
+		public _2_1< T > flip() {
 			return new _2_1< T >( right, left );
 		}
 
@@ -57,13 +57,13 @@ public class BiPair implements Flippable {
 		private T left;
 		private T right;
 
-		public _2_1 ( T left, T right ) {
+		public _2_1( T left, T right ) {
 			this.left = left;
 			this.right = right;
 		}
 
 		@Override
-		public _1_2< T > flip () {
+		public _1_2< T > flip() {
 			return new _1_2< T >( right, left );
 		}
 	}

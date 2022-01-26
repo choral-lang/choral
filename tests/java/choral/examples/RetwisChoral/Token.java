@@ -3,7 +3,7 @@ package choral.examples.RetwisChoral;
 import choral.runtime.Serializers.KryoSerializable;
 
 @KryoSerializable
-public class Token{
+public class Token {
 
 	private final String id;
 
@@ -31,7 +31,7 @@ public class Token{
 		return id.equals( token.id );
 	}
 
-	public String id(){
+	public String id() {
 		return this.id;
 	}
 

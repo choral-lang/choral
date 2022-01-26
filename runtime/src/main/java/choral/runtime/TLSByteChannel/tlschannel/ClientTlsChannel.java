@@ -43,18 +43,18 @@ public class ClientTlsChannel implements TlsChannel {
 	/**
 	 * Builder of {@link ClientTlsChannel}
 	 */
-	public static class Builder extends TlsChannelBuilder<Builder> {
+	public static class Builder extends TlsChannelBuilder< Builder > {
 
-		private Supplier<SSLEngine> sslEngineFactory;
+		private Supplier< SSLEngine > sslEngineFactory;
 
-		private Builder(ByteChannel underlying, SSLEngine sslEngine) {
-			super(underlying);
+		private Builder( ByteChannel underlying, SSLEngine sslEngine ) {
+			super( underlying );
 			this.sslEngineFactory = () -> sslEngine;
 		}
 
-		private Builder(ByteChannel underlying, SSLContext sslContext) {
-			super(underlying);
-			this.sslEngineFactory = () -> defaultSSLEngineFactory(sslContext);
+		private Builder( ByteChannel underlying, SSLContext sslContext ) {
+			super( underlying );
+			this.sslEngineFactory = () -> defaultSSLEngineFactory( sslContext );
 		}
 
 		@Override
@@ -62,16 +62,18 @@ public class ClientTlsChannel implements TlsChannel {
 			return this;
 		}
 
-        public ClientTlsChannel build() {
-            return new ClientTlsChannel(underlying, sslEngineFactory.get(), sessionInitCallback, runTasks,
-                    plainBufferAllocator, encryptedBufferAllocator, releaseBuffers, waitForCloseConfirmation);
-        }
+		public ClientTlsChannel build() {
+			return new ClientTlsChannel( underlying, sslEngineFactory.get(), sessionInitCallback,
+					runTasks,
+					plainBufferAllocator, encryptedBufferAllocator, releaseBuffers,
+					waitForCloseConfirmation );
+		}
 
 	}
 
-	private static SSLEngine defaultSSLEngineFactory(SSLContext sslContext) {
+	private static SSLEngine defaultSSLEngineFactory( SSLContext sslContext ) {
 		SSLEngine engine = sslContext.createSSLEngine();
-		engine.setUseClientMode(true);
+		engine.setUseClientMode( true );
 		return engine;
 	}
 
@@ -79,27 +81,23 @@ public class ClientTlsChannel implements TlsChannel {
 	 * Create a new {@link Builder}, configured with a underlying
 	 * {@link Channel} and a fixed {@link SSLEngine}.
 	 *
-	 * @param underlying
-	 *            a reference to the underlying {@link ByteChannel}
-	 * @param sslEngine
-	 *            the engine to use with this channel
+	 * @param underlying a reference to the underlying {@link ByteChannel}
+	 * @param sslEngine  the engine to use with this channel
 	 */
-	public static Builder newBuilder(ByteChannel underlying, SSLEngine sslEngine) {
-		return new Builder(underlying, sslEngine);
+	public static Builder newBuilder( ByteChannel underlying, SSLEngine sslEngine ) {
+		return new Builder( underlying, sslEngine );
 	}
 
-    /**
-     * Create a new {@link Builder}, configured with a underlying
-     * {@link Channel} and a {@link SSLContext}.
-     *
-     * @param underlying
-     *            a reference to the underlying {@link ByteChannel}
-     * @param sslContext
-     *            a context to use with this channel, it will be used to create a client {@link SSLEngine}.
-     */
-    public static Builder newBuilder(ByteChannel underlying, SSLContext sslContext) {
-        return new Builder(underlying, sslContext);
-    }
+	/**
+	 * Create a new {@link Builder}, configured with a underlying
+	 * {@link Channel} and a {@link SSLContext}.
+	 *
+	 * @param underlying a reference to the underlying {@link ByteChannel}
+	 * @param sslContext a context to use with this channel, it will be used to create a client {@link SSLEngine}.
+	 */
+	public static Builder newBuilder( ByteChannel underlying, SSLContext sslContext ) {
+		return new Builder( underlying, sslContext );
+	}
 
 	private final ByteChannel underlying;
 	private final TlsChannelImpl impl;
@@ -107,19 +105,23 @@ public class ClientTlsChannel implements TlsChannel {
 	private ClientTlsChannel(
 			ByteChannel underlying,
 			SSLEngine engine,
-			Consumer<SSLSession> sessionInitCallback,
+			Consumer< SSLSession > sessionInitCallback,
 			boolean runTasks,
 			BufferAllocator plainBufAllocator,
 			BufferAllocator encryptedBufAllocator,
 			boolean releaseBuffers,
-			boolean waitForCloseNotifyOnClose) {
-		if (!engine.getUseClientMode())
-			throw new IllegalArgumentException("SSLEngine must be in client mode");
+			boolean waitForCloseNotifyOnClose
+	) {
+		if( !engine.getUseClientMode() )
+			throw new IllegalArgumentException( "SSLEngine must be in client mode" );
 		this.underlying = underlying;
-		TrackingAllocator trackingPlainBufAllocator = new TrackingAllocator(plainBufAllocator);
-		TrackingAllocator trackingEncryptedAllocator = new TrackingAllocator(encryptedBufAllocator);
-		impl = new TlsChannelImpl(underlying, underlying, engine, Optional.empty(), sessionInitCallback, runTasks,
-				trackingPlainBufAllocator, trackingEncryptedAllocator, releaseBuffers, waitForCloseNotifyOnClose);
+		TrackingAllocator trackingPlainBufAllocator = new TrackingAllocator( plainBufAllocator );
+		TrackingAllocator trackingEncryptedAllocator = new TrackingAllocator(
+				encryptedBufAllocator );
+		impl = new TlsChannelImpl( underlying, underlying, engine, Optional.empty(),
+				sessionInitCallback, runTasks,
+				trackingPlainBufAllocator, trackingEncryptedAllocator, releaseBuffers,
+				waitForCloseNotifyOnClose );
 	}
 
 	@Override
@@ -133,7 +135,7 @@ public class ClientTlsChannel implements TlsChannel {
 	}
 
 	@Override
-	public Consumer<SSLSession> getSessionInitCallback() {
+	public Consumer< SSLSession > getSessionInitCallback() {
 		return impl.getSessionInitCallback();
 	}
 
@@ -153,36 +155,36 @@ public class ClientTlsChannel implements TlsChannel {
 	}
 
 	@Override
-	public long read(ByteBuffer[] dstBuffers, int offset, int length) throws IOException {
-		ByteBufferSet dest = new ByteBufferSet(dstBuffers, offset, length);
-		TlsChannelImpl.checkReadBuffer(dest);
-		return impl.read(dest);
+	public long read( ByteBuffer[] dstBuffers, int offset, int length ) throws IOException {
+		ByteBufferSet dest = new ByteBufferSet( dstBuffers, offset, length );
+		TlsChannelImpl.checkReadBuffer( dest );
+		return impl.read( dest );
 	}
 
 	@Override
-	public long read(ByteBuffer[] dstBuffers) throws IOException {
-		return read(dstBuffers, 0, dstBuffers.length);
+	public long read( ByteBuffer[] dstBuffers ) throws IOException {
+		return read( dstBuffers, 0, dstBuffers.length );
 	}
 
 	@Override
-	public int read(ByteBuffer dstBuffer) throws IOException {
-		return (int) read(new ByteBuffer[] { dstBuffer });
+	public int read( ByteBuffer dstBuffer ) throws IOException {
+		return (int) read( new ByteBuffer[] { dstBuffer } );
 	}
 
 	@Override
-	public long write(ByteBuffer[] srcBuffers, int offset, int length) throws IOException {
-		ByteBufferSet source = new ByteBufferSet(srcBuffers, offset, length);
-		return impl.write(source);
+	public long write( ByteBuffer[] srcBuffers, int offset, int length ) throws IOException {
+		ByteBufferSet source = new ByteBufferSet( srcBuffers, offset, length );
+		return impl.write( source );
 	}
 
 	@Override
-	public long write(ByteBuffer[] outs) throws IOException {
-		return write(outs, 0, outs.length);
+	public long write( ByteBuffer[] outs ) throws IOException {
+		return write( outs, 0, outs.length );
 	}
 
 	@Override
-	public int write(ByteBuffer srcBuffer) throws IOException {
-		return (int) write(new ByteBuffer[] { srcBuffer });
+	public int write( ByteBuffer srcBuffer ) throws IOException {
+		return (int) write( new ByteBuffer[] { srcBuffer } );
 	}
 
 	@Override

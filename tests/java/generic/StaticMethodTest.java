@@ -19,15 +19,19 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package generic;public class StaticMethodTest< S > {
+package generic;
 
-	static < S, R > R conv1( String i, S j ){ 	// <-- when m is static, there are no bindings between
-																						// the class-generics and the method generics.
-																						// TODO: this should be the same also for worlds, hence we cannot have them as parameters
+public class StaticMethodTest< S > {
+
+	static < S, R > R conv1(
+			String i, S j
+	) {    // <-- when m is static, there are no bindings between
+		// the class-generics and the method generics.
+		// TODO: this should be the same also for worlds, hence we cannot have them as parameters
 		return null;
 	}
 
-	< R > R conv2( String i, S j ){
+	< R > R conv2( String i, S j ) {
 		return null;
 	}
 
@@ -47,14 +51,15 @@ package generic;public class StaticMethodTest< S > {
 //
 //	}
 
-	interface Pair< T1, T2 > {}
+	interface Pair< T1, T2 > {
+	}
 
-	interface MyPair< T1 extends Integer, T2 > extends Pair< T2, T1 >{}
+	interface MyPair< T1 extends Integer, T2 > extends Pair< T2, T1 > {
+	}
 
 	public static void main( String[] args ) {
 //		Test.< Integer, String >conv1( "ciao", 12 );
 //		new Test< Integer >().< String >conv2( "ciao", 12 );
-
 
 
 //		String s2 = new Test.MyTest< Integer >().< String >conv( "ciao", 12 );

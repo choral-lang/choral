@@ -1,4 +1,5 @@
 package choral.examples.Mergesort.ChoralUnit;
+
 import choral.choralUnit.annotations.Test;
 import choral.choralUnit.testUtils.TestUtils_A;
 import choral.lang.Unit;
@@ -12,9 +13,9 @@ import choral.choralUnit.testUtils.TestUtils_B;
 public class MergesortTest_B {
 	@Test
 	public static void test1() {
-		SymChannel_B < Object > ch_AB;
+		SymChannel_B< Object > ch_AB;
 		ch_AB = TestUtils_B.newLocalChannel( Unit.id, "ch_AB" );
-		SymChannel_A < Object > ch_BC;
+		SymChannel_A< Object > ch_BC;
 		ch_BC = TestUtils_A.newLocalChannel( "ch_BC", Unit.id );
 		new Mergesort_B( ch_AB, ch_BC, Unit.id ).sort( Unit.id );
 	}

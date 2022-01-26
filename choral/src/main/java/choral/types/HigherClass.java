@@ -74,12 +74,12 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 
 	@Override
 	public boolean isBoxedType() {
-		return universe().isBoxedType(this);
+		return universe().isBoxedType( this );
 	}
 
 	@Override
 	public HigherPrimitiveDataType unboxedType() {
-		return universe().unboxedType(this);
+		return universe().unboxedType( this );
 	}
 
 	@Override

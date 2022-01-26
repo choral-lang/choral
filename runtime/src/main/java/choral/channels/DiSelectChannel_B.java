@@ -25,5 +25,6 @@ import choral.lang.Unit;
 
 public interface DiSelectChannel_B {
 	< T extends Enum< T > > T select( Unit m );
+
 	< T extends Enum< T > > T select();
 }

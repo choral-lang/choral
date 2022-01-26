@@ -43,22 +43,22 @@ public abstract class TLSChannelImpl< T > implements SymChannelImpl< T > {
 	}
 
 	@Override
-	public < M extends Enum< M > > Unit select ( M m ) {
+	public < M extends Enum< M > > Unit select( M m ) {
 		return channel.com( serializer.fromObject( m ) );
 	}
 
 	@Override
-	public < M extends Enum< M > > M select ( Unit u ) {
+	public < M extends Enum< M > > M select( Unit u ) {
 		return this.select();
 	}
 
 	@Override
-	public < S extends T > S com () {
+	public < S extends T > S com() {
 		return serializer.toObject( channel.com() );
 	}
 
 	@Override
-	public < T extends Enum< T > > T select () {
+	public < T extends Enum< T > > T select() {
 		return serializer.toObject( channel.com() );
 	}
 }

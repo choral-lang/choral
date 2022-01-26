@@ -89,12 +89,12 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 		// check for multi-world objects on the RHS of the short-cicuited expression
 		if(
 				( n.operator().equals( BinaryExpression.Operator.SHORT_CIRCUITED_AND )
-				|| n.operator().equals( BinaryExpression.Operator.SHORT_CIRCUITED_OR ) )
-				&& collectAllWorlds( n.right() ).size() > 1
-		){
+						|| n.operator().equals( BinaryExpression.Operator.SHORT_CIRCUITED_OR ) )
+						&& collectAllWorlds( n.right() ).size() > 1
+		) {
 			throw new ChoralException(
 					"Found unprojectable expression. Right-hand side of short-circuited " +
-						"boolean expression contains multi-role objects: "
+							"boolean expression contains multi-role objects: "
 							+ new PrettyPrinterVisitor().visit( n ) );
 		}
 		if( atWorld( worlds( n.left() ) ) && atWorld( worlds( n.right() ) ) ) {
@@ -212,7 +212,7 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 									n.typeExpression().worldArguments(),
 									dataType.typeConstructor().worldParameters()
 											.stream().map(
-											w -> new WorldArgument( new Name( w.identifier() ) ) )
+													w -> new WorldArgument( new Name( w.identifier() ) ) )
 											.collect( Collectors.toList() )
 							) ),
 							Collections.singletonList( this.world() ),
@@ -320,7 +320,7 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 			return Collections.singletonList( ( (EnumCaseInstantiationExpression) e ).world() );
 		} else if( e instanceof FieldAccessExpression ) {
 			List< WorldArgument > worlds = worldsFromAnnotation( e ).map(
-					w -> new WorldArgument( new Name( w.identifier() ) ) )
+							w -> new WorldArgument( new Name( w.identifier() ) ) )
 					.collect( Collectors.toList() );
 //			System.out.println( new PrettyPrinterVisitor().visit( e ) + " has worlds " +
 //					worlds.stream().map( w -> w.name().identifier() ).collect( Collectors.joining( ", " ) ) ); // TODO: remove this
@@ -332,7 +332,7 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 				GroundDataTypeOrVoid t = ( (MethodCallExpression) e ).methodAnnotation().get().returnType();
 				if( !t.isVoid() ) {
 					return ( (GroundDataType) t ).worldArguments().stream().map(
-							w -> new WorldArgument( new Name( w.identifier() ) ) )
+									w -> new WorldArgument( new Name( w.identifier() ) ) )
 							.collect( Collectors.toList() );
 				} else {
 					return List.of();
@@ -367,7 +367,7 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 			return Stream.concat(
 					collectAllWorlds( ( (AssignExpression) e ).target() ).stream(),
 					collectAllWorlds( ( (AssignExpression) e ).value() ).stream()
-					).distinct().collect( Collectors.toList() );
+			).distinct().collect( Collectors.toList() );
 		} else if( e instanceof BinaryExpression ) {
 			return Stream.concat(
 					collectAllWorlds( ( (BinaryExpression) e ).left() ).stream(),
@@ -384,7 +384,7 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 			return Collections.singletonList( ( (EnumCaseInstantiationExpression) e ).world() );
 		} else if( e instanceof FieldAccessExpression ) {
 			List< WorldArgument > worlds = worldsFromAnnotation( e ).map(
-					w -> new WorldArgument( new Name( w.identifier() ) ) )
+							w -> new WorldArgument( new Name( w.identifier() ) ) )
 					.collect( Collectors.toList() );
 			return worlds;
 		} else if( e instanceof LiteralExpression ) {
@@ -394,7 +394,7 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 				GroundDataTypeOrVoid t = ( (MethodCallExpression) e ).methodAnnotation().get().returnType();
 				if( !t.isVoid() ) {
 					return ( (GroundDataType) t ).worldArguments().stream().map(
-							w -> new WorldArgument( new Name( w.identifier() ) ) )
+									w -> new WorldArgument( new Name( w.identifier() ) ) )
 							.collect( Collectors.toList() );
 				} else {
 					return List.of();
@@ -430,7 +430,8 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 			return ( (GroundDataType) e.typeAnnotation().get() ).worldArguments().stream();
 		} else {
 			if( e.typeAnnotation().isEmpty() ) {
-				throw new ChoralException( new PrettyPrinterVisitor().visit( e ) + " is not annotated" );
+				throw new ChoralException(
+						new PrettyPrinterVisitor().visit( e ) + " is not annotated" );
 			}
 			return Stream.of();
 		}

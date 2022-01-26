@@ -29,7 +29,9 @@ import java.nio.ByteBuffer;
 
 public class TLSChannel_A< T > extends TLSChannelImpl< T > implements SymChannel_A< T > {
 
-	public TLSChannel_A( TSLByteChannelImpl channel, ChoralSerializer< Object, ByteBuffer > serializer ){
+	public TLSChannel_A(
+			TSLByteChannelImpl channel, ChoralSerializer< Object, ByteBuffer > serializer
+	) {
 		this.channel = channel;
 		this.serializer = serializer;
 	}

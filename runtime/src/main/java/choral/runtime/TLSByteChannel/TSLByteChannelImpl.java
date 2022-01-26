@@ -45,23 +45,23 @@ public abstract class TSLByteChannelImpl implements SymByteChannelImpl {
 	public < T extends ByteBuffer > Unit com( T m ) {
 		try {
 			channel.write( m );
-		} catch ( IOException e ) {
+		} catch( IOException e ) {
 			e.printStackTrace();
 		}
 		return Unit.id;
 	}
 
 	@Override
-	public ByteChannel byteChannel(){
+	public ByteChannel byteChannel() {
 		return this.channel;
 	}
 
 	@Override
-	public < T extends ByteBuffer > T com () {
+	public < T extends ByteBuffer > T com() {
 		try {
 			int BUFFER_SIZE = 4096;
-			return ( T ) recvLoop( ByteBuffer.allocate( BUFFER_SIZE ) );
-		} catch ( IOException e ) {
+			return (T) recvLoop( ByteBuffer.allocate( BUFFER_SIZE ) );
+		} catch( IOException e ) {
 			throw new RuntimeException( e.getMessage() );
 		}
 	}

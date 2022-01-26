@@ -1,17 +1,27 @@
 package choral.examples.diffieHellman;
+
 import choral.examples.BiPair.BiPair_B;
+
 import java.math.BigInteger;
+
 import choral.lang.Unit;
 import choral.annotations.Choreography;
 import choral.channels.SymDataChannel_B;
 
 @Choreography( role = "Bob", name = "DiffieHellman" )
 public class DiffieHellman_Bob {
-	public static BiPair_B < BigInteger, BigInteger > exchangeKeys( SymDataChannel_B < BigInteger > channel, Unit aPrivKey, BigInteger bPrivKey, Unit aSharedGenerator, BigInteger bSharedGenerator, Unit aSharedPrime, BigInteger bSharedPrime ) {
+	public static BiPair_B< BigInteger, BigInteger > exchangeKeys(
+			SymDataChannel_B< BigInteger > channel, Unit aPrivKey, BigInteger bPrivKey,
+			Unit aSharedGenerator, BigInteger bSharedGenerator, Unit aSharedPrime,
+			BigInteger bSharedPrime
+	) {
 		return exchangeKeys( channel, bPrivKey, bSharedGenerator, bSharedPrime );
 	}
-	
-	public static BiPair_B < BigInteger, BigInteger > exchangeKeys( SymDataChannel_B < BigInteger > channel, BigInteger bPrivKey, BigInteger bSharedGenerator, BigInteger bSharedPrime ) {
+
+	public static BiPair_B< BigInteger, BigInteger > exchangeKeys(
+			SymDataChannel_B< BigInteger > channel, BigInteger bPrivKey,
+			BigInteger bSharedGenerator, BigInteger bSharedPrime
+	) {
 		BigInteger bPubKey;
 		bPubKey = bSharedGenerator.modPow( bPrivKey, bSharedPrime );
 		BigInteger bRecvKey;
@@ -19,7 +29,7 @@ public class DiffieHellman_Bob {
 		channel.< BigInteger >com( bPubKey );
 		BigInteger bSharedKey;
 		bSharedKey = bSharedGenerator.modPow( bRecvKey, bSharedPrime );
-		return new BiPair_B < BigInteger, BigInteger >( Unit.id, bSharedKey );
+		return new BiPair_B< BigInteger, BigInteger >( Unit.id, bSharedKey );
 	}
 
 }

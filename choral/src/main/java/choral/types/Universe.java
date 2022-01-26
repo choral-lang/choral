@@ -432,7 +432,7 @@ public class Universe {
 		}
 
 		@Override
-		public String toString(){
+		public String toString() {
 			return "void";
 		}
 	};

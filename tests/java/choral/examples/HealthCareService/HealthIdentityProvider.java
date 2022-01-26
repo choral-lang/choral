@@ -32,10 +32,11 @@ import java.util.UUID;
 
 public class HealthIdentityProvider {
 
-	public static TLSChannel_A< Object > connect () {
+	public static TLSChannel_A< Object > connect() {
 		String CLIENT_IP = UUID.randomUUID().toString();
 		String SERVICE_IP = UUID.randomUUID().toString();
-		new Thread( () -> new Storage().authenticate( TestUtils_A.newLocalTLSChannel( SERVICE_IP, Unit.id ) ) ).start();
+		new Thread( () -> new Storage().authenticate(
+				TestUtils_A.newLocalTLSChannel( SERVICE_IP, Unit.id ) ) ).start();
 		new Thread( () -> new DistAuth_IP(
 				TestUtils_B.newLocalTLSChannel( Unit.id, CLIENT_IP ),
 				TestUtils_B.newLocalTLSChannel( Unit.id, SERVICE_IP )

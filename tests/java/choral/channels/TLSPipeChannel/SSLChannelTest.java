@@ -40,37 +40,41 @@ import java.security.cert.CertificateException;
 public class SSLChannelTest {
 
 	public static SSLContext getSSLContext() throws NoSuchAlgorithmException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException, IOException {
-			KeyStore keyStore = KeyStore.getInstance( KeyStore.getDefaultType() );
-			KeyStore trustStore = KeyStore.getInstance( KeyStore.getDefaultType() );
-			String password = "password";
-			String keyStoreFile = "src/tests/java/choral/channels/TLSPipeChannel/keystore.jks";
-			String trustStoreFile = "src/tests/java/choral/channels/TLSPipeChannel/truststore.ts";
-			keyStore.load( new FileInputStream( keyStoreFile ), password.toCharArray() );
-			trustStore.load( new FileInputStream( trustStoreFile ), password.toCharArray() );
-			KeyManagerFactory kmf = KeyManagerFactory.getInstance( "SunX509" );
-			kmf.init( keyStore, password.toCharArray() );
-			TrustManagerFactory tmf = TrustManagerFactory.getInstance( "SunX509" );
-			tmf.init( trustStore );
-			SSLContext sslContext = SSLContext.getInstance( "TLSv1.3" );
-			sslContext.init( kmf.getKeyManagers(), tmf.getTrustManagers(), null );
-			return sslContext;
-		}
+		KeyStore keyStore = KeyStore.getInstance( KeyStore.getDefaultType() );
+		KeyStore trustStore = KeyStore.getInstance( KeyStore.getDefaultType() );
+		String password = "password";
+		String keyStoreFile = "src/tests/java/choral/channels/TLSPipeChannel/keystore.jks";
+		String trustStoreFile = "src/tests/java/choral/channels/TLSPipeChannel/truststore.ts";
+		keyStore.load( new FileInputStream( keyStoreFile ), password.toCharArray() );
+		trustStore.load( new FileInputStream( trustStoreFile ), password.toCharArray() );
+		KeyManagerFactory kmf = KeyManagerFactory.getInstance( "SunX509" );
+		kmf.init( keyStore, password.toCharArray() );
+		TrustManagerFactory tmf = TrustManagerFactory.getInstance( "SunX509" );
+		tmf.init( trustStore );
+		SSLContext sslContext = SSLContext.getInstance( "TLSv1.3" );
+		sslContext.init( kmf.getKeyManagers(), tmf.getTrustManagers(), null );
+		return sslContext;
+	}
 
-	public static void main( String[] args ) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+	public static void main(
+			String[] args
+	) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
 
 		SSLContext sslContext = getSSLContext();
 
 		choral.utils.Pair< PipedByteChannel, PipedByteChannel > channels = PipedByteChannel.getConnectedChannels();
 
 		new Thread( () -> {
-			TSLByteChannel_A c = new TSLByteChannel_A( new WrapperByteChannel_A( channels.left() ), sslContext );
+			TSLByteChannel_A c = new TSLByteChannel_A( new WrapperByteChannel_A( channels.left() ),
+					sslContext );
 			c.com( KryoSerializer.getInstance().fromObject( new MyPair<>( "Hello", "World!" ) ) );
-		}).start();
+		} ).start();
 		new Thread( () -> {
-			TSLByteChannel_B c = new TSLByteChannel_B( new WrapperByteChannel_B( channels.right() ), sslContext );
-			MyPair<String, String> p = KryoSerializer.getInstance().toObject( c.com( Unit.id ) );
+			TSLByteChannel_B c = new TSLByteChannel_B( new WrapperByteChannel_B( channels.right() ),
+					sslContext );
+			MyPair< String, String > p = KryoSerializer.getInstance().toObject( c.com( Unit.id ) );
 			System.out.println( "Server received " + p.left() + " " + p.right() );
-		}).start();
+		} ).start();
 
 	}
 }

@@ -27,20 +27,20 @@ public class Signature {
 
 	private final String signature;
 
-	public Signature( String signature ){
+	public Signature( String signature ) {
 		this.signature = signature;
 	}
 
 	@Override
-	public boolean equals ( Object o ) {
-		if ( this == o ) return true;
-		if ( o == null || getClass() != o.getClass() ) return false;
-		Signature signature1 = ( Signature ) o;
+	public boolean equals( Object o ) {
+		if( this == o ) return true;
+		if( o == null || getClass() != o.getClass() ) return false;
+		Signature signature1 = (Signature) o;
 		return Objects.equals( signature, signature1.signature );
 	}
 
 	@Override
-	public int hashCode () {
+	public int hashCode() {
 		return Objects.hash( signature );
 	}
 }

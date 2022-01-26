@@ -20,6 +20,7 @@ public class Service extends AbstractBehavior< Message > {
 	}
 
 	private final ActorRef< SystemDemo.AuthSession > system;
+
 	public static Behavior< Message > create(
 			ActorRef< SystemDemo.AuthSession > system
 	) {
@@ -34,10 +35,10 @@ public class Service extends AbstractBehavior< Message > {
 	}
 
 	private Behavior< Message > onMessage( AuthResultMessage_B message ) {
-		if( message.result().right().isPresent() ){
+		if( message.result().right().isPresent() ) {
 			System.out.println( "[Service] token id: " + message.result().right().get().id() );
 		} else {
-			System.out.println( "[Service] Something went wrong!");
+			System.out.println( "[Service] Something went wrong!" );
 		}
 		system.tell( new SystemDemo.AuthSessionStop() );
 		return this;

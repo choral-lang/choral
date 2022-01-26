@@ -1,4 +1,5 @@
 package choral.examples.BiPair;
+
 import choral.annotations.Choreography;
 import choral.lang.Unit;
 
@@ -9,7 +10,7 @@ public class BiPair_B< L, R > {
 	public BiPair_B( Unit left, R right ) {
 		this( right );
 	}
-	
+
 	public BiPair_B( R right ) {
 		this.right = right;
 	}
@@ -17,7 +18,7 @@ public class BiPair_B< L, R > {
 	public Unit left() {
 		return Unit.id;
 	}
-	
+
 	public R right() {
 		return this.right;
 	}

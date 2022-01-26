@@ -36,13 +36,13 @@ package choral.runtime.TLSByteChannel.tlschannel;
  * execution).
  *
  * @see <a href="https://www.openssl.org/docs/man1.1.0/ssl/SSL_get_error.html">
- *      OpenSSL error documentation</a>
+ * OpenSSL error documentation</a>
  */
 public class NeedsTaskException extends TlsChannelFlowControlException {
 
 	private Runnable task;
 
-	public NeedsTaskException(Runnable task) {
+	public NeedsTaskException( Runnable task ) {
 		this.task = task;
 	}
 

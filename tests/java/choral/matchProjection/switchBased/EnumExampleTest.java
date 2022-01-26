@@ -26,41 +26,41 @@ import java.util.stream.IntStream;
 
 public class EnumExampleTest {
 
-		public static void main( String[] args ) {
+	public static void main( String[] args ) {
 
-			IntStream.range( 1,10 ).forEach( (e) -> {
-					String s = new EnumExampleTest().m();
-					System.out.println( s );
-			} );
-		}
+		IntStream.range( 1, 10 ).forEach( ( e ) -> {
+			String s = new EnumExampleTest().m();
+			System.out.println( s );
+		} );
+	}
 
 
-		String m() {
-			String outer = "MONDO!";
+	String m() {
+		String outer = "MONDO!";
 
-			EnumExample< String > c;
-			if ( new Random().nextBoolean() ) {
-				c = new EnumExample.EnumOption1<>( "CIAO" );
+		EnumExample< String > c;
+		if( new Random().nextBoolean() ) {
+			c = new EnumExample.EnumOption1<>( "CIAO" );
+		} else {
+			if( new Random().nextBoolean() ) {
+				c = new EnumExample.EnumOption2<>();
 			} else {
-				if ( new Random().nextBoolean() ) {
-					c = new EnumExample.EnumOption2<>();
-				} else {
-					c = new EnumExample.EnumOption3< String >( 1 );
-				}
+				c = new EnumExample.EnumOption3< String >( 1 );
 			}
-
-			{
-				Object t_exp1Eval = c;
-				if ( t_exp1Eval instanceof EnumExample.EnumOption1 ) {
-					EnumExample.EnumOption1< String > x = ( EnumExample.EnumOption1< String > ) t_exp1Eval;
-					return x.msg + " " + outer;
-				}
-				if ( t_exp1Eval instanceof EnumExample.EnumOption3 ) {
-					EnumExample.EnumOption3< String > x = ( EnumExample.EnumOption3< String > ) t_exp1Eval;
-					return "Found error: " + x.error;
-				}
-			}
-			return outer;
 		}
+
+		{
+			Object t_exp1Eval = c;
+			if( t_exp1Eval instanceof EnumExample.EnumOption1 ) {
+				EnumExample.EnumOption1< String > x = (EnumExample.EnumOption1< String >) t_exp1Eval;
+				return x.msg + " " + outer;
+			}
+			if( t_exp1Eval instanceof EnumExample.EnumOption3 ) {
+				EnumExample.EnumOption3< String > x = (EnumExample.EnumOption3< String >) t_exp1Eval;
+				return "Found error: " + x.error;
+			}
+		}
+		return outer;
+	}
 
 }

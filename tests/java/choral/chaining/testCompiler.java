@@ -38,12 +38,12 @@ public class testCompiler {
 
 		String file = "src/tests/java/ChainingTests/ChainingOperator.ch";
 
-		ANTLRInputStream input = new ANTLRFileStream(file);
-		ChoralLexer lexer = new ChoralLexer(input);
-		CommonTokenStream tokens = new CommonTokenStream(lexer);
-		ChoralParser cp = new ChoralParser(tokens);
+		ANTLRInputStream input = new ANTLRFileStream( file );
+		ChoralLexer lexer = new ChoralLexer( input );
+		CommonTokenStream tokens = new CommonTokenStream( lexer );
+		ChoralParser cp = new ChoralParser( tokens );
 		cp.removeErrorListeners();
-		cp.addErrorListener(new ParsingErrorListener( file ));
+		cp.addErrorListener( new ParsingErrorListener( file ) );
 		ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
 		CompilationUnit cu = AstOptimizer
 				.loadParameters()

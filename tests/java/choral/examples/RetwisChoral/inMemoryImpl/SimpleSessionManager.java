@@ -11,7 +11,7 @@ public class SimpleSessionManager implements SessionManager {
 	private final static SimpleSessionManager INSTANCE = new SimpleSessionManager();
 	private final HashMap< Token, String > sessions;
 
-	private SimpleSessionManager(){
+	private SimpleSessionManager() {
 		this.sessions = new HashMap();
 	}
 

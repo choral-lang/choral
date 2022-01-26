@@ -1,25 +1,33 @@
 package choral.examples.RetwisChoral;
+
 import choral.channels.SymChannel_A;
 import choral.annotations.Choreography;
+
 import java.util.Optional;
+
 import choral.lang.Unit;
 
 @Choreography( role = "Client", name = "RetwisLoginManager" )
 public class RetwisLoginManager_Client {
-	private SymChannel_A < Object > chCS;
+	private SymChannel_A< Object > chCS;
 	private CommandInterface commandInterface;
 
-	public RetwisLoginManager_Client( SymChannel_A < Object > chCS, Unit chSR, CommandInterface commandInterface, Unit db, Unit sessionManager ) {
+	public RetwisLoginManager_Client(
+			SymChannel_A< Object > chCS, Unit chSR, CommandInterface commandInterface, Unit db,
+			Unit sessionManager
+	) {
 		this( chCS, commandInterface );
 	}
-	
-	public RetwisLoginManager_Client( SymChannel_A < Object > chCS, CommandInterface commandInterface ) {
+
+	public RetwisLoginManager_Client(
+			SymChannel_A< Object > chCS, CommandInterface commandInterface
+	) {
 		this.chCS = chCS;
 		this.commandInterface = commandInterface;
 	}
 
-	public Optional < Token > main( LoginAction action ) {
-		switch( action ){
+	public Optional< Token > main( LoginAction action ) {
+		switch( action ) {
 			case SIGNUP -> {
 				chCS.< LoginAction >select( LoginAction.SIGNUP );
 				return signUp();
@@ -36,11 +44,11 @@ public class RetwisLoginManager_Client {
 		}
 		return Optional.< Token >empty();
 	}
-	
-	public Optional < Token > signUp() {
+
+	public Optional< Token > signUp() {
 		chCS.< String >com( commandInterface.getUsername() );
 		{
-			switch( chCS.< Result >select( Unit.id ) ){
+			switch( chCS.< Result >select( Unit.id ) ) {
 				default -> {
 					throw new RuntimeException( "Received unexpected label from select operation" );
 				}
@@ -54,12 +62,12 @@ public class RetwisLoginManager_Client {
 			}
 		}
 	}
-	
-	public Optional < Token > signIn() {
+
+	public Optional< Token > signIn() {
 		chCS.< String >com( commandInterface.getUsername() );
 		chCS.< String >com( commandInterface.promptPassword() );
 		{
-			switch( chCS.< Result >select( Unit.id ) ){
+			switch( chCS.< Result >select( Unit.id ) ) {
 				default -> {
 					throw new RuntimeException( "Received unexpected label from select operation" );
 				}
@@ -72,7 +80,7 @@ public class RetwisLoginManager_Client {
 			}
 		}
 	}
-	
+
 	public void logout() {
 		chCS.< Token >com( commandInterface.getSessionToken() );
 	}

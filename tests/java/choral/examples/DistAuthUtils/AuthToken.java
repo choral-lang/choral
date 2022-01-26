@@ -31,28 +31,28 @@ public class AuthToken {
 
 	private final String id;
 
-	public AuthToken ( String id ) {
+	public AuthToken( String id ) {
 		this.id = id;
 	}
 
 	@Override
-	public boolean equals ( Object o ) {
-		if ( this == o ) return true;
-		if ( o == null || getClass() != o.getClass() ) return false;
-		AuthToken authToken = ( AuthToken ) o;
+	public boolean equals( Object o ) {
+		if( this == o ) return true;
+		if( o == null || getClass() != o.getClass() ) return false;
+		AuthToken authToken = (AuthToken) o;
 		return Objects.equals( id, authToken.id );
 	}
 
 	@Override
-	public int hashCode () {
+	public int hashCode() {
 		return Objects.hash( id );
 	}
 
-	public String id () {
+	public String id() {
 		return id;
 	}
 
-	public static AuthToken create () {
+	public static AuthToken create() {
 		return new AuthToken( UUID.randomUUID().toString() );
 	}
 }

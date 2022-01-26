@@ -29,12 +29,12 @@ public class LocalChannel {
 	public static class _1_2 implements SymChannel._1_2< Object > {
 
 		@Override
-		public < M > M com$1 ( M m ) {
+		public < M > M com$1( M m ) {
 			return null;
 		}
 
 		@Override
-		public < M > M com$2 ( M m ) {
+		public < M > M com$2( M m ) {
 			return null;
 		}
 	}
@@ -42,12 +42,12 @@ public class LocalChannel {
 	public static class _2_1 implements SymChannel._2_1< Object > {
 
 		@Override
-		public < M > M com$2 ( M m ) {
+		public < M > M com$2( M m ) {
 			return null;
 		}
 
 		@Override
-		public < M > M com$1 ( M m ) {
+		public < M > M com$1( M m ) {
 			return null;
 		}
 	}

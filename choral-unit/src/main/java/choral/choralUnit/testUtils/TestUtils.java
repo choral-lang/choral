@@ -56,24 +56,31 @@ public class TestUtils {
 	private final static Map< String, Pair< SymChannel_A< Object >, SymChannel_B< Object > > > channels = new HashMap<>();
 	private final static Map< String, Pair< TLSChannel_A< Object >, TLSChannel_B< Object > > > tlsChannels = new HashMap<>();
 
-	public static synchronized Pair< SymChannel_A< Object >, SymChannel_B< Object > > newLocalChannel( String id ){
-		if( ! channels.containsKey( id ) ){
+	public static synchronized Pair< SymChannel_A< Object >, SymChannel_B< Object > > newLocalChannel(
+			String id
+	) {
+		if( !channels.containsKey( id ) ) {
 			MessageQueue m1 = new MessageQueue();
 			MessageQueue m2 = new MessageQueue();
-			channels.put( id, new Pair<>( new LocalChannel_A( m1, m2 ), new LocalChannel_B( m2, m1 ) ) );
+			channels.put( id,
+					new Pair<>( new LocalChannel_A( m1, m2 ), new LocalChannel_B( m2, m1 ) ) );
 			return channels.get( id );
 		} else {
 			return channels.remove( id );
 		}
 	}
+
 	public static Pair< SerializerChannel_A, SerializerChannel_B > newSocketChannel()
 			throws ExecutionException, InterruptedException {
 		return newSocketChannel( 0 );
 	}
 
-	public static Pair< SerializerChannel_A, SerializerChannel_B > newSocketChannel( int server_port )
+	public static Pair< SerializerChannel_A, SerializerChannel_B > newSocketChannel(
+			int server_port
+	)
 			throws ExecutionException, InterruptedException {
-		server_port = server_port == 0 ? ThreadLocalRandom.current().nextInt( 10000, 65000 ) : server_port;
+		server_port = server_port == 0 ? ThreadLocalRandom.current().nextInt( 10000,
+				65000 ) : server_port;
 		ServerSocketByteChannel serverListener =
 				ServerSocketByteChannel.at( "localhost", server_port );
 		CompletableFuture< SerializerChannel_B > f = new CompletableFuture<>();
@@ -104,18 +111,24 @@ public class TestUtils {
 		return Pair.of( ch_A, ch_B );
 	}
 
-	public static synchronized Pair< TLSChannel_A< Object >, TLSChannel_B< Object > > newLocalTLSChannel( String id ){
-		if( ! tlsChannels.containsKey( id ) ){
+	public static synchronized Pair< TLSChannel_A< Object >, TLSChannel_B< Object > > newLocalTLSChannel(
+			String id
+	) {
+		if( !tlsChannels.containsKey( id ) ) {
 			try {
 				Pair< PipedByteChannel, PipedByteChannel > localChannels = PipedByteChannel.getConnectedChannels();
-				WrapperByteChannel_A localChannel1 = new WrapperByteChannel_A( localChannels.left() );
-				WrapperByteChannel_B localChannel2 = new WrapperByteChannel_B( localChannels.right() );
+				WrapperByteChannel_A localChannel1 = new WrapperByteChannel_A(
+						localChannels.left() );
+				WrapperByteChannel_B localChannel2 = new WrapperByteChannel_B(
+						localChannels.right() );
 				SSLContext sslContext = getSSLContext();
 				tlsChannels.put( id, new Pair<>(
-						new TLSChannel_A<>( new TSLByteChannel_A( localChannel1, sslContext ), KryoSerializer.getInstance() ),
-						new TLSChannel_B<>( new TSLByteChannel_B( localChannel2, sslContext ), KryoSerializer.getInstance() )
+						new TLSChannel_A<>( new TSLByteChannel_A( localChannel1, sslContext ),
+								KryoSerializer.getInstance() ),
+						new TLSChannel_B<>( new TSLByteChannel_B( localChannel2, sslContext ),
+								KryoSerializer.getInstance() )
 				) );
-			} catch ( IOException | CertificateException | NoSuchAlgorithmException
+			} catch( IOException | CertificateException | NoSuchAlgorithmException
 					| UnrecoverableKeyException | KeyStoreException | KeyManagementException e ) {
 				e.printStackTrace();
 			}
@@ -127,8 +140,7 @@ public class TestUtils {
 
 	private static SSLContext getSSLContext() throws
 			NoSuchAlgorithmException, KeyStoreException, CertificateException,
-			UnrecoverableKeyException, KeyManagementException, IOException
-	{
+			UnrecoverableKeyException, KeyManagementException, IOException {
 		KeyStore ks = KeyStore.getInstance( "JKS" );
 		KeyStore ts = KeyStore.getInstance( "JKS" );
 		String password = "password";

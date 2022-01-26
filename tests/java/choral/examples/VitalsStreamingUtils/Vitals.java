@@ -31,26 +31,26 @@ public class Vitals {
 	private final String temperature;
 	private final String motion;
 
-	public Vitals ( String id, String heartRate, String temperature, String motion ) {
+	public Vitals( String id, String heartRate, String temperature, String motion ) {
 		this.id = id;
 		this.heartRate = heartRate;
 		this.temperature = temperature;
 		this.motion = motion;
 	}
 
-	public String id () {
+	public String id() {
 		return id;
 	}
 
-	public String heartRate () {
+	public String heartRate() {
 		return heartRate;
 	}
 
-	public String temperature () {
+	public String temperature() {
 		return temperature;
 	}
 
-	public String motion () {
+	public String motion() {
 		return motion;
 	}
 }

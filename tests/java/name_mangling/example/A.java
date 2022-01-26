@@ -33,17 +33,17 @@ public class A {
 	public static class _1_2 extends B._1_2 implements I._1_2, I._2_1 {
 
 		@Override
-		public String m$2 ( Object x ) {
+		public String m$2( Object x ) {
 			return null;
 		}
 
 		@Override
-		public String m$2 ( CharSequence x ) {
+		public String m$2( CharSequence x ) {
 			return null;
 		}
 
 		@Override
-		public String m$1 ( Object x ) {
+		public String m$1( Object x ) {
 			return null;
 		}
 	}
@@ -51,17 +51,17 @@ public class A {
 	public static class _2_1 extends B._2_1 implements I._1_2, I._2_1 {
 
 		@Override
-		public String m$1 ( Object x ) {
+		public String m$1( Object x ) {
 			return null;
 		}
 
 		@Override
-		public String m$1 ( CharSequence x ) {
+		public String m$1( CharSequence x ) {
 			return null;
 		}
 
 		@Override
-		public String m$2 ( Object x ) {
+		public String m$2( Object x ) {
 			return null;
 		}
 	}

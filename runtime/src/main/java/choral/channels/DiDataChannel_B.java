@@ -24,6 +24,7 @@ package choral.channels;
 import choral.lang.Unit;
 
 public interface DiDataChannel_B< T > {
-	< S extends T > S com ( Unit m );
-	< S extends T > S com ();
+	< S extends T > S com( Unit m );
+
+	< S extends T > S com();
 }

@@ -38,27 +38,27 @@ public class X {
 	public static class _1_2_3 implements Ip._2_3_1, Ip._3_1_2 {
 
 		@Override
-		public String m$3$1 ( String _1, String _2 ) {
+		public String m$3$1( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$1$2 ( String _1, String _2 ) {
+		public String m$1$2( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$2$3 ( String _1, String _2 ) {
+		public String m$2$3( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$1$3 ( String _1, String _2 ) {
+		public String m$1$3( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$3$2 ( String _1, String _2 ) {
+		public String m$3$2( String _1, String _2 ) {
 			return null;
 		}
 	}
@@ -66,27 +66,27 @@ public class X {
 	public static class _1_3_2 implements Ip._3_2_1, Ip._2_1_3 {
 
 		@Override
-		public String m$3$2 ( String _1, String _2 ) {
+		public String m$3$2( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$1$2 ( String _1, String _2 ) {
+		public String m$1$2( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$2$1 ( String _1, String _2 ) {
+		public String m$2$1( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$1$3 ( String _1, String _2 ) {
+		public String m$1$3( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$2$3 ( String _1, String _2 ) {
+		public String m$2$3( String _1, String _2 ) {
 			return null;
 		}
 	}
@@ -95,27 +95,27 @@ public class X {
 	public static class _2_1_3 implements Ip._1_3_2, Ip._3_2_1 {
 
 		@Override
-		public String m$3$2 ( String _1, String _2 ) {
+		public String m$3$2( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$2$1 ( String _1, String _2 ) {
+		public String m$2$1( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$1$3 ( String _1, String _2 ) {
+		public String m$1$3( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$2$3 ( String _1, String _2 ) {
+		public String m$2$3( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$3$1 ( String _1, String _2 ) {
+		public String m$3$1( String _1, String _2 ) {
 			return null;
 		}
 	}
@@ -123,55 +123,55 @@ public class X {
 	public static class _2_3_1 implements Ip._3_1_2, Ip._1_2_3 {
 
 		@Override
-		public String m$3$1 ( String _1, String _2 ) {
+		public String m$3$1( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$2$1 ( String _1, String _2 ) {
+		public String m$2$1( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$1$2 ( String _1, String _2 ) {
+		public String m$1$2( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$2$3 ( String _1, String _2 ) {
+		public String m$2$3( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$1$3 ( String _1, String _2 ) {
+		public String m$1$3( String _1, String _2 ) {
 			return null;
 		}
 	}
 
-	public static class _3_1_2 implements Ip._1_2_3, Ip._2_3_1{
+	public static class _3_1_2 implements Ip._1_2_3, Ip._2_3_1 {
 
 		@Override
-		public String m$2$3 ( String _1, String _2 ) {
+		public String m$2$3( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$3$1 ( String _1, String _2 ) {
+		public String m$3$1( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$1$2 ( String _1, String _2 ) {
+		public String m$1$2( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$3$2 ( String _1, String _2 ) {
+		public String m$3$2( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$2$1 ( String _1, String _2 ) {
+		public String m$2$1( String _1, String _2 ) {
 			return null;
 		}
 	}
@@ -179,27 +179,27 @@ public class X {
 	public static class _3_2_1 implements Ip._2_1_3, Ip._1_3_2 {
 
 		@Override
-		public String m$2$1 ( String _1, String _2 ) {
+		public String m$2$1( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$3$1 ( String _1, String _2 ) {
+		public String m$3$1( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$1$3 ( String _1, String _2 ) {
+		public String m$1$3( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$3$2 ( String _1, String _2 ) {
+		public String m$3$2( String _1, String _2 ) {
 			return null;
 		}
 
 		@Override
-		public String m$1$2 ( String _1, String _2 ) {
+		public String m$1$2( String _1, String _2 ) {
 			return null;
 		}
 	}

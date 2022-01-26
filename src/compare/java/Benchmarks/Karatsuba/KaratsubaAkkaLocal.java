@@ -46,17 +46,19 @@ public class KaratsubaAkkaLocal {
 					long start = System.nanoTime();
 					ActorSystem< KaratsubaMessage > system =
 							ActorSystem.create( Karatsuba.create(), "KaratsubaTest" );
-					KaratsubaRootRequest request = new KaratsubaRootRequest( new KaratsubaOperation( left, right ) );
+					KaratsubaRootRequest request = new KaratsubaRootRequest(
+							new KaratsubaOperation( left, right ) );
 					system.tell( request );
 					request.resultFuture().get();
 					system.getWhenTerminated();
 					system.terminate();
 					times.add( System.nanoTime() - start );
-					if( !request.resultFuture().get().equals( result ) ){
+					if( !request.resultFuture().get().equals( result ) ) {
 //						System.out.println( "azz " + request.resultFuture().get() + " instead of " + result );
-						throw new RuntimeException( "The procedure returned an unexpected result, expected: " + result + ", computed: " + request.resultFuture().get() );
+						throw new RuntimeException(
+								"The procedure returned an unexpected result, expected: " + result + ", computed: " + request.resultFuture().get() );
 					} else {
-						System.out.println( "done " + i++);
+						System.out.println( "done " + i++ );
 					}
 				}
 				if( write ) {

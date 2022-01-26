@@ -25,8 +25,8 @@ import javax.net.ssl.SSLEngineResult;
 
 public class Util {
 
-	public static void assertTrue(boolean condition) {
-		if (!condition)
+	public static void assertTrue( boolean condition ) {
+		if( !condition )
 			throw new AssertionError();
 	}
 
@@ -34,22 +34,23 @@ public class Util {
 	 * Convert a {@link SSLEngineResult} into a {@link String}, this is needed
 	 * because the supplied method includes a log-breaking newline.
 	 */
-	public static String resultToString(SSLEngineResult result) {
-		return String.format("status=%s,handshakeStatus=%s,bytesConsumed=%d,bytesConsumed=%d", result.getStatus(),
-				result.getHandshakeStatus(), result.bytesProduced(), result.bytesConsumed());
+	public static String resultToString( SSLEngineResult result ) {
+		return String.format( "status=%s,handshakeStatus=%s,bytesConsumed=%d,bytesConsumed=%d",
+				result.getStatus(),
+				result.getHandshakeStatus(), result.bytesProduced(), result.bytesConsumed() );
 	}
 
 	public static int getJavaMajorVersion() {
-		String version = System.getProperty("java.version");
-		if (version.startsWith("1.")) {
-			version = version.substring(2, 3);
+		String version = System.getProperty( "java.version" );
+		if( version.startsWith( "1." ) ) {
+			version = version.substring( 2, 3 );
 		} else {
-			int dot = version.indexOf(".");
-			if (dot != -1) {
-				version = version.substring(0, dot);
+			int dot = version.indexOf( "." );
+			if( dot != -1 ) {
+				version = version.substring( 0, dot );
 			}
 		}
-		return Integer.parseInt(version);
+		return Integer.parseInt( version );
 	}
 
 }

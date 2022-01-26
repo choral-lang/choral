@@ -2,7 +2,7 @@ package DistAuth.DistAuthUtils;
 
 import java.util.Optional;
 
-public class AuthResult_B extends BiPair_B< Optional < AuthToken >, Optional < AuthToken > > {
+public class AuthResult_B extends BiPair_B< Optional< AuthToken >, Optional< AuthToken > > {
 	public AuthResult_B( Void t1, AuthToken t2 ) {
 		this( t2 );
 	}

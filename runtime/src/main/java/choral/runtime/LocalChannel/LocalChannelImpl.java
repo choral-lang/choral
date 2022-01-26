@@ -32,7 +32,7 @@ public class LocalChannelImpl implements SymChannelImpl< Object > {
 	private final MessageQueue queueOut;
 	private final MessageQueue queueIn;
 
-	public LocalChannelImpl ( MessageQueue queueOut, MessageQueue queueIn ) {
+	public LocalChannelImpl( MessageQueue queueOut, MessageQueue queueIn ) {
 		this.queueOut = queueOut;
 		this.queueIn = queueIn;
 	}
@@ -43,10 +43,10 @@ public class LocalChannelImpl implements SymChannelImpl< Object > {
 	}
 
 	@Override
-	public < S > S com () {
+	public < S > S com() {
 		try {
 			return queueIn.recv();
-		} catch ( ExecutionException | InterruptedException e ) {
+		} catch( ExecutionException | InterruptedException e ) {
 			e.printStackTrace();
 		}
 		return null; // it should never happen
@@ -59,17 +59,17 @@ public class LocalChannelImpl implements SymChannelImpl< Object > {
 	}
 
 	@Override
-	public < M extends Enum< M > > Unit select ( M m ) {
+	public < M extends Enum< M > > Unit select( M m ) {
 		return this.com( m );
 	}
 
 	@Override
-	public < M extends Enum< M > > M select ( Unit m ) {
+	public < M extends Enum< M > > M select( Unit m ) {
 		return this.select();
 	}
 
 	@Override
-	public < T extends Enum< T > > T select () {
+	public < T extends Enum< T > > T select() {
 		return this.com();
 	}
 

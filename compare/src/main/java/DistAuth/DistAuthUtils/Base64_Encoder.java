@@ -25,7 +25,8 @@ import java.util.Base64;
 
 public class Base64_Encoder {
 
-	private Base64_Encoder () {}
+	private Base64_Encoder() {
+	}
 
 	public static String encodeToString( byte[] b ) {
 		return Base64.getEncoder().encodeToString( b );

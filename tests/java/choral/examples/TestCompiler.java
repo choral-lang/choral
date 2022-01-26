@@ -59,9 +59,9 @@ public class TestCompiler {
 
 		).collect( Collectors.toMap( Map.Entry::getKey, Map.Entry::getValue ) );
 		try {
-			for ( Map.Entry< String, List< String > > targetTemplate : targetTemplates.entrySet() ) {
-				Compiler.main( ( String[] ) ArrayUtils.addAll(
-						new String[]{
+			for( Map.Entry< String, List< String > > targetTemplate : targetTemplates.entrySet() ) {
+				Compiler.main( (String[]) ArrayUtils.addAll(
+						new String[] {
 								"-annotate",
 								"-d", destinationFolder,
 								"-t", targetFolder,
@@ -69,7 +69,7 @@ public class TestCompiler {
 						targetTemplate.getValue().toArray()
 				) );
 			}
-		} catch ( Exception e ) {
+		} catch( Exception e ) {
 			e.printStackTrace();
 		}
 

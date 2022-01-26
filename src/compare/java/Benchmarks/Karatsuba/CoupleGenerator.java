@@ -6,7 +6,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class CoupleGenerator {
 
-	public static final String filepath = System.getProperty( "user.dir" ) + "/src/compare/java/Benchmarks/Karatsuba/numbers/";
+	public static final String filepath = System.getProperty(
+			"user.dir" ) + "/src/compare/java/Benchmarks/Karatsuba/numbers/";
 
 	public static void main( String[] args ) {
 		// 10^9   10^11    10^13    10^15     10^17     10^19
@@ -22,7 +23,8 @@ public class CoupleGenerator {
 				int pow = (int) Math.log10( prod );
 				if( prod > 0 && power[ idx ] == pow ) {
 					//System.out.println( left + " * " + right + " = " + prod + "(" + pow + ")" );
-					content.append( left ).append( "," ).append( right ).append(",").append( left*right ).append( "\n" );
+					content.append( left ).append( "," ).append( right ).append( "," ).append(
+							left * right ).append( "\n" );
 				} else {
 					i--;
 				}
