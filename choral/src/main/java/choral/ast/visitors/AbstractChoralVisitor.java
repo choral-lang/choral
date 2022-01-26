@@ -24,7 +24,6 @@ package choral.ast.visitors;
 import choral.ast.CompilationUnit;
 import choral.ast.ImportDeclaration;
 import choral.ast.Name;
-import choral.ast.Node;
 import choral.ast.body.Class;
 import choral.ast.body.Enum;
 import choral.ast.body.*;

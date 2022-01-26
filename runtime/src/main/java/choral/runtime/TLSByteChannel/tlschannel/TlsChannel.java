@@ -21,14 +21,13 @@
 
 package choral.runtime.TLSByteChannel.tlschannel;
 
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.function.Consumer;
-
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
 
 /**
  * A ByteChannel interface to a TLS (Transport Layer Security) connection.

@@ -21,7 +21,8 @@
 
 package choral.types;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public abstract class HigherReferenceType extends HigherDataType implements ReferenceType {

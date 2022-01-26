@@ -27,8 +27,6 @@ import choral.ast.body.Interface;
 import choral.ast.visitors.ChoralVisitorInterface;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 public class CompilationUnit extends Node {

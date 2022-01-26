@@ -21,7 +21,8 @@
 
 package choral.runtime.SerializerChannel;
 
-import choral.channels.*;
+import choral.channels.SymChannel_B;
+import choral.channels.SymDataChannelImpl;
 import choral.runtime.Serializers.ChoralSerializer;
 
 import java.nio.ByteBuffer;

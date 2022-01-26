@@ -23,8 +23,8 @@ package choral.runtime.SerializerChannel;
 
 import choral.channels.SymChannelImpl;
 import choral.channels.SymDataChannelImpl;
-import choral.runtime.Serializers.ChoralSerializer;
 import choral.lang.Unit;
+import choral.runtime.Serializers.ChoralSerializer;
 
 import java.nio.ByteBuffer;
 

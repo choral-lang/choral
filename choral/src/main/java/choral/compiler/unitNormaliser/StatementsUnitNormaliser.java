@@ -22,7 +22,7 @@
 package choral.compiler.unitNormaliser;
 
 import choral.ast.body.VariableDeclaration;
-import choral.ast.expression.*;
+import choral.ast.expression.Expression;
 import choral.ast.statement.*;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.utils.Pair;

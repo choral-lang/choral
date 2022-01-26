@@ -21,9 +21,6 @@
 
 package choral.compiler;
 
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.Parser;
-import org.apache.commons.cli.*;
 import choral.ast.CompilationUnit;
 import choral.ast.ImportDeclaration;
 import choral.ast.Name;
@@ -34,18 +31,22 @@ import choral.ast.body.Enum;
 import choral.ast.body.Interface;
 import choral.ast.expression.LiteralExpression;
 import choral.ast.type.WorldArgument;
+import choral.compiler.Logger.Level;
+import choral.compiler.courtesyMethodSinthesiser.CourtesyMethodsSynthesiser;
 import choral.compiler.soloist.DependecyVisitor;
 import choral.compiler.soloist.ImportProjector;
 import choral.compiler.soloist.ProjectableTemplate;
 import choral.compiler.soloist.SoloistProjector;
-import choral.compiler.courtesyMethodSinthesiser.CourtesyMethodsSynthesiser;
 import choral.compiler.unitNormaliser.UnitRepresentation;
+import choral.exceptions.ChoralException;
 import choral.grammar.ChoralLexer;
 import choral.grammar.ChoralParser;
-import choral.exceptions.ChoralException;
-import choral.compiler.Logger.*;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.*;
+import org.apache.commons.cli.*;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;

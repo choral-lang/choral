@@ -22,7 +22,6 @@
 
 package choral.ast.expression;
 
-import org.antlr.runtime.ANTLRStringStream;
 import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.visitors.ChoralVisitorInterface;

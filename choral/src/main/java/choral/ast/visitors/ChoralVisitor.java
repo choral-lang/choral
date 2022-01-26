@@ -25,9 +25,9 @@ import choral.ast.CompilationUnit;
 import choral.ast.ImportDeclaration;
 import choral.ast.Name;
 import choral.ast.Node;
-import choral.ast.body.*;
 import choral.ast.body.Class;
 import choral.ast.body.Enum;
+import choral.ast.body.*;
 import choral.ast.expression.*;
 import choral.ast.statement.*;
 import choral.ast.type.FormalTypeParameter;
@@ -36,7 +36,10 @@ import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.utils.Pair;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ChoralVisitor implements ChoralVisitorInterface< Node > {

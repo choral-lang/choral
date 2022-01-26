@@ -29,7 +29,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static choral.types.Modifier.*;
-import static choral.types.ModifierUtils.*;
+import static choral.types.ModifierUtils.assertAccessModifiers;
+import static choral.types.ModifierUtils.assertIllegalCombinationOfModifiers;
 
 public abstract class Member implements HasSource {
 

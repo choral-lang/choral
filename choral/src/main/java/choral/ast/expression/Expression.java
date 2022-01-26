@@ -24,11 +24,8 @@ package choral.ast.expression;
 import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.WithTypeAnnotation;
-import choral.ast.type.WorldArgument;
 import choral.ast.visitors.MergerInterface;
-import choral.types.GroundDataType;
 import choral.types.GroundDataTypeOrVoid;
-import choral.types.Member;
 
 import java.util.Optional;
 

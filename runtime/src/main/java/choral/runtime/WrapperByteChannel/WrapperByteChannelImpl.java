@@ -21,10 +21,9 @@
 
 package choral.runtime.WrapperByteChannel;
 
-import choral.runtime.ChoralByteChannel.SymByteChannelImpl;
 import choral.lang.Unit;
+import choral.runtime.ChoralByteChannel.SymByteChannelImpl;
 import choral.runtime.Media.BlockingByteChannel;
-import choral.runtime.Media.SocketByteChannel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

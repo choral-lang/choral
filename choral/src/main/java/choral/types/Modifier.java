@@ -21,14 +21,13 @@
 
 package choral.types;
 
-import choral.utils.Formatting;
 import choral.exceptions.StaticVerificationException;
+import choral.utils.Formatting;
 
 import java.util.EnumSet;
 import java.util.stream.Collectors;
 
 import static choral.types.Modifier.*;
-import static choral.types.Modifier.FINAL;
 
 public enum Modifier {
 	STATIC( "static" ),

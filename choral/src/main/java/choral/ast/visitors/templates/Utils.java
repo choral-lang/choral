@@ -31,7 +31,6 @@ import org.apache.velocity.runtime.parser.node.SimpleNode;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.HashMap;
-import java.util.Map;
 
 public class Utils {
 

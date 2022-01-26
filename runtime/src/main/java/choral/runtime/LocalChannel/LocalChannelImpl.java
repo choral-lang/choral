@@ -22,8 +22,8 @@
 package choral.runtime.LocalChannel;
 
 import choral.channels.SymChannelImpl;
-import choral.runtime.Media.MessageQueue;
 import choral.lang.Unit;
+import choral.runtime.Media.MessageQueue;
 
 import java.util.concurrent.ExecutionException;
 

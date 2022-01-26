@@ -21,9 +21,9 @@
 
 package choral.runtime.TLSByteChannel;
 
+import choral.lang.Unit;
 import choral.runtime.ChoralByteChannel.SymByteChannelImpl;
 import choral.runtime.TLSByteChannel.tlschannel.TlsChannel;
-import choral.lang.Unit;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

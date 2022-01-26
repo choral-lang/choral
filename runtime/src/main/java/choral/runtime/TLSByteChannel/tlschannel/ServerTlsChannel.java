@@ -21,6 +21,13 @@
 
 package choral.runtime.TLSByteChannel.tlschannel;
 
+import choral.runtime.TLSByteChannel.tlschannel.impl.BufferHolder;
+import choral.runtime.TLSByteChannel.tlschannel.impl.ByteBufferSet;
+import choral.runtime.TLSByteChannel.tlschannel.impl.TlsChannelImpl;
+import choral.runtime.TLSByteChannel.tlschannel.impl.TlsExplorer;
+import choral.runtime.TLSByteChannel.tlschannel.util.TlsChannelCallbackException;
+
+import javax.net.ssl.*;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
@@ -32,20 +39,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import javax.net.ssl.SNIHostName;
-import javax.net.ssl.SNIServerName;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.StandardConstants;
-
-import choral.runtime.TLSByteChannel.tlschannel.impl.BufferHolder;
-import choral.runtime.TLSByteChannel.tlschannel.impl.ByteBufferSet;
-import choral.runtime.TLSByteChannel.tlschannel.impl.TlsChannelImpl;
-import choral.runtime.TLSByteChannel.tlschannel.impl.TlsExplorer;
-import choral.runtime.TLSByteChannel.tlschannel.util.TlsChannelCallbackException;
 
 /**
  * A server-side {@link TlsChannel}.

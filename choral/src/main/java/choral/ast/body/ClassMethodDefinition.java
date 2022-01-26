@@ -21,11 +21,9 @@
 
 package choral.ast.body;
 
-import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.statement.Statement;
 import choral.ast.visitors.ChoralVisitorInterface;
-import choral.types.Member;
 
 import java.util.EnumSet;
 import java.util.List;

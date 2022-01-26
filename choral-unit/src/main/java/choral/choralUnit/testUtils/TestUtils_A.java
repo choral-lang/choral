@@ -22,8 +22,8 @@
 package choral.choralUnit.testUtils;
 
 import choral.channels.SymChannel_A;
-import choral.runtime.TLSChannel.TLSChannel_A;
 import choral.lang.Unit;
+import choral.runtime.TLSChannel.TLSChannel_A;
 
 public class TestUtils_A {
 
