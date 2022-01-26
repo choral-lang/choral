@@ -25,11 +25,11 @@ public class Profile {
 
 	private final String id;
 
-	public Profile ( String id ) {
+	public Profile( String id ) {
 		this.id = id;
 	}
 
-	public String id () {
+	public String id() {
 		return id;
 	}
 }

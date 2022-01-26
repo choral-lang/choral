@@ -32,7 +32,10 @@ public class SerializerChannelImpl implements SymChannelImpl< Object > {
 	private final ChoralSerializer< Object, ByteBuffer > serializer;
 	private final SymDataChannelImpl< ByteBuffer > channel;
 
-	public SerializerChannelImpl ( ChoralSerializer< Object, ByteBuffer > serializer, SymDataChannelImpl< ByteBuffer > channel ){
+	public SerializerChannelImpl(
+			ChoralSerializer< Object, ByteBuffer > serializer,
+			SymDataChannelImpl< ByteBuffer > channel
+	) {
 		this.serializer = serializer;
 		this.channel = channel;
 	}
@@ -49,22 +52,22 @@ public class SerializerChannelImpl implements SymChannelImpl< Object > {
 	}
 
 	@Override
-	public < S > S com () {
+	public < S > S com() {
 		return serializer.toObject( channel.com( Unit.id ) );
 	}
 
 	@Override
-	public < T extends Enum< T > > Unit select ( T m ) {
+	public < T extends Enum< T > > Unit select( T m ) {
 		return this.com( m );
 	}
 
 	@Override
-	public < T extends Enum< T > > T select ( Unit m ) {
+	public < T extends Enum< T > > T select( Unit m ) {
 		return select();
 	}
 
 	@Override
-	public < T extends Enum< T > > T select () {
+	public < T extends Enum< T > > T select() {
 		return this.com();
 	}
 

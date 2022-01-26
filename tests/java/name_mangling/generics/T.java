@@ -43,16 +43,16 @@ public class T@( A, B )< R@( X, Y ) extends Flippable@( X, Y ) >{
 
 public class T {
 
-	public static class _1_2< R extends Flippable._1_2 >{
+	public static class _1_2< R extends Flippable._1_2 > {
 		R p1;
 		R p2;
 
-		_1_2( R p1, R p2 ){
+		_1_2( R p1, R p2 ) {
 			this.p1 = p1;
 			this.p2 = p2;
 		}
 
-		Flippable._2_1 flip$1_2( R x ){
+		Flippable._2_1 flip$1_2( R x ) {
 			return x.flip();
 		}
 
@@ -62,12 +62,12 @@ public class T {
 		R p1;
 		R p2;
 
-		public _2_1 ( R p1, R p2 ) {
+		public _2_1( R p1, R p2 ) {
 			this.p1 = p1;
 			this.p2 = p2;
 		}
 
-		Flippable._2_1 flip$2_1( R x ){
+		Flippable._2_1 flip$2_1( R x ) {
 			return x.flip();
 		}
 	}

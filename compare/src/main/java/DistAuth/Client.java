@@ -26,7 +26,7 @@ public class Client extends AbstractBehavior< Message > {
 			ActorRef< Message > service,
 			Credentials credentials,
 			ActorContext< Message > context
-			) {
+	) {
 		super( context );
 		this.system = system;
 		this.ip = ip;
@@ -56,10 +56,10 @@ public class Client extends AbstractBehavior< Message > {
 	}
 
 	private Behavior< Message > onMessage( AuthResultMessage_A message ) {
-		if( message.result().left().isPresent() ){
+		if( message.result().left().isPresent() ) {
 			System.out.println( "[Client] token id: " + message.result().left().get().id() );
 		} else {
-			System.out.println( "[Client] Something went wrong!");
+			System.out.println( "[Client] Something went wrong!" );
 		}
 		system.tell( new SystemDemo.AuthSessionStop() );
 		return this;
@@ -71,9 +71,9 @@ public class Client extends AbstractBehavior< Message > {
 		try {
 			MessageDigest md;
 			md = MessageDigest.getInstance( "SHA3-256" );
-			return Base64_Encoder.encodeToString( md.digest( salt_and_pwd.getBytes( StandardCharsets.UTF_8 ) ) );
-		}
-		catch ( NoSuchAlgorithmException e ) {
+			return Base64_Encoder.encodeToString(
+					md.digest( salt_and_pwd.getBytes( StandardCharsets.UTF_8 ) ) );
+		} catch( NoSuchAlgorithmException e ) {
 			e.printStackTrace();
 			return "Algorithm not found";
 		}

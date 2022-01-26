@@ -78,9 +78,9 @@ import java.util.function.Consumer;
 public interface TlsChannel extends ByteChannel, GatheringByteChannel, ScatteringByteChannel {
 
 	BufferAllocator defaultPlainBufferAllocator = new HeapBufferAllocator();
-    BufferAllocator defaultEncryptedBufferAllocator = new DirectBufferAllocator();
+	BufferAllocator defaultEncryptedBufferAllocator = new DirectBufferAllocator();
 
-    /**
+	/**
 	 * Return a reference to the underlying {@link ByteChannel}.
 	 */
 	ByteChannel getUnderlying();
@@ -89,8 +89,8 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
 	 * Return a reference to the {@link SSLEngine} used.
 	 *
 	 * @return the engine reference if present, or <code>null</code> if unknown
-	 *         (that can happen in server-side choral.channels before the SNI is
-	 *         parsed).
+	 * (that can happen in server-side choral.channels before the SNI is
+	 * parsed).
 	 */
 	SSLEngine getSslEngine();
 
@@ -100,25 +100,25 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
 	 *
 	 * @see TlsChannelBuilder#withSessionInitCallback(Consumer)
 	 */
-	Consumer<SSLSession> getSessionInitCallback();
+	Consumer< SSLSession > getSessionInitCallback();
 
-    /**
-     * Return the {@link BufferAllocator} to use for unencrypted data. Actually, a decorating subclass is returned,
-     * which contains allocation statistics for this channel.
-     *
-     * @see TlsChannelBuilder#withPlainBufferAllocator(BufferAllocator)
-     * @see TrackingAllocator
-     */
-    TrackingAllocator getPlainBufferAllocator();
+	/**
+	 * Return the {@link BufferAllocator} to use for unencrypted data. Actually, a decorating subclass is returned,
+	 * which contains allocation statistics for this channel.
+	 *
+	 * @see TlsChannelBuilder#withPlainBufferAllocator(BufferAllocator)
+	 * @see TrackingAllocator
+	 */
+	TrackingAllocator getPlainBufferAllocator();
 
-    /**
-     * Return the {@link BufferAllocator} to use for encrypted data. Actually, a decorating subclass is returned,
-     * which contains allocation statistics for this channel.
-     *
-     * @see TlsChannelBuilder#withEncryptedBufferAllocator(BufferAllocator)
-     * @see TrackingAllocator
-     */
-    TrackingAllocator getEncryptedBufferAllocator();
+	/**
+	 * Return the {@link BufferAllocator} to use for encrypted data. Actually, a decorating subclass is returned,
+	 * which contains allocation statistics for this channel.
+	 *
+	 * @see TlsChannelBuilder#withEncryptedBufferAllocator(BufferAllocator)
+	 * @see TrackingAllocator
+	 */
+	TrackingAllocator getEncryptedBufferAllocator();
 
 	/**
 	 * Return whether CPU-intensive tasks are run or not.
@@ -170,29 +170,19 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
 	 * then an invocation of this method will block until the first operation is
 	 * complete.
 	 *
-	 * @param dst
-	 *            The buffer into which bytesProduced are to be transferred
-	 *
+	 * @param dst The buffer into which bytesProduced are to be transferred
 	 * @return The number of bytesProduced read, or <tt>-1</tt> if the channel has
-	 *         reached end-of-stream; contrary to the behavior specified in
-	 *         {@link ByteChannel}, this method never returns 0, but throws
-	 *         {@link WouldBlockException}
-	 *
-	 * @throws WouldBlockException
-	 *             if the channel is in non-blocking mode and the IO operation
-	 *             cannot be completed immediately
-	 *
-	 * @throws NeedsTaskException
-	 *             if the channel is not configured to run tasks automatically
-	 *             and a task needs to be executed to complete the operation
-	 *
-	 * @throws SSLException
-	 *             if the {@link SSLEngine} throws a SSLException
-	 *
-	 * @throws IOException
-	 *             if the underlying channel throws an IOException
+	 * reached end-of-stream; contrary to the behavior specified in
+	 * {@link ByteChannel}, this method never returns 0, but throws
+	 * {@link WouldBlockException}
+	 * @throws WouldBlockException if the channel is in non-blocking mode and the IO operation
+	 *                             cannot be completed immediately
+	 * @throws NeedsTaskException  if the channel is not configured to run tasks automatically
+	 *                             and a task needs to be executed to complete the operation
+	 * @throws SSLException        if the {@link SSLEngine} throws a SSLException
+	 * @throws IOException         if the underlying channel throws an IOException
 	 */
-	int read(ByteBuffer dst) throws IOException;
+	int read( ByteBuffer dst ) throws IOException;
 
 	/**
 	 * Writes a sequence of bytesProduced to this channel from the given buffer.
@@ -235,28 +225,18 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
 	 * then an invocation of this method will block until the first operation is
 	 * complete.
 	 *
-	 * @param src
-	 *            The buffer from which bytesProduced are to be retrieved
-	 *
+	 * @param src The buffer from which bytesProduced are to be retrieved
 	 * @return The number of bytesProduced written, contrary to the behavior specified
-	 *         in {@link ByteChannel}, this method never returns 0, but throws
-	 *         {@link WouldBlockException}
-	 *
-	 * @throws WouldBlockException
-	 *             if the channel is in non-blocking mode and the IO operation
-	 *             cannot be completed immediately
-	 *
-	 * @throws NeedsTaskException
-	 *             if the channel is not configured to run tasks automatically
-	 *             and a task needs to be executed to complete the operation
-	 *
-	 * @throws SSLException
-	 *             if the {@link SSLEngine} throws a SSLException
-	 *
-	 * @throws IOException
-	 *             if the underlying channel throws an IOException
+	 * in {@link ByteChannel}, this method never returns 0, but throws
+	 * {@link WouldBlockException}
+	 * @throws WouldBlockException if the channel is in non-blocking mode and the IO operation
+	 *                             cannot be completed immediately
+	 * @throws NeedsTaskException  if the channel is not configured to run tasks automatically
+	 *                             and a task needs to be executed to complete the operation
+	 * @throws SSLException        if the {@link SSLEngine} throws a SSLException
+	 * @throws IOException         if the underlying channel throws an IOException
 	 */
-	int write(ByteBuffer src) throws IOException;
+	int write( ByteBuffer src ) throws IOException;
 
 	/**
 	 * Initiates a handshake (initial or renegotiation) on this channel. This
@@ -288,19 +268,12 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
 	 * however, then an invocation of this method will block until the first
 	 * operation is complete.
 	 *
-	 * @throws WouldBlockException
-	 *             if the channel is in non-blocking mode and the IO operation
-	 *             cannot be completed immediately
-	 *
-	 * @throws NeedsTaskException
-	 *             if the channel is not configured to run tasks automatically
-	 *             and a task needs to be executed to complete the operation
-	 *
-	 * @throws SSLException
-	 *             if the {@link SSLEngine} throws a SSLException
-	 *
-	 * @throws IOException
-	 *             if the underlying channel throws an IOException
+	 * @throws WouldBlockException if the channel is in non-blocking mode and the IO operation
+	 *                             cannot be completed immediately
+	 * @throws NeedsTaskException  if the channel is not configured to run tasks automatically
+	 *                             and a task needs to be executed to complete the operation
+	 * @throws SSLException        if the {@link SSLEngine} throws a SSLException
+	 * @throws IOException         if the underlying channel throws an IOException
 	 */
 	void renegotiate() throws IOException;
 
@@ -327,19 +300,12 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
 	 * however, then an invocation of this method will block until the first
 	 * operation is complete.
 	 *
-	 * @throws WouldBlockException
-	 *             if the channel is in non-blocking mode and the IO operation
-	 *             cannot be completed immediately
-	 *
-	 * @throws NeedsTaskException
-	 *             if the channel is not configured to run tasks automatically
-	 *             and a task needs to be executed to complete the operation
-	 *
-	 * @throws SSLException
-	 *             if the {@link SSLEngine} throws a SSLException
-	 *
-	 * @throws IOException
-	 *             if the underlying channel throws an IOException
+	 * @throws WouldBlockException if the channel is in non-blocking mode and the IO operation
+	 *                             cannot be completed immediately
+	 * @throws NeedsTaskException  if the channel is not configured to run tasks automatically
+	 *                             and a task needs to be executed to complete the operation
+	 * @throws SSLException        if the {@link SSLEngine} throws a SSLException
+	 * @throws IOException         if the underlying channel throws an IOException
 	 */
 	void handshake() throws IOException;
 
@@ -356,42 +322,26 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
 	 * with respect to non-blocking responses, see {@link #write(ByteBuffer)}
 	 * for more details.
 	 *
-	 * @param srcs
-	 *            The buffers from which bytesProduced are to be retrieved
-	 *
-	 * @param offset
-	 *            The offset within the buffer array of the first buffer from
-	 *            which bytesProduced are to be retrieved; must be non-negative and no
-	 *            larger than <tt>srcs.length</tt>
-	 *
-	 * @param length
-	 *            The maximum number of buffers to be accessed; must be
-	 *            non-negative and no larger than <tt>srcs.length</tt>
-	 *            &nbsp;-&nbsp;<tt>offset</tt>
-	 *
+	 * @param srcs   The buffers from which bytesProduced are to be retrieved
+	 * @param offset The offset within the buffer array of the first buffer from
+	 *               which bytesProduced are to be retrieved; must be non-negative and no
+	 *               larger than <tt>srcs.length</tt>
+	 * @param length The maximum number of buffers to be accessed; must be
+	 *               non-negative and no larger than <tt>srcs.length</tt>
+	 *               &nbsp;-&nbsp;<tt>offset</tt>
 	 * @return The number of bytesProduced written, contrary to the behavior specified
-	 *         in {@link ByteChannel}, this method never returns 0, but throws
-	 *         {@link WouldBlockException}
-	 *
-	 * @throws IndexOutOfBoundsException
-	 *             If the preconditions on the <tt>offset</tt> and
-	 *             <tt>length</tt> parameters do not hold
-	 *
-	 * @throws WouldBlockException
-	 *             if the channel is in non-blocking mode and the IO operation
-	 *             cannot be completed immediately
-	 *
-	 * @throws NeedsTaskException
-	 *             if the channel is not configured to run tasks automatically
-	 *             and a task needs to be executed to complete the operation
-	 *
-	 * @throws SSLException
-	 *             if the {@link SSLEngine} throws a SSLException
-	 *
-	 * @throws IOException
-	 *             if the underlying channel throws an IOException
+	 * in {@link ByteChannel}, this method never returns 0, but throws
+	 * {@link WouldBlockException}
+	 * @throws IndexOutOfBoundsException If the preconditions on the <tt>offset</tt> and
+	 *                                   <tt>length</tt> parameters do not hold
+	 * @throws WouldBlockException       if the channel is in non-blocking mode and the IO operation
+	 *                                   cannot be completed immediately
+	 * @throws NeedsTaskException        if the channel is not configured to run tasks automatically
+	 *                                   and a task needs to be executed to complete the operation
+	 * @throws SSLException              if the {@link SSLEngine} throws a SSLException
+	 * @throws IOException               if the underlying channel throws an IOException
 	 */
-	long write(ByteBuffer[] srcs, int offset, int length) throws IOException;
+	long write( ByteBuffer[] srcs, int offset, int length ) throws IOException;
 
 	/**
 	 * Writes a sequence of bytesProduced to this channel from the given buffers.
@@ -407,37 +357,25 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
 	 * </pre>
 	 *
 	 * </blockquote>
-	 *
+	 * <p>
 	 * This method behaves slightly different than the interface specification,
 	 * with respect to non-blocking responses, see {@link #write(ByteBuffer)}
 	 * for more details.
 	 *
-	 * @param srcs
-	 *            The buffers from which bytesProduced are to be retrieved
-	 *
+	 * @param srcs The buffers from which bytesProduced are to be retrieved
 	 * @return The number of bytesProduced written, contrary to the behavior specified
-	 *         in {@link ByteChannel}, this method never returns 0, but throws
-	 *         {@link WouldBlockException}
-	 *
-	 * @throws IndexOutOfBoundsException
-	 *             If the preconditions on the <tt>offset</tt> and
-	 *             <tt>length</tt> parameters do not hold
-	 *
-	 * @throws WouldBlockException
-	 *             if the channel is in non-blocking mode and the IO operation
-	 *             cannot be completed immediately
-	 *
-	 * @throws NeedsTaskException
-	 *             if the channel is not configured to run tasks automatically
-	 *             and a task needs to be executed to complete the operation
-	 *
-	 * @throws SSLException
-	 *             if the {@link SSLEngine} throws a SSLException
-	 *
-	 * @throws IOException
-	 *             if the underlying channel throws an IOExceptions
+	 * in {@link ByteChannel}, this method never returns 0, but throws
+	 * {@link WouldBlockException}
+	 * @throws IndexOutOfBoundsException If the preconditions on the <tt>offset</tt> and
+	 *                                   <tt>length</tt> parameters do not hold
+	 * @throws WouldBlockException       if the channel is in non-blocking mode and the IO operation
+	 *                                   cannot be completed immediately
+	 * @throws NeedsTaskException        if the channel is not configured to run tasks automatically
+	 *                                   and a task needs to be executed to complete the operation
+	 * @throws SSLException              if the {@link SSLEngine} throws a SSLException
+	 * @throws IOException               if the underlying channel throws an IOExceptions
 	 */
-	long write(ByteBuffer[] srcs) throws IOException;
+	long write( ByteBuffer[] srcs ) throws IOException;
 
 	/**
 	 * Reads a sequence of bytesProduced from this channel into a subsequence of the
@@ -452,43 +390,27 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
 	 * with respect to non-blocking responses, see {@link #read(ByteBuffer)} for
 	 * more details.
 	 *
-	 * @param dsts
-	 *            The buffers into which bytesProduced are to be transferred
-	 *
-	 * @param offset
-	 *            The offset within the buffer array of the first buffer into
-	 *            which bytesProduced are to be transferred; must be non-negative and no
-	 *            larger than <tt>dsts.length</tt>
-	 *
-	 * @param length
-	 *            The maximum number of buffers to be accessed; must be
-	 *            non-negative and no larger than <tt>dsts.length</tt>
-	 *            &nbsp;-&nbsp;<tt>offset</tt>
-	 *
+	 * @param dsts   The buffers into which bytesProduced are to be transferred
+	 * @param offset The offset within the buffer array of the first buffer into
+	 *               which bytesProduced are to be transferred; must be non-negative and no
+	 *               larger than <tt>dsts.length</tt>
+	 * @param length The maximum number of buffers to be accessed; must be
+	 *               non-negative and no larger than <tt>dsts.length</tt>
+	 *               &nbsp;-&nbsp;<tt>offset</tt>
 	 * @return The number of bytesProduced read, or <tt>-1</tt> if the channel has
-	 *         reached end-of-stream; contrary to the behavior specified in
-	 *         {@link ByteChannel}, this method never returns 0, but throws
-	 *         {@link WouldBlockException}
-	 *
-	 * @throws IndexOutOfBoundsException
-	 *             If the preconditions on the <tt>offset</tt> and
-	 *             <tt>length</tt> parameters do not hold
-	 *
-	 * @throws WouldBlockException
-	 *             if the channel is in non-blocking mode and the IO operation
-	 *             cannot be completed immediately
-	 *
-	 * @throws NeedsTaskException
-	 *             if the channel is not configured to run tasks automatically
-	 *             and a task needs to be executed to complete the operation
-	 *
-	 * @throws SSLException
-	 *             if the {@link SSLEngine} throws a SSLException
-	 *
-	 * @throws IOException
-	 *             if the underlying channel throws an IOException
+	 * reached end-of-stream; contrary to the behavior specified in
+	 * {@link ByteChannel}, this method never returns 0, but throws
+	 * {@link WouldBlockException}
+	 * @throws IndexOutOfBoundsException If the preconditions on the <tt>offset</tt> and
+	 *                                   <tt>length</tt> parameters do not hold
+	 * @throws WouldBlockException       if the channel is in non-blocking mode and the IO operation
+	 *                                   cannot be completed immediately
+	 * @throws NeedsTaskException        if the channel is not configured to run tasks automatically
+	 *                                   and a task needs to be executed to complete the operation
+	 * @throws SSLException              if the {@link SSLEngine} throws a SSLException
+	 * @throws IOException               if the underlying channel throws an IOException
 	 */
-	long read(ByteBuffer[] dsts, int offset, int length) throws IOException;
+	long read( ByteBuffer[] dsts, int offset, int length ) throws IOException;
 
 	/**
 	 * Reads a sequence of bytesProduced from this channel into the given buffers.
@@ -510,33 +432,21 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
 	 * with respect to non-blocking responses, see {@link #read(ByteBuffer)} for
 	 * more details.
 	 *
-	 * @param dsts
-	 *            The buffers into which bytesProduced are to be transferred
-	 *
+	 * @param dsts The buffers into which bytesProduced are to be transferred
 	 * @return The number of bytesProduced read, or <tt>-1</tt> if the channel has
-	 *         reached end-of-stream; contrary to the behavior specified in
-	 *         {@link ByteChannel}, this method never returns 0, but throws
-	 *         {@link WouldBlockException}
-	 *
-	 * @throws IndexOutOfBoundsException
-	 *             If the preconditions on the <tt>offset</tt> and
-	 *             <tt>length</tt> parameters do not hold
-	 *
-	 * @throws WouldBlockException
-	 *             if the channel is in non-blocking mode and the IO operation
-	 *             cannot be completed immediately
-	 *
-	 * @throws NeedsTaskException
-	 *             if the channel is not configured to run tasks automatically
-	 *             and a task needs to be executed to complete the operation
-	 *
-	 * @throws SSLException
-	 *             if the {@link SSLEngine} throws a SSLException
-	 *
-	 * @throws IOException
-	 *             if the underlying channel throws an IOException
+	 * reached end-of-stream; contrary to the behavior specified in
+	 * {@link ByteChannel}, this method never returns 0, but throws
+	 * {@link WouldBlockException}
+	 * @throws IndexOutOfBoundsException If the preconditions on the <tt>offset</tt> and
+	 *                                   <tt>length</tt> parameters do not hold
+	 * @throws WouldBlockException       if the channel is in non-blocking mode and the IO operation
+	 *                                   cannot be completed immediately
+	 * @throws NeedsTaskException        if the channel is not configured to run tasks automatically
+	 *                                   and a task needs to be executed to complete the operation
+	 * @throws SSLException              if the {@link SSLEngine} throws a SSLException
+	 * @throws IOException               if the underlying channel throws an IOException
 	 */
-	long read(ByteBuffer[] dsts) throws IOException;
+	long read( ByteBuffer[] dsts ) throws IOException;
 
 	/**
 	 * Closes the underlying channel. This method first does some form of TLS
@@ -550,64 +460,62 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
 	 * <p>
 	 * For finer control of the TLS close, use {@link #shutdown()}
 	 *
-	 * @throws IOException
-	 *             if the underlying channel throws an IOException during close.
-	 *             Exceptions thrown during any previous TLS close are not
-	 *             propagated.
+	 * @throws IOException if the underlying channel throws an IOException during close.
+	 *                     Exceptions thrown during any previous TLS close are not
+	 *                     propagated.
 	 */
 	void close() throws IOException;
 
-    /**
-     * <p> Shuts down the TLS connection. This method emulates the behavior of OpenSSL's <a
-     * href="https://wiki.openssl.org/index.php/Manual:SSL_shutdown(3)"> SSL_shutdown()</a>.</p>
-     *
-     * <p> The shutdown procedure consists of two steps: the sending of the "close notify" shutdown alert and the
-     * reception of the peer's "close notify". According to the TLS standard, it is acceptable for an application to
-     * only send its shutdown alert and then close the underlying connection without waiting for the peer's response.
-     * When the underlying connection shall be used for more communications, the complete shutdown procedure
-     * (bidirectional "close notify" alerts) must be performed, so that the peers stay synchronized.</p>
-     *
-     * <p> This class supports both uni- and bidirectional shutdown by its 2 step behavior, using this method.</p>
-     *
-     * <p> When this is the first party to send the "close notify" alert, this method will only send the alert, set the
-     * {@link #shutdownSent()} flag and return <code>false</code>. If a unidirectional shutdown is enough, this first
-     * call is sufficient. In order to complete the bidirectional shutdown handshake, This method must be called again.
-     * The second call will wait for the peer's "close notify" shutdown alert. On success, the second call will return
-     * <code>true</code>.</p>
-     *
-     * <p> If the peer already sent the "close notify" alert and it was already processed implicitly inside a read
-     * operation, the {@link #shutdownReceived()} flag is already set. This method will then send the "close notify"
-     * alert, set the {@link #shutdownSent()} flag and immediately return <code>true</code>. It is therefore recommended
-     * to check the return value of this method and call it again, if the bidirectional shutdown is not yet
-     * complete.</p>
-     *
-     * <p> If the underlying channel is blocking, this method will only return once the handshake step has been finished
-     * or an error occurred.</p>
-     *
-     * <p> If the underlying channel is non-blocking, this method may throw {@link WouldBlockException} if the
-     * underlying channel could not support the continuation of the handshake. The calling process then must repeat the
-     * call after taking appropriate action (like waiting in a selector in case of a {@link SocketChannel}).</p>
-     *
-     * <p> Note that despite not being mandated by the specification, a proper TLS close is important to prevent
-     * truncation attacks, which consists, essentially, of an adversary introducing TCP FIN segments to trick on party
-     * to ignore the final bytes of a secure stream. For more details, see <a href="https://hal.inria.fr/hal-01102013">the
-     * original paper</a>.</p>
-     *
-     * @return whether the closing is finished.
-     * @throws IOException         if the underlying channel throws an IOException
-     * @throws WouldBlockException if the channel is in non-blocking mode and the IO operation cannot be completed
-     *                             immediately
-     * @see TlsChannelBuilder#withWaitForCloseConfirmation(boolean)
-     */
-    boolean shutdown() throws IOException;
+	/**
+	 * <p> Shuts down the TLS connection. This method emulates the behavior of OpenSSL's <a
+	 * href="https://wiki.openssl.org/index.php/Manual:SSL_shutdown(3)"> SSL_shutdown()</a>.</p>
+	 *
+	 * <p> The shutdown procedure consists of two steps: the sending of the "close notify" shutdown alert and the
+	 * reception of the peer's "close notify". According to the TLS standard, it is acceptable for an application to
+	 * only send its shutdown alert and then close the underlying connection without waiting for the peer's response.
+	 * When the underlying connection shall be used for more communications, the complete shutdown procedure
+	 * (bidirectional "close notify" alerts) must be performed, so that the peers stay synchronized.</p>
+	 *
+	 * <p> This class supports both uni- and bidirectional shutdown by its 2 step behavior, using this method.</p>
+	 *
+	 * <p> When this is the first party to send the "close notify" alert, this method will only send the alert, set the
+	 * {@link #shutdownSent()} flag and return <code>false</code>. If a unidirectional shutdown is enough, this first
+	 * call is sufficient. In order to complete the bidirectional shutdown handshake, This method must be called again.
+	 * The second call will wait for the peer's "close notify" shutdown alert. On success, the second call will return
+	 * <code>true</code>.</p>
+	 *
+	 * <p> If the peer already sent the "close notify" alert and it was already processed implicitly inside a read
+	 * operation, the {@link #shutdownReceived()} flag is already set. This method will then send the "close notify"
+	 * alert, set the {@link #shutdownSent()} flag and immediately return <code>true</code>. It is therefore recommended
+	 * to check the return value of this method and call it again, if the bidirectional shutdown is not yet
+	 * complete.</p>
+	 *
+	 * <p> If the underlying channel is blocking, this method will only return once the handshake step has been finished
+	 * or an error occurred.</p>
+	 *
+	 * <p> If the underlying channel is non-blocking, this method may throw {@link WouldBlockException} if the
+	 * underlying channel could not support the continuation of the handshake. The calling process then must repeat the
+	 * call after taking appropriate action (like waiting in a selector in case of a {@link SocketChannel}).</p>
+	 *
+	 * <p> Note that despite not being mandated by the specification, a proper TLS close is important to prevent
+	 * truncation attacks, which consists, essentially, of an adversary introducing TCP FIN segments to trick on party
+	 * to ignore the final bytes of a secure stream. For more details, see <a href="https://hal.inria.fr/hal-01102013">the
+	 * original paper</a>.</p>
+	 *
+	 * @return whether the closing is finished.
+	 * @throws IOException         if the underlying channel throws an IOException
+	 * @throws WouldBlockException if the channel is in non-blocking mode and the IO operation cannot be completed
+	 *                             immediately
+	 * @see TlsChannelBuilder#withWaitForCloseConfirmation(boolean)
+	 */
+	boolean shutdown() throws IOException;
 
 	/**
 	 * Return whether this side of the connection has already received the close
 	 * notification.
 	 *
-	 * @see #shutdown()
-	 *
 	 * @return <code>true</code> if the close notification was received
+	 * @see #shutdown()
 	 */
 	boolean shutdownReceived();
 
@@ -615,9 +523,8 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
 	 * Return whether this side of the connection has already sent the close
 	 * notification.
 	 *
-	 * @see #shutdown()
-	 *
 	 * @return <code>true</code> if the close notification was sent
+	 * @see #shutdown()
 	 */
 	boolean shutdownSent();
 

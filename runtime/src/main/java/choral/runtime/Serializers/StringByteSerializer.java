@@ -20,6 +20,7 @@
  */
 
 package choral.runtime.Serializers;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -29,9 +30,10 @@ public class StringByteSerializer implements ChoralSerializer< String, ByteBuffe
 	private final Charset CHARSET = StandardCharsets.UTF_8;
 	private static final StringByteSerializer INSTANCE = new StringByteSerializer();
 
-	private StringByteSerializer(){}
+	private StringByteSerializer() {
+	}
 
-	public static StringByteSerializer getInstance(){
+	public static StringByteSerializer getInstance() {
 		return INSTANCE;
 	}
 
@@ -42,7 +44,7 @@ public class StringByteSerializer implements ChoralSerializer< String, ByteBuffe
 
 	@Override
 	public < M extends String > M toObject( ByteBuffer byteBuffer ) {
-		return ( M ) new String( byteBuffer.array(), CHARSET );
+		return (M) new String( byteBuffer.array(), CHARSET );
 	}
 
 }

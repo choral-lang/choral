@@ -32,8 +32,9 @@ import java.util.UUID;
 
 public class Device {
 
-	public SymChannel_B< Object > connect(){
-		Pair< SymChannel_A< Object >, SymChannel_B< Object > > p = TestUtils.newLocalChannel( UUID.randomUUID().toString() );
+	public SymChannel_B< Object > connect() {
+		Pair< SymChannel_A< Object >, SymChannel_B< Object > > p = TestUtils.newLocalChannel(
+				UUID.randomUUID().toString() );
 		new Thread( () -> new VitalsStreaming_Device( p.left(), new Sensor() ).gather() ).start();
 		return p.right();
 	}

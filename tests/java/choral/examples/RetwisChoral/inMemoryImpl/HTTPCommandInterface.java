@@ -123,7 +123,7 @@ public class HTTPCommandInterface implements CommandInterface {
 	}
 
 	public void stop() {
-		synchronized( actionResponses ){
+		synchronized( actionResponses ) {
 			actionResponses.get( 0 ).complete( currentResponseMessage );
 		}
 		httpServer.stop( 1000 );
@@ -136,7 +136,7 @@ public class HTTPCommandInterface implements CommandInterface {
 		if( firstLoop ) {
 			firstLoop = false;
 		} else {
-			synchronized( actionResponses ){
+			synchronized( actionResponses ) {
 				actionResponses.get( 0 ).complete( currentResponseMessage );
 			}
 		}
@@ -263,7 +263,7 @@ public class HTTPCommandInterface implements CommandInterface {
 			messages.add( message );
 		}
 
-		void add( String message ){
+		void add( String message ) {
 			add( message, false );
 		}
 

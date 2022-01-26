@@ -36,9 +36,12 @@ public class KaratsubaChoralSocket {
 					Collectors.toList() );
 			int i = 0;
 			ExecutorService executors = Executors.newFixedThreadPool( 3 );
-			Pair< SerializerChannel_A, SerializerChannel_B > ch_AB = TestUtils.newSocketChannel( 10000 );
-			Pair< SerializerChannel_A, SerializerChannel_B > ch_BC = TestUtils.newSocketChannel( 20000 );
-			Pair< SerializerChannel_A, SerializerChannel_B > ch_CA = TestUtils.newSocketChannel( 30000 );
+			Pair< SerializerChannel_A, SerializerChannel_B > ch_AB = TestUtils.newSocketChannel(
+					10000 );
+			Pair< SerializerChannel_A, SerializerChannel_B > ch_BC = TestUtils.newSocketChannel(
+					20000 );
+			Pair< SerializerChannel_A, SerializerChannel_B > ch_CA = TestUtils.newSocketChannel(
+					30000 );
 			for( Path numbers : num_files ) {
 				int idx = Integer.parseInt(
 						numbers.getFileName().toString().split( "numbers_" )[ 1 ].split(

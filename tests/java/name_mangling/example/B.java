@@ -31,13 +31,15 @@ abstract class B@( S, T ) implements I@( S, T ) {
 abstract public class B {
 
 	static abstract public class _1_2 implements I._1_2 {
-		abstract public String m$2 ( Object x );
-		abstract public String m$2 ( CharSequence x );
+		abstract public String m$2( Object x );
+
+		abstract public String m$2( CharSequence x );
 	}
 
 	static abstract public class _2_1 implements I._2_1 {
-		abstract public String m$1 ( Object x );
-		abstract public String m$1 ( CharSequence x );
+		abstract public String m$1( Object x );
+
+		abstract public String m$1( CharSequence x );
 	}
 
 }

@@ -28,7 +28,10 @@ import choral.runtime.Serializers.ChoralSerializer;
 import java.nio.ByteBuffer;
 
 public class SerializerChannel_B extends SerializerChannelImpl implements SymChannel_B< Object > {
-	public SerializerChannel_B( ChoralSerializer< Object, ByteBuffer > serializer, SymDataChannelImpl< ByteBuffer > channel ) {
+	public SerializerChannel_B(
+			ChoralSerializer< Object, ByteBuffer > serializer,
+			SymDataChannelImpl< ByteBuffer > channel
+	) {
 		super( serializer, channel );
 	}
 

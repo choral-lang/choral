@@ -23,8 +23,8 @@ package Benchmarks.Karatsuba.Java;
 
 public class Karatsuba {
 
-	public static Long multiply ( Long n1, Long n2 ) {
-		if ( n1 < 10 || n2 < 10 ) {
+	public static Long multiply( Long n1, Long n2 ) {
+		if( n1 < 10 || n2 < 10 ) {
 			return n1 * n2;
 		} else {
 			double m = Math.max( Math.log10( n1 ), Math.log10( n2 ) ) + 1;

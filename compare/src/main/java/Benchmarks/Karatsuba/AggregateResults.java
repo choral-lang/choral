@@ -21,12 +21,14 @@ public class AggregateResults {
 		map.put( "akka_local", "aSetup" );
 //		map.put( "choral_socket", "choralSock" );
 
-		List< String > tiers = List.of( new String[] { "sequential", "choral_local", "akka_local" } );
+		List< String > tiers = List.of(
+				new String[] { "sequential", "choral_local", "akka_local" } );
 
-		for( int tier_idx = 0; tier_idx < 6; tier_idx++ ){
+		for( int tier_idx = 0; tier_idx < 6; tier_idx++ ) {
 			System.out.println( " - - - TIER: " + tier_idx + " - - - " );
-			for( String tier : tiers ){
-				String results = Files.readString( Path.of( filepath + tier + "/results_" + tier_idx + ".csv" ) );
+			for( String tier : tiers ) {
+				String results = Files.readString(
+						Path.of( filepath + tier + "/results_" + tier_idx + ".csv" ) );
 				// cleanup from list dump
 				results = results.replace( "[", "" ).replace( "]", "" ).replace( " ", "" );
 				List< String > list = Arrays.stream( results.split( "," ) ).toList();
@@ -38,7 +40,6 @@ public class AggregateResults {
 				System.out.println( "(" + map.get( tier ) + "," + avg + ")" );
 			}
 		}
-
 
 
 	}

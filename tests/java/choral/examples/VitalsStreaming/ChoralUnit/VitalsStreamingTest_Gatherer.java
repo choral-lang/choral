@@ -1,4 +1,5 @@
 package choral.examples.VitalsStreaming.ChoralUnit;
+
 import choral.annotations.Choreography;
 import choral.lang.Unit;
 import choral.choralUnit.annotations.Test;
@@ -10,7 +11,7 @@ import choral.examples.VitalsStreaming.VitalsStreaming_Gatherer;
 public class VitalsStreamingTest_Gatherer {
 	@Test
 	public static void test1() {
-		SymChannel_B < Object > c;
+		SymChannel_B< Object > c;
 		c = TestUtils_B.newLocalChannel( Unit.id, "VitalsStreaming" );
 		new VitalsStreaming_Gatherer( c, Unit.id ).gather( new MyHandler() );
 	}

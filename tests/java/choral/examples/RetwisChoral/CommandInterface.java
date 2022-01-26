@@ -2,36 +2,36 @@ package choral.examples.RetwisChoral;
 
 public interface CommandInterface {
 
-    RetwisAction action();
+	RetwisAction action();
 
-    String getPostsUsername();
+	String getPostsUsername();
 
-    String getUsername();
+	String getUsername();
 
-    Integer getPostsPage();
+	Integer getPostsPage();
 
-    void showPosts( Posts posts );
+	void showPosts( Posts posts );
 
-    void showPost( Post post );
+	void showPost( Post post );
 
-    void showErrorMessage( String message );
+	void showErrorMessage( String message );
 
-    void showSuccessMessage( String message );
+	void showSuccessMessage( String message );
 
-    Token getSessionToken();
+	Token getSessionToken();
 
-    String getPost();
+	String getPost();
 
-    String getFollowTarget();
+	String getFollowTarget();
 
-    void showMentions( Mentions mentions );
+	void showMentions( Mentions mentions );
 
-    String getStatusPostID();
+	String getStatusPostID();
 
-    String promptPassword();
+	String promptPassword();
 
-    String getMentionsUsername();
+	String getMentionsUsername();
 
-    String getStopFollowTarget();
+	String getStopFollowTarget();
 
 }

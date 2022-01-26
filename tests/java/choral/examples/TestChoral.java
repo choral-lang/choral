@@ -306,18 +306,20 @@ public class TestChoral {
 
 	}
 
-	private static void projectionPerformance( List< CompilationRequest > compilationRequests ){
+	private static void projectionPerformance( List< CompilationRequest > compilationRequests ) {
 		boolean firstRun = true;
 		for( CompilationRequest compilationRequest : compilationRequests ) {
 			int runs = firstRun ? 2000 : 1000;
 			int skip = firstRun ? 1000 : 0;
-			int interval = runs/100;
+			int interval = runs / 100;
 			firstRun = false;
 			Map< String, ArrayList< Long > > log = new HashMap<>();
-			System.out.println( "Compilation performance for symbol: " + compilationRequest.symbol );
+			System.out.println(
+					"Compilation performance for symbol: " + compilationRequest.symbol );
 			for( int i = 0; i < runs; i++ ) {
 				if( i % interval == 0 )
-					System.out.print( "\rRun: " + i + " of " + runs + " (" + ( 100 * i / runs ) + "%)" );
+					System.out.print(
+							"\rRun: " + i + " of " + runs + " (" + ( 100 * i / runs ) + "%)" );
 				performanceProject( Collections.singletonList( compilationRequest ), log );
 			}
 			System.out.print( "\rDone\n" );
@@ -352,13 +354,13 @@ public class TestChoral {
 				if( !compilationRequest.headersFolders().isEmpty() )
 					parameters.add( "--headers=" + String.join( ":",
 							compilationRequest.headersFolders() ) );
-					parameters.add(
+				parameters.add(
 						compilationRequest.sourceFolder().get( 0 )
-						+ File.separator
-						+ compilationRequest.symbol + ".ch"
-					);
-					System.out.println( "Issuing command " + String.join( " ", parameters ) );
-					Choral.main( parameters.toArray( new String[ 0 ] ) );
+								+ File.separator
+								+ compilationRequest.symbol + ".ch"
+				);
+				System.out.println( "Issuing command " + String.join( " ", parameters ) );
+				Choral.main( parameters.toArray( new String[ 0 ] ) );
 			}
 		} catch( Exception e ) {
 			e.printStackTrace();
@@ -367,27 +369,29 @@ public class TestChoral {
 
 	private static void project( CompilationRequest compilationRequest ) {
 		try {
-				ArrayList< String > parameters = new ArrayList<>();
-				parameters.add( "epp" );
-				parameters.add( "--verbosity=DEBUG" );
-				if( !compilationRequest.headersFolders().isEmpty() )
-					parameters.add( "--headers=" + String.join( ":",
-							compilationRequest.headersFolders() ) );
-				parameters.add( "-t" );
-				parameters.add( compilationRequest.targetFolder() );
-				parameters.add( "-s" );
-				parameters.add( String.join( ":", compilationRequest.sourceFolder() ) );
-				parameters.add( compilationRequest.symbol() );
-				parameters.addAll( compilationRequest.worlds() );
-				parameters.add( "--annotate" );
-				System.out.println( "Issuing command " + String.join( " ", parameters ) );
-				Choral.main( parameters.toArray( new String[ 0 ] ) );
+			ArrayList< String > parameters = new ArrayList<>();
+			parameters.add( "epp" );
+			parameters.add( "--verbosity=DEBUG" );
+			if( !compilationRequest.headersFolders().isEmpty() )
+				parameters.add( "--headers=" + String.join( ":",
+						compilationRequest.headersFolders() ) );
+			parameters.add( "-t" );
+			parameters.add( compilationRequest.targetFolder() );
+			parameters.add( "-s" );
+			parameters.add( String.join( ":", compilationRequest.sourceFolder() ) );
+			parameters.add( compilationRequest.symbol() );
+			parameters.addAll( compilationRequest.worlds() );
+			parameters.add( "--annotate" );
+			System.out.println( "Issuing command " + String.join( " ", parameters ) );
+			Choral.main( parameters.toArray( new String[ 0 ] ) );
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void performanceProject( List< CompilationRequest > compilationRequests, Map< String, ArrayList< Long > > log ) {
+	private static void performanceProject(
+			List< CompilationRequest > compilationRequests, Map< String, ArrayList< Long > > log
+	) {
 		try {
 			for( CompilationRequest compilationRequest : compilationRequests ) {
 				ArrayList< String > parameters = new ArrayList<>();

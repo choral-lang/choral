@@ -31,7 +31,7 @@ import choral.runtime.TLSChannel.TLSChannel_A;
 import java.util.ArrayList;
 
 public class HealthCareService {
-	public static void main ( String[] args ) {
+	public static void main( String[] args ) {
 		TLSChannel_A< Object > toIP = HealthIdentityProvider.connect();
 		TLSChannel_A< Object > toStorage = Storage.connect();
 		AuthResult_A authResult = new DistAuth_Client( toIP ).authenticate( getCredentials() );
@@ -41,13 +41,14 @@ public class HealthCareService {
 						.map( Device::connect )
 						.map( VitalsStreaming_Gatherer::new )
 						.forEach( vs ->
-								vs.gather( data -> toStorage.< StorageMsg >com( new StorageMsg( token, data ) ) )
+								vs.gather( data -> toStorage.< StorageMsg >com(
+										new StorageMsg( token, data ) ) )
 						)
 		);
 		Storage.disconnect();
 	}
 
-	private static Credentials getCredentials () {
+	private static Credentials getCredentials() {
 		return new Credentials( "john", "doe" );
 	}
 }

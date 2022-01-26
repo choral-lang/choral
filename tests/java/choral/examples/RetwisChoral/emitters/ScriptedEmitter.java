@@ -35,7 +35,7 @@ public class ScriptedEmitter implements Emitter {
 				}
 			} );
 			done.complete( null );
-		});
+		} );
 		actionsSubmitter.shutdown();
 		return this;
 	}

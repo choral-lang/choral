@@ -1,4 +1,5 @@
 package choral.examples.HelloRoles;
+
 import choral.annotations.Choreography;
 
 @Choreography( role = "B", name = "HelloRoles" )

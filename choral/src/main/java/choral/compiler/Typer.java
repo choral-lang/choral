@@ -997,10 +997,10 @@ public class Typer {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException( "ambiguous constructor invocation, " +
 									ms.stream().map( x -> "'" + t +
-											x.signature().parameters().stream()
-													.map( y -> y.type().toString() )
-													.collect( Formatting.joining( ",", "(", ")",
-															"" ) ) + "'" )
+													x.signature().parameters().stream()
+															.map( y -> y.type().toString() )
+															.collect( Formatting.joining( ",", "(", ")",
+																	"" ) ) + "'" )
 											.collect( Collectors.collectingAndThen(
 													Collectors.toList(),
 													Formatting.joiningOxfordComma() ) ) ) );
@@ -1631,10 +1631,10 @@ public class Typer {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException( "ambiguous constructor invocation, " +
 									ms.stream().map( x -> "'" + t +
-											x.signature().parameters().stream()
-													.map( y -> y.type().toString() )
-													.collect( Formatting.joining( ",", "(", ")",
-															"" ) ) + "'" )
+													x.signature().parameters().stream()
+															.map( y -> y.type().toString() )
+															.collect( Formatting.joining( ",", "(", ")",
+																	"" ) ) + "'" )
 											.collect( Collectors.collectingAndThen(
 													Collectors.toList(),
 													Formatting.joiningOxfordComma() ) ) ) );
@@ -2075,7 +2075,7 @@ public class Typer {
 						throw new StaticVerificationException(
 								"reference to '" + query + "' is ambiguous, " +
 										results.stream().map(
-												x -> "'" + x.identifier( true ) + "'" )
+														x -> "'" + x.identifier( true ) + "'" )
 												.collect( Collectors.collectingAndThen(
 														Collectors.toList(),
 														Formatting.joiningOxfordComma() ) ) +

@@ -1,4 +1,5 @@
 package choral.examples.RetwisChoral;
+
 import choral.runtime.Serializers.KryoSerializable;
 import choral.annotations.Choreography;
 

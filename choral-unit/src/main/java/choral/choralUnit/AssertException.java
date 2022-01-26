@@ -22,7 +22,7 @@
 package choral.choralUnit;
 
 public class AssertException extends RuntimeException {
-	public AssertException( String m ){
+	public AssertException( String m ) {
 		super( m );
 	}
 }

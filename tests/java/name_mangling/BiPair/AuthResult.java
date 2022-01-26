@@ -27,20 +27,29 @@ public class AuthResult@( A, B ) extends BiPair@( B, A )< Optional@B< AuthToken@
 */
 
 import choral.examples.DistAuthUtils.AuthToken;
+
 import java.util.Optional;
 
 public class AuthResult {
 
 	public static class _1_2 extends BiPair._2_1< Optional< AuthToken > > {
 
-		public _1_2 ( AuthToken left, AuthToken right ) {
+		public _1_2( AuthToken left, AuthToken right ) {
 			super( Optional.of( left ), Optional.of( right ) );
 		}
-		public _1_2 (){ super( Optional.empty(), Optional.empty() ); }
+
+		public _1_2() {
+			super( Optional.empty(), Optional.empty() );
+		}
 	}
 
 	public static class _2_1 extends BiPair._1_2< Optional< AuthToken > > {
-		public _2_1 ( AuthToken left, AuthToken right ) { super( Optional.of( left ), Optional.of( right ) ); }
-		public _2_1 (){ super( Optional.empty(), Optional.empty() ); }
+		public _2_1( AuthToken left, AuthToken right ) {
+			super( Optional.of( left ), Optional.of( right ) );
+		}
+
+		public _2_1() {
+			super( Optional.empty(), Optional.empty() );
+		}
 	}
 }

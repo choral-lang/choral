@@ -3,7 +3,7 @@ package choral.examples.RetwisChoral;
 import choral.runtime.Serializers.KryoSerializable;
 
 @KryoSerializable
-public class Post{
+public class Post {
 
 	private final String content;
 	private final String postId;

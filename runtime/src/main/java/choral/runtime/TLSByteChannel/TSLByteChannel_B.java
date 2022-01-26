@@ -36,14 +36,14 @@ public class TSLByteChannel_B extends TSLByteChannelImpl implements
 
 	public TSLByteChannel_B( SymByteChannelImpl channel, SSLContext sslContext ) {
 		this.channel = ServerTlsChannel
-			.newBuilder( channel.byteChannel(), sslContext )
-			.build();
+				.newBuilder( channel.byteChannel(), sslContext )
+				.build();
 	}
 
 	public TSLByteChannel_B( ByteChannel channel, SSLContext sslContext ) {
 		this.channel = ServerTlsChannel
-			.newBuilder( channel, sslContext )
-			.build();
+				.newBuilder( channel, sslContext )
+				.build();
 	}
 
 }

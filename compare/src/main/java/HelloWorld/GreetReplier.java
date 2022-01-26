@@ -16,7 +16,7 @@ public class GreetReplier extends AbstractBehavior< GreetMessage > {
 		this.max = max;
 	}
 
-	public static Behavior< GreetMessage > create( int max ){
+	public static Behavior< GreetMessage > create( int max ) {
 		return Behaviors.setup( context -> new GreetReplier( context, max ) );
 	}
 
@@ -28,7 +28,7 @@ public class GreetReplier extends AbstractBehavior< GreetMessage > {
 	private Behavior< GreetMessage > onGreeted( GreetMessage message ) {
 		greetingCounter++;
 		System.out.println( "Greeting n. " + greetingCounter + " to " + message.name );
-		if( greetingCounter == max ){
+		if( greetingCounter == max ) {
 			return Behaviors.stopped();
 		} else {
 			message.actorReference.tell( new GreetMessage( message.name, getContext().getSelf() ) );

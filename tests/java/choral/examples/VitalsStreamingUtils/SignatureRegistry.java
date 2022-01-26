@@ -27,11 +27,12 @@ import java.util.Set;
 public class SignatureRegistry {
 
 	private static final Set< Signature > signatures = new HashSet<>();
+
 	static {
 		signatures.add( new Signature( "1fffd0e1-e60c-4364-8b4a-94f14dcc956e" ) );
 	}
 
-	public static boolean isValid( Signature signature ){
+	public static boolean isValid( Signature signature ) {
 		return signatures.contains( signature );
 	}
 

@@ -10,15 +10,41 @@ public interface Emitter {
 	interface Action {
 		RetwisAction action();
 
-		default String 	postsUsername(){ 	throw new UnsupportedOperationException(); }
-		default Integer postsPage(){ 		throw new UnsupportedOperationException(); }
-		default String 	post(){				throw new UnsupportedOperationException(); }
-		default Token 	sessionToken(){		throw new UnsupportedOperationException(); }
-		default String 	followTarget(){		throw new UnsupportedOperationException(); }
-		default String 	stopFollowTarget(){	throw new UnsupportedOperationException(); }
-		default String 	username(){ 		throw new UnsupportedOperationException(); }
-		default String 	mentionsUsername(){ throw new UnsupportedOperationException(); }
-		default String 	statusPostID(){ 	throw new UnsupportedOperationException(); }
+		default String postsUsername() {
+			throw new UnsupportedOperationException();
+		}
+
+		default Integer postsPage() {
+			throw new UnsupportedOperationException();
+		}
+
+		default String post() {
+			throw new UnsupportedOperationException();
+		}
+
+		default Token sessionToken() {
+			throw new UnsupportedOperationException();
+		}
+
+		default String followTarget() {
+			throw new UnsupportedOperationException();
+		}
+
+		default String stopFollowTarget() {
+			throw new UnsupportedOperationException();
+		}
+
+		default String username() {
+			throw new UnsupportedOperationException();
+		}
+
+		default String mentionsUsername() {
+			throw new UnsupportedOperationException();
+		}
+
+		default String statusPostID() {
+			throw new UnsupportedOperationException();
+		}
 
 		enum Fields {
 			postsUsername,
@@ -52,7 +78,7 @@ public interface Emitter {
 			return postsPage;
 		}
 
-		public RetwisAction action(){
+		public RetwisAction action() {
 			return action;
 		}
 	}
@@ -188,7 +214,8 @@ public interface Emitter {
 	class Logout implements Action {
 		private final RetwisAction action = RetwisAction.LOGOUT;
 
-		public Logout() {}
+		public Logout() {
+		}
 
 		@Override
 		public RetwisAction action() {

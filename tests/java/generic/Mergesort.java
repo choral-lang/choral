@@ -27,13 +27,13 @@ import java.util.List;
 
 public class Mergesort {
 
-	public static void main ( String[] args ) {
+	public static void main( String[] args ) {
 		ArrayList< Integer > a = new ArrayList<>( Arrays.asList( 72, 15, 6, 19, 2, 13, 6 ) );
 		System.out.println( new Mergesort().sort( a ) );
 	}
 
-	public List< Integer > sort ( List< Integer > a ){
-		if( a.size() > 1 ){
+	public List< Integer > sort( List< Integer > a ) {
+		if( a.size() > 1 ) {
 			Integer pivot = Double.valueOf( Math.floor( a.size() / 2 ) ).intValue();
 			List< Integer > lhs = sort( a.subList( 0, pivot ) );
 			List< Integer > rhs = sort( a.subList( pivot, a.size() ) );
@@ -44,11 +44,11 @@ public class Mergesort {
 
 	}
 
-	private List< Integer > merge ( List< Integer> lhs, List< Integer> rhs ) {
+	private List< Integer > merge( List< Integer > lhs, List< Integer > rhs ) {
 		if( lhs.size() > 0 ) {
-			if( rhs.size() > 0 ){
+			if( rhs.size() > 0 ) {
 				ArrayList< Integer > result = new ArrayList<>();
-				if( lhs.get( 0 ) <= rhs.get( 0 ) ){
+				if( lhs.get( 0 ) <= rhs.get( 0 ) ) {
 					result.add( lhs.get( 0 ) );
 					result.addAll( merge( lhs.subList( 1, lhs.size() ), rhs ) );
 					return result;

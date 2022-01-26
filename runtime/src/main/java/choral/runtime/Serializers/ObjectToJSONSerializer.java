@@ -23,22 +23,23 @@ package choral.runtime.Serializers;
 
 import com.google.gson.Gson;
 
-public class ObjectToJSONSerializer implements ChoralSerializer< Object, String >{
+public class ObjectToJSONSerializer implements ChoralSerializer< Object, String > {
 
 	static final private Gson gson = new Gson();
 	static final private String header = "!";
 	static final private ObjectToJSONSerializer INSTANCE = new ObjectToJSONSerializer();
 
-	private ObjectToJSONSerializer(){}
+	private ObjectToJSONSerializer() {
+	}
 
-	public static ObjectToJSONSerializer getInstance(){
+	public static ObjectToJSONSerializer getInstance() {
 		return INSTANCE;
 	}
 
 	@Override
 	public < M > String fromObject( M o ) {
 		return o.getClass().getName() + header
-			+ gson.toJson( o );
+				+ gson.toJson( o );
 	}
 
 	@Override
@@ -47,8 +48,8 @@ public class ObjectToJSONSerializer implements ChoralSerializer< Object, String 
 		String className = s.substring( 0, s.indexOf( header ) );
 		String object = s.substring( s.indexOf( header ) + header.length() );
 		try {
-			return ( T ) gson.fromJson( object, Class.forName( className ) );
-		} catch ( ClassNotFoundException e ) {
+			return (T) gson.fromJson( object, Class.forName( className ) );
+		} catch( ClassNotFoundException e ) {
 			e.printStackTrace();
 		}
 		return null;

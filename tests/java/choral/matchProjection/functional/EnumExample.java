@@ -26,9 +26,13 @@ import java.util.function.Function;
 
 public abstract class EnumExample< T > {
 
-	private EnumExample(){}
+	private EnumExample() {
+	}
 
-	public abstract < R > Optional< R > match( Function< EnumOption1< T >, Optional< R > > f1, Function< EnumOption2< T >, Optional< R > > f2 );
+	public abstract < R > Optional< R > match(
+			Function< EnumOption1< T >, Optional< R > > f1,
+			Function< EnumOption2< T >, Optional< R > > f2
+	);
 
 	public static final class EnumOption1< T > extends EnumExample< T > {
 
@@ -43,7 +47,10 @@ public abstract class EnumExample< T > {
 		}
 
 		@Override
-		public < R > Optional< R > match( Function< EnumOption1< T >, Optional< R > > f1, Function< EnumOption2< T >, Optional< R > > f2 ) {
+		public < R > Optional< R > match(
+				Function< EnumOption1< T >, Optional< R > > f1,
+				Function< EnumOption2< T >, Optional< R > > f2
+		) {
 			System.out.println( "Invoking match on EnumOption1" );
 			return f1.apply( this );
 		}
@@ -51,10 +58,14 @@ public abstract class EnumExample< T > {
 
 	public static final class EnumOption2< T > extends EnumExample< T > {
 
-		public EnumOption2(){}
+		public EnumOption2() {
+		}
 
 		@Override
-		public < R > Optional< R > match( Function< EnumOption1< T >, Optional< R > > f1, Function< EnumOption2< T >, Optional< R > > f2 ) {
+		public < R > Optional< R > match(
+				Function< EnumOption1< T >, Optional< R > > f1,
+				Function< EnumOption2< T >, Optional< R > > f2
+		) {
 			System.out.println( "Invoking match on EnumOption2" );
 			return f2.apply( this );
 		}

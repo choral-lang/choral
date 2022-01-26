@@ -38,7 +38,8 @@ public class SocketChannelTest {
 							server.shutdown();
 						}
 					} );
-				} catch( IOException ignored ) {}
+				} catch( IOException ignored ) {
+				}
 			}
 		} );
 

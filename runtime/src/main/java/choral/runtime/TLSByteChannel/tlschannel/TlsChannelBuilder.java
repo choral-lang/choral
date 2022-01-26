@@ -30,12 +30,13 @@ import java.util.function.Consumer;
 /**
  * Base class for builders of {@link TlsChannel}.
  */
-public abstract class TlsChannelBuilder<T extends TlsChannelBuilder<T>> {
+public abstract class TlsChannelBuilder< T extends TlsChannelBuilder< T > > {
 
 	final ByteChannel underlying;
 
 	// @formatter:off
-	Consumer<SSLSession> sessionInitCallback = session -> {};
+	Consumer< SSLSession > sessionInitCallback = session -> {
+	};
 	// @formatter:on
 	boolean runTasks = true;
 	BufferAllocator plainBufferAllocator = TlsChannel.defaultPlainBufferAllocator;
@@ -43,7 +44,7 @@ public abstract class TlsChannelBuilder<T extends TlsChannelBuilder<T>> {
 	boolean releaseBuffers = true;
 	boolean waitForCloseConfirmation = false;
 
-	TlsChannelBuilder(ByteChannel underlying) {
+	TlsChannelBuilder( ByteChannel underlying ) {
 		this.underlying = underlying;
 	}
 
@@ -54,7 +55,7 @@ public abstract class TlsChannelBuilder<T extends TlsChannelBuilder<T>> {
 	 * setting this <code>false</code>, the calling code should be prepared to handle
 	 * {@link NeedsTaskException}}
 	 */
-	public T withRunTasks(boolean runTasks) {
+	public T withRunTasks( boolean runTasks ) {
 		this.runTasks = runTasks;
 		return getThis();
 	}
@@ -65,7 +66,7 @@ public abstract class TlsChannelBuilder<T extends TlsChannelBuilder<T>> {
 	 * supplement user-supplied ones when dealing with too big a TLS record,
 	 * that is, they operate entirely inside the JVM.
 	 */
-	public T withPlainBufferAllocator(BufferAllocator bufferAllocator) {
+	public T withPlainBufferAllocator( BufferAllocator bufferAllocator ) {
 		this.plainBufferAllocator = bufferAllocator;
 		return getThis();
 	}
@@ -75,7 +76,7 @@ public abstract class TlsChannelBuilder<T extends TlsChannelBuilder<T>> {
 	 * {@link DirectBufferAllocator} is used, as this data is usually read from or
 	 * written to native sockets.
 	 */
-	public T withEncryptedBufferAllocator(BufferAllocator bufferAllocator) {
+	public T withEncryptedBufferAllocator( BufferAllocator bufferAllocator ) {
 		this.encryptedBufferAllocator = bufferAllocator;
 		return getThis();
 	}
@@ -86,7 +87,7 @@ public abstract class TlsChannelBuilder<T extends TlsChannelBuilder<T>> {
 	 * same thread as the rest of the handshake, so it should ideally run as
 	 * fast as possible.
 	 */
-	public T withSessionInitCallback(Consumer<SSLSession> sessionInitCallback) {
+	public T withSessionInitCallback( Consumer< SSLSession > sessionInitCallback ) {
 		this.sessionInitCallback = sessionInitCallback;
 		return getThis();
 	}
@@ -102,30 +103,30 @@ public abstract class TlsChannelBuilder<T extends TlsChannelBuilder<T>> {
 	 * allocations, which have a cost. This is effectively a memory-time trade-off.
 	 * However, in most cases the default behavior makes sense.
 	 */
-	public T withReleaseBuffers(boolean releaseBuffers) {
+	public T withReleaseBuffers( boolean releaseBuffers ) {
 		this.releaseBuffers = releaseBuffers;
 		return getThis();
 	}
 
-    /**
-     * <p> Whether to wait for TLS close confirmation when executing a local {@link TlsChannel#close()} on the channel.
-     * If the underlying channel is blocking, setting this to <code>true</code> will block (potentially until it times
-     * out, or indefinitely) the close operation until the counterpart confirms the close on their side (sending a
-     * close_notify alert. If the underlying channel is non-blocking, setting this parameter to true is ineffective.
-     * </p>
-     *
-     * <p> Setting this value to <code>true</code> emulates the behavior of {@link SSLSocket} when used in layered mode
-     * (and without autoClose). </p>
-     *
-     * <p> Even when this behavior is enabled, the close operation will not propagate any {@link IOException} thrown
-     * during the TLS close exchange and just proceed to close the underlying channel. </p>
-     *
-     * <p> Default is to not wait and close immediately. The proper closing procedure can be initiated at any moment
-     * using {@link TlsChannel#shutdown()}.</p>
-     *
-     * @see TlsChannel#shutdown()
-     */
-    public T withWaitForCloseConfirmation(boolean waitForCloseConfirmation) {
+	/**
+	 * <p> Whether to wait for TLS close confirmation when executing a local {@link TlsChannel#close()} on the channel.
+	 * If the underlying channel is blocking, setting this to <code>true</code> will block (potentially until it times
+	 * out, or indefinitely) the close operation until the counterpart confirms the close on their side (sending a
+	 * close_notify alert. If the underlying channel is non-blocking, setting this parameter to true is ineffective.
+	 * </p>
+	 *
+	 * <p> Setting this value to <code>true</code> emulates the behavior of {@link SSLSocket} when used in layered mode
+	 * (and without autoClose). </p>
+	 *
+	 * <p> Even when this behavior is enabled, the close operation will not propagate any {@link IOException} thrown
+	 * during the TLS close exchange and just proceed to close the underlying channel. </p>
+	 *
+	 * <p> Default is to not wait and close immediately. The proper closing procedure can be initiated at any moment
+	 * using {@link TlsChannel#shutdown()}.</p>
+	 *
+	 * @see TlsChannel#shutdown()
+	 */
+	public T withWaitForCloseConfirmation( boolean waitForCloseConfirmation ) {
 		this.waitForCloseConfirmation = waitForCloseConfirmation;
 		return getThis();
 	}

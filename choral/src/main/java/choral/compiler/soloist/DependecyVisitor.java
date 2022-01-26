@@ -570,13 +570,13 @@ public class DependecyVisitor implements ChoralVisitorInterface< Void > {
 	) {
 		List< WorldArgument > worlds =
 				Streams.concat(
-						compilationUnits.stream().map( CompilationUnit::interfaces ).flatMap(
-								List::stream ),
-						compilationUnits.stream().map( CompilationUnit::classes ).flatMap(
-								List::stream ),
-						compilationUnits.stream().map( CompilationUnit::enums ).flatMap(
-								List::stream )
-				).filter( t -> t.name().identifier().equals( template ) )
+								compilationUnits.stream().map( CompilationUnit::interfaces ).flatMap(
+										List::stream ),
+								compilationUnits.stream().map( CompilationUnit::classes ).flatMap(
+										List::stream ),
+								compilationUnits.stream().map( CompilationUnit::enums ).flatMap(
+										List::stream )
+						).filter( t -> t.name().identifier().equals( template ) )
 						.flatMap( t -> t.worldParameters().stream().map(
 								FormalWorldParameter::toWorldArgument ) )
 						.collect( Collectors.toList() );

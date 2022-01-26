@@ -13,9 +13,9 @@ import choral.lang.Unit;
 public class KaratsubaTest_B {
 	@Test
 	public static void test1() {
-		SymChannel_B < Object > ch_AB;
+		SymChannel_B< Object > ch_AB;
 		ch_AB = TestUtils_B.newLocalChannel( Unit.id, "ch_AB" );
-		SymChannel_A < Object > ch_BC;
+		SymChannel_A< Object > ch_BC;
 		ch_BC = TestUtils_A.newLocalChannel( "ch_BC", Unit.id );
 		Karatsuba_B.multiply( Unit.id, Unit.id, ch_AB, ch_BC, Unit.id );
 	}

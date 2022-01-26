@@ -29,6 +29,7 @@ import java.lang.annotation.Target;
 @Retention( RetentionPolicy.RUNTIME )
 @Target( ElementType.TYPE )
 public @interface Choreography {
-	String name ();
-	String role ();
+	String name();
+
+	String role();
 }

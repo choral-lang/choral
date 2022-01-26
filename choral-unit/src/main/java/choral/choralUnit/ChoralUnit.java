@@ -33,14 +33,15 @@ import java.util.List;
 
 public class ChoralUnit {
 
-	public static void main ( String[] args ) {
+	public static void main( String[] args ) {
 
 		String target;
 
-		if( args[ 0 ] != null && args[ 0 ].length() > 0 ){
+		if( args[ 0 ] != null && args[ 0 ].length() > 0 ) {
 			target = args[ 0 ];
 		} else {
-			throw new ChoralUnitException( "ChoralUnit must be launched with a target, e.g., 'ChoralUnit MyClass'" );
+			throw new ChoralUnitException(
+					"ChoralUnit must be launched with a target, e.g., 'ChoralUnit MyClass'" );
 		}
 
 		ScanResult scanResult = new ClassGraph().enableMethodInfo().enableClassInfo().enableAnnotationInfo().scan();
@@ -49,27 +50,31 @@ public class ChoralUnit {
 				.filter( c -> c.getAnnotationInfo( Choreography.class.getName() )
 						.getParameterValues().getValue( "name" ).equals( target ) );
 
-		if ( classes.size() == 0 ) {
+		if( classes.size() == 0 ) {
 			throw new ChoralUnitException( "Found 0 classes belonging to " + target );
 		}
 
-		MethodInfoList methods = classes.get( 0 ).getMethodInfo().filter( m -> m.hasAnnotation( Test.class.getName() ) );
+		MethodInfoList methods = classes.get( 0 ).getMethodInfo().filter(
+				m -> m.hasAnnotation( Test.class.getName() ) );
 
-		for ( MethodInfo method : methods ) {
+		for( MethodInfo method : methods ) {
 			List< Thread > threadList = new ArrayList<>();
-			for ( ClassInfo cls : classes ) {
+			for( ClassInfo cls : classes ) {
 				threadList.add(
 						new Thread( () -> {
 							try {
-								Method classMethod = Class.forName( cls.getName() ).getMethod( method.getName() );
-								if ( Modifier.isStatic( classMethod.getModifiers() ) ) {
-									Class.forName( cls.getName() ).getMethod( method.getName() ).invoke( Class.forName( cls.getName() ) );
+								Method classMethod = Class.forName( cls.getName() ).getMethod(
+										method.getName() );
+								if( Modifier.isStatic( classMethod.getModifiers() ) ) {
+									Class.forName( cls.getName() ).getMethod(
+											method.getName() ).invoke(
+											Class.forName( cls.getName() ) );
 								} else {
 									throw new ChoralUnitException( "Test method " + method.getName()
 											+ " in class " + cls.getName()
 											+ " is not static. ChoralUnit method tests must all be static." );
 								}
-							} catch ( ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e ) {
+							} catch( ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e ) {
 								e.printStackTrace();
 							}
 						} )
@@ -79,7 +84,7 @@ public class ChoralUnit {
 			threadList.forEach( t -> {
 				try {
 					t.join();
-				} catch ( InterruptedException e ) {
+				} catch( InterruptedException e ) {
 					e.printStackTrace();
 				}
 			} );
