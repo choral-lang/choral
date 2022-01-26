@@ -277,7 +277,7 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 		private boolean interfaceFinalised = false;
 
 		@Override
-		public final boolean isInterfaceFinalised() {
+		public boolean isInterfaceFinalised() {
 			return interfaceFinalised;
 		}
 

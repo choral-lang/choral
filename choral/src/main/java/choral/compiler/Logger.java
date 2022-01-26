@@ -21,6 +21,7 @@
 
 package choral.compiler;
 
+import java.util.Collections;
 import java.util.EnumSet;
 
 public class Logger {
@@ -77,9 +78,7 @@ public class Logger {
 
 	public Logger( Logger logger ) {
 		this.filterLevels.clear();
-		for( Level l : logger.filterLevels ) {
-			this.filterLevels.add( l );
-		}
+		this.filterLevels.addAll( logger.filterLevels );
 		setFile( logger.file );
 	}
 
@@ -90,9 +89,7 @@ public class Logger {
 
 	public Logger( Level... filterLevels ) {
 		this.filterLevels.clear();
-		for( Level l : filterLevels ) {
-			this.filterLevels.add( l );
-		}
+		Collections.addAll( this.filterLevels, filterLevels );
 	}
 
 	public boolean hasErrors() {
