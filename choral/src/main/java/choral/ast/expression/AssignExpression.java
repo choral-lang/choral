@@ -60,26 +60,17 @@ public class AssignExpression extends Expression {
 		private final BinaryExpression.Operator op;
 
 		public boolean isLogical() {
-			switch( this ) {
-				case AND_ASSIGN:
-				case OR_ASSIGN:
-					return true;
-				default:
-					return false;
-			}
+			return switch( this ) {
+				case AND_ASSIGN, OR_ASSIGN -> true;
+				default -> false;
+			};
 		}
 
 		public boolean isArithmetic() {
-			switch( this ) {
-				case ADD_ASSIGN:
-				case SUB_ASSIGN:
-				case MUL_ASSIGN:
-				case DIV_ASSIGN:
-				case MOD_ASSIGN:
-					return true;
-				default:
-					return false;
-			}
+			return switch( this ) {
+				case ADD_ASSIGN, SUB_ASSIGN, MUL_ASSIGN, DIV_ASSIGN, MOD_ASSIGN -> true;
+				default -> false;
+			};
 		}
 
 		public String symbol() {
@@ -100,26 +91,17 @@ public class AssignExpression extends Expression {
 		}
 
 		public static Operator getIfPresent( String name ) {
-			switch( name ) {
-				case "=":
-					return ASSIGN;
-				case "+=":
-					return ADD_ASSIGN;
-				case "-=":
-					return SUB_ASSIGN;
-				case "*=":
-					return MUL_ASSIGN;
-				case "/=":
-					return DIV_ASSIGN;
-				case "&=":
-					return AND_ASSIGN;
-				case "|=":
-					return OR_ASSIGN;
-				case "%=":
-					return MOD_ASSIGN;
-				default:
-					throw new RuntimeException( "Unexpected operator " + name );
-			}
+			return switch( name ) {
+				case "=" -> ASSIGN;
+				case "+=" -> ADD_ASSIGN;
+				case "-=" -> SUB_ASSIGN;
+				case "*=" -> MUL_ASSIGN;
+				case "/=" -> DIV_ASSIGN;
+				case "&=" -> AND_ASSIGN;
+				case "|=" -> OR_ASSIGN;
+				case "%=" -> MOD_ASSIGN;
+				default -> throw new RuntimeException( "Unexpected operator " + name );
+			};
 		}
 
 	}

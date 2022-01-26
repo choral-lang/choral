@@ -224,25 +224,23 @@ public class TlsChannelImpl implements ByteChannel {
 				}
 				Util.assertTrue( inPlain.nullOrEmpty() );
 				switch( handshakeStatus ) {
-					case NEED_UNWRAP:
-					case NEED_WRAP:
+					case NEED_UNWRAP, NEED_WRAP -> {
 						bytesToReturn = handshake( Optional.of( dest ),
 								Optional.of( handshakeStatus ) );
 						handshakeStatus = NOT_HANDSHAKING;
-						break;
-					case NOT_HANDSHAKING:
-					case FINISHED:
+					}
+					case NOT_HANDSHAKING, FINISHED -> {
 						UnwrapResult res = readAndUnwrap( Optional.of( dest ) );
 						if( res.wasClosed ) {
 							return -1;
 						}
 						bytesToReturn = res.bytesProduced;
 						handshakeStatus = res.lastHandshakeStatus;
-						break;
-					case NEED_TASK:
+					}
+					case NEED_TASK -> {
 						handleTask();
 						handshakeStatus = engine.getHandshakeStatus();
-						break;
+					}
 				}
 			}
 		} catch( EofException e ) {
