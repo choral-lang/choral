@@ -46,9 +46,7 @@ public class LocalChannelImpl implements SymChannelImpl< Object > {
 	public < S > S com () {
 		try {
 			return queueIn.recv();
-		} catch ( ExecutionException e ) {
-			e.printStackTrace();
-		} catch ( InterruptedException e ) {
+		} catch ( ExecutionException | InterruptedException e ) {
 			e.printStackTrace();
 		}
 		return null; // it should never happen

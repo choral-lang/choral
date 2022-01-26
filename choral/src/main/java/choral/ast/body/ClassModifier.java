@@ -37,7 +37,7 @@ public enum ClassModifier {
 		return this.label;
 	}
 
-	private ClassModifier( String label ) {
+	ClassModifier( String label ) {
 		this.label = label;
 	}
 }

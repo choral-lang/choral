@@ -111,7 +111,7 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 
 	@Override
 	public ClassMethodDefinition visit( ClassMethodDefinition n ) {
-		ClassMethodDefinition m = new ClassMethodDefinition(
+		return new ClassMethodDefinition(
 				visit( n.signature() ),
 				n.body().isPresent() ?
 						StatementsUnitNormaliser.visitStatement(
@@ -121,24 +121,22 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 				n.modifiers(),
 				n.position()
 		);
-		return m;
 	}
 
 	@Override
 	public InterfaceMethodDefinition visit( InterfaceMethodDefinition n ) {
-		InterfaceMethodDefinition m = new InterfaceMethodDefinition(
+		return new InterfaceMethodDefinition(
 				visit( n.signature() ),
 				n.annotations(),
 				n.modifiers(),
 				n.position()
 		);
-		return m;
 	}
 
 
 	@Override
 	public ConstructorDefinition visit( ConstructorDefinition n ) {
-		ConstructorDefinition c = new ConstructorDefinition(
+		return new ConstructorDefinition(
 				visit( n.signature() ),
 				n.explicitConstructorInvocation().map(
 						x -> (MethodCallExpression) ExpressionUnitNormaliser.visitExpression(
@@ -148,7 +146,6 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 				n.modifiers(),
 				n.position()
 		);
-		return c;
 	}
 
 	private FormalMethodParameter unit( FormalMethodParameter p ) {

@@ -37,7 +37,7 @@ public enum ClassMethodModifier {
 		return this.label;
 	}
 
-	private ClassMethodModifier( String label ) {
+	ClassMethodModifier( String label ) {
 		this.label = label;
 	}
 }

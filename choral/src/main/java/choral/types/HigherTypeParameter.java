@@ -407,7 +407,7 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 		}
 
 		@Override
-		public final boolean isInterfaceFinalised() {
+		public boolean isInterfaceFinalised() {
 			return definition().isInterfaceFinalised();
 		}
 

@@ -108,7 +108,7 @@ public abstract class HigherDataType extends TypeBase
 			for( int j = 0; j < i; j++ ) {
 				if( w == worldArgs.get( j ) ) {
 					throw new StaticVerificationException(
-							"illegal type instantiation: role '" + w + "' must play exactly one role in '" + toString() + "'" );
+							"illegal type instantiation: role '" + w + "' must play exactly one role in '" + this + "'" );
 				}
 			}
 		}

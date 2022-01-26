@@ -52,7 +52,7 @@ public final class TlsExplorer {
 	 * byte buffer to get the length of an SSL/TLS record.
 	 * <P>
 	 */
-	public final static int getRequiredSize(ByteBuffer source) {
+	public static int getRequiredSize( ByteBuffer source) {
 		if (source.remaining() < RECORD_HEADER_SIZE)
 			throw new BufferUnderflowException();
 		source.mark();
@@ -71,7 +71,7 @@ public final class TlsExplorer {
 		}
 	}
 
-	public final static Map<Integer, SNIServerName> explore(ByteBuffer source) throws SSLProtocolException {
+	public static Map<Integer, SNIServerName> explore( ByteBuffer source) throws SSLProtocolException {
 		if (source.remaining() < RECORD_HEADER_SIZE)
 			throw new BufferUnderflowException();
 		source.mark();
