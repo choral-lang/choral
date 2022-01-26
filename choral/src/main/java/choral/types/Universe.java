@@ -106,30 +106,21 @@ public class Universe {
 		}
 
 		public boolean isIntegral() {
-			switch( this ) {
-				case CHAR:
-				case BYTE:
-				case SHORT:
-				case INT:
-				case LONG:
-					return true;
-				default:
-					return false;
-			}
+			return switch( this ) {
+				case CHAR, BYTE, SHORT, INT, LONG -> true;
+				default -> false;
+			};
 		}
 
 		public boolean isAssignableTo( PrimitiveTypeTag target ) {
 			if( target == null ) {
 				return false;
 			}
-			switch( this ) {
-				case BOOLEAN:
-					return target == BOOLEAN;
-				case BYTE:
-					return target != CHAR && this.compareTo( target ) <= 0;
-				default:
-					return this.compareTo( target ) <= 0;
-			}
+			return switch( this ) {
+				case BOOLEAN -> target == BOOLEAN;
+				case BYTE -> target != CHAR && this.compareTo( target ) <= 0;
+				default -> this.compareTo( target ) <= 0;
+			};
 		}
 
 		PrimitiveTypeTag( String identifier, SpecialTypeTag boxedType ) {
