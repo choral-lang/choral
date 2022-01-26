@@ -23,19 +23,18 @@ package choral;
 
 import choral.ast.CompilationUnit;
 import choral.ast.Position;
-import choral.compiler.*;
 import choral.compiler.Compiler;
+import choral.compiler.*;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.ChoralException;
-
-import static choral.utils.Streams.*;
-
 import picocli.AutoComplete;
 import picocli.CommandLine;
 import picocli.CommandLine.*;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,6 +44,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static choral.utils.Streams.*;
 
 @Command(
 		name = "choral",

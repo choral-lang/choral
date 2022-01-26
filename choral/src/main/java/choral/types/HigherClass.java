@@ -23,13 +23,13 @@ package choral.types;
 
 import choral.ast.Node;
 import choral.exceptions.StaticVerificationException;
-import choral.types.Member.*;
+import choral.types.Member.HigherConstructor;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static choral.types.Modifier.*;
+import static choral.types.Modifier.PUBLIC;
 
 public class HigherClass extends HigherClassOrInterface implements Class {
 

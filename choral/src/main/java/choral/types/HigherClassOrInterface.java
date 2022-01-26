@@ -31,7 +31,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static choral.types.Modifier.*;
-import static choral.types.ModifierUtils.*;
+import static choral.types.ModifierUtils.assertAccessModifiers;
+import static choral.types.ModifierUtils.assertLegalModifiers;
 
 public abstract class HigherClassOrInterface extends HigherReferenceType
 		implements ClassOrInterface, TypeParameterDeclarationContext {

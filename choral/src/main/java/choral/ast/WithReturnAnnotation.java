@@ -21,8 +21,6 @@
 
 package choral.ast;
 
-import java.util.Optional;
-
 public interface WithReturnAnnotation {
 	public enum ReturnAnnotation {
 		Returns,

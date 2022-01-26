@@ -1,12 +1,12 @@
 package Benchmarks.Karatsuba.Choral.ChoralUnit;
 
+import Benchmarks.Karatsuba.Choral.Karatsuba_B;
 import choral.annotations.Choreography;
 import choral.channels.SymChannel_A;
 import choral.channels.SymChannel_B;
 import choral.choralUnit.annotations.Test;
 import choral.choralUnit.testUtils.TestUtils_A;
 import choral.choralUnit.testUtils.TestUtils_B;
-import Benchmarks.Karatsuba.Choral.Karatsuba_B;
 import choral.lang.Unit;
 
 @Choreography( role = "B", name = "KaratsubaTest" )

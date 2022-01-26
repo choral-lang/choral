@@ -22,8 +22,8 @@
 package choral.choralUnit;
 
 import choral.annotations.Choreography;
-import io.github.classgraph.*;
 import choral.choralUnit.annotations.Test;
+import io.github.classgraph.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

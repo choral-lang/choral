@@ -21,12 +21,11 @@
 
 package choral.runtime.TLSByteChannel.tlschannel;
 
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.nio.channels.ByteChannel;
 import java.util.function.Consumer;
-
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocket;
 
 /**
  * Base class for builders of {@link TlsChannel}.

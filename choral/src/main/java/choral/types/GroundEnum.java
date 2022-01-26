@@ -21,8 +21,6 @@
 
 package choral.types;
 
-import java.util.stream.Stream;
-
 public interface GroundEnum extends GroundClass, Enum {
 
 	@Override

@@ -24,8 +24,8 @@ package choral.compiler;
 import choral.ast.CompilationUnit;
 import choral.ast.statement.Statement;
 import choral.ast.visitors.PrettyPrinterVisitor;
-import choral.compiler.SourceObject.HeaderSourceObject;
 import choral.compiler.SourceObject.ChoralSourceObject;
+import choral.compiler.SourceObject.HeaderSourceObject;
 
 import java.nio.file.Paths;
 

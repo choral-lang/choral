@@ -21,13 +21,13 @@
 
 package choral.compiler;
 
+import choral.ast.Position;
+import choral.exceptions.AstPositionedException;
+import choral.exceptions.SyntaxException;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
-import choral.ast.Position;
-import choral.exceptions.AstPositionedException;
-import choral.exceptions.SyntaxException;
 
 import java.util.ArrayList;
 import java.util.Collections;

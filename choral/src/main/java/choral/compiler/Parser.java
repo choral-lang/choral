@@ -21,17 +21,16 @@
 
 package choral.compiler;
 
-import org.antlr.v4.runtime.ANTLRFileStream;
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CommonTokenStream;
 import choral.ast.CompilationUnit;
 import choral.exceptions.ChoralCompoundException;
 import choral.grammar.ChoralLexer;
+import org.antlr.v4.runtime.ANTLRFileStream;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.stream.Collectors;
 
 public class Parser {
 

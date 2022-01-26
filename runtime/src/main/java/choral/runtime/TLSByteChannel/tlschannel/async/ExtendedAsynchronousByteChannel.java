@@ -22,12 +22,7 @@
 package choral.runtime.TLSByteChannel.tlschannel.async;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousByteChannel;
-import java.nio.channels.CompletionHandler;
-import java.nio.channels.InterruptedByTimeoutException;
-import java.nio.channels.ReadPendingException;
-import java.nio.channels.ShutdownChannelGroupException;
-import java.nio.channels.WritePendingException;
+import java.nio.channels.*;
 import java.util.concurrent.TimeUnit;
 
 /**

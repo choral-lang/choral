@@ -22,9 +22,15 @@
 package choral.compiler;
 
 import choral.ast.CompilationUnit;
-import choral.ast.body.*;
-import choral.ast.expression.*;
-import choral.ast.statement.*;
+import choral.ast.body.ConstructorSignature;
+import choral.ast.body.MethodSignature;
+import choral.ast.body.RefType;
+import choral.ast.expression.ClassInstantiationExpression;
+import choral.ast.expression.EnumCaseInstantiationExpression;
+import choral.ast.expression.LiteralExpression;
+import choral.ast.statement.SelectStatement;
+import choral.ast.statement.SwitchStatement;
+import choral.ast.statement.TryCatchStatement;
 import choral.ast.type.FormalTypeParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.visitors.PrettyPrinterVisitor;
@@ -34,7 +40,10 @@ import choral.compiler.soloist.StatementsProjector;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class JavaCompiler extends PrettyPrinterVisitor {

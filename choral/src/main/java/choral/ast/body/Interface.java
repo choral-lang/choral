@@ -21,10 +21,6 @@
 
 package choral.ast.body;
 
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
-
 import choral.ast.Name;
 import choral.ast.Position;
 import choral.ast.type.FormalTypeParameter;
@@ -32,6 +28,10 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.types.HigherInterface;
+
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
 
 import static choral.ast.body.InterfaceModifier.*;
 

@@ -21,10 +21,10 @@
 
 package choral.compiler;
 
-import org.antlr.v4.runtime.ANTLRFileStream;
-import org.antlr.v4.runtime.CommonTokenStream;
 import choral.grammar.ChoralLexer;
 import choral.grammar.ChoralParser;
+import org.antlr.v4.runtime.ANTLRFileStream;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.IOException;
 

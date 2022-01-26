@@ -22,8 +22,8 @@
 package choral.runtime.TLSChannel;
 
 import choral.channels.SymChannel_B;
-import choral.runtime.TLSByteChannel.TSLByteChannelImpl;
 import choral.runtime.Serializers.ChoralSerializer;
+import choral.runtime.TLSByteChannel.TSLByteChannelImpl;
 
 import java.nio.ByteBuffer;
 

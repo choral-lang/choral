@@ -24,17 +24,15 @@ package choral.ast.body;
 import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.expression.MethodCallExpression;
-import choral.ast.statement.BlockStatement;
 import choral.ast.statement.ExpressionStatement;
-import choral.ast.statement.NilStatement;
 import choral.ast.statement.Statement;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.types.Member;
 
-import static choral.ast.body.ConstructorModifier.*;
-
 import java.util.EnumSet;
 import java.util.Optional;
+
+import static choral.ast.body.ConstructorModifier.*;
 
 public class ConstructorDefinition extends Node {
 	private final ConstructorSignature signature;

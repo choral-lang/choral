@@ -21,9 +21,6 @@
 
 package choral.types;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 public abstract class Substitution {
 
 //    public abstract Collection<? extends World> worldParameters();

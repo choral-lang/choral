@@ -21,8 +21,6 @@
 
 package choral.types;
 
-import java.util.List;
-
 public interface GroundInterface extends GroundClassOrInterface, Interface {
 
 	@Override

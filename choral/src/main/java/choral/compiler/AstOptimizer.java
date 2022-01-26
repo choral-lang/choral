@@ -21,23 +21,26 @@
 
 package choral.compiler;
 
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.tree.ErrorNode;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.RuleNode;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.antlr.v4.runtime.Token;
 import choral.ast.*;
-import choral.ast.body.*;
 import choral.ast.body.Class;
 import choral.ast.body.Enum;
+import choral.ast.body.*;
 import choral.ast.expression.*;
 import choral.ast.statement.*;
-import choral.ast.type.*;
+import choral.ast.type.FormalTypeParameter;
+import choral.ast.type.FormalWorldParameter;
+import choral.ast.type.TypeExpression;
+import choral.ast.type.WorldArgument;
 import choral.exceptions.SyntaxException;
 import choral.grammar.ChoralParser;
 import choral.grammar.ChoralVisitor;
 import choral.utils.Pair;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ErrorNode;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.RuleNode;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.text.ParseException;
 import java.util.*;

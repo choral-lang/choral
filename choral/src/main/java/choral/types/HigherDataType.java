@@ -24,7 +24,8 @@ package choral.types;
 import choral.exceptions.StaticVerificationException;
 import choral.types.kinds.Kind;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public abstract class HigherDataType extends TypeBase
