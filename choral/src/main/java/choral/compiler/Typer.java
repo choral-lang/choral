@@ -2561,11 +2561,8 @@ public class Typer {
 					TaskQueue.Task task = tasks.poll();
 					task.prepare();
 					switch( task.status() ) {
-						case READY:
-							task.run();
-							break;
-						case WAITING:
-							enqueue( task );
+						case READY -> task.run();
+						case WAITING -> enqueue( task );
 					}
 				} else {
 					// no more tasks for this and prior phases
@@ -2579,11 +2576,8 @@ public class Typer {
 				TaskQueue.Task task = tasks.poll();
 				task.prepare();
 				switch( task.status() ) {
-					case READY:
-						task.run();
-						break;
-					case WAITING:
-						enqueue( task );
+					case READY -> task.run();
+					case WAITING -> enqueue( task );
 				}
 			}
 		}

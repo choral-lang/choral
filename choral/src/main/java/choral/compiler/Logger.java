@@ -120,19 +120,13 @@ public class Logger {
 	public void log( Level level, String message ) {
 		if( filterLevels.contains( level ) ) {
 			switch( level ) {
-				case ERROR:
+				case ERROR -> {
 					this.errors = true;
 					System.err.println( "[ERROR] " + message );
-					break;
-				case WARNING:
-					System.out.println( "[WARNING] " + message );
-					break;
-				case INFO:
-					System.out.println( "[INFO] " + message );
-					break;
-				case DEBUG:
-					System.out.println( "[DEBUG] " + message );
-					break;
+				}
+				case WARNING -> System.out.println( "[WARNING] " + message );
+				case INFO -> System.out.println( "[INFO] " + message );
+				case DEBUG -> System.out.println( "[DEBUG] " + message );
 			}
 		}
 	}

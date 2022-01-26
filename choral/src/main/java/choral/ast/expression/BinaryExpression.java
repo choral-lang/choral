@@ -103,32 +103,20 @@ public class BinaryExpression extends Expression {
 		}
 
 		public static BinaryExpression.Operator getIfPresent( String name ) {
-			switch( name ) {
-				case "==":
-					return EQUALS;
-				case "!=":
-					return NOT_EQUALS;
-				case "<":
-					return LESS;
-				case ">":
-					return GREATER;
-				case "<=":
-					return LESS_EQUALS;
-				case ">=":
-					return GREATER_EQUALS;
-				case "+":
-					return PLUS;
-				case "-":
-					return MINUS;
-				case "*":
-					return MULTIPLY;
-				case "/":
-					return DIVIDE;
-				case "%":
-					return REMAINDER;
-				default:
-					throw new RuntimeException( "Unexpected operator " + name );
-			}
+			return switch( name ) {
+				case "==" -> EQUALS;
+				case "!=" -> NOT_EQUALS;
+				case "<" -> LESS;
+				case ">" -> GREATER;
+				case "<=" -> LESS_EQUALS;
+				case ">=" -> GREATER_EQUALS;
+				case "+" -> PLUS;
+				case "-" -> MINUS;
+				case "*" -> MULTIPLY;
+				case "/" -> DIVIDE;
+				case "%" -> REMAINDER;
+				default -> throw new RuntimeException( "Unexpected operator " + name );
+			};
 		}
 
 		public String symbol() {
