@@ -92,8 +92,8 @@ public class Typer {
 		protected void visit( choral.ast.CompilationUnit n ) {
 			String[] path = n.packageDeclaration().split( "\\." );
 			Package pkg = universe.rootPackage();
-			for( int i = 0; i < path.length; i++ ) {
-				pkg = pkg.declarePackage( path[ i ] );
+			for( String s : path ) {
+				pkg = pkg.declarePackage( s );
 			}
 			CompilationUnitScope scope = new CompilationUnitScope( pkg, n.imports() );
 			for( choral.ast.body.Class x : n.classes() ) {
@@ -475,7 +475,7 @@ public class Typer {
 					}
 					HigherTypeParameter tp = tm.typeParameters().get( 0 );
 					if( tp.innerType().upperClass().specialTypeTag() != SpecialTypeTag.ENUM
-							|| tp.innerType().upperInterfaces().count() != 0 ) {
+							|| tp.innerType().upperInterfaces().findAny().isPresent() ) {
 						throw new AstPositionedException( x.position(),
 								new StaticVerificationException(
 										"illegal selection method, the type parameter must be bounded exactly by '"
@@ -2553,12 +2553,7 @@ public class Typer {
 		}
 
 		PriorityQueue< TaskQueue.Task > tasks = new PriorityQueue<>(
-				new Comparator< TaskQueue.Task >() {
-					@Override
-					public int compare( Task o1, Task o2 ) {
-						return o1.compareTo( o2 );
-					}
-				} );
+				Comparator.naturalOrder() );
 
 		public void process( Phase to ) {
 			while( !tasks.isEmpty() ) {

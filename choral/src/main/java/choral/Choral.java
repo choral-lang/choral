@@ -237,11 +237,9 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				annotatedUnits.parallelStream().map( HeaderCompiler::compile )
 						.forEach( emissionOptions.isDryRun()
 								? skip()
-								: wrapConsumer( s -> {
-							SourceWriter.writeSource( s, emissionOptions.targetpath(),
-									emissionOptions.useCanonicalPaths(),
-									emissionOptions.isOverwritingAllowed() );
-						} ) );
+								: wrapConsumer( s -> SourceWriter.writeSource( s, emissionOptions.targetpath(),
+										emissionOptions.useCanonicalPaths(),
+										emissionOptions.isOverwritingAllowed() ) ) );
 			} catch( Exception e ) {
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
 				System.out.println( "compilation failed." );
