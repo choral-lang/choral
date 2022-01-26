@@ -51,6 +51,4 @@ public class BlankExpression extends Expression {
 		return m.merge( this, (BlankExpression) n );
 	}
 
-	;
-
 }

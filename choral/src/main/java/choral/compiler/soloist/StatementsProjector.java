@@ -64,14 +64,12 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 				n.catches().stream()
 						.filter( p -> p.left().type().worldArguments().contains( this.world ) )
 						.map( p -> {
-							Pair< VariableDeclaration, Statement > r =
-									new Pair< VariableDeclaration, Statement >(
-											new VariableDeclaration(
-													p.left().name(),
-													TypesProjector.visit( this.world(),
-															p.left().type() ).get( 0 ) ),
-											visit( p.right() ) );
-							return r;
+							return new Pair< VariableDeclaration, Statement >(
+									new VariableDeclaration(
+											p.left().name(),
+											TypesProjector.visit( this.world(),
+													p.left().type() ).get( 0 ) ),
+									visit( p.right() ) );
 						} ) // add exceptions to gamma here
 						.collect( Collectors.toList() )
 				,

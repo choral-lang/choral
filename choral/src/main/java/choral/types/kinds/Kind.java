@@ -44,7 +44,6 @@ public abstract class Kind implements Serializable {
 			defaultInstance = instance;
 			instances.put( defaultInstance, defaultInstance );
 		}
-		assert defaultInstance != null;
 		return defaultInstance;
 	}
 

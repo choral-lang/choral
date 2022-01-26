@@ -39,7 +39,7 @@ public enum Modifier {
 
 	public final String label;
 
-	private Modifier( String label ) {
+	Modifier( String label ) {
 		this.label = label;
 	}
 }

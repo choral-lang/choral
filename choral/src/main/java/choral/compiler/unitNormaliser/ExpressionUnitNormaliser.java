@@ -64,9 +64,7 @@ public class ExpressionUnitNormaliser
 				return true;
 			}
 			// CHECK FOR id.id.id....
-			if( scope instanceof FieldAccessExpression && isNoop( scoped ) ) {
-				return true;
-			}
+			return scope instanceof FieldAccessExpression && isNoop( scoped );
 		}
 		return false;
 	}

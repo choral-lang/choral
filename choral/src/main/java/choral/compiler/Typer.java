@@ -800,8 +800,6 @@ public class Typer {
 						i = 1;
 					} else if( this.type.isStrictSubtypeOf( m.type ) ) {
 						i = -1;
-					} else {
-						i = 0;
 					}
 				}
 				return i;
@@ -2123,7 +2121,7 @@ public class Typer {
 		}
 	}
 
-	private static interface ClassOrInterfaceScope extends Scope {
+	private interface ClassOrInterfaceScope extends Scope {
 		CallableScope getScope( Member.HigherCallable callable );
 	}
 

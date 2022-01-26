@@ -72,6 +72,4 @@ public class EnumCaseInstantiationExpression extends Expression {
 		return m.merge( this, (EnumCaseInstantiationExpression) n );
 	}
 
-	;
-
 }
