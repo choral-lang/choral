@@ -335,18 +335,16 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 						.collect( Collectors.toList() );
 				extendedClassesOrInterfaces().flatMap(
 								GroundClassOrInterface::allExtendedInterfaces )
-						.forEach( x -> {
-							extendedInterfaces().filter( y ->
-									x.typeConstructor() == y.typeConstructor() &&
-											x.worldArguments().equals( y.worldArguments() ) &&
-											!x.typeArguments().equals( y.typeArguments() )
-							).findAny().ifPresent( y -> {
-										throw new StaticVerificationException(
-												"illegal inheritance, cannot implement both '"
-														+ y + "' and " + x + "'" );
-									}
-							);
-						} );
+						.forEach( x -> extendedInterfaces().filter( y ->
+								x.typeConstructor() == y.typeConstructor() &&
+										x.worldArguments().equals( y.worldArguments() ) &&
+										!x.typeArguments().equals( y.typeArguments() )
+						).findAny().ifPresent( y -> {
+									throw new StaticVerificationException(
+											"illegal inheritance, cannot implement both '"
+													+ y + "' and " + x + "'" );
+								}
+						) );
 				inheritanceFinalised = true;
 			}
 		}

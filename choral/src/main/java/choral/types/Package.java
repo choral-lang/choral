@@ -108,8 +108,7 @@ public class Package {
 	public Package declarePackage( String path ) {
 		String[] names = path.split( "\\." );
 		Package pkg = this;
-		for( int i = 0; i < names.length; i++ ) {
-			String name = names[ i ];
+		for( String name : names ) {
 			Optional< Package > x = pkg.declaredPackage( name );
 			if( x.isEmpty() ) {
 				if( declaredType( name ).isPresent() ) {

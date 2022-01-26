@@ -551,13 +551,11 @@ public class AstOptimizer implements ChoralVisitor {
 			}
 		}
 
-		return fd.Identifier().stream().map( f -> {
-					return new Field(
-							getName( f ),
-							visitReferenceType( fd.referenceType() ),
-							modifiers,
-							getPosition( fd ) );
-				}
+		return fd.Identifier().stream().map( f -> new Field(
+				getName( f ),
+				visitReferenceType( fd.referenceType() ),
+				modifiers,
+				getPosition( fd ) )
 		).collect( Collectors.toList() );
 	}
 
@@ -605,7 +603,7 @@ public class AstOptimizer implements ChoralVisitor {
 			}
 		}
 
-		ClassMethodDefinition m = new ClassMethodDefinition(
+		return new ClassMethodDefinition(
 				visitMethodHeader( md.methodHeader() ),
 				visitMethodBody( md.methodBody() ).orElse( null ),
 				ifPresent( md.annotations() ).applyOrElse( this::visitAnnotations,
@@ -613,7 +611,6 @@ public class AstOptimizer implements ChoralVisitor {
 				modifiers,
 				getPosition( md )
 		);
-		return m;
 	}
 
 
@@ -876,7 +873,7 @@ public class AstOptimizer implements ChoralVisitor {
 	) {
 		debugInfo();
 		TypeExpression t = visitReferenceType( lvd.referenceType() );
-		VariableDeclarationStatement s = new VariableDeclarationStatement(
+		return new VariableDeclarationStatement(
 				lvd.Identifier().stream()
 						.map( e -> new VariableDeclaration(
 								getName( e ),
@@ -886,7 +883,6 @@ public class AstOptimizer implements ChoralVisitor {
 						.collect( Collectors.toList() ),
 				null,
 				getPosition( lvd ) );
-		return s;
 	}
 
 	@Override
@@ -1120,7 +1116,7 @@ public class AstOptimizer implements ChoralVisitor {
 						Collections.emptyList() ),
 				getPosition( mi )
 		);
-		Expression expression = null;
+		Expression expression;
 		if( isPresent( mi.THIS() ) ) {
 			expression = new ThisExpression( getPosition( mi ) );
 		} else if( isPresent( mi.SUPER() ) ) {
