@@ -154,21 +154,15 @@ public class AstOptimizer implements ChoralVisitor {
 	}
 
 	@Override
-	public List< Annotation > visitAnnotations( ChoralParser.AnnotationsContext ac ) {
+	public Annotation visitAnnotation( ChoralParser.AnnotationContext ac ) {
 		debugInfo();
-		List< Annotation > al = new ArrayList<>();
-		al.add(
-				new Annotation(
-						getName( ac.Identifier() ),
-						ifPresent( ac.annotationValues() ).applyOrElse( this::visitAnnotationValues,
-								Collections::emptyMap ),
-						getPosition( ac )
-				)
+
+		return new Annotation(
+				getName( ac.Identifier() ),
+				ifPresent( ac.annotationValues() ).applyOrElse( this::visitAnnotationValues,
+						Collections::emptyMap ),
+				getPosition( ac )
 		);
-		if( isPresent( ac.annotations() ) ) {
-			al.addAll( visitAnnotations( ac.annotations() ) );
-		}
-		return al;
 	}
 
 	@Override
@@ -176,9 +170,7 @@ public class AstOptimizer implements ChoralVisitor {
 			ChoralParser.AnnotationValuesContext avc
 	) {
 		debugInfo();
-		Map< Name, LiteralExpression< String > > vm = new HashMap<>();
-		vm.put( getName( avc.Identifier() ),
-				visitLiteral( avc.literal(), null ) );
+		Map< Name, LiteralExpression< String > > vm = Collections.singletonMap( getName( avc.Identifier() ), visitLiteral( avc.literal(), null ) );
 		if( isPresent( avc.annotationValues() ) ) {
 			vm.putAll( visitAnnotationValues( avc.annotationValues() ) );
 		}
@@ -231,8 +223,7 @@ public class AstOptimizer implements ChoralVisitor {
 				headlessClass.fields(),
 				headlessClass.methods(),
 				headlessClass.constructors(),
-				ifPresent( cls.annotations() ).applyOrElse( this::visitAnnotations,
-						Collections::emptyList ),
+				cls.annotation().stream().map( this::visitAnnotation ).collect( Collectors.toList() ),
 				modifiers,
 				getPosition( cls )
 		);
@@ -281,8 +272,7 @@ public class AstOptimizer implements ChoralVisitor {
 				typeParameters,
 				superTypes,
 				methods,
-				ifPresent( id.annotations() ).applyOrElse( this::visitAnnotations,
-						Collections::emptyList ),
+				id.annotation().stream().map( this::visitAnnotation ).collect( Collectors.toList() ),
 				modifiers,
 				getPosition( id )
 		);
@@ -316,8 +306,7 @@ public class AstOptimizer implements ChoralVisitor {
 				name,
 				visitWorldParameter( ed.worldParameter() ),
 				visitEnumBody( ed.enumBody() ),
-				ifPresent( ed.annotations() ).applyOrElse( this::visitAnnotations,
-						Collections::emptyList ),
+				ed.annotation().stream().map( this::visitAnnotation ).collect( Collectors.toList() ),
 				modifiers,
 				getPosition( ed )
 		);
@@ -606,8 +595,7 @@ public class AstOptimizer implements ChoralVisitor {
 		return new ClassMethodDefinition(
 				visitMethodHeader( md.methodHeader() ),
 				visitMethodBody( md.methodBody() ).orElse( null ),
-				ifPresent( md.annotations() ).applyOrElse( this::visitAnnotations,
-						Collections::emptyList ),
+				md.annotation().stream().map( this::visitAnnotation ).collect( Collectors.toList() ),
 				modifiers,
 				getPosition( md )
 		);
@@ -762,8 +750,7 @@ public class AstOptimizer implements ChoralVisitor {
 
 		return new InterfaceMethodDefinition(
 				visitMethodHeader( imd.methodHeader() ),
-				ifPresent( imd.annotations() ).applyOrElse( this::visitAnnotations,
-						Collections::emptyList ),
+				imd.annotation().stream().map( this::visitAnnotation ).collect( Collectors.toList() ),
 				modifiers,
 				getPosition( imd )
 		);
