@@ -32,16 +32,16 @@ import java.util.Map;
 public class Annotation extends Node {
 
 	private final Name name;
-	private final Map< Name, LiteralExpression< String > > values;
+	private final Map< Name, LiteralExpression > values;
 
-	public Annotation( Name name, Map< Name, LiteralExpression< String > > values ) {
+	public Annotation( Name name, Map< Name, LiteralExpression > values ) {
 		this.name = name;
 		this.values = values;
 	}
 
 
 	public Annotation(
-			Name name, Map< Name, LiteralExpression< String > > values, final Position position
+			Name name, Map< Name, LiteralExpression > values, final Position position
 	) {
 		super( position );
 		this.name = name;
@@ -52,7 +52,7 @@ public class Annotation extends Node {
 		return name;
 	}
 
-	public Map< Name, LiteralExpression< String > > getValues() {
+	public Map< Name, LiteralExpression > getValues() {
 		return values;
 	}
 
