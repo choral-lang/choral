@@ -166,11 +166,11 @@ public class AstOptimizer implements ChoralVisitor {
 	}
 
 	@Override
-	public Map< Name, LiteralExpression< String > > visitAnnotationValues(
+	public Map< Name, LiteralExpression > visitAnnotationValues(
 			ChoralParser.AnnotationValuesContext avc
 	) {
 		debugInfo();
-		Map< Name, LiteralExpression< String > > vm = Collections.singletonMap( getName( avc.Identifier() ), visitLiteral( avc.literal(), null ) );
+		Map< Name, LiteralExpression > vm = Collections.singletonMap( getName( avc.Identifier() ), visitLiteral( avc.literal(), null ) );
 		if( isPresent( avc.annotationValues() ) ) {
 			vm.putAll( visitAnnotationValues( avc.annotationValues() ) );
 		}
