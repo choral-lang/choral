@@ -13,8 +13,8 @@ class BaseClass@A {
 }
 
 @Deprecated(since="4.2")
-@WithDefaultIntVal(23)
-@WithBool(is_used=true)
+@WithDefaultVal(23)
+@WithMultipleValues(name="Test", age=25, is_developer=true)
 class AnnotationTest@A extends BaseClass@A implements I@A {
 
     public String@A strField;

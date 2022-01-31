@@ -180,7 +180,8 @@ public class AstOptimizer implements ChoralVisitor {
 			ChoralParser.AnnotationValuesContext avc
 	) {
 		debugInfo();
-		Map< Name, LiteralExpression > vm = Collections.singletonMap(
+		Map< Name, LiteralExpression > vm = new HashMap<>();
+		vm.put(
 				getName( avc.Identifier() ),
 				visitLiteral( avc.literal(), null )
 		);
