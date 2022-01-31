@@ -44,6 +44,10 @@ literal
 	| StringLiteral
 	;
 
+/*
+ * Productions from §4 (Types, Values, and Variables)
+ */
+
 referenceType
 	: Identifier worldArguments? typeArguments?
 	;
@@ -85,6 +89,10 @@ typeArgumentList
 	: referenceType ( COMMA referenceType )*
 	;
 
+/*
+ * Productions from §6 (Names)
+ */
+
 expressionName
 	: Identifier
 	| ambiguousName DOT Identifier
@@ -93,6 +101,11 @@ expressionName
 ambiguousName
 	: Identifier
 	| ambiguousName DOT Identifier
+	;
+
+qualifiedName
+	: Identifier
+	| qualifiedName DOT Identifier
 	;
 
 /*
@@ -117,23 +130,10 @@ importDeclaration
 	: IMPORT qualifiedName (DOT STAR)? SEMI
 	;
 
-qualifiedName
-	: Identifier
-	| qualifiedName DOT Identifier
-	;
-
 typeDeclaration
 	: classDeclaration
 	| interfaceDeclaration
 	| enumDeclaration
-	;
-
-annotations
-	: AT Identifier ( LPAREN annotationValues RPAREN )? annotations?
-	;
-
-annotationValues
- 	: Identifier ASSIGN literal ( COMMA annotationValues )?
 	;
 
 /*
@@ -271,32 +271,8 @@ explicitConstructorInvocation
     |	typeArguments? SUPER LPAREN argumentList? RPAREN SEMI
     ;
 
-/*
- * Productions from §9 (Interfaces), added enums
- */
-
-interfaceDeclaration
-	: annotations? interfaceModifier* INTERFACE Identifier worldParameters typeParameters? extendsInterfaces? interfaceBody
-	;
-
-interfaceModifier
-	:	'public'
-	|	'protected'
-	|	'private'
-	|	'abstract'
-	|	'static'
-	;
-
 enumDeclaration
 	: annotations? classModifier* ENUM Identifier AT worldParameter enumBody
-	;
-
-extendsInterfaces
-	: EXTENDS interfaceTypeList
-	;
-
-interfaceBody
-	: LBRACE interfaceMethodDeclaration* RBRACE
 	;
 
 enumBody
@@ -311,6 +287,30 @@ enumConstant
 	:	Identifier
 	;
 
+/*
+ * Productions from §9 (Interfaces)
+ */
+
+interfaceDeclaration
+	: annotations? interfaceModifier* INTERFACE Identifier worldParameters typeParameters? extendsInterfaces? interfaceBody
+	;
+
+interfaceModifier
+	:	'public'
+	|	'protected'
+	|	'private'
+	|	'abstract'
+	|	'static'
+	;
+
+extendsInterfaces
+	: EXTENDS interfaceTypeList
+	;
+
+interfaceBody
+	: LBRACE interfaceMethodDeclaration* RBRACE
+	;
+
 interfaceMethodDeclaration
 	: annotations? interfaceMethodModifier* methodHeader SEMI
 	;
@@ -321,6 +321,14 @@ interfaceMethodModifier
 	|	'abstract'
 //	|	'default'
 //	|	'static'
+	;
+
+annotations
+	: AT Identifier ( LPAREN annotationValues RPAREN )? annotations?
+	;
+
+annotationValues
+ 	: Identifier ASSIGN literal ( COMMA annotationValues )?
 	;
 
 /*
@@ -433,6 +441,10 @@ methodInvocation
 staticGenericAccess
 	: Identifier worldArguments typeArguments?
 	;
+
+/*
+ * Productions from §15 (Expressions)
+ */
 
 primary
 	:	literal AT worldArgument
