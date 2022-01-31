@@ -456,7 +456,7 @@ public class Compiler {
 			Node node, String name, String role, List< ImportDeclaration > imports
 	) {
 		imports.add( new ImportDeclaration( "choral.annotations.Choreography", null ) );
-		Map< Name, LiteralExpression< String > > values = new HashMap<>();
+		Map< Name, LiteralExpression > values = new HashMap<>();
 		values.put( new Name( "name" ),
 				new LiteralExpression.StringLiteralExpression( escapeString( name ), null ) );
 		values.put( new Name( "role" ),
