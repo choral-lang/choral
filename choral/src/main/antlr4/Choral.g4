@@ -324,7 +324,7 @@ interfaceMethodModifier
 	;
 
 annotation
-	: AT Identifier ( LPAREN annotationValues RPAREN )?
+	: AT Identifier ( LPAREN ( literal | annotationValues ) RPAREN )?
 	;
 
 annotationValues
