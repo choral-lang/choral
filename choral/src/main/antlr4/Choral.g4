@@ -141,7 +141,7 @@ typeDeclaration
  */
 
 classDeclaration
-	: annotations? classModifier* CLASS Identifier worldParameters typeParameters? superClass? superInterfaces? classBody
+	: annotation* classModifier* CLASS Identifier worldParameters typeParameters? superClass? superInterfaces? classBody
 	;
 
 classModifier
@@ -210,7 +210,7 @@ fieldModifier
 	;
 
 methodDeclaration
-	: annotations? methodModifier* methodHeader methodBody
+	: annotation* methodModifier* methodHeader methodBody
 	;
 
 methodModifier
@@ -272,7 +272,7 @@ explicitConstructorInvocation
     ;
 
 enumDeclaration
-	: annotations? classModifier* ENUM Identifier AT worldParameter enumBody
+	: annotation* classModifier* ENUM Identifier AT worldParameter enumBody
 	;
 
 enumBody
@@ -292,7 +292,7 @@ enumConstant
  */
 
 interfaceDeclaration
-	: annotations? interfaceModifier* INTERFACE Identifier worldParameters typeParameters? extendsInterfaces? interfaceBody
+	: annotation* interfaceModifier* INTERFACE Identifier worldParameters typeParameters? extendsInterfaces? interfaceBody
 	;
 
 interfaceModifier
@@ -312,7 +312,7 @@ interfaceBody
 	;
 
 interfaceMethodDeclaration
-	: annotations? interfaceMethodModifier* methodHeader SEMI
+	: annotation* interfaceMethodModifier* methodHeader SEMI
 	;
 
 interfaceMethodModifier
@@ -323,8 +323,8 @@ interfaceMethodModifier
 //	|	'static'
 	;
 
-annotations
-	: AT Identifier ( LPAREN annotationValues RPAREN )? annotations?
+annotation
+	: AT Identifier ( LPAREN annotationValues RPAREN )?
 	;
 
 annotationValues
