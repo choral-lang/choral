@@ -53,6 +53,7 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 	private static final String COMMA = ",";
 	private static final String SPACED_COMMA = COMMA + " ";
 	private static final String SEMICOLON = ";";
+	private static final String AMPERSAND = " & ";
 	private static final String IMPLEMENTS = "implements";
 	private static final String EXTENDS = "extends";
 	private static final String PACKAGE = "package";
@@ -236,7 +237,7 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 		if( !n.upperBound().isEmpty() ) {
 			s.append( ' ' ).append( EXTENDS ).append( ' ' ).append(
 					n.upperBound().stream().map( this::visit ).collect(
-							Collectors.joining( SPACED_COMMA ) )
+							Collectors.joining( AMPERSAND ) )
 			);
 		}
 		return s.toString();
