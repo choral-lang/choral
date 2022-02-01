@@ -30,6 +30,7 @@ import choral.ast.visitors.ChoralVisitorInterface;
 import choral.types.Member;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 
 import static choral.ast.body.ConstructorModifier.*;
@@ -38,12 +39,14 @@ public class ConstructorDefinition extends Node {
 	private final ConstructorSignature signature;
 	private final MethodCallExpression explicitConstructorInvocation;
 	private final Statement blockStatements;
+	private final List< Annotation > annotations;
 	private final EnumSet< ConstructorModifier > modifiers;
 
 	public ConstructorDefinition(
 			final ConstructorSignature signature,
 			final MethodCallExpression explicitConstructorInvocation,
 			final Statement blockStatements,
+			final List< Annotation > annotations,
 			final EnumSet< ConstructorModifier > modifiers,
 			final Position position
 	) {
@@ -51,6 +54,7 @@ public class ConstructorDefinition extends Node {
 		this.signature = signature;
 		this.explicitConstructorInvocation = explicitConstructorInvocation;
 		this.blockStatements = blockStatements;
+		this.annotations = annotations;
 		this.modifiers = modifiers;
 	}
 
@@ -63,6 +67,10 @@ public class ConstructorDefinition extends Node {
 	public void setTypeAnnotation( Member.HigherConstructor typeAnnotation ) {
 		this.typeAnnotation = typeAnnotation;
 		this.signature.setTypeAnnotation( typeAnnotation );
+	}
+
+	public List< Annotation > annotations() {
+		return annotations;
 	}
 
 	public EnumSet< ConstructorModifier > modifiers() {
