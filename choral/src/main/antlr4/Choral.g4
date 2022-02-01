@@ -249,7 +249,7 @@ methodBody
 	;
 
 constructorDeclaration
-	: constructorModifier* constructorDeclarator constructorBody
+	: annotation* constructorModifier* constructorDeclarator constructorBody
 	;
 
 constructorModifier
