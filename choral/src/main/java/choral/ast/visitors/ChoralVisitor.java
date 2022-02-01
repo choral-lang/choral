@@ -341,6 +341,7 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 		return new Field(
 				n.name(),
 				safeVisit( n.typeExpression() ),
+				visitAndCollect( n.annotations() ),
 				n.modifiers(),
 				n.position()
 		);
