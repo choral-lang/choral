@@ -523,7 +523,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		if( !n.upperBound().isEmpty() ) {
 			s.append( ' ' ).append( EXTENDS ).append( ' ' ).append(
 					n.upperBound().stream().map( this::visit ).collect(
-							Collectors.joining( SPACED_COMMA ) )
+							Collectors.joining( AMPERSAND ) )
 			);
 		}
 		return s.toString();
