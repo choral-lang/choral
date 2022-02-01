@@ -198,7 +198,7 @@ classMemberDeclaration
 	;
 
 fieldDeclaration
-	: fieldModifier* referenceType Identifier (COMMA Identifier)* SEMI
+	: annotation* fieldModifier* referenceType Identifier (COMMA Identifier)* SEMI
 	;
 
 fieldModifier

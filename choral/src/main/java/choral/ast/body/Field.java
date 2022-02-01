@@ -29,6 +29,7 @@ import choral.ast.visitors.ChoralVisitorInterface;
 import choral.types.Member;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 
 import static choral.ast.body.FieldModifier.*;
@@ -36,15 +37,20 @@ import static choral.ast.body.FieldModifier.*;
 public class Field extends Node {
 	private final Name name;
 	private final TypeExpression type;
+	private final List< Annotation > annotations;
 	private final EnumSet< FieldModifier > modifiers;
 
 	public Field(
-			final Name name, final TypeExpression type, final EnumSet< FieldModifier > modifiers,
+			final Name name,
+			final TypeExpression type,
+			final List< Annotation > annotations,
+			final EnumSet< FieldModifier > modifiers,
 			final Position position
 	) {
 		super( position );
 		this.name = name;
 		this.type = type;
+		this.annotations = annotations;
 		this.modifiers = EnumSet.copyOf( modifiers );
 	}
 
@@ -56,6 +62,10 @@ public class Field extends Node {
 
 	public void setTypeAnnotation( Member.Field typeAnnotation ) {
 		this.typeAnnotation = typeAnnotation;
+	}
+
+	public List< Annotation > annotations() {
+		return annotations;
 	}
 
 	public EnumSet< FieldModifier > modifiers() {
