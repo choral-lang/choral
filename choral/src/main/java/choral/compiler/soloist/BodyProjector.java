@@ -143,6 +143,7 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 								ExpressionProjector.visit( this.world(), x ) ) ).orElse( null ),
 				StatementsUnitNormaliser.visitStatement(
 						StatementsProjector.visit( this.world(), n.blockStatements() ) ),
+				n.annotations(),
 				n.modifiers(),
 				n.position()
 		);

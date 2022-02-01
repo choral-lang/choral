@@ -441,7 +441,9 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 				safeVisit( n.signature() ),
 				n.explicitConstructorInvocation().map( this::safeVisit ).orElse( null ),
 				safeVisit( n.blockStatements() ),
-				n.modifiers(), n.position()
+				visitAndCollect( n.annotations() ),
+				n.modifiers(),
+				n.position()
 		);
 	}
 

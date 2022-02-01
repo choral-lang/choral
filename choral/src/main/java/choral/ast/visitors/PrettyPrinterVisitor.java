@@ -463,12 +463,11 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 	public String visit( ConstructorDefinition n ) {
 		HashMap< String, Object > m = new HashMap<>();
 		m.put( "modifiers", visitModifiers( n.modifiers() ) );
+		m.put( "annotations", visitAndCollect( n.annotations(), NEWLINE, NEWLINE ) );
 		m.put( "signature", visit( n.signature() ) );
 		m.put( "body", indent( visit( n.body() ) ) );
 
-		String template = "$modifiers$signature {" + NEWLINE +
-				"$body" + NEWLINE +
-				"}";
+		String template = "${annotations}$modifiers$signature {" + NEWLINE + "$body" + NEWLINE + "}";
 		return Utils.createVelocityTemplate( template ).render( m );
 	}
 
