@@ -396,7 +396,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( FormalMethodParameter n ) {
-		return visit( n.type() ) + " " + n.name();
+		return visitAndCollect( n.annotations(), " ", " " ) + visit( n.type() ) + " " + n.name();
 	}
 
 	@Override

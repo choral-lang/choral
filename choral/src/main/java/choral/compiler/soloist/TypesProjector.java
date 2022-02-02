@@ -144,7 +144,9 @@ public class TypesProjector extends AbstractSoloistProjector< List< ? extends No
 					new FormalMethodParameter(
 							n.name(),
 							visit( world(), n.type() ).get( 0 ),
-							n.position() )
+							n.annotations(),
+							n.position()
+					)
 			);
 		} else {
 			return emptyList();

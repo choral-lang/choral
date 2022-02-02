@@ -144,7 +144,7 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 								ExpressionProjector.visit( this.world(), x ) ) ).orElse( null ),
 				StatementsUnitNormaliser.visitStatement(
 						StatementsProjector.visit( this.world(), n.blockStatements() ) ),
-				n.annotations(),
+				visitAndCollect( n.annotations() ),
 				n.modifiers(),
 				n.position()
 		);
@@ -158,6 +158,7 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 						new TypeExpression( UnitRepresentation.UNIT,
 								Collections.singletonList( this.world() ),
 								Collections.emptyList() ),
+						visitAndCollect( p.annotations() ),
 						p.position()
 				)
 				: l.get( 0 );

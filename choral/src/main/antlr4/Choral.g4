@@ -240,7 +240,7 @@ formalParameters
 	;
 
 formalParameter
-	: referenceType Identifier
+	: annotation* referenceType Identifier
 	;
 
 methodBody
