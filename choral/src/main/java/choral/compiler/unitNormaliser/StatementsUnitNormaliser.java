@@ -51,6 +51,7 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 								new VariableDeclaration(
 										p.left().name(),
 										p.left().type(),
+										p.left().annotations(),
 										p.left().initializer().orElse( null )
 								),
 								visit( p.right() ) ) )
@@ -74,6 +75,7 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 						v -> new VariableDeclaration(
 								v.name(),
 								v.type(),
+								v.annotations(),
 								v.initializer().orElse( null )
 						)
 				).collect( Collectors.toList() ),

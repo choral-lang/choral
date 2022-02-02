@@ -350,7 +350,7 @@ blockStatement
 	;
 
 localVariableDeclaration
-	: referenceType variableDeclarator ( COMMA variableDeclarator )* SEMI
+	: annotation* referenceType variableDeclarator ( COMMA variableDeclarator )* SEMI
 	;
 
 variableDeclarator

@@ -886,10 +886,12 @@ public class AstOptimizer implements ChoralVisitor {
 			ChoralParser.LocalVariableDeclarationContext lvd
 	) {
 		debugInfo();
-		TypeExpression t = visitReferenceType( lvd.referenceType() );
+		TypeExpression type = visitReferenceType( lvd.referenceType() );
+		List< Annotation > annotations = lvd.annotation().stream().map(
+				this::visitAnnotation ).collect( Collectors.toList() );
 		return new VariableDeclarationStatement(
 				lvd.variableDeclarator().stream().map(
-						vd -> visitVariableDeclarator( vd, t )
+						vd -> visitVariableDeclarator( vd, type, annotations )
 				).collect( Collectors.toList() ),
 				null,
 				getPosition( lvd )
@@ -906,11 +908,14 @@ public class AstOptimizer implements ChoralVisitor {
 	}
 
 	public VariableDeclaration visitVariableDeclarator(
-			ChoralParser.VariableDeclaratorContext vd, TypeExpression type
+			ChoralParser.VariableDeclaratorContext vd,
+			TypeExpression type,
+			List< Annotation > annotations
 	) {
 		return new VariableDeclaration(
 				getName( vd.Identifier() ),
 				type,
+				annotations,
 				isPresent( vd.shortCircuitOrExpression() ) ? new AssignExpression(
 						ifPresent( vd.chainedExpression() ).applyOrElse(
 								ce -> this.visitChainedExpression( ce,
@@ -1589,6 +1594,8 @@ public class AstOptimizer implements ChoralVisitor {
 				new VariableDeclaration(
 						getName( cb.formalParameter().Identifier() ),
 						visitReferenceType( cb.formalParameter().referenceType() ),
+						cb.formalParameter().annotation().stream().map(
+								this::visitAnnotation ).collect( Collectors.toList() ),
 						null,
 						getPosition( cb )
 				),
