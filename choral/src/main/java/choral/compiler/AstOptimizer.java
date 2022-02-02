@@ -788,7 +788,7 @@ public class AstOptimizer implements ChoralVisitor {
 	}
 
 	@Override
-	public List< Name > visitEnumBody( ChoralParser.EnumBodyContext eb ) {
+	public List< EnumConstant > visitEnumBody( ChoralParser.EnumBodyContext eb ) {
 		debugInfo();
 		return ifPresent( eb.enumConstantList() ).applyOrElse(
 				this::visitEnumConstantList,
@@ -799,15 +799,20 @@ public class AstOptimizer implements ChoralVisitor {
 	/* * * * * * * * * * STATEMENTS * * * * * * * * * * * * */
 
 	@Override
-	public List< Name > visitEnumConstantList( ChoralParser.EnumConstantListContext ctx ) {
+	public List< EnumConstant > visitEnumConstantList( ChoralParser.EnumConstantListContext ctx ) {
 		return ctx.enumConstant().stream().map( this::visitEnumConstant ).collect(
 				Collectors.toList() );
 	}
 
 	@Override
-	public Name visitEnumConstant( ChoralParser.EnumConstantContext ctx ) {
+	public EnumConstant visitEnumConstant( ChoralParser.EnumConstantContext ctx ) {
 		debugInfo();
-		return getName( ctx.Identifier() );
+		return new EnumConstant(
+				getName( ctx.Identifier() ),
+				ctx.annotation().stream().map( this::visitAnnotation ).collect(
+						Collectors.toList() ),
+				getPosition( ctx )
+		);
 	}
 
 	@Override

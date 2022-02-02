@@ -60,7 +60,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( CompilationUnit n ) {
-		return ( n.packageDeclaration().length() > 0 ? PACKAGE + " " + n.packageDeclaration() + SEMICOLON + NEWLINE : "" )
+		return ( n.packageDeclaration().length() > 0 ? PACKAGE + " " + n.packageDeclaration() + SEMICOLON + _2NEWLINE : "" )
 				+ visitAndCollect( n.imports(), SEMICOLON + NEWLINE, SEMICOLON + _2NEWLINE )
 				+ visitAndCollect( n.interfaces(), NEWLINE, NEWLINE )
 				+ visitAndCollect( n.enums(), NEWLINE, NEWLINE )
@@ -132,13 +132,18 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		HashMap< String, Object > m = new HashMap<>();
 		m.put( "enum", "enum" );
 		m.put( "type", visitTypeDeclaration( n ) );
-		m.put( "cases", indent( visitAndCollect( n.cases(), SPACED_COMMA, NEWLINE ) ) );
+		m.put( "cases", indent( visitAndCollect( n.cases(), COMMA + NEWLINE, NEWLINE ) ) );
 		m.put( "modifiers", visitModifiers( n.modifiers() ) );
 		m.put( "annotations", visitAndCollect( n.annotations(), NEWLINE, NEWLINE ) );
 		String template = "${annotations}$modifiers$enum $type {" + NEWLINE +
 				"#if( $!{cases.trim()} != '' )$cases" + NEWLINE + "#end" +
 				"}" + NEWLINE;
 		return Utils.createVelocityTemplate( template ).render( m );
+	}
+
+	@Override
+	public String visit( EnumConstant n ) {
+		return visitAndCollect( n.annotations(), NEWLINE, NEWLINE ) + n.name();
 	}
 
 
