@@ -652,6 +652,8 @@ public class AstOptimizer implements ChoralVisitor {
 		return new FormalMethodParameter(
 				getName( fp.Identifier() ),
 				visitReferenceType( fp.referenceType() ),
+				fp.annotation().stream().map( this::visitAnnotation ).collect(
+						Collectors.toList() ),
 				getPosition( fp )
 		);
 	}
