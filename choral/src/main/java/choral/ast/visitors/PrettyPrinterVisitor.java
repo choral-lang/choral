@@ -222,7 +222,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 				"}" + NEWLINE + "$catches";
 		m.put( "body", indent( visit( n.body() ) ) );
 		String catches = n.catches().stream().map( e ->
-				"catch ( " + visit( e.left() ) + " ) { " + NEWLINE +
+				"catch ( " + visit( e.left(), " " ) + " ) { " + NEWLINE +
 						indent( visit( e.right() ) ) + NEWLINE + "}"
 		).collect( Collectors.joining( NEWLINE ) );
 		m.put( "catches", catches );
@@ -494,7 +494,12 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( VariableDeclaration n ) {
-		return visit( n.type() ) + " " + visit( n.name() );
+		return visit( n, NEWLINE );
+	}
+
+	public String visit( VariableDeclaration n, String separator ) {
+		return visitAndCollect( n.annotations(), separator, separator ) + visit(
+				n.type() ) + " " + visit( n.name() );
 	}
 
 	@Override
