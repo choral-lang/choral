@@ -48,7 +48,11 @@ enum Day@A {
 	WEDNESDAY,
 	THURSDAY,
 	FRIDAY,
+
+	@Weekend
 	SATURDAY,
+
+	@Weekend
 	SUNDAY
 }
 

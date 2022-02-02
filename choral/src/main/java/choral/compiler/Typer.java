@@ -348,9 +348,9 @@ public class Typer {
 			taskQueue.hierarchyConstructionTasks.put( t, ht );
 			taskQueue.enqueue( ht );
 			taskQueue.enqueue( Phase.MEMBER_DECLARATIONS, () -> {
-				for( Name c : n.cases() ) {
+				for( EnumConstant c : n.cases() ) {
 					try {
-						t.innerType().addCase( c.identifier() );
+						t.innerType().addCase( c.name().identifier() );
 					} catch( StaticVerificationException e ) {
 						throw new AstPositionedException( c.position(), e );
 					}

@@ -190,6 +190,11 @@ public class DependecyVisitor implements ChoralVisitorInterface< Void > {
 	}
 
 	@Override
+	public Void visit( EnumConstant n ) {
+		return null;
+	}
+
+	@Override
 	public Void visit( Interface n ) {
 		if( toWorldArguments( n.worldParameters() ).contains( w ) ) {
 			// we add dependencies from type parameters

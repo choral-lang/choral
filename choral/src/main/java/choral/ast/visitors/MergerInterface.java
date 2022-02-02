@@ -42,6 +42,8 @@ public interface MergerInterface< T > {
 
 	T merge( Enum n1, Enum n2 );
 
+	T merge( EnumConstant n1, EnumConstant n2 );
+
 	T merge( Interface n1, Interface n2 );
 
 	T merge( Statement n1, Statement n2 );
