@@ -9,7 +9,8 @@ import java.util.List;
 @MultipleValuesAndTypesAnnotation(first="yay", second=42)
 @DefaultValueAnnotation(1337)
 public class ValidAnnotationPositions@A {
-	@MethodAnnotation
+	@MethodAnnotation1
+	@MethodAnnotation2
 	public static void main( ) {
 		AnnotationTest@A at = new AnnotationTest@A( "abcde"@A );
 		List@A< MyExtensionBaseClass< String > > ls = at.< MyExtensionBaseClass< String > >interface_method( new MyExtensionBaseClass@A< String >() );
@@ -35,13 +36,16 @@ class MyExtensionBaseClass@A< T@A > extends MyBaseClass@A< T > {
 	}
 }
 
-@InterfaceAnnotation
+@InterfaceAnnotation1
+@InterfaceAnnotation2
 interface MyInterface@A< K@A extends InterfaceA@A & InterfaceB@A, V@A > {
-	@InterfaceMethodAnnotation
+	@InterfaceMethodAnnotation1
+	@InterfaceMethodAnnotation1
 	< T@A extends K@A > List@A< T > interface_method( T@A param );
 }
 
-@EnumAnnotation
+@EnumAnnotation1
+@EnumAnnotation2
 enum Day@A {
 	MONDAY,
 	TUESDAY,
@@ -53,19 +57,23 @@ enum Day@A {
 	SATURDAY,
 
 	@Weekend
+	@LastDay
 	SUNDAY
 }
 
-@ClassAnnotation
+@ClassAnnotation1
+@ClassAnnotation2
 class AnnotationTest@A extends MyBaseClass@A< String > implements MyInterface@A< MyBaseClass< String >, String > {
-	@FieldAnnotation
+	@FieldAnnotation1
+	@FieldAnnotation2
 	public String@A strField;
 
 	@OtherFieldAnnotation
 	public Day@A enumField;
 
-	@ConstructorAnnotation
-	AnnotationTest( String@A strField ) {
+	@ConstructorAnnotation1
+	@ConstructorAnnotation2
+	AnnotationTest( @ParameterAnnotation1 @ParameterAnnotation2 String@A strField ) {
 		this.strField = strField;
 		this.enumField = Day@A.MONDAY;
 	}
