@@ -56,6 +56,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 	private static final String PACKAGE = "package";
 	private static final String TAB = "\t";
 	private static final String ANNOTATION = "@";
+	private static final String ASSIGN = " = ";
 
 	@Override
 	public String visit( CompilationUnit n ) {
@@ -325,8 +326,13 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( VariableDeclarationStatement n ) {
-		return visitAndCollect( n.variables(), SEMICOLON + NEWLINE ) + getContinuation( n,
-				SEMICOLON );
+		// Visit manually to preserve structure from original code
+		String type = visit( n.variables().get( 0 ).type() );
+		String variables = n.variables().stream().map(
+				v -> visit( v.name() ) + v.initializer().map(
+						e -> ASSIGN + visit( e.value() ) ).orElse( "" )
+		).collect( Collectors.joining( SPACED_COMMA ) );
+		return type + " " + variables + getContinuation( n, SEMICOLON );
 	}
 
 	@Override

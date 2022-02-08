@@ -25,6 +25,7 @@ import choral.ast.Name;
 import choral.ast.body.VariableDeclaration;
 import choral.ast.expression.*;
 import choral.ast.statement.*;
+import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractSoloistProjector;
 import choral.ast.visitors.PrettyPrinterVisitor;
@@ -32,7 +33,6 @@ import choral.compiler.merge.StatementsMerger;
 import choral.types.GroundDataType;
 import choral.utils.Pair;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,8 +66,10 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 						.map( p -> new Pair<>(
 								new VariableDeclaration(
 										p.left().name(),
-										TypesProjector.visit( this.world(),
-												p.left().type() ).get( 0 ) ),
+										TypesProjector.visit( this.world(), p.left().type() ).get(
+												0 ),
+										null
+								),
 								visit( p.right() ) ) ) // add exceptions to gamma here
 						.collect( Collectors.toList() )
 				,
@@ -86,14 +88,17 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 
 	@Override
 	public Statement visit( VariableDeclarationStatement n ) {
-		VariableDeclaration v = n.variables().get(
-				0 ); // there is only one variable after de-sugaring
-		if( v.type().worldArguments().contains( this.world() ) ) {
+		TypeExpression t = n.variables().get( 0 ).type();
+		TypeExpression tp = TypesProjector.visit( this.world(), t ).get( 0 );
+		if( t.worldArguments().contains( this.world() ) ) {
 			return new VariableDeclarationStatement(
-					Collections.singletonList(
-							new VariableDeclaration( v.name(),
-									TypesProjector.visit( this.world(), v.type() ).get( 0 ) )
-					),
+					n.variables().stream().map(
+							v -> new VariableDeclaration(
+									v.name(),
+									tp,
+									v.initializer().orElse( null )
+							)
+					).collect( Collectors.toList() ),
 					visit( n.continuation() )
 			).copyPosition( n );
 		} else {

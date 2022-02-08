@@ -349,6 +349,7 @@ public class ImportProjector implements ChoralVisitorInterface< Void > {
 	@Override
 	public Void visit( VariableDeclaration n ) {
 		visit( n.type() );
+		n.initializer().ifPresent( this::visit );
 		return null;
 	}
 

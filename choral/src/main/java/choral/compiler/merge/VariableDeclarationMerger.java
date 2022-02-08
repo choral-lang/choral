@@ -22,7 +22,10 @@
 package choral.compiler.merge;
 
 import choral.ast.body.VariableDeclaration;
+import choral.ast.expression.AssignExpression;
 import choral.ast.visitors.AbstractMerger;
+
+import java.util.Optional;
 
 class VariableDeclarationMerger extends AbstractMerger< VariableDeclaration > {
 	private VariableDeclarationMerger() {
@@ -41,6 +44,21 @@ class VariableDeclarationMerger extends AbstractMerger< VariableDeclaration > {
 				n1.type().equals( n2.type() ),
 				errorPrefix + "different types:  " + n1.type() + " and " + n2.type(), n1, n2
 		);
-		return new VariableDeclaration( n1.name(), n1.type() );
+
+		Optional< AssignExpression > i1 = n1.initializer(), i2 = n2.initializer();
+		MergeException._assert(
+				( i1.isPresent() && i2.isPresent() ) || ( i1.isEmpty() && i2.isEmpty() ),
+				errorPrefix + "different initializers: " + i1.orElse( null ) + " and " + i2.orElse(
+						null ), n1, n2
+		);
+
+		return new VariableDeclaration(
+				n1.name(),
+				n1.type(),
+				i1.isPresent() && i2.isPresent()
+						? (AssignExpression) ExpressionsMerger.mergeExpressions( i1.get(),
+						i2.get() )
+						: null
+		);
 	}
 }
