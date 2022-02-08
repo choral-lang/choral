@@ -875,14 +875,11 @@ public class AstOptimizer implements ChoralVisitor {
 		TypeExpression t = visitReferenceType( lvd.referenceType() );
 		return new VariableDeclarationStatement(
 				lvd.Identifier().stream()
-						.map( e -> new VariableDeclaration(
-								getName( e ),
-								t,
-								t.position()
-						) )
+						.map( e -> new VariableDeclaration( getName( e ), t, null, t.position() ) )
 						.collect( Collectors.toList() ),
 				null,
-				getPosition( lvd ) );
+				getPosition( lvd )
+		);
 	}
 
 	@Override
@@ -896,26 +893,30 @@ public class AstOptimizer implements ChoralVisitor {
 						new VariableDeclaration(
 								getName( lvac.Identifier() ),
 								t,
+								new AssignExpression(
+										ifPresent( lvac.chainedExpression() ).applyOrElse(
+												ce -> this.visitChainedExpression( ce,
+														visitShortCircuitOrExpression(
+																lvac.shortCircuitOrExpression()
+														)
+												),
+												() -> visitShortCircuitOrExpression(
+														lvac.shortCircuitOrExpression()
+												)
+										),
+										new FieldAccessExpression(
+												getName( lvac.Identifier() ),
+												getPosition( lvac.Identifier() )
+										),
+										AssignExpression.Operator.ASSIGN,
+										getPosition( lvac )
+								),
 								t.position()
-						) ),
-				new ExpressionStatement(
-						new AssignExpression(
-								ifPresent( lvac.chainedExpression() ).applyOrElse(
-										ce -> this.visitChainedExpression( ce,
-												visitShortCircuitOrExpression(
-														lvac.shortCircuitOrExpression() ) ),
-										() -> visitShortCircuitOrExpression(
-												lvac.shortCircuitOrExpression() )
-								),
-								new FieldAccessExpression(
-										getName( lvac.Identifier() ),
-										getPosition( lvac.Identifier() )
-								),
-								visitAssignmentOperator( lvac.assignmentOperator() ),
-								getPosition( lvac ) ),
-						null,
-						getPosition( lvac ) ),
-				getPosition( lvac ) );
+						)
+				),
+				null,
+				getPosition( lvac )
+		);
 	}
 
 	@Override
@@ -1574,6 +1575,7 @@ public class AstOptimizer implements ChoralVisitor {
 				new VariableDeclaration(
 						getName( cb.formalParameter().Identifier() ),
 						visitReferenceType( cb.formalParameter().referenceType() ),
+						null,
 						getPosition( cb )
 				),
 				visitBlock( cb.block() )

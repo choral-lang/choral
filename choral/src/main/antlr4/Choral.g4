@@ -198,7 +198,7 @@ classMemberDeclaration
 	;
 
 fieldDeclaration
-	: fieldModifier* referenceType Identifier+ SEMI
+	: fieldModifier* referenceType Identifier (COMMA Identifier)* SEMI
 	;
 
 fieldModifier
@@ -336,18 +336,18 @@ blockStatements
 	;
 
 blockStatement
-	: localVariableDeclaration SEMI
-	| localVariableDeclarationAndAssignment SEMI
+	: localVariableDeclaration
+	| localVariableDeclarationAndAssignment
 	| block
 	| statement
 	;
 
 localVariableDeclaration
-	: referenceType Identifier+
+	: referenceType Identifier ( COMMA Identifier )* SEMI
 	;
 
 localVariableDeclarationAndAssignment
-	: referenceType Identifier assignmentOperator shortCircuitOrExpression chainedExpression?
+	: referenceType Identifier ASSIGN shortCircuitOrExpression chainedExpression? SEMI
 	;
 
 statement
