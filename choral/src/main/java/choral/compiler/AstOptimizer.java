@@ -839,14 +839,10 @@ public class AstOptimizer implements ChoralVisitor {
 		if( isPresent( bsc.localVariableDeclaration() ) ) {
 			return visitLocalVariableDeclaration( bsc.localVariableDeclaration() );
 		}
-		if( isPresent( bsc.localVariableDeclarationAndAssignment() ) ) {
-			return visitLocalVariableDeclarationAndAssignment(
-					bsc.localVariableDeclarationAndAssignment() );
-		} else if( isPresent( bsc.block() ) ) {
+		if( isPresent( bsc.block() ) ) {
 			return new BlockStatement( visitBlock( bsc.block() ), null, getPosition( bsc ) );
-		} else {
-			return visitStatement( bsc.statement() );
 		}
+		return visitStatement( bsc.statement() );
 	}
 
 	@Override
@@ -874,48 +870,48 @@ public class AstOptimizer implements ChoralVisitor {
 		debugInfo();
 		TypeExpression t = visitReferenceType( lvd.referenceType() );
 		return new VariableDeclarationStatement(
-				lvd.Identifier().stream()
-						.map( e -> new VariableDeclaration( getName( e ), t, null, t.position() ) )
-						.collect( Collectors.toList() ),
+				lvd.variableDeclarator().stream().map(
+						vd -> visitVariableDeclarator( vd, t )
+				).collect( Collectors.toList() ),
 				null,
 				getPosition( lvd )
 		);
 	}
 
 	@Override
-	public Statement visitLocalVariableDeclarationAndAssignment(
-			ChoralParser.LocalVariableDeclarationAndAssignmentContext lvac
+	public VariableDeclaration visitVariableDeclarator(
+			ChoralParser.VariableDeclaratorContext vd
 	) {
-		debugInfo();
-		TypeExpression t = visitReferenceType( lvac.referenceType() );
-		return new VariableDeclarationStatement(
-				Collections.singletonList(
-						new VariableDeclaration(
-								getName( lvac.Identifier() ),
-								t,
-								new AssignExpression(
-										ifPresent( lvac.chainedExpression() ).applyOrElse(
-												ce -> this.visitChainedExpression( ce,
-														visitShortCircuitOrExpression(
-																lvac.shortCircuitOrExpression()
-														)
-												),
-												() -> visitShortCircuitOrExpression(
-														lvac.shortCircuitOrExpression()
-												)
-										),
-										new FieldAccessExpression(
-												getName( lvac.Identifier() ),
-												getPosition( lvac.Identifier() )
-										),
-										AssignExpression.Operator.ASSIGN,
-										getPosition( lvac )
+		throw new UnsupportedOperationException(
+				"visitVariableDeclarator( ChoralParser.VariableDeclaratorContext vd ) should not be used. Use visitVariableDeclarator( ChoralParser.VariableDeclaratorContext vd, TypeExpression type ) instead"
+		);
+	}
+
+	public VariableDeclaration visitVariableDeclarator(
+			ChoralParser.VariableDeclaratorContext vd, TypeExpression type
+	) {
+		return new VariableDeclaration(
+				getName( vd.Identifier() ),
+				type,
+				isPresent( vd.shortCircuitOrExpression() ) ? new AssignExpression(
+						ifPresent( vd.chainedExpression() ).applyOrElse(
+								ce -> this.visitChainedExpression( ce,
+										visitShortCircuitOrExpression(
+												vd.shortCircuitOrExpression()
+										)
 								),
-								t.position()
-						)
-				),
-				null,
-				getPosition( lvac )
+								() -> visitShortCircuitOrExpression(
+										vd.shortCircuitOrExpression()
+								)
+						),
+						new FieldAccessExpression(
+								getName( vd.Identifier() ),
+								getPosition( vd.Identifier() )
+						),
+						AssignExpression.Operator.ASSIGN,
+						getPosition( vd )
+				) : null,
+				getPosition( vd )
 		);
 	}
 
