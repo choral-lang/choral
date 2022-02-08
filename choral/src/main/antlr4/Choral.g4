@@ -345,17 +345,16 @@ blockStatements
 
 blockStatement
 	: localVariableDeclaration
-	| localVariableDeclarationAndAssignment
 	| block
 	| statement
 	;
 
 localVariableDeclaration
-	: referenceType Identifier ( COMMA Identifier )* SEMI
+	: referenceType variableDeclarator ( COMMA variableDeclarator )* SEMI
 	;
 
-localVariableDeclarationAndAssignment
-	: referenceType Identifier ASSIGN shortCircuitOrExpression chainedExpression? SEMI
+variableDeclarator
+	: Identifier (ASSIGN shortCircuitOrExpression chainedExpression?)?
 	;
 
 statement
