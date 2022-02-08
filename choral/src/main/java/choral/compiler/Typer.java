@@ -1329,6 +1329,7 @@ public class Typer {
 				for( VariableDeclaration x : n.variables() ) {
 					GroundDataType type = visitGroundDataTypeExpression( scope, x.type(), false );
 					scope.declareVariable( x.name().identifier(), type );
+					x.initializer().ifPresent( e -> synth( scope, e ) );
 				}
 				return assertReachableContinuation( n, false );
 			}

@@ -460,6 +460,7 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 		return new VariableDeclaration(
 				safeVisit( n.name() ),
 				safeVisit( n.type() ),
+				safeVisit( n.initializer().get() ),
 				n.position()
 		);
 	}

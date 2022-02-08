@@ -28,7 +28,6 @@ import choral.ast.visitors.AbstractChoralVisitor;
 import choral.utils.Pair;
 
 import java.util.AbstractMap;
-import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -49,7 +48,11 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 				visit( n.body() ),
 				n.catches().stream()
 						.map( p -> new Pair<>(
-								new VariableDeclaration( p.left().name(), p.left().type() ),
+								new VariableDeclaration(
+										p.left().name(),
+										p.left().type(),
+										p.left().initializer().orElse( null )
+								),
 								visit( p.right() ) ) )
 						.collect( Collectors.toList() ),
 				visit( n.continuation() )
@@ -66,15 +69,14 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 
 	@Override
 	public Statement visit( VariableDeclarationStatement n ) {
-		VariableDeclaration v = n.variables().get(
-				0 ); // there is only one variable after desugaring
 		return new VariableDeclarationStatement(
-				Collections.singletonList(
-						new VariableDeclaration(
+				n.variables().stream().map(
+						v -> new VariableDeclaration(
 								v.name(),
-								v.type()
+								v.type(),
+								v.initializer().orElse( null )
 						)
-				),
+				).collect( Collectors.toList() ),
 				visit( n.continuation() )
 		).copyPosition( n );
 	}

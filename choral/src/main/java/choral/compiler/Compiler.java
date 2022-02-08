@@ -312,10 +312,7 @@ public class Compiler {
 						cp.addErrorListener( new ParsingErrorListener( logger ) );
 						ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
 						if( !logger.hasErrors() ) {
-							cu = AstOptimizer
-									.loadParameters( /* new String[]{ "showDebug" } */ )
-									.optimise( ctx, t );
-							cu = AstDesugarer.desugar( cu );
+							cu = AstOptimizer.loadParameters().optimise( ctx, t );
 						}
 					} catch( ChoralException | IOException e ) {
 						logger.logf( Level.ERROR, "%s: %s", t, e.getMessage() );
