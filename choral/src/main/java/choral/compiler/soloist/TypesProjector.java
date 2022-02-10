@@ -132,7 +132,8 @@ public class TypesProjector extends AbstractSoloistProjector< List< ? extends No
 										.map( FormalWorldParameter::toWorldArgument )
 										.collect( Collectors.toList() ) ) ),
 						emptyList(),
-						visitAndCollect( w.toWorldArgument(), n.upperBound() )
+						visitAndCollect( w.toWorldArgument(), n.upperBound() ),
+						n.annotations()
 				).< FormalTypeParameter >copyPosition( n )
 		).collect( Collectors.toList() );
 	}

@@ -53,7 +53,7 @@ referenceType
 	;
 
 typeParameter
-	: Identifier worldParameters typeBound?
+	: annotation* Identifier worldParameters typeBound?
 	;
 
 worldParameter
