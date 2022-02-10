@@ -55,11 +55,6 @@ public class AbstractMerger< T > implements MergerInterface< T > {
 	}
 
 	@Override
-	public T merge( EnumConstant n1, EnumConstant n2 ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public T merge( Interface n1, Interface n2 ) {
 		throw new UnsupportedOperationException();
 	}

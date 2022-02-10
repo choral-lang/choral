@@ -36,16 +36,13 @@ import static choral.ast.body.ClassModifier.*;
 
 
 public class Enum extends TemplateDeclaration {
-	private final List< EnumConstant > cases;
+	private final List< Name > cases;
 	private final List< Annotation > annotations;
 	private final EnumSet< ClassModifier > modifiers;
 
 	public Enum(
-			final Name name,
-			final FormalWorldParameter worldParameter,
-			final List< EnumConstant > cases,
-			List< Annotation > annotations,
-			final EnumSet< ClassModifier > modifiers,
+			final Name name, final FormalWorldParameter worldParameter, final List< Name > cases,
+			List< Annotation > annotations, final EnumSet< ClassModifier > modifiers,
 			final Position position
 	) {
 		super( name, Collections.singletonList( worldParameter ), Collections.emptyList(),
@@ -102,7 +99,7 @@ public class Enum extends TemplateDeclaration {
 		return annotations;
 	}
 
-	public List< EnumConstant > cases() {
+	public List< Name > cases() {
 		return cases;
 	}
 

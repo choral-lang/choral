@@ -42,8 +42,6 @@ public interface ChoralVisitorInterface< R > {
 
 	R visit( choral.ast.body.Enum n );
 
-	R visit( EnumConstant n );
-
 	R visit( Interface n );
 
 	R visit( Statement n );

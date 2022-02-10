@@ -284,7 +284,7 @@ enumConstantList
 	;
 
 enumConstant
-	:	annotation* Identifier
+	:	Identifier
 	;
 
 /*

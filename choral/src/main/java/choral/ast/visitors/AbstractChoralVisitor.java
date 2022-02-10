@@ -60,11 +60,6 @@ public abstract class AbstractChoralVisitor< T > implements ChoralVisitorInterfa
 	}
 
 	@Override
-	public T visit( EnumConstant n ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public T visit( Interface n ) {
 		throw new UnsupportedOperationException();
 	}

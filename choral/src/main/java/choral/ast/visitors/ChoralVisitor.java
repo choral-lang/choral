@@ -337,15 +337,6 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 	}
 
 	@Override
-	public Node visit( EnumConstant n ) {
-		return new EnumConstant(
-				n.name(),
-				visitAndCollect( n.annotations() ),
-				n.position()
-		);
-	}
-
-	@Override
 	public Node visit( Field n ) {
 		return new Field(
 				n.name(),
