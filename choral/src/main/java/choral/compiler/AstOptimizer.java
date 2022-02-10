@@ -560,8 +560,6 @@ public class AstOptimizer implements ChoralVisitor {
 		return fd.Identifier().stream().map( f -> new Field(
 				getName( f ),
 				visitReferenceType( fd.referenceType() ),
-				fd.annotation().stream().map( this::visitAnnotation ).collect(
-						Collectors.toList() ),
 				modifiers,
 				getPosition( fd ) )
 		).collect( Collectors.toList() );

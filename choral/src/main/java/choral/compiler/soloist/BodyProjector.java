@@ -53,7 +53,6 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 			return new Field(
 					n.name(),
 					TypesProjector.visit( this.world(), n.typeExpression() ).get( 0 ),
-					visitAndCollect( n.annotations() ),
 					n.modifiers(),
 					n.position()
 			);

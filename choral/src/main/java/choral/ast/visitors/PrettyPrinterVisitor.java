@@ -379,14 +379,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( Field n ) {
-		HashMap< String, Object > m = new HashMap<>();
-		m.put( "annotations", visitAndCollect( n.annotations(), NEWLINE, NEWLINE ) );
-		m.put( "modifiers", visitModifiers( n.modifiers() ) );
-		m.put( "type", visit( n.typeExpression() ) );
-		m.put( "name", n.name() );
-
-		String template = "${annotations}$modifiers$type $name";
-		return Utils.createVelocityTemplate( template ).render( m );
+		return visitModifiers( n.modifiers() ) + visit( n.typeExpression() ) + " " + n.name();
 	}
 
 	@Override
