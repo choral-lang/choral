@@ -34,7 +34,7 @@ public class EnumConstant extends Node {
 	private final List< Annotation > annotations;
 
 	public EnumConstant(
-			final Name name, final List< Annotation > annotations, final Position position
+			final Name name, List< Annotation > annotations, final Position position
 	) {
 		super( position );
 		this.name = name;

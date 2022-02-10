@@ -313,7 +313,6 @@ public class ImportProjector implements ChoralVisitorInterface< Void > {
 	@Override
 	public Void visit( FormalMethodParameter n ) {
 		visit( n.type() );
-		n.annotations().forEach( this::visit );
 		return null;
 	}
 

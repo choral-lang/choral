@@ -44,7 +44,7 @@ public class Enum extends TemplateDeclaration {
 			final Name name,
 			final FormalWorldParameter worldParameter,
 			final List< EnumConstant > cases,
-			final List< Annotation > annotations,
+			List< Annotation > annotations,
 			final EnumSet< ClassModifier > modifiers,
 			final Position position
 	) {

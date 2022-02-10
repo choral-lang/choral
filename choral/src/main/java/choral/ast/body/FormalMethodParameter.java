@@ -27,12 +27,9 @@ import choral.ast.Position;
 import choral.ast.type.TypeExpression;
 import choral.ast.visitors.ChoralVisitorInterface;
 
-import java.util.List;
-
 public class FormalMethodParameter extends Node {
 	private final Name name;
 	private final TypeExpression type;
-	private final List< Annotation > annotations;
 
 //    public FormalMethodParameter( final String name, final TypeExpression type) {
 ////        this.name = new Name( name );
@@ -40,15 +37,11 @@ public class FormalMethodParameter extends Node {
 ////    }
 
 	public FormalMethodParameter(
-			final Name name,
-			final TypeExpression type,
-			final List< Annotation > annotations,
-			final Position position
+			final Name name, final TypeExpression type, final Position position
 	) {
 		super( position );
 		this.name = name;
 		this.type = type;
-		this.annotations = annotations;
 	}
 
 	public Name name() {
@@ -57,10 +50,6 @@ public class FormalMethodParameter extends Node {
 
 	public TypeExpression type() {
 		return type;
-	}
-
-	public List< Annotation > annotations() {
-		return annotations;
 	}
 
 	@Override

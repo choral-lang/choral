@@ -361,7 +361,6 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 		return new FormalMethodParameter(
 				n.name(),
 				safeVisit( n.type() ),
-				visitAndCollect( n.annotations() ),
 				n.position()
 		);
 	}
