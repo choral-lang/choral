@@ -44,11 +44,6 @@ class VariableDeclarationMerger extends AbstractMerger< VariableDeclaration > {
 				n1.type().equals( n2.type() ),
 				errorPrefix + "different types:  " + n1.type() + " and " + n2.type(), n1, n2
 		);
-		MergeException._assert(
-				n1.annotations().equals( n2.annotations() ),
-				errorPrefix + "different annotation lists: " + n1.annotations() + " and " + n2.annotations(),
-				n1, n2
-		);
 
 		Optional< AssignExpression > i1 = n1.initializer(), i2 = n2.initializer();
 		MergeException._assert(
@@ -60,7 +55,6 @@ class VariableDeclarationMerger extends AbstractMerger< VariableDeclaration > {
 		return new VariableDeclaration(
 				n1.name(),
 				n1.type(),
-				n1.annotations(),
 				i1.isPresent() && i2.isPresent()
 						? (AssignExpression) ExpressionsMerger.mergeExpressions( i1.get(),
 						i2.get() )

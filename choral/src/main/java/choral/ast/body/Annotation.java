@@ -57,13 +57,6 @@ public class Annotation extends Node {
 	}
 
 	@Override
-	// Used in the merge, does not check world correspondence
-	public boolean equals( Object n ) {
-		return n instanceof Annotation && name.equals( ( (Annotation) n ).name ) && values.equals(
-				( (Annotation) n ).values );
-	}
-
-	@Override
 	public < R > R accept( ChoralVisitorInterface< R > v ) {
 		return v.visit( this );
 	}

@@ -1,6 +1,5 @@
 package choral;
 
-import java.lang.Exception;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,29 +81,14 @@ class AnnotationTest@A extends MyBaseClass@A< String > implements MyInterface@A<
 	@Override
 	@MethodAnnotation
 	public < T@A extends MyBaseClass@A< String > > List@A< T > interface_method( T@A param ) {
-		@LocalVariableDeclarationAndAssignmentAnnotation1
-		@LocalVariableDeclarationAndAssignmentAnnotation2
 		List@A< T > ls = new ArrayList@A<T>();
-
-		try {
-			ls.add( param );
-		} catch ( @CatchAnnotation1 @CatchAnnotation2 Exception@A e ) {
-			System@A.out.println("Didn't work"@A);
-		}
+		ls.add( param );
 		return ls;
 	}
 
 	@Override
 	String@A baseMethod( String@A param ) {
-		@LocalVariableDeclarationAnnotation1
-		@LocalVariableDeclarationAnnotation2
-		Integer@A tmp;
-		tmp = 4@A;
-
-		@MultiDeclarationAndAssignmentAnnotation1
-		@MultiDeclarationAndAssignmentAnnotation2
-		Boolean@A bool1, bool2, bool3 = true@A, bool4 = false@A, bool5, bool6 = false@A;
-
+		Integer@A tmp = 4@A;
 		return param;
 	}
 }

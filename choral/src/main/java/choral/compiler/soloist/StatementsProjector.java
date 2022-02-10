@@ -66,10 +66,8 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 						.map( p -> new Pair<>(
 								new VariableDeclaration(
 										p.left().name(),
-										TypesProjector.visit(
-												this.world(), p.left().type()
-										).get( 0 ),
-										p.left().annotations(),
+										TypesProjector.visit( this.world(), p.left().type() ).get(
+												0 ),
 										null
 								),
 								visit( p.right() ) ) ) // add exceptions to gamma here
@@ -98,7 +96,6 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 							v -> new VariableDeclaration(
 									v.name(),
 									tp,
-									v.annotations(),
 									v.initializer().orElse( null )
 							)
 					).collect( Collectors.toList() ),

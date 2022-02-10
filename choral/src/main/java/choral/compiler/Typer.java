@@ -1270,9 +1270,10 @@ public class Typer {
 				for( Pair< VariableDeclaration, Statement > c : n.catches() ) {
 					GroundDataType te = visitGroundDataTypeExpression( scope, c.left().type(),
 							false );
-					if( te.worldArguments().size() > 1 || !te.isSubtypeOf(
-							universe().specialType( SpecialTypeTag.EXCEPTION ).applyTo(
-									te.worldArguments() ) )
+					if( te.worldArguments().size() > 1 ||
+							te.isSubtypeOf(
+									universe().specialType( SpecialTypeTag.EXCEPTION ).applyTo(
+											te.worldArguments() ) )
 					) {
 						throw new AstPositionedException( c.left().type().position(),
 								new StaticVerificationException( "required an instance of type '"
