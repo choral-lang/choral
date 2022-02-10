@@ -233,11 +233,11 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 	@Override
 	public String visit( FormalTypeParameter n ) {
 		StringBuilder s = new StringBuilder();
-		s.append( visitAndCollect( n.annotations(), " ", " " ) );
 		s.append( n.name() );
 		if( !n.upperBound().isEmpty() ) {
 			s.append( ' ' ).append( EXTENDS ).append( ' ' ).append(
-					visitAndCollect( n.upperBound(), AMPERSAND )
+					n.upperBound().stream().map( this::visit ).collect(
+							Collectors.joining( AMPERSAND ) )
 			);
 		}
 		return s.toString();

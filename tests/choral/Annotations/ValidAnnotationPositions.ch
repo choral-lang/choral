@@ -13,7 +13,7 @@ public class ValidAnnotationPositions@A {
 	@MethodAnnotation1
 	@MethodAnnotation2
 	public static void main( ) {
-		AnnotationTest@A at = new < String > AnnotationTest@A( "abcde"@A );
+		AnnotationTest@A at = new AnnotationTest@A( "abcde"@A );
 		List@A< MyExtensionBaseClass< String > > ls = at.< MyExtensionBaseClass< String > >interface_method( new MyExtensionBaseClass@A< String >() );
 		System@A.out.println( ls.get( 0@A ).baseMethod( "yay"@A ) );
 	}
@@ -28,7 +28,7 @@ class MyBaseClass@A< T@A > implements InterfaceA@A, InterfaceB@A {
 	}
 }
 
-class MyExtensionBaseClass@A< @TypeParamAnnotation1 @TypeParamAnnotation2 T@A > extends MyBaseClass@A< T > {
+class MyExtensionBaseClass@A< T@A > extends MyBaseClass@A< T > {
 	MyExtensionBaseClass() { }
 
 	@Override
@@ -39,7 +39,7 @@ class MyExtensionBaseClass@A< @TypeParamAnnotation1 @TypeParamAnnotation2 T@A > 
 
 @InterfaceAnnotation1
 @InterfaceAnnotation2
-interface MyInterface@A< @TypeParamAnnotation1 @TypeParamAnnotation2 K@A extends InterfaceA@A & InterfaceB@A, V@A > {
+interface MyInterface@A< K@A extends InterfaceA@A & InterfaceB@A, V@A > {
 	@InterfaceMethodAnnotation1
 	@InterfaceMethodAnnotation1
 	< T@A extends K@A > List@A< T > interface_method( T@A param );
@@ -74,14 +74,14 @@ class AnnotationTest@A extends MyBaseClass@A< String > implements MyInterface@A<
 
 	@ConstructorAnnotation1
 	@ConstructorAnnotation2
-	<@TypeParamAnnotation1 @TypeParamAnnotation2 T@A> AnnotationTest( @ParameterAnnotation1 @ParameterAnnotation2 String@A strField ) {
+	AnnotationTest( @ParameterAnnotation1 @ParameterAnnotation2 String@A strField ) {
 		this.strField = strField;
 		this.enumField = Day@A.MONDAY;
 	}
 
 	@Override
 	@MethodAnnotation
-	public < @TypeParamAnnotation1 @TypeParamAnnotation2 T@A extends MyBaseClass@A< String > > List@A< T > interface_method( T@A param ) {
+	public < T@A extends MyBaseClass@A< String > > List@A< T > interface_method( T@A param ) {
 		@LocalVariableDeclarationAndAssignmentAnnotation1
 		@LocalVariableDeclarationAndAssignmentAnnotation2
 		List@A< T > ls = new ArrayList@A<T>();

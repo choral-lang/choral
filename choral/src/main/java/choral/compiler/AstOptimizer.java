@@ -410,15 +410,12 @@ public class AstOptimizer implements ChoralVisitor {
 	@Override
 	public FormalTypeParameter visitTypeParameter( ChoralParser.TypeParameterContext tp ) {
 		debugInfo();
-		return new FormalTypeParameter(
-				getName( tp.Identifier() ),
-				visitWorldParameters( tp.worldParameters() ),
-				ifPresent( tp.typeBound() )
-						.applyOrElse( this::visitTypeBound, Collections::emptyList ),
-				tp.annotation().stream().map( this::visitAnnotation ).collect(
-						Collectors.toList() ),
-				getPosition( tp )
-		);
+		Name name = getName( tp.Identifier() );
+		List< FormalWorldParameter > worldParameters = ifPresent( tp.worldParameters() )
+				.applyOrElse( this::visitWorldParameters, Collections::emptyList );
+		List< TypeExpression > superTypes = ifPresent( tp.typeBound() )
+				.applyOrElse( this::visitTypeBound, Collections::emptyList );
+		return new FormalTypeParameter( name, worldParameters, superTypes, getPosition( tp ) );
 	}
 
 	@Override
