@@ -536,6 +536,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 	@Override
 	public String visit( FormalTypeParameter n ) {
 		StringBuilder s = new StringBuilder();
+		s.append( visitAndCollect( n.annotations(), " ", " " ) );
 		s.append( n.name() );
 		if( !n.worldParameters().isEmpty() ) {
 			s.append( " @ ( " );
