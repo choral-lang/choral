@@ -128,7 +128,7 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 	public InterfaceMethodDefinition visit( InterfaceMethodDefinition n ) {
 		return new InterfaceMethodDefinition(
 				visit( n.signature() ),
-				visitAndCollect( n.annotations() ),
+				n.annotations(),
 				n.modifiers(),
 				n.position()
 		);

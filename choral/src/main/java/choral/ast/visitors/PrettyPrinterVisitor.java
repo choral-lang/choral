@@ -453,9 +453,9 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		m.put( "modifiers", visitModifiers( n.modifiers() ) );
 		m.put( "signature", visit( n.signature() ) );
 //        m.put("body", indent(visit(n.body())));
-		m.put( "annotations", visitAndCollect( n.annotations(), NEWLINE, NEWLINE ) );
+//        m.put("annotations", visitAndCollect(n.annotations(), NEWLINE, NEWLINE)); ${annotations}
 
-		String template = "${annotations}$modifiers$signature";
+		String template = "$modifiers$signature";
 		return Utils.createVelocityTemplate( template ).render( m );
 	}
 
