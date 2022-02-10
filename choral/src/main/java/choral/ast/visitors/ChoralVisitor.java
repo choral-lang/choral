@@ -517,6 +517,7 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 				n.name(),
 				visitAndCollect( n.worldParameters() ),
 				visitAndCollect( n.upperBound() ),
+				visitAndCollect( n.annotations() ),
 				n.position()
 		);
 	}
