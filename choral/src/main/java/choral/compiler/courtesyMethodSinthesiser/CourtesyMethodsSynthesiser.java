@@ -265,7 +265,6 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 					constructorSignature,
 					n.explicitConstructorInvocation().orElse( null ),
 					n.blockStatements(),
-					n.annotations(),
 					n.modifiers(),
 					n.position()
 			) );
@@ -273,7 +272,6 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 					visit( n.signature() ),
 					proxyConstructor,
 					new NilStatement(),
-					n.annotations(),
 					n.modifiers(),
 					n.position()
 			);
@@ -282,7 +280,6 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 				visit( n.signature() ),
 				n.explicitConstructorInvocation().orElse( null ),
 				n.blockStatements(),
-				n.annotations(),
 				n.modifiers(),
 				n.position()
 		);

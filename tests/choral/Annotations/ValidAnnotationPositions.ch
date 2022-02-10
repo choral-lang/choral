@@ -59,7 +59,6 @@ class AnnotationTest@A extends MyBaseClass@A< String > implements MyInterface@A<
 	public String@A strField;
 	public Day@A enumField;
 
-    @ConstructorAnnotation
 	AnnotationTest( String@A strField ) {
 		this.strField = strField;
 		this.enumField = Day@A.MONDAY;

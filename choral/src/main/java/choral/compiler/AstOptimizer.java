@@ -678,11 +678,8 @@ public class AstOptimizer implements ChoralVisitor {
 				visitConstructorDeclarator( cd.constructorDeclarator() ),
 				b.left(),
 				b.right(),
-				cd.annotation().stream().map( this::visitAnnotation ).collect(
-						Collectors.toList() ),
 				modifiers,
-				getPosition( cd )
-		);
+				getPosition( cd ) );
 	}
 
 	@Override
