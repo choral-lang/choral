@@ -21,5 +21,9 @@
 
 package choral.channels;
 
-public interface BiChannel@( A, B )< T@X, R@Y > extends BiDataChannel@( A, B )< T, R >, SymSelectChannel@( A, B ) {
+public interface BiChannel@( A, B )< T@A, R@A > extends
+	DiChannel@( A, B )< T >,
+	DiChannel@( B, A )< R >,
+	BiDataChannel@( A, B )< T, R >,
+	SymSelectChannel@( A, B ) {
 }
