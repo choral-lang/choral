@@ -48,7 +48,7 @@ public class testCompiler {
 		CompilationUnit cu = AstOptimizer
 				.loadParameters()
 				.optimise( ctx, file );
-		cu = AstDesugarer.desugar( cu );
+//		cu = AstDesugarer.desugar( cu );
 
 		System.out.println( new PrettyPrinterVisitor().visit( cu ) );
 

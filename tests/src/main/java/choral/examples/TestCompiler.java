@@ -34,8 +34,8 @@ public class TestCompiler {
 
 	public static void main( String[] args ) {
 
-		String targetFolder = "src/tests/choral/examples";
-		String destinationFolder = "src/tests/java/";
+		String targetFolder = "tests/src/main/choral/examples";
+		String destinationFolder = "tests/src/main/java/choral/examples";
 
 		Map< String, List< String > > targetTemplates = Stream.of(
 //				new AbstractMap.SimpleEntry<>( "HelloRoles", ALL_WORLDS )

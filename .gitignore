@@ -8,6 +8,7 @@ target/
 .classpath
 .settings/
 .project
-
+.DS_Store
 # antlr generated files
 choral/src/main/java/choral/grammar/
+
