@@ -24,37 +24,37 @@
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-actor-typed_2.13</artifactId>
 			<version>2.6.18</version>
-			<scope>runtime</scope>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>base</artifactId>
 			<version>${choral.version}</version>
-			<scope>runtime</scope>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>runtime</artifactId>
 			<version>${choral.version}</version>
-			<scope>runtime</scope>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>choral-unit</artifactId>
 			<version>${choral.version}</version>
-			<scope>runtime</scope>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>base</artifactId>
 			<version>${choral.version}</version>
-			<scope>runtime</scope>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
 			<version>3.6.1</version>
-			<scope>runtime</scope>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 </project>
