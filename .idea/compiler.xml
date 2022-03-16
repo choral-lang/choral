@@ -8,11 +8,11 @@
         <outputRelativeToContentRoot value="true" />
         <module name="runtime" />
         <module name="compare" />
+        <module name="tests" />
         <module name="choral-unit" />
         <module name="choral" />
         <module name="base" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="16" />
   </component>
 </project>

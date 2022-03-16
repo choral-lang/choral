@@ -78,18 +78,18 @@ public class TestChoral {
 		return sourceFolder + File.separator + subFolder;
 	}
 
-	static String sourceFolder = "src/tests/choral/examples";
-	static String targetFolder = "src/tests/java/";
+	static String sourceFolder = "tests/src/main/choral/examples";
+	static String targetFolder = "tests/src/main/java";
 
 	public static void main( String[] args ) {
 
 		List< CompilationRequest > compilationRequests = Stream.of(
 
-//				new CompilationRequest(
-//						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
-//						targetFolder,
-//						Collections.emptyList(),
-//						"HelloRoles", ALL_WORLDS )
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
+						targetFolder,
+						Collections.emptyList(),
+						"HelloRoles", ALL_WORLDS )
 //				,
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "BiPair") ),
@@ -121,20 +121,20 @@ public class TestChoral {
 //						List.of( "src/tests/choral/examples/BiPair", "src/tests/choral/examples/DistAuth" ),
 //						"AuthResult", ALL_WORLDS )
 //				,
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "DistAuth" ),
-								subFolder( sourceFolder, "AuthResult" ),
-								subFolder( sourceFolder, "BiPair" )
-						),
-						targetFolder,
-						List.of(
-								"src/tests/choral/examples/DistAuth",
-//								"src/tests/choral/examples/AuthResult",
-//								"src/tests/choral/examples/BiPair",
-								"src/runtime/choral",
-								"src/choralUnit/choral"
-						),
-						"DistAuth", ALL_WORLDS )
+//				new CompilationRequest(
+//						List.of( subFolder( sourceFolder, "DistAuth" ),
+//								subFolder( sourceFolder, "AuthResult" ),
+//								subFolder( sourceFolder, "BiPair" )
+//						),
+//						targetFolder,
+//						List.of(
+//								"src/tests/choral/examples/DistAuth",
+////								"src/tests/choral/examples/AuthResult",
+////								"src/tests/choral/examples/BiPair",
+//								"src/runtime/choral",
+//								"src/choralUnit/choral"
+//						),
+//						"DistAuth", ALL_WORLDS )
 //				,
 //				new CompilationRequest(
 //						List.of( subFolder( sourceFolder, "DistAuth" ) ),
@@ -296,7 +296,7 @@ public class TestChoral {
 //					),
 //					"If_MultiWorld", ALL_WORLDS )
 
-		).collect( Collectors.toList() );
+		).toList();
 
 //		generateCHH( headersRequest );
 //		check( compilationRequests );
