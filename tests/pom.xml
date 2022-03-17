@@ -8,7 +8,6 @@
 		<version>0.1.1</version>
 	</parent>
 	<version>${choral.version}</version>
-	<groupId>org.choral-lang</groupId>
 	<artifactId>tests</artifactId>
 	<name>Tests</name>
 	<url>${choral.url}</url>
@@ -24,25 +23,36 @@
 			<groupId>org.choral-lang</groupId>
 			<artifactId>base</artifactId>
 			<version>${choral.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>runtime</artifactId>
 			<version>${choral.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>choral</artifactId>
 			<version>${choral.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>choral-unit</artifactId>
 			<version>${choral.version}</version>
-			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.antlr</groupId>
+			<artifactId>antlr4-runtime</artifactId>
+			<version>4.9.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.velocity</groupId>
+			<artifactId>velocity</artifactId>
+			<version>1.7</version>
+		</dependency>
+		<dependency>
+			<groupId>com.esotericsoftware</groupId>
+			<artifactId>kryo</artifactId>
+			<version>5.3.0</version>
 		</dependency>
 	</dependencies>
 </project>

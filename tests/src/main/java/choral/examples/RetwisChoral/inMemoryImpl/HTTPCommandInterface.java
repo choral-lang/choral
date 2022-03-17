@@ -5,7 +5,6 @@ import choral.examples.RetwisChoral.emitters.Emitter;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
-import org.checkerframework.checker.units.qual.C;
 
 import java.io.IOException;
 import java.io.OutputStream;
