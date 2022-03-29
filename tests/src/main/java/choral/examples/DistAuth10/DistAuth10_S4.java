@@ -1,8 +1,8 @@
 package choral.examples.DistAuth10;
 
-import choral.runtime.TLSChannel.TLSChannel_A;
 import choral.lang.Unit;
 import choral.DistAuth.EnumBoolean;
+import choral.runtime.TLSChannel.TLSChannel_A;
 
 public class DistAuth10_S4 {
 	private TLSChannel_A < Object > ch_s4;

@@ -1,7 +1,7 @@
 package choral.examples.DistAuth10;
 
-import choral.lang.Unit;
 import choral.runtime.TLSChannel.TLSChannel_A;
+import choral.lang.Unit;
 import choral.DistAuth.EnumBoolean;
 
 public class DistAuth10_S1 {

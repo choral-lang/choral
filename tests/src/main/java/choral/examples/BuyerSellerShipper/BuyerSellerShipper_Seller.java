@@ -1,9 +1,9 @@
 package choral.examples.BuyerSellerShipper;
 
 import choral.channels.SymChannel_A;
+import choral.lang.Unit;
 import choral.examples.BuyerSellerShipperUtils.Catalogue;
 import choral.examples.BuyerSellerShipperUtils.Price;
-import choral.lang.Unit;
 
 class BuyerSellerShipper_Seller {
 	SymChannel_A < Object > c;
