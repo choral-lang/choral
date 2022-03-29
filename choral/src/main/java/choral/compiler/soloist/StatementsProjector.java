@@ -30,12 +30,11 @@ import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractSoloistProjector;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.merge.StatementsMerger;
+import choral.compiler.unitNormaliser.UnitRepresentation;
 import choral.types.GroundDataType;
 import choral.utils.Pair;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class StatementsProjector extends AbstractSoloistProjector< Statement > {
@@ -99,13 +98,20 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 									v.name(),
 									tp,
 									v.annotations(),
-									v.initializer().orElse( null )
+									v.initializer().isEmpty() ? null : (AssignExpression) ExpressionProjector.visit(
+											this.world(), v.initializer().get() )
 							)
 					).collect( Collectors.toList() ),
 					visit( n.continuation() )
 			).copyPosition( n );
 		} else {
-			return visit( n.continuation() );
+			return new ExpressionStatement( UnitRepresentation.unitMC(
+					n.variables().stream()
+							.filter( v -> v.initializer().isPresent() )
+							.map( v -> ExpressionProjector.visit( this.world(),
+									v.initializer().get() ) )
+							.collect( Collectors.toList() ), this.world()
+			), visit( n.continuation() ), n.position() );
 		}
 	}
 

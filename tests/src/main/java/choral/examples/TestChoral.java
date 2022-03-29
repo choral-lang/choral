@@ -331,17 +331,17 @@ public class TestChoral {
 
 		).toList();
 		List<String> compilationSymbols = Stream.of(
-//				HelloRoles
-//				,ConsumeItems
-				BuyerSellerShipper
-//				,DistAuth
-//				VitalsStreaming
-//				,DiffieHellman
-//				,Mergesort
-//				,Quicksort
-//				,Karatsuba
-//				,DistAuth5
-//				,DistAuth10
+				HelloRoles
+				,ConsumeItems
+				,BuyerSellerShipper
+				,DistAuth
+				,VitalsStreaming
+				,DiffieHellman
+				,Mergesort
+				,Quicksort
+				,Karatsuba
+				,DistAuth5
+				,DistAuth10
 		).toList();
 		List< CompilationRequest > compilationRequests = compilationSymbols.stream()
 				.map( s -> allCompilationRequests.stream().filter( c -> c.symbol.equalsIgnoreCase( s ) ).findFirst() )
