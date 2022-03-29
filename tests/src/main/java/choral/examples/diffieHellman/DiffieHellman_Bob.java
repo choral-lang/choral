@@ -1,8 +1,8 @@
 package choral.examples.diffieHellman;
 
-import choral.examples.BiPair.BiPair_B;
 import java.math.BigInteger;
 import choral.lang.Unit;
+import choral.examples.BiPair.BiPair_B;
 import choral.channels.SymDataChannel_B;
 
 public class DiffieHellman_Bob {

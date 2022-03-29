@@ -1,9 +1,9 @@
 package choral.examples.VitalsStreaming;
 
-import choral.examples.VitalsStreamingUtils.VitalsMsg;
-import choral.examples.VitalsStreamingUtils.Sensor;
-import choral.channels.SymChannel_A;
 import choral.lang.Unit;
+import choral.examples.VitalsStreamingUtils.VitalsMsg;
+import choral.channels.SymChannel_A;
+import choral.examples.VitalsStreamingUtils.Sensor;
 
 public class VitalsStreaming_Device {
 	private SymChannel_A < Object > ch;

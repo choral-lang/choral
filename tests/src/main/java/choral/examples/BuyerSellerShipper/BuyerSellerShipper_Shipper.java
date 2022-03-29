@@ -1,8 +1,8 @@
 package choral.examples.BuyerSellerShipper;
 
-import choral.runtime.UI.Panel;
 import choral.channels.SymChannel_A;
 import choral.lang.Unit;
+import choral.runtime.UI.Panel;
 
 class BuyerSellerShipper_Shipper {
 	SymChannel_A < Object > cb;
@@ -26,7 +26,7 @@ class BuyerSellerShipper_Shipper {
 					{
 						switch( cb.< EnumBoolean >select( Unit.id ) ){
 							case True -> {
-								String operation = cb.< String >com( Unit.id( Unit.id, Unit.id ) );
+								String operation = cb.< String >com( Unit.id );
 								Panel.show( "Shipper", "Buyer shipped " + operation );
 							}
 							case False -> {

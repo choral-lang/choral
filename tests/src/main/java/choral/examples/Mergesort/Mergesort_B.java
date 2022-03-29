@@ -1,9 +1,9 @@
 package choral.examples.Mergesort;
 
+import choral.lang.Unit;
 import java.util.List;
 import choral.channels.SymChannel_A;
 import choral.channels.SymChannel_B;
-import choral.lang.Unit;
 
 public class Mergesort_B {
 	SymChannel_B < Object > ch_AB;
@@ -69,7 +69,7 @@ public class Mergesort_B {
 				case L -> {
 					Mergesort_A mb = new Mergesort_A( ch_BC, Unit.id, ch_AB );
 					Mergesort_C mc = new Mergesort_C( Unit.id, ch_AB, ch_BC );
-					List < Integer > lhs = mb.sort( ch_AB.< List < Integer > >com( Unit.id.id( Unit.id, Unit.id.id() ) ) );
+					List < Integer > lhs = mb.sort( ch_AB.< List < Integer > >com( Unit.id ) );
 					mc.sort( Unit.id );
 					return merge( lhs, Unit.id );
 				}

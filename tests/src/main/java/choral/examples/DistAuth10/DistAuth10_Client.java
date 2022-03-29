@@ -1,15 +1,15 @@
 package choral.examples.DistAuth10;
 
-import java.nio.charset.StandardCharsets;
-import choral.examples.DistAuthUtils.Credentials;
-import choral.examples.DistAuthUtils.AuthToken;
 import choral.examples.AuthResult.AuthResult_A;
-import java.security.MessageDigest;
-import choral.runtime.TLSChannel.TLSChannel_A;
+import choral.examples.DistAuthUtils.AuthToken;
 import choral.examples.DistAuthUtils.Base64_Encoder;
+import choral.examples.DistAuthUtils.Credentials;
 import choral.lang.Unit;
 import choral.DistAuth.EnumBoolean;
 import java.security.NoSuchAlgorithmException;
+import choral.runtime.TLSChannel.TLSChannel_A;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 public class DistAuth10_Client {
 	private TLSChannel_A < Object > ch_Client_IP;
@@ -35,7 +35,7 @@ public class DistAuth10_Client {
 	}
 	
 	public AuthResult_A authenticate( Credentials credentials ) {
-		String salt = ch_Client_IP.< String >com( Unit.id.id( ch_Client_IP.< String >com( credentials.username ) ) );
+		String salt = ch_Client_IP.< String >com( ch_Client_IP.< String >com( credentials.username ) );
 		ch_Client_IP.< String >com( calcHash( salt, credentials.password ) );
 		{
 			switch( ch_Client_IP.< EnumBoolean >select( Unit.id ) ){

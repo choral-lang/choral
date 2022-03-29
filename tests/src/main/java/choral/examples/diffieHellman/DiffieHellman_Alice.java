@@ -1,9 +1,9 @@
 package choral.examples.diffieHellman;
 
-import choral.examples.BiPair.BiPair_A;
-import choral.channels.SymDataChannel_A;
 import java.math.BigInteger;
+import choral.channels.SymDataChannel_A;
 import choral.lang.Unit;
+import choral.examples.BiPair.BiPair_A;
 
 public class DiffieHellman_Alice {
 	public static BiPair_A < BigInteger, BigInteger > exchangeKeys( SymDataChannel_A < BigInteger > channel, BigInteger aPrivKey, Unit bPrivKey, BigInteger aSharedGenerator, Unit bSharedGenerator, BigInteger aSharedPrime, Unit bSharedPrime ) {

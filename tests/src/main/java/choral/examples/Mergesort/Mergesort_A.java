@@ -1,10 +1,10 @@
 package choral.examples.Mergesort;
 
-import java.util.List;
-import choral.channels.SymChannel_A;
 import java.util.ArrayList;
-import choral.channels.SymChannel_B;
 import choral.lang.Unit;
+import choral.channels.SymChannel_A;
+import java.util.List;
+import choral.channels.SymChannel_B;
 
 public class Mergesort_A {
 	SymChannel_A < Object > ch_AB;
