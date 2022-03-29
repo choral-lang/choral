@@ -1,10 +1,10 @@
 package choral.examples.VitalsStreaming;
 
 import java.util.function.Consumer;
+import choral.lang.Unit;
 import choral.examples.VitalsStreamingUtils.VitalsMsg;
 import choral.examples.VitalsStreamingUtils.Vitals;
 import choral.channels.SymChannel_B;
-import choral.lang.Unit;
 
 public class VitalsStreaming_Gatherer {
 	private SymChannel_B < Object > ch;
@@ -24,7 +24,7 @@ public class VitalsStreaming_Gatherer {
 					
 				}
 				case ON -> {
-					VitalsMsg msg = ch.< VitalsMsg >com( Unit.id.id() );
+					VitalsMsg msg = ch.< VitalsMsg >com( Unit.id );
 					Boolean checkSignature = VitalsStreamingHelper.checkSignature( msg.signature() );
 					if( checkSignature ){
 						consumer.accept( VitalsStreamingHelper.pseudonymise( msg.content() ) );

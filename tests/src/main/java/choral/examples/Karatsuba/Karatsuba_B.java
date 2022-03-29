@@ -1,8 +1,8 @@
 package choral.examples.Karatsuba;
 
-import choral.channels.SymChannel_A;
 import choral.lang.Unit;
 import choral.channels.SymChannel_B;
+import choral.channels.SymChannel_A;
 
 public class Karatsuba_B {
 	public static Unit multiply( Unit n1, Unit n2, SymChannel_B < Object > ch_AB, SymChannel_A < Object > ch_BC, Unit ch_CA ) {

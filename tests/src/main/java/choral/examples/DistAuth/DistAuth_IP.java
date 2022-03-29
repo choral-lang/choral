@@ -1,10 +1,10 @@
 package choral.examples.DistAuth;
 
-import choral.runtime.TLSChannel.TLSChannel_B;
-import choral.DistAuth.EnumBoolean;
-import choral.examples.DistAuthUtils.ClientRegistry;
 import choral.examples.DistAuthUtils.AuthToken;
 import choral.lang.Unit;
+import choral.examples.DistAuthUtils.ClientRegistry;
+import choral.DistAuth.EnumBoolean;
+import choral.runtime.TLSChannel.TLSChannel_B;
 
 public class DistAuth_IP {
 	private TLSChannel_B < Object > ch_Client_IP;

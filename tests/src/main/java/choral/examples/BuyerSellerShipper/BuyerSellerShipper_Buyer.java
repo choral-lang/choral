@@ -1,10 +1,10 @@
 package choral.examples.BuyerSellerShipper;
 
-import choral.channels.SymChannel_B;
+import choral.lang.Unit;
 import choral.examples.BuyerSellerShipperUtils.Customer;
 import choral.runtime.UI.Panel;
 import choral.examples.BuyerSellerShipperUtils.Price;
-import choral.lang.Unit;
+import choral.channels.SymChannel_B;
 
 class BuyerSellerShipper_Buyer {
 	SymChannel_B < Object > c;
@@ -26,7 +26,7 @@ class BuyerSellerShipper_Buyer {
 			switch( c.< EnumBoolean >select( Unit.id ) ){
 				case True -> {
 					cb.< EnumBoolean >select( EnumBoolean.True );
-					Price price = c.< Price >com( Unit.id.id( Unit.id ) );
+					Price price = c.< Price >com( Unit.id );
 					String choice = Panel.prompt( "Buyer", book + " costs " + price.amount + price.currency + ". Enter 'Y' to order" );
 					if( choice.equals( "Y" ) ){
 						c.< EnumBoolean >select( EnumBoolean.True );

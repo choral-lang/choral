@@ -1,9 +1,9 @@
 package choral.examples.DistAuth5;
 
-import choral.examples.DistAuthUtils.ClientRegistry;
-import choral.runtime.TLSChannel.TLSChannel_B;
-import choral.lang.Unit;
 import choral.examples.DistAuthUtils.AuthToken;
+import choral.lang.Unit;
+import choral.runtime.TLSChannel.TLSChannel_B;
+import choral.examples.DistAuthUtils.ClientRegistry;
 import choral.DistAuth.EnumBoolean;
 
 public class DistAuth5_IP {

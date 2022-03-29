@@ -1,10 +1,10 @@
 package choral.examples.Quicksort;
 
 import choral.channels.SymChannel_A;
-import java.util.ArrayList;
-import choral.channels.SymChannel_B;
 import choral.lang.Unit;
+import choral.channels.SymChannel_B;
 import java.util.List;
+import java.util.ArrayList;
 
 public class Quicksort_B {
 	SymChannel_B < Object > ch_AB;

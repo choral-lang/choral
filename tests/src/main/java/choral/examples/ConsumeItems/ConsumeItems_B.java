@@ -1,7 +1,7 @@
 package choral.examples.ConsumeItems;
 
-import java.util.function.Consumer;
 import choral.lang.Unit;
+import java.util.function.Consumer;
 import choral.channels.DiChannel_B;
 
 public class ConsumeItems_B {
