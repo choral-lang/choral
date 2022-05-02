@@ -1,6 +1,6 @@
 package java.security;
 
-public class NoSuchAlgorithmException@A {
+public class NoSuchAlgorithmException@A extends Exception@A {
 
 	public void printStackTrace(){}
 }

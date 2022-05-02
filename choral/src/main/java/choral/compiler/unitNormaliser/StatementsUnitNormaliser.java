@@ -22,6 +22,7 @@
 package choral.compiler.unitNormaliser;
 
 import choral.ast.body.VariableDeclaration;
+import choral.ast.expression.AssignExpression;
 import choral.ast.expression.Expression;
 import choral.ast.statement.*;
 import choral.ast.visitors.AbstractChoralVisitor;
@@ -76,7 +77,9 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 								v.name(),
 								v.type(),
 								v.annotations(),
-								v.initializer().orElse( null )
+								v.initializer().isPresent() ?
+										(AssignExpression) ExpressionUnitNormaliser.visitExpression(
+												v.initializer().get() ) : null
 						)
 				).collect( Collectors.toList() ),
 				visit( n.continuation() )
