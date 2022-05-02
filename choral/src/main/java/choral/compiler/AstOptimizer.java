@@ -539,8 +539,11 @@ public class AstOptimizer implements ChoralVisitor {
 		debugInfo();
 		if( cmd.fieldDeclaration() != null ) {
 			return visitFieldDeclaration( cmd.fieldDeclaration() );
-		} else {
+		} else if (cmd.methodDeclaration() != null ) {
 			return Collections.singletonList( visitMethodDeclaration( cmd.methodDeclaration() ) );
+		} else {
+			throw new SyntaxException( getPosition( cmd ),
+					"Illegal member declaration." );
 		}
 	}
 

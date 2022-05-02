@@ -1,6 +1,55 @@
 /* Choral Header Version 0.1 */
 package java.lang;
 
-public final class Short@A extends Number@A {
+public final class Short@A extends Number@A implements Comparable@A<Short>  {
 
+    public static final short@A MIN_VALUE;
+
+    public static final short@A MAX_VALUE;
+
+    public static final Class@A<Short> TYPE;
+
+    public static String@A toString(short@A s) { }
+
+    public static short@A parseShort(String@A s, int@A radix) { }
+
+    public static short@A parseShort(String@A s) { }
+
+    public static Short@A valueOf(String@A s, int@A radix) { }
+
+    public static Short@A valueOf(String@A s) { }
+
+    public static Short@A valueOf(short@A s) { }
+
+    public static Short@A decode(String@A nm) { }
+
+    public Short(short@A value) { }
+
+    public Short(String@A s) { }
+
+    public byte@A byteValue() { }
+
+    public short@A shortValue() { }
+
+    public int@A intValue() { }
+
+    public long@A longValue() { }
+
+    public float@A floatValue() { }
+
+    public double@A doubleValue() { }
+
+    public String@A toString() { }
+
+    public int@A hashCode() { }
+
+    public boolean@A equals(Object@A obj) { }
+
+    public int@A compareTo(Short@A anotherShort) { }
+
+    public static final int@A SIZE;
+
+    public static short@A reverseBytes(short@A i) { }
+
+    private static final long@A serialVersionUID;
 }

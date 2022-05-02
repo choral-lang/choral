@@ -1,6 +1,8 @@
 /* Choral Header Version 0.1 */
 package java.lang;
 
-public final class Character@A {
+import java.io.Serializable;
 
+public final class Character@A implements Serializable@A, Comparable@A<Character> {
+	public int@A compareTo(Character@A anotherCharacter) { }
 }

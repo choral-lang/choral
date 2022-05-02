@@ -1,6 +1,52 @@
 /* Choral Header Version 0.1 */
 package java.lang;
 
-public final class Byte@A extends Number@A {
+public final class Byte@A extends Number@A implements Comparable@A<Byte> {
+
+    public static final byte@A MIN_VALUE;
+
+    public static final byte@A MAX_VALUE;
+
+    public static final Class@A<Byte> TYPE;
+
+    public static Byte@A valueOf(byte@A b) { }
+
+    public static byte@A parseByte(String@A s, int@A radix) { }
+
+    public static byte@A parseByte(String@A s) { }
+
+    public static Byte@A valueOf(String@A s, int@A radix) { }
+
+    public static Byte@A valueOf(String@A s) { }
+
+    public static Byte@A decode(String@A nm) { }
+
+    public Byte(byte@A value) { }
+
+    public Byte(String@A s) { }
+
+    public byte@A byteValue() { }
+
+    public short@A shortValue() { }
+
+    public int@A intValue() { }
+
+    public long@A longValue() { }
+
+    public float@A floatValue() { }
+
+    public double@A doubleValue() { }
+
+    public String@A toString() { }
+
+    public int@A hashCode() { }
+
+    public boolean@A equals(Object@A obj) { }
+
+    public int@A compareTo(Byte@A anotherByte) { }
+
+    public static final int@A SIZE;
+
+    private static final long@A serialVersionUID;
 
 }

@@ -1,7 +1,7 @@
 /* Choral Header Version 0.1 */
 package java.lang;
 
-public final class Integer@A extends Number@A {
+public final class Integer@A extends Number@A implements Comparable@A<Integer> {
 
     public static final int@A MIN_VALUE;
 
