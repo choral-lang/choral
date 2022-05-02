@@ -1,10 +1,78 @@
 /* Choral Header Version 0.1 */
 package java.lang;
 
-public final class Double@A extends Number@A {
+public final class Double@A extends Number@A implements Comparable@A<Double> {
 
-	public static Double@A valueOf( Double@A x ){}
+    public static final double@A POSITIVE_INFINITY;
 
-	public Integer@A intValue(){}
+    public static final double@A NEGATIVE_INFINITY;
+
+    public static final double@A NaN;
+
+    public static final double@A MAX_VALUE;
+
+    public static final double@A MIN_NORMAL;
+
+    public static final double@A MIN_VALUE;
+
+    public static final int@A MAX_EXPONENT;
+
+    public static final int@A MIN_EXPONENT;
+
+    public static final int@A SIZE;
+
+    public static final Class@A<Double> TYPE;
+    
+    public static String@A toString(double@A d) { }
+
+    public static String@A toHexString(double@A d) { }
+
+    public static Double@A valueOf(String@A s) { }
+
+    public static Double@A valueOf(double@A d) { }
+
+    public static double@A parseDouble(String@A s) { }
+
+    static public boolean@A isNaN(double@A v) { }
+
+    static public boolean@A isInfinite(double@A v) { }
+
+    public Double(double@A value) { }
+
+    public Double(String@A s) { }
+
+    public boolean@A isNaN() { }
+
+    public boolean@A isInfinite() { }
+
+    public String@A toString() { }
+
+    public byte@A byteValue() { }
+
+    public short@A shortValue() { }
+
+    public int@A intValue() { }
+
+    public long@A longValue() { }
+
+    public float@A floatValue() { }
+
+    public double@A doubleValue() { }
+
+    public int@A hashCode() { }
+
+    public boolean@A equals(Object@A obj) { }
+
+    public static long@A doubleToLongBits(double@A value) { }
+
+    public static long@A doubleToRawLongBits(double@A value) { }
+
+    public static double@A longBitsToDouble(long@A bits) { }
+
+    public int@A compareTo(Double@A anotherDouble) { }
+
+    public static int@A compare(double@A d1, double@A d2) { }
+
+    private static final long@A serialVersionUID;
 
 }

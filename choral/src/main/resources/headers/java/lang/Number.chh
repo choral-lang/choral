@@ -1,6 +1,21 @@
 /* Choral Header Version 0.1 */
 package java.lang;
 
-public abstract class Number@A {
+import java.io.Serializable;
 
+public abstract class Number@A implements Serializable@A {
+
+    public abstract int@A intValue();
+
+    public abstract long@A longValue();
+
+    public abstract float@A floatValue();
+
+    public abstract double@A doubleValue();
+
+    public byte@A byteValue() { }
+
+    public short@A shortValue() { }
+
+    private static final long@A serialVersionUID;
 }
