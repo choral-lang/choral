@@ -253,7 +253,16 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 			Throwable e, VerbosityOptions.VerbosityLevel verbosity
 	) {
 		if( e instanceof AstPositionedException ) {
-			printNiceErrorMessage( (AstPositionedException) e, verbosity );
+			AstPositionedException pe = (AstPositionedException) e;
+			if (pe.position() == null) {
+				// TODO: position should be defined!
+				System.out.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
+				if( verbosity == VerbosityOptions.VerbosityLevel.DEBUG ) {
+					e.printStackTrace();
+				}
+			} else {
+				printNiceErrorMessage( (AstPositionedException) e, verbosity );
+			}
 		} else if( e instanceof ChoralCompoundException ) {
 			for( ChoralException c : ( (ChoralCompoundException) e ).getCauses() ) {
 				printNiceErrorMessage( c, verbosity );
@@ -545,7 +554,7 @@ class ChoralVersionProvider implements IVersionProvider {
 		InputStream is = getClass().getClassLoader().getResourceAsStream( "version.properties" );
 		properties.load( is );
 		return new String[] {
-				"${COMMAND-FULL-NAME} v" + properties.getProperty( "choral.version" )
+				"${COMMAND-FULL-NAME} " + properties.getProperty( "choral.version" )
 		};
 	}
 }

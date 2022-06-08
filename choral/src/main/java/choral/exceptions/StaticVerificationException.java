@@ -33,7 +33,7 @@ public class StaticVerificationException extends ChoralException {
 
 	public static ChoralException of( String message, Optional< ? extends Node > p ) {
 		StaticVerificationException e = new StaticVerificationException( message );
-		if( p.isPresent() ) {
+		if( p.isPresent() && p.get().hasPosition() ) {
 			return new AstPositionedException( p.get(), e );
 		} else {
 			return e;
@@ -42,7 +42,11 @@ public class StaticVerificationException extends ChoralException {
 
 	public static ChoralException of( String message, Position p ) {
 		StaticVerificationException e = new StaticVerificationException( message );
-		return new AstPositionedException( p, e );
+		if( p == null) {
+			return new AstPositionedException( p, e );
+		} else {
+			return e;
+		}
 	}
 
 }
