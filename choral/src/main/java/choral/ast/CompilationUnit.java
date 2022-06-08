@@ -28,10 +28,11 @@ import choral.ast.visitors.ChoralVisitorInterface;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 
 public class CompilationUnit extends Node {
 
-	private final String packageDeclaration;
+	private final Optional<String> packageDeclaration;
 	private final List< ImportDeclaration > imports;
 	private final List< Interface > interfaces;
 	private final List< Class > classes;
@@ -39,7 +40,7 @@ public class CompilationUnit extends Node {
 	private final String primaryType;
 
 	public CompilationUnit(
-			final String packageDeclaration, final List< ImportDeclaration > imports,
+			final Optional<String> packageDeclaration, final List< ImportDeclaration > imports,
 			final List< Interface > interfaces, final List< Class > classes,
 			final List< Enum > enums, final String sourceFile
 	) {
@@ -74,7 +75,7 @@ public class CompilationUnit extends Node {
 		return enums;
 	}
 
-	public String packageDeclaration() {
+	public Optional<String> packageDeclaration() {
 		return packageDeclaration;
 	}
 

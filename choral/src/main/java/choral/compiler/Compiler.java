@@ -469,7 +469,7 @@ public class Compiler {
 	}
 
 	private CompilationUnit projectAndEncloseInCompilationUnit(
-			String pkgDec, List< ImportDeclaration > imports, WorldArgument w, Node node
+			Optional< String > pkgDec, List< ImportDeclaration > imports, WorldArgument w, Node node
 	) {
 		ArrayList< ImportDeclaration > _imports = new ArrayList<>( imports );
 		_imports.add( UnitRepresentation.UNIT_IMPORT_DECLARATION );

@@ -26,15 +26,16 @@ import choral.ast.Node;
 import choral.ast.type.WorldArgument;
 
 import java.util.List;
+import java.util.Optional;
 
 public class ProjectableTemplate {
 	private final WorldArgument worldArgument;
-	private final String packageDeclaration;
+	private final Optional< String > packageDeclaration;
 	private final List< ImportDeclaration > imports;
 	private final Node node;
 
 	public ProjectableTemplate(
-			String packageDeclaration, List< ImportDeclaration > imports, Node node,
+			Optional< String > packageDeclaration, List< ImportDeclaration > imports, Node node,
 			WorldArgument worldArgument
 	) {
 		this.worldArgument = worldArgument;
@@ -47,7 +48,7 @@ public class ProjectableTemplate {
 		return worldArgument;
 	}
 
-	public String packageDeclaration() {
+	public Optional< String > packageDeclaration() {
 		return packageDeclaration;
 	}
 

@@ -29,6 +29,7 @@ public abstract class Node {
 	private Position position;
 
 	// ToDo: remove this, make position mandatory
+	@Deprecated
 	protected Node() {
 		this( null );
 	}

@@ -38,6 +38,7 @@ import choral.types.Universe.PrimitiveTypeTag;
 import choral.types.Universe.SpecialTypeTag;
 import choral.utils.Formatting;
 import choral.utils.Pair;
+import com.google.common.base.Strings;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -90,10 +91,12 @@ public class Typer {
 		}
 
 		protected void visit( choral.ast.CompilationUnit n ) {
-			String[] path = n.packageDeclaration().split( "\\." );
 			Package pkg = universe.rootPackage();
-			for( String s : path ) {
-				pkg = pkg.declarePackage( s );
+			if( n.packageDeclaration().isPresent() ) {
+				String[] path = n.packageDeclaration().get().split( "\\." );
+				for( String s : path ) {
+					pkg = pkg.declarePackage( s );
+				}
 			}
 			CompilationUnitScope scope = new CompilationUnitScope( pkg, n.imports() );
 			for( choral.ast.body.Class x : n.classes() ) {

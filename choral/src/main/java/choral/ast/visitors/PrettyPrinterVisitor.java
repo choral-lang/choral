@@ -60,7 +60,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( CompilationUnit n ) {
-		return ( n.packageDeclaration().length() > 0 ? PACKAGE + " " + n.packageDeclaration() + SEMICOLON + _2NEWLINE : "" )
+		return ( n.packageDeclaration().isPresent() ? PACKAGE + " " + n.packageDeclaration().get() + SEMICOLON + _2NEWLINE : "" )
 				+ visitAndCollect( n.imports(), SEMICOLON + NEWLINE, SEMICOLON + _2NEWLINE )
 				+ visitAndCollect( n.interfaces(), NEWLINE, NEWLINE )
 				+ visitAndCollect( n.enums(), NEWLINE, NEWLINE )

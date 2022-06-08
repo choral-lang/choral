@@ -56,7 +56,7 @@ public class AstOptimizer implements ChoralVisitor {
 	private final List< Class > classes;
 	private final List< Enum > enums;
 	private String file = "";
-	private String _package = "";
+	private Optional<String> _package = Optional.empty();
 	private final Set< String > debugExcludeMethods = new HashSet<>();
 	private boolean debug;
 	private String lastMethod = "";
@@ -129,7 +129,7 @@ public class AstOptimizer implements ChoralVisitor {
 	@Override
 	public Void visitPackageDeclaration( ChoralParser.PackageDeclarationContext pdc ) {
 		debugInfo();
-		_package = visitQualifiedName( pdc.qualifiedName() );
+		_package = Optional.of( visitQualifiedName( pdc.qualifiedName() ) );
 		return null;
 	}
 

@@ -22,6 +22,7 @@
 package choral.compiler;
 
 import java.io.File;
+import java.util.Optional;
 
 public abstract class SourceObject {
 	protected final String source;
@@ -32,6 +33,14 @@ public abstract class SourceObject {
 		this.source = sourceCode;
 		this.fullname = fullname;
 		this.sourcefile = sourceFile;
+	}
+
+	static String combineName( Optional<String> qualifier, String name ) {
+		if( qualifier.isEmpty() ) {
+			return name;
+		} else {
+			return qualifier + "." + name;
+		}
 	}
 
 	static String combineName( String qualifier, String name ) {

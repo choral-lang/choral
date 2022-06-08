@@ -65,7 +65,7 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 		Path sourcePath = Paths.get( n.position().sourceFile() );
 		String imports = jc.visitAndCollect( n.imports(), SEMICOLON + NEWLINE,
 				SEMICOLON + _2NEWLINE );
-		String packageDeclaration = n.packageDeclaration().length() > 0 ? PACKAGE + " " + n.packageDeclaration() + SEMICOLON + _2NEWLINE : "";
+		String packageDeclaration = n.packageDeclaration().isPresent() ? PACKAGE + " " + n.packageDeclaration().get() + SEMICOLON + _2NEWLINE : "";
 		n.interfaces().forEach( x -> c.add(
 				new JavaSourceObject( packageDeclaration + imports + jc.visit( x ),
 						JavaSourceObject.combineName( n.packageDeclaration(),

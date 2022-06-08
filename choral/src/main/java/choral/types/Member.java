@@ -133,15 +133,15 @@ public abstract class Member implements HasSource {
 		return this.declarationContext == context
 				|| this.isPublic()
 				|| this.isProtected()
-				|| ( this.isPackagePrivate() && this.declarationContext().declarationPackage() ==
-				context.declarationPackage() );
+				|| ( this.isPackagePrivate() && this.declarationContext().declarationPackage() == context.declarationPackage() )
+				|| ( this.isPrivate() && this.declarationContext().typeConstructor() == context.typeConstructor() );
 	}
 
 	public final boolean isAccessibleFrom( GroundTypeParameter context ) {
 		return this.isPublic()
 				|| this.isProtected()
-				|| ( this.isPackagePrivate() && this.declarationContext().declarationPackage() ==
-				context.typeConstructor().declarationContext().declarationPackage() );
+				|| ( this.isPackagePrivate()
+				   && this.declarationContext().declarationPackage() == context.typeConstructor().declarationContext().declarationPackage() );
 	}
 
 	private final GroundClassOrInterface declarationContext;
