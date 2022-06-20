@@ -69,5 +69,11 @@
             <artifactId>classgraph</artifactId>
             <version>4.8.140</version>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>org.choral-lang</groupId>
+            <artifactId>base</artifactId>
+            <version>0.1.1</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 </project>

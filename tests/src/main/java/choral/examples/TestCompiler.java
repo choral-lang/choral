@@ -21,12 +21,12 @@
 
 package choral.examples;
 
-import org.apache.commons.lang.ArrayUtils;
-import choral.compiler.Compiler;
-
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import choral.compiler.Compiler;
+import org.apache.commons.lang.ArrayUtils;
+
 
 public class TestCompiler {
 

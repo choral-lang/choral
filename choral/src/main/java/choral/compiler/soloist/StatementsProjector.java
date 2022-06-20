@@ -40,8 +40,8 @@ import java.util.stream.Collectors;
 public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 
 	private final Name SELECT_CHANNEL_METHOD = new Name( "select" );
-	public static final SwitchArgument.SwitchArgumentLabel SELECT_DEFAULT = new SwitchArgument.SwitchArgumentLabel(
-			new Name( "$SELECT_DEFAULT" ) );
+//	public static final SwitchArgument.SwitchArgumentLabel SELECT_DEFAULT = new SwitchArgument.SwitchArgumentLabel(
+//			new Name( "$SELECT_DEFAULT" ) );
 
 	private StatementsProjector( WorldArgument w ) {
 		super( w );
@@ -167,6 +167,7 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 //				cases.put( SELECT_DEFAULT,
 //						new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
 //			}
+			cases.put( SwitchArgument.SwitchArgumentMergeDefault.getInstance(), new NilStatement() );
 			cases.put( new SwitchArgument.SwitchArgumentLabel(
 					getSelectionMethodEnum( n.expression() ) ), visit( n.continuation() ) );
 			return new SwitchStatement(
@@ -193,20 +194,21 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 			).copyPosition( n );
 		} else {
 			List< Statement > cases = List.of( visit( n.ifBranch() ), visit( n.elseBranch() ) );
-			if( n.returns() && !n.hasContinuation() ) {
-				Statement firstSwitchStatement = cases.get( 0 );
-				boolean continueSearch = true;
-				while( continueSearch ) {
-					if( firstSwitchStatement instanceof SwitchStatement ) {
-						continueSearch = false;
-						// we add the default case
-						( (SwitchStatement) firstSwitchStatement ).cases().put( SELECT_DEFAULT,
-								new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
-					} else {
-						firstSwitchStatement = firstSwitchStatement.continuation();
-					}
-				}
-			}
+//			if( n.returns() && !n.hasContinuation() ) {
+//				Statement firstSwitchStatement = cases.get( 0 );
+//				boolean continueSearch = true;
+//				while( continueSearch ) {
+//					if( firstSwitchStatement instanceof SwitchStatement ) {
+//						continueSearch = false;
+//						// we add the default case
+//						( ( SwitchStatement ) firstSwitchStatement ).cases().put(
+//								SwitchArgument.SwitchArgumentMergeDefault.getInstance(), new NilStatement() );
+//						// reminder: the JavaCompiler adds a throw in place of the SwitchArgumentMergeDefault instance
+//					} else {
+//						firstSwitchStatement = firstSwitchStatement.continuation();
+//					}
+//				}
+//			}
 			return new BlockStatement(
 					new ExpressionStatement(
 							ExpressionProjector.visit( this.world(), n.condition() ),
@@ -232,20 +234,21 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 			List< Statement > cases = n.cases().values().stream()
 					.map( this::visit ).collect( Collectors.toList() );
 			// if we have cases, the body "returns", and it does not have a continuation (which would then be reachable)
-			if( cases.size() > 0 && n.returns() && !n.hasContinuation() ) {
-				Statement firstSwitchStatement = cases.get( 0 );
-				boolean continueSearch = true;
-				while( continueSearch ) {
-					if( firstSwitchStatement instanceof SwitchStatement ) {
-						continueSearch = false;
-						// we add the default case
-						( (SwitchStatement) firstSwitchStatement ).cases().put( SELECT_DEFAULT,
-								new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
-					} else {
-						firstSwitchStatement = firstSwitchStatement.continuation();
-					}
-				}
-			}
+//			if( cases.size() > 0 && n.returns() && !n.hasContinuation() ) {
+//				Statement firstSwitchStatement = cases.get( 0 );
+//				boolean continueSearch = true;
+//				while( continueSearch ) {
+//					if( firstSwitchStatement instanceof SwitchStatement ) {
+//						continueSearch = false;
+//						// we add the default case
+//
+//						( (SwitchStatement) firstSwitchStatement ).cases().put( SELECT_DEFAULT,
+//								new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
+//					} else {
+//						firstSwitchStatement = firstSwitchStatement.continuation();
+//					}
+//				}
+//			}
 			return new BlockStatement(
 					new ExpressionStatement(
 							ExpressionProjector.visit( this.world(), n.guard() ),

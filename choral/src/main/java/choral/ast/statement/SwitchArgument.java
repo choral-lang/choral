@@ -92,8 +92,23 @@ public abstract class SwitchArgument< T > extends Node {
 		}
 	}
 
-	public static class SwitchArgumentDefault extends SwitchArgument< Void > {
+	public static class SwitchArgumentMergeDefault extends SwitchArgument< Void > {
+		private final static SwitchArgumentMergeDefault instance = new SwitchArgumentMergeDefault( null );
+		private SwitchArgumentMergeDefault( Void argument ) {
+			super( argument );
+		}
 
+		static public SwitchArgumentMergeDefault getInstance()
+		{
+			return instance;
+		}
+
+		@Override
+		public < R > R accept( ChoralVisitorInterface< R > v ) {
+			return v.visit( this );
+		}
+	}
+	public static class SwitchArgumentDefault extends SwitchArgument< Void > {
 		public SwitchArgumentDefault() {
 			this( null );
 		}

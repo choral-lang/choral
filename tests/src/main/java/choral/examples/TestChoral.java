@@ -114,6 +114,7 @@ public class TestChoral {
 		final String RetwisLoginManager = "RetwisLoginManager";
 		final String Retwis = "Retwis";
 		final String If_MultiWorld = "If_MultiWorld";
+		final String TestSwitch = "TestSwitch";
 
 		List< CompilationRequest > allCompilationRequests = Stream.of(
 
@@ -328,20 +329,26 @@ public class TestChoral {
 							runtimeMainFolder
 					),
 					If_MultiWorld, ALL_WORLDS )
-
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "TestSwitch" ) ),
+						targetFolder,
+						Collections.emptyList(),
+						TestSwitch, ALL_WORLDS )
 		).toList();
 		List<String> compilationSymbols = Stream.of(
-				HelloRoles
-				,ConsumeItems
-				,BuyerSellerShipper
-				,DistAuth
-				,VitalsStreaming
-				,DiffieHellman
-				,Mergesort
-				,Quicksort
-				,Karatsuba
-				,DistAuth5
-				,DistAuth10
+//				HelloRoles
+//				,ConsumeItems
+//				,BuyerSellerShipper
+//				,DistAuth
+//				,VitalsStreaming
+//				,DiffieHellman
+//				,Mergesort
+//				,Quicksort
+//				,Karatsuba
+//				,DistAuth5
+//				,DistAuth10
+				TestSwitch
 		).toList();
 		List< CompilationRequest > compilationRequests = compilationSymbols.stream()
 				.map( s -> allCompilationRequests.stream().filter( c -> c.symbol.equalsIgnoreCase( s ) ).findFirst() )
@@ -352,7 +359,8 @@ public class TestChoral {
 //			TestChoral.performanceProject( Collections.singletonList( c ), new HashMap<>() );
 //		} );
 //		projectionPerformance( compilationRequests );
-		compilationRequests.forEach( TestChoral::printProgramSizes );
+//		compilationRequests.forEach( TestChoral::printProgramSizes );
+		compilationRequests.forEach( TestChoral::project );
 //		version();
 
 	}

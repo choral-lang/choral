@@ -25,14 +25,12 @@ import choral.ast.body.VariableDeclaration;
 import choral.ast.expression.EnumCaseInstantiationExpression;
 import choral.ast.statement.*;
 import choral.ast.visitors.AbstractMerger;
+import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.unitNormaliser.StatementsUnitNormaliser;
 import choral.exceptions.ChoralException;
 import choral.utils.Pair;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class StatementsMerger extends AbstractMerger< Statement > {
@@ -115,21 +113,38 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 		);
 	}
 
+	private void checkSingleDefaultCase( SwitchStatement s ){
+		if ( s.cases().keySet().stream().filter( k ->
+				k instanceof SwitchArgument.SwitchArgumentMergeDefault
+				|| k instanceof SwitchArgument.SwitchArgumentDefault ).count() > 1 ){
+			throw new MergeException( "Cannot merge switch statement with multiple default causes (user and compiler-defined ones)", s, s );
+		}
+	}
+
 	@Override
 	public Statement merge( SwitchStatement n1, SwitchStatement n2 ) {
 		Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
-		for( SwitchArgument key : n1.cases().keySet() ) {
+		checkSingleDefaultCase( n1 );
+		checkSingleDefaultCase( n2 );
+		// and the one added by the compiler from a selectionMethod
+		for( SwitchArgument<?> key : n1.cases().keySet() ) {
+			if( ( key instanceof SwitchArgument.SwitchArgumentMergeDefault &&
+					n2.cases().keySet().stream().anyMatch( k -> k instanceof SwitchArgument.SwitchArgumentDefault ) )
+				 || ( key instanceof SwitchArgument.SwitchArgumentDefault &&
+					n2.cases().containsKey(	SwitchArgument.SwitchArgumentMergeDefault.getInstance() ) )
+			){
+				throw new MergeException( "Cannot merge switch statements with user-defined and compiler-defined default cases", n1, n2 );
+			}
 			// we merge the cases present also in n2
 			if( n2.cases().containsKey( key ) ) {
-				cases.put( key, merge( n1.cases().get( key ), n2.cases().get( key ) )
-				);
+				cases.put( key, merge( n1.cases().get( key ), n2.cases().get( key ) ) );
 			} else {
 				// we include the cases present only in n1
 				cases.put( key, n1.cases().get( key ) );
 			}
 		}
 		// we include the cases present only in n2
-		for( SwitchArgument key : n2.cases().keySet().stream().filter(
+		for( SwitchArgument<?> key : n2.cases().keySet().stream().filter(
 				k -> !cases.containsKey( k ) ).collect( Collectors.toSet() ) ) {
 			cases.put( key, n2.cases().get( key ) );
 		}

@@ -29,6 +29,7 @@ import choral.ast.expression.ClassInstantiationExpression;
 import choral.ast.expression.EnumCaseInstantiationExpression;
 import choral.ast.expression.LiteralExpression;
 import choral.ast.statement.SelectStatement;
+import choral.ast.statement.SwitchArgument;
 import choral.ast.statement.SwitchStatement;
 import choral.ast.statement.TryCatchStatement;
 import choral.ast.type.FormalTypeParameter;
@@ -157,7 +158,7 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 		String cases = n.cases().entrySet().stream().map(
 				e -> {
 					String caseSwitch, body;
-					if( e.getKey().equals( StatementsProjector.SELECT_DEFAULT ) ) {
+					if( e.getKey().equals( SwitchArgument.SwitchArgumentMergeDefault.getInstance() )) {
 						caseSwitch = "default -> ";
 						body = "throw new RuntimeException( \"Received unexpected label from select operation\" );";
 					} else {

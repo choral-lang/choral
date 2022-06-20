@@ -39,7 +39,7 @@ public abstract class SourceObject {
 		if( qualifier.isEmpty() ) {
 			return name;
 		} else {
-			return qualifier + "." + name;
+			return qualifier.get() + "." + name;
 		}
 	}
 

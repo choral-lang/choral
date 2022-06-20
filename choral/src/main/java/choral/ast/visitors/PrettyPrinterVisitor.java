@@ -366,7 +366,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( SwitchArgument< ? > n ) {
-		if( n instanceof SwitchArgument.SwitchArgumentDefault ) {
+		if( n instanceof SwitchArgument.SwitchArgumentDefault || n instanceof SwitchArgument.SwitchArgumentMergeDefault ) {
 			return "default -> ";
 		} else {
 			return "case " + (
