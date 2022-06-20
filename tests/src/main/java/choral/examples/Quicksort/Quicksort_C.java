@@ -1,11 +1,13 @@
 package choral.examples.Quicksort;
 
 import choral.channels.SymChannel_A;
-import choral.lang.Unit;
 import choral.channels.SymChannel_B;
 import java.util.List;
+import choral.lang.Unit;
 import java.util.ArrayList;
+import choral.annotations.Choreography;
 
+@Choreography( role = "C", name = "Quicksort" )
 public class Quicksort_C {
 	SymChannel_B < Object > ch_BC;
 	SymChannel_A < Object > ch_CA;
@@ -29,6 +31,9 @@ public class Quicksort_C {
 				case STOP -> {
 					
 				}
+				default -> {
+					throw new RuntimeException( "Received unexpected label from select operation" );
+				}
 				case GO -> {
 					{
 						switch( ch_CA.< Recv >select( Unit.id ) ){
@@ -37,6 +42,9 @@ public class Quicksort_C {
 							}
 							case C -> {
 								lower.add( ch_CA.< Integer >com( Unit.id ) );
+							}
+							default -> {
+								throw new RuntimeException( "Received unexpected label from select operation" );
 							}
 						}
 					}
@@ -49,11 +57,11 @@ public class Quicksort_C {
 	public Unit sort() {
 		{
 			switch( ch_CA.< Loop >select( Unit.id ) ){
-				default -> {
-					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
 				case STOP -> {
 					return Unit.id;
+				}
+				default -> {
+					throw new RuntimeException( "Received unexpected label from select operation" );
 				}
 				case GO -> {
 					List < Integer > lowerPartition = new ArrayList < Integer >();

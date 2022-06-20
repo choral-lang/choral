@@ -113,12 +113,14 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 		);
 	}
 
-	private void checkSingleDefaultCase( SwitchStatement s ){
-		if ( s.cases().keySet().stream().filter( k ->
-				k instanceof SwitchArgument.SwitchArgumentMergeDefault
-				|| k instanceof SwitchArgument.SwitchArgumentDefault ).count() > 1 ){
-			throw new MergeException( "Cannot merge switch statement with multiple default causes (user and compiler-defined ones)", s, s );
-		}
+	private void checkSingleDefaultCase( SwitchStatement s ) {
+		MergeException.check(
+				s.cases().keySet().stream().filter( k ->
+								k instanceof SwitchArgument.SwitchArgumentMergeDefault
+										|| k instanceof SwitchArgument.SwitchArgumentDefault )
+						.count() > 1,
+				"Cannot merge switch statement with multiple default cases (user and compiler-defined ones)",
+				s, s );
 	}
 
 	@Override
@@ -127,14 +129,16 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 		checkSingleDefaultCase( n1 );
 		checkSingleDefaultCase( n2 );
 		// and the one added by the compiler from a selectionMethod
-		for( SwitchArgument<?> key : n1.cases().keySet() ) {
-			if( ( key instanceof SwitchArgument.SwitchArgumentMergeDefault &&
-					n2.cases().keySet().stream().anyMatch( k -> k instanceof SwitchArgument.SwitchArgumentDefault ) )
-				 || ( key instanceof SwitchArgument.SwitchArgumentDefault &&
-					n2.cases().containsKey(	SwitchArgument.SwitchArgumentMergeDefault.getInstance() ) )
-			){
-				throw new MergeException( "Cannot merge switch statements with user-defined and compiler-defined default cases", n1, n2 );
-			}
+		for( SwitchArgument< ? > key : n1.cases().keySet() ) {
+			MergeException.check(
+					( ( key instanceof SwitchArgument.SwitchArgumentMergeDefault &&
+							n2.cases().keySet().stream().anyMatch(
+									k -> k instanceof SwitchArgument.SwitchArgumentDefault ) )
+							|| ( key instanceof SwitchArgument.SwitchArgumentDefault &&
+							n2.cases().containsKey(
+									SwitchArgument.SwitchArgumentMergeDefault.getInstance() ) ) ),
+					"Cannot merge switch statements with user-defined and compiler-defined default cases",
+					n1, n2 );
 			// we merge the cases present also in n2
 			if( n2.cases().containsKey( key ) ) {
 				cases.put( key, merge( n1.cases().get( key ), n2.cases().get( key ) ) );
@@ -144,14 +148,16 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 			}
 		}
 		// we include the cases present only in n2
-		for( SwitchArgument<?> key : n2.cases().keySet().stream().filter(
-				k -> !cases.containsKey( k ) ).collect( Collectors.toSet() ) ) {
+		for( SwitchArgument< ? > key :
+				n2.cases().keySet().stream()
+						.filter( k -> !cases.containsKey( k ) )
+						.collect( Collectors.toSet() ) ) {
 			cases.put( key, n2.cases().get( key ) );
 		}
-		return new SwitchStatement(
+		return new
+				SwitchStatement(
 				ExpressionsMerger.mergeExpressions( n1.guard(), n2.guard() ),
-				cases,
-				merge( n1.continuation(), n2.continuation() )
+				cases, merge( n1.continuation(), n2.continuation() )
 		);
 	}
 

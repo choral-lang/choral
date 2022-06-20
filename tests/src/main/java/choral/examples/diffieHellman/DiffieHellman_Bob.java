@@ -1,10 +1,12 @@
 package choral.examples.diffieHellman;
 
-import java.math.BigInteger;
-import choral.lang.Unit;
+import choral.annotations.Choreography;
 import choral.examples.BiPair.BiPair_B;
+import choral.lang.Unit;
+import java.math.BigInteger;
 import choral.channels.SymDataChannel_B;
 
+@Choreography( role = "Bob", name = "DiffieHellman" )
 public class DiffieHellman_Bob {
 	public static BiPair_B < BigInteger, BigInteger > exchangeKeys( SymDataChannel_B < BigInteger > channel, Unit aPrivKey, BigInteger bPrivKey, Unit aSharedGenerator, BigInteger bSharedGenerator, Unit aSharedPrime, BigInteger bSharedPrime ) {
 		return exchangeKeys( channel, bPrivKey, bSharedGenerator, bSharedPrime );

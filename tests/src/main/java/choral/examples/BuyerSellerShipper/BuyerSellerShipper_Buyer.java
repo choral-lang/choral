@@ -1,11 +1,13 @@
 package choral.examples.BuyerSellerShipper;
 
+import choral.annotations.Choreography;
 import choral.lang.Unit;
 import choral.examples.BuyerSellerShipperUtils.Customer;
-import choral.runtime.UI.Panel;
-import choral.examples.BuyerSellerShipperUtils.Price;
 import choral.channels.SymChannel_B;
+import choral.examples.BuyerSellerShipperUtils.Price;
+import choral.runtime.UI.Panel;
 
+@Choreography( role = "Buyer", name = "BuyerSellerShipper" )
 class BuyerSellerShipper_Buyer {
 	SymChannel_B < Object > c;
 	SymChannel_B < Object > cb;
@@ -37,6 +39,9 @@ class BuyerSellerShipper_Buyer {
 						c.< EnumBoolean >select( EnumBoolean.False );
 						cb.< EnumBoolean >select( EnumBoolean.False );
 					}
+				}
+				default -> {
+					throw new RuntimeException( "Received unexpected label from select operation" );
 				}
 				case False -> {
 					cb.< EnumBoolean >select( EnumBoolean.False );

@@ -39,10 +39,6 @@ import java.util.stream.Collectors;
 
 public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 
-	private final Name SELECT_CHANNEL_METHOD = new Name( "select" );
-//	public static final SwitchArgument.SwitchArgumentLabel SELECT_DEFAULT = new SwitchArgument.SwitchArgumentLabel(
-//			new Name( "$SELECT_DEFAULT" ) );
-
 	private StatementsProjector( WorldArgument w ) {
 		super( w );
 	}

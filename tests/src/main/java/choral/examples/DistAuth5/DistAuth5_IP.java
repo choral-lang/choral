@@ -1,11 +1,13 @@
 package choral.examples.DistAuth5;
 
+import choral.annotations.Choreography;
 import choral.examples.DistAuthUtils.AuthToken;
 import choral.lang.Unit;
 import choral.runtime.TLSChannel.TLSChannel_B;
 import choral.examples.DistAuthUtils.ClientRegistry;
 import choral.DistAuth.EnumBoolean;
 
+@Choreography( role = "IP", name = "DistAuth5" )
 public class DistAuth5_IP {
 	private TLSChannel_B < Object > ch_Client_IP;
 	private TLSChannel_B < Object > ch_Service_IP;

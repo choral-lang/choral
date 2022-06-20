@@ -2,9 +2,11 @@ package choral.examples.BuyerSellerShipper;
 
 import choral.channels.SymChannel_A;
 import choral.lang.Unit;
-import choral.examples.BuyerSellerShipperUtils.Catalogue;
+import choral.annotations.Choreography;
 import choral.examples.BuyerSellerShipperUtils.Price;
+import choral.examples.BuyerSellerShipperUtils.Catalogue;
 
+@Choreography( role = "Seller", name = "BuyerSellerShipper" )
 class BuyerSellerShipper_Seller {
 	SymChannel_A < Object > c;
 
@@ -29,6 +31,9 @@ class BuyerSellerShipper_Seller {
 				switch( c.< EnumBoolean >select( Unit.id ) ){
 					case True -> {
 						catalogue.ship( title ).to( c.< String >com( Unit.id ) );
+					}
+					default -> {
+						throw new RuntimeException( "Received unexpected label from select operation" );
 					}
 					case False -> {
 						

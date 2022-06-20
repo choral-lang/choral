@@ -1,9 +1,11 @@
 package choral.examples.DistAuth10;
 
-import choral.lang.Unit;
 import choral.DistAuth.EnumBoolean;
 import choral.runtime.TLSChannel.TLSChannel_A;
+import choral.lang.Unit;
+import choral.annotations.Choreography;
 
+@Choreography( role = "S3", name = "DistAuth10" )
 public class DistAuth10_S3 {
 	private TLSChannel_A < Object > ch_s3;
 
@@ -29,11 +31,11 @@ public class DistAuth10_S3 {
 		calcHash( Unit.id, Unit.id );
 		{
 			switch( ch_s3.< EnumBoolean >select( Unit.id ) ){
-				default -> {
-					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
 				case True -> {
 					return Unit.id;
+				}
+				default -> {
+					throw new RuntimeException( "Received unexpected label from select operation" );
 				}
 				case False -> {
 					return Unit.id;

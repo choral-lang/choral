@@ -1,11 +1,13 @@
 package choral.examples.DistAuth5;
 
 import choral.examples.DistAuthUtils.AuthToken;
-import choral.examples.AuthResult.AuthResult_B;
 import choral.lang.Unit;
-import choral.runtime.TLSChannel.TLSChannel_A;
+import choral.examples.AuthResult.AuthResult_B;
 import choral.DistAuth.EnumBoolean;
+import choral.annotations.Choreography;
+import choral.runtime.TLSChannel.TLSChannel_A;
 
+@Choreography( role = "Service", name = "DistAuth5" )
 public class DistAuth5_Service {
 	private TLSChannel_A < Object > ch_Service_IP;
 
@@ -31,14 +33,14 @@ public class DistAuth5_Service {
 		calcHash( Unit.id, Unit.id );
 		{
 			switch( ch_Service_IP.< EnumBoolean >select( Unit.id ) ){
-				default -> {
-					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
 				case True -> {
 					return new AuthResult_B( Unit.id, ch_Service_IP.< AuthToken >com( Unit.id ) );
 				}
 				case False -> {
 					return new AuthResult_B();
+				}
+				default -> {
+					throw new RuntimeException( "Received unexpected label from select operation" );
 				}
 			}
 		}

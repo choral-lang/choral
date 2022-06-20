@@ -1,11 +1,13 @@
 package choral.examples.VitalsStreaming;
 
-import java.util.function.Consumer;
 import choral.lang.Unit;
-import choral.examples.VitalsStreamingUtils.VitalsMsg;
-import choral.examples.VitalsStreamingUtils.Vitals;
 import choral.channels.SymChannel_B;
+import choral.examples.VitalsStreamingUtils.Vitals;
+import choral.examples.VitalsStreamingUtils.VitalsMsg;
+import java.util.function.Consumer;
+import choral.annotations.Choreography;
 
+@Choreography( role = "Gatherer", name = "VitalsStreaming" )
 public class VitalsStreaming_Gatherer {
 	private SymChannel_B < Object > ch;
 
@@ -20,6 +22,9 @@ public class VitalsStreaming_Gatherer {
 	public void gather( Consumer < Vitals > consumer ) {
 		{
 			switch( ch.< StreamState >select( Unit.id ) ){
+				default -> {
+					throw new RuntimeException( "Received unexpected label from select operation" );
+				}
 				case OFF -> {
 					
 				}

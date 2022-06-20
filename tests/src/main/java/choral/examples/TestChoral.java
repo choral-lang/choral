@@ -337,17 +337,17 @@ public class TestChoral {
 						TestSwitch, ALL_WORLDS )
 		).toList();
 		List<String> compilationSymbols = Stream.of(
-//				HelloRoles
-//				,ConsumeItems
-//				,BuyerSellerShipper
-//				,DistAuth
-//				,VitalsStreaming
-//				,DiffieHellman
-//				,Mergesort
-//				,Quicksort
-//				,Karatsuba
-//				,DistAuth5
-//				,DistAuth10
+//				HelloRoles//,
+//				ConsumeItems//,
+//				BuyerSellerShipper//,
+//				DistAuth//,
+//				VitalsStreaming//,
+//				DiffieHellman//,
+//				Mergesort//,
+//				Quicksort//,
+//				Karatsuba//,
+//				DistAuth5//,
+//				DistAuth10//,
 				TestSwitch
 		).toList();
 		List< CompilationRequest > compilationRequests = compilationSymbols.stream()

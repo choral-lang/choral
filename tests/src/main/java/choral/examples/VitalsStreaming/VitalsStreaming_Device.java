@@ -1,10 +1,12 @@
 package choral.examples.VitalsStreaming;
 
-import choral.lang.Unit;
-import choral.examples.VitalsStreamingUtils.VitalsMsg;
 import choral.channels.SymChannel_A;
 import choral.examples.VitalsStreamingUtils.Sensor;
+import choral.lang.Unit;
+import choral.examples.VitalsStreamingUtils.VitalsMsg;
+import choral.annotations.Choreography;
 
+@Choreography( role = "Device", name = "VitalsStreaming" )
 public class VitalsStreaming_Device {
 	private SymChannel_A < Object > ch;
 	private Sensor sensor;

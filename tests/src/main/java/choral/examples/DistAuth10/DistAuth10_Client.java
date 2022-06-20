@@ -1,16 +1,18 @@
 package choral.examples.DistAuth10;
 
 import choral.examples.AuthResult.AuthResult_A;
-import choral.examples.DistAuthUtils.AuthToken;
 import choral.examples.DistAuthUtils.Base64_Encoder;
-import choral.examples.DistAuthUtils.Credentials;
-import choral.lang.Unit;
-import choral.DistAuth.EnumBoolean;
-import java.security.NoSuchAlgorithmException;
-import choral.runtime.TLSChannel.TLSChannel_A;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import choral.DistAuth.EnumBoolean;
+import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import choral.examples.DistAuthUtils.AuthToken;
+import choral.examples.DistAuthUtils.Credentials;
+import choral.runtime.TLSChannel.TLSChannel_A;
+import choral.annotations.Choreography;
+import choral.lang.Unit;
 
+@Choreography( role = "Client", name = "DistAuth10" )
 public class DistAuth10_Client {
 	private TLSChannel_A < Object > ch_Client_IP;
 
@@ -39,11 +41,11 @@ public class DistAuth10_Client {
 		ch_Client_IP.< String >com( calcHash( salt, credentials.password ) );
 		{
 			switch( ch_Client_IP.< EnumBoolean >select( Unit.id ) ){
-				default -> {
-					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
 				case True -> {
 					return new AuthResult_A( ch_Client_IP.< AuthToken >com( Unit.id ), Unit.id );
+				}
+				default -> {
+					throw new RuntimeException( "Received unexpected label from select operation" );
 				}
 				case False -> {
 					return new AuthResult_A();

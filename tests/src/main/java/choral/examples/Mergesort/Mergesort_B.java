@@ -1,10 +1,12 @@
 package choral.examples.Mergesort;
 
 import choral.lang.Unit;
+import choral.channels.SymChannel_B;
+import choral.annotations.Choreography;
 import java.util.List;
 import choral.channels.SymChannel_A;
-import choral.channels.SymChannel_B;
 
+@Choreography( role = "B", name = "Mergesort" )
 public class Mergesort_B {
 	SymChannel_B < Object > ch_AB;
 	SymChannel_A < Object > ch_BC;
