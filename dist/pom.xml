@@ -79,7 +79,8 @@
                                     <mainClass>choral.Choral</mainClass>
                                 </manifest>
                             </archive>
-                            <finalName>choral-v${choral.version}-standalone</finalName>
+                            <!-- <finalName>choral-v${choral.version}-standalone</finalName> -->
+                            <finalName>choral-standalone</finalName>
                             <appendAssemblyId>false</appendAssemblyId>
                         </configuration>
                     </execution>
