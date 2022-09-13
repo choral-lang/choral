@@ -1,5 +1,6 @@
-build/
-dist/
+/dist/**
+!/dist/pom.xml
+!/dist/assembly.xml
 release/
 out/
 target/
@@ -9,6 +10,6 @@ target/
 .settings/
 .project
 .DS_Store
-# antlr generated files
-choral/src/main/java/choral/grammar/
-
+.factorypath
+# ANTLR generated files
+/choral/src/main/java/choral/grammar/
