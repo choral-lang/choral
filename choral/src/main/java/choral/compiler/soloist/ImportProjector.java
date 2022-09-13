@@ -359,7 +359,6 @@ public class ImportProjector implements ChoralVisitorInterface< Void > {
 	@Override
 	public Void visit( TypeExpression n ) {
 		if( n.typeAnnotation().isPresent() && n.typeAnnotation().get().isHigherType() ) {
-			HigherDataType dataType = (HigherDataType) n.typeAnnotation().get();
 			String qualifiedName = n.name().identifier();
 			addImport( qualifiedName );
 		} else if( n.name().equals( UnitRepresentation.UNIT ) ) {

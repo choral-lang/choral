@@ -32,7 +32,6 @@ import java.nio.channels.ByteChannel;
 public class WrapperByteChannelImpl implements SymByteChannelImpl {
 
 	private final BlockingByteChannel channel;
-	private final int BUFFER_SIZE = 10000;
 
 	public WrapperByteChannelImpl( BlockingByteChannel channel ) {
 		this.channel = channel;

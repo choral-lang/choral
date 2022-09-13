@@ -108,7 +108,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		m.put( "type", visitTypeDeclaration( n ) );
 		m.put( "extends", ifPresent( n.superClass().orElse( null ) ).applyOrElse(
 				t -> " " + EXTENDS + " " + visit( t ), String::new ) );
-		m.put( "implements",
+		m.put( IMPLEMENTS,
 				n.implementsInterfaces().isEmpty() ? "" : " " + IMPLEMENTS + " " + visitAndCollect(
 						n.implementsInterfaces(), COMMA ) );
 		m.put( "fields",

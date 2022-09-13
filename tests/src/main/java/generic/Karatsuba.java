@@ -42,11 +42,9 @@ public class Karatsuba {
 	}
 
 	public static void main( String[] args ) {
-
-		System.out.println( new Karatsuba().multiply( 1000L, 1000L ) + ":" + 1000 * 1000 );
-		System.out.println( new Karatsuba().multiply( 12345L, 6789L ) + ":" + 12345 * 6789 );
-		System.out.println(
-				new Karatsuba().multiply( 2358925L, 1259174L ) + ":" + 2358925L * 1259174L );
+		System.out.println( Karatsuba.multiply( 1000L, 1000L ) + ":" + 1000 * 1000 );
+		System.out.println( Karatsuba.multiply( 12345L, 6789L ) + ":" + 12345 * 6789 );
+		System.out.println( Karatsuba.multiply( 2358925L, 1259174L ) + ":" + 2358925L * 1259174L );
 	}
 
 }

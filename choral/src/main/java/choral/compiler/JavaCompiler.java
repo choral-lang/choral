@@ -36,7 +36,6 @@ import choral.ast.type.TypeExpression;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.ast.visitors.templates.Utils;
 import choral.compiler.SourceObject.JavaSourceObject;
-import choral.compiler.soloist.StatementsProjector;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,10 +53,8 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 	private static final String SPACED_COMMA = COMMA + " ";
 	private static final String SEMICOLON = ";";
 	private static final String AMPERSAND = " & ";
-	private static final String IMPLEMENTS = "implements";
 	private static final String EXTENDS = "extends";
 	private static final String PACKAGE = "package";
-	private static final String TAB = "\t";
 
 	public static Collection< JavaSourceObject > compile( CompilationUnit n ) {
 		List< JavaSourceObject > c = new LinkedList<>();
