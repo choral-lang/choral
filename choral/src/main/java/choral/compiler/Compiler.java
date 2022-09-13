@@ -32,7 +32,7 @@ import choral.ast.body.Interface;
 import choral.ast.expression.LiteralExpression;
 import choral.ast.type.WorldArgument;
 import choral.compiler.Logger.Level;
-import choral.compiler.courtesyMethodSinthesiser.CourtesyMethodsSynthesiser;
+import choral.compiler.courtesyMethodSynthesiser.CourtesyMethodsSynthesiser;
 import choral.compiler.soloist.DependecyVisitor;
 import choral.compiler.soloist.ImportProjector;
 import choral.compiler.soloist.ProjectableTemplate;

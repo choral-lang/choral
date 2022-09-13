@@ -19,7 +19,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package choral.compiler.courtesyMethodSinthesiser;
+package choral.compiler.courtesyMethodSynthesiser;
 
 import choral.ast.CompilationUnit;
 import choral.ast.Name;
