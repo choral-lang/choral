@@ -217,5 +217,3 @@ public final class HigherEnum extends HigherClass implements Enum {
 	}
 
 }
-
-

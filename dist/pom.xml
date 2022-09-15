@@ -10,7 +10,7 @@
         <choral.version>0.1.1</choral.version>
 		<choral.url>https://www.choral-lang.org/</choral.url>
     </properties>
-    
+
     <!-- add zip with all the jars from the submodules -->
     <dependencies>
         <dependency>

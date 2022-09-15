@@ -12,4 +12,3 @@ public class SaltMessage implements Message {
 		return salt;
 	}
 }
-

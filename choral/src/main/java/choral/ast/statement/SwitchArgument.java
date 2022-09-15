@@ -132,5 +132,3 @@ public abstract class SwitchArgument< T > extends Node {
 		}
 	}
 }
-
-

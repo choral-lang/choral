@@ -275,7 +275,3 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 	}
 
 }
-
-
-
-

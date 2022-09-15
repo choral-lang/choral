@@ -12,7 +12,7 @@ public class DistAuth5_S2 {
 	public DistAuth5_S2( Unit ch_Client_IP, Unit ch_Service_IP, Unit ch_s1, TLSChannel_A < Object > ch_s2 ) {
 		this( ch_s2 );
 	}
-	
+
 	public DistAuth5_S2( TLSChannel_A < Object > ch_s2 ) {
 		this.ch_s2 = ch_s2;
 	}
@@ -22,11 +22,11 @@ public class DistAuth5_S2 {
 			return Unit.id;
 		}
 	}
-	
+
 	public Unit authenticate( Unit credentials ) {
 		return authenticate();
 	}
-	
+
 	public Unit authenticate() {
 		calcHash( Unit.id, Unit.id );
 		{

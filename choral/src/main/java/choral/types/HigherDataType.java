@@ -273,7 +273,3 @@ public abstract class HigherDataType extends TypeBase
 	}
 
 }
-
-
-
-

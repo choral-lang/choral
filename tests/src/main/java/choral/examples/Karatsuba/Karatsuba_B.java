@@ -10,7 +10,7 @@ public class Karatsuba_B {
 	public static Unit multiply( Unit n1, Unit n2, SymChannel_B < Object > ch_AB, SymChannel_A < Object > ch_BC, Unit ch_CA ) {
 		return multiply( ch_AB, ch_BC );
 	}
-	
+
 	public static Unit multiply( SymChannel_B < Object > ch_AB, SymChannel_A < Object > ch_BC ) {
 		{
 			switch( ch_AB.< Choice >select( Unit.id ) ){

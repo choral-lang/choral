@@ -414,5 +414,3 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 	}
 
 }
-
-

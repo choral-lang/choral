@@ -19,13 +19,13 @@ public class VitalsStreaming_Device {
 	public void gather( Unit consumer ) {
 		gather();
 	}
-	
+
 	public void gather() {
 		if( sensor.isOn() ){
 			ch.< StreamState >select( StreamState.ON );
 			ch.< VitalsMsg >com( sensor.next() );
 			gather( Unit.id );
-		} else { 
+		} else {
 			ch.< StreamState >select( StreamState.OFF );
 		}
 	}

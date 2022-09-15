@@ -12,7 +12,7 @@ class BuyerSellerShipper_Shipper {
 	BuyerSellerShipper_Shipper( Unit c, SymChannel_A < Object > cb ) {
 		this( cb );
 	}
-	
+
 	BuyerSellerShipper_Shipper( SymChannel_A < Object > cb ) {
 		this.cb = cb;
 	}
@@ -20,7 +20,7 @@ class BuyerSellerShipper_Shipper {
 	void run( Unit catalogue, Unit customer ) {
 		run();
 	}
-	
+
 	void run() {
 		{
 			switch( cb.< EnumBoolean >select( Unit.id ) ){
@@ -35,7 +35,7 @@ class BuyerSellerShipper_Shipper {
 								throw new RuntimeException( "Received unexpected label from select operation" );
 							}
 							case False -> {
-								
+
 							}
 						}
 					}
@@ -44,7 +44,7 @@ class BuyerSellerShipper_Shipper {
 					throw new RuntimeException( "Received unexpected label from select operation" );
 				}
 				case False -> {
-					
+
 				}
 			}
 		}

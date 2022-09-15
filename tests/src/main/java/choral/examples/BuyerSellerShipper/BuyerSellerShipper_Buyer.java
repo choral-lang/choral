@@ -20,7 +20,7 @@ class BuyerSellerShipper_Buyer {
 	void run( Unit catalogue, Customer customer ) {
 		run( customer );
 	}
-	
+
 	void run( Customer customer ) {
 		String book = Panel.prompt( "Buyer", "Insert the title of the book" );
 		c.< String >com( book );
@@ -35,7 +35,7 @@ class BuyerSellerShipper_Buyer {
 						cb.< EnumBoolean >select( EnumBoolean.True );
 						cb.< String >com( price.amount + price.currency );
 						c.< String >com( customer.address );
-					} else { 
+					} else {
 						c.< EnumBoolean >select( EnumBoolean.False );
 						cb.< EnumBoolean >select( EnumBoolean.False );
 					}

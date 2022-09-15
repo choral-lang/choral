@@ -14,7 +14,7 @@ public class DistAuth_Service {
 	public DistAuth_Service( Unit ch_Client_IP, TLSChannel_A < Object > ch_Service_IP ) {
 		this( ch_Service_IP );
 	}
-	
+
 	public DistAuth_Service( TLSChannel_A < Object > ch_Service_IP ) {
 		this.ch_Service_IP = ch_Service_IP;
 	}
@@ -24,11 +24,11 @@ public class DistAuth_Service {
 			return Unit.id;
 		}
 	}
-	
+
 	public AuthResult_B authenticate( Unit credentials ) {
 		return authenticate();
 	}
-	
+
 	public AuthResult_B authenticate() {
 		calcHash( Unit.id, Unit.id );
 		{

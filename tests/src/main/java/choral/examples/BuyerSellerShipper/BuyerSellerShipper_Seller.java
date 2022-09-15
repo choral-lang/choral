@@ -13,7 +13,7 @@ class BuyerSellerShipper_Seller {
 	BuyerSellerShipper_Seller( SymChannel_A < Object > c, Unit cb ) {
 		this( c );
 	}
-	
+
 	BuyerSellerShipper_Seller( SymChannel_A < Object > c ) {
 		this.c = c;
 	}
@@ -21,7 +21,7 @@ class BuyerSellerShipper_Seller {
 	void run( Catalogue catalogue, Unit customer ) {
 		run( catalogue );
 	}
-	
+
 	void run( Catalogue catalogue ) {
 		String title = c.< String >com( Unit.id );
 		if( catalogue.includes( title ) ){
@@ -36,11 +36,11 @@ class BuyerSellerShipper_Seller {
 						throw new RuntimeException( "Received unexpected label from select operation" );
 					}
 					case False -> {
-						
+
 					}
 				}
 			}
-		} else { 
+		} else {
 			c.< EnumBoolean >select( EnumBoolean.False );
 		}
 	}

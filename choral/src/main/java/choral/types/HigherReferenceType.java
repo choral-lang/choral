@@ -83,4 +83,3 @@ public abstract class HigherReferenceType extends HigherDataType implements Refe
 
 	}
 }
-

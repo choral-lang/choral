@@ -67,6 +67,3 @@ class Z2_KaratsubaResponse extends KaratsubaResponse {
 		return this;
 	}
 }
-
-
-

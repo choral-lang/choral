@@ -14,7 +14,7 @@ public class VitalsStreaming_Gatherer {
 	public VitalsStreaming_Gatherer( SymChannel_B < Object > ch, Unit sensor ) {
 		this( ch );
 	}
-	
+
 	public VitalsStreaming_Gatherer( SymChannel_B < Object > ch ) {
 		this.ch = ch;
 	}
@@ -26,7 +26,7 @@ public class VitalsStreaming_Gatherer {
 					throw new RuntimeException( "Received unexpected label from select operation" );
 				}
 				case OFF -> {
-					
+
 				}
 				case ON -> {
 					VitalsMsg msg = ch.< VitalsMsg >com( Unit.id );

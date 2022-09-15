@@ -70,4 +70,3 @@ class BuyBook2@Buyer{
 		}
 	}
 }
-

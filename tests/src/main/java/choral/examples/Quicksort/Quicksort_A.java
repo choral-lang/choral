@@ -15,7 +15,7 @@ public class Quicksort_A {
 	public Quicksort_A( SymChannel_A < Object > ch_AB, Unit ch_BC, SymChannel_B < Object > ch_CA ) {
 		this( ch_AB, ch_CA );
 	}
-	
+
 	public Quicksort_A( SymChannel_A < Object > ch_AB, SymChannel_B < Object > ch_CA ) {
 		this.ch_AB = ch_AB;
 		this.ch_CA = ch_CA;
@@ -34,13 +34,13 @@ public class Quicksort_A {
 			orderedList.add( pivot );
 			orderedList.addAll( ch_AB.< List < Integer > >com( qb.sort( Unit.id ) ) );
 			return orderedList;
-		} else { 
+		} else {
 			ch_AB.< Loop >select( Loop.STOP );
 			ch_CA.< Loop >select( Loop.STOP );
 			return a;
 		}
 	}
-	
+
 	private void partition( List < Integer > a, Integer pivot, Unit greater, Unit lower ) {
 		if( a.size() > 0 ){
 			ch_AB.< Loop >select( Loop.GO );
@@ -50,13 +50,13 @@ public class Quicksort_A {
 				ch_AB.< Recv >select( Recv.B );
 				ch_CA.< Recv >select( Recv.B );
 				ch_AB.< Integer >com( i );
-			} else { 
+			} else {
 				ch_AB.< Recv >select( Recv.C );
 				ch_CA.< Recv >select( Recv.C );
 				ch_CA.< Integer >com( i );
 			}
 			partition( a, pivot, Unit.id, Unit.id );
-		} else { 
+		} else {
 			ch_AB.< Loop >select( Loop.STOP );
 			ch_CA.< Loop >select( Loop.STOP );
 		}

@@ -22,7 +22,7 @@ public final class Double@A extends Number@A implements Comparable@A<Double> {
     public static final int@A SIZE;
 
     public static final Class@A<Double> TYPE;
-    
+
     public static String@A toString(double@A d) { }
 
     public static String@A toHexString(double@A d) { }

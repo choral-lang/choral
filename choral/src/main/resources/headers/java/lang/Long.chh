@@ -76,5 +76,5 @@ public final class Long@A extends Number@A {
     public static int@A signum(long@A i) { }
 
     public static long@A reverseBytes(long@A i) { }
-    
+
 }

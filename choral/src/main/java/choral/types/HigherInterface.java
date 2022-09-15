@@ -185,5 +185,3 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 	}
 
 }
-
-

@@ -75,6 +75,3 @@ class Z1_KaratsubaResponse extends KaratsubaResponse {
 
 class Z2_KaratsubaResponse extends KaratsubaResponse {
 }
-
-
-

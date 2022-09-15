@@ -10,13 +10,13 @@ public class Karatsuba_A {
 	public static Long multiply( Long n1, Long n2, SymChannel_A < Object > ch_AB, Unit ch_BC, SymChannel_B < Object > ch_CA ) {
 		return multiply( n1, n2, ch_AB, ch_CA );
 	}
-	
+
 	public static Long multiply( Long n1, Long n2, SymChannel_A < Object > ch_AB, SymChannel_B < Object > ch_CA ) {
 		if( n1 < 10 || n2 < 10 ){
 			ch_AB.< Choice >select( Choice.DONE );
 			ch_CA.< Choice >select( Choice.DONE );
 			return n1 * n2;
-		} else { 
+		} else {
 			ch_AB.< Choice >select( Choice.RECUR );
 			ch_CA.< Choice >select( Choice.RECUR );
 			Double m = Math.max( Math.log10( n1 ), Math.log10( n2 ) ) + 1;

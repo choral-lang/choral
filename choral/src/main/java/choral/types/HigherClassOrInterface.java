@@ -656,4 +656,3 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 	}
 
 }
-

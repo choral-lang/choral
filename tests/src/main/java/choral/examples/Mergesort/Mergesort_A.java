@@ -15,7 +15,7 @@ public class Mergesort_A {
 	public Mergesort_A( SymChannel_A < Object > ch_AB, Unit ch_BC, SymChannel_B < Object > ch_CA ) {
 		this( ch_AB, ch_CA );
 	}
-	
+
 	public Mergesort_A( SymChannel_A < Object > ch_AB, SymChannel_B < Object > ch_CA ) {
 		this.ch_AB = ch_AB;
 		this.ch_CA = ch_CA;
@@ -31,13 +31,13 @@ public class Mergesort_A {
 			mb.sort( ch_AB.< List < Integer > >com( a.subList( 0, pivot.intValue() ) ) );
 			mc.sort( ch_CA.< List < Integer > >com( a.subList( pivot.intValue(), a.size() ) ) );
 			return merge( Unit.id, Unit.id );
-		} else { 
+		} else {
 			ch_AB.< MChoice >select( MChoice.R );
 			ch_CA.< MChoice >select( MChoice.R );
 			return a;
 		}
 	}
-	
+
 	private List < Integer > merge( Unit lhs, Unit rhs ) {
 		{
 			switch( ch_AB.< MChoice >select( Unit.id ) ){

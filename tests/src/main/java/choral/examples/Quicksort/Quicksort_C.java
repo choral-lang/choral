@@ -15,7 +15,7 @@ public class Quicksort_C {
 	public Quicksort_C( Unit ch_AB, SymChannel_B < Object > ch_BC, SymChannel_A < Object > ch_CA ) {
 		this( ch_BC, ch_CA );
 	}
-	
+
 	public Quicksort_C( SymChannel_B < Object > ch_BC, SymChannel_A < Object > ch_CA ) {
 		this.ch_BC = ch_BC;
 		this.ch_CA = ch_CA;
@@ -24,12 +24,12 @@ public class Quicksort_C {
 	public Unit sort( Unit a ) {
 		return sort();
 	}
-	
+
 	private void partition( Unit a, Unit pivot, Unit greater, List < Integer > lower ) {
 		{
 			switch( ch_CA.< Loop >select( Unit.id ) ){
 				case STOP -> {
-					
+
 				}
 				default -> {
 					throw new RuntimeException( "Received unexpected label from select operation" );
@@ -38,7 +38,7 @@ public class Quicksort_C {
 					{
 						switch( ch_CA.< Recv >select( Unit.id ) ){
 							case B -> {
-								
+
 							}
 							case C -> {
 								lower.add( ch_CA.< Integer >com( Unit.id ) );
@@ -53,7 +53,7 @@ public class Quicksort_C {
 			}
 		}
 	}
-	
+
 	public Unit sort() {
 		{
 			switch( ch_CA.< Loop >select( Unit.id ) ){
