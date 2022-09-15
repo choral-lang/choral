@@ -66,16 +66,6 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 		);
 	}
 
-	@Override
-	public Statement merge( SelectStatement n1, SelectStatement n2 ) {
-		return new SelectStatement(
-				(EnumCaseInstantiationExpression) ExpressionsMerger.mergeExpressions(
-						n1.enumConstructor(), n2.enumConstructor() ),
-				ExpressionsMerger.mergeExpressions( n1.channelExpression(),
-						n2.channelExpression() ),
-				merge( n1.continuation(), n2.continuation() )
-		);
-	}
 
 	@Override
 	public Statement merge( ExpressionStatement n1, ExpressionStatement n2 ) {

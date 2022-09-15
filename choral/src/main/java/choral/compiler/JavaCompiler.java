@@ -28,7 +28,6 @@ import choral.ast.body.RefType;
 import choral.ast.expression.ClassInstantiationExpression;
 import choral.ast.expression.EnumCaseInstantiationExpression;
 import choral.ast.expression.LiteralExpression;
-import choral.ast.statement.SelectStatement;
 import choral.ast.statement.SwitchArgument;
 import choral.ast.statement.SwitchStatement;
 import choral.ast.statement.TryCatchStatement;
@@ -194,13 +193,6 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 	@Override
 	public String visit( EnumCaseInstantiationExpression n ) {
 		return n.name().identifier() + "." + n._case();
-	}
-
-	@Override
-	public String visit( SelectStatement n ) {
-		return visit( n.channelExpression() ) + ".select( " + visit(
-				n.enumConstructor() ) + " )" + getContinuation( n, SEMICOLON );
-//		return visit( n.channelExpression() ) + ".com( " + visit( n.enumConstructor() ) + " )" + getContinuation( n, SEMICOLON );
 	}
 
 	@Override

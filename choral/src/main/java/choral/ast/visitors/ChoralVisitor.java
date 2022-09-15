@@ -395,16 +395,6 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 	}
 
 	@Override
-	public Node visit( SelectStatement n ) {
-		return new SelectStatement(
-				safeVisit( n.enumConstructor() ),
-				safeVisit( n.channelExpression() ),
-				safeVisit( n.continuation() ),
-				n.position()
-		);
-	}
-
-	@Override
 	public Node visit( ScopedExpression n ) {
 		return new ScopedExpression(
 				safeVisit( n.scope() ),

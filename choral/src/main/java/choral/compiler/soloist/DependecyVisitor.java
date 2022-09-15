@@ -229,13 +229,6 @@ public class DependecyVisitor implements ChoralVisitorInterface< Void > {
 	}
 
 	@Override
-	public Void visit( SelectStatement n ) {
-		visit( n.channelExpression() );
-		visit( n.enumConstructor() );
-		return null;
-	}
-
-	@Override
 	public Void visit( ScopedExpression n ) {
 		visit( n.scope() );
 		visit( n.scopedExpression() );

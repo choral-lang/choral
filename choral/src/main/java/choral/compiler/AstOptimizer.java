@@ -949,8 +949,6 @@ public class AstOptimizer implements ChoralVisitor {
 		debugInfo();
 		if( isPresent( bs.emptyStatement() ) ) {
 			return visitEmptyStatement( bs.emptyStatement() );
-//		} else if( isPresent( bs.selectStatement() ) ) {
-//			return visitSelectStatement( bs.selectStatement() );
 		} else if( isPresent( bs.expressionStatement() ) ) {
 			return visitExpressionStatement( bs.expressionStatement() );
 		} else {
@@ -963,16 +961,6 @@ public class AstOptimizer implements ChoralVisitor {
 		debugInfo();
 		return new NilStatement( getPosition( es ) );
 	}
-
-//	@Override
-//	public SelectStatement visitSelectStatement( ChoralParser.SelectStatementContext nsc ) {
-//		return new SelectStatement(
-//				visitEnumCaseCreationExpression( nsc.enumCaseCreationExpression() ),
-//				visitExpression( nsc.expression() ),
-//				null,
-//				getPosition( nsc )
-//		);
-//	}
 
 	@Override
 	public ExpressionStatement visitExpressionStatement(

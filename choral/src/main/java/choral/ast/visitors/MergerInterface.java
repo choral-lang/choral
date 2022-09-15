@@ -50,8 +50,6 @@ public interface MergerInterface< T > {
 
 	T merge( BlockStatement n1, BlockStatement n2 );
 
-	T merge( SelectStatement n1, SelectStatement n2 );
-
 	T merge( ScopedExpression n1, ScopedExpression n2 );
 
 	T merge( ExpressionStatement n1, ExpressionStatement n2 );

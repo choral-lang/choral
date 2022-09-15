@@ -367,7 +367,6 @@ statement
 
 basicStatement
 	: emptyStatement
-//	| selectStatement
 	| expressionStatement
 	| returnStatement
 	;
@@ -375,10 +374,6 @@ basicStatement
 emptyStatement
 	: SEMI
 	;
-
-//selectStatement
-//	: SELECT LPAREN enumCaseCreationExpression COMMA expression RPAREN SEMI
-//	;
 
 expressionStatement
 	: statementExpression SEMI

@@ -50,8 +50,6 @@ public interface ChoralVisitorInterface< R > {
 
 	R visit( BlockStatement n );
 
-	R visit( SelectStatement n );
-
 	R visit( ScopedExpression n );
 
 	R visit( ExpressionStatement n );

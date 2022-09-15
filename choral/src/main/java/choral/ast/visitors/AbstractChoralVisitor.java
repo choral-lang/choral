@@ -80,11 +80,6 @@ public abstract class AbstractChoralVisitor< T > implements ChoralVisitorInterfa
 	}
 
 	@Override
-	public T visit( SelectStatement n ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public T visit( ScopedExpression n ) {
 		throw new UnsupportedOperationException();
 	}

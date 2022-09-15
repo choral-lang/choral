@@ -75,11 +75,6 @@ public class AbstractMerger< T > implements MergerInterface< T > {
 	}
 
 	@Override
-	public T merge( SelectStatement n1, SelectStatement n2 ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public T merge( ScopedExpression n1, ScopedExpression n2 ) {
 		throw new UnsupportedOperationException();
 	}

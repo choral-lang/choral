@@ -417,13 +417,6 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 	}
 
 	@Override
-	public String visit( SelectStatement n ) {
-		return "select( " +
-				visit( n.enumConstructor() ) + SPACED_COMMA + visit( n.channelExpression() ) +
-				" )" + getContinuation( n, SEMICOLON );
-	}
-
-	@Override
 	public String visit( ScopedExpression n ) {
 		return visit( n.scope() ) + "." + visit( n.scopedExpression() );
 	}
