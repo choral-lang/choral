@@ -318,5 +318,4 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 				visit( n.continuation() )
 		).copyPosition( n );
 	}
-
 }

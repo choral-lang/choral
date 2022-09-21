@@ -123,8 +123,7 @@ public abstract class SwitchArgument< T > extends Node {
 			super( argument );
 		}
 
-		static public SwitchArgumentMergeDefault getInstance()
-		{
+		static public SwitchArgumentMergeDefault getInstance() {
 			return instance;
 		}
 
