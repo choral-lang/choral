@@ -40,11 +40,6 @@ public abstract class Expression extends Node
 		super( position );
 	}
 
-//	@Override
-//	public Optional<? extends GroundDataType> typeAnnotation() {
-//		;
-//	}
-
 	private GroundDataTypeOrVoid typeAnnotation;
 
 	public Optional< ? extends GroundDataTypeOrVoid > typeAnnotation() {

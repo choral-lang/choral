@@ -122,30 +122,6 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 		}
 	}
 
-
-//	private String compileCase( CaseSignature c, String extendsEnum ) {
-//		HashMap< String, Object > m = new HashMap<>();
-//		m.put( "name", c.name() );
-//		m.put( "super", extendsEnum );
-//		m.put( "fields", indent( c.parameters().stream().map( p ->
-//										"public final " + visit( p.type() ) + " " + p.name()
-//						).collect( Collectors.joining( SEMICOLON + NEWLINE ) ) )
-//		);
-//		m.put( "constructorBody", indent( c.parameters().stream().map( p ->
-//										TAB + "this." + p.name() + " = " + p.name()
-//						).collect( Collectors.joining( SEMICOLON + NEWLINE ) ) )
-//		);
-//
-//		String template =
-//						"public static final class $name extends $super {" + NEWLINE +
-//										"#if( $!{fields.trim()} != '' )$fields" + SEMICOLON + NEWLINE + "#end" +
-//										TAB + "public " + c.name() +
-//										( c.parameters().isEmpty() ? "()" : "( " + visitAndCollect( c.parameters(), SPACED_COMMA ) + " )" ) + "{" +
-//										"#if( $!{constructorBody.trim()} != '' )" + _2NEWLINE + "$constructorBody" + SEMICOLON + NEWLINE + TAB + "#end" +
-//										"}" + NEWLINE + "}";
-//		return Utils.createVelocityTemplate( template ).render( m );
-//	}
-
 	@Override
 	public String visit( SwitchStatement n ) {
 		HashMap< String, Object > m = new HashMap<>();
@@ -162,10 +138,6 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 						body = visit( e.getValue() );
 					}
 					return caseSwitch + "{" + NEWLINE + indent( body ) + NEWLINE + "}";
-//							+ indent( containsReturn( e.getValue() ) ?
-//							""
-//							: ( body.length() > 2 ? NEWLINE : "" ) + "break;" // body.length() > 2 accounts for empty case-bodies
-//					);
 				}
 		).collect( Collectors.joining( NEWLINE ) );
 		m.put( "cases", indent( cases ) );

@@ -117,10 +117,6 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 			return isSelectionMethodAtWorld( ht.right() );
 		}
 		if( e instanceof MethodCallExpression ) {
-//			if( ( (MethodCallExpression) e ).arguments().size() > 1 ){
-//				throw new SoloistProjectorException( "Found improper expression " + new PrettyPrinterVisitor().visit( e ) + " as selection method" );
-//			}
-//			System.out.println( new PrettyPrinterVisitor().visit( e ) + " selectMehod: " + ( (MethodCallExpression) e ).isSelect() );
 			MethodCallExpression methodCall = ( (MethodCallExpression) e );
 			return methodCall.isSelect()
 					&& ( (GroundDataType) methodCall.methodAnnotation().get().returnType() )
@@ -159,10 +155,9 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 	public Statement visit( ExpressionStatement n ) {
 		if( isSelectionMethodAtWorld( n.expression() ) ) {
 			Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
-//			if( ! n.returns() ){
-//				cases.put( SELECT_DEFAULT,
-//						new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
-//			}
+			// NOTE: When generating code, `JavaCompiler` replaces the default
+			// case of a projection-generated switch statement with a throw
+			// statement. We use `NilStatement` here to simplify the merge.
 			cases.put( SwitchArgument.SwitchArgumentMergeDefault.getInstance(), new NilStatement() );
 			cases.put( new SwitchArgument.SwitchArgumentLabel(
 					getSelectionMethodEnum( n.expression() ) ), visit( n.continuation() ) );
@@ -190,21 +185,6 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 			).copyPosition( n );
 		} else {
 			List< Statement > cases = List.of( visit( n.ifBranch() ), visit( n.elseBranch() ) );
-//			if( n.returns() && !n.hasContinuation() ) {
-//				Statement firstSwitchStatement = cases.get( 0 );
-//				boolean continueSearch = true;
-//				while( continueSearch ) {
-//					if( firstSwitchStatement instanceof SwitchStatement ) {
-//						continueSearch = false;
-//						// we add the default case
-//						( ( SwitchStatement ) firstSwitchStatement ).cases().put(
-//								SwitchArgument.SwitchArgumentMergeDefault.getInstance(), new NilStatement() );
-//						// reminder: the JavaCompiler adds a throw in place of the SwitchArgumentMergeDefault instance
-//					} else {
-//						firstSwitchStatement = firstSwitchStatement.continuation();
-//					}
-//				}
-//			}
 			return new BlockStatement(
 					new ExpressionStatement(
 							ExpressionProjector.visit( this.world(), n.condition() ),
@@ -226,25 +206,8 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 					visit( n.continuation() )
 			).copyPosition( n );
 		} else {
-			// we collect the "normal" cases
 			List< Statement > cases = n.cases().values().stream()
 					.map( this::visit ).collect( Collectors.toList() );
-			// if we have cases, the body "returns", and it does not have a continuation (which would then be reachable)
-//			if( cases.size() > 0 && n.returns() && !n.hasContinuation() ) {
-//				Statement firstSwitchStatement = cases.get( 0 );
-//				boolean continueSearch = true;
-//				while( continueSearch ) {
-//					if( firstSwitchStatement instanceof SwitchStatement ) {
-//						continueSearch = false;
-//						// we add the default case
-//
-//						( (SwitchStatement) firstSwitchStatement ).cases().put( SELECT_DEFAULT,
-//								new NilStatement() ); // reminder: the JavaCompiler adds a throw in place of the SELECT_DEFAULT
-//					} else {
-//						firstSwitchStatement = firstSwitchStatement.continuation();
-//					}
-//				}
-//			}
 			return new BlockStatement(
 					new ExpressionStatement(
 							ExpressionProjector.visit( this.world(), n.guard() ),
