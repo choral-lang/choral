@@ -31,7 +31,10 @@ import choral.ast.visitors.AbstractSoloistProjector;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.merge.StatementsMerger;
 import choral.compiler.unitNormaliser.UnitRepresentation;
+import choral.types.GroundClass;
 import choral.types.GroundDataType;
+import choral.types.GroundDataTypeOrVoid;
+import choral.types.Member;
 import choral.utils.Pair;
 
 import java.util.*;
@@ -151,6 +154,40 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 						e ) + " as selection method " );
 	}
 
+	private GroundClass getSuperSelectionMethodClass( MethodCallExpression mc ) {
+		Optional< ? extends Member.GroundMethod > ann = mc.methodAnnotation();
+		assert ann.isPresent();
+
+		GroundDataTypeOrVoid type = ann.get().returnType();
+		assert type.isClass();
+
+		return (GroundClass) type;
+	}
+
+	private Optional< MethodCallExpression > isSuperSelectionMethodAtWorld( Expression e ) {
+		if( e instanceof ScopedExpression s ) {
+			Pair< Expression, Expression > ht = Utils.headAndTail( s );
+			return isSuperSelectionMethodAtWorld( ht.right() );
+		}
+
+		if( e instanceof MethodCallExpression mc ) {
+			if( !mc.isSuperSelect() ) {
+				return Optional.empty();
+			}
+
+			GroundClass c = getSuperSelectionMethodClass( mc );
+			if( c.worldArguments().stream().anyMatch(
+					w -> this.world()
+							.equals( new WorldArgument( new Name( w.identifier() ) ) ) ) ) {
+				return Optional.of( mc );
+			} else {
+				return Optional.empty();
+			}
+		}
+
+		return Optional.empty();
+	}
+
 	@Override
 	public Statement visit( ExpressionStatement n ) {
 		if( isSelectionMethodAtWorld( n.expression() ) ) {
@@ -166,12 +203,32 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 					cases,
 					new NilStatement()
 			);
-		} else {
-			return new ExpressionStatement(
-					ExpressionProjector.visit( this.world(), n.expression() ),
-					visit( n.continuation() )
-			).copyPosition( n );
 		}
+
+		Optional< MethodCallExpression > mc = isSuperSelectionMethodAtWorld( n.expression() );
+		if ( mc.isPresent() ) {
+			Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
+			// NOTE: When generating code, `JavaCompiler` replaces the default
+			// case of a projection-generated switch statement with a throw
+			// statement. We use `NilStatement` here to simplify the merge.
+			cases.put( SwitchArgument.SwitchArgumentMergeDefault.getInstance(), new NilStatement() );
+			cases.put( new SwitchArgument.SwitchArgumentClassLabel(
+					new Pair< Name, Name >( new Name(
+							getSuperSelectionMethodClass( mc.get() ).typeConstructor().identifier(),
+							n.position() ),
+							new Name( "__unusedVar__", n.position() ) ),
+					n.position() ), visit( n.continuation() ) );
+			return new SwitchStatement(
+					ExpressionProjector.visit( this.world(), n.expression() ),
+					cases,
+					new NilStatement()
+			);
+		}
+
+		return new ExpressionStatement(
+				ExpressionProjector.visit( this.world(), n.expression() ),
+				visit( n.continuation() )
+		).copyPosition( n );
 	}
 
 	@Override

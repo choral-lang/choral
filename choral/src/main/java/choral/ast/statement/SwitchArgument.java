@@ -26,6 +26,7 @@ import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.expression.LiteralExpression;
 import choral.ast.visitors.ChoralVisitorInterface;
+import choral.utils.Pair;
 
 public abstract class SwitchArgument< T > extends Node {
 	final T argument;
@@ -87,6 +88,30 @@ public abstract class SwitchArgument< T > extends Node {
 		public boolean equals( Object obj ) {
 			if( obj instanceof SwitchArgumentLabel ) {
 				return this.argument().equals( ( (SwitchArgumentLabel) obj ).argument() );
+			}
+			return false;
+		}
+	}
+
+	public static class SwitchArgumentClassLabel extends SwitchArgument< Pair< Name, Name > > {
+		public SwitchArgumentClassLabel( Pair< Name, Name > argument, Position position ) {
+			super( argument, position );
+		}
+
+		@Override
+		public < R > R accept( ChoralVisitorInterface< R > v ) {
+			return v.visit( this );
+		}
+
+		@Override
+		public int hashCode() {
+			return argument().hashCode();
+		}
+
+		@Override
+		public boolean equals( Object obj ) {
+			if( obj instanceof SwitchArgumentClassLabel ) {
+				return this.argument().equals( ( (SwitchArgumentClassLabel) obj ).argument() );
 			}
 			return false;
 		}

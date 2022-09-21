@@ -35,7 +35,7 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.templates.Utils;
-
+import choral.utils.Pair;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -366,14 +366,22 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( SwitchArgument< ? > n ) {
-		if( n instanceof SwitchArgument.SwitchArgumentDefault || n instanceof SwitchArgument.SwitchArgumentMergeDefault ) {
+		if( n instanceof SwitchArgument.SwitchArgumentDefault ||
+				n instanceof SwitchArgument.SwitchArgumentMergeDefault ) {
 			return "default -> ";
 		} else {
-			return "case " + (
-					n instanceof SwitchArgument.SwitchArgumentLabel ?
-							( (SwitchArgument.SwitchArgumentLabel) n ).argument().identifier()
-							: ( (SwitchArgument.SwitchArgumentLiteral) n ).argument().content().toString()
-			) + " -> ";
+			String pattern = null;
+
+			if ( n instanceof SwitchArgument.SwitchArgumentLiteral l ) {
+				pattern = l.argument().content().toString();
+			} else if ( n instanceof SwitchArgument.SwitchArgumentLabel l ) {
+				pattern = l.argument().identifier();
+			} else if ( n instanceof SwitchArgument.SwitchArgumentClassLabel l ) {
+				Pair< Name, Name > arg = l.argument();
+				pattern = arg.left().identifier() + " " + arg.right().identifier();
+			}
+
+			return "case " + pattern + " -> ";
 		}
 	}
 

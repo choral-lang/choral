@@ -73,6 +73,7 @@ public class Typer {
 	private abstract static class Visitor {
 
 		private static final String SELECTION_METHOD_ANNOTATION = "SelectionMethod";
+		private static final String SUPER_SELECTION_METHOD_ANNOTATION = "SuperSelectionMethod";
 
 		private final TaskQueue taskQueue;
 		private final Universe universe;
@@ -252,6 +253,7 @@ public class Typer {
 										nm.signature().returnType(), false ) );
 					}
 					checkIfSelectionMethod( tm, nm.annotations() );
+					checkIfSuperSelectionMethod( tm, nm.annotations() );
 					try {
 						tm.innerCallable().finalise();
 						t.innerType().addMethod( tm );
@@ -447,6 +449,7 @@ public class Typer {
 										nm.signature().returnType(), false ) );
 					}
 					checkIfSelectionMethod( tm, nm.annotations() );
+					checkIfSuperSelectionMethod( tm, nm.annotations() );
 					tm.innerCallable().finalise();
 					t.innerType().addMethod( tm );
 				}
@@ -533,6 +536,17 @@ public class Typer {
 					}
 
 					tm.setSelectionMethod();
+					break;
+				}
+			}
+		}
+
+		private void checkIfSuperSelectionMethod( Member.HigherMethod tm,
+				List< Annotation > annotations ) {
+			for( Annotation x : annotations ) {
+				if( x.getName().identifier().equals( SUPER_SELECTION_METHOD_ANNOTATION ) ) {
+					// TODO: Proper typechecks.
+					tm.setSuperSelectionMethod();
 					break;
 				}
 			}

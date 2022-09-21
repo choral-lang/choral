@@ -470,6 +470,9 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 								if( x.isSelectionMethod() && sameSignature ) {
 									y.setSelectionMethod();
 								}
+								if (x.isSuperSelectionMethod() && sameSignature) {
+									y.setSuperSelectionMethod();
+								}
 								implemented = !y.isAbstract();
 								inherited = sameErasure && !sameSignature;
 								if( inherited ) {
