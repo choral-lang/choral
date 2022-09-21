@@ -42,7 +42,7 @@ import com.google.common.collect.Streams;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class DependecyVisitor implements ChoralVisitorInterface< Void > {
+public class DependencyVisitor implements ChoralVisitorInterface< Void > {
 
 	private final Map< String, AvailableTemplate > availableTemplates;
 	private final WorldArgument w;
@@ -51,7 +51,7 @@ public class DependecyVisitor implements ChoralVisitorInterface< Void > {
 	// name, world index
 	private final Set< Pair< String, Integer > > visitedTemplates;
 
-	public DependecyVisitor( List< CompilationUnit > CUs, WorldArgument w ) {
+	public DependencyVisitor( List< CompilationUnit > CUs, WorldArgument w ) {
 		this.w = w;
 		availableTemplates = new HashMap<>();
 		projectableTemplates = new HashSet<>();
@@ -66,7 +66,7 @@ public class DependecyVisitor implements ChoralVisitorInterface< Void > {
 		} );
 	}
 
-	private DependecyVisitor(
+	private DependencyVisitor(
 			Map< String, AvailableTemplate > availableTemplates,
 			Set< Pair< String, Integer > > projectableTemplates,
 			Set< Pair< String, Integer > > visitedTemplates,
@@ -129,7 +129,7 @@ public class DependecyVisitor implements ChoralVisitorInterface< Void > {
 				// to interate over them and update the same data structure in the loop
 				.stream()
 				.filter( p -> !visitedTemplates.contains( p ) )
-				.forEach( p -> new DependecyVisitor(
+				.forEach( p -> new DependencyVisitor(
 								availableTemplates,
 								projectableTemplates,
 								visitedTemplates,
@@ -497,7 +497,7 @@ public class DependecyVisitor implements ChoralVisitorInterface< Void > {
 	public Void visit( FormalTypeParameter n ) {
 		n.worldParameters().forEach( w ->
 				n.upperBound().forEach( t ->
-						new DependecyVisitor(
+						new DependencyVisitor(
 								this.availableTemplates,
 								this.projectableTemplates,
 								this.visitedTemplates,

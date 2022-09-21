@@ -33,7 +33,7 @@ import choral.ast.expression.LiteralExpression;
 import choral.ast.type.WorldArgument;
 import choral.compiler.Logger.Level;
 import choral.compiler.courtesyMethodSynthesiser.CourtesyMethodsSynthesiser;
-import choral.compiler.soloist.DependecyVisitor;
+import choral.compiler.soloist.DependencyVisitor;
 import choral.compiler.soloist.ImportProjector;
 import choral.compiler.soloist.ProjectableTemplate;
 import choral.compiler.soloist.SoloistProjector;
@@ -346,7 +346,7 @@ public class Compiler {
 			if( targetWorlds.size() > 0 ) {
 				for( String targetWorld : targetWorlds ) {
 					projectableTemplates.addAll(
-							new DependecyVisitor( targetCompilationUnits,
+							new DependencyVisitor( targetCompilationUnits,
 									new WorldArgument( new Name( targetWorld ) ) )
 									.collectTemplates( targetSymbol )
 					);
@@ -355,13 +355,13 @@ public class Compiler {
 			} else {
 				// we project for all worlds in the target template
 				logf( Level.DEBUG, "Projecting for all worlds" );
-				for( WorldArgument targetWorld : DependecyVisitor.getWorldArguments(
+				for( WorldArgument targetWorld : DependencyVisitor.getWorldArguments(
 						targetCompilationUnits,
 						targetSymbol ) ) {
 					logf( Level.DEBUG, "Projecting for world: %s",
 							targetWorld.name().identifier() );
 					projectableTemplates.addAll(
-							new DependecyVisitor( targetCompilationUnits,
+							new DependencyVisitor( targetCompilationUnits,
 									targetWorld ).collectTemplates(
 									targetSymbol )
 					);
