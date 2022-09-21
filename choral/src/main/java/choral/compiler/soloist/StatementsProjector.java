@@ -88,6 +88,37 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 
 	@Override
 	public Statement visit( VariableDeclarationStatement n ) {
+		List< VariableDeclaration > vars = n.variables();
+		if( vars.size() == 1 ) {
+			VariableDeclaration var = vars.get( 0 );
+			Optional< AssignExpression > init = var.initializer();
+
+			if( init.isPresent() ) {
+				Expression e = init.get().value();
+
+				Optional< MethodCallExpression > mc = isSuperSelectionMethodAtWorld( e );
+				if( mc.isPresent() ) {
+					Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
+					// NOTE: When generating code, `JavaCompiler` replaces the default
+					// case of a projection-generated switch statement with a throw
+					// statement. We use `NilStatement` here to simplify the merge.
+					cases.put( SwitchArgument.SwitchArgumentMergeDefault.getInstance(),
+							new NilStatement() );
+					cases.put( new SwitchArgument.SwitchArgumentClassLabel(
+							new Pair< Name, Name >( new Name(
+									getSuperSelectionMethodClass( mc.get() ).typeConstructor()
+											.identifier(),
+									n.position() ),
+									var.name() ),
+							n.position() ), visit( n.continuation() ) );
+					return new SwitchStatement(
+							ExpressionProjector.visit( this.world(), e ),
+							cases,
+							new NilStatement() );
+				}
+			}
+		}
+
 		TypeExpression t = n.variables().get( 0 ).type();
 		TypeExpression tp = TypesProjector.visit( this.world(), t ).get( 0 );
 		if( t.worldArguments().contains( this.world() ) ) {
@@ -103,15 +134,15 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 					).collect( Collectors.toList() ),
 					visit( n.continuation() )
 			).copyPosition( n );
-		} else {
-			return new ExpressionStatement( UnitRepresentation.unitMC(
-					n.variables().stream()
-							.filter( v -> v.initializer().isPresent() )
-							.map( v -> ExpressionProjector.visit( this.world(),
-									v.initializer().get() ) )
-							.collect( Collectors.toList() ), this.world()
-			), visit( n.continuation() ), n.position() );
 		}
+
+		return new ExpressionStatement( UnitRepresentation.unitMC(
+				n.variables().stream()
+						.filter( v -> v.initializer().isPresent() )
+						.map( v -> ExpressionProjector.visit( this.world(),
+								v.initializer().get() ) )
+						.collect( Collectors.toList() ), this.world()
+		), visit( n.continuation() ), n.position() );
 	}
 
 	private boolean isSelectionMethodAtWorld( Expression e ) {
