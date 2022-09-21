@@ -46,7 +46,7 @@ public class KindApplicationException extends ChoralException {
 		return "ill-formed kind application " + subject + object + ".";
 	}
 
-	@java.lang.Override
+	@Override
 	public String toString() {
 		return "KindApplicationException{" +
 				"subject=" + subject +

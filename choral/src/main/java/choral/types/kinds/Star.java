@@ -25,12 +25,12 @@ public class Star extends Kind {
 	Star() {
 	}
 
-	@java.lang.Override
+	@Override
 	public java.lang.String toString() {
 		return "*";
 	}
 
-	@java.lang.Override
+	@Override
 	public boolean equals( Object o ) {
 		return ( o == this ) || ( o instanceof Star );
 	}
