@@ -22,7 +22,8 @@
 package choral.channels;
 
 public interface BiChannel_A< T, R > extends
-									 DiDataChannel_A< T >,
-									 DiDataChannel_B< R >,
-									 DiSelectChannel_A, DiSelectChannel_B {
+									 DiChannel_A< T >,
+									 DiChannel_B< R >,
+									 BiDataChannel_A< T, R >,
+									 SymSelectChannel_A {
 }

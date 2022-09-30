@@ -21,8 +21,8 @@
 
 package choral.channels;
 
-public interface SymChannelImpl< T > extends SymChannel_A< T >,
-											 DiDataChannel_B< T >,
-											 DiDataChannel_A< T >,
-											 DiSelectChannel_A, DiSelectChannel_B {
+public interface SymChannelImpl< T > extends BiChannel_A< T, T >,
+											 BiChannel_B< T, T >,
+											 SymDataChannel_A< T >,
+											 SymDataChannel_B< T > {
 }
