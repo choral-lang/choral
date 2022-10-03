@@ -87,6 +87,10 @@ public class TypeExpression extends Node implements WithTypeAnnotation< DataType
 	// WARNING: used in the merge, does not check world correspondence
 	public boolean equals( Object n ) {
 		if( n instanceof TypeExpression && ( (TypeExpression) n ).typeArguments().size() == this.typeArguments().size() ) {
+			if( !this.name().equals( ( (TypeExpression) n ).name() ) ) {
+				return false;
+			}
+
 			for( int i = 0; i < this.typeArguments().size(); i++ ) {
 				if( ( (TypeExpression) n ).typeArguments().get( i ).equals(
 						this.typeArguments().get( i ) ) ) {
