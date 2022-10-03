@@ -34,6 +34,9 @@ import choral.compiler.unitNormaliser.UnitRepresentation;
 import choral.types.GroundClass;
 import choral.types.GroundDataType;
 import choral.types.GroundDataTypeOrVoid;
+import choral.types.HigherClassOrInterface;
+import choral.types.HigherReferenceType;
+import choral.types.HigherTypeParameter;
 import choral.types.Member;
 import choral.utils.Pair;
 
@@ -86,6 +89,88 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 		).copyPosition( n );
 	}
 
+	private GroundClass getSuperSelectionPattern( MethodCallExpression method ) {
+		Optional< ? extends Member.GroundMethod > ann = method.methodAnnotation();
+
+		if( !ann.isPresent() ) {
+			throw new SoloistProjectorException(
+					"The selection method's method annotation is missing: "
+							+ new PrettyPrinterVisitor().visit( method ) );
+		}
+
+		GroundDataTypeOrVoid type = ann.get().returnType();
+
+		if( !type.isClass() ) {
+			throw new SoloistProjectorException(
+					"The return type of a superselection method must be a class type: "
+							+ new PrettyPrinterVisitor().visit( method ) );
+		}
+
+		return (GroundClass) type;
+	}
+
+	private ScopedExpression getSuperSelectionGuard( Expression scope,
+			MethodCallExpression method ) {
+		Optional< ? extends Member.GroundMethod > ann = method.methodAnnotation();
+
+		if( !ann.isPresent() ) {
+			throw new SoloistProjectorException(
+					"The selection method's method annotation is missing: "
+							+ new PrettyPrinterVisitor().visit( method ) );
+		}
+
+		List< ? extends HigherTypeParameter > params = ann.get().higherCallable().typeParameters();
+
+		if( params.size() != 1 ) {
+			throw new SoloistProjectorException(
+					"Expected the selection method to have a single type parameter: "
+							+ new PrettyPrinterVisitor().visit( method ) );
+		}
+
+		HigherReferenceType upper = params.get( 0 ).innerType().upperClass().typeConstructor();
+
+		TypeExpression te =
+				new TypeExpression( new Name( ( (HigherClassOrInterface) upper ).identifier() ),
+						List.of(), List.of() );
+		te.setTypeAnnotation( upper );
+
+		return new ScopedExpression( scope,
+				new MethodCallExpression( method.name(), method.arguments(), List.of( te ) ) );
+	}
+
+	private Optional< Pair< ScopedExpression, GroundClass > > isSuperSelectionMethodAtWorld(
+			Expression e ) {
+		// A superselection is a `ScopedExpression`, where the scope is an expression that evaluates
+		// to a channel, and the nested expression is a `MethodCallExpression` that invokes a
+		// channel's superselection method.
+		//
+		// We assume that the superselection method is a generic method whose first (and only) type
+		// argument is the type of the method's first (and only) argument and its return type.
+		//
+		// The upper bound, if any (and Object otherwise), of the single type argument is used as
+		// the type argument in the rewritten selection method call that serves as the switch guard
+		// at the receiver.
+
+		if( e instanceof ScopedExpression s ) {
+			if( s.scopedExpression() instanceof MethodCallExpression method ) {
+				if( !method.isSuperSelect() ) {
+					return Optional.empty();
+				}
+
+				GroundClass c = getSuperSelectionPattern( method );
+				if( !c.worldArguments().stream().anyMatch(
+						w -> this.world()
+								.equals( new WorldArgument( new Name( w.identifier() ) ) ) ) ) {
+					return Optional.empty();
+				}
+
+				return Optional.of( new Pair<>( getSuperSelectionGuard( s.scope(), method ), c ) );
+			}
+		}
+
+		return Optional.empty();
+	}
+
 	@Override
 	public Statement visit( VariableDeclarationStatement n ) {
 		List< VariableDeclaration > vars = n.variables();
@@ -96,8 +181,9 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 			if( init.isPresent() ) {
 				Expression e = init.get().value();
 
-				Optional< MethodCallExpression > mc = isSuperSelectionMethodAtWorld( e );
-				if( mc.isPresent() ) {
+				Optional< Pair< ScopedExpression, GroundClass > > ssm =
+						isSuperSelectionMethodAtWorld( e );
+				if( ssm.isPresent() ) {
 					Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
 					// NOTE: When generating code, `JavaCompiler` replaces the default
 					// case of a projection-generated switch statement with a throw
@@ -106,13 +192,13 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 							new NilStatement() );
 					cases.put( new SwitchArgument.SwitchArgumentClassLabel(
 							new Pair< Name, Name >( new Name(
-									getSuperSelectionMethodClass( mc.get() ).typeConstructor()
+									ssm.get().right().typeConstructor()
 											.identifier(),
 									n.position() ),
 									var.name() ),
 							n.position() ), visit( n.continuation() ) );
 					return new SwitchStatement(
-							ExpressionProjector.visit( this.world(), e ),
+							ExpressionProjector.visit( this.world(), ssm.get().left() ),
 							cases,
 							new NilStatement() );
 				}
@@ -185,40 +271,6 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 						e ) + " as selection method " );
 	}
 
-	private GroundClass getSuperSelectionMethodClass( MethodCallExpression mc ) {
-		Optional< ? extends Member.GroundMethod > ann = mc.methodAnnotation();
-		assert ann.isPresent();
-
-		GroundDataTypeOrVoid type = ann.get().returnType();
-		assert type.isClass();
-
-		return (GroundClass) type;
-	}
-
-	private Optional< MethodCallExpression > isSuperSelectionMethodAtWorld( Expression e ) {
-		if( e instanceof ScopedExpression s ) {
-			Pair< Expression, Expression > ht = Utils.headAndTail( s );
-			return isSuperSelectionMethodAtWorld( ht.right() );
-		}
-
-		if( e instanceof MethodCallExpression mc ) {
-			if( !mc.isSuperSelect() ) {
-				return Optional.empty();
-			}
-
-			GroundClass c = getSuperSelectionMethodClass( mc );
-			if( c.worldArguments().stream().anyMatch(
-					w -> this.world()
-							.equals( new WorldArgument( new Name( w.identifier() ) ) ) ) ) {
-				return Optional.of( mc );
-			} else {
-				return Optional.empty();
-			}
-		}
-
-		return Optional.empty();
-	}
-
 	@Override
 	public Statement visit( ExpressionStatement n ) {
 		if( isSelectionMethodAtWorld( n.expression() ) ) {
@@ -236,8 +288,9 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 			);
 		}
 
-		Optional< MethodCallExpression > mc = isSuperSelectionMethodAtWorld( n.expression() );
-		if ( mc.isPresent() ) {
+		Optional< Pair< ScopedExpression, GroundClass > > ssm =
+				isSuperSelectionMethodAtWorld( n.expression() );
+		if ( ssm.isPresent() ) {
 			Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
 			// NOTE: When generating code, `JavaCompiler` replaces the default
 			// case of a projection-generated switch statement with a throw
@@ -245,12 +298,12 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 			cases.put( SwitchArgument.SwitchArgumentMergeDefault.getInstance(), new NilStatement() );
 			cases.put( new SwitchArgument.SwitchArgumentClassLabel(
 					new Pair< Name, Name >( new Name(
-							getSuperSelectionMethodClass( mc.get() ).typeConstructor().identifier(),
+							 ssm.get().right().typeConstructor().identifier(),
 							n.position() ),
 							new Name( "__unusedVar__", n.position() ) ),
 					n.position() ), visit( n.continuation() ) );
 			return new SwitchStatement(
-					ExpressionProjector.visit( this.world(), n.expression() ),
+					ExpressionProjector.visit( this.world(), ssm.get().left() ),
 					cases,
 					new NilStatement()
 			);
