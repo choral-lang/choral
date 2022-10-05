@@ -149,8 +149,6 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 			throw new UnsupportedOperationException( "interfaces cannot have fields" );
 		}
 
-		protected final List< Member.HigherMethod > declaredMethods = new ArrayList<>();
-
 		public void addMethod( Member.HigherMethod method ) {
 			assert ( method.isPublic() && method.isAbstract() );
 //			if(!method.isPublic() || !method.isAbstract()){
