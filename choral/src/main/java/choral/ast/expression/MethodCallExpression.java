@@ -68,8 +68,8 @@ public class MethodCallExpression extends InvocationExpression {
 		return ( methodAnnotation != null ) && methodAnnotation.higherCallable().isSelectionMethod();
 	}
 
-    public boolean isSuperSelect() {
-        return ( methodAnnotation != null ) && methodAnnotation.higherCallable().isSuperSelectionMethod();
+    public boolean isTypeSelect() {
+        return ( methodAnnotation != null ) && methodAnnotation.higherCallable().isTypeSelectionMethod();
     }
 
 	private Member.GroundMethod methodAnnotation;

@@ -89,7 +89,7 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 		).copyPosition( n );
 	}
 
-	private GroundClass getSuperSelectionPattern( MethodCallExpression method ) {
+	private GroundClass getTypeSelectionPattern( MethodCallExpression method ) {
 		Optional< ? extends Member.GroundMethod > ann = method.methodAnnotation();
 
 		if( !ann.isPresent() ) {
@@ -102,14 +102,14 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 
 		if( !type.isClass() ) {
 			throw new SoloistProjectorException(
-					"The return type of a superselection method must be a class type: "
+					"The return type of a type selection method must be a class type: "
 							+ new PrettyPrinterVisitor().visit( method ) );
 		}
 
 		return (GroundClass) type;
 	}
 
-	private ScopedExpression getSuperSelectionGuard( Expression scope,
+	private ScopedExpression getTypeSelectionGuard( Expression scope,
 			MethodCallExpression method ) {
 		Optional< ? extends Member.GroundMethod > ann = method.methodAnnotation();
 
@@ -138,14 +138,16 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 				new MethodCallExpression( method.name(), method.arguments(), List.of( te ) ) );
 	}
 
-	private Optional< Pair< ScopedExpression, GroundClass > > isSuperSelectionMethodAtWorld(
+	private Optional< Pair< ScopedExpression, GroundClass > > isTypeSelectionMethodAtWorld(
 			Expression e ) {
-		// A superselection is a `ScopedExpression`, where the scope is an expression that evaluates
-		// to a channel, and the nested expression is a `MethodCallExpression` that invokes a
-		// channel's superselection method.
+		// A type-driven selection is a `ScopedExpression`, where the scope is
+		// an expression that evaluates to a channel, and the nested expression
+		// is a `MethodCallExpression` that invokes a channel's type selection
+		// method.
 		//
-		// We assume that the superselection method is a generic method whose first (and only) type
-		// argument is the type of the method's first (and only) argument and its return type.
+		// We assume that the type selection method is a generic method whose
+		// first (and only) type argument is the type of the method's first (and
+		// only) argument and its return type.
 		//
 		// The upper bound, if any (and Object otherwise), of the single type argument is used as
 		// the type argument in the rewritten selection method call that serves as the switch guard
@@ -153,18 +155,18 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 
 		if( e instanceof ScopedExpression s ) {
 			if( s.scopedExpression() instanceof MethodCallExpression method ) {
-				if( !method.isSuperSelect() ) {
+				if( !method.isTypeSelect() ) {
 					return Optional.empty();
 				}
 
-				GroundClass c = getSuperSelectionPattern( method );
+				GroundClass c = getTypeSelectionPattern( method );
 				if( !c.worldArguments().stream().anyMatch(
 						w -> this.world()
 								.equals( new WorldArgument( new Name( w.identifier() ) ) ) ) ) {
 					return Optional.empty();
 				}
 
-				return Optional.of( new Pair<>( getSuperSelectionGuard( s.scope(), method ), c ) );
+				return Optional.of( new Pair<>( getTypeSelectionGuard( s.scope(), method ), c ) );
 			}
 		}
 
@@ -182,7 +184,7 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 				Expression e = init.get().value();
 
 				Optional< Pair< ScopedExpression, GroundClass > > ssm =
-						isSuperSelectionMethodAtWorld( e );
+						isTypeSelectionMethodAtWorld( e );
 				if( ssm.isPresent() ) {
 					Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
 					// NOTE: When generating code, `JavaCompiler` replaces the default
@@ -289,7 +291,7 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 		}
 
 		Optional< Pair< ScopedExpression, GroundClass > > ssm =
-				isSuperSelectionMethodAtWorld( n.expression() );
+				isTypeSelectionMethodAtWorld( n.expression() );
 		if ( ssm.isPresent() ) {
 			Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
 			// NOTE: When generating code, `JavaCompiler` replaces the default

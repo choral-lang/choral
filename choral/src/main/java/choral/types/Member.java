@@ -572,14 +572,14 @@ public abstract class Member implements HasSource {
 			this.selectionMethod = true;
 		}
 
-        boolean superSelectionMethod = false;
+        boolean typeSelectionMethod = false;
 
-        public boolean isSuperSelectionMethod() {
-            return superSelectionMethod;
+        public boolean isTypeSelectionMethod() {
+            return typeSelectionMethod;
         }
 
-        public void setSuperSelectionMethod() {
-            this.superSelectionMethod = true;
+        public void setTypeSelectionMethod() {
+            this.typeSelectionMethod = true;
         }
 
 		private final HashMap< Substitution, HigherMethod > alphaIndex = new HashMap<>();
@@ -619,8 +619,8 @@ public abstract class Member implements HasSource {
 				if( isSelectionMethod() ) {
 					result.setSelectionMethod();
 				}
-				if (isSuperSelectionMethod()) {
-                    result.setSuperSelectionMethod();
+				if (isTypeSelectionMethod()) {
+                    result.setTypeSelectionMethod();
                 }
 				result.innerCallable.finalise();
 				alphaIndex.put( substitution, result );
@@ -656,8 +656,8 @@ public abstract class Member implements HasSource {
 			if( isSelectionMethod() ) {
 				result.setSelectionMethod();
 			}
-			if (isSuperSelectionMethod()) {
-                result.setSuperSelectionMethod();
+			if (isTypeSelectionMethod()) {
+                result.setTypeSelectionMethod();
             }
 			result.innerCallable.finalise();
 			return result;
