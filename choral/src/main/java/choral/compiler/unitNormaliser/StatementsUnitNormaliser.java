@@ -27,6 +27,7 @@ import choral.ast.expression.Expression;
 import choral.ast.statement.*;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.utils.Pair;
+import choral.utils.Streams;
 
 import java.util.AbstractMap;
 import java.util.Map;
@@ -113,7 +114,7 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 				// this should be always present
 				n.cases().entrySet().stream().map( e ->
 						new AbstractMap.SimpleEntry<>( e.getKey(), visit( e.getValue() ) )
-				).collect( Collectors.toMap( Map.Entry::getKey, Map.Entry::getValue ) ),
+				).collect( Streams.toLinkedHashMap( Map.Entry::getKey, Map.Entry::getValue ) ),
 				visit( n.continuation() )
 		).copyPosition( n );
 	}

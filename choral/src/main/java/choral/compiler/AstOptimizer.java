@@ -35,6 +35,7 @@ import choral.exceptions.SyntaxException;
 import choral.grammar.ChoralParser;
 import choral.grammar.ChoralVisitor;
 import choral.utils.Pair;
+import choral.utils.Streams;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ErrorNode;
@@ -1530,7 +1531,7 @@ public class AstOptimizer implements ChoralVisitor {
 		debugInfo();
 		return sbc.switchCase().stream()
 				.flatMap( c -> visitSwitchCase( c ).entrySet().stream() )
-				.collect( Collectors.toMap( Map.Entry::getKey, Map.Entry::getValue )
+				.collect( Streams.toLinkedHashMap( Map.Entry::getKey, Map.Entry::getValue )
 				);
 	}
 
@@ -1541,7 +1542,7 @@ public class AstOptimizer implements ChoralVisitor {
 		return isPresent( scc.switchArgs() ) ?
 				visitSwitchArgs( scc.switchArgs() ).stream()
 						.map( a -> new AbstractMap.SimpleEntry<>( a, s ) )
-						.collect( Collectors.toMap( Map.Entry::getKey, Map.Entry::getValue ) )
+						.collect( Streams.toLinkedHashMap( Map.Entry::getKey, Map.Entry::getValue ) )
 				: Collections.singletonMap(
 				new SwitchArgument.SwitchArgumentDefault( getPosition( scc.getStop() ) ), s );
 	}

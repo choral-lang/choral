@@ -35,6 +35,7 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.utils.Pair;
+import choral.utils.Streams;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -102,7 +103,7 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 						new AbstractMap.SimpleEntry< SwitchArgument< ? >, Statement >(
 								safeVisit( e.getKey() ), safeVisit( e.getValue() )
 						) {
-						} ).collect( Collectors.toMap( Map.Entry::getKey, Map.Entry::getValue )
+						} ).collect( Streams.toLinkedHashMap( Map.Entry::getKey, Map.Entry::getValue )
 				),
 				safeVisit( n.continuation() ),
 				n.position()

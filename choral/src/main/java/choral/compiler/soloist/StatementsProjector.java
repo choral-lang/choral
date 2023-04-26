@@ -39,6 +39,7 @@ import choral.types.HigherReferenceType;
 import choral.types.HigherTypeParameter;
 import choral.types.Member;
 import choral.utils.Pair;
+import choral.utils.Streams;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -345,7 +346,7 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 					n.cases().entrySet().stream().map( e ->
 							new Pair<>( e.getKey(),
 									visit( e.getValue() ) )
-					).collect( Collectors.toMap( Pair::left, Pair::right ) ),
+					).collect( Streams.toLinkedHashMap( Pair::left, Pair::right ) ),
 					visit( n.continuation() )
 			).copyPosition( n );
 		} else {
