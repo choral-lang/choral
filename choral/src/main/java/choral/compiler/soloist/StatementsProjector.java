@@ -141,19 +141,16 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 
 	private Optional< Pair< ScopedExpression, GroundClass > > isTypeSelectionMethodAtWorld(
 			Expression e ) {
-		// A type-driven selection is a `ScopedExpression`, where the scope is
-		// an expression that evaluates to a channel, and the nested expression
-		// is a `MethodCallExpression` that invokes a channel's type selection
-		// method.
+		// A type-driven selection is a `ScopedExpression`, where the scope is an expression that
+		// evaluates to a channel, and the nested expression is a `MethodCallExpression` that
+		// invokes a channel's type selection method.
 		//
-		// We assume that the type selection method is a generic method whose
-		// first (and only) type argument is the type of the method's first (and
-		// only) argument and its return type.
+		// We assume that the type selection method is a generic method whose first (and only) type
+		// argument is the type of the method's first (and only) argument and its return type.
 		//
 		// The upper bound, if any (and Object otherwise), of the single type argument is used as
 		// the type argument in the rewritten selection method call that serves as the switch guard
 		// at the receiver.
-
 		if( e instanceof ScopedExpression s ) {
 			if( s.scopedExpression() instanceof MethodCallExpression method ) {
 				if( !method.isTypeSelect() ) {
@@ -174,6 +171,18 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 		return Optional.empty();
 	}
 
+	private static SwitchStatement selectionSwitchStatement( Expression guard,
+			SwitchArgument< ? > argument, Statement statement ) {
+		Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
+		cases.put( argument, statement );
+		// NOTE: When generating code, `JavaCompiler` will replace the body of a
+		// `SwitchArgumentMergeDefault` case with a throw statement, so we just use a dummy
+		// `NilStatement` for its body.
+		cases.put( SwitchArgument.SwitchArgumentMergeDefault.getInstance(),
+				new NilStatement() );
+		return new SwitchStatement( guard, cases, new NilStatement() );
+	}
+
 	@Override
 	public Statement visit( VariableDeclarationStatement n ) {
 		List< VariableDeclaration > vars = n.variables();
@@ -187,23 +196,16 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 				Optional< Pair< ScopedExpression, GroundClass > > ssm =
 						isTypeSelectionMethodAtWorld( e );
 				if( ssm.isPresent() ) {
-					Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
-					// NOTE: When generating code, `JavaCompiler` replaces the default
-					// case of a projection-generated switch statement with a throw
-					// statement. We use `NilStatement` here to simplify the merge.
-					cases.put( SwitchArgument.SwitchArgumentMergeDefault.getInstance(),
-							new NilStatement() );
-					cases.put( new SwitchArgument.SwitchArgumentClassLabel(
-							new Pair< Name, Name >( new Name(
-									ssm.get().right().typeConstructor()
-											.identifier(),
-									n.position() ),
-									var.name() ),
-							n.position() ), visit( n.continuation() ) );
-					return new SwitchStatement(
+					return selectionSwitchStatement(
 							ExpressionProjector.visit( this.world(), ssm.get().left() ),
-							cases,
-							new NilStatement() );
+							new SwitchArgument.SwitchArgumentClassLabel(
+									new Pair< Name, Name >( new Name(
+											ssm.get().right().typeConstructor()
+													.identifier(),
+											n.position() ),
+											var.name() ),
+									n.position() ),
+							visit( n.continuation() ) );
 				}
 			}
 		}
@@ -217,12 +219,11 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 									v.name(),
 									tp,
 									v.annotations(),
-									v.initializer().isEmpty() ? null : (AssignExpression) ExpressionProjector.visit(
-											this.world(), v.initializer().get() )
-							)
-					).collect( Collectors.toList() ),
-					visit( n.continuation() )
-			).copyPosition( n );
+									v.initializer().isEmpty() ? null
+											: (AssignExpression) ExpressionProjector.visit(
+													this.world(), v.initializer().get() ) ) )
+							.collect( Collectors.toList() ),
+					visit( n.continuation() ) ).copyPosition( n );
 		}
 
 		return new ExpressionStatement( UnitRepresentation.unitMC(
@@ -230,8 +231,8 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 						.filter( v -> v.initializer().isPresent() )
 						.map( v -> ExpressionProjector.visit( this.world(),
 								v.initializer().get() ) )
-						.collect( Collectors.toList() ), this.world()
-		), visit( n.continuation() ), n.position() );
+						.collect( Collectors.toList() ),
+				this.world() ), visit( n.continuation() ), n.position() );
 	}
 
 	private boolean isSelectionMethodAtWorld( Expression e ) {
@@ -277,45 +278,30 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 	@Override
 	public Statement visit( ExpressionStatement n ) {
 		if( isSelectionMethodAtWorld( n.expression() ) ) {
-			Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
-			// NOTE: When generating code, `JavaCompiler` replaces the default
-			// case of a projection-generated switch statement with a throw
-			// statement. We use `NilStatement` here to simplify the merge.
-			cases.put( SwitchArgument.SwitchArgumentMergeDefault.getInstance(), new NilStatement() );
-			cases.put( new SwitchArgument.SwitchArgumentLabel(
-					getSelectionMethodEnum( n.expression() ) ), visit( n.continuation() ) );
-			return new SwitchStatement(
+			return selectionSwitchStatement(
 					ExpressionProjector.visit( this.world(), n.expression() ),
-					cases,
-					new NilStatement()
-			);
+					new SwitchArgument.SwitchArgumentLabel(
+							getSelectionMethodEnum( n.expression() ) ),
+					visit( n.continuation() ) );
 		}
 
 		Optional< Pair< ScopedExpression, GroundClass > > ssm =
 				isTypeSelectionMethodAtWorld( n.expression() );
-		if ( ssm.isPresent() ) {
-			Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
-			// NOTE: When generating code, `JavaCompiler` replaces the default
-			// case of a projection-generated switch statement with a throw
-			// statement. We use `NilStatement` here to simplify the merge.
-			cases.put( SwitchArgument.SwitchArgumentMergeDefault.getInstance(), new NilStatement() );
-			cases.put( new SwitchArgument.SwitchArgumentClassLabel(
-					new Pair< Name, Name >( new Name(
-							 ssm.get().right().typeConstructor().identifier(),
-							n.position() ),
-							new Name( "__unusedVar__", n.position() ) ),
-					n.position() ), visit( n.continuation() ) );
-			return new SwitchStatement(
+		if( ssm.isPresent() ) {
+			return selectionSwitchStatement(
 					ExpressionProjector.visit( this.world(), ssm.get().left() ),
-					cases,
-					new NilStatement()
-			);
+					new SwitchArgument.SwitchArgumentClassLabel(
+							new Pair< Name, Name >( new Name(
+									ssm.get().right().typeConstructor().identifier(),
+									n.position() ),
+									new Name( "__unusedVar__", n.position() ) ),
+							n.position() ),
+					visit( n.continuation() ) );
 		}
 
 		return new ExpressionStatement(
 				ExpressionProjector.visit( this.world(), n.expression() ),
-				visit( n.continuation() )
-		).copyPosition( n );
+				visit( n.continuation() ) ).copyPosition( n );
 	}
 
 	@Override
