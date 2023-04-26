@@ -294,7 +294,7 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 							new Pair< Name, Name >( new Name(
 									ssm.get().right().typeConstructor().identifier(),
 									n.position() ),
-									new Name( "__unusedVar__", n.position() ) ),
+									new Name( "$choral$unused", n.position() ) ),
 							n.position() ),
 					visit( n.continuation() ) );
 		}
