@@ -8,7 +8,7 @@ To build the project locally, install [Maven](https://maven.apache.org/) and run
 mvn clean install
 ```
 
-This will generate `dist/choral.jar`, which can be run with
+This will generate `dist/target/choral-standalone.jar`, which can be run with
 ```shell
-java -jar ./dist/choral.jar
+java -jar ./dist/target/choral-standalone.jar
 ```
