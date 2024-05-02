@@ -88,8 +88,8 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		HashMap< String, Object > m = new HashMap<>();
 		m.put( "interface", "interface" );
 		m.put( "type", visitTypeDeclaration( n ) );
-		m.put( "extends", n.extendsInterfaces().isEmpty() ? "" : m.put( "extends",
-				" " + IMPLEMENTS + " " + visitAndCollect( n.extendsInterfaces(), COMMA ) ) );
+		m.put( "extends", n.extendsInterfaces().isEmpty() ? "" :
+				" " + EXTENDS + " " + visitAndCollect( n.extendsInterfaces(), COMMA ) );
 		m.put( "methods", indent( visitAndCollect( n.methods(), SEMICOLON + NEWLINE,
 				SEMICOLON + _2NEWLINE ) ) );
 		m.put( "modifiers", visitModifiers( n.modifiers() ) );
@@ -108,7 +108,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		m.put( "type", visitTypeDeclaration( n ) );
 		m.put( "extends", ifPresent( n.superClass().orElse( null ) ).applyOrElse(
 				t -> " " + EXTENDS + " " + visit( t ), String::new ) );
-		m.put( IMPLEMENTS,
+		m.put( "implements",
 				n.implementsInterfaces().isEmpty() ? "" : " " + IMPLEMENTS + " " + visitAndCollect(
 						n.implementsInterfaces(), COMMA ) );
 		m.put( "fields",

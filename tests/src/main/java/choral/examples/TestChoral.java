@@ -92,6 +92,7 @@ public class TestChoral {
 		final String HelloRoles = "HelloRoles";
 		final String BiPair = "BiPair";
 		final String ConsumeItems = "ConsumeItems";
+		final String ExtendsTest = "ExtendsTest";
 		final String MultiFoo = "MultiFoo";
 		final String RemoteFunction = "RemoteFunction";
 		final String AuthResult = "AuthResult";
@@ -139,6 +140,12 @@ public class TestChoral {
 						targetFolder,
 						Collections.emptyList(),
 						MultiFoo, ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder( sourceFolder, "ExtendsTest") ),
+						targetFolder,
+						Collections.emptyList(),
+						"MyExtClass", ALL_WORLDS )
 				,
 				new CompilationRequest(
 						List.of( subFolder( sourceFolder, "RemoteFunction") ),
@@ -336,6 +343,8 @@ public class TestChoral {
 		).toList();
 		List<String> compilationSymbols = Stream.of(
 //				HelloRoles//,
+				"MyExtClass"//, //ExtendsTest
+//				MultiFoo//,
 //				ConsumeItems//,
 //				BuyerSellerShipper//,
 //				DistAuth//,
@@ -346,7 +355,7 @@ public class TestChoral {
 //				Karatsuba//,
 //				DistAuth5//,
 //				DistAuth10//,
-				TestSwitch
+//				TestSwitch
 		).toList();
 		List< CompilationRequest > compilationRequests = compilationSymbols.stream()
 				.map( s -> allCompilationRequests.stream().filter( c -> c.symbol.equalsIgnoreCase( s ) ).findFirst() )

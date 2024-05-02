@@ -7,10 +7,11 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="choral (1)" />
-        <module name="runtime" />
         <module name="compare" />
         <module name="tests" />
+        <module name="runtime" />
         <module name="choral-unit" />
+        <module name="choral" />
         <module name="base" />
       </profile>
     </annotationProcessing>
