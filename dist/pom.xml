@@ -3,11 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.choral-lang</groupId>
 	<artifactId>Choral-zip</artifactId>
-	<version>0.1.1</version>
+	<version>0.1.2</version>
 	<packaging>pom</packaging>
 
     <properties>
-        <choral.version>0.1.1</choral.version>
+        <choral.version>0.1.2</choral.version>
 		<choral.url>https://www.choral-lang.org/</choral.url>
     </properties>
 
