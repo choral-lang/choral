@@ -40,7 +40,7 @@ esac
 
 printHeader "Downloading Choral"
 
-CHORAL_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/choral-lang/choral/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
+CHORAL_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/choral-lang/choral/releases/latest | sed -e 's/.*"tag_name":"v\([^"]*\)".*/\1/')
 CHORAL_URL="https://github.com/choral-lang/choral/releases/download/${CHORAL_LATEST_VERSION}/choral-${CHORAL_LATEST_VERSION}.zip"
 curl -L -o choral.zip $CHORAL_URL
 TMP_DIR=$(mktemp -d -t choral-XXXXXXXX)
