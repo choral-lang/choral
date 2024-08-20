@@ -3,11 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.choral-lang</groupId>
 	<artifactId>distribution</artifactId>
-	<version>0.1.2</version>
+	<version>1.0.0</version>
 	<packaging>pom</packaging>
 
     <properties>
-        <choral.version>0.1.2</choral.version>
+        <choral.version>0.1.3</choral.version>
         <choral.url>https://www.choral-lang.org/</choral.url>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
