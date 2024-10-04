@@ -54,6 +54,7 @@ import static choral.utils.Streams.*;
 				Choral.Checker.class,
 				Choral.Projector.class,
 				Choral.HeaderGenerator.class,
+				Choral.Amend.class,
 				AutoComplete.GenerateCompletion.class
 		}
 )
@@ -245,6 +246,16 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				System.out.println( "compilation failed." );
 				return 1;
 			}
+			return 0;
+		}
+	}
+
+	@Command( name = "amend", 
+			description = "dummy command." 
+	)
+	static class Amend extends ChoralCommand implements Callable< Integer >{
+		public Integer call(){
+			System.out.println( "dummy command" );
 			return 0;
 		}
 	}
