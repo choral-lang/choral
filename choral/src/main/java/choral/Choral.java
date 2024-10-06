@@ -254,8 +254,31 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 			description = "dummy command." 
 	)
 	static class Amend extends ChoralCommand implements Callable< Integer >{
+		
+		@Mixin
+		PathOption.SourcePathOption sourcesPathOption;
+
 		public Integer call(){
 			System.out.println( "dummy command" );
+			try{
+				Collection< File > sourceFiles = sourcesPathOption.getPaths( true ).stream()
+						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
+							if( Files.isDirectory( q ) ) return false;
+							String x = q.toString();
+							x = x.substring(
+									x.length() - SourceObject.ChoralSourceObject.FILE_EXTENSION.length() ).toLowerCase();
+							return x.equals( SourceObject.ChoralSourceObject.FILE_EXTENSION );
+						}, FileVisitOption.FOLLOW_LINKS ) ) )
+						.map( Path::toFile )
+						.collect( Collectors.toList() );
+				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
+						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
+				
+			} catch( Exception e ){
+				printNiceErrorMessage( e, verbosityOptions.verbosity() );
+				System.out.println( "compilation failed." );
+				return 1;
+			}
 			return 0;
 		}
 	}
