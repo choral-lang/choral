@@ -251,7 +251,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 	}
 
 	@Command( name = "amend", 
-			description = "dummy command." 
+			description = "WIP - infer communications" 
 	)
 	static class Amend extends ChoralCommand implements Callable< Integer >{
 		
@@ -259,7 +259,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		PathOption.SourcePathOption sourcesPathOption;
 
 		public Integer call(){
-			System.out.println( "dummy command" );
+			System.out.println( "amend called" );
 			try{
 				Collection< File > sourceFiles = sourcesPathOption.getPaths( true ).stream()
 						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
