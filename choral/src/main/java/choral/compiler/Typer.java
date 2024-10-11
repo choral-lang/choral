@@ -896,7 +896,6 @@ public class Typer {
 		public SourceVisitor( TaskQueue taskQueue, Universe universe, boolean relaxed ) {
 			super( taskQueue, universe );
 			this.relaxed = relaxed;
-
 		}
 
 		private boolean relaxed;

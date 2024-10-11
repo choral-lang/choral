@@ -256,7 +256,19 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 	static class Amend extends ChoralCommand implements Callable< Integer >{
 		
 		@Mixin
+		EmissionOptions emissionOptions;
+
+		@Mixin
+		PathOption.HeadersPathOption headersPathOption;
+
+		@Mixin
 		PathOption.SourcePathOption sourcesPathOption;
+
+		@Parameters( index = "0", arity = "1" )
+		String symbol;
+
+		@Parameters( index = "1..*", arity = "0..*" )
+		List< String > worlds;
 
 		public Integer call(){
 			System.out.println( "amend called" );
@@ -273,7 +285,19 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						.collect( Collectors.toList() );
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
-				
+				Collection< CompilationUnit > headerUnits = Stream.concat(
+							HeaderLoader.loadStandardProfile(),
+							HeaderLoader.loadFromPath(
+									headersPathOption.getPaths(),
+									sourceFiles,
+									true, true )
+					)
+					.collect( Collectors.toList() );
+				AtomicReference< Collection< CompilationUnit > > annotatedUnits = new AtomicReference<>();
+				profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( sourceUnits,
+							headerUnits, true ) ) );
+
+						
 			} catch( Exception e ){
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
 				System.out.println( "compilation failed." );
