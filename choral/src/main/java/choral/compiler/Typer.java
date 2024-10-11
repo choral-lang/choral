@@ -56,14 +56,23 @@ public class Typer {
 	}
 
 	public static Collection< CompilationUnit > annotate(
-			Collection< CompilationUnit > sourceUnits, Collection< CompilationUnit > headerUnits
+		Collection< CompilationUnit > sourceUnits, 
+		Collection< CompilationUnit > headerUnits 
+		){
+			return annotate(sourceUnits, headerUnits, false);
+		}
+
+	public static Collection< CompilationUnit > annotate(
+			Collection< CompilationUnit > sourceUnits, 
+			Collection< CompilationUnit > headerUnits, 
+			boolean relaxed
 	) {
 		TaskQueue taskQueue = new TaskQueue();
 		Universe universe = new Universe();
 		Visitor headerVisitor = new HeaderVisitor( taskQueue, universe );
 		headerUnits.forEach( cu -> taskQueue.enqueue( Phase.TYPE_SYMBOL_DECLARATIONS,
 				() -> headerVisitor.visit( cu ) ) );
-		Visitor sourceVisitor = new SourceVisitor( taskQueue, universe );
+		Visitor sourceVisitor = new SourceVisitor( taskQueue, universe, relaxed );
 		sourceUnits.forEach( cu -> taskQueue.enqueue( Phase.TYPE_SYMBOL_DECLARATIONS,
 				() -> sourceVisitor.visit( cu ) ) );
 		taskQueue.process();
@@ -884,9 +893,13 @@ public class Typer {
 
 	private static class SourceVisitor
 			extends Visitor {
-		public SourceVisitor( TaskQueue taskQueue, Universe universe ) {
+		public SourceVisitor( TaskQueue taskQueue, Universe universe, boolean relaxed ) {
 			super( taskQueue, universe );
+			this.relaxed = relaxed;
+
 		}
+
+		private boolean relaxed;
 
 		@Override
 		protected void visitImportDeclarations( Scope scope, List< ImportDeclaration > imports ) {
@@ -953,9 +966,17 @@ public class Typer {
 					throw new StaticVerificationException(
 							"non-abstract methods must have bodies" );
 				} else {
-					boolean returnChecked = new Check( bodyScope,
+					boolean returnChecked;
+					if( relaxed ){
+						returnChecked = new RelaxedCheck( bodyScope,
 							callable.innerCallable().returnType() )
 							.visit( body );
+					}
+					else{
+						returnChecked = new Check( bodyScope,
+							callable.innerCallable().returnType() )
+							.visit( body );
+					}
 					if( !callable.innerCallable().returnType().isVoid() && !returnChecked ) {
 						throw new AstPositionedException( body.position(),
 								new StaticVerificationException( "missing return statement" ) );
@@ -1028,7 +1049,10 @@ public class Typer {
 				dependencies.put( callable, selected.higherCallable() );
 				positions.put( callable, n.position() );
 			}
-			new Check( scope, universe().voidType() ).visit( d.blockStatements() );
+			if( relaxed )
+				new RelaxedCheck( scope, universe().voidType() ).visit( d.blockStatements() );
+			else
+				new Check( scope, universe().voidType() ).visit( d.blockStatements() );
 		}
 
 		private List< ? extends Member.GroundCallable > findMostSpecificCallable(
@@ -1128,13 +1152,19 @@ public class Typer {
 		}
 
 		GroundDataTypeOrVoid synth( VariableDeclarationScope scope, Expression n ) {
-			return new Synth( scope ).visit( n );
+			if( relaxed )
+				return new RelaxedSynth( scope ).visit( n );
+			else
+				return new Synth( scope ).visit( n );
 		}
 
 		GroundDataTypeOrVoid synth(
 				VariableDeclarationScope scope, Expression n, boolean explicitConstructorArg
 		) {
-			return new Synth( scope, explicitConstructorArg ).visit( n );
+			if( relaxed )
+				return new RelaxedSynth( scope, explicitConstructorArg ).visit( n );	
+			else
+				return new Synth( scope, explicitConstructorArg ).visit( n );
 		}
 
 		GroundDataType assertNotVoid( GroundDataTypeOrVoid t, Position position ) {
