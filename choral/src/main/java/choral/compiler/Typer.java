@@ -1362,6 +1362,225 @@ public class Typer {
 				return returnChecked;
 			}
 		}
+		
+		/**
+		 * A relaxed version of Check. Doesn't throw exceptions on data location mismatch.
+		 */
+		private final class RelaxedCheck extends AbstractChoralVisitor< Boolean > {
+			private VariableDeclarationScope scope;
+
+			private final GroundDataTypeOrVoid expected;
+
+			public RelaxedCheck( VariableDeclarationScope scope, GroundDataTypeOrVoid expected ) {
+				this.scope = scope;
+				this.expected = expected;
+			}
+
+			private boolean visitAsInBlock( Statement n ) {
+				// visit n as if { n }
+				openBlock();
+				boolean returnChecked = visit( n );
+				closeBlock();
+				return returnChecked;
+			}
+
+			private void openBlock() {
+				scope = scope.newBlockScope();
+			}
+
+			private void closeBlock() {
+				scope = (VariableDeclarationScope) scope.parent();
+			}
+
+			@Override
+			public Boolean visit( Statement n ) {
+				return n.accept( this );
+			}
+
+			@Override
+			public Boolean visit( BlockStatement n ) {
+				boolean returnChecked = visitAsInBlock( n.enclosedStatement() );
+				return assertReachableContinuation( n, returnChecked );
+			}
+
+			@Override
+			public Boolean visit( ExpressionStatement n ) {
+				synth( scope, n.expression() );
+				return assertReachableContinuation( n, false );
+			}
+
+			@Override
+			public Boolean visit( IfStatement n ) {
+				GroundDataTypeOrVoid type = synth( scope, n.condition() );
+				if( type.primitiveTypeTag() != PrimitiveTypeTag.BOOLEAN &&
+						type.specialTypeTag() != SpecialTypeTag.BOOLEAN ) {
+					throw new AstPositionedException( n.condition().position(),
+							new StaticVerificationException( "required an instance of type '"
+									+ PrimitiveTypeTag.BOOLEAN
+									+ "', found '" + type + "'" ) );
+				}
+				boolean returnChecked = visitAsInBlock( n.ifBranch() );
+				returnChecked &= visitAsInBlock( n.elseBranch() );
+				return assertReachableContinuation( n, returnChecked );
+			}
+
+			private /* static */ final EnumSet< PrimitiveTypeTag > legalSwitchPrimitiveTypes = EnumSet.of(
+					PrimitiveTypeTag.CHAR, PrimitiveTypeTag.BYTE, PrimitiveTypeTag.SHORT,
+					PrimitiveTypeTag.INT );
+
+			private /* static */ final EnumSet< SpecialTypeTag > legalSwitchSpecialTypes = EnumSet.of(
+					SpecialTypeTag.BYTE, SpecialTypeTag.SHORT, SpecialTypeTag.INTEGER,
+					SpecialTypeTag.STRING );
+
+			@Override
+			public Boolean visit( SwitchStatement n ) {
+				GroundDataTypeOrVoid g = synth( scope, n.guard() );
+				if( !legalSwitchPrimitiveTypes.contains( g.primitiveTypeTag() )
+						&& !legalSwitchSpecialTypes.contains( g.specialTypeTag() )
+						&& !g.isEnum() ) {
+					throw new AstPositionedException( n.guard().position(),
+							new StaticVerificationException( "incompatible types, found '" + g
+									+ "', required an instance of '" + PrimitiveTypeTag.CHAR
+									+ "', '" + PrimitiveTypeTag.BYTE
+									+ "', '" + PrimitiveTypeTag.SHORT
+									+ "', '" + PrimitiveTypeTag.INT
+									+ "', '" + SpecialTypeTag.BYTE
+									+ "', '" + SpecialTypeTag.SHORT
+									+ "', '" + SpecialTypeTag.INTEGER
+									+ "', '" + SpecialTypeTag.STRING
+									+ "', or an enum type" ) );
+				}
+				boolean returnChecked = true;
+				boolean hasDefault = false;
+				List< String > casesFound = new ArrayList<>( n.cases().size() );
+				for( Map.Entry< SwitchArgument< ? >, Statement > e : n.cases().entrySet() ) {
+					if( e.getKey() instanceof SwitchArgument.SwitchArgumentLabel ) {
+						SwitchArgument.SwitchArgumentLabel l = (SwitchArgument.SwitchArgumentLabel) e.getKey();
+						if( g.isEnum() ) {
+							GroundEnum ge = (GroundEnum) g;
+							String id = l.argument().identifier();
+							if( ge.field( id ).isEmpty() ) {
+								throw new AstPositionedException( l.argument().position(),
+										new UnresolvedSymbolException( id ) );
+							} else {
+								if( casesFound.contains( id ) ) {
+									throw new AstPositionedException( l.argument().position(),
+											new StaticVerificationException(
+													"duplicate case '" + id + "'" ) );
+								} else {
+									casesFound.add( id );
+								}
+							}
+						} else {
+							throw new AstPositionedException( l.argument().position(),
+									new StaticVerificationException(
+											"required a literal of type '" + g + "', found a label" ) );
+						}
+					} else if( e.getKey() instanceof SwitchArgument.SwitchArgumentLiteral ) {
+						SwitchArgument.SwitchArgumentLiteral l = (SwitchArgument.SwitchArgumentLiteral) e.getKey();
+						GroundDataTypeOrVoid a = synth( scope, l.argument() );
+						String s = l.argument().content().toString();
+						if( !a.isAssignableTo( g ) ) {
+							throw new AstPositionedException( l.position(),
+									new StaticVerificationException( "required type '" + g
+											+ "', found '" + g + "'" ) );
+						}
+						if( casesFound.contains( s ) ) {
+							throw StaticVerificationException.of(
+									"duplicate case '" + s + "'",
+									l.argument().position() );
+						} else {
+							casesFound.add( s );
+						}
+					} else {
+						hasDefault = true;
+					}
+					returnChecked &= visitAsInBlock( e.getValue() );
+				}
+				returnChecked &= hasDefault;
+				return assertReachableContinuation( n, returnChecked );
+			}
+
+			@Override
+			public Boolean visit( TryCatchStatement n ) {
+				boolean returnChecked = visitAsInBlock( n.body() );
+				for( Pair< VariableDeclaration, Statement > c : n.catches() ) {
+					GroundDataType te = visitGroundDataTypeExpression( scope, c.left().type(),
+							false );
+					if( te.worldArguments().size() > 1 || !te.isSubtypeOf(
+							universe().specialType( SpecialTypeTag.EXCEPTION ).applyTo(
+									te.worldArguments() ) )
+					) {
+						throw new AstPositionedException( c.left().type().position(),
+								new StaticVerificationException( "required an instance of type '"
+										+ SpecialTypeTag.EXCEPTION
+										+ "', found '" + te + "'" ) );
+					}
+					openBlock();  // ---
+					try {
+						scope.declareVariable( c.left().name().identifier(), te );
+					} catch( StaticVerificationException e ) {
+						throw new AstPositionedException( c.left().name().position(), e );
+					}
+					returnChecked &= visit( c.right() );
+					closeBlock(); // ---
+				}
+				return assertReachableContinuation( n, returnChecked );
+			}
+
+			@Override
+			public Boolean visit( NilStatement n ) {
+				return false;
+			}
+
+			@Override
+			public Boolean visit( ReturnStatement n ) {
+				if( n.returnExpression() == null ) {
+					if( expected == universe().voidType() ) {
+						return assertReachableContinuation( n, true );
+					} else {
+						throw new AstPositionedException( n.position(),
+								new StaticVerificationException(
+										"missing return value" ) );
+					}
+				} else {
+					if( expected == universe().voidType() ) {
+						throw new AstPositionedException( n.returnExpression().position(),
+								new StaticVerificationException(
+										"cannot return a value from a method with 'void' result type" ) );
+					} else {
+						GroundDataTypeOrVoid found = synth( scope, n.returnExpression() );
+						if( !found.isAssignableTo( expected ) ) {
+							throw new AstPositionedException( n.position(),
+									new StaticVerificationException(
+											"required type '" + expected + "', found '" + found + "'" ) );
+						}
+						return assertReachableContinuation( n, true );
+					}
+				}
+			}
+
+			@Override
+			public Boolean visit( VariableDeclarationStatement n ) {
+				for( VariableDeclaration x : n.variables() ) {
+					GroundDataType type = visitGroundDataTypeExpression( scope, x.type(), false );
+					scope.declareVariable( x.name().identifier(), type );
+					x.initializer().ifPresent( e -> synth( scope, e ) );
+				}
+				return assertReachableContinuation( n, false );
+			}
+
+			public boolean assertReachableContinuation( Statement n, boolean returnChecked ) {
+				if( returnChecked && n.hasContinuation() ) {
+					throw StaticVerificationException.of(
+							"unreachable statement",
+							n.continuation().position() );
+				}
+				returnChecked |= visit( n.continuation() );
+				n.setReturnAnnotation( returnChecked );
+				return returnChecked;
+			}
+		}
 
 		private final class Synth extends AbstractChoralVisitor< GroundDataTypeOrVoid > {
 
@@ -1793,6 +2012,438 @@ public class Typer {
 
 		}
 
+		/**
+		 * A relaxed version of Synth. Doesn't throw exceptions on data location mismatch.
+		 */
+		private final class RelaxedSynth extends AbstractChoralVisitor< GroundDataTypeOrVoid > {
+
+			public RelaxedSynth( VariableDeclarationScope scope ) {
+				this( scope, false );
+			}
+
+			public RelaxedSynth( VariableDeclarationScope scope, boolean explicitConstructorArg ) {
+				this.scope = scope;
+				this.explicitConstructorArg = explicitConstructorArg;
+			}
+
+			private final VariableDeclarationScope scope;
+			private GroundDataTypeOrVoid left = null;
+			private boolean leftStatic = false;
+			private final boolean explicitConstructorArg;
+
+			@Override
+			public GroundDataTypeOrVoid visit( Expression n ) {
+				return n.accept( this );
+			}
+
+			@Override
+			public GroundDataTypeOrVoid visit( ScopedExpression n ) {
+				left = visit( n.scope() );
+				GroundDataTypeOrVoid right = visit( n.scopedExpression() );
+				left = null;
+				return annotate( n, right );
+			}
+
+			private GroundPrimitiveDataType assertUnbox(
+					GroundDataTypeOrVoid type, Position position
+			) {
+				GroundPrimitiveDataType result = unbox( type );
+				if( result == null ) {
+					throw new AstPositionedException( position,
+							new StaticVerificationException(
+									"primitive type expected, '" + type + "' cannot be converted" ) );
+				} else {
+					return result;
+				}
+			}
+
+			private GroundPrimitiveDataType unbox( GroundDataTypeOrVoid type ) {
+				if( type instanceof GroundPrimitiveDataType ) {
+					return (GroundPrimitiveDataType) type;
+				}
+				if( type instanceof GroundClass ) {
+					GroundClass c = (GroundClass) type;
+					for( PrimitiveTypeTag p : PrimitiveTypeTag.values() ) {
+						if( p.boxedType() == c.specialTypeTag() ) {
+							return universe().primitiveDataType( p ).applyTo( c.worldArguments() );
+						}
+					}
+				}
+				return null;
+			}
+
+			private GroundDataType visitBinaryOp(
+					BinaryExpression.Operator operator, GroundDataTypeOrVoid tvl,
+					GroundDataTypeOrVoid tvr,
+					Position position
+			) {
+				if( !tvl.isVoid() && !tvr.isVoid() ) {
+					GroundDataType tl = (GroundDataType) tvl;
+					GroundDataType tr = (GroundDataType) tvr;
+					if( tl.worldArguments().size() == 1 && tr.worldArguments().size() == 1
+							&& tl.worldArguments().equals( tr.worldArguments() ) ) {
+						GroundPrimitiveDataType pl = null;
+						GroundPrimitiveDataType pr = null;
+						switch( operator ) {
+							case PLUS: {
+								if( tl.specialTypeTag() == SpecialTypeTag.STRING
+										|| tr.specialTypeTag() == SpecialTypeTag.STRING
+										|| ( ( tl.specialTypeTag() == SpecialTypeTag.CHARACTER ||
+										tl.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) &&
+										( tr.specialTypeTag() == SpecialTypeTag.CHARACTER ||
+												tr.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) )
+								) {
+									return universe().specialType( SpecialTypeTag.STRING ).applyTo(
+											tl.worldArguments() );
+								}
+							}
+							case MINUS:
+							case MULTIPLY:
+							case DIVIDE:
+							case REMAINDER:
+								pl = assertUnbox( tl, position );
+								pr = assertUnbox( tr, position );
+								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
+									GroundPrimitiveDataType p = ( pl.primitiveTypeTag().compareTo(
+											pr.primitiveTypeTag() ) > 0 )
+											? pl
+											: pr;
+									if( p.primitiveTypeTag().compareTo(
+											PrimitiveTypeTag.INT ) < 0 ) {
+										// promote byte, char, short to int
+										p = universe().primitiveDataType(
+												PrimitiveTypeTag.INT ).applyTo(
+												tl.worldArguments() );
+									}
+									return p;
+								}
+								break;
+							case LESS:
+							case LESS_EQUALS:
+							case GREATER:
+							case GREATER_EQUALS:
+								pl = assertUnbox( tl, position );
+								pr = assertUnbox( tr, position );
+								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
+									return universe().primitiveDataType(
+											PrimitiveTypeTag.BOOLEAN ).applyTo(
+											tl.worldArguments() );
+								}
+								break;
+							case OR:
+							case AND:
+								pl = assertUnbox( tl, position );
+								pr = assertUnbox( tr, position );
+								if( pl.primitiveTypeTag().isIntegral() && pr.primitiveTypeTag().isIntegral() ) {
+									if( pl.primitiveTypeTag().compareTo(
+											pr.primitiveTypeTag() ) > 0 ) {
+										return pl;
+									} else {
+										return pr;
+									}
+								}
+							case SHORT_CIRCUITED_OR:
+							case SHORT_CIRCUITED_AND:
+								pl = ( pl == null ) ? assertUnbox( tl, position ) : pl;
+								pr = ( pr == null ) ? assertUnbox( tr, position ) : pr;
+								if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN
+										&& pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
+									return tl;
+								}
+								break;
+							case EQUALS:
+							case NOT_EQUALS:
+								if( ( tl instanceof GroundReferenceType && tr.isSubtypeOf( tl ) ) ||
+										( tr instanceof GroundReferenceType && tl.isSubtypeOf(
+												tr ) )
+								) {
+									return universe().primitiveDataType(
+											PrimitiveTypeTag.BOOLEAN ).applyTo(
+											tl.worldArguments() );
+								} else {
+									pl = assertUnbox( tl, position );
+									pr = assertUnbox( tr, position );
+									if( pl.primitiveTypeTag() == pr.primitiveTypeTag() ||
+											( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() )
+									) {
+										return universe().primitiveDataType(
+												PrimitiveTypeTag.BOOLEAN ).applyTo(
+												tl.worldArguments() );
+									}
+								}
+						}
+					}
+				}
+				throw new AstPositionedException( position,
+						new StaticVerificationException( "cannot apply '"
+								+ operator + "' to '" + tvl
+								+ "' and '" + tvr + "'" ) );
+			}
+
+			@Override
+			public GroundDataType visit( AssignExpression n ) {
+				GroundDataTypeOrVoid tvl = synth( scope, n.target(), explicitConstructorArg );
+				if( tvl.isVoid() ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException(
+									"expected assignable variable" ) );
+				}
+				GroundDataType tl = (GroundDataType) tvl;
+				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg );
+				if( tvr.isVoid() ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException(
+									"required type '" + tl + "', found '" + tvr + "'" ) );
+				}
+				GroundDataType tr = (GroundDataType) tvr;
+				if( n.operator().hasOperation() ) {
+					// tr might be promoted beyond tl
+					tr = visitBinaryOp( n.operator().operation(), tl, tr, n.position() );
+				}
+				if( !tr.isAssignableTo( tl ) ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException(
+									"required type '" + tl + "', found '" + tr + "'" ) );
+				}
+				return annotate( n, tl );
+			}
+
+			@Override
+			public GroundDataType visit( BinaryExpression n ) {
+				GroundDataTypeOrVoid tl = synth( scope, n.left(), explicitConstructorArg );
+				GroundDataTypeOrVoid tr = synth( scope, n.right(), explicitConstructorArg );
+				return annotate( n, visitBinaryOp( n.operator(), tl, tr, n.position() ) );
+			}
+
+			@Override
+			public GroundDataTypeOrVoid visit( EnclosedExpression n ) {
+				return synth( scope, n.nestedExpression(), explicitConstructorArg );
+			}
+
+			private boolean checkMemberAccess( Member m ) {
+				return ( !leftStatic || m.isStatic() ) && m.isAccessibleFrom( scope.lookupThis() );
+			}
+
+			@Override
+			public GroundDataType visit( FieldAccessExpression n ) {
+				String identifier = n.name().identifier();
+				Optional< ? extends GroundDataType > result = Optional.empty();
+				if( left == null ) {
+					result = scope.lookupVariable( identifier );
+					if( result.isEmpty() ) {
+						left = scope.lookupThis();
+						leftStatic = explicitConstructorArg;
+					}
+				}
+				if( left instanceof GroundReferenceType ) {
+					result = ( (GroundReferenceType) left ).field( identifier )
+							.filter( this::checkMemberAccess )
+							.map( Member.Field::type );
+				}
+				left = null;
+				leftStatic = false;
+				if( result.isEmpty() ) {
+					throw new AstPositionedException( n.position(),
+							new UnresolvedSymbolException( identifier ) );
+				} else {
+					return annotate( n, result.get() );
+				}
+			}
+
+			@Override
+			public GroundDataType visit( StaticAccessExpression n ) {
+				leftStatic = true;
+				TypeExpression m = n.typeExpression();
+				HigherReferenceType type = scope.assertLookupReferenceType( m.name().identifier() );
+				List< World > worldArgs = m.worldArguments().stream()
+						.map( x -> scope.lookupWorldParameter( x.name().identifier() ).orElseThrow(
+								() -> new AstPositionedException( x.position(),
+										new UnresolvedSymbolException( x.name().identifier() ) ) ) )
+						.collect( Collectors.toList() );
+				if( !m.typeArguments().isEmpty() ) {
+					throw new AstPositionedException( m.typeArguments().get( 0 ).position(),
+							new StaticVerificationException(
+									"unexpected type argument in static member access" ) );
+				}
+				GroundReferenceType g = type.applyTo( worldArgs );
+				annotate( n.typeExpression(), g );
+				return annotate( n, g );
+			}
+
+			@Override
+			public GroundDataType visit( ClassInstantiationExpression n ) {
+				GroundClass t = visitGroundClassExpression( scope, n.typeExpression(), false );
+				if( t.typeConstructor().isAbstract() ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException(
+									"'" + t + "' is abstract, cannot be instantiated" ) );
+				}
+				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
+						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
+						.collect( Collectors.toList() );
+				List< ? extends GroundDataType > args = n.arguments().stream()
+						.map( x -> assertNotVoid(
+								synth( scope, x, explicitConstructorArg ),
+								x.position() ) )
+						.collect( Collectors.toList() );
+				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
+						typeArgs,
+						args,
+						t.constructors().filter( this::checkMemberAccess )
+				);
+				if( ms.isEmpty() ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException( "cannot resolve constructor '" + t +
+									args.stream().map( Object::toString ).collect( Formatting
+											.joining( ",", "(", ")", "" ) )
+									+ "'" ) );
+				} else if( ms.size() > 1 ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException( "ambiguous constructor invocation, " +
+									ms.stream().map( x -> "'" + t +
+													x.signature().parameters().stream()
+															.map( y -> y.type().toString() )
+															.collect( Formatting.joining( ",", "(", ")",
+																	"" ) ) + "'" )
+											.collect( Collectors.collectingAndThen(
+													Collectors.toList(),
+													Formatting.joiningOxfordComma() ) ) ) );
+				}
+				Member.GroundConstructor selected = (Member.GroundConstructor) ms.get( 0 );
+				n.setConstructorAnnotation( selected );
+				leftStatic = false;
+				return t;
+			}
+
+			@Override
+			public GroundDataTypeOrVoid visit( MethodCallExpression n ) {
+				if( left == null ) {
+					left = scope.lookupThis();
+					leftStatic = explicitConstructorArg;
+				}
+				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
+						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
+						.collect( Collectors.toList() );
+				List< ? extends GroundDataType > args = n.arguments().stream()
+						.map( x -> assertNotVoid(
+								synth( scope, x, explicitConstructorArg ),
+								x.position() ) )
+						.collect( Collectors.toList() );
+				if( left instanceof GroundReferenceType ) {
+					GroundReferenceType t = (GroundReferenceType) left;
+					List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
+							typeArgs,
+							args,
+							t.methods( n.name().identifier() ).filter( this::checkMemberAccess )
+					);
+					if( ms.isEmpty() ) {
+						throw new AstPositionedException( n.position(),
+								new StaticVerificationException( "cannot resolve method '"
+										+ n.name().identifier()
+										+ args.stream().map( Object::toString ).collect( Formatting
+										.joining( ",", "(", ")", "" ) )
+										+ "' in '" + t + "'" ) );
+					} else if( ms.size() > 1 ) {
+						throw new AstPositionedException( n.position(),
+								new StaticVerificationException(
+										"ambiguous method invocation, " +
+												ms.stream().map( Member.GroundCallable::toString )
+														.collect( Collectors.collectingAndThen(
+																Collectors.toList(),
+																Formatting.joiningOxfordComma() ) ) ) );
+					}
+					Member.GroundMethod selected = (Member.GroundMethod) ms.get( 0 );
+					n.setMethodAnnotation( selected );
+					leftStatic = false;
+					return selected.returnType();
+				} else {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException( "cannot resolve method '"
+									+ n.name().identifier()
+									+ args.stream().map( Object::toString ).collect( Formatting
+									.joining( ",", "(", ")", "" ) )
+									+ "' in 'void'" ) );
+				}
+			}
+
+			@Override
+			public GroundDataType visit( NotExpression n ) {
+				GroundDataTypeOrVoid t = visit( n.expression() );
+				GroundPrimitiveDataType p = assertUnbox( t, n.expression().position() );
+				if( p.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
+					return annotate( n, p );
+				} else {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException( "cannot apply '!' to '" + t
+									+ "'" ) );
+				}
+			}
+
+			@Override
+			public GroundDataType visit( ThisExpression n ) {
+				if( explicitConstructorArg ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException(
+									"cannot reference 'this' before constructor has been called" ) );
+
+				}
+				return annotate( n, scope.lookupThis() );
+			}
+
+			@Override
+			public GroundDataType visit( SuperExpression n ) {
+				if( explicitConstructorArg ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException(
+									"cannot reference 'super' before supertype constructor has been called" ) );
+
+				}
+				return annotate( n, scope.lookupSuper() );
+			}
+
+			@Override
+			public GroundDataType visit( NullExpression n ) {
+				return annotate( n, universe().nullType( visitWorlds( n.worlds() ) ) );
+			}
+
+			public GroundDataType visit( LiteralExpression.BooleanLiteralExpression n ) {
+				return annotate( n, universe()
+						.primitiveDataType( PrimitiveTypeTag.BOOLEAN )
+						.applyTo( visitWorld( n.world() ) ) );
+			}
+
+			public GroundDataType visit( LiteralExpression.IntegerLiteralExpression n ) {
+				return annotate( n, universe()
+						.primitiveDataType( PrimitiveTypeTag.INT )
+						.applyTo( visitWorld( n.world() ) ) );
+			}
+
+			public GroundDataType visit( LiteralExpression.DoubleLiteralExpression n ) {
+				return annotate( n, universe()
+						.primitiveDataType( PrimitiveTypeTag.DOUBLE )
+						.applyTo( visitWorld( n.world() ) ) );
+			}
+
+			public GroundDataType visit( LiteralExpression.StringLiteralExpression n ) {
+				return annotate( n, universe()
+						.specialType( SpecialTypeTag.STRING )
+						.applyTo( List.of( visitWorld( n.world() ) ) ) );
+			}
+
+			@Override
+			public GroundDataType visit( TypeExpression n ) {
+				return annotate( n, visitGroundDataTypeExpression( scope, n, false ) );
+			}
+
+			public List< ? extends World > visitWorlds( List< WorldArgument > n ) {
+				return n.stream().map( this::visitWorld ).collect( Collectors.toList() );
+			}
+
+			public World visitWorld( WorldArgument n ) {
+				return annotate( n, scope.assertLookupWorldParameter( n.name() ) );
+			}
+
+		}
 	}
 
 	private interface Scope {
