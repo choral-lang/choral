@@ -32,8 +32,8 @@ import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.StaticVerificationException;
-import choral.types.Package;
 import choral.types.*;
+import choral.types.Package; // to avoid ambigous reference to "Package"
 import choral.types.Universe.PrimitiveTypeTag;
 import choral.types.Universe.SpecialTypeTag;
 import choral.utils.Formatting;
@@ -1434,8 +1434,7 @@ public class Typer {
 
 			@Override
 			public Boolean visit( ExpressionStatement n ) {
-				synth( scope, n.expression() );
-				return assertReachableContinuation( n, false );
+				throw new UnsupportedOperationException("Expression statements not allowed");
 			}
 
 			@Override
@@ -1463,98 +1462,12 @@ public class Typer {
 
 			@Override
 			public Boolean visit( SwitchStatement n ) {
-				GroundDataTypeOrVoid g = synth( scope, n.guard() );
-				if( !legalSwitchPrimitiveTypes.contains( g.primitiveTypeTag() )
-						&& !legalSwitchSpecialTypes.contains( g.specialTypeTag() )
-						&& !g.isEnum() ) {
-					throw new AstPositionedException( n.guard().position(),
-							new StaticVerificationException( "incompatible types, found '" + g
-									+ "', required an instance of '" + PrimitiveTypeTag.CHAR
-									+ "', '" + PrimitiveTypeTag.BYTE
-									+ "', '" + PrimitiveTypeTag.SHORT
-									+ "', '" + PrimitiveTypeTag.INT
-									+ "', '" + SpecialTypeTag.BYTE
-									+ "', '" + SpecialTypeTag.SHORT
-									+ "', '" + SpecialTypeTag.INTEGER
-									+ "', '" + SpecialTypeTag.STRING
-									+ "', or an enum type" ) );
-				}
-				boolean returnChecked = true;
-				boolean hasDefault = false;
-				List< String > casesFound = new ArrayList<>( n.cases().size() );
-				for( Map.Entry< SwitchArgument< ? >, Statement > e : n.cases().entrySet() ) {
-					if( e.getKey() instanceof SwitchArgument.SwitchArgumentLabel ) {
-						SwitchArgument.SwitchArgumentLabel l = (SwitchArgument.SwitchArgumentLabel) e.getKey();
-						if( g.isEnum() ) {
-							GroundEnum ge = (GroundEnum) g;
-							String id = l.argument().identifier();
-							if( ge.field( id ).isEmpty() ) {
-								throw new AstPositionedException( l.argument().position(),
-										new UnresolvedSymbolException( id ) );
-							} else {
-								if( casesFound.contains( id ) ) {
-									throw new AstPositionedException( l.argument().position(),
-											new StaticVerificationException(
-													"duplicate case '" + id + "'" ) );
-								} else {
-									casesFound.add( id );
-								}
-							}
-						} else {
-							throw new AstPositionedException( l.argument().position(),
-									new StaticVerificationException(
-											"required a literal of type '" + g + "', found a label" ) );
-						}
-					} else if( e.getKey() instanceof SwitchArgument.SwitchArgumentLiteral ) {
-						SwitchArgument.SwitchArgumentLiteral l = (SwitchArgument.SwitchArgumentLiteral) e.getKey();
-						GroundDataTypeOrVoid a = synth( scope, l.argument() );
-						String s = l.argument().content().toString();
-						if( !a.isAssignableTo( g ) ) {
-							throw new AstPositionedException( l.position(),
-									new StaticVerificationException( "required type '" + g
-											+ "', found '" + g + "'" ) );
-						}
-						if( casesFound.contains( s ) ) {
-							throw StaticVerificationException.of(
-									"duplicate case '" + s + "'",
-									l.argument().position() );
-						} else {
-							casesFound.add( s );
-						}
-					} else {
-						hasDefault = true;
-					}
-					returnChecked &= visitAsInBlock( e.getValue() );
-				}
-				returnChecked &= hasDefault;
-				return assertReachableContinuation( n, returnChecked );
+				throw new UnsupportedOperationException("Switch statements not allowed");
 			}
 
 			@Override
 			public Boolean visit( TryCatchStatement n ) {
-				boolean returnChecked = visitAsInBlock( n.body() );
-				for( Pair< VariableDeclaration, Statement > c : n.catches() ) {
-					GroundDataType te = visitGroundDataTypeExpression( scope, c.left().type(),
-							false );
-					if( te.worldArguments().size() > 1 || !te.isSubtypeOf(
-							universe().specialType( SpecialTypeTag.EXCEPTION ).applyTo(
-									te.worldArguments() ) )
-					) {
-						throw new AstPositionedException( c.left().type().position(),
-								new StaticVerificationException( "required an instance of type '"
-										+ SpecialTypeTag.EXCEPTION
-										+ "', found '" + te + "'" ) );
-					}
-					openBlock();  // ---
-					try {
-						scope.declareVariable( c.left().name().identifier(), te );
-					} catch( StaticVerificationException e ) {
-						throw new AstPositionedException( c.left().name().position(), e );
-					}
-					returnChecked &= visit( c.right() );
-					closeBlock(); // ---
-				}
-				return assertReachableContinuation( n, returnChecked );
+				throw new UnsupportedOperationException("Try-catch statements not allowed");
 			}
 
 			@Override
@@ -1564,29 +1477,7 @@ public class Typer {
 
 			@Override
 			public Boolean visit( ReturnStatement n ) {
-				if( n.returnExpression() == null ) {
-					if( expected == universe().voidType() ) {
-						return assertReachableContinuation( n, true );
-					} else {
-						throw new AstPositionedException( n.position(),
-								new StaticVerificationException(
-										"missing return value" ) );
-					}
-				} else {
-					if( expected == universe().voidType() ) {
-						throw new AstPositionedException( n.returnExpression().position(),
-								new StaticVerificationException(
-										"cannot return a value from a method with 'void' result type" ) );
-					} else {
-						GroundDataTypeOrVoid found = synth( scope, n.returnExpression() );
-						if( !found.isAssignableTo( expected ) ) {
-							throw new AstPositionedException( n.position(),
-									new StaticVerificationException(
-											"required type '" + expected + "', found '" + found + "'" ) );
-						}
-						return assertReachableContinuation( n, true );
-					}
-				}
+				throw new UnsupportedOperationException("Expression statements not allowed");
 			}
 
 			@Override
