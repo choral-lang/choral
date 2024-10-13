@@ -1434,7 +1434,8 @@ public class Typer {
 
 			@Override
 			public Boolean visit( ExpressionStatement n ) {
-				throw new UnsupportedOperationException("Expression statements not allowed");
+				synth( scope, n.expression() );
+				return assertReachableContinuation( n, false );
 			}
 
 			@Override
@@ -1462,12 +1463,12 @@ public class Typer {
 
 			@Override
 			public Boolean visit( SwitchStatement n ) {
-				throw new UnsupportedOperationException("Switch statements not allowed");
+				throw new UnsupportedOperationException("Switch statements not allowed\n\tStatement at " + n.position().toString());
 			}
 
 			@Override
 			public Boolean visit( TryCatchStatement n ) {
-				throw new UnsupportedOperationException("Try-catch statements not allowed");
+				throw new UnsupportedOperationException("Try-catch statements not allowed\n\tStatement at " + n.position().toString());
 			}
 
 			@Override
@@ -1477,7 +1478,7 @@ public class Typer {
 
 			@Override
 			public Boolean visit( ReturnStatement n ) {
-				throw new UnsupportedOperationException("Expression statements not allowed");
+				throw new UnsupportedOperationException("Return statements not allowed\n\tStatement at " + n.position().toString());
 			}
 
 			@Override
