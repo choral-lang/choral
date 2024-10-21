@@ -273,6 +273,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		public Integer call(){
 			System.out.println( "amend called" );
 			try{
+				System.out.println("Collecting sourcefiles");
 				Collection< File > sourceFiles = sourcesPathOption.getPaths( true ).stream()
 						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
 							if( Files.isDirectory( q ) ) return false;
@@ -283,8 +284,10 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						}, FileVisitOption.FOLLOW_LINKS ) ) )
 						.map( Path::toFile )
 						.collect( Collectors.toList() );
+				System.out.println("Creating sourceunits");
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
+				System.out.println("Creating headerunits");
 				Collection< CompilationUnit > headerUnits = Stream.concat(
 							HeaderLoader.loadStandardProfile(),
 							HeaderLoader.loadFromPath(
@@ -294,8 +297,9 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 					)
 					.collect( Collectors.toList() );
 				AtomicReference< Collection< CompilationUnit > > annotatedUnits = new AtomicReference<>();
-				profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( sourceUnits,
-							headerUnits, true ) ) );
+				System.out.println("typechecking");
+				profilerLog( "typechecking", () -> annotatedUnits.set( choral.compiler.amend.RelaxedTyper.annotate( sourceUnits,
+							headerUnits) ) );
 
 						
 			} catch( Exception e ){
