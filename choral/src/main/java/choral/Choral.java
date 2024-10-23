@@ -284,9 +284,12 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						}, FileVisitOption.FOLLOW_LINKS ) ) )
 						.map( Path::toFile )
 						.collect( Collectors.toList() );
+
 				System.out.println("Creating sourceunits");
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
+				printSourceUnits(sourceUnits);
+
 				System.out.println("Creating headerunits");
 				Collection< CompilationUnit > headerUnits = Stream.concat(
 							HeaderLoader.loadStandardProfile(),
@@ -297,10 +300,11 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 					)
 					.collect( Collectors.toList() );
 				AtomicReference< Collection< CompilationUnit > > annotatedUnits = new AtomicReference<>();
+				// printHeaderUnits(headerUnits);
+
 				System.out.println("typechecking");
 				profilerLog( "typechecking", () -> annotatedUnits.set( choral.compiler.amend.RelaxedTyper.annotate( sourceUnits,
 							headerUnits) ) );
-
 						
 			} catch( Exception e ){
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
@@ -309,6 +313,55 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 			}
 			return 0;
 		}
+	}
+
+	private static void printSourceUnits( Collection< CompilationUnit > sourceUnits ){
+		System.out.println( "Source units: " );
+		printCompilationUnits(sourceUnits);
+	}
+
+	private static void printHeaderUnits( Collection< CompilationUnit > headerUnits ){
+		System.out.println( "Header units: " );
+		printCompilationUnits(headerUnits);
+	}
+
+	private static void printCompilationUnits( Collection< CompilationUnit > compilationUnits ){
+		compilationUnits.stream().forEach( compilationUnit -> {
+			String string = "\u001B[34mPrimaty type:\u001B[0m " + compilationUnit.primaryType() + " at " + compilationUnit.position();
+			printWithIndentation(string, 1);
+			string = "\u001B[34mPackage:\u001B[0m " + (compilationUnit.packageDeclaration().isPresent()?compilationUnit.packageDeclaration().get():"None");
+			printWithIndentation(string, 2);
+			string = "\u001B[34mImports:\u001B[0m " + compilationUnit.imports().stream().map( im -> im.name() ).collect( Collectors.toList() );
+			printWithIndentation(string, 2);
+			string = "\u001B[34mInterfaces:\u001B[0m " + compilationUnit.interfaces().stream().map( in -> in.name() ).collect( Collectors.toList() );
+			printWithIndentation(string, 2);
+			string = "\u001B[34mClasses:\u001B[0m " + compilationUnit.classes().stream().map( cl -> cl.name() ).collect( Collectors.toList() );
+			printWithIndentation(string, 2);
+			string = "\u001B[34mEnums:\u001B[0m " + compilationUnit.enums().stream().map( en -> en.name() ).collect( Collectors.toList() );
+			printWithIndentation(string, 2);
+		} );
+	}
+
+	private static void printWithIndentation(String string, int indentation){
+		printWithIndentation(string, "    ".repeat(indentation), 120);
+	}
+
+	private static void printWithIndentation(String string, String indentation, int maxwidth){
+		String[] words = string.split( " " );
+		StringBuilder line = new StringBuilder( indentation );
+
+		for( String word : words ){
+			if( line.length() + word.length() >= maxwidth ){
+				System.out.println( line.toString() );
+				line = new StringBuilder( indentation + "    " );
+			}
+			line.append( " " + word );
+		}
+		if( line.length() > 0 ){
+			System.out.println( line.toString() );
+		}
+
+
 	}
 
 	private static void printNiceErrorMessage(

@@ -1467,7 +1467,6 @@ public class RelaxedTyper {
 				if( n.operator().hasOperation() ) {
 					// tr might be promoted beyond tl
 					tr = visitBinaryOp( n.operator().operation(), tl, tr, n.position() );
-					System.out.println( "VisitBinaryOp result:  prim:" + tr.primitiveTypeTag() + " spec:" + tr.specialTypeTag() );
 				}
 				if( !tr.isAssignableTo_relaxed( tl ) ) {
 					throw new AstPositionedException( n.position(),
