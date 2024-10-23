@@ -12,9 +12,12 @@ RUN apk add unzip
 RUN unzip choral.zip 
 
 # Move libraries and launcher to designated directories
-FROM amazoncorretto:23
-COPY --from=unzipper /tmp/choral/dist/ /usr/local/lib/choral/
-COPY --from=unzipper /tmp/choral/launchers/ /usr/local/bin/
-COPY --from=build /choral/dist/target/choral-standalone.jar /usr/local/lib/choral/
+FROM amazoncorretto:23-alpine
+ARG CHORAL_LAUNCHER=/usr/local/bin
+ARG CHORAL_HOME=/usr/local/lib/choral
+COPY --from=unzipper /tmp/choral/dist/ $CHORAL_HOME
+COPY --from=unzipper /tmp/choral/launchers/ $CHORAL_LAUNCHER
+COPY --from=build /choral/dist/target/choral-standalone.jar $CHORAL_HOME
 RUN chmod +x /usr/local/bin/choral
-ENV CHORAL_HOME=/usr/local/lib/choral
+# Persisting the path variable for choral's libraries
+ENV CHORAL_HOME=$CHORAL_HOME
