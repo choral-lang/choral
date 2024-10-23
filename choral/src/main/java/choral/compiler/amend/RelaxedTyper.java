@@ -1341,99 +1341,104 @@ public class RelaxedTyper {
 				if( !tvl.isVoid() && !tvr.isVoid() ) {
 					GroundDataType tl = (GroundDataType) tvl;
 					GroundDataType tr = (GroundDataType) tvr;
-					if( tl.worldArguments().size() == 1 && tr.worldArguments().size() == 1
-							&& tl.worldArguments().equals( tr.worldArguments() ) ) {
-						GroundPrimitiveDataType pl = null;
-						GroundPrimitiveDataType pr = null;
-						switch( operator ) {
-							case PLUS: {
-								if( tl.specialTypeTag() == SpecialTypeTag.STRING
-										|| tr.specialTypeTag() == SpecialTypeTag.STRING
-										|| ( ( tl.specialTypeTag() == SpecialTypeTag.CHARACTER ||
-										tl.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) &&
-										( tr.specialTypeTag() == SpecialTypeTag.CHARACTER ||
-												tr.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) )
+					if( !(tl.worldArguments().size() == 1 && tr.worldArguments().size() == 1
+							&& tl.worldArguments().equals( tr.worldArguments()) ) ) {
+						System.out.println( "These arguments are not located at the same role" );
+						System.out.println( "\t" + tvl.toString() + " and " + tvr.toString() );
+						System.out.println( "\tLocated at " + position.formattedPosition() );
+					}
+					GroundPrimitiveDataType pl = null;
+					GroundPrimitiveDataType pr = null;
+					switch( operator ) {
+						case PLUS: {
+
+							if( tl.specialTypeTag() == SpecialTypeTag.STRING
+									|| tr.specialTypeTag() == SpecialTypeTag.STRING
+									|| ( ( tl.specialTypeTag() == SpecialTypeTag.CHARACTER ||
+									tl.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) &&
+									( tr.specialTypeTag() == SpecialTypeTag.CHARACTER ||
+											tr.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) )
+							) {
+								return universe().specialType( SpecialTypeTag.STRING ).applyTo(
+										tl.worldArguments() );
+							}
+						}
+						case MINUS:
+						case MULTIPLY:
+						case DIVIDE:
+						case REMAINDER:
+							pl = assertUnbox( tl, position );
+							pr = assertUnbox( tr, position );
+							if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
+								GroundPrimitiveDataType p = ( pl.primitiveTypeTag().compareTo(
+										pr.primitiveTypeTag() ) > 0 )
+										? pl
+										: pr;
+								if( p.primitiveTypeTag().compareTo(
+										PrimitiveTypeTag.INT ) < 0 ) {
+									// promote byte, char, short to int
+									p = universe().primitiveDataType(
+											PrimitiveTypeTag.INT ).applyTo(
+											tl.worldArguments() );
+								}
+								return p;
+							}
+							break;
+						case LESS:
+						case LESS_EQUALS:
+						case GREATER:
+						case GREATER_EQUALS:
+							pl = assertUnbox( tl, position );
+							pr = assertUnbox( tr, position );
+							if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
+								return universe().primitiveDataType(
+										PrimitiveTypeTag.BOOLEAN ).applyTo(
+										tl.worldArguments() );
+							}
+							break;
+						case OR:
+						case AND:
+							pl = assertUnbox( tl, position );
+							pr = assertUnbox( tr, position );
+							if( pl.primitiveTypeTag().isIntegral() && pr.primitiveTypeTag().isIntegral() ) {
+								if( pl.primitiveTypeTag().compareTo(
+										pr.primitiveTypeTag() ) > 0 ) {
+									return pl;
+								} else {
+									return pr;
+								}
+							}
+						case SHORT_CIRCUITED_OR:
+						case SHORT_CIRCUITED_AND:
+							pl = ( pl == null ) ? assertUnbox( tl, position ) : pl;
+							pr = ( pr == null ) ? assertUnbox( tr, position ) : pr;
+							if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN
+									&& pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
+								return tl;
+							}
+							break;
+						case EQUALS:
+						case NOT_EQUALS:
+							if( ( tl instanceof GroundReferenceType && tr.isSubtypeOf( tl ) ) ||
+									( tr instanceof GroundReferenceType && tl.isSubtypeOf(
+											tr ) )
+							) {
+								return universe().primitiveDataType(
+										PrimitiveTypeTag.BOOLEAN ).applyTo(
+										tl.worldArguments() );
+							} else {
+								pl = assertUnbox( tl, position );
+								pr = assertUnbox( tr, position );
+								if( pl.primitiveTypeTag() == pr.primitiveTypeTag() ||
+										( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() )
 								) {
-									return universe().specialType( SpecialTypeTag.STRING ).applyTo(
+									return universe().primitiveDataType(
+											PrimitiveTypeTag.BOOLEAN ).applyTo(
 											tl.worldArguments() );
 								}
 							}
-							case MINUS:
-							case MULTIPLY:
-							case DIVIDE:
-							case REMAINDER:
-								pl = assertUnbox( tl, position );
-								pr = assertUnbox( tr, position );
-								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
-									GroundPrimitiveDataType p = ( pl.primitiveTypeTag().compareTo(
-											pr.primitiveTypeTag() ) > 0 )
-											? pl
-											: pr;
-									if( p.primitiveTypeTag().compareTo(
-											PrimitiveTypeTag.INT ) < 0 ) {
-										// promote byte, char, short to int
-										p = universe().primitiveDataType(
-												PrimitiveTypeTag.INT ).applyTo(
-												tl.worldArguments() );
-									}
-									return p;
-								}
-								break;
-							case LESS:
-							case LESS_EQUALS:
-							case GREATER:
-							case GREATER_EQUALS:
-								pl = assertUnbox( tl, position );
-								pr = assertUnbox( tr, position );
-								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
-									return universe().primitiveDataType(
-											PrimitiveTypeTag.BOOLEAN ).applyTo(
-											tl.worldArguments() );
-								}
-								break;
-							case OR:
-							case AND:
-								pl = assertUnbox( tl, position );
-								pr = assertUnbox( tr, position );
-								if( pl.primitiveTypeTag().isIntegral() && pr.primitiveTypeTag().isIntegral() ) {
-									if( pl.primitiveTypeTag().compareTo(
-											pr.primitiveTypeTag() ) > 0 ) {
-										return pl;
-									} else {
-										return pr;
-									}
-								}
-							case SHORT_CIRCUITED_OR:
-							case SHORT_CIRCUITED_AND:
-								pl = ( pl == null ) ? assertUnbox( tl, position ) : pl;
-								pr = ( pr == null ) ? assertUnbox( tr, position ) : pr;
-								if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN
-										&& pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
-									return tl;
-								}
-								break;
-							case EQUALS:
-							case NOT_EQUALS:
-								if( ( tl instanceof GroundReferenceType && tr.isSubtypeOf( tl ) ) ||
-										( tr instanceof GroundReferenceType && tl.isSubtypeOf(
-												tr ) )
-								) {
-									return universe().primitiveDataType(
-											PrimitiveTypeTag.BOOLEAN ).applyTo(
-											tl.worldArguments() );
-								} else {
-									pl = assertUnbox( tl, position );
-									pr = assertUnbox( tr, position );
-									if( pl.primitiveTypeTag() == pr.primitiveTypeTag() ||
-											( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() )
-									) {
-										return universe().primitiveDataType(
-												PrimitiveTypeTag.BOOLEAN ).applyTo(
-												tl.worldArguments() );
-									}
-								}
-						}
 					}
+					
 				}
 				throw new AstPositionedException( position,
 						new StaticVerificationException( "cannot apply '"
@@ -1457,6 +1462,9 @@ public class RelaxedTyper {
 									"required type '" + tl + "', found '" + tvr + "'" ) );
 				}
 				GroundDataType tr = (GroundDataType) tvr;
+				if( !tr.worldArguments().equals(tl.worldArguments()) )
+					System.out.println( "Not same worldarguments at " + n.position().formattedPosition() );
+					System.out.println( "\t" + tr.specialTypeTag() + " - " + tr.primitiveTypeTag() );
 				if( n.operator().hasOperation() ) {
 					// tr might be promoted beyond tl
 					tr = visitBinaryOp( n.operator().operation(), tl, tr, n.position() );
@@ -1478,7 +1486,7 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( EnclosedExpression n ) {
-				return synth( scope, n.nestedExpression(), explicitConstructorArg );
+				throw new UnsupportedOperationException("Enclosed expressions not allowed\n\tExpression at " + n.position().toString());
 			}
 
 			private boolean checkMemberAccess( Member m ) {
@@ -1514,158 +1522,37 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataType visit( StaticAccessExpression n ) {
-				leftStatic = true;
-				TypeExpression m = n.typeExpression();
-				HigherReferenceType type = scope.assertLookupReferenceType( m.name().identifier() );
-				List< World > worldArgs = m.worldArguments().stream()
-						.map( x -> scope.lookupWorldParameter( x.name().identifier() ).orElseThrow(
-								() -> new AstPositionedException( x.position(),
-										new UnresolvedSymbolException( x.name().identifier() ) ) ) )
-						.collect( Collectors.toList() );
-				if( !m.typeArguments().isEmpty() ) {
-					throw new AstPositionedException( m.typeArguments().get( 0 ).position(),
-							new StaticVerificationException(
-									"unexpected type argument in static member access" ) );
-				}
-				GroundReferenceType g = type.applyTo( worldArgs );
-				annotate( n.typeExpression(), g );
-				return annotate( n, g );
+				throw new UnsupportedOperationException("Static access expression not allowed\n\tExpression at " + n.position().toString());
 			}
 
 			@Override
 			public GroundDataType visit( ClassInstantiationExpression n ) {
-				GroundClass t = visitGroundClassExpression( scope, n.typeExpression(), false );
-				if( t.typeConstructor().isAbstract() ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException(
-									"'" + t + "' is abstract, cannot be instantiated" ) );
-				}
-				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
-						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
-						.collect( Collectors.toList() );
-				List< ? extends GroundDataType > args = n.arguments().stream()
-						.map( x -> assertNotVoid(
-								synth( scope, x, explicitConstructorArg ),
-								x.position() ) )
-						.collect( Collectors.toList() );
-				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
-						typeArgs,
-						args,
-						t.constructors().filter( this::checkMemberAccess )
-				);
-				if( ms.isEmpty() ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException( "cannot resolve constructor '" + t +
-									args.stream().map( Object::toString ).collect( Formatting
-											.joining( ",", "(", ")", "" ) )
-									+ "'" ) );
-				} else if( ms.size() > 1 ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException( "ambiguous constructor invocation, " +
-									ms.stream().map( x -> "'" + t +
-													x.signature().parameters().stream()
-															.map( y -> y.type().toString() )
-															.collect( Formatting.joining( ",", "(", ")",
-																	"" ) ) + "'" )
-											.collect( Collectors.collectingAndThen(
-													Collectors.toList(),
-													Formatting.joiningOxfordComma() ) ) ) );
-				}
-				Member.GroundConstructor selected = (Member.GroundConstructor) ms.get( 0 );
-				n.setConstructorAnnotation( selected );
-				leftStatic = false;
-				return t;
+				throw new UnsupportedOperationException("Class instantiation expression not allowed\n\tExpression at " + n.position().toString());
 			}
 
 			@Override
 			public GroundDataTypeOrVoid visit( MethodCallExpression n ) {
-				if( left == null ) {
-					left = scope.lookupThis();
-					leftStatic = explicitConstructorArg;
-				}
-				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
-						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
-						.collect( Collectors.toList() );
-				List< ? extends GroundDataType > args = n.arguments().stream()
-						.map( x -> assertNotVoid(
-								synth( scope, x, explicitConstructorArg ),
-								x.position() ) )
-						.collect( Collectors.toList() );
-				if( left instanceof GroundReferenceType ) {
-					GroundReferenceType t = (GroundReferenceType) left;
-					List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
-							typeArgs,
-							args,
-							t.methods( n.name().identifier() ).filter( this::checkMemberAccess )
-					);
-					if( ms.isEmpty() ) {
-						throw new AstPositionedException( n.position(),
-								new StaticVerificationException( "cannot resolve method '"
-										+ n.name().identifier()
-										+ args.stream().map( Object::toString ).collect( Formatting
-										.joining( ",", "(", ")", "" ) )
-										+ "' in '" + t + "'" ) );
-					} else if( ms.size() > 1 ) {
-						throw new AstPositionedException( n.position(),
-								new StaticVerificationException(
-										"ambiguous method invocation, " +
-												ms.stream().map( Member.GroundCallable::toString )
-														.collect( Collectors.collectingAndThen(
-																Collectors.toList(),
-																Formatting.joiningOxfordComma() ) ) ) );
-					}
-					Member.GroundMethod selected = (Member.GroundMethod) ms.get( 0 );
-					n.setMethodAnnotation( selected );
-					leftStatic = false;
-					return selected.returnType();
-				} else {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException( "cannot resolve method '"
-									+ n.name().identifier()
-									+ args.stream().map( Object::toString ).collect( Formatting
-									.joining( ",", "(", ")", "" ) )
-									+ "' in 'void'" ) );
-				}
+				throw new UnsupportedOperationException("Method call expression not allowed\n\tExpression at " + n.position().toString());
 			}
 
 			@Override
 			public GroundDataType visit( NotExpression n ) {
-				GroundDataTypeOrVoid t = visit( n.expression() );
-				GroundPrimitiveDataType p = assertUnbox( t, n.expression().position() );
-				if( p.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
-					return annotate( n, p );
-				} else {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException( "cannot apply '!' to '" + t
-									+ "'" ) );
-				}
+				throw new UnsupportedOperationException("Not expression not allowed\n\tExpression at " + n.position().toString());
 			}
 
 			@Override
 			public GroundDataType visit( ThisExpression n ) {
-				if( explicitConstructorArg ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException(
-									"cannot reference 'this' before constructor has been called" ) );
-
-				}
-				return annotate( n, scope.lookupThis() );
+				throw new UnsupportedOperationException("This expression not allowed\n\tExpression at " + n.position().toString());
 			}
 
 			@Override
 			public GroundDataType visit( SuperExpression n ) {
-				if( explicitConstructorArg ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException(
-									"cannot reference 'super' before supertype constructor has been called" ) );
-
-				}
-				return annotate( n, scope.lookupSuper() );
+				throw new UnsupportedOperationException("Super expression not allowed\n\tExpression at " + n.position().toString());
 			}
 
 			@Override
 			public GroundDataType visit( NullExpression n ) {
-				return annotate( n, universe().nullType( visitWorlds( n.worlds() ) ) );
+				throw new UnsupportedOperationException("Null expression not allowed\n\tExpression at " + n.position().toString());
 			}
 
 			public GroundDataType visit( LiteralExpression.BooleanLiteralExpression n ) {
@@ -1694,7 +1581,7 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataType visit( TypeExpression n ) {
-				return annotate( n, visitGroundDataTypeExpression( scope, n, false ) );
+				throw new UnsupportedOperationException("Type expression not allowed\n\tExpression at " + n.position().toString());
 			}
 
 			public List< ? extends World > visitWorlds( List< WorldArgument > n ) {
