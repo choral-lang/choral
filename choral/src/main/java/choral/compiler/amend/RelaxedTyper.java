@@ -955,8 +955,6 @@ public class RelaxedTyper {
 							"non-abstract methods must have bodies" );
 				} else {
 					boolean returnChecked;
-					/*System.out.println( "callable string: " + callable.toString() + 
-						(callable.sourceCode().isPresent()?" at " + callable.sourceCode().get().position().formattedPosition():"") );*/
 					returnChecked = new Check( bodyScope,
 						callable.innerCallable().returnType() )
 						.visit( body );
@@ -1141,6 +1139,13 @@ public class RelaxedTyper {
 			return new Synth( scope, explicitConstructorArg ).visit( n );
 		}
 
+		GroundDataTypeOrVoid synth(
+				VariableDeclarationScope scope, Expression n, 
+				boolean explicitConstructorArg, List< ? extends World > leftWorlds
+		) {
+			return new Synth( scope, explicitConstructorArg, leftWorlds ).visit( n );
+		}
+
 		GroundDataType assertNotVoid( GroundDataTypeOrVoid t, Position position ) {
 			if( t.isVoid() ) {
 				throw new AstPositionedException( position,
@@ -1161,16 +1166,6 @@ public class RelaxedTyper {
 			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected ) {
 				this.scope = scope;
 				this.expected = expected;
-				/*System.out.println( "RelaxedCheck called with expected: " + 
-					(expected.primitiveTypeTag()!=null?expected.primitiveTypeTag() + " - ":"") + 
-					(expected.specialTypeTag()!=null?expected.specialTypeTag() + " - ":"") + 
-					(expected.isVoid()?"void - ":"") + 
-					(expected.isPrimitive()?"primitive - ":"") + 
-					(expected.isTypeParameter()?"typeparameter - ":"") + 
-					(expected.isClass()?"class - ":"") + 
-					(expected.isInterface()?"interface - ":"") + 
-					(expected.isEnum()?"enum - ":"") + 
-					(expected.isHigherType()?"highertype - ":"") );*/
 			}
 
 			private boolean visitAsInBlock( Statement n ) {
@@ -1278,19 +1273,27 @@ public class RelaxedTyper {
 
 			public Synth( VariableDeclarationScope scope ) {
 				this( scope, false );
-				// System.out.println("RelaxedSynth called");
 			}
 
 			public Synth( VariableDeclarationScope scope, boolean explicitConstructorArg ) {
 				this.scope = scope;
 				this.explicitConstructorArg = explicitConstructorArg;
-				// System.out.println("RelaxedSynth called");
+			}
+
+			public Synth( 
+				VariableDeclarationScope scope, boolean explicitConstructorArg, 
+				List< ? extends World > leftWorlds 
+			) {
+				this.scope = scope;
+				this.explicitConstructorArg = explicitConstructorArg;
+				this.leftWorlds = leftWorlds;
 			}
 
 			private final VariableDeclarationScope scope;
 			private GroundDataTypeOrVoid left = null;
 			private boolean leftStatic = false;
 			private final boolean explicitConstructorArg;
+			List< ? extends World > leftWorlds = null;
 
 			@Override
 			public GroundDataTypeOrVoid visit( Expression n ) {
@@ -1343,15 +1346,12 @@ public class RelaxedTyper {
 					GroundDataType tr = (GroundDataType) tvr;
 					if( !(tl.worldArguments().size() == 1 && tr.worldArguments().size() == 1
 							&& tl.worldArguments().equals( tr.worldArguments()) ) ) {
-						System.out.println( "These arguments are not located at the same role" );
-						System.out.println( "\t" + tvl.toString() + " and " + tvr.toString() );
-						System.out.println( "\tLocated at " + position.formattedPosition() );
+						// Maybe nothing??
 					}
 					GroundPrimitiveDataType pl = null;
 					GroundPrimitiveDataType pr = null;
 					switch( operator ) {
 						case PLUS: {
-
 							if( tl.specialTypeTag() == SpecialTypeTag.STRING
 									|| tr.specialTypeTag() == SpecialTypeTag.STRING
 									|| ( ( tl.specialTypeTag() == SpecialTypeTag.CHARACTER ||
@@ -1455,21 +1455,21 @@ public class RelaxedTyper {
 									"expected assignable variable" ) );
 				}
 				GroundDataType tl = (GroundDataType) tvl;
-				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg );
+
+				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg, tl.worldArguments() );
 				if( tvr.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
 									"required type '" + tl + "', found '" + tvr + "'" ) );
 				}
 				GroundDataType tr = (GroundDataType) tvr;
-				if( !tr.worldArguments().equals(tl.worldArguments()) )
-					System.out.println( "Not same worldarguments at " + n.position().formattedPosition() );
-					System.out.println( "\t" + tr.specialTypeTag() + " - " + tr.primitiveTypeTag() );
+
 				if( n.operator().hasOperation() ) {
 					// tr might be promoted beyond tl
 					tr = visitBinaryOp( n.operator().operation(), tl, tr, n.position() );
+					System.out.println( "VisitBinaryOp result:  prim:" + tr.primitiveTypeTag() + " spec:" + tr.specialTypeTag() );
 				}
-				if( !tr.isAssignableTo( tl ) ) {
+				if( !tr.isAssignableTo_relaxed( tl ) ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
 									"required type '" + tl + "', found '" + tr + "'" ) );
@@ -1479,8 +1479,12 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataType visit( BinaryExpression n ) {
-				GroundDataTypeOrVoid tl = synth( scope, n.left(), explicitConstructorArg );
-				GroundDataTypeOrVoid tr = synth( scope, n.right(), explicitConstructorArg );
+				/*System.out.println( "Binary Expression at " + n.position().formattedPosition() + 
+					"\n\t" + n.left().getClass().getName() + 
+					"\n\t" + n.operator() + 
+					"\n\t" + n.right().getClass().getName() );*/
+				GroundDataTypeOrVoid tl = synth( scope, n.left(), explicitConstructorArg, leftWorlds );
+				GroundDataTypeOrVoid tr = synth( scope, n.right(), explicitConstructorArg, leftWorlds );
 				return annotate( n, visitBinaryOp( n.operator(), tl, tr, n.position() ) );
 			}
 
@@ -1496,6 +1500,7 @@ public class RelaxedTyper {
 			@Override
 			public GroundDataType visit( FieldAccessExpression n ) {
 				String identifier = n.name().identifier();
+
 				Optional< ? extends GroundDataType > result = Optional.empty();
 				if( left == null ) {
 					result = scope.lookupVariable( identifier );
@@ -1515,7 +1520,20 @@ public class RelaxedTyper {
 					throw new AstPositionedException( n.position(),
 							new UnresolvedSymbolException( identifier ) );
 				} else {
-					// System.out.println( "Variable " + n.name() + " has type " + result.get().getClass().getName() );
+
+					// If righthand side of an assignment
+					if ( leftWorlds != null ){
+						List< ? extends World > rightWorlds = result.get().worldArguments();
+
+						// Check if at same role
+						if( !leftWorlds.stream().anyMatch( leftWorld -> 
+							rightWorlds.stream().anyMatch( rightWorld ->
+								leftWorld.identifier().equals(rightWorld.identifier()) ) ) ){
+							// We should insert a communication in this case
+							System.out.println( "Role " + leftWorlds + " needs variable " + identifier + " at role " + rightWorlds );
+						}
+					}
+
 					return annotate( n, result.get() );
 				}
 			}
@@ -1556,27 +1574,54 @@ public class RelaxedTyper {
 			}
 
 			public GroundDataType visit( LiteralExpression.BooleanLiteralExpression n ) {
+				checkWorlds(n);
+					
 				return annotate( n, universe()
 						.primitiveDataType( PrimitiveTypeTag.BOOLEAN )
 						.applyTo( visitWorld( n.world() ) ) );
 			}
 
 			public GroundDataType visit( LiteralExpression.IntegerLiteralExpression n ) {
+				checkWorlds(n);
+				
 				return annotate( n, universe()
 						.primitiveDataType( PrimitiveTypeTag.INT )
 						.applyTo( visitWorld( n.world() ) ) );
 			}
 
 			public GroundDataType visit( LiteralExpression.DoubleLiteralExpression n ) {
+				checkWorlds(n);
+				
 				return annotate( n, universe()
 						.primitiveDataType( PrimitiveTypeTag.DOUBLE )
 						.applyTo( visitWorld( n.world() ) ) );
 			}
 
 			public GroundDataType visit( LiteralExpression.StringLiteralExpression n ) {
+				checkWorlds(n);
+				
 				return annotate( n, universe()
 						.specialType( SpecialTypeTag.STRING )
 						.applyTo( List.of( visitWorld( n.world() ) ) ) );
+			}
+
+			/**
+			 * Checks that, if the given literalexpression is the righthand side of an assignment,
+			 * it should have the same worldarguments. If not, an exception is thrown.
+			 * @param <T>	extends <code>LiteralExpression</code>
+			 * @param n 	a <code>LiteralExpression</code>
+			 */
+			private <T extends LiteralExpression<?>> void checkWorlds( T n ){
+				if( leftWorlds != null && 
+					!leftWorlds.stream().anyMatch( world -> 
+						world.identifier().equals(n.world().name().identifier()) 
+					) 
+				){
+					throw new AstPositionedException( n.position(),
+							 new StaticVerificationException(
+									 "Literal '" + n + "', cannot be assigned to variable at world '" + leftWorlds + "'" ) );
+				}
+				
 			}
 
 			@Override

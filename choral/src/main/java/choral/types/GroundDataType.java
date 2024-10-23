@@ -56,6 +56,10 @@ public interface GroundDataType extends DataType, GroundDataTypeOrVoid {
 				(GroundDataType) type );
 	}
 
+	default boolean isAssignableTo_relaxed( GroundDataTypeOrVoid type ) {
+		return isAssignableTo(type);
+	}
+
 	boolean isEquivalentToErasureOf( GroundDataType type );
 
 }
