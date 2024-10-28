@@ -288,7 +288,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				System.out.println("Creating sourceunits");
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
-				printSourceUnits(sourceUnits);
+				// printSourceUnits(sourceUnits);
 
 				System.out.println("Creating headerunits");
 				Collection< CompilationUnit > headerUnits = Stream.concat(
