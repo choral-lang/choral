@@ -44,6 +44,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Similar to Typer, except RelaxedTyper allows location mismatch between variables.
+ * RelaxedTyper allows expressions such as "int@A a = b;" where b is an int@B.
+ */
 public class RelaxedTyper {
 
 	private enum Phase {
