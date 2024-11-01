@@ -359,6 +359,18 @@ public class Universe {
 			}
 
 			@Override
+			public boolean isSubtypeOf_relaxed( Type type, boolean strict ) {
+				if( strict && type instanceof GroundNullType ) {
+					return false;
+				}
+				if( type instanceof GroundReferenceType ) {
+					GroundReferenceType t = (GroundReferenceType) type;
+					return true;
+				}
+				return false;
+			}
+
+			@Override
 			public boolean isEquivalentToErasureOf( GroundDataType type ) {
 				return isEquivalentTo( type );
 			}

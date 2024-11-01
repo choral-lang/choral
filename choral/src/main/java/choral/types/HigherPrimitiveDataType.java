@@ -113,8 +113,25 @@ public final class HigherPrimitiveDataType extends HigherDataType implements Pri
 		}
 
 		@Override
+		protected boolean isEquivalentTo_relaxed( GroundDataType type ) {
+			if( type == this ) {
+				return true;
+			} else if( type instanceof Proxy ) {
+				Proxy other = (Proxy) type;
+				return ( other.definition() == this );
+			} else {
+				return false;
+			}
+		}
+
+		@Override
 		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo( type ) );
+		}
+
+		@Override
+		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
+			return ( !strict && isEquivalentTo_relaxed( type ) );
 		}
 
 	}
@@ -161,8 +178,25 @@ public final class HigherPrimitiveDataType extends HigherDataType implements Pri
 		}
 
 		@Override
+		protected boolean isEquivalentTo_relaxed( GroundDataType type ) {
+			if( type instanceof Definition ) {
+				return type.isEquivalentTo( this );
+			} else if( type instanceof Proxy ) {
+				Proxy other = (Proxy) type;
+				return ( this.definition() == other.definition() );
+			} else {
+				return false;
+			}
+		}
+
+		@Override
 		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo( type ) );
+		}
+
+		@Override
+		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
+			return ( !strict && isEquivalentTo_relaxed( type ) );
 		}
 
 	}

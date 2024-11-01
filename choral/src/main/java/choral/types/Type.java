@@ -30,12 +30,24 @@ public interface Type extends HasSource {
 
 	boolean isSubtypeOf( Type type, boolean strict );
 
+	default boolean isSubtypeOf_relaxed( Type type, boolean strict ){
+		return isSubtypeOf(type, strict);
+	}
+
 	default boolean isStrictSubtypeOf( Type type ) {
 		return isSubtypeOf( type, true );
 	}
 
+	default boolean isStrictSubtypeOf_relaxed( Type type ) {
+		return isSubtypeOf_relaxed( type, true );
+	}
+
 	default boolean isSubtypeOf( Type type ) {
 		return isSubtypeOf( type, false );
+	}
+
+	default boolean isSubtypeOf_relaxed( Type type ) {
+		return isSubtypeOf_relaxed( type, false );
 	}
 
 	Universe universe();

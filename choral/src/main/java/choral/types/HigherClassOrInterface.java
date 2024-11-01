@@ -396,9 +396,30 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		@Override
+		protected boolean isEquivalentTo_relaxed( GroundDataType type ) {
+			if( type == this ) {
+				return true;
+			} else if( type instanceof Proxy ) {
+				Proxy other = (Proxy) type;
+				return ( other.definition() == this ) &&
+						typeArguments().equals( other.typeArguments() );
+			} else {
+				return false;
+			}
+		}
+
+		@Override
 		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo( type ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) )
+					|| ( type.isEquivalentTo(
+					universe().topReferenceType( worldArguments() ) ) );
+		}
+
+		@Override
+		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
+			return ( !strict && isEquivalentTo_relaxed( type ) )
+					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) )
 					|| ( type.isEquivalentTo(
 					universe().topReferenceType( worldArguments() ) ) );
 		}
@@ -637,9 +658,30 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		@Override
+		protected boolean isEquivalentTo_relaxed( GroundDataType type ) {
+			if( type instanceof Definition ) {
+				return type.isEquivalentTo( this );
+			} else if( type instanceof Proxy ) {
+				Proxy other = (Proxy) type;
+				return ( this.definition() == other.definition() ) &&
+						typeArguments().equals( other.typeArguments() );
+			} else {
+				return false;
+			}
+		}
+
+		@Override
 		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo( type ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) )
+					|| ( type.isEquivalentTo(
+					universe().topReferenceType( worldArguments() ) ) );
+		}
+
+		@Override
+		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
+			return ( !strict && isEquivalentTo_relaxed( type ) )
+					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) )
 					|| ( type.isEquivalentTo(
 					universe().topReferenceType( worldArguments() ) ) );
 		}

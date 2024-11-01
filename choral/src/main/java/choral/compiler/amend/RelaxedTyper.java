@@ -1075,7 +1075,7 @@ public class RelaxedTyper {
 						GroundDataType p = cparams.get( i ).type();
 //						System.out.printf( "'%s' isSubtypeOf '%s': %s\n", a,p, a.isSubtypeOf( p ) );
 						if( phase == 1 ) {
-							incompatible = !a.isSubtypeOf( p );
+							incompatible = !a.isSubtypeOf_relaxed( p );
 						} else {
 							if( p.isPrimitive() ) {
 								if( a instanceof GroundClass && ( (GroundClass) a ).isBoxedType() ) {
@@ -1087,7 +1087,7 @@ public class RelaxedTyper {
 								}
 							}
 //							System.out.printf( "'%s' isAssignableTo '%s': %s\n", a,p,a.isAssignableTo( p ) );
-							incompatible = !a.isAssignableTo( p );
+							incompatible = !a.isAssignableTo_relaxed( p );
 						}
 						if( incompatible ) {
 							break;
@@ -1106,8 +1106,8 @@ public class RelaxedTyper {
 						for( int i = 0; i < cparams.size(); i++ ) {
 							GroundDataType cp = cparams.get( i ).type();
 							GroundDataType mp = mparams.get( i ).type();
-							mcsub &= mp.isSubtypeOf( cp );
-							cmsub &= cp.isSubtypeOf( mp );
+							mcsub &= mp.isSubtypeOf_relaxed( cp );
+							cmsub &= cp.isSubtypeOf_relaxed( mp );
 						}
 						if( mcsub ) {
 //							System.out.println( "subsumed by most specific candidate " + m );
@@ -1564,7 +1564,108 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( MethodCallExpression n ) {
-				throw new UnsupportedOperationException("Method call expression not allowed\n\tExpression at " + n.position().toString());
+				final boolean local;
+				if( left == null ) { // only happens for simple method calls (local)
+					left = scope.lookupThis();
+					leftStatic = explicitConstructorArg;
+					local = true;
+				}else if( !left.isVoid() && ((GroundDataType)left).worldArguments().size() != 1 ){
+					// for now
+					throw new UnsupportedOperationException("MethodCallExpression with " + ((GroundDataType)left).worldArguments().size() + " roles not allowed\n\tExpression at " + n.position().toString());
+				}else{
+					local = false;
+				}
+
+				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
+						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
+						.collect( Collectors.toList() );
+				List< ? extends GroundDataType > args = n.arguments().stream()
+						.map( x -> {
+							Optional<? extends World> hw;
+							if(local){
+								hw = Optional.empty();
+							}else{
+								hw = Optional.of(((GroundDataType)left).worldArguments().get(0));
+							}
+							return assertNotVoid(
+								synth( scope, x, explicitConstructorArg, hw ),
+								x.position() );
+						} )
+						.collect( Collectors.toList() );
+				if( left instanceof GroundReferenceType ) {
+					GroundReferenceType t = (GroundReferenceType) left;
+
+					// print out method
+					/*
+					System.out.println( "t: " + t );
+					System.out.println( "t methods: " + t.methods( n.name().identifier() ).toList() );
+					System.out.println( "t methods declarationcontext worldarguments: " + t.methods( n.name().identifier() ).map( x -> x.declarationContext().worldArguments() ).toList() );
+					System.out.println( "t fields: " + t.fields().toList() );
+					System.out.println( "typeargs: " );
+					typeArgs.forEach( x -> {
+						System.out.println( "\ttypearg: " + x.toString() );
+						System.out.println( "\tworldarguments: " + x.worldParameters() );
+					} ) ;
+					System.out.println( "args: " );
+					args.forEach( x -> {
+						System.out.println( "\targ: " + x );
+						System.out.println( "\tworldarguments: " + x.worldArguments() );
+					} );
+					System.out.println();
+					 */
+
+					List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
+							typeArgs,
+							args,
+							t.methods( n.name().identifier() ).filter( this::checkMemberAccess )
+					);
+					if( ms.isEmpty() ) {
+						throw new AstPositionedException( n.position(),
+								new StaticVerificationException( "cannot resolve method '"
+										+ n.name().identifier()
+										+ args.stream().map( Object::toString ).collect( Formatting
+										.joining( ",", "(", ")", "" ) )
+										+ "' in '" + t + "'" ) );
+					} else if( ms.size() > 1 ) {
+						throw new AstPositionedException( n.position(),
+								new StaticVerificationException(
+										"ambiguous method invocation, " +
+												ms.stream().map( Member.GroundCallable::toString )
+														.collect( Collectors.collectingAndThen(
+																Collectors.toList(),
+																Formatting.joiningOxfordComma() ) ) ) );
+					}
+					Member.GroundMethod selected = (Member.GroundMethod) ms.get( 0 );
+					n.setMethodAnnotation( selected );
+					leftStatic = false;
+
+					// Check worlds of params
+					// doesn't need
+					/*
+					for( int i = 0; i < args.size(); i++ ){
+						if( !left.isVoid() && Collections.disjoint( ((GroundDataType)left).worldArguments(), args.get(i).worldArguments() )  ){
+							System.out.println( "Location mismatch found at " + n.position() );
+							System.out.println( "Role " + ((GroundDataType)left).worldArguments() + " needs " + args.get(i) + " from " + args.get(i).worldArguments() );
+						}
+					} */
+					
+					// System.out.println( "left roles: " + ((GroundDataType)left).worldArguments() );
+					if( n.methodAnnotation().isPresent() ){
+						//System.out.println( "Method annotation: " + n.methodAnnotation().get().higherCallable().declarationPackage().toString() );
+						if( n.methodAnnotation().get().higherCallable().declarationPackage().toString().equals("choral.channels") ){
+							System.out.println( "found channel at " + n.position() );
+						}
+					}
+
+					return selected.returnType();
+				} else {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException( "cannot resolve method '"
+									+ n.name().identifier()
+									+ args.stream().map( Object::toString ).collect( Formatting
+									.joining( ",", "(", ")", "" ) )
+									+ "' in 'void'" ) );
+				}
 			}
 
 			@Override
