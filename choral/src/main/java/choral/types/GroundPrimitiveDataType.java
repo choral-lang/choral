@@ -50,7 +50,7 @@ public interface GroundPrimitiveDataType extends GroundDataType, PrimitiveDataTy
 		if( type instanceof GroundDataType ) {
 			GroundDataType t = (GroundDataType) type;
 			return this.primitiveTypeTag().isAssignableTo( t.primitiveTypeTag() )
-					|| this.boxedType().isEquivalentTo( t ) ;
+					|| this.boxedType().isEquivalentTo_relaxed( t ) ;
 		} else {
 			return false;
 		}

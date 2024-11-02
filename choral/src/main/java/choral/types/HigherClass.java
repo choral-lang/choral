@@ -277,7 +277,7 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 
 		@Override
 		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
-			return ( !strict && isEquivalentTo( type ) )
+			return ( !strict && isEquivalentTo_relaxed( type ) )
 					|| ( extendedClass().isPresent() && extendedClass().get().isSubtypeOf_relaxed( type,
 					false ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) );

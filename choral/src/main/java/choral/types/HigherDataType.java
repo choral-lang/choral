@@ -152,6 +152,15 @@ public abstract class HigherDataType extends TypeBase
 	}
 
 	@Override
+	public boolean isEquivalentTo_relaxed( Type type ) {
+		if( type instanceof HigherDataType ) {
+			HigherDataType t = (HigherDataType) type;
+			return applyTo( worldParameters ).isEquivalentTo_relaxed( t.applyTo( worldParameters ) );
+		}
+		return false;
+	}
+
+	@Override
 	public boolean isSubtypeOf( Type type, boolean strict ) {
 		if( type instanceof HigherDataType ) {
 			HigherDataType t = (HigherDataType) type;
@@ -159,6 +168,16 @@ public abstract class HigherDataType extends TypeBase
 				return applyTo( worldParameters ).isSubtypeOf( t.applyTo( worldParameters ),
 						strict );
 			}
+		}
+		return false;
+	}
+
+	@Override
+	public boolean isSubtypeOf_relaxed( Type type, boolean strict ) {
+		if( type instanceof HigherDataType ) {
+			HigherDataType t = (HigherDataType) type;
+			return applyTo( worldParameters ).isSubtypeOf_relaxed( t.applyTo( worldParameters ),
+					strict );
 		}
 		return false;
 	}
@@ -200,6 +219,13 @@ public abstract class HigherDataType extends TypeBase
 					isEquivalentTo( (GroundDataType) type );
 		}
 
+		@Override
+		public final boolean isEquivalentTo_relaxed( Type type ) {
+			return this.isSameKind( type ) &&
+					type instanceof GroundDataType &&
+					isEquivalentTo_relaxed( (GroundDataType) type );
+		}
+
 		protected abstract boolean isEquivalentTo( GroundDataType type );
 
 		protected abstract boolean isEquivalentTo_relaxed( GroundDataType type );
@@ -209,6 +235,13 @@ public abstract class HigherDataType extends TypeBase
 			return this.isSameKind( type ) &&
 					type instanceof GroundDataType &&
 					isSubtypeOf( (GroundDataType) type, strict );
+		}
+
+		@Override
+		public final boolean isSubtypeOf_relaxed( Type type, boolean strict ) {
+			return this.isSameKind( type ) &&
+					type instanceof GroundDataType &&
+					isSubtypeOf_relaxed( (GroundDataType) type, strict );
 		}
 
 		protected abstract boolean isSubtypeOf( GroundDataType type, boolean strict );
@@ -263,6 +296,13 @@ public abstract class HigherDataType extends TypeBase
 					isEquivalentTo( (GroundDataType) type );
 		}
 
+		@Override
+		public final boolean isEquivalentTo_relaxed( Type type ) {
+			return this.isSameKind( type ) &&
+					type instanceof GroundDataType &&
+					isEquivalentTo_relaxed( (GroundDataType) type );
+		}
+
 		protected abstract boolean isEquivalentTo( GroundDataType type );
 
 		protected abstract boolean isEquivalentTo_relaxed( GroundDataType type );
@@ -272,6 +312,13 @@ public abstract class HigherDataType extends TypeBase
 			return this.isSameKind( type ) &&
 					type instanceof GroundDataType &&
 					isSubtypeOf( (GroundDataType) type, strict );
+		}
+
+		@Override
+		public final boolean isSubtypeOf_relaxed( Type type, boolean strict ) {
+			return this.isSameKind( type ) &&
+					type instanceof GroundDataType &&
+					isSubtypeOf_relaxed( (GroundDataType) type, strict );
 		}
 
 		protected abstract boolean isSubtypeOf( GroundDataType type, boolean strict );

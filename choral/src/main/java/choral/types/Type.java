@@ -28,11 +28,11 @@ public interface Type extends HasSource {
 
 	boolean isEquivalentTo( Type type );
 
+	boolean isEquivalentTo_relaxed( Type type );
+
 	boolean isSubtypeOf( Type type, boolean strict );
 
-	default boolean isSubtypeOf_relaxed( Type type, boolean strict ){
-		return isSubtypeOf(type, strict);
-	}
+	boolean isSubtypeOf_relaxed( Type type, boolean strict );
 
 	default boolean isStrictSubtypeOf( Type type ) {
 		return isSubtypeOf( type, true );
