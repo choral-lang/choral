@@ -24,17 +24,23 @@ public class PrintCompilationUnits {
 		compilationUnits.stream().forEach( compilationUnit -> {
 			String string = "\u001B[34mPrimaty type:\u001B[0m " + compilationUnit.primaryType() + " at " + compilationUnit.position();
 			printWithIndentation(string, 1);
-			string = "\u001B[34mPackage:\u001B[0m " + (compilationUnit.packageDeclaration().isPresent()?compilationUnit.packageDeclaration().get():"None");
+			string = blue("Package: ") + (compilationUnit.packageDeclaration().isPresent()?compilationUnit.packageDeclaration().get():"None");
 			printWithIndentation(string, 2);
-			string = "\u001B[34mImports:\u001B[0m " + compilationUnit.imports().stream().map( im -> im.name() ).collect( Collectors.toList() );
+			string = blue("Imports: ") + compilationUnit.imports().stream().map( im -> im.name() ).collect( Collectors.toList() );
 			printWithIndentation(string, 2);
-			string = "\u001B[34mInterfaces:\u001B[0m " + compilationUnit.interfaces().stream().map( in -> in.name() ).collect( Collectors.toList() );
+			string = blue("Interfaces: ") + compilationUnit.interfaces().stream().map( in -> in.name() ).collect( Collectors.toList() );
 			printWithIndentation(string, 2);
-			string = "\u001B[34mClasses:\u001B[0m " + compilationUnit.classes().stream().map( cl -> cl.name() ).collect( Collectors.toList() );
+			string = blue("Classes: ") + compilationUnit.classes().stream().map( cl -> cl.name() ).collect( Collectors.toList() );
 			printWithIndentation(string, 2);
-			string = "\u001B[34mEnums:\u001B[0m " + compilationUnit.enums().stream().map( en -> en.name() ).collect( Collectors.toList() );
+			string = blue("Class methods: ") + compilationUnit.classes().stream().map( cl -> cl.methods().stream().map( meth -> meth.toString() ).collect( Collectors.toList() ) ).collect( Collectors.toList() );
+			printWithIndentation(string, 3);
+			string = blue("Enums: ") + compilationUnit.enums().stream().map( en -> en.name() ).collect( Collectors.toList() );
 			printWithIndentation(string, 2);
 		} );
+	}
+
+	public static String blue( String string ){
+		return "\u001B[34m" + string + "\u001B[0m";
 	}
 
 	public static void printWithIndentation(String string, int indentation){
