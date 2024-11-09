@@ -26,4 +26,6 @@ public interface GroundDataTypeOrVoid extends DataTypeOrVoid {
 	GroundDataTypeOrVoid applySubstitution( Substitution substitution );
 
 	boolean isAssignableTo( GroundDataTypeOrVoid type );
+
+	boolean isAssignableTo_relaxed( GroundDataTypeOrVoid type );
 }

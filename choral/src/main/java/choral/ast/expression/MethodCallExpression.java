@@ -92,6 +92,11 @@ public class MethodCallExpression extends InvocationExpression {
 	}
 
 	@Override
+	public String toString(){
+		return name.toString() + "()";
+	}
+
+	@Override
 	public < R > R accept( ChoralVisitorInterface< R > v ) {
 		return v.visit( this );
 	}

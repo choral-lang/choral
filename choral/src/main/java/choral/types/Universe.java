@@ -399,6 +399,11 @@ public class Universe {
 		}
 
 		@Override
+		public boolean isAssignableTo_relaxed( GroundDataTypeOrVoid type ) {
+			return false;
+		}
+
+		@Override
 		public SpecialTypeTag specialTypeTag() {
 			return null;
 		}

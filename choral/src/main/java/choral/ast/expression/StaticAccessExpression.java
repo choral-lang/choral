@@ -56,6 +56,11 @@ public class StaticAccessExpression extends Expression {
 	}
 
 	@Override
+	public String toString(){
+		return typeExpression.name().toString();
+	}
+
+	@Override
 	public < R > R accept( ChoralVisitorInterface< R > v ) {
 		return v.visit( this );
 	}
