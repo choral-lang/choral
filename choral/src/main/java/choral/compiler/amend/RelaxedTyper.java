@@ -1143,11 +1143,18 @@ public class RelaxedTyper {
 			return new Synth( scope, explicitConstructorArg ).visit( n );
 		}
 
+		GroundDataTypeOrVoid synth( 
+			VariableDeclarationScope scope, 
+			Expression n, 
+			List< ? extends World > homeWorlds ) {
+			return new Synth( scope, homeWorlds ).visit( n );
+		}
+
 		GroundDataTypeOrVoid synth(
 				VariableDeclarationScope scope, Expression n, 
-				boolean explicitConstructorArg, Optional< ? extends World > homeWorld
+				boolean explicitConstructorArg, List< ? extends World > homeWorlds
 		) {
-			return new Synth( scope, explicitConstructorArg, homeWorld ).visit( n );
+			return new Synth( scope, explicitConstructorArg, homeWorlds ).visit( n );
 		}
 
 		GroundDataType assertNotVoid( GroundDataTypeOrVoid t, Position position ) {
@@ -1284,20 +1291,26 @@ public class RelaxedTyper {
 				this.explicitConstructorArg = explicitConstructorArg;
 			}
 
+			public Synth( VariableDeclarationScope scope, List< ? extends World > homeWorlds  ) {
+				this( scope, false, homeWorlds );
+			}
+
 			public Synth( 
 				VariableDeclarationScope scope, boolean explicitConstructorArg, 
-				Optional< ? extends World > homeWorld 
+				List< ? extends World > homeWorlds 
 			) {
 				this.scope = scope;
 				this.explicitConstructorArg = explicitConstructorArg;
-				this.homeWorld = homeWorld;
+				this.homeWorlds = homeWorlds;
 			}
-
+			
 			private final VariableDeclarationScope scope;
 			private GroundDataTypeOrVoid left = null;
 			private boolean leftStatic = false;
 			private final boolean explicitConstructorArg;
-			Optional< ? extends World > homeWorld = Optional.empty(); // The world at which the expression takes place
+			List< ? extends World > homeWorlds = Collections.emptyList(); // The worlds at which the expression takes place
+			boolean checkLocation = true; 	// for scopedexpressions like "this.obj.val" we only want to check location once for 
+											// the whole expression, not once for every sub-expression
 
 			@Override
 			public GroundDataTypeOrVoid visit( Expression n ) {
@@ -1306,8 +1319,18 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( ScopedExpression n ) {
+				boolean first = checkLocation;
+				checkLocation = false;
+
 				left = visit( n.scope() );
+				GroundDataTypeOrVoid savedLeft = left;
 				GroundDataTypeOrVoid right = visit( n.scopedExpression() );
+
+				// if n is the outermost scopedExpression and not void
+				if( first && !savedLeft.isVoid() ){
+					inferCommunications(n.toString(), ((GroundDataType)savedLeft).worldArguments(), n);
+					
+				}
 				left = null;
 				return annotate( n, right );
 			}
@@ -1348,16 +1371,13 @@ public class RelaxedTyper {
 				if( !tvl.isVoid() && !tvr.isVoid() ) {
 					GroundDataType tl = (GroundDataType) tvl;
 					GroundDataType tr = (GroundDataType) tvr;
-					if( !(tl.worldArguments().size() == 1 && tr.worldArguments().size() == 1
-							&& tl.worldArguments().equals( tr.worldArguments()) ) 
-					) {
-						// Nothing?
-					} 
+
 					List< ? extends World > worlds;
-					if( homeWorld.isPresent() )
-						worlds = List.of(homeWorld.get());
+					if( !homeWorlds.isEmpty() )
+						worlds = homeWorlds;
 					else
 						worlds = tl.worldArguments();
+					
 					GroundPrimitiveDataType pl = null;
 					GroundPrimitiveDataType pr = null;
 					switch( operator ) {
@@ -1465,8 +1485,8 @@ public class RelaxedTyper {
 									"expected assignable variable" ) );
 				}
 				GroundDataType tl = (GroundDataType) tvl;
-				homeWorld = (tl.worldArguments().size()>0)?Optional.of(tl.worldArguments().get(0)):Optional.empty();
-				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg, homeWorld );
+				homeWorlds = tl.worldArguments();
+				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg, homeWorlds );
 				if( tvr.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
@@ -1488,17 +1508,12 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataType visit( BinaryExpression n ) {
-				/*System.out.println( "Binary Expression at " + n.position().formattedPosition() + 
-					"\n\t" + n.left().getClass().getName() + 
-					"\n\t" + n.operator() + 
-					"\n\t" + n.right().getClass().getName() );*/
-				
-				if( homeWorld.isEmpty() )
-					homeWorld = setExpressionHome(n);
+				if( homeWorlds.isEmpty() )
+					homeWorlds = setExpressionHome(n); 
 
-				GroundDataTypeOrVoid tl = synth( scope, n.left(), explicitConstructorArg, homeWorld );
+				GroundDataTypeOrVoid tl = synth( scope, n.left(), explicitConstructorArg, homeWorlds );
 				
-				GroundDataTypeOrVoid tr = synth( scope, n.right(), explicitConstructorArg, homeWorld );
+				GroundDataTypeOrVoid tr = synth( scope, n.right(), explicitConstructorArg, homeWorlds );
 				return annotate( n, visitBinaryOp( n.operator(), tl, tr, n.position() ) );
 			}
 
@@ -1535,17 +1550,13 @@ public class RelaxedTyper {
 							new UnresolvedSymbolException( identifier ) );
 				} else {
 
-					// If righthand side of an assignment
-					if ( homeWorld.isPresent() ){
+					// IF not part of a scopedexpression
+					if ( checkLocation ){
 						List< ? extends World > rightWorlds = result.get().worldArguments();
-
-						// Check if at same role
-						if( !homeWorld.stream().anyMatch( leftWorld -> 
-							rightWorlds.stream().anyMatch( rightWorld ->
-								leftWorld.identifier().equals(rightWorld.identifier()) ) ) ){
-							// We should insert a communication in this case
-							System.out.println( "Role " + homeWorld.get() + " needs variable " + identifier + " at role " + rightWorlds );
-						}
+						
+						// We should insert a communication in this case
+						inferCommunications(identifier, rightWorlds, n);
+						
 					}
 
 					return annotate( n, result.get() );
@@ -1596,11 +1607,11 @@ public class RelaxedTyper {
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
 						.map( x -> {
-							Optional<? extends World> hw;
+							List<? extends World> hw;
 							if(local){
-								hw = Optional.empty();
+								hw = Collections.emptyList();
 							}else{
-								hw = Optional.of(((GroundDataType)left).worldArguments().get(0));
+								hw = ((GroundDataType)left).worldArguments();
 							}
 							return assertNotVoid(
 								synth( scope, x, explicitConstructorArg, hw ),
@@ -1627,7 +1638,7 @@ public class RelaxedTyper {
 						System.out.println( "\tworldarguments: " + x.worldArguments() );
 					} );
 					System.out.println();
-					 */
+					*/
 
 					List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
 							typeArgs,
@@ -1653,24 +1664,6 @@ public class RelaxedTyper {
 					Member.GroundMethod selected = (Member.GroundMethod) ms.get( 0 );
 					n.setMethodAnnotation( selected );
 					leftStatic = false;
-
-					// Check worlds of params
-					// doesn't need
-					/*
-					for( int i = 0; i < args.size(); i++ ){
-						if( !left.isVoid() && Collections.disjoint( ((GroundDataType)left).worldArguments(), args.get(i).worldArguments() )  ){
-							System.out.println( "Location mismatch found at " + n.position() );
-							System.out.println( "Role " + ((GroundDataType)left).worldArguments() + " needs " + args.get(i) + " from " + args.get(i).worldArguments() );
-						}
-					} */
-					
-					// System.out.println( "left roles: " + ((GroundDataType)left).worldArguments() );
-					if( n.methodAnnotation().isPresent() ){
-						//System.out.println( "Method annotation: " + n.methodAnnotation().get().higherCallable().declarationPackage().toString() );
-						if( n.methodAnnotation().get().higherCallable().declarationPackage().toString().equals("choral.channels") ){
-							System.out.println( "found channel at " + n.position() );
-						}
-					}
 
 					return selected.returnType();
 				} else {
@@ -1742,56 +1735,64 @@ public class RelaxedTyper {
 			}
 
 			/**
+			 * Gets called whenever a communication needs to be inferred 
+			 */
+			private void inferCommunications( 
+				String expressionString, 
+				List< ? extends World > fromWorlds, 
+				Expression expression 
+				){
+				if( !homeWorlds.isEmpty() && !atHome(fromWorlds) ){
+					System.out.println( "Role(s) " + homeWorlds + " needs " + expressionString + " at world(s) " + fromWorlds );
+					System.out.println( "\tat " + expression.position() );
+					scope.getChannels();
+				}
+					
+			}
+
+			/**
+			 * Returns true if all worlds in otherWorlds are equal to at least one world in homeWorlds
+			 */
+			private boolean atHome(List< ? extends World > otherWorlds ){
+				return otherWorlds.stream().allMatch( other -> homeWorlds.stream().anyMatch( homeWorld -> other.equals( homeWorld )) );
+			}
+
+
+			/**
 			 * Checks that, if the given literalexpression is the righthand side of an assignment,
 			 * it should have the same worldarguments. If not, an exception is thrown.
 			 * @param <T>	extends <code>LiteralExpression</code>
 			 * @param n 	a <code>LiteralExpression</code>
 			 */
 			private <T extends LiteralExpression<?>> void checkWorlds( T n ){
-				if( homeWorld.isPresent() && 
-					!homeWorld.stream().anyMatch( world -> 
-						world.identifier().equals(n.world().name().identifier()) 
-					) 
-				){
+				if( !homeWorlds.isEmpty() && !atHome( List.of( visitWorld(n.world()) ) )){
 					throw new AstPositionedException( n.position(),
 							 new StaticVerificationException(
-									 "Literal '" + n + "', cannot be used in an expression at world '" + homeWorld + "'" ) );
+									 "Literal '" + n + "', cannot be used in an expression at world '" + homeWorlds + "'" ) );
 				}
 			}
 
 			/**
 			 * Checks if a given expression is locked to some world by looking at existance of literals
-			 * @param expression, the expression to look at
-			 * @return either an empty optional or an optional of the world of the expression
 			 */
-			private <E extends Expression > Optional<? extends World> setExpressionHome( E expression ){
-				
-				// Look at literals
-				Optional<? extends World> literalWorld = setExpressionHome_literals(expression);
-				
-				// If no literals were found
-				// Look at variables
-				
-				return literalWorld;
-			}
-
-			private <E extends Expression> Optional<? extends World> setExpressionHome_literals( E expression ){
+			private <E extends Expression > List<? extends World> setExpressionHome( E expression ){
 				// don't care about: assignments, variables/FieldAccessExpressions, (maybe scoped expressions?) 
 				// do care about: literals, BinaryExpressions
 				if( expression instanceof BinaryExpression ){
-					Optional<? extends World> left = setExpressionHome_literals( ((BinaryExpression)expression).left() );
-					Optional<? extends World> right = setExpressionHome_literals( ((BinaryExpression)expression).right() );
-					if( left.isPresent() && right.isPresent() && !left.get().equals(right.get()) ){
+					List<? extends World> left = setExpressionHome( ((BinaryExpression)expression).left() );
+					List<? extends World> right = setExpressionHome( ((BinaryExpression)expression).right() );
+					if( !left.isEmpty() && !right.isEmpty() && !left.equals(right) ){
 						throw new AstPositionedException( expression.position(),
 							 new StaticVerificationException(
 									 "Binary expression has literals of different worlds" ) );
 					}
-					return left.isPresent()? left: right;
+					return !left.isEmpty()? left: right;
 				} else if( expression instanceof LiteralExpression ){
-					return Optional.of(scope.assertLookupWorldParameter(((LiteralExpression)expression).world().name()));
+					return List.of( visitWorld(((LiteralExpression<?>)expression).world()) );
 				}
-				return Optional.empty();
+				return Collections.emptyList();
 			}
+
 
 			@Override
 			public GroundDataType visit( TypeExpression n ) {
@@ -2381,6 +2382,33 @@ public class RelaxedTyper {
 		private final Map< String, GroundDataType > variables = new HashMap<>();
 
 		@Override
+		public void getChannels(){
+			System.out.println( "\tAvailable channels: " );
+
+			// this fields
+			lookupThis().fields().forEach( field -> {
+				
+				// this is dumb
+				String type = field.type().typeConstructor().toString();
+				int pck = type.lastIndexOf(".");
+				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
+					System.out.println( "\t\t" + field.identifier() + " - " + field.type().typeConstructor().toString().substring(pck+1) + "@" + field.type().typeConstructor().worldParameters() );
+				}
+			} );
+			
+			// method arguments
+			variables.forEach( (key, val) -> {
+				
+				// this is still dumb
+				String type = val.typeConstructor().toString();
+				int pck = type.lastIndexOf(".");
+				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
+					System.out.println( "\t\t" + key + " - " + val.typeConstructor().toString().substring(pck+1) + "@" + val.typeConstructor().worldParameters() );
+				}
+			} );
+		}
+
+		@Override
 		public void declareVariable( String identifier, GroundDataType type ) {
 			if( lookupVariable( identifier ).isEmpty() ) {
 				variables.put( identifier, type );
@@ -2438,6 +2466,33 @@ public class RelaxedTyper {
 		}
 
 		private final Map< String, GroundDataType > variables = new HashMap<>();
+
+		@Override
+		public void getChannels(){
+			System.out.println( "\tAvailable channels: " );
+
+			// this fields
+			lookupThis().fields().forEach( field -> {
+				
+				// this is dumb
+				String type = field.type().typeConstructor().toString();
+				int pck = type.lastIndexOf(".");
+				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
+					System.out.println( "\t\t" + field.identifier() + " - " + field.type().typeConstructor().toString().substring(pck+1) + "@" + field.type().typeConstructor().worldParameters() );
+				}
+			} );
+			
+			// method arguments
+			variables.forEach( (key, val) -> {
+				
+				// this is still dumb
+				String type = val.typeConstructor().toString();
+				int pck = type.lastIndexOf(".");
+				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
+					System.out.println( "\t\t" + key + " - " + val.typeConstructor().toString().substring(pck+1) + "@" + val.typeConstructor().worldParameters() );
+				}
+			} );
+		}
 
 		@Override
 		public void declareVariable( String identifier, GroundDataType type ) {
@@ -2522,6 +2577,8 @@ public class RelaxedTyper {
 		Scope parent();
 
 		BlockScope newBlockScope();
+
+		void getChannels();
 
 	}
 
