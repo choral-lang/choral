@@ -1309,8 +1309,10 @@ public class RelaxedTyper {
 			private boolean leftStatic = false;
 			private final boolean explicitConstructorArg;
 			List< ? extends World > homeWorlds = Collections.emptyList(); // The worlds at which the expression takes place
+			
 			boolean checkLocation = true; 	// for scopedexpressions like "this.obj.val" we only want to check location once for 
 											// the whole expression, not once for every sub-expression
+			String fullName;				// the full name of a scopedExpression, used by innermost scopedExpression
 
 			@Override
 			public GroundDataTypeOrVoid visit( Expression n ) {
@@ -1319,18 +1321,23 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( ScopedExpression n ) {
-				boolean first = checkLocation;
+				if(checkLocation){
+					fullName = n.toString();
 				checkLocation = false;
+				}
+				
 
 				left = visit( n.scope() );
-				GroundDataTypeOrVoid savedLeft = left;
 				GroundDataTypeOrVoid right = visit( n.scopedExpression() );
 
-				// if n is the outermost scopedExpression and not void
-				if( first && !savedLeft.isVoid() ){
-					inferCommunications(n.toString(), ((GroundDataType)savedLeft).worldArguments(), n);
+				if( !(n.scopedExpression() instanceof ScopedExpression) && !right.isVoid() ){
+					System.out.println( "World of innermost scopedexpression: " + ((GroundDataType)right).worldArguments() );
+					System.out.println( "\tat " + n.position() );
 					
+					// if n is the innermost scopedExpression and not void
+					inferCommunications(fullName, ((GroundDataType)right).worldArguments(), n);
 				}
+				
 				left = null;
 				return annotate( n, right );
 			}
@@ -1761,8 +1768,6 @@ public class RelaxedTyper {
 			/**
 			 * Checks that, if the given literalexpression is the righthand side of an assignment,
 			 * it should have the same worldarguments. If not, an exception is thrown.
-			 * @param <T>	extends <code>LiteralExpression</code>
-			 * @param n 	a <code>LiteralExpression</code>
 			 */
 			private <T extends LiteralExpression<?>> void checkWorlds( T n ){
 				if( !homeWorlds.isEmpty() && !atHome( List.of( visitWorld(n.world()) ) )){
