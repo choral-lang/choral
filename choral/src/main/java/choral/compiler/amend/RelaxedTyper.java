@@ -1252,7 +1252,29 @@ public class RelaxedTyper {
 
 			@Override
 			public Boolean visit( ReturnStatement n ) {
-				throw new UnsupportedOperationException("Return statements not allowed\n\tStatement at " + n.position().toString());
+				if( n.returnExpression() == null ) {
+					if( expected == universe().voidType() ) {
+						return assertReachableContinuation( n, true );
+					} else {
+						throw new AstPositionedException( n.position(),
+								new StaticVerificationException(
+										"missing return value" ) );
+					}
+				} else {
+					if( expected == universe().voidType() ) {
+						throw new AstPositionedException( n.returnExpression().position(),
+								new StaticVerificationException(
+										"cannot return a value from a method with 'void' result type" ) );
+					} else {
+						GroundDataTypeOrVoid found = synth( scope, n.returnExpression(), ((GroundDataType) expected).worldArguments() );
+						if( !found.isAssignableTo_relaxed( expected ) ) {
+							throw new AstPositionedException( n.position(),
+									new StaticVerificationException(
+											"required type '" + expected + "', found '" + found + "'" ) );
+						}
+						return assertReachableContinuation( n, true );
+					}
+				}
 			}
 
 			@Override
@@ -1323,7 +1345,7 @@ public class RelaxedTyper {
 			public GroundDataTypeOrVoid visit( ScopedExpression n ) {
 				if(checkLocation){
 					fullName = n.toString();
-				checkLocation = false;
+					checkLocation = false;
 				}
 				
 
@@ -1331,8 +1353,6 @@ public class RelaxedTyper {
 				GroundDataTypeOrVoid right = visit( n.scopedExpression() );
 
 				if( !(n.scopedExpression() instanceof ScopedExpression) && !right.isVoid() ){
-					System.out.println( "World of innermost scopedexpression: " + ((GroundDataType)right).worldArguments() );
-					System.out.println( "\tat " + n.position() );
 					
 					// if n is the innermost scopedExpression and not void
 					inferCommunications(fullName, ((GroundDataType)right).worldArguments(), n);
@@ -1672,6 +1692,14 @@ public class RelaxedTyper {
 					n.setMethodAnnotation( selected );
 					leftStatic = false;
 
+					if(local){
+						for( int i = 0; i < args.size(); i++ ){
+							List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
+							synth( scope, n.arguments().get(i), explicitConstructorArg, expectedArgWorlds );
+
+						}
+					}
+
 					return selected.returnType();
 				} else {
 					throw new AstPositionedException( n.position(),
@@ -1762,6 +1790,10 @@ public class RelaxedTyper {
 			 */
 			private boolean atHome(List< ? extends World > otherWorlds ){
 				return otherWorlds.stream().allMatch( other -> homeWorlds.stream().anyMatch( homeWorld -> other.equals( homeWorld )) );
+			}
+
+			private boolean atHome( List< ? extends World > home, List< ? extends World > otherWorlds ){
+				return otherWorlds.stream().allMatch( other -> home.stream().anyMatch( homeWorld -> other.equals( homeWorld )) );
 			}
 
 
