@@ -1612,7 +1612,54 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataType visit( ClassInstantiationExpression n ) {
-				throw new UnsupportedOperationException("Class instantiation expression not allowed\n\tExpression at " + n.position().toString());
+				GroundClass t = visitGroundClassExpression( scope, n.typeExpression(), false );
+				if( t.typeConstructor().isAbstract() ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException(
+									"'" + t + "' is abstract, cannot be instantiated" ) );
+				}
+				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
+						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
+						.collect( Collectors.toList() );
+				List< ? extends GroundDataType > args = n.arguments().stream()
+						.map( x -> assertNotVoid(
+								synth( scope, x, explicitConstructorArg ),
+								x.position() ) )
+						.collect( Collectors.toList() );
+				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
+						typeArgs,
+						args,
+						t.constructors().filter( this::checkMemberAccess )
+				);
+				if( ms.isEmpty() ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException( "cannot resolve constructor '" + t +
+									args.stream().map( Object::toString ).collect( Formatting
+											.joining( ",", "(", ")", "" ) )
+									+ "'" ) );
+				} else if( ms.size() > 1 ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException( "ambiguous constructor invocation, " +
+									ms.stream().map( x -> "'" + t +
+													x.signature().parameters().stream()
+															.map( y -> y.type().toString() )
+															.collect( Formatting.joining( ",", "(", ")",
+																	"" ) ) + "'" )
+											.collect( Collectors.collectingAndThen(
+													Collectors.toList(),
+													Formatting.joiningOxfordComma() ) ) ) );
+				}
+				Member.GroundConstructor selected = (Member.GroundConstructor) ms.get( 0 );
+				n.setConstructorAnnotation( selected );
+
+				for( int i = 0; i < args.size(); i++ ){
+					List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
+					synth( scope, n.arguments().get(i), explicitConstructorArg, expectedArgWorlds );
+
+				}
+
+				leftStatic = false;
+				return t;
 			}
 
 			@Override
@@ -1622,9 +1669,6 @@ public class RelaxedTyper {
 					left = scope.lookupThis();
 					leftStatic = explicitConstructorArg;
 					local = true;
-				}else if( !left.isVoid() && ((GroundDataType)left).worldArguments().size() != 1 ){
-					// for now
-					throw new UnsupportedOperationException("MethodCallExpression with " + ((GroundDataType)left).worldArguments().size() + " roles not allowed\n\tExpression at " + n.position().toString());
 				}else{
 					local = false;
 				}
