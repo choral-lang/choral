@@ -1678,14 +1678,8 @@ public class RelaxedTyper {
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
 						.map( x -> {
-							List<? extends World> hw;
-							if(local){
-								hw = Collections.emptyList();
-							}else{
-								hw = ((GroundDataType)left).worldArguments();
-							}
 							return assertNotVoid(
-								synth( scope, x, explicitConstructorArg, hw ),
+								synth( scope, x, explicitConstructorArg ),
 								x.position() );
 						} )
 						.collect( Collectors.toList() );
@@ -1736,12 +1730,10 @@ public class RelaxedTyper {
 					n.setMethodAnnotation( selected );
 					leftStatic = false;
 
-					if(local){
-						for( int i = 0; i < args.size(); i++ ){
-							List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
-							synth( scope, n.arguments().get(i), explicitConstructorArg, expectedArgWorlds );
+					for( int i = 0; i < args.size(); i++ ){
+						List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
+						synth( scope, n.arguments().get(i), explicitConstructorArg, expectedArgWorlds );
 
-						}
 					}
 
 					return selected.returnType();
@@ -1824,7 +1816,10 @@ public class RelaxedTyper {
 				if( !homeWorlds.isEmpty() && !atHome(fromWorlds) ){
 					System.out.println( "Role(s) " + homeWorlds + " needs " + expressionString + " at world(s) " + fromWorlds );
 					System.out.println( "\tat " + expression.position() );
-					scope.getChannels();
+					System.out.println( "\tAvailable channels: " );
+					for( String ch : scope.getChannels() )
+						System.out.print(ch);
+					
 				}
 					
 			}
@@ -2463,8 +2458,9 @@ public class RelaxedTyper {
 		private final Map< String, GroundDataType > variables = new HashMap<>();
 
 		@Override
-		public void getChannels(){
-			System.out.println( "\tAvailable channels: " );
+		public List<String> getChannels(){
+			List<String> channels = new ArrayList<>();
+			
 
 			// this fields
 			lookupThis().fields().forEach( field -> {
@@ -2473,7 +2469,9 @@ public class RelaxedTyper {
 				String type = field.type().typeConstructor().toString();
 				int pck = type.lastIndexOf(".");
 				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
-					System.out.println( "\t\t" + field.identifier() + " - " + field.type().typeConstructor().toString().substring(pck+1) + "@" + field.type().typeConstructor().worldParameters() );
+					String ch = "\t\t" + field.identifier() + " - " + field.type().typeConstructor().toString().substring(pck+1) + "@" + field.type().typeConstructor().worldParameters() + "\n";
+					if( !channels.contains(ch) )
+						channels.add( ch );
 				}
 			} );
 			
@@ -2484,9 +2482,12 @@ public class RelaxedTyper {
 				String type = val.typeConstructor().toString();
 				int pck = type.lastIndexOf(".");
 				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
-					System.out.println( "\t\t" + key + " - " + val.typeConstructor().toString().substring(pck+1) + "@" + val.typeConstructor().worldParameters() );
+					String ch = "\t\t" + key + " - " + val.typeConstructor().toString().substring(pck+1) + "@" + val.typeConstructor().worldParameters() + "\n";
+					if( !channels.contains(ch) )
+						channels.add( ch );
 				}
 			} );
+			return channels;
 		}
 
 		@Override
@@ -2549,8 +2550,8 @@ public class RelaxedTyper {
 		private final Map< String, GroundDataType > variables = new HashMap<>();
 
 		@Override
-		public void getChannels(){
-			System.out.println( "\tAvailable channels: " );
+		public List<String> getChannels(){
+			List<String> channels = new ArrayList<>();
 
 			// this fields
 			lookupThis().fields().forEach( field -> {
@@ -2559,7 +2560,9 @@ public class RelaxedTyper {
 				String type = field.type().typeConstructor().toString();
 				int pck = type.lastIndexOf(".");
 				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
-					System.out.println( "\t\t" + field.identifier() + " - " + field.type().typeConstructor().toString().substring(pck+1) + "@" + field.type().typeConstructor().worldParameters() );
+					String ch = "\t\t" + field.identifier() + " - " + field.type().typeConstructor().toString().substring(pck+1) + "@" + field.type().typeConstructor().worldParameters() + "\n";
+					if( !channels.contains(ch) )
+						channels.add( ch );
 				}
 			} );
 			
@@ -2570,9 +2573,18 @@ public class RelaxedTyper {
 				String type = val.typeConstructor().toString();
 				int pck = type.lastIndexOf(".");
 				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
-					System.out.println( "\t\t" + key + " - " + val.typeConstructor().toString().substring(pck+1) + "@" + val.typeConstructor().worldParameters() );
+					String ch = "\t\t" + key + " - " + val.typeConstructor().toString().substring(pck+1) + "@" + val.typeConstructor().worldParameters() + "\n";
+					if( !channels.contains(ch) )
+						channels.add( ch );
 				}
 			} );
+			if( parent() instanceof VariableDeclarationScope ){
+				parent.getChannels().forEach( ch -> {
+					if(!channels.contains(ch))
+						channels.add(ch);
+				} );;
+			}
+			return channels;
 		}
 
 		@Override
@@ -2659,7 +2671,7 @@ public class RelaxedTyper {
 
 		BlockScope newBlockScope();
 
-		void getChannels();
+		List<String> getChannels();
 
 	}
 
