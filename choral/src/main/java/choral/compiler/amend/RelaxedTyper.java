@@ -1242,7 +1242,29 @@ public class RelaxedTyper {
 
 			@Override
 			public Boolean visit( TryCatchStatement n ) {
-				throw new UnsupportedOperationException("Try-catch statements not allowed\n\tStatement at " + n.position().toString());
+				boolean returnChecked = visitAsInBlock( n.body() );
+				for( Pair< VariableDeclaration, Statement > c : n.catches() ) {
+					GroundDataType te = visitGroundDataTypeExpression( scope, c.left().type(),
+							false );
+					if( te.worldArguments().size() > 1 || !te.isSubtypeOf_relaxed(
+							universe().specialType( SpecialTypeTag.EXCEPTION ).applyTo(
+									te.worldArguments() ) )
+					) {
+						throw new AstPositionedException( c.left().type().position(),
+								new StaticVerificationException( "required an instance of type '"
+										+ SpecialTypeTag.EXCEPTION
+										+ "', found '" + te + "'" ) );
+					}
+					openBlock();  // ---
+					try {
+						scope.declareVariable( c.left().name().identifier(), te );
+					} catch( StaticVerificationException e ) {
+						throw new AstPositionedException( c.left().name().position(), e );
+					}
+					returnChecked &= visit( c.right() );
+					closeBlock(); // ---
+				}
+				return assertReachableContinuation( n, returnChecked );
 			}
 
 			@Override
