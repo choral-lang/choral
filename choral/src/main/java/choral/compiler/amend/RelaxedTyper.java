@@ -33,6 +33,7 @@ import choral.ast.visitors.AbstractChoralVisitor;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.StaticVerificationException;
 import choral.types.*;
+import choral.types.Member.HigherMethod;
 import choral.types.Package; // to avoid ambigous reference to "Package"
 import choral.types.Universe.PrimitiveTypeTag;
 import choral.types.Universe.SpecialTypeTag;
@@ -944,7 +945,7 @@ public class RelaxedTyper {
 
 		@Override
 		protected void visitMethodBody(
-				CallableBodyScope bodyScope, Member.HigherMethod callable, Statement body
+				CallableBodyScope bodyScope, HigherMethod callable, Statement body
 		) {
 			if( callable.isAbstract() ) {
 				if( body != null ) {
@@ -959,13 +960,27 @@ public class RelaxedTyper {
 							"non-abstract methods must have bodies" );
 				} else {
 					boolean returnChecked;
+					System.out.println( "visiting method: " + callable.toString() + " at " + body.position() );
+					
+					callable.addChannel(bodyScope.getChannels()); // find all available channels
+					
 					returnChecked = new Check( bodyScope,
-						callable.innerCallable().returnType() )
+						callable.innerCallable().returnType(), callable )
 						.visit( body );
 					if( !callable.innerCallable().returnType().isVoid() && !returnChecked ) {
 						throw new AstPositionedException( body.position(),
 								new StaticVerificationException( "missing return statement" ) );
 					}
+
+					callable.worldDependenciesList().forEach( (world, depenList) -> {
+						System.out.println( "Role " + world + " needs" );
+						depenList.forEach( dependency -> System.out.println( "\t" + dependency + "\n\tat " + dependency.position() ) );
+					} );
+					if( !callable.channels().isEmpty() ){
+						System.out.println( "Channels: " );
+						callable.channels().forEach( ch -> System.out.println( "\t" + ch ) );
+					}
+					
 				}
 			}
 		}
@@ -1133,28 +1148,48 @@ public class RelaxedTyper {
 			return ms;
 		}
 
-		GroundDataTypeOrVoid synth( VariableDeclarationScope scope, Expression n ) {
-			return new Synth( scope ).visit( n );
+		GroundDataTypeOrVoid synth( 
+			VariableDeclarationScope scope, 
+			Expression n, 
+			HigherMethod method
+		) {
+			return new Synth( scope, method ).visit( n );
+		}
+
+		// only kept because used in visitConstructorBody
+		GroundDataTypeOrVoid synth(
+				VariableDeclarationScope scope, 
+				Expression n, 
+				boolean explicitConstructorArg
+		) {
+			return new Synth( scope, explicitConstructorArg, null ).visit( n );
 		}
 
 		GroundDataTypeOrVoid synth(
-				VariableDeclarationScope scope, Expression n, boolean explicitConstructorArg
+				VariableDeclarationScope scope, 
+				Expression n, 
+				boolean explicitConstructorArg, 
+				HigherMethod method 
 		) {
-			return new Synth( scope, explicitConstructorArg ).visit( n );
+			return new Synth( scope, explicitConstructorArg, method ).visit( n );
 		}
 
 		GroundDataTypeOrVoid synth( 
 			VariableDeclarationScope scope, 
 			Expression n, 
-			List< ? extends World > homeWorlds ) {
-			return new Synth( scope, homeWorlds ).visit( n );
+			List< ? extends World > homeWorlds,
+			HigherMethod method  ) {
+			return new Synth( scope, homeWorlds, method ).visit( n );
 		}
 
 		GroundDataTypeOrVoid synth(
-				VariableDeclarationScope scope, Expression n, 
-				boolean explicitConstructorArg, List< ? extends World > homeWorlds
+				VariableDeclarationScope scope, 
+				Expression n, 
+				boolean explicitConstructorArg, 
+				List< ? extends World > homeWorlds,
+				HigherMethod method 
 		) {
-			return new Synth( scope, explicitConstructorArg, homeWorlds ).visit( n );
+			return new Synth( scope, explicitConstructorArg, homeWorlds, method ).visit( n );
 		}
 
 		GroundDataType assertNotVoid( GroundDataTypeOrVoid t, Position position ) {
@@ -1170,13 +1205,20 @@ public class RelaxedTyper {
 		 * A relaxed version of Check. Doesn't throw exceptions on data location mismatch.
 		 */
 		private final class Check extends AbstractChoralVisitor< Boolean > {
+			
 			private VariableDeclarationScope scope;
-
 			private final GroundDataTypeOrVoid expected;
+			private HigherMethod method = null;
 
 			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected ) {
 				this.scope = scope;
 				this.expected = expected;
+			}
+
+			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected, HigherMethod method ) {
+				this.scope = scope;
+				this.expected = expected;
+				this.method = method;
 			}
 
 			private boolean visitAsInBlock( Statement n ) {
@@ -1208,13 +1250,13 @@ public class RelaxedTyper {
 
 			@Override
 			public Boolean visit( ExpressionStatement n ) {
-				synth( scope, n.expression() );
+				synth( scope, n.expression(), method );
 				return assertReachableContinuation( n, false );
 			}
 
 			@Override
 			public Boolean visit( IfStatement n ) {
-				GroundDataTypeOrVoid type = synth( scope, n.condition() );
+				GroundDataTypeOrVoid type = synth( scope, n.condition(), method );
 				if( type.primitiveTypeTag() != PrimitiveTypeTag.BOOLEAN &&
 						type.specialTypeTag() != SpecialTypeTag.BOOLEAN ) {
 					throw new AstPositionedException( n.condition().position(),
@@ -1288,7 +1330,7 @@ public class RelaxedTyper {
 								new StaticVerificationException(
 										"cannot return a value from a method with 'void' result type" ) );
 					} else {
-						GroundDataTypeOrVoid found = synth( scope, n.returnExpression(), ((GroundDataType) expected).worldArguments() );
+						GroundDataTypeOrVoid found = synth( scope, n.returnExpression(), ((GroundDataType) expected).worldArguments(), method );
 						if( !found.isAssignableTo_relaxed( expected ) ) {
 							throw new AstPositionedException( n.position(),
 									new StaticVerificationException(
@@ -1304,7 +1346,7 @@ public class RelaxedTyper {
 				for( VariableDeclaration x : n.variables() ) {
 					GroundDataType type = visitGroundDataTypeExpression( scope, x.type(), false );
 					scope.declareVariable( x.name().identifier(), type );
-					x.initializer().ifPresent( e -> synth( scope, e ) );
+					x.initializer().ifPresent( e -> synth( scope, e, method ) );
 				}
 				return assertReachableContinuation( n, false );
 			}
@@ -1326,26 +1368,37 @@ public class RelaxedTyper {
 		 */
 		private final class Synth extends AbstractChoralVisitor< GroundDataTypeOrVoid > {
 
-			public Synth( VariableDeclarationScope scope ) {
-				this( scope, false );
+			public Synth( VariableDeclarationScope scope, HigherMethod method ) {
+				this( scope, false, method );
 			}
 
-			public Synth( VariableDeclarationScope scope, boolean explicitConstructorArg ) {
+			public Synth( 
+				VariableDeclarationScope scope, 
+				boolean explicitConstructorArg, 
+				HigherMethod method 
+			) {
 				this.scope = scope;
 				this.explicitConstructorArg = explicitConstructorArg;
+				this.method = method;
 			}
 
-			public Synth( VariableDeclarationScope scope, List< ? extends World > homeWorlds  ) {
-				this( scope, false, homeWorlds );
+			public Synth( 
+				VariableDeclarationScope scope, 
+				List< ? extends World > homeWorlds, 
+				HigherMethod method   
+			) {
+				this( scope, false, homeWorlds, method );
 			}
 
 			public Synth( 
 				VariableDeclarationScope scope, boolean explicitConstructorArg, 
-				List< ? extends World > homeWorlds 
+				List< ? extends World > homeWorlds,
+				HigherMethod method 
 			) {
 				this.scope = scope;
 				this.explicitConstructorArg = explicitConstructorArg;
 				this.homeWorlds = homeWorlds;
+				this.method = method;
 			}
 			
 			private final VariableDeclarationScope scope;
@@ -1357,6 +1410,7 @@ public class RelaxedTyper {
 			boolean checkLocation = true; 	// for scopedexpressions like "this.obj.val" we only want to check location once for 
 											// the whole expression, not once for every sub-expression
 			String fullName;				// the full name of a scopedExpression, used by innermost scopedExpression
+			HigherMethod method;			// the enclosing method
 
 			@Override
 			public GroundDataTypeOrVoid visit( Expression n ) {
@@ -1527,7 +1581,7 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataType visit( AssignExpression n ) {
-				GroundDataTypeOrVoid tvl = synth( scope, n.target(), explicitConstructorArg );
+				GroundDataTypeOrVoid tvl = synth( scope, n.target(), explicitConstructorArg, method );
 				if( tvl.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
@@ -1535,7 +1589,7 @@ public class RelaxedTyper {
 				}
 				GroundDataType tl = (GroundDataType) tvl;
 				homeWorlds = tl.worldArguments();
-				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg, homeWorlds );
+				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg, homeWorlds, method );
 				if( tvr.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
@@ -1560,9 +1614,9 @@ public class RelaxedTyper {
 				if( homeWorlds.isEmpty() )
 					homeWorlds = setExpressionHome(n); 
 
-				GroundDataTypeOrVoid tl = synth( scope, n.left(), explicitConstructorArg, homeWorlds );
+				GroundDataTypeOrVoid tl = synth( scope, n.left(), explicitConstructorArg, homeWorlds, method );
 				
-				GroundDataTypeOrVoid tr = synth( scope, n.right(), explicitConstructorArg, homeWorlds );
+				GroundDataTypeOrVoid tr = synth( scope, n.right(), explicitConstructorArg, homeWorlds, method );
 				return annotate( n, visitBinaryOp( n.operator(), tl, tr, n.position() ) );
 			}
 
@@ -1599,7 +1653,7 @@ public class RelaxedTyper {
 							new UnresolvedSymbolException( identifier ) );
 				} else {
 
-					// IF not part of a scopedexpression
+					// If not part of a scopedexpression
 					if ( checkLocation ){
 						List< ? extends World > rightWorlds = result.get().worldArguments();
 						
@@ -1645,7 +1699,7 @@ public class RelaxedTyper {
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
 						.map( x -> assertNotVoid(
-								synth( scope, x, explicitConstructorArg ),
+								synth( scope, x, explicitConstructorArg, method ),
 								x.position() ) )
 						.collect( Collectors.toList() );
 				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
@@ -1676,7 +1730,7 @@ public class RelaxedTyper {
 
 				for( int i = 0; i < args.size(); i++ ){
 					List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
-					synth( scope, n.arguments().get(i), explicitConstructorArg, expectedArgWorlds );
+					synth( scope, n.arguments().get(i), explicitConstructorArg, expectedArgWorlds, method );
 
 				}
 
@@ -1701,31 +1755,12 @@ public class RelaxedTyper {
 				List< ? extends GroundDataType > args = n.arguments().stream()
 						.map( x -> {
 							return assertNotVoid(
-								synth( scope, x, explicitConstructorArg ),
+								synth( scope, x, explicitConstructorArg, method ),
 								x.position() );
 						} )
 						.collect( Collectors.toList() );
 				if( left instanceof GroundReferenceType ) {
 					GroundReferenceType t = (GroundReferenceType) left;
-
-					// print out method
-					/*
-					System.out.println( "t: " + t );
-					System.out.println( "t methods: " + t.methods( n.name().identifier() ).toList() );
-					System.out.println( "t methods declarationcontext worldarguments: " + t.methods( n.name().identifier() ).map( x -> x.declarationContext().worldArguments() ).toList() );
-					System.out.println( "t fields: " + t.fields().toList() );
-					System.out.println( "typeargs: " );
-					typeArgs.forEach( x -> {
-						System.out.println( "\ttypearg: " + x.toString() );
-						System.out.println( "\tworldarguments: " + x.worldParameters() );
-					} ) ;
-					System.out.println( "args: " );
-					args.forEach( x -> {
-						System.out.println( "\targ: " + x );
-						System.out.println( "\tworldarguments: " + x.worldArguments() );
-					} );
-					System.out.println();
-					*/
 
 					List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
 							typeArgs,
@@ -1754,7 +1789,7 @@ public class RelaxedTyper {
 
 					for( int i = 0; i < args.size(); i++ ){
 						List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
-						synth( scope, n.arguments().get(i), explicitConstructorArg, expectedArgWorlds );
+						synth( scope, n.arguments().get(i), explicitConstructorArg, expectedArgWorlds, method );
 
 					}
 
@@ -1836,12 +1871,7 @@ public class RelaxedTyper {
 				Expression expression 
 				){
 				if( !homeWorlds.isEmpty() && !atHome(fromWorlds) ){
-					System.out.println( "Role(s) " + homeWorlds + " needs " + expressionString + " at world(s) " + fromWorlds );
-					System.out.println( "\tat " + expression.position() );
-					System.out.println( "\tAvailable channels: " );
-					for( String ch : scope.getChannels() )
-						System.out.print(ch);
-					
+					method.addDependency(homeWorlds.stream().map( world -> (World)world ).toList(), expression, expressionString);
 				}
 					
 			}
@@ -2491,7 +2521,7 @@ public class RelaxedTyper {
 				String type = field.type().typeConstructor().toString();
 				int pck = type.lastIndexOf(".");
 				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
-					String ch = "\t\t" + field.identifier() + " - " + field.type().typeConstructor().toString().substring(pck+1) + "@" + field.type().typeConstructor().worldParameters() + "\n";
+					String ch = field.identifier() + " - " + field.type().typeConstructor().toString().substring(pck+1) + "@" + field.type().typeConstructor().worldParameters();
 					if( !channels.contains(ch) )
 						channels.add( ch );
 				}
@@ -2504,7 +2534,7 @@ public class RelaxedTyper {
 				String type = val.typeConstructor().toString();
 				int pck = type.lastIndexOf(".");
 				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
-					String ch = "\t\t" + key + " - " + val.typeConstructor().toString().substring(pck+1) + "@" + val.typeConstructor().worldParameters() + "\n";
+					String ch = key + " - " + val.typeConstructor().toString().substring(pck+1) + "@" + val.typeConstructor().worldParameters();
 					if( !channels.contains(ch) )
 						channels.add( ch );
 				}
@@ -2582,7 +2612,7 @@ public class RelaxedTyper {
 				String type = field.type().typeConstructor().toString();
 				int pck = type.lastIndexOf(".");
 				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
-					String ch = "\t\t" + field.identifier() + " - " + field.type().typeConstructor().toString().substring(pck+1) + "@" + field.type().typeConstructor().worldParameters() + "\n";
+					String ch = field.identifier() + " - " + field.type().typeConstructor().toString().substring(pck+1) + "@" + field.type().typeConstructor().worldParameters();
 					if( !channels.contains(ch) )
 						channels.add( ch );
 				}
@@ -2595,7 +2625,7 @@ public class RelaxedTyper {
 				String type = val.typeConstructor().toString();
 				int pck = type.lastIndexOf(".");
 				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
-					String ch = "\t\t" + key + " - " + val.typeConstructor().toString().substring(pck+1) + "@" + val.typeConstructor().worldParameters() + "\n";
+					String ch = key + " - " + val.typeConstructor().toString().substring(pck+1) + "@" + val.typeConstructor().worldParameters();
 					if( !channels.contains(ch) )
 						channels.add( ch );
 				}

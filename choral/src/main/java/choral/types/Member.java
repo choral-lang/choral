@@ -22,6 +22,7 @@
 package choral.types;
 
 import choral.ast.Node;
+import choral.ast.expression.Expression;
 import choral.exceptions.StaticVerificationException;
 import choral.utils.Formatting;
 
@@ -680,6 +681,51 @@ public abstract class Member implements HasSource {
 		@Override
 		public Definition innerCallable() {
 			return innerCallable;
+		}
+
+		private Map<World, List<Expression>> worldDependencies =  new HashMap<World, List<Expression>>();
+		// for example
+		// int@A i_A = 0@A;
+		// int@B i_B = i_A;
+		// 
+		// world B would depend on i_A 
+		
+		public void addDependency( List<World> worlds, Expression expression, String expressionString ){
+			for( World world : worlds ){
+				addDependency(world, expression, expressionString);
+			}
+		}
+
+		public void addDependency( World world, Expression expression, String expressionString ){
+			worldDependencies.putIfAbsent(world, new ArrayList<>());
+			worldDependencies.get(world).add(expression);
+			
+		}
+
+		public Map<World, List<Expression>> worldDependenciesList(){
+			return worldDependencies;
+		}
+
+		public List<Expression> worldDependencies( World world ){
+			return worldDependencies.get(world);
+		}
+
+		private List<String> channels = new ArrayList<String>();
+		// A list of all the channels available to the method from either the 
+		// enclosing class' fields or the methods arguments.
+
+		public void addChannel( List<String> channelList ){
+			for( String channel : channelList ){
+				addChannel(channel);
+			}
+		}
+
+		public void addChannel( String channel ){
+			channels.add(channel);
+		}
+
+		public List<String> channels(){
+			return channels;
 		}
 
 		public final class Definition extends HigherCallable.Definition implements GroundMethod {
