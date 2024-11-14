@@ -27,5 +27,8 @@ public interface GroundDataTypeOrVoid extends DataTypeOrVoid {
 
 	boolean isAssignableTo( GroundDataTypeOrVoid type );
 
+	/**
+	 * relaxed version of isAssignableTo. Doesn't check world correspondence. 
+	 */
 	boolean isAssignableTo_relaxed( GroundDataTypeOrVoid type );
 }

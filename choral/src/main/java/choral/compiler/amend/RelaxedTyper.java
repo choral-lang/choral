@@ -974,7 +974,7 @@ public class RelaxedTyper {
 
 					callable.worldDependenciesList().forEach( (world, depenList) -> {
 						System.out.println( "Role " + world + " needs" );
-						depenList.forEach( dependency -> System.out.println( "\t" + dependency + "\n\tat " + dependency.position() ) );
+						depenList.forEach( dependency -> System.out.println( "\t" + dependency + " at " + dependency.position() ) );
 					} );
 					if( !callable.channels().isEmpty() ){
 						System.out.println( "Channels: " );
@@ -1208,7 +1208,7 @@ public class RelaxedTyper {
 			
 			private VariableDeclarationScope scope;
 			private final GroundDataTypeOrVoid expected;
-			private HigherMethod method = null;
+			private HigherMethod method = null; // the enclosing method
 
 			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected ) {
 				this.scope = scope;
@@ -1419,18 +1419,22 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( ScopedExpression n ) {
-				if(checkLocation){
+				// We want to capture the full ScopedExpression, but only consieder the worldargument 
+				// of the innermost expression 
+				// for expression obj.first.second.val, we want to capture the full expression, but 
+				// only consider the world of val
+
+				if(checkLocation){ // only true at the first visited ScopedExpression in a scoped chain
 					fullName = n.toString();
 					checkLocation = false;
 				}
-				
 
 				left = visit( n.scope() );
 				GroundDataTypeOrVoid right = visit( n.scopedExpression() );
 
+				// if n.scopedExpression() is not a ScopedExpression then n.scopedExpression() is the 
+				// innermost expression (usually a FieldAccessExpression or a MethodCallExpression)
 				if( !(n.scopedExpression() instanceof ScopedExpression) && !right.isVoid() ){
-					
-					// if n is the innermost scopedExpression and not void
 					inferCommunications(fullName, ((GroundDataType)right).worldArguments(), n);
 				}
 				
@@ -1475,11 +1479,11 @@ public class RelaxedTyper {
 					GroundDataType tl = (GroundDataType) tvl;
 					GroundDataType tr = (GroundDataType) tvr;
 
-					List< ? extends World > worlds;
+					List< ? extends World > worlds; 	// the worlds of this expression
 					if( !homeWorlds.isEmpty() )
-						worlds = homeWorlds;
+						worlds = homeWorlds;			// if homeworlds is set, use that
 					else
-						worlds = tl.worldArguments();
+						worlds = tl.worldArguments(); 	// if no homeworld is set, use the left side's worlds
 					
 					GroundPrimitiveDataType pl = null;
 					GroundPrimitiveDataType pr = null;
@@ -1552,8 +1556,8 @@ public class RelaxedTyper {
 							break;
 						case EQUALS:
 						case NOT_EQUALS:
-							if( ( tl instanceof GroundReferenceType && tr.isSubtypeOf( tl ) ) ||
-									( tr instanceof GroundReferenceType && tl.isSubtypeOf(
+							if( ( tl instanceof GroundReferenceType && tr.isSubtypeOf_relaxed( tl ) ) ||
+									( tr instanceof GroundReferenceType && tl.isSubtypeOf_relaxed(
 											tr ) )
 							) {
 								return universe().primitiveDataType(
@@ -1588,7 +1592,7 @@ public class RelaxedTyper {
 									"expected assignable variable" ) );
 				}
 				GroundDataType tl = (GroundDataType) tvl;
-				homeWorlds = tl.worldArguments();
+				homeWorlds = tl.worldArguments(); // the lefthand side of an assignment determines the worlds of the expression
 				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg, homeWorlds, method );
 				if( tvr.isVoid() ) {
 					throw new AstPositionedException( n.position(),
@@ -1612,10 +1616,14 @@ public class RelaxedTyper {
 			@Override
 			public GroundDataType visit( BinaryExpression n ) {
 				if( homeWorlds.isEmpty() )
-					homeWorlds = setExpressionHome(n); 
+					homeWorlds = setExpressionHome(n); 	// if homeworlds is not set, check if this 
+														// expression's worlds are limited by literals
 
 				GroundDataTypeOrVoid tl = synth( scope, n.left(), explicitConstructorArg, homeWorlds, method );
-				
+				// if homeWorlds was not initially set and the expression did not contain 
+				// lliterals, the leftmost expression desides worlds
+				if( homeWorlds.isEmpty() && !tl.isVoid() ) 	
+					homeWorlds = ((GroundDataType)tl).worldArguments();
 				GroundDataTypeOrVoid tr = synth( scope, n.right(), explicitConstructorArg, homeWorlds, method );
 				return annotate( n, visitBinaryOp( n.operator(), tl, tr, n.position() ) );
 			}
@@ -1652,14 +1660,11 @@ public class RelaxedTyper {
 					throw new AstPositionedException( n.position(),
 							new UnresolvedSymbolException( identifier ) );
 				} else {
-
-					// If not part of a scopedexpression
-					if ( checkLocation ){
+					if ( checkLocation ){ // If not part of a scopedexpression
 						List< ? extends World > rightWorlds = result.get().worldArguments();
 						
-						// We should insert a communication in this case
+						// We should check world correspondence 
 						inferCommunications(identifier, rightWorlds, n);
-						
 					}
 
 					return annotate( n, result.get() );
@@ -1728,10 +1733,13 @@ public class RelaxedTyper {
 				Member.GroundConstructor selected = (Member.GroundConstructor) ms.get( 0 );
 				n.setConstructorAnnotation( selected );
 
+				// Since findMostSpecificCallable has been relaxed to not check world 
+				// corresponcence, we need to check this manually
 				for( int i = 0; i < args.size(); i++ ){
 					List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
+					// probably a better way to check world correspondence, since the 
+					// arguments have already been synthed earlier in this method
 					synth( scope, n.arguments().get(i), explicitConstructorArg, expectedArgWorlds, method );
-
 				}
 
 				leftStatic = false;
@@ -1740,13 +1748,10 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( MethodCallExpression n ) {
-				final boolean local;
+				
 				if( left == null ) { // only happens for simple method calls (local)
 					left = scope.lookupThis();
 					leftStatic = explicitConstructorArg;
-					local = true;
-				}else{
-					local = false;
 				}
 
 				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
@@ -1787,10 +1792,13 @@ public class RelaxedTyper {
 					n.setMethodAnnotation( selected );
 					leftStatic = false;
 
+					// Since findMostSpecificCallable has been relaxed to not check world 
+					// corresponcence, we need to check this manually
 					for( int i = 0; i < args.size(); i++ ){
 						List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
+						// probably a better way to check world correspondence, since the 
+						// arguments have already been synthed earlier in this method
 						synth( scope, n.arguments().get(i), explicitConstructorArg, expectedArgWorlds, method );
-
 					}
 
 					return selected.returnType();
@@ -1863,7 +1871,8 @@ public class RelaxedTyper {
 			}
 
 			/**
-			 * Gets called whenever a communication needs to be inferred 
+			 * If the given expression's worlds don't correspond to homeworlds, a dependency is 
+			 * added to the enclosing method.
 			 */
 			private void inferCommunications( 
 				String expressionString, 
@@ -1889,8 +1898,8 @@ public class RelaxedTyper {
 
 
 			/**
-			 * Checks that, if the given literalexpression is the righthand side of an assignment,
-			 * it should have the same worldarguments. If not, an exception is thrown.
+			 * Checks the worldcorrespondence between the given literalexpression and homeworlds.
+			 * If they don't match, an exception is thrown.
 			 */
 			private <T extends LiteralExpression<?>> void checkWorlds( T n ){
 				if( !homeWorlds.isEmpty() && !atHome( List.of( visitWorld(n.world()) ) )){
@@ -1904,11 +1913,11 @@ public class RelaxedTyper {
 			 * Checks if a given expression is locked to some world by looking at existance of literals
 			 */
 			private <E extends Expression > List<? extends World> setExpressionHome( E expression ){
-				// don't care about: assignments, variables/FieldAccessExpressions, (maybe scoped expressions?) 
-				// do care about: literals, BinaryExpressions
+				
 				if( expression instanceof BinaryExpression ){
 					List<? extends World> left = setExpressionHome( ((BinaryExpression)expression).left() );
 					List<? extends World> right = setExpressionHome( ((BinaryExpression)expression).right() );
+					
 					if( !left.isEmpty() && !right.isEmpty() && !left.equals(right) ){
 						throw new AstPositionedException( expression.position(),
 							 new StaticVerificationException(
@@ -2723,6 +2732,10 @@ public class RelaxedTyper {
 
 		BlockScope newBlockScope();
 
+		/**
+		 * Collects channels available in the scope by looking at the fields of "this" 
+		 * and the enclosing method's arguments
+		 */
 		List<String> getChannels();
 
 	}
