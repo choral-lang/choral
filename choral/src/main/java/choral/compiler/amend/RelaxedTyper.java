@@ -547,6 +547,44 @@ public class RelaxedTyper {
 			}
 		}
 
+		public static boolean isComMethod(
+				Member.HigherMethod tm
+		) {
+			if( tm.typeParameters().size() != 1 ) {
+				System.out.println( "not correct number of typeparameters" );
+				return false;
+			}
+			HigherTypeParameter tp = tm.typeParameters().get( 0 );
+			
+			if( tm.arity() != 1 ) {
+				System.out.println( "not correct arity" );
+				return false;
+			}
+			GroundDataType mp = tm.innerCallable().signature().parameters()
+					.get( 0 ).type();
+			if( mp.worldArguments().size() != 1 || !mp.isEquivalentTo(
+					tp.applyTo( mp.worldArguments() ) ) ) {
+				System.out.println( "not parameters and typeparameters not same worlds" );
+				return false;
+			}
+			if( tm.innerCallable().returnType().isVoid() ) {
+				System.out.println( "cannot have returntype void" );
+				return false;
+			}
+			GroundDataType tr = (GroundDataType) tm.innerCallable().returnType();
+			if( tr.worldArguments().size() != 1 || !tr.isEquivalentTo(
+					tp.applyTo( tr.worldArguments() ) ) ) {
+				System.out.println( "not correct worlds" );
+				return false;
+			}
+			if( mp.worldArguments().equals( tr.worldArguments() ) ) {
+				System.out.println( "not correct worlds" );
+				return false;
+			}
+
+			return true;
+		}
+
 		private void checkIfTypeSelectionMethod( Member.HigherMethod tm,
 				List< Annotation > annotations ) {
 			for( Annotation x : annotations ) {
@@ -2526,26 +2564,22 @@ public class RelaxedTyper {
 			// this fields
 			lookupThis().fields().forEach( field -> {
 				
-				// this is dumb
-				String type = field.type().typeConstructor().toString();
-				int pck = type.lastIndexOf(".");
-				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
-					String ch = field.identifier() + " - " + field.type().typeConstructor().toString().substring(pck+1) + "@" + field.type().typeConstructor().worldParameters();
-					if( !channels.contains(ch) )
-						channels.add( ch );
+				if( field.type().typeConstructor() instanceof HigherInterface ){
+					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
+					if( typec.innerType().methods().allMatch( Visitor::isComMethod ) ){
+						channels.add(field.type().toString());
+					}
 				}
 			} );
 			
 			// method arguments
 			variables.forEach( (key, val) -> {
 				
-				// this is still dumb
-				String type = val.typeConstructor().toString();
-				int pck = type.lastIndexOf(".");
-				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
-					String ch = key + " - " + val.typeConstructor().toString().substring(pck+1) + "@" + val.typeConstructor().worldParameters();
-					if( !channels.contains(ch) )
-						channels.add( ch );
+				if( val.typeConstructor() instanceof HigherInterface ){
+					HigherInterface typec = (HigherInterface)val.typeConstructor();
+					if( typec.innerType().methods().allMatch( Visitor::isComMethod ) ){
+						channels.add(val.toString());
+					}					
 				}
 			} );
 			return channels;
@@ -2617,26 +2651,22 @@ public class RelaxedTyper {
 			// this fields
 			lookupThis().fields().forEach( field -> {
 				
-				// this is dumb
-				String type = field.type().typeConstructor().toString();
-				int pck = type.lastIndexOf(".");
-				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
-					String ch = field.identifier() + " - " + field.type().typeConstructor().toString().substring(pck+1) + "@" + field.type().typeConstructor().worldParameters();
-					if( !channels.contains(ch) )
-						channels.add( ch );
+				if( field.type().typeConstructor() instanceof HigherInterface ){
+					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
+					if( typec.innerType().methods().allMatch( Visitor::isComMethod ) ){
+						channels.add(field.type().toString());
+					}
 				}
 			} );
 			
 			// method arguments
 			variables.forEach( (key, val) -> {
 				
-				// this is still dumb
-				String type = val.typeConstructor().toString();
-				int pck = type.lastIndexOf(".");
-				if( pck >= 0 && type.substring(0, pck).equals( "choral.channels" ) ){
-					String ch = key + " - " + val.typeConstructor().toString().substring(pck+1) + "@" + val.typeConstructor().worldParameters();
-					if( !channels.contains(ch) )
-						channels.add( ch );
+				if( val.typeConstructor() instanceof HigherInterface ){
+					HigherInterface typec = (HigherInterface)val.typeConstructor();
+					if( typec.innerType().methods().allMatch( Visitor::isComMethod ) ){
+						channels.add(val.toString());
+					}					
 				}
 			} );
 			if( parent() instanceof VariableDeclarationScope ){
