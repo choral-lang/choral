@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 import choral.ast.CompilationUnit;
+import choral.types.GroundDataType;
 
 /**
  * Some useful methods to print out lists of CompilationUnits.
@@ -62,4 +63,73 @@ public class PrintCompilationUnits {
 			System.out.println( line.toString() );
 		}
 	}
+
+	public static void printWorldDependenciesAndChannels(Collection<CompilationUnit> units){
+		units.forEach( sourceUnit -> {
+			// sourceUnit
+			sourceUnit.classes().forEach( cls -> {
+				// class
+				cls.methods().forEach( method -> {
+					// method 
+					System.out.println( "Dependencies for method " + blue(method.signature().typeAnnotation().get().toString()) );
+					if( !method.signature().typeAnnotation().get().worldDependencies().isEmpty() ){
+						method.signature().typeAnnotation().get().worldDependencies().forEach( (world, depenList) -> {
+							// world dependencies
+							System.out.println( "\tRole " + world + " needs" );
+							depenList.forEach( dependency -> System.out.println( "\t\t" + dependency + " of type " + ((GroundDataType)dependency.typeAnnotation().get()).toString() + " at " + dependency.position() ) );
+						} );
+					}else{
+						System.out.println( "\tNone" );
+					}
+					System.out.println( "Channels for method " + blue(method.signature().typeAnnotation().get().toString()) );
+					if( !method.signature().typeAnnotation().get().channels().isEmpty() ){
+						method.signature().typeAnnotation().get().channels().forEach( ch -> System.out.println( "\t" + ch ) );
+					}else{
+						System.out.println( "\tNone" );
+					}
+				});
+			});
+		} );
+	}
+
+	public static void printWorldDependencies(Collection<CompilationUnit> units){
+		units.forEach( sourceUnit -> {
+			// sourceUnit
+			sourceUnit.classes().forEach( cls -> {
+				// class
+				cls.methods().forEach( method -> {
+					// method 
+					System.out.println( "Dependencies for method " + blue(method.signature().typeAnnotation().get().toString()) );
+					if( !method.signature().typeAnnotation().get().worldDependencies().isEmpty() ){
+						method.signature().typeAnnotation().get().worldDependencies().forEach( (world, depenList) -> {
+							// world dependencies
+							System.out.println( "\tRole " + world + " needs" );
+							depenList.forEach( dependency -> System.out.println( "\t\t" + dependency + " of type " + ((GroundDataType)dependency.typeAnnotation().get()).toString() + " at " + dependency.position() ) );
+						} );
+					}else{
+						System.out.println( "\t\tNone" );
+					}
+				});
+			});
+		} );
+	}
+
+	public static void printChannels(Collection<CompilationUnit> units){
+		units.forEach( sourceUnit -> {
+			// sourceUnit
+			sourceUnit.classes().forEach( cls -> {
+				// class
+				cls.methods().forEach( method -> {
+					// method 
+					System.out.println( "Channels for method " + blue(method.signature().typeAnnotation().get().toString()) );
+					if( !method.signature().typeAnnotation().get().channels().isEmpty() ){
+						method.signature().typeAnnotation().get().channels().forEach( ch -> System.out.println( "\t" + ch ) );
+					}else{
+						System.out.println( "\t\tNone" );
+					}
+				});
+			});
+		} );
+	}
+
 }

@@ -551,34 +551,34 @@ public class RelaxedTyper {
 				Member.HigherMethod tm
 		) {
 			if( tm.typeParameters().size() != 1 ) {
-				System.out.println( "not correct number of typeparameters" );
+				// System.out.println( "not correct number of typeparameters" );
 				return false;
 			}
 			HigherTypeParameter tp = tm.typeParameters().get( 0 );
 			
 			if( tm.arity() != 1 ) {
-				System.out.println( "not correct arity" );
+				// System.out.println( "not correct arity" );
 				return false;
 			}
 			GroundDataType mp = tm.innerCallable().signature().parameters()
 					.get( 0 ).type();
 			if( mp.worldArguments().size() != 1 || !mp.isEquivalentTo(
 					tp.applyTo( mp.worldArguments() ) ) ) {
-				System.out.println( "not parameters and typeparameters not same worlds" );
+				// System.out.println( "not parameters and typeparameters not same worlds" );
 				return false;
 			}
 			if( tm.innerCallable().returnType().isVoid() ) {
-				System.out.println( "cannot have returntype void" );
+				// System.out.println( "cannot have returntype void" );
 				return false;
 			}
 			GroundDataType tr = (GroundDataType) tm.innerCallable().returnType();
 			if( tr.worldArguments().size() != 1 || !tr.isEquivalentTo(
 					tp.applyTo( tr.worldArguments() ) ) ) {
-				System.out.println( "not correct worlds" );
+				// System.out.println( "not correct worlds" );
 				return false;
 			}
 			if( mp.worldArguments().equals( tr.worldArguments() ) ) {
-				System.out.println( "not correct worlds" );
+				// System.out.println( "not correct worlds" );
 				return false;
 			}
 
@@ -998,7 +998,6 @@ public class RelaxedTyper {
 							"non-abstract methods must have bodies" );
 				} else {
 					boolean returnChecked;
-					System.out.println( "visiting method: " + callable.toString() + " at " + body.position() );
 					
 					callable.addChannel(bodyScope.getChannels()); // find all available channels
 					
@@ -1008,17 +1007,7 @@ public class RelaxedTyper {
 					if( !callable.innerCallable().returnType().isVoid() && !returnChecked ) {
 						throw new AstPositionedException( body.position(),
 								new StaticVerificationException( "missing return statement" ) );
-					}
-
-					callable.worldDependenciesList().forEach( (world, depenList) -> {
-						System.out.println( "Role " + world + " needs" );
-						depenList.forEach( dependency -> System.out.println( "\t" + dependency + " at " + dependency.position() ) );
-					} );
-					if( !callable.channels().isEmpty() ){
-						System.out.println( "Channels: " );
-						callable.channels().forEach( ch -> System.out.println( "\t" + ch ) );
-					}
-					
+					}					
 				}
 			}
 		}
@@ -1908,6 +1897,11 @@ public class RelaxedTyper {
 						.applyTo( List.of( visitWorld( n.world() ) ) ) );
 			}
 
+			@Override
+			public GroundDataType visit( TypeExpression n ) {
+				throw new UnsupportedOperationException("Type expression not allowed\n\tExpression at " + n.position().toString());
+			}
+
 			/**
 			 * If the given expression's worlds don't correspond to homeworlds, a dependency is 
 			 * added to the enclosing method.
@@ -1966,12 +1960,6 @@ public class RelaxedTyper {
 					return List.of( visitWorld(((LiteralExpression<?>)expression).world()) );
 				}
 				return Collections.emptyList();
-			}
-
-
-			@Override
-			public GroundDataType visit( TypeExpression n ) {
-				throw new UnsupportedOperationException("Type expression not allowed\n\tExpression at " + n.position().toString());
 			}
 
 			public List< ? extends World > visitWorlds( List< WorldArgument > n ) {
@@ -2557,8 +2545,8 @@ public class RelaxedTyper {
 		private final Map< String, GroundDataType > variables = new HashMap<>();
 
 		@Override
-		public List<String> getChannels(){
-			List<String> channels = new ArrayList<>();
+		public List<GroundDataType> getChannels(){
+			List<GroundDataType> channels = new ArrayList<>();
 			
 
 			// this fields
@@ -2567,7 +2555,7 @@ public class RelaxedTyper {
 				if( field.type().typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
 					if( typec.innerType().methods().allMatch( Visitor::isComMethod ) ){
-						channels.add(field.type().toString());
+						channels.add(field.type());
 					}
 				}
 			} );
@@ -2578,7 +2566,7 @@ public class RelaxedTyper {
 				if( val.typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)val.typeConstructor();
 					if( typec.innerType().methods().allMatch( Visitor::isComMethod ) ){
-						channels.add(val.toString());
+						channels.add(val);
 					}					
 				}
 			} );
@@ -2645,8 +2633,8 @@ public class RelaxedTyper {
 		private final Map< String, GroundDataType > variables = new HashMap<>();
 
 		@Override
-		public List<String> getChannels(){
-			List<String> channels = new ArrayList<>();
+		public List<GroundDataType> getChannels(){
+			List<GroundDataType> channels = new ArrayList<>();
 
 			// this fields
 			lookupThis().fields().forEach( field -> {
@@ -2654,7 +2642,7 @@ public class RelaxedTyper {
 				if( field.type().typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
 					if( typec.innerType().methods().allMatch( Visitor::isComMethod ) ){
-						channels.add(field.type().toString());
+						channels.add(field.type());
 					}
 				}
 			} );
@@ -2665,7 +2653,7 @@ public class RelaxedTyper {
 				if( val.typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)val.typeConstructor();
 					if( typec.innerType().methods().allMatch( Visitor::isComMethod ) ){
-						channels.add(val.toString());
+						channels.add(val);
 					}					
 				}
 			} );
@@ -2766,7 +2754,7 @@ public class RelaxedTyper {
 		 * Collects channels available in the scope by looking at the fields of "this" 
 		 * and the enclosing method's arguments
 		 */
-		List<String> getChannels();
+		List<GroundDataType> getChannels();
 
 	}
 

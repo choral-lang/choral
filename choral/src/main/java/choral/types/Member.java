@@ -702,7 +702,7 @@ public abstract class Member implements HasSource {
 			
 		}
 
-		public Map<World, List<Expression>> worldDependenciesList(){
+		public Map<World, List<Expression>> worldDependencies(){
 			return worldDependencies;
 		}
 
@@ -710,21 +710,21 @@ public abstract class Member implements HasSource {
 			return worldDependencies.get(world);
 		}
 
-		private List<String> channels = new ArrayList<String>();
+		private List<GroundDataType> channels = new ArrayList<GroundDataType>();
 		// A list of all the channels available to the method from either the 
 		// enclosing class' fields or the methods arguments.
 
-		public void addChannel( List<String> channelList ){
-			for( String channel : channelList ){
+		public void addChannel( List<GroundDataType> channelList ){
+			for( GroundDataType channel : channelList ){
 				addChannel(channel);
 			}
 		}
 
-		public void addChannel( String channel ){
+		public void addChannel( GroundDataType channel ){
 			channels.add(channel);
 		}
 
-		public List<String> channels(){
+		public List<GroundDataType> channels(){
 			return channels;
 		}
 

@@ -308,6 +308,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				profilerLog( "typechecking", () -> annotatedUnits.set( RelaxedTyper.annotate( sourceUnits,
 							headerUnits) ) );
 				// PrintCompilationUnits.printSourceUnits(sourceUnits);
+				// PrintCompilationUnits.printWorldDependenciesAndChannels(sourceUnits);
 
 						
 			} catch( Exception e ){
