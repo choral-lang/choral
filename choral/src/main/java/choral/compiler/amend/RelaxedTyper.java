@@ -2518,7 +2518,7 @@ public class RelaxedTyper {
 				
 				if( field.type().typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
-					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf_relaxed( diSelectChannel ) ){
+					if( typec.isSubtypeOf( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
 						channels.add(field.type());
 					}
 				}
@@ -2529,7 +2529,7 @@ public class RelaxedTyper {
 				
 				if( val.typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)val.typeConstructor();
-					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf_relaxed( diSelectChannel ) ){
+					if( typec.isSubtypeOf( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
 						channels.add(val);
 					}					
 				}
@@ -2607,7 +2607,7 @@ public class RelaxedTyper {
 				
 				if( field.type().typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
-					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf_relaxed( diSelectChannel ) ){
+					if( typec.isSubtypeOf( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
 						channels.add(field.type());
 					}
 				}
@@ -2618,7 +2618,7 @@ public class RelaxedTyper {
 				
 				if( val.typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)val.typeConstructor();
-					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf_relaxed( diSelectChannel ) ){
+					if( typec.isSubtypeOf( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
 						channels.add(val);
 					}					
 				}
