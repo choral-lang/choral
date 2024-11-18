@@ -547,44 +547,6 @@ public class RelaxedTyper {
 			}
 		}
 
-		public static boolean isComMethod(
-				Member.HigherMethod tm
-		) {
-			if( tm.typeParameters().size() != 1 ) {
-				// System.out.println( "not correct number of typeparameters" );
-				return false;
-			}
-			HigherTypeParameter tp = tm.typeParameters().get( 0 );
-			
-			if( tm.arity() != 1 ) {
-				// System.out.println( "not correct arity" );
-				return false;
-			}
-			GroundDataType mp = tm.innerCallable().signature().parameters()
-					.get( 0 ).type();
-			if( mp.worldArguments().size() != 1 || !mp.isEquivalentTo(
-					tp.applyTo( mp.worldArguments() ) ) ) {
-				// System.out.println( "not parameters and typeparameters not same worlds" );
-				return false;
-			}
-			if( tm.innerCallable().returnType().isVoid() ) {
-				// System.out.println( "cannot have returntype void" );
-				return false;
-			}
-			GroundDataType tr = (GroundDataType) tm.innerCallable().returnType();
-			if( tr.worldArguments().size() != 1 || !tr.isEquivalentTo(
-					tp.applyTo( tr.worldArguments() ) ) ) {
-				// System.out.println( "not correct worlds" );
-				return false;
-			}
-			if( mp.worldArguments().equals( tr.worldArguments() ) ) {
-				// System.out.println( "not correct worlds" );
-				return false;
-			}
-
-			return true;
-		}
-
 		private void checkIfTypeSelectionMethod( Member.HigherMethod tm,
 				List< Annotation > annotations ) {
 			for( Annotation x : annotations ) {
@@ -1000,14 +962,14 @@ public class RelaxedTyper {
 					boolean returnChecked;
 					
 					callable.addChannel(bodyScope.getChannels()); // find all available channels
-					
+
 					returnChecked = new Check( bodyScope,
 						callable.innerCallable().returnType(), callable )
 						.visit( body );
 					if( !callable.innerCallable().returnType().isVoid() && !returnChecked ) {
 						throw new AstPositionedException( body.position(),
 								new StaticVerificationException( "missing return statement" ) );
-					}					
+					}	
 				}
 			}
 		}
@@ -2547,6 +2509,8 @@ public class RelaxedTyper {
 		@Override
 		public List<GroundDataType> getChannels(){
 			List<GroundDataType> channels = new ArrayList<>();
+			HigherDataType diDataChannel = assertLookupDataType("choral.channels.DiDataChannel");
+			HigherDataType diSelectChannel = assertLookupDataType("choral.channels.DiSelectChannel");
 			
 
 			// this fields
@@ -2554,7 +2518,7 @@ public class RelaxedTyper {
 				
 				if( field.type().typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
-					if( typec.innerType().methods().allMatch( Visitor::isComMethod ) ){
+					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf_relaxed( diSelectChannel ) ){
 						channels.add(field.type());
 					}
 				}
@@ -2565,7 +2529,7 @@ public class RelaxedTyper {
 				
 				if( val.typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)val.typeConstructor();
-					if( typec.innerType().methods().allMatch( Visitor::isComMethod ) ){
+					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf_relaxed( diSelectChannel ) ){
 						channels.add(val);
 					}					
 				}
@@ -2635,13 +2599,15 @@ public class RelaxedTyper {
 		@Override
 		public List<GroundDataType> getChannels(){
 			List<GroundDataType> channels = new ArrayList<>();
+			HigherDataType diDataChannel = assertLookupDataType("choral.channels.DiDataChannel");
+			HigherDataType diSelectChannel = assertLookupDataType("choral.channels.DiSelectChannel");
 
 			// this fields
 			lookupThis().fields().forEach( field -> {
 				
 				if( field.type().typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
-					if( typec.innerType().methods().allMatch( Visitor::isComMethod ) ){
+					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf_relaxed( diSelectChannel ) ){
 						channels.add(field.type());
 					}
 				}
@@ -2652,7 +2618,7 @@ public class RelaxedTyper {
 				
 				if( val.typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)val.typeConstructor();
-					if( typec.innerType().methods().allMatch( Visitor::isComMethod ) ){
+					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf_relaxed( diSelectChannel ) ){
 						channels.add(val);
 					}					
 				}

@@ -401,8 +401,14 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 				return true;
 			} else if( type instanceof Proxy ) {
 				Proxy other = (Proxy) type;
-				return ( other.definition() == this ) &&
-						typeArguments().equals( other.typeArguments() );
+				boolean typeargs = true;
+				if (typeArguments().size() == other.typeArguments().size()){
+					for( int i = 0; i < typeArguments().size(); i++ ){
+						if ( !typeArguments().get(i).isEquivalentTo_relaxed( other.typeArguments().get(i) ) )
+							typeargs = false;
+					}
+				}
+				return ( other.definition() == this ) && typeargs;
 			} else {
 				return false;
 			}
@@ -420,7 +426,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo_relaxed( type ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) )
-					|| ( type.isEquivalentTo(
+					|| ( type.isEquivalentTo_relaxed(
 					universe().topReferenceType( worldArguments() ) ) );
 		}
 
@@ -660,11 +666,18 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		@Override
 		protected boolean isEquivalentTo_relaxed( GroundDataType type ) {
 			if( type instanceof Definition ) {
-				return type.isEquivalentTo( this );
+				return type.isEquivalentTo_relaxed( this );
 			} else if( type instanceof Proxy ) {
 				Proxy other = (Proxy) type;
-				return ( this.definition() == other.definition() ) &&
-						typeArguments().equals( other.typeArguments() );
+				boolean typeargs = true;
+				if (typeArguments().size() == other.typeArguments().size()){
+					for( int i = 0; i < typeArguments().size(); i++ ){
+						if ( !typeArguments().get(i).isEquivalentTo_relaxed( other.typeArguments().get(i) ) )
+							typeargs = false;
+					}
+				}
+				return ( this.definition() == other.definition() ) && typeargs;
+						
 			} else {
 				return false;
 			}
@@ -682,7 +695,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo_relaxed( type ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) )
-					|| ( type.isEquivalentTo(
+					|| ( type.isEquivalentTo_relaxed(
 					universe().topReferenceType( worldArguments() ) ) );
 		}
 

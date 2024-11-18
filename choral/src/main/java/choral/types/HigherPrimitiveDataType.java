@@ -180,7 +180,7 @@ public final class HigherPrimitiveDataType extends HigherDataType implements Pri
 		@Override
 		protected boolean isEquivalentTo_relaxed( GroundDataType type ) {
 			if( type instanceof Definition ) {
-				return type.isEquivalentTo( this );
+				return type.isEquivalentTo_relaxed( this );
 			} else if( type instanceof Proxy ) {
 				Proxy other = (Proxy) type;
 				return ( this.definition() == other.definition() );
