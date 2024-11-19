@@ -401,14 +401,16 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 				return true;
 			} else if( type instanceof Proxy ) {
 				Proxy other = (Proxy) type;
-				boolean typeargs = true;
-				if (typeArguments().size() == other.typeArguments().size()){
-					for( int i = 0; i < typeArguments().size(); i++ ){
-						if ( !typeArguments().get(i).isEquivalentTo_relaxed( other.typeArguments().get(i) ) )
-							typeargs = false;
-					}
+				if (other.definition() != this)
+					return false;
+				if (typeArguments().size() != other.typeArguments().size()) {
+					return false;
 				}
-				return ( other.definition() == this ) && typeargs;
+				for( int i = 0; i < typeArguments().size(); i++ ){
+					if ( !typeArguments().get(i).isEquivalentTo_relaxed( other.typeArguments().get(i) ) )
+						return false;
+				}
+				return true;
 			} else {
 				return false;
 			}
