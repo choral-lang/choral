@@ -1394,12 +1394,20 @@ public class RelaxedTyper {
 			private GroundDataTypeOrVoid left = null;
 			private boolean leftStatic = false;
 			private final boolean explicitConstructorArg;
-			List< ? extends World > homeWorlds = Collections.emptyList(); // The worlds at which the expression takes place
-			
-			boolean checkLocation = true; 	// for scopedexpressions like "this.obj.val" we only want to check location once for 
-											// the whole expression, not once for every sub-expression
-			String fullName;				// the full name of a scopedExpression, used by innermost scopedExpression
-			HigherMethod method;			// the enclosing method
+			/** The worlds at which the expression takes place. */
+			List< ? extends World > homeWorlds = Collections.emptyList();
+			/** Whether we need to check the location of the expression.
+			 * <p>
+			 * For scopedexpressions like "this.obj.val" we only want to check location once for
+			 * the whole expression, not once for every sub-expression.
+			 */
+			boolean checkLocation = true;
+			/** If we are visiting a {@link ScopedExpression}, this will be the full name of the
+			 * expression.
+			 */
+			String fullName;
+			/** A reference to the enclosing method. */
+			HigherMethod method;
 
 			@Override
 			public GroundDataTypeOrVoid visit( Expression n ) {
