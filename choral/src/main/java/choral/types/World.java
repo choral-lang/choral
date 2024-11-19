@@ -78,7 +78,7 @@ public final class World extends TypeBase {
 
 	@Override
 	public boolean isEquivalentTo_relaxed( Type type ) {
-		return this.equals( type ); // Maybe should always return true??
+		return true;
 	}
 
 	@Override

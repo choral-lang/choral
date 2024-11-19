@@ -28,7 +28,19 @@ public interface GroundDataTypeOrVoid extends DataTypeOrVoid {
 	boolean isAssignableTo( GroundDataTypeOrVoid type );
 
 	/**
-	 * relaxed version of isAssignableTo. Doesn't check world correspondence. 
+	 * Relaxed version of {@link #isAssignableTo}. Doesn't check world correspondence. 
+	 * <p>
+	 * Consider the following example
+	 * <pre>
+	 * {@code
+	 * int@B b = 0@B;
+	 *int@A a = b;
+	 * }
+	 * </pre>
+	 * <p>
+	 * {@link #isAssignableTo_relaxed} would return {@code true} when checking {@code int@A a = b;} 
+	 * even though {@code a} and {@code b} are at different roles. On the same expression 
+	 * {@link #isAssignableTo} would return {@code false}.
 	 */
 	boolean isAssignableTo_relaxed( GroundDataTypeOrVoid type );
 }

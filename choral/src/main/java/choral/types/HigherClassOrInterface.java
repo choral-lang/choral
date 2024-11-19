@@ -403,9 +403,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 				Proxy other = (Proxy) type;
 				if (other.definition() != this)
 					return false;
-				if (typeArguments().size() != other.typeArguments().size()) {
+				if (typeArguments().size() != other.typeArguments().size())
 					return false;
-				}
 				for( int i = 0; i < typeArguments().size(); i++ ){
 					if ( !typeArguments().get(i).isEquivalentTo_relaxed( other.typeArguments().get(i) ) )
 						return false;
@@ -671,14 +670,15 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 				return type.isEquivalentTo_relaxed( this );
 			} else if( type instanceof Proxy ) {
 				Proxy other = (Proxy) type;
-				boolean typeargs = true;
-				if (typeArguments().size() == other.typeArguments().size()){
-					for( int i = 0; i < typeArguments().size(); i++ ){
-						if ( !typeArguments().get(i).isEquivalentTo_relaxed( other.typeArguments().get(i) ) )
-							typeargs = false;
-					}
+				if (this.definition() != other.definition())
+					return false;
+				if (typeArguments().size() != other.typeArguments().size()) 
+					return false;
+				for( int i = 0; i < typeArguments().size(); i++ ){
+					if ( !typeArguments().get(i).isEquivalentTo_relaxed( other.typeArguments().get(i) ) )
+						return false;
 				}
-				return ( this.definition() == other.definition() ) && typeargs;
+				return true;
 						
 			} else {
 				return false;

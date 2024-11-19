@@ -29,14 +29,28 @@ public interface Type extends HasSource {
 	boolean isEquivalentTo( Type type );
 
 	/**
-	 * relaxed version of isEquivalentTo. Doesn't check world correspondence. 
+	 * Relaxed version of {@link #isEquivalentTo}. Doesn't check world correspondence. 
+	 * <p>
+	 * TODO what exactly does it mean for types to be equivalent??
 	 */
 	boolean isEquivalentTo_relaxed( Type type );
 
 	boolean isSubtypeOf( Type type, boolean strict );
 
 	/**
-	 * relaxed version of isSubtypeOf. Doesn't check world correspondence. 
+	 * Relaxed version of {@link #isSubtypeOf}. Doesn't check world correspondence. 
+	 * <p>
+	 * Consider the following example
+	 * <pre>
+	 * {@code
+	 * Integer@B b;
+	 *int@A a;
+	 * }
+	 * </pre>
+	 * <p>
+	 * {@link #isSubtypeOf_relaxed} would return {@code true} when checking if {@code a} 
+	 * is a subtype of {@code b} even though {@code a} and {@code b} are at different 
+	 * roles. On the same check {@link #isSubtypeOf} would return {@code false}.
 	 */
 	boolean isSubtypeOf_relaxed( Type type, boolean strict );
 
@@ -45,7 +59,19 @@ public interface Type extends HasSource {
 	}
 
 	/**
-	 * relaxed version of isStrictSubtypeOf. Doesn't check world correspondence. 
+	 * Relaxed version of {@link #isStrictSubtypeOf}. Doesn't check world correspondence. 
+	 * <p>
+	 * Consider the following example
+	 * <pre>
+	 * {@code
+	 * Integer@B b;
+	 *int@A a;
+	 * }
+	 * </pre>
+	 * <p>
+	 * {@link #isStrictSubtypeOf_relaxed} would return {@code true} when checking if {@code a} 
+	 * is a subtype of {@code b} even though {@code a} and {@code b} are at different roles. 
+	 * On the same check {@link #isStrictSubtypeOf} would return {@code false}.
 	 */
 	default boolean isStrictSubtypeOf_relaxed( Type type ) {
 		return isSubtypeOf_relaxed( type, true );
@@ -56,7 +82,19 @@ public interface Type extends HasSource {
 	}
 
 	/**
-	 * relaxed version of isSubtypeOf. Doesn't check world correspondence. 
+	 * Relaxed version of {@link #isSubtypeOf}. Doesn't check world correspondence. 
+	 * <p>
+	 * Consider the following example
+	 * <pre>
+	 * {@code
+	 * Integer@B b;
+	 *int@A a;
+	 * }
+	 * </pre>
+	 * <p>
+	 * {@link #isSubtypeOf_relaxed} would return {@code true} when checking if {@code a} 
+	 * is a subtype of {@code b} even though {@code a} and {@code b} are at different roles. 
+	 * On the same check {@link #isSubtypeOf} would return {@code false}.
 	 */
 	default boolean isSubtypeOf_relaxed( Type type ) {
 		return isSubtypeOf_relaxed( type, false );

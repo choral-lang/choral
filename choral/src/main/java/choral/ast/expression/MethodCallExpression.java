@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A method call on an object of the shape a( b ) where
@@ -93,7 +94,7 @@ public class MethodCallExpression extends InvocationExpression {
 
 	@Override
 	public String toString(){
-		return name.toString() + "()";
+		return name.toString() + arguments().stream().map( arg -> arg.toString() ).collect( Collectors.joining(", ", "(", ")") );
 	}
 
 	@Override

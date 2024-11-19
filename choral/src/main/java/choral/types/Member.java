@@ -710,9 +710,11 @@ public abstract class Member implements HasSource {
 			return worldDependencies.get(world);
 		}
 
+		/**
+		 * A list of all the channels available to the method from either the 
+		 * enclosing class' fields or the method's arguments.
+		 */
 		private List<GroundDataType> channels = new ArrayList<GroundDataType>();
-		// A list of all the channels available to the method from either the 
-		// enclosing class' fields or the methods arguments.
 
 		public void addChannel( List<GroundDataType> channelList ){
 			for( GroundDataType channel : channelList ){
