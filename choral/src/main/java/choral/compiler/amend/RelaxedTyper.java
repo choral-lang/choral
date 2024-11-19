@@ -1416,12 +1416,17 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( ScopedExpression n ) {
-				// We want to capture the full ScopedExpression, but only consieder the worldargument 
-				// of the innermost expression 
-				// for expression obj.first.second.val, we want to capture the full expression, but 
-				// only consider the world of val
+				// Consider a program like:
+				// ```
+				// MyObj@B obj = ...;
+				// int@A x = obj.first.second + 1@A;
+				// ```
+				// We want to infer that B needs to send `obj.first.second` to A. This means:
+				// 1. When we get to the root of the scoped expression, record its full name.
+				// 2. We disable communication inference for all sub-expressions of the scoped
+				//    expression, except the innermost one.
 
-				if(checkLocation){ // only true at the first visited ScopedExpression in a scoped chain
+				if(checkLocation){
 					fullName = n.toString();
 					checkLocation = false;
 				}
