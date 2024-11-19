@@ -2513,7 +2513,7 @@ public class RelaxedTyper {
 			HigherDataType diSelectChannel = assertLookupDataType("choral.channels.DiSelectChannel");
 			
 
-			// this fields
+			// Look for channels in `this`
 			lookupThis().fields().forEach( field -> {
 				
 				if( field.type().typeConstructor() instanceof HigherInterface ){
@@ -2524,7 +2524,7 @@ public class RelaxedTyper {
 				}
 			} );
 			
-			// method arguments
+			// Look for channels in this method's list of parameters
 			variables.forEach( (key, val) -> {
 				
 				if( val.typeConstructor() instanceof HigherInterface ){
