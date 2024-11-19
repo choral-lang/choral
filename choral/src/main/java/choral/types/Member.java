@@ -683,7 +683,7 @@ public abstract class Member implements HasSource {
 			return innerCallable;
 		}
 
-		private Map<World, List<Expression>> worldDependencies =  new HashMap<World, List<Expression>>();
+		private Map<World, List<Expression>> worldDependencies =  new HashMap<>();
 		// for example
 		// int@A i_A = 0@A;
 		// int@B i_B = i_A;
