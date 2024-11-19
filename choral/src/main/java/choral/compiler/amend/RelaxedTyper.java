@@ -1402,12 +1402,19 @@ public class RelaxedTyper {
 			private GroundDataTypeOrVoid left = null;
 			private boolean leftStatic = false;
 			private final boolean explicitConstructorArg;
-			List< ? extends World > homeWorlds = Collections.emptyList(); // The worlds at which the expression takes place
-			
-			boolean checkLocation = true; 	// for scopedexpressions like "this.obj.val" we only want to check location once for 
-											// the whole expression, not once for every sub-expression
-			String fullName;				// the full name of a scopedExpression, used by innermost scopedExpression
-			/** the enclosing method */
+			/** The worlds at which the expression takes place. */
+			List< ? extends World > homeWorlds = Collections.emptyList();
+			/** Whether we need to check the location of the expression.
+			 * <p>
+			 * For scopedexpressions like "this.obj.val" we only want to check location once for
+			 * the whole expression, not once for every sub-expression.
+			 */
+			boolean checkLocation = true;
+			/** If we are visiting a {@link ScopedExpression}, this will be the full name of the
+			 * expression.
+			 */
+			String fullName;
+			/** A reference to the enclosing method. */
 			HigherMethod enclosingMethod;
 
 			@Override
@@ -1417,12 +1424,17 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( ScopedExpression n ) {
-				// We want to capture the full ScopedExpression, but only consieder the worldargument 
-				// of the innermost expression 
-				// for expression obj.first.second.val, we want to capture the full expression, but 
-				// only consider the world of val
+				// Consider a program like:
+				// ```
+				// MyObj@B obj = ...;
+				// int@A x = obj.first.second + 1@A;
+				// ```
+				// We want to infer that B needs to send `obj.first.second` to A. This means:
+				// 1. When we get to the root of the scoped expression, record its full name.
+				// 2. We disable communication inference for all sub-expressions of the scoped
+				//    expression, except the innermost one.
 
-				if(checkLocation){ // only true at the first visited ScopedExpression in a scoped chain
+				if(checkLocation){
 					fullName = n.toString();
 					checkLocation = false;
 				}
@@ -2523,7 +2535,7 @@ public class RelaxedTyper {
 			HigherDataType diSelectChannel = assertLookupDataType("choral.channels.DiSelectChannel");
 			
 
-			// this fields
+			// Look for channels in `this`
 			lookupThis().fields().forEach( field -> {
 				
 				if( field.type().typeConstructor() instanceof HigherInterface ){
@@ -2534,7 +2546,7 @@ public class RelaxedTyper {
 				}
 			} );
 			
-			// method arguments
+			// Look for channels in this method's list of parameters
 			variables.forEach( (key, val) -> {
 				
 				if( val.typeConstructor() instanceof HigherInterface ){

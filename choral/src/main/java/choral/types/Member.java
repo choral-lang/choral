@@ -683,12 +683,18 @@ public abstract class Member implements HasSource {
 			return innerCallable;
 		}
 
-		private Map<World, List<Expression>> worldDependencies =  new HashMap<World, List<Expression>>();
-		// for example
-		// int@A i_A = 0@A;
-		// int@B i_B = i_A;
-		// 
-		// world B would depend on i_A 
+		/**
+		 * A map mapping worlds to a list of their dependencies.
+		 * <p>
+		 * For example:
+		 * <pre>
+		 * {@code
+		 * int@A i_A = 0@A;
+		 *int@B i_B = i_A;}
+		 * </pre>
+		 * World {@code B} would depend on {@code i_A}. 
+		 */
+		private Map<World, List<Expression>> worldDependencies =  new HashMap<>();
 		
 		public void addDependency( List<World> worlds, Expression expression, String expressionString ){
 			for( World world : worlds ){
