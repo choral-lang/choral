@@ -77,8 +77,18 @@ public final class World extends TypeBase {
 	}
 
 	@Override
+	public boolean isEquivalentTo_relaxed( Type type ) {
+		return true;
+	}
+
+	@Override
 	public boolean isSubtypeOf( Type type, boolean strict ) {
 		return ( !strict && this.isEquivalentTo( type ) );
+	}
+
+	@Override
+	public boolean isSubtypeOf_relaxed( Type type, boolean strict ) {
+		return ( !strict && this.isEquivalentTo_relaxed( type ) );
 	}
 
 	public static List< World > freshWorlds( Universe universe, int size ) {

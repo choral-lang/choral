@@ -14,3 +14,4 @@ target/
 # ANTLR generated files
 /choral/src/main/java/choral/grammar/
 /build
+.vscode/settings.json

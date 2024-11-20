@@ -396,10 +396,38 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		@Override
+		protected boolean isEquivalentTo_relaxed( GroundDataType type ) {
+			if( type == this ) {
+				return true;
+			} else if( type instanceof Proxy ) {
+				Proxy other = (Proxy) type;
+				if (other.definition() != this)
+					return false;
+				if (typeArguments().size() != other.typeArguments().size())
+					return false;
+				for( int i = 0; i < typeArguments().size(); i++ ){
+					if ( !typeArguments().get(i).isEquivalentTo_relaxed( other.typeArguments().get(i) ) )
+						return false;
+				}
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		@Override
 		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo( type ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) )
 					|| ( type.isEquivalentTo(
+					universe().topReferenceType( worldArguments() ) ) );
+		}
+
+		@Override
+		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
+			return ( !strict && isEquivalentTo_relaxed( type ) )
+					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) )
+					|| ( type.isEquivalentTo_relaxed(
 					universe().topReferenceType( worldArguments() ) ) );
 		}
 
@@ -637,10 +665,39 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		@Override
+		protected boolean isEquivalentTo_relaxed( GroundDataType type ) {
+			if( type instanceof Definition ) {
+				return type.isEquivalentTo_relaxed( this );
+			} else if( type instanceof Proxy ) {
+				Proxy other = (Proxy) type;
+				if (this.definition() != other.definition())
+					return false;
+				if (typeArguments().size() != other.typeArguments().size()) 
+					return false;
+				for( int i = 0; i < typeArguments().size(); i++ ){
+					if ( !typeArguments().get(i).isEquivalentTo_relaxed( other.typeArguments().get(i) ) )
+						return false;
+				}
+				return true;
+						
+			} else {
+				return false;
+			}
+		}
+
+		@Override
 		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo( type ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) )
 					|| ( type.isEquivalentTo(
+					universe().topReferenceType( worldArguments() ) ) );
+		}
+
+		@Override
+		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
+			return ( !strict && isEquivalentTo_relaxed( type ) )
+					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) )
+					|| ( type.isEquivalentTo_relaxed(
 					universe().topReferenceType( worldArguments() ) ) );
 		}
 

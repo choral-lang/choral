@@ -54,6 +54,11 @@ public class ScopedExpression extends Expression {
 	}
 
 	@Override
+	public String toString(){
+		return scope + "." + scopedExpression;
+	}
+
+	@Override
 	public < R > R accept( ChoralVisitorInterface< R > v ) {
 		return v.visit( this );
 	}

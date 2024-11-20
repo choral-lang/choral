@@ -25,6 +25,8 @@ import choral.ast.CompilationUnit;
 import choral.ast.Position;
 import choral.compiler.Compiler;
 import choral.compiler.*;
+import choral.compiler.amend.RelaxedTyper;
+import choral.utils.PrintCompilationUnits;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.ChoralException;
@@ -256,11 +258,24 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 	static class Amend extends ChoralCommand implements Callable< Integer >{
 		
 		@Mixin
+		EmissionOptions emissionOptions;
+
+		@Mixin
+		PathOption.HeadersPathOption headersPathOption;
+
+		@Mixin
 		PathOption.SourcePathOption sourcesPathOption;
+
+		@Parameters( index = "0", arity = "1" )
+		String symbol;
+
+		@Parameters( index = "1..*", arity = "0..*" )
+		List< String > worlds;
 
 		public Integer call(){
 			System.out.println( "amend called" );
 			try{
+				System.out.println("Collecting sourcefiles");
 				Collection< File > sourceFiles = sourcesPathOption.getPaths( true ).stream()
 						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
 							if( Files.isDirectory( q ) ) return false;
@@ -271,9 +286,31 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						}, FileVisitOption.FOLLOW_LINKS ) ) )
 						.map( Path::toFile )
 						.collect( Collectors.toList() );
+
+				System.out.println("Creating sourceunits");
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
-				
+				// PrintCompilationUnits.printSourceUnits(sourceUnits);
+
+				System.out.println("Creating headerunits");
+				Collection< CompilationUnit > headerUnits = Stream.concat(
+							HeaderLoader.loadStandardProfile(),
+							HeaderLoader.loadFromPath(
+									headersPathOption.getPaths(),
+									sourceFiles,
+									true, true )
+					)
+					.collect( Collectors.toList() );
+				AtomicReference< Collection< CompilationUnit > > annotatedUnits = new AtomicReference<>();
+				// PrintCompilationUnits.printHeaderUnits(headerUnits);
+
+				System.out.println("typechecking");
+				profilerLog( "typechecking", () -> annotatedUnits.set( RelaxedTyper.annotate( sourceUnits,
+							headerUnits) ) );
+				// PrintCompilationUnits.printSourceUnits(sourceUnits);
+				// PrintCompilationUnits.printWorldDependenciesAndChannels(sourceUnits);
+
+						
 			} catch( Exception e ){
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
 				System.out.println( "compilation failed." );

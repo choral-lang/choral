@@ -76,7 +76,7 @@ public abstract class LiteralExpression< T > extends Expression {
 
 	@Override
 	public String toString() {
-		return content + "@" + world;
+		return content + "@" + world.name();
 	}
 
 	public static class BooleanLiteralExpression extends LiteralExpression< Boolean > {

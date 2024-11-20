@@ -46,6 +46,16 @@ public interface GroundPrimitiveDataType extends GroundDataType, PrimitiveDataTy
 		}
 	}
 
+	default boolean isAssignableTo_relaxed( GroundDataTypeOrVoid type ) {
+		if( type instanceof GroundDataType ) {
+			GroundDataType t = (GroundDataType) type;
+			return this.primitiveTypeTag().isAssignableTo( t.primitiveTypeTag() )
+					|| this.boxedType().isEquivalentTo_relaxed( t ) ;
+		} else {
+			return false;
+		}
+	}
+
 	@Override
 	default boolean isEquivalentToErasureOf( GroundDataType type ) {
 		return isEquivalentTo( type );
