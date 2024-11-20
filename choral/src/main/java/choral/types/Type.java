@@ -31,7 +31,17 @@ public interface Type extends HasSource {
 	/**
 	 * Relaxed version of {@link #isEquivalentTo}. Doesn't check world correspondence. 
 	 * <p>
-	 * TODO what exactly does it mean for types to be equivalent??
+	 * Consider the following example
+	 * <pre>
+	 * {@code
+	 * int@B b;
+	 *int@A a;
+	 * }
+	 * </pre>
+	 * <p>
+	 * {@link #isEquivalentTo_relaxed} would return {@code true} when checking if {@code a} 
+	 * is equivalent to {@code b} even though {@code a} and {@code b} are at different 
+	 * roles. On the same check {@link #isEquivalentTo} would return {@code false}.
 	 */
 	boolean isEquivalentTo_relaxed( Type type );
 
