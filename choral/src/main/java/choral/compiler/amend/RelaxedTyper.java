@@ -1433,6 +1433,11 @@ public class RelaxedTyper {
 				// 1. When we get to the root of the scoped expression, record its full name.
 				// 2. We disable communication inference for all sub-expressions of the scoped
 				//    expression, except the innermost one.
+				// 
+				// Note that if `second` is a field in `obj.first`, then `obj.first.second` is 
+				// a `ScopedExpression` with `scope=obj` and `scopedExpression=first.second`. 
+				// `first.second` is then a `ScopedExpression` with `scope=first` and 
+				// `scopedExpression=second`. `second` would then be a `FieldAccessExpression`.
 
 				if(checkLocation){
 					fullName = n.toString();
