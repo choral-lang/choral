@@ -23,10 +23,12 @@ package choral;
 
 import choral.ast.CompilationUnit;
 import choral.ast.Position;
+import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.Compiler;
 import choral.compiler.*;
 import choral.compiler.amend.RelaxedTyper;
 import choral.utils.PrintCompilationUnits;
+import choral.utils.Streams.WrappedException;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.ChoralException;
@@ -41,6 +43,7 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -275,7 +278,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		public Integer call(){
 			System.out.println( "amend called" );
 			try{
-				System.out.println("Collecting sourcefiles");
+				System.out.println( "Collecting sourcefiles" );
 				Collection< File > sourceFiles = sourcesPathOption.getPaths( true ).stream()
 						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
 							if( Files.isDirectory( q ) ) return false;
@@ -287,12 +290,12 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						.map( Path::toFile )
 						.collect( Collectors.toList() );
 
-				System.out.println("Creating sourceunits");
+				System.out.println( "Creating sourceunits" );
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 				// PrintCompilationUnits.printSourceUnits(sourceUnits);
 
-				System.out.println("Creating headerunits");
+				System.out.println( "Creating headerunits" );
 				Collection< CompilationUnit > headerUnits = Stream.concat(
 							HeaderLoader.loadStandardProfile(),
 							HeaderLoader.loadFromPath(
@@ -304,12 +307,31 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				AtomicReference< Collection< CompilationUnit > > annotatedUnits = new AtomicReference<>();
 				// PrintCompilationUnits.printHeaderUnits(headerUnits);
 
-				System.out.println("typechecking");
+				System.out.println( "typechecking" );
 				profilerLog( "typechecking", () -> annotatedUnits.set( RelaxedTyper.annotate( sourceUnits,
 							headerUnits) ) );
 				// PrintCompilationUnits.printSourceUnits(sourceUnits);
 				// PrintCompilationUnits.printWorldDependenciesAndChannels(sourceUnits);
+				
+				System.out.println( "converting compulationunits to choral" );
 
+				String destinationFolder = System.getProperty( "user.dir" ) + File.separator + "dist";
+				if( emissionOptions.targetpath().isPresent() )
+					destinationFolder = emissionOptions.targetpath().get().toAbsolutePath().toString();
+				System.out.println( "Destination Folder: " + destinationFolder );
+					
+				PrettyPrinterVisitor ppv = new PrettyPrinterVisitor();
+				for( CompilationUnit cu : sourceUnits ){
+					String[] path = cu.position().sourceFile().split( "/" );
+					// System.out.println( Paths.get( destinationFolder + "/" + path[path.length -1] ) );
+					// System.out.println( "sorucefile: " + destinationFolder + "/" + path[path.length -1] );
+
+					// TODO create folders when not present
+					Files.write( Paths.get( destinationFolder + "/" + path[path.length -1] ), 
+								 ppv.visit(cu).getBytes(), 
+								 StandardOpenOption.CREATE,
+								 StandardOpenOption.TRUNCATE_EXISTING);
+				}
 						
 			} catch( Exception e ){
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
