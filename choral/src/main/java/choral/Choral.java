@@ -327,6 +327,8 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 					// System.out.println( "sorucefile: " + destinationFolder + "/" + path[path.length -1] );
 
 					// TODO create folders when not present
+					// TODO replace "/"
+					// TODO output in distinct folders (currently everything gets put directly into target/amend)
 					Files.write( Paths.get( destinationFolder + "/" + path[path.length -1] ), 
 								 ppv.visit(cu).getBytes(), 
 								 StandardOpenOption.CREATE,
