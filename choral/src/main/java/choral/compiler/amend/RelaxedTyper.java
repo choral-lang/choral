@@ -1645,7 +1645,7 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( EnclosedExpression n ) {
-				throw new UnsupportedOperationException("Enclosed expressions not allowed\n\tExpression at " + n.position().toString());
+				return synth( scope, n.nestedExpression(), explicitConstructorArg, enclosingMethod );
 			}
 
 			private boolean checkMemberAccess( Member m ) {
@@ -1830,7 +1830,15 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataType visit( NotExpression n ) {
-				throw new UnsupportedOperationException("Not expression not allowed\n\tExpression at " + n.position().toString());
+				GroundDataTypeOrVoid t = visit( n.expression() );
+				GroundPrimitiveDataType p = assertUnbox( t, n.expression().position() );
+				if( p.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
+					return annotate( n, p );
+				} else {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException( "cannot apply '!' to '" + t
+									+ "'" ) );
+				}
 			}
 
 			@Override
