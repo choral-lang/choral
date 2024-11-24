@@ -27,6 +27,7 @@ import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.Compiler;
 import choral.compiler.*;
 import choral.compiler.amend.RelaxedTyper;
+import choral.compiler.amend.BasicInference;
 import choral.utils.PrintCompilationUnits;
 import choral.utils.Streams.WrappedException;
 import choral.exceptions.AstPositionedException;
@@ -313,13 +314,18 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				// PrintCompilationUnits.printSourceUnits(sourceUnits);
 				// PrintCompilationUnits.printWorldDependenciesAndChannels(sourceUnits);
 				
-				System.out.println( "converting compulationunits to choral" );
+				System.out.println( "Infering communications" );
+				for( CompilationUnit cu : sourceUnits )
+					BasicInference.inferComms( cu );
 
-				String destinationFolder = System.getProperty( "user.dir" ) + File.separator + "dist";
+				System.out.println( "Converting compulationunits to choral" );
+
+				String destinationFolder;
 				if( emissionOptions.targetpath().isPresent() )
 					destinationFolder = emissionOptions.targetpath().get().toAbsolutePath().toString();
-				System.out.println( "Destination Folder: " + destinationFolder );
-					
+				else
+					destinationFolder = System.getProperty( "user.dir" ) + File.separator + "dist";
+				
 				PrettyPrinterVisitor ppv = new PrettyPrinterVisitor();
 				for( CompilationUnit cu : sourceUnits ){
 					String[] path = cu.position().sourceFile().split( "/" );
