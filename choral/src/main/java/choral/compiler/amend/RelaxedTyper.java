@@ -1764,6 +1764,12 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( MethodCallExpression n ) {
+				if( n.name().identifier().equals("com") ){
+					System.out.println( "MethodCallExpression: " + n.toString() );
+					System.out.println( "typearguments: " + n.typeArguments().get(0).name() );
+					System.out.println( "typearguments: " + n.typeArguments().get(0).typeArguments() );
+					System.out.println( "typearguments: " + n.typeArguments().get(0).worldArguments() );
+				}
 				
 				if( left == null ) { // only happens for simple method calls (local)
 					left = scope.lookupThis();
