@@ -720,19 +720,19 @@ public abstract class Member implements HasSource {
 		 * A list of all the channels available to the method from either the 
 		 * enclosing class' fields or the method's arguments.
 		 */
-		private List<GroundDataType> channels = new ArrayList<GroundDataType>();
+		private List<GroundInterface> channels = new ArrayList<>();
 
-		public void addChannel( List<GroundDataType> channelList ){
-			for( GroundDataType channel : channelList ){
+		public void addChannel( List<GroundInterface> channelList ){
+			for( GroundInterface channel : channelList ){
 				addChannel(channel);
 			}
 		}
 
-		public void addChannel( GroundDataType channel ){
+		public void addChannel( GroundInterface channel ){
 			channels.add(channel);
 		}
 
-		public List<GroundDataType> channels(){
+		public List<GroundInterface> channels(){
 			return channels;
 		}
 

@@ -2542,8 +2542,8 @@ public class RelaxedTyper {
 		private final Map< String, GroundDataType > variables = new HashMap<>();
 
 		@Override
-		public List<GroundDataType> getChannels(){
-			List<GroundDataType> channels = new ArrayList<>();
+		public List<GroundInterface> getChannels(){
+			List<GroundInterface> channels = new ArrayList<>();
 			HigherDataType diDataChannel = assertLookupDataType("choral.channels.DiDataChannel");
 			HigherDataType diSelectChannel = assertLookupDataType("choral.channels.DiSelectChannel");
 			
@@ -2553,8 +2553,8 @@ public class RelaxedTyper {
 				
 				if( field.type().typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
-					if( typec.isSubtypeOf( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
-						channels.add(field.type());
+					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
+						channels.add((GroundInterface)field.type());
 					}
 				}
 			} );
@@ -2564,8 +2564,8 @@ public class RelaxedTyper {
 				
 				if( val.typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)val.typeConstructor();
-					if( typec.isSubtypeOf( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
-						channels.add(val);
+					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
+						channels.add((GroundInterface)val);
 					}					
 				}
 			} );
@@ -2632,8 +2632,8 @@ public class RelaxedTyper {
 		private final Map< String, GroundDataType > variables = new HashMap<>();
 
 		@Override
-		public List<GroundDataType> getChannels(){
-			List<GroundDataType> channels = new ArrayList<>();
+		public List<GroundInterface> getChannels(){
+			List<GroundInterface> channels = new ArrayList<>();
 			HigherDataType diDataChannel = assertLookupDataType("choral.channels.DiDataChannel");
 			HigherDataType diSelectChannel = assertLookupDataType("choral.channels.DiSelectChannel");
 
@@ -2642,8 +2642,8 @@ public class RelaxedTyper {
 				
 				if( field.type().typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
-					if( typec.isSubtypeOf( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
-						channels.add(field.type());
+					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
+						channels.add((GroundInterface)field.type());
 					}
 				}
 			} );
@@ -2653,8 +2653,8 @@ public class RelaxedTyper {
 				
 				if( val.typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)val.typeConstructor();
-					if( typec.isSubtypeOf( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
-						channels.add(val);
+					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
+						channels.add((GroundInterface)val);
 					}					
 				}
 			} );
@@ -2755,7 +2755,7 @@ public class RelaxedTyper {
 		 * Collects channels available in the scope by looking at the fields of "this" 
 		 * and the enclosing method's arguments
 		 */
-		List<GroundDataType> getChannels();
+		List<GroundInterface> getChannels();
 
 	}
 
