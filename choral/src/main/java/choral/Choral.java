@@ -279,7 +279,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		public Integer call(){
 			System.out.println( "amend called" );
 			try{
-				System.out.println( "Collecting sourcefiles" );
+				System.out.println( "-=Collecting sourcefiles=-" );
 				Collection< File > sourceFiles = sourcesPathOption.getPaths( true ).stream()
 						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
 							if( Files.isDirectory( q ) ) return false;
@@ -291,12 +291,12 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						.map( Path::toFile )
 						.collect( Collectors.toList() );
 
-				System.out.println( "Creating sourceunits" );
+				System.out.println( "-=Creating sourceunits=-" );
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 				// PrintCompilationUnits.printSourceUnits(sourceUnits);
 
-				System.out.println( "Creating headerunits" );
+				System.out.println( "-=Creating headerunits=-" );
 				Collection< CompilationUnit > headerUnits = Stream.concat(
 							HeaderLoader.loadStandardProfile(),
 							HeaderLoader.loadFromPath(
@@ -308,17 +308,25 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				AtomicReference< Collection< CompilationUnit > > annotatedUnits = new AtomicReference<>();
 				// PrintCompilationUnits.printHeaderUnits(headerUnits);
 
-				System.out.println( "typechecking" );
+				System.out.println( "-=Typechecking=-" );
 				profilerLog( "typechecking", () -> annotatedUnits.set( RelaxedTyper.annotate( sourceUnits,
 							headerUnits) ) );
 				// PrintCompilationUnits.printSourceUnits(sourceUnits);
 				// PrintCompilationUnits.printWorldDependenciesAndChannels(sourceUnits);
 				
-				System.out.println( "Infering communications" );
-				for( CompilationUnit cu : sourceUnits )
-					BasicInference.inferComms( cu );
+				
+				System.out.println( "-=Infering communications=-" );
+				// TODO maybe use an option to choose inference alghorithm
+				List<CompilationUnit> amendedSourceUnits = sourceUnits.stream()
+					.map( BasicInference::inferComms ).toList();
+				for( CompilationUnit cu : amendedSourceUnits )
+					System.out.println( cu );
 
-				System.out.println( "Converting compulationunits to choral" );
+				System.out.println( "-=Un-relaxed typechecking=-" );
+				profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( amendedSourceUnits,
+							headerUnits) ) );
+				
+				System.out.println( "-=Converting compulationunits to choral=-" );
 
 				String destinationFolder;
 				if( emissionOptions.targetpath().isPresent() )
@@ -327,7 +335,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 					destinationFolder = System.getProperty( "user.dir" ) + File.separator + "dist";
 				
 				PrettyPrinterVisitor ppv = new PrettyPrinterVisitor();
-				for( CompilationUnit cu : sourceUnits ){
+				for( CompilationUnit cu : amendedSourceUnits ){
 					String[] path = cu.position().sourceFile().split( "/" );
 					// System.out.println( Paths.get( destinationFolder + "/" + path[path.length -1] ) );
 					// System.out.println( "sorucefile: " + destinationFolder + "/" + path[path.length -1] );

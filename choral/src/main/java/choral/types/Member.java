@@ -23,8 +23,10 @@ package choral.types;
 
 import choral.ast.Node;
 import choral.ast.expression.Expression;
+import choral.ast.statement.Statement;
 import choral.exceptions.StaticVerificationException;
 import choral.utils.Formatting;
+import choral.utils.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -694,45 +696,49 @@ public abstract class Member implements HasSource {
 		 * </pre>
 		 * World {@code B} would depend on {@code i_A}. 
 		 */
-		private Map<World, List<Expression>> worldDependencies =  new HashMap<>();
+		private Map<World, List<Pair<Expression, Statement>>> worldDependencies =  new HashMap<>();
 		
-		public void addDependency( List<World> worlds, Expression expression, String expressionString ){
+		public void addDependency( List<World> worlds, Expression expression, Statement statement ){
 			for( World world : worlds ){
-				addDependency(world, expression, expressionString);
+				addDependency(world, expression, statement);
 			}
 		}
 
-		public void addDependency( World world, Expression expression, String expressionString ){
+		public void addDependency( World world, Expression expression, Statement statement ){
 			worldDependencies.putIfAbsent(world, new ArrayList<>());
-			worldDependencies.get(world).add(expression);
+			worldDependencies.get(world).add(new Pair<>(expression, statement));
 			
 		}
 
-		public Map<World, List<Expression>> worldDependencies(){
+		public Map<World, List<Pair<Expression, Statement>>> worldDependencies(){
 			return worldDependencies;
 		}
 
-		public List<Expression> worldDependencies( World world ){
+		public List<Pair<Expression, Statement>> worldDependencies( World world ){
 			return worldDependencies.get(world);
+		}
+
+		public void clearDependencies(){
+			worldDependencies.clear();
 		}
 
 		/**
 		 * A list of all the channels available to the method from either the 
 		 * enclosing class' fields or the method's arguments.
 		 */
-		private List<GroundInterface> channels = new ArrayList<>();
+		private List<Pair<String, GroundInterface>> channels = new ArrayList<>();
 
-		public void addChannel( List<GroundInterface> channelList ){
-			for( GroundInterface channel : channelList ){
-				addChannel(channel);
+		public void addChannel( List<Pair<String, GroundInterface>> channelList ){
+			for( Pair<String, GroundInterface> channelPair : channelList ){
+				addChannel(channelPair);
 			}
 		}
 
-		public void addChannel( GroundInterface channel ){
-			channels.add(channel);
+		public void addChannel( Pair<String, GroundInterface> channelPair ){
+			channels.add(channelPair);
 		}
 
-		public List<GroundInterface> channels(){
+		public List<Pair<String, GroundInterface>> channels(){
 			return channels;
 		}
 
