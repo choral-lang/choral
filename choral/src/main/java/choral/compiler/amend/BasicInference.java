@@ -303,7 +303,6 @@ public class BasicInference {
 			}
 			ExpressionStatement newStatement = new ExpressionStatement(newExpression, visitContinutation(n.continuation()), n.position());
 
-			setReturn(newStatement, n);
 			return newStatement;
 		}
 
@@ -316,9 +315,9 @@ public class BasicInference {
 					n.variables(), 
 					visitContinutation(n.continuation()), 
 					n.position());
-				setReturn(newStatement, n);
 				return newStatement;
 			}
+
 			List<VariableDeclaration> newVariables = new ArrayList<>();
 			for( VariableDeclaration x : n.variables() ) {
 				// If there are dependencies, we visit each VariableDeclaration seperately
@@ -336,11 +335,11 @@ public class BasicInference {
 					newInitializer,
 					x.position()));
 			}
+
 			VariableDeclarationStatement newStatement = new VariableDeclarationStatement(
 				newVariables, 
 				visitContinutation(n.continuation()), 
 				n.position());
-			setReturn(newStatement, n);
 			return newStatement;
 		}
 
@@ -348,8 +347,6 @@ public class BasicInference {
 		public Statement visit( NilStatement n ) {
 			return new NilStatement(n.position());
 		}
-
-
 
 		@Override
 		public Statement visit( BlockStatement n ) {
@@ -364,7 +361,20 @@ public class BasicInference {
 
 		@Override
 		public Statement visit( IfStatement n ) {
-			throw new UnsupportedOperationException("IfStatement not supported\n\tStatement at " + n.position().toString());
+			List<Pair<Expression, Expression>> dependencyPairList = amendedStatements.get(n);
+			Expression newCondition;
+			if( dependencyPairList == null ){
+				// If this statement has no dependencies, there is no reason to visit its expression
+				newCondition = n.condition();
+			} else{
+				newCondition = visitExpression(dependencyPairList, n.condition());
+			}
+			IfStatement newStatement = new IfStatement(
+				newCondition, 
+				visit(n.ifBranch()), 
+				visit(n.elseBranch()), 
+				visitContinutation(n.continuation()), n.position());
+			return newStatement;
 		}
 
 		@Override
@@ -380,15 +390,6 @@ public class BasicInference {
 		@Override
 		public Statement visit( ReturnStatement n ) {
 			throw new UnsupportedOperationException("ReturnStatement not supported\n\tStatement at " + n.position().toString());
-		}
-
-
-		/**
-		 * Sets the return annotation for {@code newStatement} to be equal to that of {@code oldStatement}
-		 */
-		private void setReturn(Statement newStatement, Statement oldStatement){
-			// newStatement.setReturnAnnotation(oldStatement.returnAnnotation());
-			// if( oldStatement.returns() ) newStatement.setReturns();
 		}
 
 		/** 
@@ -510,8 +511,6 @@ public class BasicInference {
 
 			}
 			MethodCallExpression newMethodCallExpression = new MethodCallExpression(n.name(), newArgs, n.typeArguments(), n.position());
-			// if( n.typeAnnotation().isPresent() ) newMethodCallExpression.setTypeAnnotation(n.typeAnnotation().get());
-			// if( n.methodAnnotation().isPresent() ) newMethodCallExpression.setMethodAnnotation(n.methodAnnotation().get());
 			return newMethodCallExpression;
 		}
 		
@@ -524,9 +523,7 @@ public class BasicInference {
 				newValue = visit(n.value());
 			}
 			Expression newTarget = n.target(); // the dependency cannot be part of the target
-			// newTarget.setTypeAnnotation(n.target().typeAnnotation().get());
 			AssignExpression newAssignExpression = new AssignExpression(newValue, newTarget, n.operator());
-			// newAssignExpression.setTypeAnnotation(n.typeAnnotation().get());
 
 			return newAssignExpression;
 		}
@@ -534,7 +531,27 @@ public class BasicInference {
 		
 		@Override
 		public Expression visit( BinaryExpression n ) {
-			throw new UnsupportedOperationException("BinaryExpression not supported\n\tExpression at " + n.position().toString());
+			Expression newLeft;
+			Expression newRight;
+			if( n.left().equals(originalExpression) ){
+				newLeft = comExpression;
+				newRight = n.right();
+			}else if( n.right().equals(originalExpression) ){
+				newRight = comExpression;
+				newLeft = n.left();
+			} else{
+				//  If none of the the expressions are the original expression, we visit both
+				newLeft = visit( n.left() );
+				newRight = visit( n.right() );
+			}
+
+			BinaryExpression newAssignExpression = new BinaryExpression(
+				newLeft, 
+				newRight, 
+				n.operator(), 
+				n.position());
+			
+			return newAssignExpression;
 		}
 
 		@Override
@@ -574,19 +591,23 @@ public class BasicInference {
 		}
 
 		public Expression visit( LiteralExpression.BooleanLiteralExpression n ) {
-			throw new UnsupportedOperationException("LiteralExpression.BooleanLiteralExpression not supported\n\tExpression at " + n.position().toString());
+			// literals are not permited to be in dependencies
+			return n;
 		}
 
 		public Expression visit( LiteralExpression.IntegerLiteralExpression n ) {
-			throw new UnsupportedOperationException("LitLiteralExpression.IntegerLiteralExpressioneralExpression not supported\n\tExpression at " + n.position().toString());
+			// literals are not permited to be in dependencies
+			return n;
 		}
 
 		public Expression visit( LiteralExpression.DoubleLiteralExpression n ) {
-			throw new UnsupportedOperationException("LiteralExpression.DoubleLiteralExpression not supported\n\tExpression at " + n.position().toString());
+			// literals are not permited to be in dependencies
+			return n;
 		}
 
 		public Expression visit( LiteralExpression.StringLiteralExpression n ) {
-			throw new UnsupportedOperationException("LiteralExpression.StringLiteralExpression not supported\n\tExpression at " + n.position().toString());
+			// literals are not permited to be in dependencies
+			return n;
 		}
 
 		@Override
