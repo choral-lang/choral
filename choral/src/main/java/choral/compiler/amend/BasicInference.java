@@ -2,22 +2,15 @@ package choral.compiler.amend;
 
 
 import choral.ast.CompilationUnit;
-import choral.ast.ImportDeclaration;
 import choral.ast.body.Class;
 import choral.ast.body.ClassMethodDefinition;
-import choral.ast.body.ConstructorDefinition;
-import choral.ast.body.Interface;
-import choral.ast.body.MethodSignature;
 import choral.ast.body.VariableDeclaration;
-import choral.ast.body.Enum;
-import choral.ast.body.Field;
 import choral.types.GroundDataType;
 import choral.types.GroundInterface;
 import choral.types.World;
 import choral.types.Member.HigherMethod;
 import choral.utils.Pair;
 import choral.ast.Name;
-import choral.ast.WithTypeAnnotation;
 import choral.ast.type.*;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.ast.statement.*;
@@ -45,6 +38,8 @@ import java.util.Map.Entry;
  *String@A a = "var_a,"@A + ch.<String>com( b );
  * }
  * </pre>
+ * This expects that there are no dependencies on literals and that the resulting {@code CompilationUnit} 
+ * will be typed again, since most or all typeannotations will be lost
  */
 public class BasicInference {
 	/*
@@ -215,9 +210,6 @@ public class BasicInference {
 					newBody = new VisitStatement(amendedStatements).visit(method.body().get());
 					// newBody = method.body().get();
 				}
-				
-				MethodSignature newMethodSignature = method.signature();
-				newMethodSignature.setTypeAnnotation(method.signature().typeAnnotation().get());
 
 				newMethods.add(new ClassMethodDefinition(
 					method.signature(), 
@@ -227,94 +219,27 @@ public class BasicInference {
 					method.position()));
 			}
 
-			// everything that has annotations (e.g. typeannotations) need to be given these annotations explicitly
-			// maybe they don't ??? TODO test this
-
-			List<FormalTypeParameter> newTypeParameters = cls.typeParameters();
-			for(int i = 0; i < newTypeParameters.size(); i++){
-				FormalTypeParameter oldTypeParameter = cls.typeParameters().get(i);
-				FormalTypeParameter newTypeParameter = newTypeParameters.get(i);
-				if( oldTypeParameter.typeAnnotation().isPresent() ) 
-					newTypeParameter.setTypeAnnotation(oldTypeParameter.typeAnnotation().get());
-			}
-			
-			TypeExpression newExtendedClass = cls.extendsClass();
-			if( cls.extendsClass() != null && cls.extendsClass().typeAnnotation().isPresent() )
-				newExtendedClass.setTypeAnnotation( cls.extendsClass().typeAnnotation().get() );
-
-			List<TypeExpression> newImplementsInterfaces = cls.implementsInterfaces();
-			setAnnotations( newImplementsInterfaces, cls.implementsInterfaces() );
-
-			List<Field> newFields = cls.fields();
-			for(int i = 0; i < newFields.size(); i++){
-				Field oldField = cls.fields().get(i);
-				Field newField = newFields.get(i);
-				if( oldField.typeAnnotation().isPresent() ) 
-					newField.setTypeAnnotation(oldField.typeAnnotation().get());
-			}
-			
-			List<ConstructorDefinition> newConstructors = cls.constructors();
-			for(int i = 0; i < newConstructors.size(); i++){
-				ConstructorDefinition oldConstructor = cls.constructors().get(i);
-				ConstructorDefinition newConstructor = newConstructors.get(i);
-				if( oldConstructor.typeAnnotation().isPresent() ) 
-					newConstructor.setTypeAnnotation(oldConstructor.typeAnnotation().get());
-			}
-
-
 			newClasses.add(new Class(
 				cls.name(), 
 				cls.worldParameters(), 
-				newTypeParameters, 
-				newExtendedClass, 
-				newImplementsInterfaces, 
-				newFields, 
+				cls.typeParameters(), 
+				cls.extendsClass(), 
+				cls.implementsInterfaces(), 
+				cls.fields(), 
 				newMethods, 
-				newConstructors, 
+				cls.constructors(), 
 				cls.annotations(), 
 				cls.modifiers(), 
 				cls.position()));
 		}
 
-		// everything that has annotations (e.g. typeannotations) need to be given these annotations explicitly
-		// maybe they don't ??? TODO test this
-
-		List<ImportDeclaration> newImports = old.imports();
-		setAnnotations( newImports, old.imports() );
-		
-		List<Interface> newInterfaces = old.interfaces();
-		for(int i = 0; i < newInterfaces.size(); i++){
-			Interface oldInterface = old.interfaces().get(i);
-			Interface newInterface = newInterfaces.get(i);
-			if( oldInterface.typeAnnotation().isPresent() ) 
-					newInterface.setTypeAnnotation(oldInterface.typeAnnotation().get());
-		}
-		
-		List<Enum> newEnums = old.enums();
-		for(int i = 0; i < newEnums.size(); i++){
-			Enum oldEnum = old.enums().get(i);
-			Enum newEnum = newEnums.get(i);
-			if( oldEnum.typeAnnotation().isPresent() ) 
-					newEnum.setTypeAnnotation(oldEnum.typeAnnotation().get());
-		}
-
 		return new CompilationUnit(
 			old.packageDeclaration(), 
-			newImports, 
-			newInterfaces, 
+			old.imports(), 
+			old.interfaces(), 
 			newClasses, 
-			newEnums, 
+			old.enums(), 
 			old.position().sourceFile());
-	}
-
-
-	private static <A,T extends WithTypeAnnotation<A>> void setAnnotations(List<T> newTs, List<T> oldTs){
-		// Why don't everything with a typeannotation extend WithTypeAnnotation ?!?
-		for(int i = 0; i < newTs.size(); i++){
-			T oldT = oldTs.get(i);
-			T newT = newTs.get(i);
-			if( oldT.typeAnnotation().isPresent() ) newT.setTypeAnnotation(oldT.typeAnnotation().get());
-		}
 	}
 
 	/*
@@ -424,12 +349,46 @@ public class BasicInference {
 			return new NilStatement(n.position());
 		}
 
+
+
+		@Override
+		public Statement visit( BlockStatement n ) {
+			// BlockStatements don't directly contain any expressions (they 
+			// contain Statemetns that then might contain Expressions) and 
+			// thus do not need to be checked for dependencies 
+			return new BlockStatement(
+				n.enclosedStatement(), 
+				visitContinutation(n.continuation()), 
+				n.position());
+		}
+
+		@Override
+		public Statement visit( IfStatement n ) {
+			throw new UnsupportedOperationException("IfStatement not supported\n\tStatement at " + n.position().toString());
+		}
+
+		@Override
+		public Statement visit( SwitchStatement n ) {
+			throw new UnsupportedOperationException("SwitchStatement not supported\n\tStatement at " + n.position().toString());
+		}
+
+		@Override
+		public Statement visit( TryCatchStatement n ) {
+			throw new UnsupportedOperationException("TryCatchStatement not supported\n\tStatement at " + n.position().toString());
+		}
+
+		@Override
+		public Statement visit( ReturnStatement n ) {
+			throw new UnsupportedOperationException("ReturnStatement not supported\n\tStatement at " + n.position().toString());
+		}
+
+
 		/**
 		 * Sets the return annotation for {@code newStatement} to be equal to that of {@code oldStatement}
 		 */
 		private void setReturn(Statement newStatement, Statement oldStatement){
-			newStatement.setReturnAnnotation(oldStatement.returnAnnotation());
-			if( oldStatement.returns() ) newStatement.setReturns();
+			// newStatement.setReturnAnnotation(oldStatement.returnAnnotation());
+			// if( oldStatement.returns() ) newStatement.setReturns();
 		}
 
 		/** 
@@ -551,8 +510,8 @@ public class BasicInference {
 
 			}
 			MethodCallExpression newMethodCallExpression = new MethodCallExpression(n.name(), newArgs, n.typeArguments(), n.position());
-			if( n.typeAnnotation().isPresent() ) newMethodCallExpression.setTypeAnnotation(n.typeAnnotation().get());
-			if( n.methodAnnotation().isPresent() ) newMethodCallExpression.setMethodAnnotation(n.methodAnnotation().get());
+			// if( n.typeAnnotation().isPresent() ) newMethodCallExpression.setTypeAnnotation(n.typeAnnotation().get());
+			// if( n.methodAnnotation().isPresent() ) newMethodCallExpression.setMethodAnnotation(n.methodAnnotation().get());
 			return newMethodCallExpression;
 		}
 		
@@ -565,12 +524,91 @@ public class BasicInference {
 				newValue = visit(n.value());
 			}
 			Expression newTarget = n.target(); // the dependency cannot be part of the target
-			newTarget.setTypeAnnotation(n.target().typeAnnotation().get());
+			// newTarget.setTypeAnnotation(n.target().typeAnnotation().get());
 			AssignExpression newAssignExpression = new AssignExpression(newValue, newTarget, n.operator());
-			newAssignExpression.setTypeAnnotation(n.typeAnnotation().get());
+			// newAssignExpression.setTypeAnnotation(n.typeAnnotation().get());
 
 			return newAssignExpression;
 		}
+
+		
+		@Override
+		public Expression visit( BinaryExpression n ) {
+			throw new UnsupportedOperationException("BinaryExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Expression visit( EnclosedExpression n ) {
+			throw new UnsupportedOperationException("EnclosedExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		
+		@Override
+		public Expression visit( StaticAccessExpression n ) {
+			throw new UnsupportedOperationException("StaticAccessExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Expression visit( ClassInstantiationExpression n ) {
+			throw new UnsupportedOperationException("ClassInstantiationExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Expression visit( NotExpression n ) {
+			throw new UnsupportedOperationException("NotExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Expression visit( ThisExpression n ) {
+			throw new UnsupportedOperationException("ThisExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Expression visit( SuperExpression n ) {
+			throw new UnsupportedOperationException("SuperExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Expression visit( NullExpression n ) {
+			throw new UnsupportedOperationException("NullExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		public Expression visit( LiteralExpression.BooleanLiteralExpression n ) {
+			throw new UnsupportedOperationException("LiteralExpression.BooleanLiteralExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		public Expression visit( LiteralExpression.IntegerLiteralExpression n ) {
+			throw new UnsupportedOperationException("LitLiteralExpression.IntegerLiteralExpressioneralExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		public Expression visit( LiteralExpression.DoubleLiteralExpression n ) {
+			throw new UnsupportedOperationException("LiteralExpression.DoubleLiteralExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		public Expression visit( LiteralExpression.StringLiteralExpression n ) {
+			throw new UnsupportedOperationException("LiteralExpression.StringLiteralExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Expression visit( TypeExpression n ) {
+			throw new UnsupportedOperationException("TypeExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Expression visit( BlankExpression n ){
+			throw new UnsupportedOperationException("BlankExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Expression visit( EnumCaseInstantiationExpression n ){
+			throw new UnsupportedOperationException("EnumCaseInstantiationExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		/* For some reason there is no visit( InvocationExpression ) in AbstractChoralVisitor
+		@Override
+		public Expression visit( InvocationExpression n ){
+			throw new UnsupportedOperationException("InvocationExpression not supported\n\tExpression at " + n.position().toString());
+		}*/
 
 
 	}
