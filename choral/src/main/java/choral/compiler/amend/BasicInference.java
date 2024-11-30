@@ -301,46 +301,31 @@ public class BasicInference {
 			} else{
 				newExpression = visitExpression(dependencyPairList, n.expression());
 			}
-			ExpressionStatement newStatement = new ExpressionStatement(newExpression, visitContinutation(n.continuation()), n.position());
 
-			return newStatement;
+			return new ExpressionStatement(
+				newExpression, 
+				visitContinutation(n.continuation()), 
+				n.position());
 		}
 
 		@Override
 		public Statement visit( VariableDeclarationStatement n ) {
 			List<Pair<Expression, Expression>> dependencyPairList = amendedStatements.get(n);
+			List<VariableDeclaration> newVariables = new ArrayList<>();
 			if( dependencyPairList == null ){
 				// If this statement has no dependencies, there is no reason to visit its expressions (n.variables())
-				VariableDeclarationStatement newStatement = new VariableDeclarationStatement(
-					n.variables(), 
-					visitContinutation(n.continuation()), 
-					n.position());
-				return newStatement;
-			}
-
-			List<VariableDeclaration> newVariables = new ArrayList<>();
-			for( VariableDeclaration x : n.variables() ) {
-				// If there are dependencies, we visit each VariableDeclaration seperately
-				AssignExpression newInitializer = null;
-				if( x.initializer().isPresent() ){
-					Expression newInit = visitExpression(dependencyPairList, x.initializer().get());
-					newInitializer = (AssignExpression)newInit;
+				newVariables = n.variables();
+			} else{
+				for( VariableDeclaration x : n.variables() ) {
+					// If there are dependencies, we visit each VariableDeclaration seperately 
+					newVariables.add( visitVariableDeclaration( dependencyPairList, x ) );
 				}
-
-				// Create a new VariableDeclaration from the ols with the potentially amended Initializer 
-				newVariables.add(new VariableDeclaration(
-					x.name(), 
-					x.type(), 
-					x.annotations(), 
-					newInitializer,
-					x.position()));
 			}
 
-			VariableDeclarationStatement newStatement = new VariableDeclarationStatement(
+			return new VariableDeclarationStatement(
 				newVariables, 
 				visitContinutation(n.continuation()), 
 				n.position());
-			return newStatement;
 		}
 
 		@Override
@@ -369,12 +354,12 @@ public class BasicInference {
 			} else{
 				newCondition = visitExpression(dependencyPairList, n.condition());
 			}
-			IfStatement newStatement = new IfStatement(
+
+			return new IfStatement(
 				newCondition, 
 				visit(n.ifBranch()), 
 				visit(n.elseBranch()), 
 				visitContinutation(n.continuation()), n.position());
-			return newStatement;
 		}
 
 		@Override
@@ -384,7 +369,31 @@ public class BasicInference {
 
 		@Override
 		public Statement visit( TryCatchStatement n ) {
-			throw new UnsupportedOperationException("TryCatchStatement not supported\n\tStatement at " + n.position().toString());
+			List<Pair<Expression, Expression>> dependencyPairList = amendedStatements.get(n);
+			List< Pair< VariableDeclaration, Statement > > newCatches = new ArrayList<>();
+			if( dependencyPairList == null ){
+				// If this statement has no dependencies, there is no reason to visit its expressions, 
+				// but the statements still need to be visited
+				for( Pair< VariableDeclaration, Statement > pair : n.catches() ){
+					newCatches.add( 
+						new Pair<>( 
+							pair.left(), 
+							visit(pair.right()) ) );
+				}
+			} else {
+				for( Pair< VariableDeclaration, Statement > pair : n.catches() ){
+					newCatches.add( 
+						new Pair<>( 
+							visitVariableDeclaration( dependencyPairList, pair.left() ), 
+							visit(pair.right()) ) );
+				}
+			}
+			
+			return new TryCatchStatement(
+				visit(n.body()), 
+				newCatches, 
+				visitContinutation(n.continuation()), 
+				n.position());
 		}
 
 		@Override
@@ -413,6 +422,22 @@ public class BasicInference {
 			}
 			
 			return newExpression;
+		}
+
+		/**
+		 * if there is no initializer, return the given {@code VaraibleDeclaration} without 
+		 * change, otherwise visit its initializer and return a new {@code VaraibleDeclaration}
+		 */
+		private VariableDeclaration visitVariableDeclaration( List<Pair<Expression, Expression>> dependencyPairList, VariableDeclaration vd ){
+			if( vd.initializer().isEmpty() )
+				return vd;
+			
+			return new VariableDeclaration(
+				vd.name(), 
+				vd.type(), 
+				vd.annotations(), 
+				(AssignExpression)visitExpression(dependencyPairList, vd.initializer().get()), 
+				vd.position());
 		}
 
 	}
