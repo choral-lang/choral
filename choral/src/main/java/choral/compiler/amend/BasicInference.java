@@ -210,28 +210,6 @@ public class BasicInference {
 			old.position().sourceFile());
 	}
 
-	/*
-	 * TODO
-	 * since compilationunits are final we cannot replace/insert statements or expressions
-	 * we ned to create a new compilationunit
-	 * we create a map of all the statements cocntaining expressions that need to be amended
-	 * we run through the old compilationunits method bodies
-	 * for all statements
-	 * 	  if they are in this list of amended statements
-	 * 	     create a new statement identical to the old, except with the dependency expression 
-	 * 		 replaced with the com expression
-	 * 	  else
-	 * 		 keep the old statement
-	 * 
-	 * Statement types we don't care about:
-	 * 		Statement, BlockStatement, NilStatement
-	 * Statement types we do care about:
-	 * 		ExpressionStatement, IfStatement, TryCatchStatement (VariableDeclarations 
-	 * 		have expressions), ReturnStatement, VariableDeclarationStatement
-	 * Others:
-	 * 		SwitchStatement (not supported)
-	 */
-
 	/**
 	 * Amends {@code Statements}.
 	 * <p>
@@ -646,7 +624,7 @@ public class BasicInference {
 			for( Dependency dependency : dependencyList ){
 				if( n.equals(dependency.originalExpression) ){
 					dependencyList.remove(dependency);
-					return dependency.createComExpression(n);
+					return dependency.createComExpression(visit(n));
 				}
 			}
 			return null;
