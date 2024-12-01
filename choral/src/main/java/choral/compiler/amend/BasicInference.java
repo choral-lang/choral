@@ -121,7 +121,6 @@ public class BasicInference {
 
 		// Since everything in a CompilationUnit is final (in particular Statemetns and 
 		// Expressions) we need to create a new CompilationUnit
-
 		return createNewCompilationUnit(cu, amendedStatements); 
 	}
 
@@ -559,9 +558,31 @@ public class BasicInference {
 			return n;
 		}
 
-		@Override // not supported
+		@Override
 		public Expression visit( ClassInstantiationExpression n ) {
-			throw new UnsupportedOperationException("ClassInstantiationExpression not supported\n\tExpression at " + n.position().toString());
+			Expression dependencyCheck = checkIfDependency(n);
+			if( dependencyCheck != null ) {
+				return dependencyCheck;
+			}
+
+			List<Expression> newArgs = new ArrayList<>();
+			for(int i = 0; i < n.arguments().size(); i++){
+				Expression argument = n.arguments().get(i);
+				
+				// visit all of the argumetns and add them to the new list of arguments
+				newArgs.add( visit(argument) );
+				// We might be able to return quickly if we when we find the originalExpression
+				// for now we don't TODO implement quicker returns
+				// If !visit(argument).equals(argument) then the argument must have been amended, 
+				// and thus the originalExpression must have been found in this argument and we 
+				// should be able to return quickly.
+			}
+
+			return new ClassInstantiationExpression(
+				n.typeExpression(), 
+				newArgs, 
+				n.typeArguments(), 
+				n.position());
 		}
 
 		@Override // not supported
@@ -703,18 +724,8 @@ public class BasicInference {
 						Collections.emptyList(), 
 						Collections.emptyList()));
 			
-			
 			MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments, visitedDependency.position());
 			FieldAccessExpression scope = new FieldAccessExpression(new Name(channelIdentifier), visitedDependency.position());
-			// newExpression.setMethodAnnotation(comMethod.applyTo(comMethod.typeParameters()));
-			// newExpression.setTypeAnnotation(comMethod.innerCallable().returnType());
-			
-			// below is used to compare to other com methods.
-			/*System.out.println( "newExpression: " + newExpression );
-			System.out.println( "MethodCallExpression: " + newExpression.toString() );
-			System.out.println( "typearguments: " + newExpression.typeArguments().get(0).name() );
-			System.out.println( "typearguments: " + newExpression.typeArguments().get(0).typeArguments() );
-			System.out.println( "typearguments: " + newExpression.typeArguments().get(0).worldArguments() );*/
 			
 			return new ScopedExpression(scope, scopedExpression);
 		}
