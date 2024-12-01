@@ -57,6 +57,10 @@ public class BasicInference {
 		Map<Statement, List<Pair<Expression, Expression>>> amendedStatements = new HashMap<>();
 		
 		for( HigherMethod method : getMethods(cu) ){
+			System.out.println( "Channels" );
+			for( Pair<String, GroundInterface> channelPair : method.channels() ){
+				System.out.println( "\t" + channelPair.left() + " - " + channelPair.right() );
+			}
 			for( Entry<World, List<Pair<Expression, Statement>>> entryset : method.worldDependencies().entrySet() ){
 				
 				World receiver = entryset.getKey();
@@ -362,7 +366,7 @@ public class BasicInference {
 				visitContinutation(n.continuation()), n.position());
 		}
 
-		@Override
+		@Override // not supported
 		public Statement visit( SwitchStatement n ) {
 			throw new UnsupportedOperationException("SwitchStatement not supported\n\tStatement at " + n.position().toString());
 		}
@@ -398,7 +402,19 @@ public class BasicInference {
 
 		@Override
 		public Statement visit( ReturnStatement n ) {
-			throw new UnsupportedOperationException("ReturnStatement not supported\n\tStatement at " + n.position().toString());
+			List<Pair<Expression, Expression>> dependencyPairList = amendedStatements.get(n);
+			Expression newReturnExpression;
+			if( dependencyPairList == null ){
+				// If this statement has no dependencies, there is no reason to visit its expression
+				newReturnExpression = n.returnExpression();
+			} else{
+				newReturnExpression = visitExpression(dependencyPairList, n.returnExpression());
+			}
+
+			return new ReturnStatement(
+				newReturnExpression, 
+				visitContinutation(n.continuation()), 
+				n.position());
 		}
 
 		/** 
@@ -414,13 +430,15 @@ public class BasicInference {
 		 * @param dependencyPairList must not be empty
 		 */
 		private Expression visitExpression( List<Pair<Expression, Expression>> dependencyPairList, Expression first ){
-			Expression newExpression = new VisitExpression(dependencyPairList.get(0)).visit(first);
-			
-			for( int i = 1; i < dependencyPairList.size(); i++ ){
-				Pair<Expression, Expression> dependencyPair = dependencyPairList.get(i);
-				newExpression = new VisitExpression(dependencyPair).visit(newExpression);
+			System.out.println( "For dependencyList: " );
+			for( Pair<Expression, Expression> dependencyPair : dependencyPairList ){
+				System.out.println( "\t" + dependencyPair.left() + " - " + dependencyPair.right() );
 			}
 			
+			Expression newExpression = new VisitExpression(dependencyPairList).visit(first);
+			
+			System.out.println( "Returns expression: " + newExpression );
+
 			return newExpression;
 		}
 
@@ -473,15 +491,13 @@ public class BasicInference {
 		 * also TODO support more expressions
 		 */
 
-		/** The communication expression to be inserted into the AST */
-		Expression comExpression;
-		/** The problematic expression */
-		Expression originalExpression;
+
+		/** A list of all the dependencies to check in this expression */
+		List<Pair<Expression, Expression>> dependencyPairList;
 		
 
-		public VisitExpression(Pair<Expression, Expression> dependencyPair){
-			this.comExpression = dependencyPair.right();
-			this.originalExpression = dependencyPair.left();
+		public VisitExpression(List<Pair<Expression, Expression>> dependencyPairList){
+			this.dependencyPairList = dependencyPairList;
 		}
 
 		@Override
@@ -491,128 +507,133 @@ public class BasicInference {
 
 		@Override
 		public Expression visit( ScopedExpression n ) {
-			Expression newscopedExpression;
-			if( n.scopedExpression().equals(originalExpression) ){
-				newscopedExpression = comExpression;
-			}else{
-				newscopedExpression = visit(n.scopedExpression());
+			Expression dependencyCheck = checkIfDependency(n);
+			if( dependencyCheck != null ) {
+				return dependencyCheck;
 			}
+			
+			Expression newscopedExpression = visit(n.scopedExpression());
 
-			// Dependencies cannot be in the scope, so no need to check
-			Expression newScope = n.scope(); 
-			ScopedExpression newScopedExpression = new ScopedExpression(newScope, newscopedExpression, n.position());
-
-			return newScopedExpression;
+			return new ScopedExpression(
+				n.scope(), // Dependencies cannot be in the scope, so no need to check
+				newscopedExpression, 
+				n.position());
 		}
 
 		@Override
 		public Expression visit( FieldAccessExpression n ) {
-			if( n.equals(originalExpression) ){
-				return comExpression;
-			}else{
-				return n;
+			Expression dependencyCheck = checkIfDependency(n);
+			if( dependencyCheck != null ) {
+				return dependencyCheck;
 			}
+			return n;
 		}
 
 		@Override
 		public Expression visit( MethodCallExpression n ) {
-			List<Expression> newArgs = new ArrayList<>();
+			Expression dependencyCheck = checkIfDependency(n);
+			if( dependencyCheck != null ) {
+				return dependencyCheck;
+			}
+			// Otherwise we create a new expression
 
+			List<Expression> newArgs = new ArrayList<>();
 			for(int i = 0; i < n.arguments().size(); i++){
 				Expression argument = n.arguments().get(i);
 				
-				// check if any of the argumetns are equal to the originalExpression
-				if( argument.equals(originalExpression) ){
-					newArgs.add(comExpression); 
-					// We might be able to return quickly if we when we find the originalExpression
-					// for now we don't TODO implement quicker returns
-				}else{
-					// otherwise visit the argument
-					newArgs.add( visit(argument) );
-					// same here, if !visit(argument).equals(argument) then the argument must have 
-					// been amended, and thus the originalExpression must have been found in this 
-					// argument and we should be able to return quickly.
-				}
-
+				// visit all of the argumetns and add them to the new list of arguments
+				newArgs.add( visit(argument) );
+				// We might be able to return quickly if we when we find the originalExpression
+				// for now we don't TODO implement quicker returns
+				// If !visit(argument).equals(argument) then the argument must have been amended, 
+				// and thus the originalExpression must have been found in this argument and we 
+				// should be able to return quickly.
 			}
-			MethodCallExpression newMethodCallExpression = new MethodCallExpression(n.name(), newArgs, n.typeArguments(), n.position());
-			return newMethodCallExpression;
+
+			return new MethodCallExpression(
+				n.name(), 
+				newArgs, 
+				n.typeArguments(), 
+				n.position());
 		}
 		
 		@Override
 		public Expression visit( AssignExpression n ) {
-			Expression newValue;
-			if( n.value().equals(originalExpression) ){
-				newValue = comExpression;
-			}else{
-				newValue = visit(n.value());
-			}
-			Expression newTarget = n.target(); // the dependency cannot be part of the target
-			AssignExpression newAssignExpression = new AssignExpression(newValue, newTarget, n.operator());
+			// an assignExpression cannot itself be a dependency, but its value() might
 
-			return newAssignExpression;
+			Expression newValue = visit( n.value() );
+
+			return new AssignExpression(
+				newValue, 
+				n.target(), 
+				n.operator(),
+				n.position());
 		}
 
-		
 		@Override
 		public Expression visit( BinaryExpression n ) {
-			Expression newLeft;
-			Expression newRight;
-			if( n.left().equals(originalExpression) ){
-				newLeft = comExpression;
-				newRight = n.right();
-			}else if( n.right().equals(originalExpression) ){
-				newRight = comExpression;
-				newLeft = n.left();
-			} else{
-				//  If none of the the expressions are the original expression, we visit both
-				newLeft = visit( n.left() );
-				newRight = visit( n.right() );
+			Expression dependencyCheck = checkIfDependency(n);
+			if( dependencyCheck != null ) {
+				return dependencyCheck;
 			}
-
-			BinaryExpression newAssignExpression = new BinaryExpression(
+			
+			Expression newLeft = visit( n.left() );
+			Expression newRight = visit( n.right() );
+			
+			return new BinaryExpression(
 				newLeft, 
 				newRight, 
 				n.operator(), 
 				n.position());
-			
-			return newAssignExpression;
 		}
 
 		@Override
 		public Expression visit( EnclosedExpression n ) {
-			throw new UnsupportedOperationException("EnclosedExpression not supported\n\tExpression at " + n.position().toString());
-		}
+			Expression dependencyCheck = checkIfDependency(n);
+			if( dependencyCheck != null ) {
+				return dependencyCheck;
+			}
 
+			Expression newNestedExpression = visit( n.nestedExpression() );
+			
+			return new EnclosedExpression(
+				newNestedExpression, 
+				n.position());
+		}
 		
 		@Override
 		public Expression visit( StaticAccessExpression n ) {
-			throw new UnsupportedOperationException("StaticAccessExpression not supported\n\tExpression at " + n.position().toString());
+			Expression dependencyCheck = checkIfDependency(n);
+			if( dependencyCheck != null ) {
+				return dependencyCheck;
+			}
+			return n;
 		}
 
-		@Override
+		@Override // not supported
 		public Expression visit( ClassInstantiationExpression n ) {
 			throw new UnsupportedOperationException("ClassInstantiationExpression not supported\n\tExpression at " + n.position().toString());
 		}
 
-		@Override
+		@Override // not supported
 		public Expression visit( NotExpression n ) {
 			throw new UnsupportedOperationException("NotExpression not supported\n\tExpression at " + n.position().toString());
 		}
 
-		@Override
+		@Override // not supported
 		public Expression visit( ThisExpression n ) {
 			throw new UnsupportedOperationException("ThisExpression not supported\n\tExpression at " + n.position().toString());
 		}
 
-		@Override
+		@Override // not supported
 		public Expression visit( SuperExpression n ) {
 			throw new UnsupportedOperationException("SuperExpression not supported\n\tExpression at " + n.position().toString());
 		}
 
 		@Override
 		public Expression visit( NullExpression n ) {
-			throw new UnsupportedOperationException("NullExpression not supported\n\tExpression at " + n.position().toString());
+			// Nothing can depend on null, so no need to compare to OriginalExpression
+			return n;
 		}
 
 		public Expression visit( LiteralExpression.BooleanLiteralExpression n ) {
@@ -635,28 +656,29 @@ public class BasicInference {
 			return n;
 		}
 
-		@Override
+		@Override // not supported
 		public Expression visit( TypeExpression n ) {
 			throw new UnsupportedOperationException("TypeExpression not supported\n\tExpression at " + n.position().toString());
 		}
 
-		@Override
+		@Override // not supported
 		public Expression visit( BlankExpression n ){
 			throw new UnsupportedOperationException("BlankExpression not supported\n\tExpression at " + n.position().toString());
 		}
 
-		@Override
+		@Override // not supported
 		public Expression visit( EnumCaseInstantiationExpression n ){
 			throw new UnsupportedOperationException("EnumCaseInstantiationExpression not supported\n\tExpression at " + n.position().toString());
 		}
 
-		/* For some reason there is no visit( InvocationExpression ) in AbstractChoralVisitor
-		@Override
-		public Expression visit( InvocationExpression n ){
-			throw new UnsupportedOperationException("InvocationExpression not supported\n\tExpression at " + n.position().toString());
-		}*/
-
-
+		private Expression checkIfDependency( Expression n ){
+			for( Pair<Expression, Expression> dependencyPair : dependencyPairList ){
+				if( n.equals(dependencyPair.left()) ){
+					dependencyPairList.remove(dependencyPair);
+					return dependencyPair.right();
+				}
+			}
+			return null;
+		}
 	}
-
 }
