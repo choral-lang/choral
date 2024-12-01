@@ -1481,7 +1481,7 @@ public class RelaxedTyper {
 				// if n.scopedExpression() is not a ScopedExpression then n.scopedExpression() is the 
 				// innermost expression (usually a FieldAccessExpression or a MethodCallExpression)
 				if( !(n.scopedExpression() instanceof ScopedExpression) && !right.isVoid() ){
-					inferCommunications(fullName, ((GroundDataType)right).worldArguments(), n);
+					inferCommunications(((GroundDataType)right).worldArguments(), n);
 				}
 				
 				left = null;
@@ -1676,7 +1676,7 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( EnclosedExpression n ) {
-				return synth( scope, n.nestedExpression(), explicitConstructorArg, enclosingMethod, enclosingStatement );
+				return synth( scope, n.nestedExpression(), explicitConstructorArg, homeWorlds, enclosingMethod, enclosingStatement );
 			}
 
 			private boolean checkMemberAccess( Member m ) {
@@ -1711,7 +1711,7 @@ public class RelaxedTyper {
 						List< ? extends World > rightWorlds = result.get().worldArguments();
 						
 						// We should check world correspondence 
-						inferCommunications(identifier, rightWorlds, n);
+						inferCommunications(rightWorlds, n);
 					}
 
 					return annotate( n, result.get() );
@@ -1785,9 +1785,10 @@ public class RelaxedTyper {
 				// between the arguments and the selected method's parameters.
 				for( int i = 0; i < args.size(); i++ ){
 					List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
-					// probably a better way to check world correspondence, since the 
-					// arguments have already been synthed earlier in this method
-					synth( scope, n.arguments().get(i), explicitConstructorArg, expectedArgWorlds, enclosingMethod, enclosingStatement );
+					List<? extends World> argWorlds = ((GroundDataType)n.arguments().get(i).typeAnnotation().get()).worldArguments();
+					// We call a variation of the inferCommunications, that checks 
+					// location on a given list of worlds instead of using homeworlds
+					inferCommunications(argWorlds, expectedArgWorlds, n.arguments().get(i));
 				}
 
 				leftStatic = false;
@@ -1841,12 +1842,14 @@ public class RelaxedTyper {
 					leftStatic = false;
 
 					// Since findMostSpecificCallable has been relaxed to not check world 
-					// corresponcence, we need to check this manually
+					// corresponcence, we need to manually check world correspondence 
+					// between the arguments and the selected method's parameters.
 					for( int i = 0; i < args.size(); i++ ){
 						List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
-						// probably a better way to check world correspondence, since the 
-						// arguments have already been synthed earlier in this method
-						synth( scope, n.arguments().get(i), explicitConstructorArg, expectedArgWorlds, enclosingMethod, enclosingStatement );
+						List<? extends World> argWorlds = ((GroundDataType)n.arguments().get(i).typeAnnotation().get()).worldArguments();
+						// We call a variation of the inferCommunications, that checks 
+						// location on a given list of worlds instead of using homeworlds
+						inferCommunications(argWorlds, expectedArgWorlds, n.arguments().get(i));
 					}
 
 					return selected.returnType();
@@ -1936,12 +1939,23 @@ public class RelaxedTyper {
 			 * added to the enclosing method.
 			 */
 			private void inferCommunications( 
-				String expressionString, 
 				List< ? extends World > fromWorlds, 
 				Expression expression 
 				){
 				if( !homeWorlds.isEmpty() && !atHome(fromWorlds) ){
 					enclosingMethod.addDependency(homeWorlds.stream().map( world -> (World)world ).toList(), expression, enclosingStatement);
+				}
+					
+			}
+
+			private void inferCommunications(
+				List< ? extends World > fromWorlds,
+				List< ? extends World > toWorlds, 
+				Expression expression 
+				){
+				if( !toWorlds.isEmpty() && !atHome(toWorlds, fromWorlds) ){
+					System.out.println( "Found dependency: role " + toWorlds.get(0) + " needs " + expression );
+					enclosingMethod.addDependency(toWorlds.stream().map( world -> (World)world ).toList(), expression, enclosingStatement);
 				}
 					
 			}
