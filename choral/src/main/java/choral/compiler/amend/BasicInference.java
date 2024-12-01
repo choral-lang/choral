@@ -54,7 +54,7 @@ public class BasicInference {
 	public static CompilationUnit inferComms( CompilationUnit cu ){
 		
 		// a map mapping from a statement to a list of all dependency expressions within that statement
-		Map<Statement, List<Pair<Expression, Expression>>> amendedStatements = new HashMap<>();
+		Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
 		
 		for( HigherMethod method : getMethods(cu) ){
 			System.out.println( "Channels" );
@@ -68,6 +68,10 @@ public class BasicInference {
 				for( Pair<Expression, Statement> dependencyPair : entryset.getValue() ){
 					Expression dependencyExpression = dependencyPair.left();
 					Statement dependencyStatement = dependencyPair.right();
+
+					Dependency newDependency = new Dependency(dependencyExpression);
+
+					// Extract senders from dependency (what world(s) needs to send data)
 					List<? extends World> senders = ((GroundDataType)dependencyExpression.typeAnnotation().get()).worldArguments();
 					if( senders.size() != 1 ){
 						// We don't accept dependencies with multiple sender worlds
@@ -75,11 +79,11 @@ public class BasicInference {
 						return null;
 						// TODO throw some exception
 					}
-					
 					World sender = senders.get(0);
 					
 					System.out.println( "Role " + receiver + " needs " + dependencyExpression + " from role " + sender );
 					
+					// Find a viable communication method
 					Pair<Pair<String, GroundInterface>, HigherMethod> comPair = findComMethod(receiver, sender, method.channels());
 					if( comPair == null ){
 						// No viable communication method was found.
@@ -90,13 +94,13 @@ public class BasicInference {
 
 					// The pair consists of the channel's identifier and its type.
 					Pair<String, GroundInterface> comChannelPair = comPair.left();
-					HigherMethod comMethod = comPair.right();
+					
+					newDependency.setChannel( comChannelPair.left(), comChannelPair.right() );
+					newDependency.setComMethod( comPair.right() );
 
-					Expression newExpression = createComExpression(dependencyExpression, comMethod, comChannelPair);
-
-					// Put in a list to be accesable later
+					// Put the dependency in a list to be accessible later
 					amendedStatements.putIfAbsent(dependencyStatement, new ArrayList<>());
-					amendedStatements.get(dependencyStatement).add(new Pair<>(dependencyExpression, newExpression));
+					amendedStatements.get(dependencyStatement).add( newDependency );
 					
 					// below is just for testing, not functional
 					/*
@@ -148,46 +152,6 @@ public class BasicInference {
 	}
 
 	/**
-	 * Creates the {@code Expression} containing the communiction of the dependency.
-	 * This expression needs
-	 * <p>
-	 * 1. a name
-	 * 		- (the name of out communication method (com))
-	 * <p>
-	 * 2. argumetns 
-	 * 		- (our dependency expression)
-	 * <p>
-	 * 3. type argumetns
-	 * 		- com methods always need the type of the data they are communicating. 
-	 * 		this is stored as a type expression. from looking at how choral treats 
-	 * 		com methods in the examples, these type expressions onle have a name (and 
-	 * 		NOTHING else). also this name is only the simple name for the type? e.g. 
-	 * 		not "java.lang.Object", only "Object". so this is the unqualified(?) name 
-	 * 		for the type.
-	 */
-	private static Expression createComExpression(Expression dependency, HigherMethod comMethod, Pair<String, GroundInterface> channelPair){
-		GroundDataType dependencyType = ((GroundDataType)dependency.typeAnnotation().get()); // 99% certain this cannot be void, maybe add an assert?
-		final List<Expression> arguments = List.of(dependency);
-		final Name name = new Name(comMethod.identifier());
-		final List<TypeExpression> typeArguments = List.of(new TypeExpression(new Name(dependencyType.typeConstructor().toString()), Collections.emptyList(), Collections.emptyList()));
-		// TODO how do I get the type's identifier without relying on toString?
-		
-		MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments, dependency.position());
-		FieldAccessExpression scope = new FieldAccessExpression(new Name(channelPair.left()), dependency.position());
-		// newExpression.setMethodAnnotation(comMethod.applyTo(comMethod.typeParameters()));
-		// newExpression.setTypeAnnotation(comMethod.innerCallable().returnType());
-		
-		// below is used to compare to other com methods.
-		/*System.out.println( "newExpression: " + newExpression );
-		System.out.println( "MethodCallExpression: " + newExpression.toString() );
-		System.out.println( "typearguments: " + newExpression.typeArguments().get(0).name() );
-		System.out.println( "typearguments: " + newExpression.typeArguments().get(0).typeArguments() );
-		System.out.println( "typearguments: " + newExpression.typeArguments().get(0).worldArguments() );*/
-		
-		return new ScopedExpression(scope, scopedExpression);
-	}
-
-	/**
 	 * Retreives all methods from the {@code CompilationUnit}
 	 */
 	private static List<HigherMethod> getMethods( CompilationUnit cu ){
@@ -204,7 +168,7 @@ public class BasicInference {
 	 * We need to create a new {@code CompilationUnit} since everything in a {@code CompilationUnit} (in 
 	 * particular {@code Statements} and {@code Expressions}) are final, and can therefore not be changed.
 	 */
-	private static CompilationUnit createNewCompilationUnit( CompilationUnit old, Map<Statement, List<Pair<Expression, Expression>>> amendedStatements ){
+	private static CompilationUnit createNewCompilationUnit( CompilationUnit old, Map<Statement, List<Dependency>> amendedStatements ){
 		List<Class> newClasses = new ArrayList<>();
 		for( Class cls : old.classes() ){
 			List<ClassMethodDefinition> newMethods = new ArrayList<>();
@@ -284,9 +248,9 @@ public class BasicInference {
 		 * is the {@code comExpression} for this dependency and {@code pair.left()} is the 
 		 * original {@code Expression} of the dependency.
 		 */
-		Map<Statement, List<Pair<Expression, Expression>>> amendedStatements;
+		Map<Statement, List<Dependency>> amendedStatements;
 		
-		public VisitStatement(Map<Statement, List<Pair<Expression, Expression>>> amendedStatements){
+		public VisitStatement(Map<Statement, List<Dependency>> amendedStatements){
 			this.amendedStatements = amendedStatements;
 		}
 
@@ -297,13 +261,13 @@ public class BasicInference {
 
 		@Override
 		public Statement visit( ExpressionStatement n ) {
-			List<Pair<Expression, Expression>> dependencyPairList = amendedStatements.get(n);
+			List<Dependency> dependencyList = amendedStatements.get(n);
 			Expression newExpression;
-			if( dependencyPairList == null ){
+			if( dependencyList == null ){
 				// If this statement has no dependencies, there is no reason to visit its expression
 				newExpression = n.expression();
 			} else{
-				newExpression = visitExpression(dependencyPairList, n.expression());
+				newExpression = visitExpression(dependencyList, n.expression());
 			}
 
 			return new ExpressionStatement(
@@ -314,15 +278,15 @@ public class BasicInference {
 
 		@Override
 		public Statement visit( VariableDeclarationStatement n ) {
-			List<Pair<Expression, Expression>> dependencyPairList = amendedStatements.get(n);
+			List<Dependency> dependencyList = amendedStatements.get(n);
 			List<VariableDeclaration> newVariables = new ArrayList<>();
-			if( dependencyPairList == null ){
+			if( dependencyList == null ){
 				// If this statement has no dependencies, there is no reason to visit its expressions (n.variables())
 				newVariables = n.variables();
 			} else{
 				for( VariableDeclaration x : n.variables() ) {
 					// If there are dependencies, we visit each VariableDeclaration seperately 
-					newVariables.add( visitVariableDeclaration( dependencyPairList, x ) );
+					newVariables.add( visitVariableDeclaration( dependencyList, x ) );
 				}
 			}
 
@@ -350,13 +314,13 @@ public class BasicInference {
 
 		@Override
 		public Statement visit( IfStatement n ) {
-			List<Pair<Expression, Expression>> dependencyPairList = amendedStatements.get(n);
+			List<Dependency> dependencyList = amendedStatements.get(n);
 			Expression newCondition;
-			if( dependencyPairList == null ){
+			if( dependencyList == null ){
 				// If this statement has no dependencies, there is no reason to visit its expression
 				newCondition = n.condition();
 			} else{
-				newCondition = visitExpression(dependencyPairList, n.condition());
+				newCondition = visitExpression(dependencyList, n.condition());
 			}
 
 			return new IfStatement(
@@ -373,9 +337,9 @@ public class BasicInference {
 
 		@Override
 		public Statement visit( TryCatchStatement n ) {
-			List<Pair<Expression, Expression>> dependencyPairList = amendedStatements.get(n);
+			List<Dependency> dependencyList = amendedStatements.get(n);
 			List< Pair< VariableDeclaration, Statement > > newCatches = new ArrayList<>();
-			if( dependencyPairList == null ){
+			if( dependencyList == null ){
 				// If this statement has no dependencies, there is no reason to visit its expressions, 
 				// but the statements still need to be visited
 				for( Pair< VariableDeclaration, Statement > pair : n.catches() ){
@@ -388,7 +352,7 @@ public class BasicInference {
 				for( Pair< VariableDeclaration, Statement > pair : n.catches() ){
 					newCatches.add( 
 						new Pair<>( 
-							visitVariableDeclaration( dependencyPairList, pair.left() ), 
+							visitVariableDeclaration( dependencyList, pair.left() ), 
 							visit(pair.right()) ) );
 				}
 			}
@@ -402,13 +366,13 @@ public class BasicInference {
 
 		@Override
 		public Statement visit( ReturnStatement n ) {
-			List<Pair<Expression, Expression>> dependencyPairList = amendedStatements.get(n);
+			List<Dependency> dependencyList = amendedStatements.get(n);
 			Expression newReturnExpression;
-			if( dependencyPairList == null ){
+			if( dependencyList == null ){
 				// If this statement has no dependencies, there is no reason to visit its expression
 				newReturnExpression = n.returnExpression();
 			} else{
-				newReturnExpression = visitExpression(dependencyPairList, n.returnExpression());
+				newReturnExpression = visitExpression(dependencyList, n.returnExpression());
 			}
 
 			return new ReturnStatement(
@@ -429,15 +393,22 @@ public class BasicInference {
 		 * initial {@code Expression} once for each dependencyPair.
 		 * @param dependencyPairList must not be empty
 		 */
-		private Expression visitExpression( List<Pair<Expression, Expression>> dependencyPairList, Expression first ){
+		private Expression visitExpression( List<Dependency> dependencyList, Expression first ){
 			System.out.println( "For dependencyList: " );
-			for( Pair<Expression, Expression> dependencyPair : dependencyPairList ){
-				System.out.println( "\t" + dependencyPair.left() + " - " + dependencyPair.right() );
+			for( Dependency dependency : dependencyList ){
+				System.out.println( "\t" + dependency.originalExpression() );
 			}
 			
-			Expression newExpression = new VisitExpression(dependencyPairList).visit(first);
+			Expression newExpression = new VisitExpression(dependencyList).visit(first);
 			
 			System.out.println( "Returns expression: " + newExpression );
+
+			if( !dependencyList.isEmpty() ){ 
+				System.out.println( "ERROR! Could not resole the following dependencies" );
+				for( Dependency dependency  : dependencyList ){
+					System.out.println( "\t" + dependency.originalExpression() );
+				}
+			}
 
 			return newExpression;
 		}
@@ -446,7 +417,7 @@ public class BasicInference {
 		 * if there is no initializer, return the given {@code VaraibleDeclaration} without 
 		 * change, otherwise visit its initializer and return a new {@code VaraibleDeclaration}
 		 */
-		private VariableDeclaration visitVariableDeclaration( List<Pair<Expression, Expression>> dependencyPairList, VariableDeclaration vd ){
+		private VariableDeclaration visitVariableDeclaration( List<Dependency> dependencyList, VariableDeclaration vd ){
 			if( vd.initializer().isEmpty() )
 				return vd;
 			
@@ -454,7 +425,7 @@ public class BasicInference {
 				vd.name(), 
 				vd.type(), 
 				vd.annotations(), 
-				(AssignExpression)visitExpression(dependencyPairList, vd.initializer().get()), 
+				(AssignExpression)visitExpression(dependencyList, vd.initializer().get()), 
 				vd.position());
 		}
 
@@ -493,11 +464,11 @@ public class BasicInference {
 
 
 		/** A list of all the dependencies to check in this expression */
-		List<Pair<Expression, Expression>> dependencyPairList;
+		List<Dependency> dependencyList;
 		
 
-		public VisitExpression(List<Pair<Expression, Expression>> dependencyPairList){
-			this.dependencyPairList = dependencyPairList;
+		public VisitExpression(List<Dependency> dependencyList){
+			this.dependencyList = dependencyList;
 		}
 
 		@Override
@@ -672,13 +643,103 @@ public class BasicInference {
 		}
 
 		private Expression checkIfDependency( Expression n ){
-			for( Pair<Expression, Expression> dependencyPair : dependencyPairList ){
-				if( n.equals(dependencyPair.left()) ){
-					dependencyPairList.remove(dependencyPair);
-					return dependencyPair.right();
+			for( Dependency dependency : dependencyList ){
+				if( n.equals(dependency.originalExpression) ){
+					dependencyList.remove(dependency);
+					return dependency.createComExpression(n);
 				}
 			}
 			return null;
 		}
+	}
+
+	private static class Dependency {
+		private Expression originalExpression;
+		private HigherMethod comMethod;
+		private String channelIdentifier;
+		private GroundInterface channel;
+
+		public Dependency( Expression originalExpression ){
+			this.originalExpression = originalExpression;
+		}
+
+		public Expression originalExpression(){
+			return originalExpression;
+		}
+
+		public HigherMethod comMethod(){
+			return comMethod;
+		}
+
+		public String channelIdentifier(){
+			return channelIdentifier;
+		}
+
+		public GroundInterface channel(){
+			return channel;
+		}
+
+		public void setChannel( GroundInterface channel ){
+			this.channel = channel;
+		}
+
+		public void setChannel( String channelIdentifier, GroundInterface channel ){
+			this.channelIdentifier = channelIdentifier;
+			this.channel = channel;
+		}
+
+		public void setComMethod( HigherMethod comMethod ){
+			this.comMethod = comMethod;
+		}
+
+		public void setChannelIdentifier( String channelIdentifier ){
+			this.channelIdentifier = channelIdentifier;
+		}
+
+		/**
+		 * Creates the {@code Expression} containing the communiction of the dependency.
+		 * This expression needs
+		 * <p>
+		 * 1. a name
+		 * 		- (the name of out communication method (com))
+		 * <p>
+		 * 2. argumetns 
+		 * 		- (our dependency expression)
+		 * <p>
+		 * 3. type argumetns
+		 * 		- com methods always need the type of the data they are communicating. 
+		 * 		this is stored as a type expression. from looking at how choral treats 
+		 * 		com methods in the examples, these type expressions onle have a name (and 
+		 * 		NOTHING else). also this name is only the simple name for the type? e.g. 
+		 * 		not "java.lang.Object", only "Object". so this is the unqualified(?) name 
+		 * 		for the type.
+		 */
+		public Expression createComExpression( Expression visitedDependency ){
+			GroundDataType dependencyType = ((GroundDataType)originalExpression.typeAnnotation().get()); // 99% certain this cannot be void, maybe add an assert?
+			final List<Expression> arguments = List.of(visitedDependency);
+			final Name name = new Name(comMethod.identifier());
+			final List<TypeExpression> typeArguments = 
+				List.of(
+					new TypeExpression(
+						new Name(dependencyType.typeConstructor().toString()), // TODO how do I get the type's identifier without relying on toString?
+						Collections.emptyList(), 
+						Collections.emptyList()));
+			
+			
+			MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments, visitedDependency.position());
+			FieldAccessExpression scope = new FieldAccessExpression(new Name(channelIdentifier), visitedDependency.position());
+			// newExpression.setMethodAnnotation(comMethod.applyTo(comMethod.typeParameters()));
+			// newExpression.setTypeAnnotation(comMethod.innerCallable().returnType());
+			
+			// below is used to compare to other com methods.
+			/*System.out.println( "newExpression: " + newExpression );
+			System.out.println( "MethodCallExpression: " + newExpression.toString() );
+			System.out.println( "typearguments: " + newExpression.typeArguments().get(0).name() );
+			System.out.println( "typearguments: " + newExpression.typeArguments().get(0).typeArguments() );
+			System.out.println( "typearguments: " + newExpression.typeArguments().get(0).worldArguments() );*/
+			
+			return new ScopedExpression(scope, scopedExpression);
+		}
+
 	}
 }
