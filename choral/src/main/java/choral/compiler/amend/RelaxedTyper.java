@@ -1784,11 +1784,14 @@ public class RelaxedTyper {
 				// corresponcence, we need to manually check world correspondence 
 				// between the arguments and the selected method's parameters.
 				for( int i = 0; i < args.size(); i++ ){
+					Expression argument = n.arguments().get(i);
+					if( argument.typeAnnotation().isPresent() ){ // Some arguments might not have a type annotation
 					List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
-					List<? extends World> argWorlds = ((GroundDataType)n.arguments().get(i).typeAnnotation().get()).worldArguments();
+						List<? extends World> argWorlds = ((GroundDataType)argument.typeAnnotation().get()).worldArguments();
 					// We call a variation of the inferCommunications, that checks 
 					// location on a given list of worlds instead of using homeworlds
-					inferCommunications(argWorlds, expectedArgWorlds, n.arguments().get(i));
+						inferCommunications(argWorlds, expectedArgWorlds, argument);
+					} 
 				}
 
 				leftStatic = false;
@@ -1845,11 +1848,14 @@ public class RelaxedTyper {
 					// corresponcence, we need to manually check world correspondence 
 					// between the arguments and the selected method's parameters.
 					for( int i = 0; i < args.size(); i++ ){
+						Expression argument = n.arguments().get(i);
+						if( argument.typeAnnotation().isPresent() ){ // Some arguments might not have a type annotation
 						List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
-						List<? extends World> argWorlds = ((GroundDataType)n.arguments().get(i).typeAnnotation().get()).worldArguments();
+							List<? extends World> argWorlds = ((GroundDataType)argument.typeAnnotation().get()).worldArguments();
 						// We call a variation of the inferCommunications, that checks 
 						// location on a given list of worlds instead of using homeworlds
-						inferCommunications(argWorlds, expectedArgWorlds, n.arguments().get(i));
+							inferCommunications(argWorlds, expectedArgWorlds, argument);
+						}
 					}
 
 					return selected.returnType();
