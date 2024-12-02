@@ -696,11 +696,14 @@ public class BasicInference {
 		}
 
 		/**
-		 * Creates the {@code Expression} containing the communiction of the dependency.
+		 * Creates the {@code Expression} containing the communiction of the dependency. Note
+		 * that the argument of the communication method ({@code visitedExpression}) should 
+		 * be visited before creating the comExpression.
+		 * <p>
 		 * This expression needs
 		 * <p>
 		 * 1. a name
-		 * 		- (the name of out communication method (com))
+		 * 		- (the name of our communication method (com))
 		 * <p>
 		 * 2. argumetns 
 		 * 		- (our dependency expression)
