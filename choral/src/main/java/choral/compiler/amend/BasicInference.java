@@ -5,8 +5,11 @@ import choral.ast.CompilationUnit;
 import choral.ast.body.Class;
 import choral.ast.body.ClassMethodDefinition;
 import choral.ast.body.VariableDeclaration;
+import choral.types.GroundClass;
+import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
 import choral.types.GroundInterface;
+import choral.types.GroundReferenceType;
 import choral.types.World;
 import choral.types.Member.HigherMethod;
 import choral.utils.Pair;
@@ -714,20 +717,37 @@ public class BasicInference {
 		 * 		for the type.
 		 */
 		public Expression createComExpression( Expression visitedDependency ){
-			GroundDataType dependencyType = ((GroundDataType)originalExpression.typeAnnotation().get()); // 99% certain this cannot be void, maybe add an assert?
+			GroundClassOrInterface dependencyType = ((GroundClassOrInterface)originalExpression.typeAnnotation().get()); // 99% certain this cannot be void, maybe add an assert?
 			final List<Expression> arguments = List.of(visitedDependency);
 			final Name name = new Name(comMethod.identifier());
 			final List<TypeExpression> typeArguments = 
-				List.of(
-					new TypeExpression(
-						new Name(dependencyType.typeConstructor().toString()), // TODO how do I get the type's identifier without relying on toString?
-						Collections.emptyList(), 
-						Collections.emptyList()));
+				List.of( getTypeExpression(dependencyType) );
 			
 			MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments, visitedDependency.position());
 			FieldAccessExpression scope = new FieldAccessExpression(new Name(channelIdentifier), visitedDependency.position());
 			
 			return new ScopedExpression(scope, scopedExpression);
+		}
+
+		private TypeExpression getTypeExpression( GroundClassOrInterface type ){
+			return new TypeExpression(
+				new Name(type.typeConstructor().identifier()),
+				Collections.emptyList(), 
+				type.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
+		}
+
+		private TypeExpression getTypeExpression( GroundReferenceType type ){
+			if( type instanceof GroundClass ){
+				GroundClass typeGC = (GroundClass)type;
+				return new TypeExpression(
+					new Name(typeGC.typeConstructor().identifier()),
+					Collections.emptyList(), 
+					typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
+			}
+			
+			System.out.println( "ERROR! Not a GroundClass" );
+			// TODO throw some exception
+			return null;
 		}
 
 	}
