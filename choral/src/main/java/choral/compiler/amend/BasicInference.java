@@ -10,6 +10,7 @@ import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
 import choral.types.GroundInterface;
 import choral.types.GroundReferenceType;
+import choral.types.GroundTypeParameter;
 import choral.types.World;
 import choral.types.Member.HigherMethod;
 import choral.utils.Pair;
@@ -740,12 +741,17 @@ public class BasicInference {
 		 * 		otherwise nested dependencies will not be caught.
 		 */
 		public Expression createComExpression( Expression visitedDependency ){
-			// this cannot be void, since it would indicate that a role depends on a void, maybe add an assert?
-			GroundClassOrInterface dependencyType = (GroundClassOrInterface)originalExpression.typeAnnotation().get(); 
+			// This cannot be void, since it would indicate that a role depends on a void, maybe add an assert?
+			TypeExpression typeExpression;
+			if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
+				typeExpression = getTypeExpression((GroundTypeParameter)originalExpression.typeAnnotation().get());
+			} else {
+				typeExpression = getTypeExpression((GroundClassOrInterface)originalExpression.typeAnnotation().get());
+			}
 			
 			final List<Expression> arguments = List.of( visitedDependency );
 			final Name name = new Name(comMethod.identifier());
-			final List<TypeExpression> typeArguments = List.of( getTypeExpression(dependencyType) );
+			final List<TypeExpression> typeArguments = List.of( typeExpression );
 			
 			MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments, visitedDependency.position());
 			
@@ -771,8 +777,15 @@ public class BasicInference {
 					Collections.emptyList(), 
 					typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
 			}
+			if( type instanceof GroundTypeParameter ){
+				GroundTypeParameter typeGTP = (GroundTypeParameter)type;
+				return new TypeExpression(
+					new Name(typeGTP.typeConstructor().identifier()),
+					Collections.emptyList(), 
+					Collections.emptyList());
+			}
 			
-			System.out.println( "ERROR! Not a GroundClass" ); 
+			System.out.println( "ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() ); 
 			// TODO throw some exception
 			return null;
 		}
