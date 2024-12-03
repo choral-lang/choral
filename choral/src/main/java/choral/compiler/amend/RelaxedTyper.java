@@ -1418,16 +1418,6 @@ public class RelaxedTyper {
 			private final boolean explicitConstructorArg;
 			/** The worlds at which the expression takes place. */
 			List< ? extends World > homeWorlds = Collections.emptyList();
-			/** Whether we need to check the location of the expression.
-			 * <p>
-			 * For scopedexpressions like "this.obj.val" we only want to check location once for
-			 * the whole expression, not once for every sub-expression.
-			 */
-			boolean checkLocation = true;
-			/** If we are visiting a {@link ScopedExpression}, this will be the full name of the
-			 * expression.
-			 */
-			String fullName;
 			/** A reference to the enclosing method. */
 			HigherMethod enclosingMethod;
 			/** A reference to the enclosing statement. */
@@ -1455,10 +1445,6 @@ public class RelaxedTyper {
 				// `first.second` is then a `ScopedExpression` with `scope=first` and 
 				// `scopedExpression=second`. `second` would then be a `FieldAccessExpression`.
 
-				if(checkLocation){
-					fullName = n.toString();
-					checkLocation = false;
-				}
 
 				/* In a ScopedExpression like a.b.c the second layer would have `scope=a.b` and 
 				 * `scopedExpression=c`. we would detect that this is the end of our ScopedExpression.
@@ -1469,14 +1455,12 @@ public class RelaxedTyper {
 				 * 
 				 * TODO
 				 * 		The explanation above is not fully correct
-				 * 		Maybe extending this "turn off" of homeWorlds to also cover the visit of 
-				 * 		scopedExpression would make checkLocation unnecessary 
 				 */
 				List< ? extends World > savedHomeWorlds = homeWorlds;
 				homeWorlds = Collections.emptyList();
 				left = visit( n.scope() );
-				homeWorlds = savedHomeWorlds;
 				GroundDataTypeOrVoid right = visit( n.scopedExpression() );
+				homeWorlds = savedHomeWorlds;
 
 				// if n.scopedExpression() is not a ScopedExpression then n.scopedExpression() is the 
 				// innermost expression (usually a FieldAccessExpression or a MethodCallExpression)
@@ -1707,12 +1691,9 @@ public class RelaxedTyper {
 					throw new AstPositionedException( n.position(),
 							new UnresolvedSymbolException( identifier ) );
 				} else {
-					if ( checkLocation ){ // If not part of a scopedexpression
-						List< ? extends World > rightWorlds = result.get().worldArguments();
-						
-						// We should check world correspondence 
-						inferCommunications(rightWorlds, n);
-					}
+					List< ? extends World > rightWorlds = result.get().worldArguments();
+					// We should check world correspondence 
+					inferCommunications(rightWorlds, n);
 
 					return annotate( n, result.get() );
 				}
@@ -1786,10 +1767,10 @@ public class RelaxedTyper {
 				for( int i = 0; i < args.size(); i++ ){
 					Expression argument = n.arguments().get(i);
 					if( argument.typeAnnotation().isPresent() ){ // Some arguments might not have a type annotation
-					List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
+						List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
 						List<? extends World> argWorlds = ((GroundDataType)argument.typeAnnotation().get()).worldArguments();
-					// We call a variation of the inferCommunications, that checks 
-					// location on a given list of worlds instead of using homeworlds
+						// We call a variation of the inferCommunications, that checks 
+						// location on a given list of worlds instead of using homeworlds
 						inferCommunications(argWorlds, expectedArgWorlds, argument);
 					} 
 				}
@@ -1849,10 +1830,10 @@ public class RelaxedTyper {
 					for( int i = 0; i < args.size(); i++ ){
 						Expression argument = n.arguments().get(i);
 						if( argument.typeAnnotation().isPresent() ){ // Some arguments might not have a type annotation
-						List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
+							List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
 							List<? extends World> argWorlds = ((GroundDataType)argument.typeAnnotation().get()).worldArguments();
-						// We call a variation of the inferCommunications, that checks 
-						// location on a given list of worlds instead of using homeworlds
+							// We call a variation of the inferCommunications, that checks 
+							// location on a given list of worlds instead of using homeworlds
 							inferCommunications(argWorlds, expectedArgWorlds, argument);
 						}
 					}
@@ -1965,7 +1946,6 @@ public class RelaxedTyper {
 				Expression expression 
 				){
 				if( !toWorlds.isEmpty() && !atHome(toWorlds, fromWorlds) ){
-					System.out.println( "Found dependency: role " + toWorlds.get(0) + " needs " + expression );
 					enclosingMethod.addDependency(toWorlds.stream().map( world -> (World)world ).toList(), expression, enclosingStatement);
 				}
 					
@@ -2607,7 +2587,7 @@ public class RelaxedTyper {
 
 			// Look for channels in `this`
 			lookupThis().fields().forEach( field -> {
-				
+				System.out.println( "Field: " + field.type() );
 				if( field.type().typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
 					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
@@ -2696,7 +2676,7 @@ public class RelaxedTyper {
 
 			// this fields
 			lookupThis().fields().forEach( field -> {
-				
+				System.out.println( "Field: " + field.type() );
 				if( field.type().typeConstructor() instanceof HigherInterface ){
 					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
 					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
