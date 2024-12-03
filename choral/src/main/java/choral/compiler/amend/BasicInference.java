@@ -104,19 +104,6 @@ public class BasicInference {
 					// Put the dependency in a list to be accessible later
 					amendedStatements.putIfAbsent(dependencyStatement, new ArrayList<>());
 					amendedStatements.get(dependencyStatement).add( newDependency );
-					
-					// below is just for testing, not functional
-					/*
-					for( GroundInterface channel : method.channels() ){
-						if( channel.typeArguments().size() == 1 ){ 		// checks that this channel is not a purely selection chanel (only
-																		// data channels have a type argument)
-							System.out.println( "Potential channel: " + channel );
-							System.out.println( "type argument check: " + channel.typeArguments().get(0).isSubtypeOf_relaxed(dependencyType) ); 
-							// TODO find proper way to check if channel dependencyType is a subtype of channel.typeArguments 
-							
-						}
-						
-					} */
 				}
 			}
 			method.clearDependencies();
@@ -137,6 +124,19 @@ public class BasicInference {
 	 */
 	private static Pair<Pair<String, GroundInterface>, HigherMethod> findComMethod(World recepient, World sender, List<Pair<String, GroundInterface>> channels){
 		for( Pair<String, GroundInterface> channelPair : channels ){
+			
+			/*
+			for( GroundInterface channel : method.channels() ){
+				if( channel.typeArguments().size() == 1 ){ 		// checks that this channel is not a purely selection chanel (only
+																// data channels have a type argument)
+					System.out.println( "Potential channel: " + channel );
+					System.out.println( "type argument check: " + channel.typeArguments().get(0).isSubtypeOf_relaxed(dependencyType) ); 
+					// TODO find proper way to check if channel dependencyType is a subtype of channel.typeArguments 
+					
+				}
+				
+			} */
+			
 			Optional<? extends HigherMethod> comMethodOptional = 
 				channelPair.right().methods()
 					.filter( method ->
@@ -223,10 +223,7 @@ public class BasicInference {
 		
 		/** A map mapping Statements to a list of all dependencies within that Statement 
 		 * <p>
-		 * mapping form a {@code Statement} to a {@code List} of {@code Pair}s of {@code 
-		 * Expression}s. Each {@code Pair} represents a dependency, where {@code Pair.right()} 
-		 * is the {@code comExpression} for this dependency and {@code pair.left()} is the 
-		 * original {@code Expression} of the dependency.
+		 * Mapping form a {@code Statement} to a {@code List} of {@code Dependency}s. Each 
 		 */
 		Map<Statement, List<Dependency>> amendedStatements;
 		
@@ -414,8 +411,9 @@ public class BasicInference {
 	/**
 	 * Amends {@code Expressions}.
 	 * <p>
-	 * Iterates through {@code Expression}s and checks if they are equal to {@code originalExpression}.
-	 * If they are they are replaced with {@code comExpression}.
+	 * Iterates through {@code Expression}s and checks if they are equal to 
+	 * anything inside {@code dependencyList}. If an {@code Expression} is 
+	 * equal to a dependency it is replaced with a communication.
 	 */
 	private static class VisitExpression extends AbstractChoralVisitor< Expression >{
 		/*
@@ -655,6 +653,13 @@ public class BasicInference {
 		}
 	}
 
+	/**
+	 * A class for represent a dependency, consisting of the original dependency expression
+	 * and a communication (both channel and method) for satisfying this dependency.
+	 * <p>
+	 * Has method {@code createComExpression} for creating a communication expression out of
+	 * the stored communication and the provided {@code Expression} argument.
+	 */
 	private static class Dependency {
 		private Expression originalExpression;
 		private HigherMethod comMethod;
@@ -702,30 +707,42 @@ public class BasicInference {
 		 * Creates the {@code Expression} containing the communiction of the dependency.
 		 * This expression needs
 		 * <p>
-		 * 1. a name
-		 * 		- (the name of out communication method (com))
+		 * 1. A name
+		 * 		- The name of out communication method (com)
 		 * <p>
-		 * 2. argumetns 
-		 * 		- (our dependency expression)
+		 * 2. Arguments 
+		 * 		- Our {@code visitedDependency} expression. This is expected to be a 
+		 * 		visited version of {@code originalExpression}. Note that his must be 
+		 * 		visited before calling {@code createComExpression}. This is because 
+		 * 		the visitor uses java's {@code Object.equals()} to check if  an 
+		 * 		expression is a dependency. If {@code createComExpression} is called 
+		 * 		before visiting {@code originalExpression} then dependencies inside
+		 * 		{@code originalExpression} (nested dependencies) will not be caught. 
 		 * <p>
 		 * 3. type argumetns
 		 * 		- com methods always need the type of the data they are communicating. 
-		 * 		this is stored as a type expression. from looking at how choral treats 
-		 * 		com methods in the examples, these type expressions onle have a name (and 
-		 * 		NOTHING else). also this name is only the simple name for the type? e.g. 
-		 * 		not "java.lang.Object", only "Object". so this is the unqualified(?) name 
-		 * 		for the type.
+		 * 		This is stored as a {@code TypeExpression}. These TypeExpressions contain
+		 * 		the unqualified name of the type (e.g. not "java.lang.Object", only 
+		 * 		"Object") and composite types (types containing other types (like 
+		 * 		{@code List})) also have a list of {@code TypeExpression}s representing 
+		 * 		its inner types.
+		 * @param visitedDependency - Must be visited before calling this method, 
+		 * 		otherwise nested dependencies will not be caught.
 		 */
 		public Expression createComExpression( Expression visitedDependency ){
-			GroundClassOrInterface dependencyType = ((GroundClassOrInterface)originalExpression.typeAnnotation().get()); // 99% certain this cannot be void, maybe add an assert?
-			final List<Expression> arguments = List.of(visitedDependency);
+			// this cannot be void, since it would indicate that a role depends on a void, maybe add an assert?
+			GroundClassOrInterface dependencyType = (GroundClassOrInterface)originalExpression.typeAnnotation().get(); 
+			
+			final List<Expression> arguments = List.of( visitedDependency );
 			final Name name = new Name(comMethod.identifier());
-			final List<TypeExpression> typeArguments = 
-				List.of( getTypeExpression(dependencyType) );
+			final List<TypeExpression> typeArguments = List.of( getTypeExpression(dependencyType) );
 			
 			MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments, visitedDependency.position());
+			
+			// The comMethod is a method inside its channel, so we need to make the channel its scope
 			FieldAccessExpression scope = new FieldAccessExpression(new Name(channelIdentifier), visitedDependency.position());
 			
+			// Something like channel.< Type >com( Expression )
 			return new ScopedExpression(scope, scopedExpression);
 		}
 
@@ -737,7 +754,7 @@ public class BasicInference {
 		}
 
 		private TypeExpression getTypeExpression( GroundReferenceType type ){
-			if( type instanceof GroundClass ){
+			if( type instanceof GroundClass ){ // I think this is only not true for primitive types, which cannot be communicated
 				GroundClass typeGC = (GroundClass)type;
 				return new TypeExpression(
 					new Name(typeGC.typeConstructor().identifier()),
@@ -745,7 +762,7 @@ public class BasicInference {
 					typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
 			}
 			
-			System.out.println( "ERROR! Not a GroundClass" );
+			System.out.println( "ERROR! Not a GroundClass" ); 
 			// TODO throw some exception
 			return null;
 		}
