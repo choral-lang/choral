@@ -75,7 +75,17 @@ public class BasicInference {
 					Dependency newDependency = new Dependency(dependencyExpression);
 
 					// Extract senders from dependency (what world(s) needs to send data)
-					List<? extends World> senders = ((GroundDataType)dependencyExpression.typeAnnotation().get()).worldArguments();
+					List<? extends World> senders;
+					if( dependencyExpression instanceof MethodCallExpression ){
+						// MethodCallExpressions dont use typeAnnotation but instead use methodAnnotation
+						GroundDataType methodReturnType = (GroundDataType)((MethodCallExpression)dependencyExpression).methodAnnotation().get().returnType();
+						// Set typeannotation = returntype here for more easy access to an expression's type
+						dependencyExpression.setTypeAnnotation(methodReturnType); 
+						senders = methodReturnType.worldArguments();
+					} else {
+						senders = ((GroundDataType)dependencyExpression.typeAnnotation().get()).worldArguments();
+					}
+					
 					if( senders.size() != 1 ){
 						// We don't accept dependencies with multiple sender worlds
 						System.out.println( "Found Dependency with " + senders.size() + "senders, expected 1" );

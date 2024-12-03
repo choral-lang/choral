@@ -1800,7 +1800,6 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( MethodCallExpression n ) {
-				
 				if( left == null ) { // only happens for simple method calls (local)
 					left = scope.lookupThis();
 					leftStatic = explicitConstructorArg;
@@ -1856,6 +1855,12 @@ public class RelaxedTyper {
 						// location on a given list of worlds instead of using homeworlds
 							inferCommunications(argWorlds, expectedArgWorlds, argument);
 						}
+					}
+
+					// If the selected method doesn't return Void
+					if( !selected.returnType().isVoid() ){
+						// Check if it needs to be communicated
+						inferCommunications(((GroundDataType)selected.returnType()).worldArguments(), n);
 					}
 
 					return selected.returnType();
