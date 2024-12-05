@@ -98,7 +98,13 @@ public class BasicInference {
 					System.out.println( "Role " + receiver + " needs " + dependencyExpression + " from role " + sender );
 					
 					// Find a viable communication method
-					Pair<Pair<String, GroundInterface>, HigherMethod> comPair = findComMethod(receiver, sender, method.channels());
+					System.out.println( "finding commethods for dependency " + dependencyExpression );
+					Pair<Pair<String, GroundInterface>, HigherMethod> comPair = findComMethod(
+						receiver, 
+						sender, 
+						(GroundDataType)dependencyExpression.typeAnnotation().get(), 
+						method.channels());
+
 					if( comPair == null ){
 						// No viable communication method was found.
 						System.out.println( "No viable communication method was found for the dependency " + dependencyExpression );
@@ -133,32 +139,28 @@ public class BasicInference {
 	 * TODO also check that the channel can send the type of the dependency (need to take
 	 * another parameter)
 	 */
-	private static Pair<Pair<String, GroundInterface>, HigherMethod> findComMethod(World recepient, World sender, List<Pair<String, GroundInterface>> channels){
+	private static Pair<Pair<String, GroundInterface>, HigherMethod> findComMethod(World recepient, World sender, GroundDataType dependencyType, List<Pair<String, GroundInterface>> channels){
+		
 		for( Pair<String, GroundInterface> channelPair : channels ){
-			
-			/*
-			for( GroundInterface channel : method.channels() ){
-				if( channel.typeArguments().size() == 1 ){ 		// checks that this channel is not a purely selection chanel (only
-																// data channels have a type argument)
-					System.out.println( "Potential channel: " + channel );
-					System.out.println( "type argument check: " + channel.typeArguments().get(0).isSubtypeOf_relaxed(dependencyType) ); 
-					// TODO find proper way to check if channel dependencyType is a subtype of channel.typeArguments 
-					
-				}
+
+			// Data channels might not return the same datatype at the receiver as 
+			// the datatype from the sender. Since we only store one type for the 
+			// dependency we assume that all types in a channel are the same.
+			GroundInterface channel = channelPair.right();
+			if( channel.typeArguments().stream().anyMatch( typeArg -> dependencyType.typeConstructor().isSubtypeOf( typeArg ) ) ){
 				
-			} */
-			
-			Optional<? extends HigherMethod> comMethodOptional = 
-				channelPair.right().methods()
-					.filter( method ->
-						method.identifier().equals("com") && // it is a com method (only checked through name)
-						method.innerCallable().signature().parameters().get(0).type().worldArguments().equals(List.of(sender)) && // its parameter's worlds are equal to our dependency's world(s)
-						method.innerCallable().returnType() instanceof GroundDataType && // probably redundant check, returntype should not be able to be void
-						((GroundDataType)method.innerCallable().returnType()).worldArguments().get(0).equals(recepient) ) // its returntype's world is equal to our dependency recipient
-					.findAny();
-			
-			if( comMethodOptional.isPresent() ){
-				return new Pair<>( channelPair, comMethodOptional.get());
+				Optional<? extends HigherMethod> comMethodOptional = 
+					channelPair.right().methods()
+						.filter( method ->
+							method.identifier().equals("com") && // it is a com method (only checked through name)
+							method.innerCallable().signature().parameters().get(0).type().worldArguments().equals(List.of(sender)) && // its parameter's worlds are equal to our dependency's world(s)
+							method.innerCallable().returnType() instanceof GroundDataType && // probably redundant check, returntype should not be able to be void
+							((GroundDataType)method.innerCallable().returnType()).worldArguments().get(0).equals(recepient) ) // its returntype's world is equal to our dependency recipient
+						.findAny();
+				
+				if( comMethodOptional.isPresent() ){
+					return new Pair<>( channelPair, comMethodOptional.get());
+				}
 			}
 		}
 		return null;
