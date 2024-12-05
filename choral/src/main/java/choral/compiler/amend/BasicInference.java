@@ -61,10 +61,6 @@ public class BasicInference {
 		Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
 		
 		for( HigherMethod method : getMethods(cu) ){
-			System.out.println( "Channels" );
-			for( Pair<String, GroundInterface> channelPair : method.channels() ){
-				System.out.println( "\t" + channelPair.left() + " - " + channelPair.right() );
-			}
 			for( Entry<World, List<Pair<Expression, Statement>>> entryset : method.worldDependencies().entrySet() ){
 				
 				World receiver = entryset.getKey();
@@ -98,7 +94,6 @@ public class BasicInference {
 					System.out.println( "Role " + receiver + " needs " + dependencyExpression + " from role " + sender );
 					
 					// Find a viable communication method
-					System.out.println( "finding commethods for dependency " + dependencyExpression );
 					Pair<Pair<String, GroundInterface>, HigherMethod> comPair = findComMethod(
 						receiver, 
 						sender, 
@@ -384,14 +379,8 @@ public class BasicInference {
 		 * @param dependencyPairList must not be empty
 		 */
 		private Expression visitExpression( List<Dependency> dependencyList, Expression first ){
-			System.out.println( "For dependencyList: " );
-			for( Dependency dependency : dependencyList ){
-				System.out.println( "\t" + dependency.originalExpression() );
-			}
 			
 			Expression newExpression = new VisitExpression(dependencyList).visit(first);
-			
-			System.out.println( "Returns expression: " + newExpression );
 
 			if( !dependencyList.isEmpty() ){ 
 				System.out.println( "ERROR! Could not resole the following dependencies" );
