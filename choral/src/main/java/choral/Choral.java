@@ -317,7 +317,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				
 				System.out.println( "-=Infering communications=-" );
 				// TODO maybe use an option to choose inference alghorithm
-				List<CompilationUnit> amendedSourceUnits = sourceUnits.stream()
+				List<CompilationUnit> amendedSourceUnits = annotatedUnits.get().stream()
 					.map( BasicInference::inferComms ).toList();
 
 				System.out.println( "-=Typechecking (un-relaxed)=-" );
@@ -325,27 +325,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 							headerUnits) ) );
 				
 				System.out.println( "-=Converting compulationunits to choral=-" );
-
-				String destinationFolder;
-				if( emissionOptions.targetpath().isPresent() )
-					destinationFolder = emissionOptions.targetpath().get().toAbsolutePath().toString();
-				else
-					destinationFolder = System.getProperty( "user.dir" ) + File.separator + "dist";
-				
-				PrettyPrinterVisitor ppv = new PrettyPrinterVisitor();
-				for( CompilationUnit cu : amendedSourceUnits ){
-					String[] path = cu.position().sourceFile().split( "/" );
-					// System.out.println( Paths.get( destinationFolder + "/" + path[path.length -1] ) );
-					// System.out.println( "sorucefile: " + destinationFolder + "/" + path[path.length -1] );
-
-					// TODO create folders when not present
-					// TODO replace "/"
-					// TODO output in distinct folders (currently everything gets put directly into target/amend)
-					Files.write( Paths.get( destinationFolder + "/" + path[path.length -1] ), 
-								 ppv.visit(cu).getBytes(), 
-								 StandardOpenOption.CREATE,
-								 StandardOpenOption.TRUNCATE_EXISTING);
-				}
+				ChoralCompiler.generateChoralFiles( annotatedUnits.get(), headerUnits, emissionOptions.targetpath() );
 						
 			} catch( Exception e ){
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
