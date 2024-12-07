@@ -608,9 +608,18 @@ public class BasicInference {
 				n.position());
 		}
 
-		@Override // not supported
+		@Override
 		public Expression visit( NotExpression n ) {
-			throw new UnsupportedOperationException("NotExpression not supported\n\tExpression at " + n.position().toString());
+			Expression dependencyCheck = checkIfDependency(n);
+			if( dependencyCheck != null ) {
+				return dependencyCheck;
+			}
+
+			Expression newExpression = visit( n.expression() );
+			
+			return new NotExpression(
+				newExpression, 
+				n.position());
 		}
 
 		@Override // not supported
