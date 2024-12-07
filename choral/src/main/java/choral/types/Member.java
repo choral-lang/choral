@@ -450,6 +450,63 @@ public abstract class Member implements HasSource {
 
 		public abstract Definition innerCallable();
 
+		/**
+		 * A map mapping worlds to a list of their dependencies.
+		 * <p>
+		 * For example:
+		 * <pre>
+		 * {@code
+		 * int@A i_A = 0@A;
+		 *int@B i_B = i_A;}
+		 * </pre>
+		 * World {@code B} would depend on {@code i_A}. 
+		 */
+		private Map<World, List<Pair<Expression, Statement>>> worldDependencies =  new HashMap<>();
+		
+		public void addDependency( List<World> worlds, Expression expression, Statement statement ){
+			for( World world : worlds ){
+				addDependency(world, expression, statement);
+			}
+		}
+
+		public void addDependency( World world, Expression expression, Statement statement ){
+			worldDependencies.putIfAbsent(world, new ArrayList<>());
+			worldDependencies.get(world).add(new Pair<>(expression, statement));
+			
+		}
+
+		public Map<World, List<Pair<Expression, Statement>>> worldDependencies(){
+			return worldDependencies;
+		}
+
+		public List<Pair<Expression, Statement>> worldDependencies( World world ){
+			return worldDependencies.get(world);
+		}
+
+		public void clearDependencies(){
+			worldDependencies.clear();
+		}
+
+		/**
+		 * A list of all the channels available to the method from either the 
+		 * enclosing class' fields or the method's arguments.
+		 */
+		private List<Pair<String, GroundInterface>> channels = new ArrayList<>();
+
+		public void addChannel( List<Pair<String, GroundInterface>> channelList ){
+			for( Pair<String, GroundInterface> channelPair : channelList ){
+				addChannel(channelPair);
+			}
+		}
+
+		public void addChannel( Pair<String, GroundInterface> channelPair ){
+			channels.add(channelPair);
+		}
+
+		public List<Pair<String, GroundInterface>> channels(){
+			return channels;
+		}
+
 		public abstract class Definition implements GroundCallable {
 
 			Definition( Signature signature ) {
@@ -683,63 +740,6 @@ public abstract class Member implements HasSource {
 		@Override
 		public Definition innerCallable() {
 			return innerCallable;
-		}
-
-		/**
-		 * A map mapping worlds to a list of their dependencies.
-		 * <p>
-		 * For example:
-		 * <pre>
-		 * {@code
-		 * int@A i_A = 0@A;
-		 *int@B i_B = i_A;}
-		 * </pre>
-		 * World {@code B} would depend on {@code i_A}. 
-		 */
-		private Map<World, List<Pair<Expression, Statement>>> worldDependencies =  new HashMap<>();
-		
-		public void addDependency( List<World> worlds, Expression expression, Statement statement ){
-			for( World world : worlds ){
-				addDependency(world, expression, statement);
-			}
-		}
-
-		public void addDependency( World world, Expression expression, Statement statement ){
-			worldDependencies.putIfAbsent(world, new ArrayList<>());
-			worldDependencies.get(world).add(new Pair<>(expression, statement));
-			
-		}
-
-		public Map<World, List<Pair<Expression, Statement>>> worldDependencies(){
-			return worldDependencies;
-		}
-
-		public List<Pair<Expression, Statement>> worldDependencies( World world ){
-			return worldDependencies.get(world);
-		}
-
-		public void clearDependencies(){
-			worldDependencies.clear();
-		}
-
-		/**
-		 * A list of all the channels available to the method from either the 
-		 * enclosing class' fields or the method's arguments.
-		 */
-		private List<Pair<String, GroundInterface>> channels = new ArrayList<>();
-
-		public void addChannel( List<Pair<String, GroundInterface>> channelList ){
-			for( Pair<String, GroundInterface> channelPair : channelList ){
-				addChannel(channelPair);
-			}
-		}
-
-		public void addChannel( Pair<String, GroundInterface> channelPair ){
-			channels.add(channelPair);
-		}
-
-		public List<Pair<String, GroundInterface>> channels(){
-			return channels;
 		}
 
 		public final class Definition extends HigherCallable.Definition implements GroundMethod {

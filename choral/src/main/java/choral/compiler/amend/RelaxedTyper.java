@@ -33,6 +33,7 @@ import choral.ast.visitors.AbstractChoralVisitor;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.StaticVerificationException;
 import choral.types.*;
+import choral.types.Member.HigherCallable;
 import choral.types.Member.HigherMethod;
 import choral.types.Package; // to avoid ambigous reference to "Package"
 import choral.types.Universe.PrimitiveTypeTag;
@@ -1038,7 +1039,8 @@ public class RelaxedTyper {
 				dependencies.put( callable, selected.higherCallable() );
 				positions.put( callable, n.position() );
 			}
-			new Check( scope, universe().voidType() ).visit( d.blockStatements() );
+			callable.addChannel(scope.getChannels()); // find all available channels
+			new Check( scope, universe().voidType(), callable ).visit( d.blockStatements() );
 		}
 
 		private List< ? extends Member.GroundCallable > findMostSpecificCallable(
@@ -1140,7 +1142,7 @@ public class RelaxedTyper {
 		GroundDataTypeOrVoid synth( 
 			VariableDeclarationScope scope, 
 			Expression n, 
-			HigherMethod method,
+			HigherCallable method,
 			Statement statement
 		) {
 			return new Synth( scope, method, statement ).visit( n );
@@ -1159,7 +1161,7 @@ public class RelaxedTyper {
 				VariableDeclarationScope scope, 
 				Expression n, 
 				boolean explicitConstructorArg, 
-				HigherMethod method,
+				HigherCallable method,
 				Statement statement
 		) {
 			return new Synth( scope, explicitConstructorArg, method, statement ).visit( n );
@@ -1169,7 +1171,7 @@ public class RelaxedTyper {
 			VariableDeclarationScope scope, 
 			Expression n, 
 			List< ? extends World > homeWorlds,
-			HigherMethod method,
+			HigherCallable method,
 			Statement statement
 		) {
 			return new Synth( scope, homeWorlds, method, statement ).visit( n );
@@ -1180,7 +1182,7 @@ public class RelaxedTyper {
 				Expression n, 
 				boolean explicitConstructorArg, 
 				List< ? extends World > homeWorlds,
-				HigherMethod method,
+				HigherCallable method,
 				Statement statement 
 		) {
 			return new Synth( scope, explicitConstructorArg, homeWorlds, method, statement ).visit( n );
@@ -1203,14 +1205,14 @@ public class RelaxedTyper {
 			private VariableDeclarationScope scope;
 			private final GroundDataTypeOrVoid expected;
 			/** The enclosing method. */
-			private HigherMethod enclosingMethod = null;
+			private HigherCallable enclosingMethod = null;
 
 			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected ) {
 				this.scope = scope;
 				this.expected = expected;
 			}
 
-			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected, HigherMethod method ) {
+			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected, HigherCallable method ) {
 				this.scope = scope;
 				this.expected = expected;
 				this.enclosingMethod = method;
@@ -1372,7 +1374,7 @@ public class RelaxedTyper {
 
 			public Synth( 
 				VariableDeclarationScope scope, 
-				HigherMethod method,
+				HigherCallable method,
 				Statement statement 
 			) {
 				this( scope, false, method, statement );
@@ -1381,7 +1383,7 @@ public class RelaxedTyper {
 			public Synth( 
 				VariableDeclarationScope scope, 
 				boolean explicitConstructorArg, 
-				HigherMethod method,
+				HigherCallable method,
 				Statement statement 
 			) {
 				this.scope = scope;
@@ -1393,7 +1395,7 @@ public class RelaxedTyper {
 			public Synth( 
 				VariableDeclarationScope scope, 
 				List< ? extends World > homeWorlds, 
-				HigherMethod method,
+				HigherCallable method,
 				Statement statement   
 			) {
 				this( scope, false, homeWorlds, method, statement );
@@ -1402,7 +1404,7 @@ public class RelaxedTyper {
 			public Synth( 
 				VariableDeclarationScope scope, boolean explicitConstructorArg, 
 				List< ? extends World > homeWorlds,
-				HigherMethod method,
+				HigherCallable method,
 				Statement statement 
 			) {
 				this.scope = scope;
@@ -1419,7 +1421,7 @@ public class RelaxedTyper {
 			/** The worlds at which the expression takes place. */
 			List< ? extends World > homeWorlds = Collections.emptyList();
 			/** A reference to the enclosing method. */
-			HigherMethod enclosingMethod;
+			HigherCallable enclosingMethod;
 			/** A reference to the enclosing statement. */
 			Statement enclosingStatement;
 

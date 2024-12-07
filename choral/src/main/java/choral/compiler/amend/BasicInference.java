@@ -4,6 +4,7 @@ package choral.compiler.amend;
 import choral.ast.CompilationUnit;
 import choral.ast.body.Class;
 import choral.ast.body.ClassMethodDefinition;
+import choral.ast.body.ConstructorDefinition;
 import choral.ast.body.VariableDeclaration;
 import choral.types.GroundClass;
 import choral.types.GroundClassOrInterface;
@@ -12,6 +13,7 @@ import choral.types.GroundInterface;
 import choral.types.GroundReferenceType;
 import choral.types.GroundTypeParameter;
 import choral.types.World;
+import choral.types.Member.HigherCallable;
 import choral.types.Member.HigherMethod;
 import choral.utils.Pair;
 import choral.ast.Name;
@@ -22,6 +24,7 @@ import choral.ast.expression.*;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Stream;
 
 /**
  * A basic communication inference. Replace a dependency with a communication of that dependency.
@@ -60,7 +63,7 @@ public class BasicInference {
 		// a map mapping from a statement to a list of all dependency expressions within that statement
 		Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
 		
-		for( HigherMethod method : getMethods(cu) ){
+		for( HigherCallable method : getMethods(cu) ){
 			for( Entry<World, List<Pair<Expression, Statement>>> entryset : method.worldDependencies().entrySet() ){
 				
 				World receiver = entryset.getKey();
@@ -164,11 +167,15 @@ public class BasicInference {
 	/**
 	 * Retreives all methods from the {@code CompilationUnit}
 	 */
-	private static List<HigherMethod> getMethods( CompilationUnit cu ){
-		return cu.classes().stream()
-			.flatMap( cls -> cls.methods().stream() )
-			.map( method -> method.signature().typeAnnotation().get() ) // we assume that methods are type-annotated
-			.toList();
+	private static List<HigherCallable> getMethods( CompilationUnit cu ){
+		return Stream.concat( 
+			cu.classes().stream()
+				.flatMap( cls -> cls.methods().stream() )
+				.map( method -> method.signature().typeAnnotation().get() ), // we assume that methods are type-annotated
+			cu.classes().stream()
+				.flatMap(cls -> cls.constructors().stream()
+				.map( method -> method.signature().typeAnnotation().get() )
+				)).toList();
 	}
 
 	/**
@@ -181,6 +188,19 @@ public class BasicInference {
 	private static CompilationUnit createNewCompilationUnit( CompilationUnit old, Map<Statement, List<Dependency>> amendedStatements ){
 		List<Class> newClasses = new ArrayList<>();
 		for( Class cls : old.classes() ){
+			List<ConstructorDefinition> newConstructors = new ArrayList<>();
+			for( ConstructorDefinition constructor : cls.constructors() ){
+				Statement newBody = new VisitStatement(amendedStatements).visit(constructor.body());
+
+				newConstructors.add(new ConstructorDefinition(
+					constructor.signature(), 
+					constructor.explicitConstructorInvocation().orElse( null ),
+					newBody, 
+					constructor.annotations(), 
+					constructor.modifiers(), 
+					constructor.position()));
+			}
+			
 			List<ClassMethodDefinition> newMethods = new ArrayList<>();
 			for( ClassMethodDefinition method : cls.methods() ){
 				Statement newBody = null;
@@ -205,7 +225,7 @@ public class BasicInference {
 				cls.implementsInterfaces(), 
 				cls.fields(), 
 				newMethods, 
-				cls.constructors(), 
+				newConstructors, 
 				cls.annotations(), 
 				cls.modifiers(), 
 				cls.position()));
