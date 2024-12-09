@@ -33,6 +33,7 @@ import choral.ast.visitors.AbstractChoralVisitor;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.StaticVerificationException;
 import choral.types.*;
+import choral.types.Member.HigherCallable;
 import choral.types.Member.HigherMethod;
 import choral.types.Package; // to avoid ambigous reference to "Package"
 import choral.types.Universe.PrimitiveTypeTag;
@@ -1038,7 +1039,8 @@ public class RelaxedTyper {
 				dependencies.put( callable, selected.higherCallable() );
 				positions.put( callable, n.position() );
 			}
-			new Check( scope, universe().voidType() ).visit( d.blockStatements() );
+			callable.addChannel(scope.getChannels()); // find all available channels
+			new Check( scope, universe().voidType(), callable ).visit( d.blockStatements() );
 		}
 
 		private List< ? extends Member.GroundCallable > findMostSpecificCallable(
@@ -1140,7 +1142,7 @@ public class RelaxedTyper {
 		GroundDataTypeOrVoid synth( 
 			VariableDeclarationScope scope, 
 			Expression n, 
-			HigherMethod method,
+			HigherCallable method,
 			Statement statement
 		) {
 			return new Synth( scope, method, statement ).visit( n );
@@ -1159,7 +1161,7 @@ public class RelaxedTyper {
 				VariableDeclarationScope scope, 
 				Expression n, 
 				boolean explicitConstructorArg, 
-				HigherMethod method,
+				HigherCallable method,
 				Statement statement
 		) {
 			return new Synth( scope, explicitConstructorArg, method, statement ).visit( n );
@@ -1169,7 +1171,7 @@ public class RelaxedTyper {
 			VariableDeclarationScope scope, 
 			Expression n, 
 			List< ? extends World > homeWorlds,
-			HigherMethod method,
+			HigherCallable method,
 			Statement statement
 		) {
 			return new Synth( scope, homeWorlds, method, statement ).visit( n );
@@ -1180,7 +1182,7 @@ public class RelaxedTyper {
 				Expression n, 
 				boolean explicitConstructorArg, 
 				List< ? extends World > homeWorlds,
-				HigherMethod method,
+				HigherCallable method,
 				Statement statement 
 		) {
 			return new Synth( scope, explicitConstructorArg, homeWorlds, method, statement ).visit( n );
@@ -1203,14 +1205,14 @@ public class RelaxedTyper {
 			private VariableDeclarationScope scope;
 			private final GroundDataTypeOrVoid expected;
 			/** The enclosing method. */
-			private HigherMethod enclosingMethod = null;
+			private HigherCallable enclosingMethod = null;
 
 			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected ) {
 				this.scope = scope;
 				this.expected = expected;
 			}
 
-			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected, HigherMethod method ) {
+			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected, HigherCallable method ) {
 				this.scope = scope;
 				this.expected = expected;
 				this.enclosingMethod = method;
@@ -1372,7 +1374,7 @@ public class RelaxedTyper {
 
 			public Synth( 
 				VariableDeclarationScope scope, 
-				HigherMethod method,
+				HigherCallable method,
 				Statement statement 
 			) {
 				this( scope, false, method, statement );
@@ -1381,7 +1383,7 @@ public class RelaxedTyper {
 			public Synth( 
 				VariableDeclarationScope scope, 
 				boolean explicitConstructorArg, 
-				HigherMethod method,
+				HigherCallable method,
 				Statement statement 
 			) {
 				this.scope = scope;
@@ -1393,7 +1395,7 @@ public class RelaxedTyper {
 			public Synth( 
 				VariableDeclarationScope scope, 
 				List< ? extends World > homeWorlds, 
-				HigherMethod method,
+				HigherCallable method,
 				Statement statement   
 			) {
 				this( scope, false, homeWorlds, method, statement );
@@ -1402,7 +1404,7 @@ public class RelaxedTyper {
 			public Synth( 
 				VariableDeclarationScope scope, boolean explicitConstructorArg, 
 				List< ? extends World > homeWorlds,
-				HigherMethod method,
+				HigherCallable method,
 				Statement statement 
 			) {
 				this.scope = scope;
@@ -1418,18 +1420,8 @@ public class RelaxedTyper {
 			private final boolean explicitConstructorArg;
 			/** The worlds at which the expression takes place. */
 			List< ? extends World > homeWorlds = Collections.emptyList();
-			/** Whether we need to check the location of the expression.
-			 * <p>
-			 * For scopedexpressions like "this.obj.val" we only want to check location once for
-			 * the whole expression, not once for every sub-expression.
-			 */
-			boolean checkLocation = true;
-			/** If we are visiting a {@link ScopedExpression}, this will be the full name of the
-			 * expression.
-			 */
-			String fullName;
 			/** A reference to the enclosing method. */
-			HigherMethod enclosingMethod;
+			HigherCallable enclosingMethod;
 			/** A reference to the enclosing statement. */
 			Statement enclosingStatement;
 
@@ -1455,10 +1447,6 @@ public class RelaxedTyper {
 				// `first.second` is then a `ScopedExpression` with `scope=first` and 
 				// `scopedExpression=second`. `second` would then be a `FieldAccessExpression`.
 
-				if(checkLocation){
-					fullName = n.toString();
-					checkLocation = false;
-				}
 
 				/* In a ScopedExpression like a.b.c the second layer would have `scope=a.b` and 
 				 * `scopedExpression=c`. we would detect that this is the end of our ScopedExpression.
@@ -1469,14 +1457,12 @@ public class RelaxedTyper {
 				 * 
 				 * TODO
 				 * 		The explanation above is not fully correct
-				 * 		Maybe extending this "turn off" of homeWorlds to also cover the visit of 
-				 * 		scopedExpression would make checkLocation unnecessary 
 				 */
 				List< ? extends World > savedHomeWorlds = homeWorlds;
 				homeWorlds = Collections.emptyList();
 				left = visit( n.scope() );
-				homeWorlds = savedHomeWorlds;
 				GroundDataTypeOrVoid right = visit( n.scopedExpression() );
+				homeWorlds = savedHomeWorlds;
 
 				// if n.scopedExpression() is not a ScopedExpression then n.scopedExpression() is the 
 				// innermost expression (usually a FieldAccessExpression or a MethodCallExpression)
@@ -1707,12 +1693,9 @@ public class RelaxedTyper {
 					throw new AstPositionedException( n.position(),
 							new UnresolvedSymbolException( identifier ) );
 				} else {
-					if ( checkLocation ){ // If not part of a scopedexpression
-						List< ? extends World > rightWorlds = result.get().worldArguments();
-						
-						// We should check world correspondence 
-						inferCommunications(rightWorlds, n);
-					}
+					List< ? extends World > rightWorlds = result.get().worldArguments();
+					// We should check world correspondence 
+					inferCommunications(rightWorlds, n);
 
 					return annotate( n, result.get() );
 				}
@@ -1786,10 +1769,10 @@ public class RelaxedTyper {
 				for( int i = 0; i < args.size(); i++ ){
 					Expression argument = n.arguments().get(i);
 					if( argument.typeAnnotation().isPresent() ){ // Some arguments might not have a type annotation
-					List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
+						List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
 						List<? extends World> argWorlds = ((GroundDataType)argument.typeAnnotation().get()).worldArguments();
-					// We call a variation of the inferCommunications, that checks 
-					// location on a given list of worlds instead of using homeworlds
+						// We call a variation of the inferCommunications, that checks 
+						// location on a given list of worlds instead of using homeworlds
 						inferCommunications(argWorlds, expectedArgWorlds, argument);
 					} 
 				}
@@ -1800,7 +1783,6 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( MethodCallExpression n ) {
-				
 				if( left == null ) { // only happens for simple method calls (local)
 					left = scope.lookupThis();
 					leftStatic = explicitConstructorArg;
@@ -1850,12 +1832,18 @@ public class RelaxedTyper {
 					for( int i = 0; i < args.size(); i++ ){
 						Expression argument = n.arguments().get(i);
 						if( argument.typeAnnotation().isPresent() ){ // Some arguments might not have a type annotation
-						List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
+							List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
 							List<? extends World> argWorlds = ((GroundDataType)argument.typeAnnotation().get()).worldArguments();
-						// We call a variation of the inferCommunications, that checks 
-						// location on a given list of worlds instead of using homeworlds
+							// We call a variation of the inferCommunications, that checks 
+							// location on a given list of worlds instead of using homeworlds
 							inferCommunications(argWorlds, expectedArgWorlds, argument);
 						}
+					}
+
+					// If the selected method doesn't return Void
+					if( !selected.returnType().isVoid() ){
+						// Check if it needs to be communicated
+						inferCommunications(((GroundDataType)selected.returnType()).worldArguments(), n);
 					}
 
 					return selected.returnType();
@@ -1960,7 +1948,6 @@ public class RelaxedTyper {
 				Expression expression 
 				){
 				if( !toWorlds.isEmpty() && !atHome(toWorlds, fromWorlds) ){
-					System.out.println( "Found dependency: role " + toWorlds.get(0) + " needs " + expression );
 					enclosingMethod.addDependency(toWorlds.stream().map( world -> (World)world ).toList(), expression, enclosingStatement);
 				}
 					
@@ -2596,29 +2583,49 @@ public class RelaxedTyper {
 		@Override
 		public List<Pair<String, GroundInterface>> getChannels(){
 			List<Pair<String, GroundInterface>> channels = new ArrayList<>();
-			HigherDataType diDataChannel = assertLookupDataType("choral.channels.DiDataChannel");
-			HigherDataType diSelectChannel = assertLookupDataType("choral.channels.DiSelectChannel");
+			HigherClassOrInterface diDataChannel = assertLookupClassOrInterface("choral.channels.DiDataChannel");
+			HigherClassOrInterface diSelectChannel = assertLookupClassOrInterface("choral.channels.DiSelectChannel");
 			
 
 			// Look for channels in `this`
 			lookupThis().fields().forEach( field -> {
-				
-				if( field.type().typeConstructor() instanceof HigherInterface ){
-					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
-					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
-						channels.add(new Pair<>(field.identifier(), (GroundInterface)field.type()));
+				if( field.type() instanceof GroundInterface ){
+					GroundInterface type = (GroundInterface)field.type();
+					
+					boolean isChannel = 
+						type.typeConstructor().innerType().isSubtypeOf(diDataChannel.innerType()) || // check if subtype of DiDataChannel
+						type.typeConstructor().innerType().isSubtypeOf(diSelectChannel.innerType()) || // check if subtype of DiSelectChannel
+						type.allExtendedInterfaces() // iterate through all extended interfaces
+							.filter( extendedInterface -> 
+								diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) || // check if the extended interface is a subtype of DiDataChannel
+								diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ) // or a subtype of DiSelectChannel
+							.findAny() // we only need one
+							.isPresent(); // check if any was found
+					
+					if( isChannel ){
+						channels.add(new Pair<>(field.identifier(), type));
 					}
 				}
 			} );
 			
 			// Look for channels in this method's list of parameters
 			variables.forEach( (key, val) -> {
-				
-				if( val.typeConstructor() instanceof HigherInterface ){
-					HigherInterface typec = (HigherInterface)val.typeConstructor();
-					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
-						channels.add(new Pair<>(key, (GroundInterface)val));
-					}					
+				if( val instanceof GroundInterface ){
+					GroundInterface type = (GroundInterface)val;
+					
+					boolean isChannel = 
+						type.typeConstructor().innerType().isSubtypeOf(diDataChannel.innerType()) || // check if subtype of DiDataChannel
+						type.typeConstructor().innerType().isSubtypeOf(diSelectChannel.innerType()) || // check if subtype of DiSelectChannel
+						type.allExtendedInterfaces() // iterate through all extended interfaces
+							.filter( extendedInterface -> 
+								diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) || // check if the extended interface is a subtype of DiDataChannel
+								diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ) // or a subtype of DiSelectChannel
+							.findAny() // we only need one
+							.isPresent(); // check if any was found
+
+					if( isChannel ){
+						channels.add(new Pair<>(key, type));
+					}
 				}
 			} );
 			return channels;
@@ -2686,28 +2693,48 @@ public class RelaxedTyper {
 		@Override
 		public List<Pair<String, GroundInterface>> getChannels(){
 			List<Pair<String, GroundInterface>> channels = new ArrayList<>();
-			HigherDataType diDataChannel = assertLookupDataType("choral.channels.DiDataChannel");
-			HigherDataType diSelectChannel = assertLookupDataType("choral.channels.DiSelectChannel");
+			HigherClassOrInterface diDataChannel = assertLookupClassOrInterface("choral.channels.DiDataChannel");
+			HigherClassOrInterface diSelectChannel = assertLookupClassOrInterface("choral.channels.DiSelectChannel");
 
-			// this fields
+			// Look for channels in `this`
 			lookupThis().fields().forEach( field -> {
-				
-				if( field.type().typeConstructor() instanceof HigherInterface ){
-					HigherInterface typec = (HigherInterface)field.type().typeConstructor();
-					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
-						channels.add(new Pair<>(field.identifier(), (GroundInterface)field.type()));
+				if( field.type() instanceof GroundInterface ){
+					GroundInterface type = (GroundInterface)field.type();
+					
+					boolean isChannel = 
+						type.typeConstructor().innerType().isSubtypeOf(diDataChannel.innerType()) || // check if subtype of DiDataChannel
+						type.typeConstructor().innerType().isSubtypeOf(diSelectChannel.innerType()) || // check if subtype of DiSelectChannel
+						type.allExtendedInterfaces() // iterate through all extended interfaces
+							.filter( extendedInterface -> 
+								diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) || // check if the extended interface is a subtype of DiDataChannel
+								diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ) // or a subtype of DiSelectChannel
+							.findAny() // we only need one
+							.isPresent(); // check if any was found
+					
+					if( isChannel ){
+						channels.add(new Pair<>(field.identifier(), type));
 					}
 				}
 			} );
 			
-			// method arguments
+			// Look for channels in this method's list of parameters
 			variables.forEach( (key, val) -> {
-				
-				if( val.typeConstructor() instanceof HigherInterface ){
-					HigherInterface typec = (HigherInterface)val.typeConstructor();
-					if( typec.isSubtypeOf_relaxed( diDataChannel ) || typec.isSubtypeOf( diSelectChannel ) ){
-						channels.add(new Pair<>(key, (GroundInterface)val));
-					}					
+				if( val instanceof GroundInterface ){
+					GroundInterface type = (GroundInterface)val;
+					
+					boolean isChannel = 
+						type.typeConstructor().innerType().isSubtypeOf(diDataChannel.innerType()) || // check if subtype of DiDataChannel
+						type.typeConstructor().innerType().isSubtypeOf(diSelectChannel.innerType()) || // check if subtype of DiSelectChannel
+						type.allExtendedInterfaces() // iterate through all extended interfaces
+							.filter( extendedInterface -> 
+								diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) || // check if the extended interface is a subtype of DiDataChannel
+								diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ) // or a subtype of DiSelectChannel
+							.findAny() // we only need one
+							.isPresent(); // check if any was found
+					
+					if( isChannel ){
+						channels.add(new Pair<>(key, type));
+					}
 				}
 			} );
 			if( parent() instanceof VariableDeclarationScope ){

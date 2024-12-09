@@ -23,7 +23,6 @@ package choral;
 
 import choral.ast.CompilationUnit;
 import choral.ast.Position;
-import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.Compiler;
 import choral.compiler.*;
 import choral.compiler.amend.RelaxedTyper;
@@ -270,11 +269,11 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		@Mixin
 		PathOption.SourcePathOption sourcesPathOption;
 
+		@Mixin
+		AmendOptions amendOptions;
+
 		@Parameters( index = "0", arity = "1" )
 		String symbol;
-
-		@Parameters( index = "1..*", arity = "0..*" )
-		List< String > worlds;
 
 		public Integer call(){
 			System.out.println( "amend called" );
@@ -317,37 +316,43 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				
 				System.out.println( "-=Infering communications=-" );
 				// TODO maybe use an option to choose inference alghorithm
-				List<CompilationUnit> amendedSourceUnits = sourceUnits.stream()
+				List<CompilationUnit> amendedSourceUnits = annotatedUnits.get().stream()
 					.map( BasicInference::inferComms ).toList();
-				for( CompilationUnit cu : amendedSourceUnits )
-					System.out.println( cu );
-
+				
 				System.out.println( "-=Typechecking (un-relaxed)=-" );
-				profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( amendedSourceUnits,
-							headerUnits) ) );
+					profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( amendedSourceUnits,
+								headerUnits) ) );
 				
-				System.out.println( "-=Converting compulationunits to choral=-" );
-
-				String destinationFolder;
-				if( emissionOptions.targetpath().isPresent() )
-					destinationFolder = emissionOptions.targetpath().get().toAbsolutePath().toString();
-				else
-					destinationFolder = System.getProperty( "user.dir" ) + File.separator + "dist";
 				
-				PrettyPrinterVisitor ppv = new PrettyPrinterVisitor();
-				for( CompilationUnit cu : amendedSourceUnits ){
-					String[] path = cu.position().sourceFile().split( "/" );
-					// System.out.println( Paths.get( destinationFolder + "/" + path[path.length -1] ) );
-					// System.out.println( "sorucefile: " + destinationFolder + "/" + path[path.length -1] );
 
-					// TODO create folders when not present
-					// TODO replace "/"
-					// TODO output in distinct folders (currently everything gets put directly into target/amend)
-					Files.write( Paths.get( destinationFolder + "/" + path[path.length -1] ), 
-								 ppv.visit(cu).getBytes(), 
-								 StandardOpenOption.CREATE,
-								 StandardOpenOption.TRUNCATE_EXISTING);
+				if( amendOptions.project() ){
+					
+					System.out.println( "-=Checks projectability=-" );
+					Compiler.checkProjectiability( annotatedUnits.get() );
+					
+					System.out.println( "-=Projecting amended compilationunits=-" );
+					try {
+						Compiler.project(
+								emissionOptions.isDryRun(),
+								emissionOptions.isAnnotated(),
+								//						emissionOptions.useCanonicalPaths() TODO: implement this
+								//						emissionOptions.isOverwritingAllowed() TODO: implement this
+								annotatedUnits.get(),
+								symbol,
+								Collections.emptyList(),
+								emissionOptions.targetpath()
+						);
+					} catch( IOException e ) {
+						throw new RuntimeException( e );
+					}
+					
+				} else{
+					
+					System.out.println( "-=Converting compulationunits to choral=-" );
+					ChoralCompiler.generateChoralFiles( annotatedUnits.get(), headerUnits, emissionOptions.targetpath() );
 				}
+
+				
 						
 			} catch( Exception e ){
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
@@ -654,6 +659,18 @@ class EmissionOptions {
 
 	public Optional< Path > targetpath() {
 		return Optional.ofNullable( targetpath );
+	}
+}
+
+@Command()
+class AmendOptions{
+
+	@Option( names = { "--epp" },
+			description = "Do end point projection on the amended file." )
+	private boolean epp = false;
+
+	public boolean project(){
+		return epp;
 	}
 }
 

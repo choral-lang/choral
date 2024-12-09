@@ -4,10 +4,16 @@ package choral.compiler.amend;
 import choral.ast.CompilationUnit;
 import choral.ast.body.Class;
 import choral.ast.body.ClassMethodDefinition;
+import choral.ast.body.ConstructorDefinition;
 import choral.ast.body.VariableDeclaration;
+import choral.types.GroundClass;
+import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
 import choral.types.GroundInterface;
+import choral.types.GroundReferenceType;
+import choral.types.GroundTypeParameter;
 import choral.types.World;
+import choral.types.Member.HigherCallable;
 import choral.types.Member.HigherMethod;
 import choral.utils.Pair;
 import choral.ast.Name;
@@ -18,6 +24,7 @@ import choral.ast.expression.*;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Stream;
 
 /**
  * A basic communication inference. Replace a dependency with a communication of that dependency.
@@ -56,11 +63,7 @@ public class BasicInference {
 		// a map mapping from a statement to a list of all dependency expressions within that statement
 		Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
 		
-		for( HigherMethod method : getMethods(cu) ){
-			System.out.println( "Channels" );
-			for( Pair<String, GroundInterface> channelPair : method.channels() ){
-				System.out.println( "\t" + channelPair.left() + " - " + channelPair.right() );
-			}
+		for( HigherCallable method : getMethods(cu) ){
 			for( Entry<World, List<Pair<Expression, Statement>>> entryset : method.worldDependencies().entrySet() ){
 				
 				World receiver = entryset.getKey();
@@ -72,7 +75,17 @@ public class BasicInference {
 					Dependency newDependency = new Dependency(dependencyExpression);
 
 					// Extract senders from dependency (what world(s) needs to send data)
-					List<? extends World> senders = ((GroundDataType)dependencyExpression.typeAnnotation().get()).worldArguments();
+					List<? extends World> senders;
+					if( dependencyExpression instanceof MethodCallExpression ){
+						// MethodCallExpressions dont use typeAnnotation but instead use methodAnnotation
+						GroundDataType methodReturnType = (GroundDataType)((MethodCallExpression)dependencyExpression).methodAnnotation().get().returnType();
+						// Set typeannotation = returntype here for more easy access to an expression's type
+						dependencyExpression.setTypeAnnotation(methodReturnType); 
+						senders = methodReturnType.worldArguments();
+					} else {
+						senders = ((GroundDataType)dependencyExpression.typeAnnotation().get()).worldArguments();
+					}
+					
 					if( senders.size() != 1 ){
 						// We don't accept dependencies with multiple sender worlds
 						System.out.println( "Found Dependency with " + senders.size() + "senders, expected 1" );
@@ -84,7 +97,12 @@ public class BasicInference {
 					System.out.println( "Role " + receiver + " needs " + dependencyExpression + " from role " + sender );
 					
 					// Find a viable communication method
-					Pair<Pair<String, GroundInterface>, HigherMethod> comPair = findComMethod(receiver, sender, method.channels());
+					Pair<Pair<String, GroundInterface>, HigherMethod> comPair = findComMethod(
+						receiver, 
+						sender, 
+						(GroundDataType)dependencyExpression.typeAnnotation().get(), 
+						method.channels());
+
 					if( comPair == null ){
 						// No viable communication method was found.
 						System.out.println( "No viable communication method was found for the dependency " + dependencyExpression );
@@ -101,19 +119,6 @@ public class BasicInference {
 					// Put the dependency in a list to be accessible later
 					amendedStatements.putIfAbsent(dependencyStatement, new ArrayList<>());
 					amendedStatements.get(dependencyStatement).add( newDependency );
-					
-					// below is just for testing, not functional
-					/*
-					for( GroundInterface channel : method.channels() ){
-						if( channel.typeArguments().size() == 1 ){ 		// checks that this channel is not a purely selection chanel (only
-																		// data channels have a type argument)
-							System.out.println( "Potential channel: " + channel );
-							System.out.println( "type argument check: " + channel.typeArguments().get(0).isSubtypeOf_relaxed(dependencyType) ); 
-							// TODO find proper way to check if channel dependencyType is a subtype of channel.typeArguments 
-							
-						}
-						
-					} */
 				}
 			}
 			method.clearDependencies();
@@ -132,19 +137,28 @@ public class BasicInference {
 	 * TODO also check that the channel can send the type of the dependency (need to take
 	 * another parameter)
 	 */
-	private static Pair<Pair<String, GroundInterface>, HigherMethod> findComMethod(World recepient, World sender, List<Pair<String, GroundInterface>> channels){
+	private static Pair<Pair<String, GroundInterface>, HigherMethod> findComMethod(World recepient, World sender, GroundDataType dependencyType, List<Pair<String, GroundInterface>> channels){
+		
 		for( Pair<String, GroundInterface> channelPair : channels ){
-			Optional<? extends HigherMethod> comMethodOptional = 
-				channelPair.right().methods()
-					.filter( method ->
-						method.identifier().equals("com") && // it is a com method (only checked through name)
-						method.innerCallable().signature().parameters().get(0).type().worldArguments().equals(List.of(sender)) && // its parameter's worlds are equal to our dependency's world(s)
-						method.innerCallable().returnType() instanceof GroundDataType && // probably redundant check, returntype should not be able to be void
-						((GroundDataType)method.innerCallable().returnType()).worldArguments().get(0).equals(recepient) ) // its returntype's world is equal to our dependency recipient
-					.findAny();
-			
-			if( comMethodOptional.isPresent() ){
-				return new Pair<>( channelPair, comMethodOptional.get());
+
+			// Data channels might not return the same datatype at the receiver as 
+			// the datatype from the sender. Since we only store one type for the 
+			// dependency we assume that all types in a channel are the same.
+			GroundInterface channel = channelPair.right();
+			if( channel.typeArguments().stream().anyMatch( typeArg -> dependencyType.typeConstructor().isSubtypeOf( typeArg ) ) ){
+				
+				Optional<? extends HigherMethod> comMethodOptional = 
+					channelPair.right().methods()
+						.filter( method ->
+							method.identifier().equals("com") && // it is a com method (only checked through name)
+							method.innerCallable().signature().parameters().get(0).type().worldArguments().equals(List.of(sender)) && // its parameter's worlds are equal to our dependency's world(s)
+							method.innerCallable().returnType() instanceof GroundDataType && // probably redundant check, returntype should not be able to be void
+							((GroundDataType)method.innerCallable().returnType()).worldArguments().get(0).equals(recepient) ) // its returntype's world is equal to our dependency recipient
+						.findAny();
+				
+				if( comMethodOptional.isPresent() ){
+					return new Pair<>( channelPair, comMethodOptional.get());
+				}
 			}
 		}
 		return null;
@@ -153,11 +167,15 @@ public class BasicInference {
 	/**
 	 * Retreives all methods from the {@code CompilationUnit}
 	 */
-	private static List<HigherMethod> getMethods( CompilationUnit cu ){
-		return cu.classes().stream()
-			.flatMap( cls -> cls.methods().stream() )
-			.map( method -> method.signature().typeAnnotation().get() ) // we assume that methods are type-annotated
-			.toList();
+	private static List<HigherCallable> getMethods( CompilationUnit cu ){
+		return Stream.concat( 
+			cu.classes().stream()
+				.flatMap( cls -> cls.methods().stream() )
+				.map( method -> method.signature().typeAnnotation().get() ), // we assume that methods are type-annotated
+			cu.classes().stream()
+				.flatMap(cls -> cls.constructors().stream()
+				.map( method -> method.signature().typeAnnotation().get() )
+				)).toList();
 	}
 
 	/**
@@ -170,6 +188,19 @@ public class BasicInference {
 	private static CompilationUnit createNewCompilationUnit( CompilationUnit old, Map<Statement, List<Dependency>> amendedStatements ){
 		List<Class> newClasses = new ArrayList<>();
 		for( Class cls : old.classes() ){
+			List<ConstructorDefinition> newConstructors = new ArrayList<>();
+			for( ConstructorDefinition constructor : cls.constructors() ){
+				Statement newBody = new VisitStatement(amendedStatements).visit(constructor.body());
+
+				newConstructors.add(new ConstructorDefinition(
+					constructor.signature(), 
+					constructor.explicitConstructorInvocation().orElse( null ),
+					newBody, 
+					constructor.annotations(), 
+					constructor.modifiers(), 
+					constructor.position()));
+			}
+			
 			List<ClassMethodDefinition> newMethods = new ArrayList<>();
 			for( ClassMethodDefinition method : cls.methods() ){
 				Statement newBody = null;
@@ -194,7 +225,7 @@ public class BasicInference {
 				cls.implementsInterfaces(), 
 				cls.fields(), 
 				newMethods, 
-				cls.constructors(), 
+				newConstructors, 
 				cls.annotations(), 
 				cls.modifiers(), 
 				cls.position()));
@@ -220,10 +251,7 @@ public class BasicInference {
 		
 		/** A map mapping Statements to a list of all dependencies within that Statement 
 		 * <p>
-		 * mapping form a {@code Statement} to a {@code List} of {@code Pair}s of {@code 
-		 * Expression}s. Each {@code Pair} represents a dependency, where {@code Pair.right()} 
-		 * is the {@code comExpression} for this dependency and {@code pair.left()} is the 
-		 * original {@code Expression} of the dependency.
+		 * Mapping form a {@code Statement} to a {@code List} of {@code Dependency}s. Each 
 		 */
 		Map<Statement, List<Dependency>> amendedStatements;
 		
@@ -371,14 +399,8 @@ public class BasicInference {
 		 * @param dependencyPairList must not be empty
 		 */
 		private Expression visitExpression( List<Dependency> dependencyList, Expression first ){
-			System.out.println( "For dependencyList: " );
-			for( Dependency dependency : dependencyList ){
-				System.out.println( "\t" + dependency.originalExpression() );
-			}
 			
 			Expression newExpression = new VisitExpression(dependencyList).visit(first);
-			
-			System.out.println( "Returns expression: " + newExpression );
 
 			if( !dependencyList.isEmpty() ){ 
 				System.out.println( "ERROR! Could not resole the following dependencies" );
@@ -411,8 +433,9 @@ public class BasicInference {
 	/**
 	 * Amends {@code Expressions}.
 	 * <p>
-	 * Iterates through {@code Expression}s and checks if they are equal to {@code originalExpression}.
-	 * If they are they are replaced with {@code comExpression}.
+	 * Iterates through {@code Expression}s and checks if they are equal to 
+	 * anything inside {@code dependencyList}. If an {@code Expression} is 
+	 * equal to a dependency it is replaced with a communication.
 	 */
 	private static class VisitExpression extends AbstractChoralVisitor< Expression >{
 		/*
@@ -585,9 +608,18 @@ public class BasicInference {
 				n.position());
 		}
 
-		@Override // not supported
+		@Override
 		public Expression visit( NotExpression n ) {
-			throw new UnsupportedOperationException("NotExpression not supported\n\tExpression at " + n.position().toString());
+			Expression dependencyCheck = checkIfDependency(n);
+			if( dependencyCheck != null ) {
+				return dependencyCheck;
+			}
+
+			Expression newExpression = visit( n.expression() );
+			
+			return new NotExpression(
+				newExpression, 
+				n.position());
 		}
 
 		@Override // not supported
@@ -652,6 +684,13 @@ public class BasicInference {
 		}
 	}
 
+	/**
+	 * A class for represent a dependency, consisting of the original dependency expression
+	 * and a communication (both channel and method) for satisfying this dependency.
+	 * <p>
+	 * Has method {@code createComExpression} for creating a communication expression out of
+	 * the stored communication and the provided {@code Expression} argument.
+	 */
 	private static class Dependency {
 		private Expression originalExpression;
 		private HigherMethod comMethod;
@@ -702,35 +741,76 @@ public class BasicInference {
 		 * <p>
 		 * This expression needs
 		 * <p>
-		 * 1. a name
-		 * 		- (the name of our communication method (com))
+		 * 1. A name
+		 * 		- The name of out communication method (com)
 		 * <p>
-		 * 2. argumetns 
-		 * 		- (our dependency expression)
+		 * 2. Arguments 
+		 * 		- Our {@code visitedDependency} expression. This is expected to be a 
+		 * 		visited version of {@code originalExpression}. Note that his must be 
+		 * 		visited before calling {@code createComExpression}. This is because 
+		 * 		the visitor uses java's {@code Object.equals()} to check if  an 
+		 * 		expression is a dependency. If {@code createComExpression} is called 
+		 * 		before visiting {@code originalExpression} then dependencies inside
+		 * 		{@code originalExpression} (nested dependencies) will not be caught. 
 		 * <p>
 		 * 3. type argumetns
 		 * 		- com methods always need the type of the data they are communicating. 
-		 * 		this is stored as a type expression. from looking at how choral treats 
-		 * 		com methods in the examples, these type expressions onle have a name (and 
-		 * 		NOTHING else). also this name is only the simple name for the type? e.g. 
-		 * 		not "java.lang.Object", only "Object". so this is the unqualified(?) name 
-		 * 		for the type.
+		 * 		This is stored as a {@code TypeExpression}. These TypeExpressions contain
+		 * 		the unqualified name of the type (e.g. not "java.lang.Object", only 
+		 * 		"Object") and composite types (types containing other types (like 
+		 * 		{@code List})) also have a list of {@code TypeExpression}s representing 
+		 * 		its inner types.
+		 * @param visitedDependency - Must be visited before calling this method, 
+		 * 		otherwise nested dependencies will not be caught.
 		 */
 		public Expression createComExpression( Expression visitedDependency ){
-			GroundDataType dependencyType = ((GroundDataType)originalExpression.typeAnnotation().get()); // 99% certain this cannot be void, maybe add an assert?
-			final List<Expression> arguments = List.of(visitedDependency);
+			// This cannot be void, since it would indicate that a role depends on a void, maybe add an assert?
+			TypeExpression typeExpression;
+			if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
+				typeExpression = getTypeExpression((GroundTypeParameter)originalExpression.typeAnnotation().get());
+			} else {
+				typeExpression = getTypeExpression((GroundClassOrInterface)originalExpression.typeAnnotation().get());
+			}
+			
+			final List<Expression> arguments = List.of( visitedDependency );
 			final Name name = new Name(comMethod.identifier());
-			final List<TypeExpression> typeArguments = 
-				List.of(
-					new TypeExpression(
-						new Name(dependencyType.typeConstructor().toString()), // TODO how do I get the type's identifier without relying on toString?
-						Collections.emptyList(), 
-						Collections.emptyList()));
+			final List<TypeExpression> typeArguments = List.of( typeExpression );
 			
 			MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments, visitedDependency.position());
+			
+			// The comMethod is a method inside its channel, so we need to make the channel its scope
 			FieldAccessExpression scope = new FieldAccessExpression(new Name(channelIdentifier), visitedDependency.position());
 			
+			// Something like channel.< Type >com( Expression )
 			return new ScopedExpression(scope, scopedExpression);
+		}
+
+		private TypeExpression getTypeExpression( GroundClassOrInterface type ){
+			return new TypeExpression(
+				new Name(type.typeConstructor().identifier()),
+				Collections.emptyList(), 
+				type.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
+		}
+
+		private TypeExpression getTypeExpression( GroundReferenceType type ){
+			if( type instanceof GroundClass ){ // I think this is only not true for primitive types, which cannot be communicated
+				GroundClass typeGC = (GroundClass)type;
+				return new TypeExpression(
+					new Name(typeGC.typeConstructor().identifier()),
+					Collections.emptyList(), 
+					typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
+			}
+			if( type instanceof GroundTypeParameter ){
+				GroundTypeParameter typeGTP = (GroundTypeParameter)type;
+				return new TypeExpression(
+					new Name(typeGTP.typeConstructor().identifier()),
+					Collections.emptyList(), 
+					Collections.emptyList());
+			}
+			
+			System.out.println( "ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() ); 
+			// TODO throw some exception
+			return null;
 		}
 
 	}
