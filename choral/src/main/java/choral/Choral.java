@@ -347,9 +347,10 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 					}
 					
 				} else{
-					
-					System.out.println( "-=Converting compulationunits to choral=-" );
-					ChoralCompiler.generateChoralFiles( annotatedUnits.get(), headerUnits, emissionOptions.targetpath() );
+					if( !emissionOptions.isDryRun() ){
+						System.out.println( "-=Converting compulationunits to choral=-" );
+						ChoralCompiler.generateChoralFiles( annotatedUnits.get(), headerUnits, emissionOptions.targetpath() );
+					}
 				}
 
 				
