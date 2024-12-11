@@ -27,6 +27,7 @@ import choral.compiler.Compiler;
 import choral.compiler.*;
 import choral.compiler.amend.RelaxedTyper;
 import choral.compiler.amend.BasicInference;
+import choral.compiler.amend.BasicSelectionInference;
 import choral.utils.PrintCompilationUnits;
 import choral.utils.Streams.WrappedException;
 import choral.exceptions.AstPositionedException;
@@ -318,9 +319,14 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				// TODO maybe use an option to choose inference alghorithm
 				List<CompilationUnit> amendedSourceUnits = annotatedUnits.get().stream()
 					.map( BasicInference::inferComms ).toList();
+
+				System.out.println( "-=Infering selections=-" );
+				// TODO maybe use an option to choose inference alghorithm
+				List<CompilationUnit> amendedSourceUnitsWithSelections = amendedSourceUnits.stream()
+					.map( cu -> new BasicSelectionInference().inferSelections(cu) ).toList();
 				
 				System.out.println( "-=Typechecking (un-relaxed)=-" );
-					profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( amendedSourceUnits,
+					profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( amendedSourceUnitsWithSelections,
 								headerUnits) ) );
 				
 				

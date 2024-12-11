@@ -328,6 +328,9 @@ public class BasicInference {
 				newCondition = visitExpression(dependencyList, n.condition());
 			}
 
+			// I need the condition's worldarguments to do knowledge of choice inference
+			newCondition.setTypeAnnotation( n.condition().typeAnnotation().get() ); 
+
 			return new IfStatement(
 				newCondition, 
 				visit(n.ifBranch()), 
