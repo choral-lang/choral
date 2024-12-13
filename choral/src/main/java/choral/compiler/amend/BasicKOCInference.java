@@ -3,7 +3,9 @@ package choral.compiler.amend;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import choral.ast.CompilationUnit;
@@ -30,98 +32,38 @@ import choral.utils.Pair;
  * Knowledge of choice inference.
  * Iterates through a program and at every if-statement and switch-statement
  * sends a selection to every role but itself.
+ * <p>
+ * retruns a Selections object with all the selections to insert. the Data 
+ * inference module needs to insert them
  */
-public class BasicSelectionInference {
+public class BasicKOCInference {
 
-    Enum ifEnum = null;
-    Enum switchEnum = null;
-
-    public BasicSelectionInference(){
-
-    }
+    Enum enumerator = null;
+    Map< Statement, List<List<Expression>> > selections = new HashMap<>();
     
-    public CompilationUnit inferSelections( CompilationUnit cu ){
+    public BasicKOCInference(){}
+    
+    public Selections inferKOC( CompilationUnit cu ){
         
-        return createNewCompilationUnit(cu);
-    }
-
-    /**
-	 * Creates a new {@code CompilationUnit} from the old, with amended method bodies (changed to 
-	 * include selections) 
-	 */
-	private CompilationUnit createNewCompilationUnit( CompilationUnit old ){
-		for( Enum enm : old.enums() ){
-            System.out.println( "Enum: " + enm );
-            System.out.println( "Worlds: " + enm.worldParameters() );
-            System.out.println( "cases: " + enm.cases() );
-            for( EnumConstant cons : enm.cases() ){
-                System.out.println( "\t" + cons );
-                System.out.println( "\t" + cons.name() );
-                System.out.println( "\t" + cons.annotations() );
-            }
-            System.out.println( "annotations: " + enm.annotations() );
-            System.out.println( "modifiers: " + enm.modifiers() );
-        }
-        
-        List<Class> newClasses = new ArrayList<>();
-		for( Class cls : old.classes() ){
+        for( Class cls : cu.classes() ){
             List< World > classWorlds = cls.worldParameters().stream().map( world -> (World)world.typeAnnotation().get() ).toList();
 
-			List<ConstructorDefinition> newConstructors = new ArrayList<>();
 			for( ConstructorDefinition constructor : cls.constructors() ){
-				Statement newBody = new VisitStatement( classWorlds, constructor.signature().typeAnnotation().get().channels() ).visit(constructor.body());
-
-				newConstructors.add(new ConstructorDefinition(
-					constructor.signature(), 
-					constructor.explicitConstructorInvocation().orElse( null ),
-					newBody, 
-					constructor.annotations(), 
-					constructor.modifiers(), 
-					constructor.position()));
+				new VisitStatement( classWorlds, constructor.signature().typeAnnotation().get().channels() ).visit(constructor.body());
 			}
 			
-			List<ClassMethodDefinition> newMethods = new ArrayList<>();
 			for( ClassMethodDefinition method : cls.methods() ){
-				Statement newBody = null;
 				if( method.body().isPresent() ){
-					newBody = new VisitStatement( classWorlds, method.signature().typeAnnotation().get().channels() ).visit(method.body().get());
+					new VisitStatement( classWorlds, method.signature().typeAnnotation().get().channels() ).visit(method.body().get());
 				}
-
-				newMethods.add(new ClassMethodDefinition(
-					method.signature(), 
-					newBody, 
-					method.annotations(), 
-					method.modifiers(), 
-					method.position()));
 			}
-
-			newClasses.add(new Class(
-				cls.name(), 
-				cls.worldParameters(), 
-				cls.typeParameters(), 
-				cls.extendsClass(), 
-				cls.implementsInterfaces(), 
-				cls.fields(), 
-				newMethods, 
-				newConstructors, 
-				cls.annotations(), 
-				cls.modifiers(), 
-				cls.position()));
 		}
-        List<Enum> newEnums = old.enums();
-        if( ifEnum != null ) newEnums.add(ifEnum);
-        if( switchEnum != null ) newEnums.add(switchEnum);
-		return new CompilationUnit(
-			old.packageDeclaration(), 
-			old.imports(), 
-			old.interfaces(), 
-			newClasses, 
-			newEnums, 
-			old.position().sourceFile());
-	}
+
+        return new Selections(selections, enumerator);
+    }
 
 
-	private class VisitStatement extends AbstractChoralVisitor< Statement >{
+	private class VisitStatement extends AbstractChoralVisitor< Void >{
 		
         List< World > allWorlds;
         List< Pair< String, GroundInterface > > methodChannels;
@@ -132,41 +74,33 @@ public class BasicSelectionInference {
         }
 
 		@Override
-		public Statement visit( Statement n ) {
+		public Void visit( Statement n ) {
 			return n.accept( this );
 		}
 
 		@Override
-		public Statement visit( ExpressionStatement n ) {
-            return new ExpressionStatement(
-                n.expression(), 
-                visitContinutation(n.continuation()), 
-                n.position());
+		public Void visit( ExpressionStatement n ) {
+            return visitContinutation( n.continuation() );
 		}
 
 		@Override
-		public Statement visit( VariableDeclarationStatement n ) {
-			return new VariableDeclarationStatement(
-                n.variables(), 
-                visitContinutation(n.continuation()), 
-                n.position());
+		public Void visit( VariableDeclarationStatement n ) {
+			return visitContinutation( n.continuation() );
 		}
 
 		@Override
-		public Statement visit( NilStatement n ) {
-			return new NilStatement(n.position());
+		public Void visit( NilStatement n ) {
+			return null;
 		}
 
 		@Override
-		public Statement visit( BlockStatement n ) {
-			return new BlockStatement(
-                visit( n.enclosedStatement() ), 
-                visitContinutation(n.continuation()), 
-                n.position());
+		public Void visit( BlockStatement n ) {
+			visit( n.enclosedStatement() ); 
+            return visitContinutation( n.continuation() );
 		}
 
 		@Override
-		public Statement visit( IfStatement n ) {
+		public Void visit( IfStatement n ) {
 			List< ? extends World > senders = ((GroundDataType)n.condition().typeAnnotation().get()).worldArguments();
             if( senders.size() != 1 ){
                 System.out.println( "Found " + senders.size() + " roles, expected 1" );
@@ -175,70 +109,54 @@ public class BasicSelectionInference {
             World sender = (World)senders.get(0);
             System.out.println( "Sender: " + sender );
             System.out.println( "AllWorlds: " + allWorlds );
-            
-            Statement newIfBranch;
-            Statement newElseBranch;
 
             List<World> recipients = allWorlds.stream().filter( world -> !world.equals(sender) ).toList();
             if( recipients.size() > 0 ){
-                Pair<List <Expression>, List<Expression>> selections = inferIfSelection( sender, recipients );
-                List<Expression> ifSelections = selections.left();
-                List<Expression> elseSelections = selections.right();
-                Statement firstIfSelection = new ExpressionStatement(ifSelections.remove(0), visitContinutation(n.ifBranch()));
-                newIfBranch = chainSelections( firstIfSelection, ifSelections );
-                
-                Statement firstElseSelection = new ExpressionStatement(elseSelections.remove(0), visitContinutation(n.elseBranch()));
-                newElseBranch = chainSelections( firstElseSelection, elseSelections );
-            } else{
-                newIfBranch = visit(n.ifBranch());
-                newElseBranch = visit(n.elseBranch());
-            }
+                Pair<List <Expression>, List<Expression>> selectionsPair = inferIfSelection( sender, recipients );
+                List<Expression> ifSelections = selectionsPair.left();
+                List<Expression> elseSelections = selectionsPair.right();
+                selections.put( n, List.of( ifSelections, elseSelections ) );
+            } 
             
-            
-
-            return new IfStatement(
-                n.condition(), 
-                newIfBranch, 
-                newElseBranch, 
-                visitContinutation(n.continuation()));
+            visitContinutation(n.ifBranch());
+            visitContinutation(n.elseBranch());
+            return visitContinutation( n.continuation() );
 		}
 
 		@Override // not supported
-		public Statement visit( SwitchStatement n ) {
+		public Void visit( SwitchStatement n ) {
 			throw new UnsupportedOperationException("SwitchStatement not supported\n\tStatement at " + n.position().toString());
 		}
 
 		@Override
-		public Statement visit( TryCatchStatement n ) {
-			return new TryCatchStatement(
-                visit( n.body() ), 
-                n.catches(), // TODO this should be visited as well
-                visitContinutation(n.continuation()), 
-                n.position());
+		public Void visit( TryCatchStatement n ) {
+			visit( n.body() ); 
+            n.catches(); // TODO this should be visited as well
+            return visitContinutation( n.continuation() );
 		}
 
 		@Override
-		public Statement visit( ReturnStatement n ) {
-			return new ReturnStatement(
-                n.returnExpression(), 
-                visitContinutation(n.continuation()), 
-                n.position());
+		public Void visit( ReturnStatement n ) {
+			return visitContinutation( n.continuation() );
 		}
 
 		/** 
 		 * Visits the continuation if there is one 
 		 */
-		private Statement visitContinutation( Statement continutation ){
+		private Void visitContinutation( Statement continutation ){
 			return continutation == null ? null : visit(continutation);
 		}
 
+        /**
+         * Creates selections for an if-statement
+         */
         private Pair<List<Expression>, List<Expression>> inferIfSelection( World sender, List<World> recipients ){
             
             List<Expression> ifSelections = new ArrayList<>();
             List<Expression> elseSelections = new ArrayList<>();
             for( World recipient : recipients ){
                 SelectionMethod selectionMethod = findSelectionMethod( sender, recipient );
-                Enum ifEnum = getIfEnum();
+                Enum ifEnum = getEnum( 2 );
                 // create selections for if branch
                 ScopedExpression ifSelectionExpression = selectionMethod.createSelectionExpression( ifEnum, ifEnum.cases().get(0) );
                 ifSelections.add( ifSelectionExpression );
@@ -271,34 +189,29 @@ public class BasicSelectionInference {
             return null; // TODO throw exception
         }
 
-        private Enum getIfEnum(){
-            if( ifEnum == null ){
+        /**
+         * Returns an enumerator with the specified amount of cases. If no such 
+         * enumerator exists, one is created.
+         */
+        private Enum getEnum( int numCases ){
+            // Checks that an enumerator with enough cases has previously been created
+            if( enumerator == null || enumerator.cases().size() < numCases ){
+                // If not, creates one
                 List<EnumConstant> cases = new ArrayList<>();
-                cases.add( new EnumConstant(new Name( "IFBRANCH" ), Collections.emptyList(), null) );
-                cases.add( new EnumConstant(new Name( "ELSEBRANCH" ), Collections.emptyList(), null) );
+                for( int i = 0; i < numCases; i++ ){
+                    cases.add( new EnumConstant(new Name( "CASE" + i ), Collections.emptyList(), null) );
+                }
                 
-                ifEnum = new Enum(
-                    new Name( "IfEnum" ), 
-                    new FormalWorldParameter( new Name( "R" ) ), // TODO How to name?? 
+                enumerator = new Enum(
+                    new Name( "KOCEnum" ), 
+                    new FormalWorldParameter( new Name( "R" ) ), 
                     cases, 
                     Collections.emptyList(), 
                     EnumSet.noneOf( ClassModifier.class ), 
                     null);
             }
-            return ifEnum;
+            return enumerator;
         }
-
-        private Statement chainSelections( Statement statement, List<Expression> remainingSelections ){
-            if( remainingSelections.size() == 0 ){
-                return statement;
-            }
-            Expression selection = remainingSelections.remove(0);
-            ExpressionStatement selectionStatement = new ExpressionStatement(
-                selection, 
-                statement);
-            return chainSelections(selectionStatement, remainingSelections);
-        }
-
 	}
 
     private class SelectionMethod{

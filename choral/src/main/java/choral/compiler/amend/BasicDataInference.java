@@ -6,6 +6,7 @@ import choral.ast.body.Class;
 import choral.ast.body.ClassMethodDefinition;
 import choral.ast.body.ConstructorDefinition;
 import choral.ast.body.VariableDeclaration;
+import choral.ast.body.Enum;
 import choral.types.GroundClass;
 import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
@@ -48,7 +49,7 @@ import java.util.stream.Stream;
  * This expects that there are no dependencies on literals and that the resulting {@code CompilationUnit} 
  * will be typed again, since most or all typeannotations will be lost
  */
-public class BasicInference {
+public class BasicDataInference {
 	/*
 	 * Iterate through all dependencies
 	 * Find a channel that can be used (based on typeargument)
@@ -58,7 +59,14 @@ public class BasicInference {
 	 * replace the dependency expression with a communication of the dependency expression
 	 */
 	// TODO cleanup. This is a mess.
-	public static CompilationUnit inferComms( CompilationUnit cu ){
+
+	Selections selections;
+
+	public BasicDataInference( Selections selections ){
+		this.selections = selections;
+	}
+
+	public CompilationUnit inferComms( CompilationUnit cu ){
 		
 		// a map mapping from a statement to a list of all dependency expressions within that statement
 		Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
@@ -137,7 +145,7 @@ public class BasicInference {
 	 * TODO also check that the channel can send the type of the dependency (need to take
 	 * another parameter)
 	 */
-	private static Pair<Pair<String, GroundInterface>, HigherMethod> findComMethod(World recepient, World sender, GroundDataType dependencyType, List<Pair<String, GroundInterface>> channels){
+	private Pair<Pair<String, GroundInterface>, HigherMethod> findComMethod(World recepient, World sender, GroundDataType dependencyType, List<Pair<String, GroundInterface>> channels){
 		
 		for( Pair<String, GroundInterface> channelPair : channels ){
 
@@ -167,7 +175,7 @@ public class BasicInference {
 	/**
 	 * Retreives all methods from the {@code CompilationUnit}
 	 */
-	private static List<HigherCallable> getMethods( CompilationUnit cu ){
+	private List<HigherCallable> getMethods( CompilationUnit cu ){
 		return Stream.concat( 
 			cu.classes().stream()
 				.flatMap( cls -> cls.methods().stream() )
@@ -185,7 +193,7 @@ public class BasicInference {
 	 * We need to create a new {@code CompilationUnit} since everything in a {@code CompilationUnit} (in 
 	 * particular {@code Statements} and {@code Expressions}) are final, and can therefore not be changed.
 	 */
-	private static CompilationUnit createNewCompilationUnit( CompilationUnit old, Map<Statement, List<Dependency>> amendedStatements ){
+	private CompilationUnit createNewCompilationUnit( CompilationUnit old, Map<Statement, List<Dependency>> amendedStatements ){
 		List<Class> newClasses = new ArrayList<>();
 		for( Class cls : old.classes() ){
 			List<ConstructorDefinition> newConstructors = new ArrayList<>();
@@ -231,12 +239,15 @@ public class BasicInference {
 				cls.position()));
 		}
 
+		List<Enum> newEnums = old.enums();
+		newEnums.add( selections.enumerator() ); // insert enum created by KOC inference 
+
 		return new CompilationUnit(
 			old.packageDeclaration(), 
 			old.imports(), 
 			old.interfaces(), 
 			newClasses, 
-			old.enums(), 
+			newEnums, 
 			old.position().sourceFile());
 	}
 
@@ -247,7 +258,7 @@ public class BasicInference {
 	 * Statement} is in the {@code amendedStatements} map, the {@code Expression}s of that 
 	 * {@code Statement} are visited by {@code VisitExpression}
 	 */
-	private static class VisitStatement extends AbstractChoralVisitor< Statement >{
+	private class VisitStatement extends AbstractChoralVisitor< Statement >{
 		
 		/** A map mapping Statements to a list of all dependencies within that Statement 
 		 * <p>
@@ -328,13 +339,19 @@ public class BasicInference {
 				newCondition = visitExpression(dependencyList, n.condition());
 			}
 
-			// I need the condition's worldarguments to do knowledge of choice inference
-			newCondition.setTypeAnnotation( n.condition().typeAnnotation().get() ); 
+			// Insert selections if there are any
+			Statement newIfBranch = visitContinutation(n.ifBranch());
+			Statement newElseBranch = visitContinutation(n.elseBranch());
+			List<List<Expression>> selectionsToInsert = selections.selections().get( n );
+			if( selectionsToInsert != null ){
+				newIfBranch = Selections.chainSelections( newIfBranch , selectionsToInsert.get(0));
+				newElseBranch = Selections.chainSelections( newElseBranch , selectionsToInsert.get(1));
+			}
 
 			return new IfStatement(
 				newCondition, 
-				visit(n.ifBranch()), 
-				visit(n.elseBranch()), 
+				newIfBranch,
+				newElseBranch, 
 				visitContinutation(n.continuation()), n.position());
 		}
 
@@ -440,7 +457,7 @@ public class BasicInference {
 	 * anything inside {@code dependencyList}. If an {@code Expression} is 
 	 * equal to a dependency it is replaced with a communication.
 	 */
-	private static class VisitExpression extends AbstractChoralVisitor< Expression >{
+	private class VisitExpression extends AbstractChoralVisitor< Expression >{
 		/*
 		 * TODO
 		 * comExpressions need to be made on the fly.
@@ -694,7 +711,7 @@ public class BasicInference {
 	 * Has method {@code createComExpression} for creating a communication expression out of
 	 * the stored communication and the provided {@code Expression} argument.
 	 */
-	private static class Dependency {
+	private class Dependency {
 		private Expression originalExpression;
 		private HigherMethod comMethod;
 		private String channelIdentifier;
