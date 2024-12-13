@@ -240,7 +240,8 @@ public class BasicDataInference {
 		}
 
 		List<Enum> newEnums = old.enums();
-		newEnums.add( selections.enumerator() ); // insert enum created by KOC inference 
+		if( selections.enumerator() != null ) 
+			newEnums.add( selections.enumerator() ); // insert enum created by KOC inference 
 
 		return new CompilationUnit(
 			old.packageDeclaration(), 
