@@ -3,8 +3,10 @@ package choral.compiler.amend;
 import choral.ast.CompilationUnit;
 
 public class InferCommunications {
+
+    public InferCommunications(){}
     
-    public static CompilationUnit inferCommunications( CompilationUnit cu ){
+    public CompilationUnit inferCommunications( CompilationUnit cu ){
 
         Selections selections = new BasicKOCInference().inferKOC( cu );
 

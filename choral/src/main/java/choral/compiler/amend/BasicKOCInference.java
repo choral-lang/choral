@@ -34,7 +34,7 @@ import choral.utils.Pair;
  * sends a selection to every role but itself.
  * <p>
  * retruns a Selections object with all the selections to insert. the Data 
- * inference module needs to insert them
+ * inference module needs to insert them.
  */
 public class BasicKOCInference {
 

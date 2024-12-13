@@ -317,9 +317,11 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				
 				
 				System.out.println( "-=Infering communications=-" );
+
 				// TODO maybe use an option to choose inference alghorithm
+				InferCommunications inference = new InferCommunications();
 				List<CompilationUnit> amendedSourceUnits = annotatedUnits.get().stream()
-					.map( InferCommunications::inferCommunications ).toList();
+					.map( inference::inferCommunications ).toList();
 				
 				System.out.println( "-=Typechecking (un-relaxed)=-" );
 					profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( amendedSourceUnits,
@@ -352,9 +354,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						ChoralCompiler.generateChoralFiles( annotatedUnits.get(), headerUnits, emissionOptions.targetpath() );
 					}
 				}
-
-				
-						
+	
 			} catch( Exception e ){
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
 				System.out.println( "compilation failed." );
