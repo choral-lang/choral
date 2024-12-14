@@ -4,15 +4,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import choral.ast.CompilationUnit;
 import choral.ast.Name;
+import choral.ast.Position;
 import choral.ast.body.Class;
 import choral.ast.body.Enum;
 import choral.ast.body.EnumConstant;
+import choral.ast.body.VariableDeclaration;
 import choral.ast.body.ClassMethodDefinition;
 import choral.ast.body.ClassModifier;
 import choral.ast.body.ConstructorDefinition;
@@ -40,11 +44,12 @@ public class BasicKOCInference {
 
     Enum enumerator = null;
     Map< Statement, List<List<Expression>> > selections = new HashMap<>();
+    Position position;
     
     public BasicKOCInference(){}
     
     public Selections inferKOC( CompilationUnit cu ){
-        
+        position = cu.position();
         for( Class cls : cu.classes() ){
             List< World > classWorlds = cls.worldParameters().stream().map( world -> (World)world.typeAnnotation().get() ).toList();
 
@@ -110,7 +115,7 @@ public class BasicKOCInference {
             System.out.println( "Sender: " + sender );
             System.out.println( "AllWorlds: " + allWorlds );
 
-            List<World> recipients = allWorlds.stream().filter( world -> !world.equals(sender) ).toList();
+            List<World> recipients = getParticipants(sender, List.of(n.ifBranch(), n.elseBranch()));
             if( recipients.size() > 0 ){
                 Pair<List <Expression>, List<Expression>> selectionsPair = inferIfSelection( sender, recipients );
                 List<Expression> ifSelections = selectionsPair.left();
@@ -152,6 +157,8 @@ public class BasicKOCInference {
          */
         private Pair<List<Expression>, List<Expression>> inferIfSelection( World sender, List<World> recipients ){
             
+            //Map<World, SelectionMethod> selectionMap = findSelectionMethods( sender, recipients );
+
             List<Expression> ifSelections = new ArrayList<>();
             List<Expression> elseSelections = new ArrayList<>();
             for( World recipient : recipients ){
@@ -208,10 +215,21 @@ public class BasicKOCInference {
                     cases, 
                     Collections.emptyList(), 
                     EnumSet.noneOf( ClassModifier.class ), 
-                    null);
+                    position);
             }
             return enumerator;
         }
+
+        private List<World> getParticipants( World sender, List<Statement> statements ){
+            Set<World> participants = new HashSet<>();
+            for( Statement statement : statements ){
+                participants.addAll( new GetStatementParticipants().getParticipants(statement) );
+            }
+            participants.remove(sender);
+
+            return participants.stream().toList();
+        }
+
 	}
 
     private class SelectionMethod{
@@ -253,32 +271,277 @@ public class BasicKOCInference {
             TypeExpression typeExpression = new TypeExpression( 
                 enumerator.name(), 
                 Collections.emptyList(), // This needs to be "higher kinded" and can thus not have a worldargument
-                Collections.emptyList());
+                Collections.emptyList(),
+                position); // TODO proper position
 
             TypeExpression argScope = new TypeExpression(
                 enumerator.name(), 
                 List.of( new WorldArgument( new Name(sender.identifier() )) ), 
-                Collections.emptyList());
+                Collections.emptyList(),
+                position); // TODO proper position
 
             ScopedExpression argument = new ScopedExpression( // looks something like Enum@Sender.CHOICE
                 new StaticAccessExpression( // Enum@Sender
-                    argScope), 
+                    argScope,
+                    position), // TODO proper position
                 new FieldAccessExpression( // CHOICE
-                    enumCons.name()));
+                    enumCons.name(),
+                    position), // TODO proper position
+                position); // TODO proper position
             
 			final List<Expression> arguments = List.of( argument );
 			final Name name = new Name( selectionMethod.identifier() );
 			final List<TypeExpression> typeArguments = List.of( typeExpression );
 			
-			MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments); // TODO add position
+			MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments, position); // TODO proper position
 			
 			// The comMethod is a method inside its channel, so we need to make the channel its scope
-			FieldAccessExpression scope = new FieldAccessExpression(new Name(channelIdentifier)); // TODO add position
+			FieldAccessExpression scope = new FieldAccessExpression(new Name(channelIdentifier), position); // TODO proper position
 			
 			// Something like channel.< Type >com( Expression )
-			return new ScopedExpression(scope, scopedExpression);
+			return new ScopedExpression(scope, scopedExpression, position);
         }
 
     }
 
+    private class GetStatementParticipants extends AbstractChoralVisitor< Void >{
+		
+        Set< World > participants = new HashSet<>();
+
+		public GetStatementParticipants(){}
+
+        /** The main method of this class */
+        public Set< World > getParticipants( Statement statement ){
+            visit( statement );
+
+            return participants;
+        }
+
+		@Override
+		public Void visit( Statement n ) {
+			return n.accept( this );
+		}
+
+		@Override
+		public Void visit( ExpressionStatement n ) {
+            Set<World> expressionParticipants = new GetExpressionParticipants().GetParticipants(n.expression());
+            participants.addAll( expressionParticipants );
+            
+            return visitContinutation(n.continuation());
+		}
+
+		@Override
+		public Void visit( VariableDeclarationStatement n ) {
+			for( VariableDeclaration vd : n.variables() ){
+                visitVariableDeclaration(vd);
+            }
+            return visitContinutation(n.continuation()); 
+		}
+
+		@Override
+		public Void visit( NilStatement n ) {
+			return visitContinutation(n.continuation()); 
+		}
+
+		@Override
+		public Void visit( BlockStatement n ) {
+			visit(n.enclosedStatement());
+            
+            return visitContinutation(n.continuation()); 
+		}
+
+		@Override
+		public Void visit( IfStatement n ) {
+            Set<World> conditionParticipants = new GetExpressionParticipants().GetParticipants(n.condition());
+            participants.addAll(conditionParticipants);
+            visit(n.ifBranch());
+            visit(n.elseBranch());
+
+			return visitContinutation(n.continuation()); 
+		}
+
+		@Override // TODO
+		public Void visit( SwitchStatement n ) {
+			// We do not check for participants inside nested switch statements. Switch statements will
+            // be considered on their own.
+			return visitContinutation(n.continuation()); 
+		}
+
+		@Override
+		public Void visit( TryCatchStatement n ) {
+			throw new UnsupportedOperationException("TryCatchStatement not supported\n\tStatement at " + n.position().toString());
+		}
+
+		@Override
+		public Void visit( ReturnStatement n ) {
+            Set<World> returnParticipants = new GetExpressionParticipants().GetParticipants(n.returnExpression());
+            participants.addAll(returnParticipants);
+
+			return visitContinutation(n.continuation());
+		}
+
+		/** 
+		 * Visits the continuation if there is one 
+		 */
+		private Void visitContinutation( Statement continutation ){
+			return continutation == null ? null : visit(continutation);
+		}
+
+        /**
+		 * If there is no initializer, return the given {@code VaraibleDeclaration} without 
+		 * change, otherwise visit its initializer and return a new {@code VaraibleDeclaration}
+		 */
+		private Void visitVariableDeclaration( VariableDeclaration vd ){
+            // TODO look at vs's type's worldarguments
+			
+			if( !vd.initializer().isEmpty() ){
+                Set<World> initializerParticipants = new GetExpressionParticipants().GetParticipants(vd.initializer().get());
+                participants.addAll(initializerParticipants);
+            }
+            
+            return null;
+		}
+
+	}
+
+    private class GetExpressionParticipants extends AbstractChoralVisitor< Void >{
+        
+        private Set<World> participants = new HashSet<>();
+
+        public GetExpressionParticipants(){}
+
+        /** The main method of this class */
+        public Set<World> GetParticipants( Expression expression ){
+            
+            visit(expression);
+            return participants;
+        }
+
+		@Override
+		public Void visit( Expression n ) {
+			return n.accept( this );
+		}
+
+		@Override
+		public Void visit( ScopedExpression n ) {
+            // probably don't need to look at the ScopedExpression's worlds, since we will 
+            // look at its scope and scopedExpression
+			visit( n.scope() );
+            return visit( n.scopedExpression() );
+		}
+
+		@Override
+		public Void visit( FieldAccessExpression n ) {
+			GroundDataType nType = (GroundDataType)n.typeAnnotation().get(); // assuming that a field cannot be void
+            participants.addAll(nType.worldArguments());
+            return null;
+		}
+
+		@Override
+		public Void visit( MethodCallExpression n ) {
+			
+            if( !n.methodAnnotation().get().returnType().isVoid() ){
+                GroundDataType returnType = (GroundDataType)n.methodAnnotation().get().returnType();
+                participants.addAll(returnType.worldArguments());
+            }
+
+            for( Expression argument : n.arguments() ){
+                visit(argument);
+            }
+
+            return null;
+		}
+		
+		@Override
+		public Void visit( AssignExpression n ) {
+			visit(n.target());
+            return visit(n.value());
+		}
+
+		@Override
+		public Void visit( BinaryExpression n ) {
+			visit(n.left());
+            return visit(n.right());
+		}
+
+		@Override
+		public Void visit( EnclosedExpression n ) {
+			return visit(n.nestedExpression());
+		}
+		
+		@Override
+		public Void visit( StaticAccessExpression n ) {
+			if( !n.typeAnnotation().get().isVoid() ){ // I think this might be able to be void
+                GroundDataType staticAccessType = (GroundDataType)n.typeAnnotation().get();
+                participants.addAll(staticAccessType.worldArguments());
+            }
+            return null;
+		}
+
+		@Override
+		public Void visit( ClassInstantiationExpression n ) {
+			// not sure how to get the class's worlds
+
+            for( Expression argument : n.arguments() ){
+                visit(argument);
+            }
+
+            return null;
+		}
+
+		@Override
+		public Void visit( NotExpression n ) {
+			return visit(n.expression());
+		}
+
+		@Override // not supported
+		public Void visit( ThisExpression n ) {
+			throw new UnsupportedOperationException("ThisExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override // not supported
+		public Void visit( SuperExpression n ) {
+			throw new UnsupportedOperationException("SuperExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Void visit( NullExpression n ) {
+            return null;
+		}
+
+		public Void visit( LiteralExpression.BooleanLiteralExpression n ) {
+            participants.add(n.world().typeAnnotation().get()); // TODO check worldargumetns for everything above this
+			return null;
+		}
+
+		public Void visit( LiteralExpression.IntegerLiteralExpression n ) {
+			participants.add(n.world().typeAnnotation().get());
+			return null;
+		}
+
+		public Void visit( LiteralExpression.DoubleLiteralExpression n ) {
+			participants.add(n.world().typeAnnotation().get());
+			return null;
+		}
+
+		public Void visit( LiteralExpression.StringLiteralExpression n ) {
+			participants.add(n.world().typeAnnotation().get());
+			return null;
+		}
+
+		@Override // not supported
+		public Void visit( TypeExpression n ) {
+			throw new UnsupportedOperationException("TypeExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override // not supported
+		public Void visit( BlankExpression n ){
+			throw new UnsupportedOperationException("BlankExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override // not supported
+		public Void visit( EnumCaseInstantiationExpression n ){
+			throw new UnsupportedOperationException("EnumCaseInstantiationExpression not supported\n\tExpression at " + n.position().toString());
+		}
+    }
 }

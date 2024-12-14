@@ -326,11 +326,11 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				System.out.println( "-=Typechecking (un-relaxed)=-" );
 					profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( amendedSourceUnits,
 								headerUnits) ) );
+				
+				System.out.println( "-=Checks projectability=-" );
+				Compiler.checkProjectiability( annotatedUnits.get() );
 
 				if( amendOptions.project() ){
-					
-					System.out.println( "-=Checks projectability=-" );
-					Compiler.checkProjectiability( annotatedUnits.get() );
 					
 					System.out.println( "-=Projecting amended compilationunits=-" );
 					try {

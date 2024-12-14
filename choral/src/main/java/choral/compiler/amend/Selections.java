@@ -37,7 +37,8 @@ public class Selections {
             Expression selection = remainingSelections.remove(0);
             ExpressionStatement selectionStatement = new ExpressionStatement(
                 selection, 
-                statement);
+                statement,
+                statement.position());
             return chainSelections(selectionStatement, remainingSelections);
         }
 
