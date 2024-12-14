@@ -157,12 +157,11 @@ public class BasicKOCInference {
          */
         private Pair<List<Expression>, List<Expression>> inferIfSelection( World sender, List<World> recipients ){
             
-            //Map<World, SelectionMethod> selectionMap = findSelectionMethods( sender, recipients );
+            List<SelectionMethod> selectionList = findSelectionMethods( sender, recipients );
 
             List<Expression> ifSelections = new ArrayList<>();
             List<Expression> elseSelections = new ArrayList<>();
-            for( World recipient : recipients ){
-                SelectionMethod selectionMethod = findSelectionMethod( sender, recipient );
+            for( SelectionMethod selectionMethod : selectionList ){
                 Enum ifEnum = getEnum( 2 );
                 // create selections for if branch
                 ScopedExpression ifSelectionExpression = selectionMethod.createSelectionExpression( ifEnum, ifEnum.cases().get(0) );
@@ -174,6 +173,37 @@ public class BasicKOCInference {
 
 
             return new Pair<>(ifSelections, elseSelections);
+        }
+
+        private List<SelectionMethod> findSelectionMethods( World initialSender, List<World> recipientsList ){
+            List<SelectionMethod> selectionList = new ArrayList<>();
+            List<World> senders = new ArrayList<>();
+            List<World> recipients = new ArrayList<>(recipientsList); // because I want a modifiable copy
+            senders.add(initialSender);
+
+            while( !recipients.isEmpty() && !senders.isEmpty() ){
+                World sender = senders.remove(0); // the current sender to consider
+                for( World recipient : recipients ){
+                    // Tries to reach all recipients
+                    SelectionMethod selectionMethod = findSelectionMethod(sender, recipient);
+                    if( selectionMethod != null ){
+                        // If a recipient is reachable, it becomes a new potential sender
+                        senders.add(recipient);
+                        selectionList.add( selectionMethod );
+                    }
+                }
+                // Remove all the recipients that have already been reached
+                recipients.removeAll(senders);
+            }
+
+            if( !recipients.isEmpty() ){
+                for( World recipient : recipients ){
+                    System.out.println( "No viable selection method was found for" + recipient );
+                }
+                return null; // TODO throw some error
+            }
+
+            return selectionList;
         }
 
         private SelectionMethod findSelectionMethod( World sender, World recipient ){
@@ -192,8 +222,8 @@ public class BasicKOCInference {
                     return new SelectionMethod( channelPair.left(), channelPair.right(), selectMethodOptional.get(), sender );
                 }
             }
-            System.out.println( "No viable selection method was found for roles " + sender + " and " + recipient );
-            return null; // TODO throw exception
+            // no viable selectionmethod was found
+            return null;
         }
 
         /**

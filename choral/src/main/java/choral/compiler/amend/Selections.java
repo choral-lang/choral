@@ -34,7 +34,7 @@ public class Selections {
             if( remainingSelections.size() == 0 ){
                 return statement;
             }
-            Expression selection = remainingSelections.remove(0);
+            Expression selection = remainingSelections.remove(remainingSelections.size()-1);
             ExpressionStatement selectionStatement = new ExpressionStatement(
                 selection, 
                 statement,
