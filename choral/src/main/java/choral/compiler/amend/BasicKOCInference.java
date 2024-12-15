@@ -34,11 +34,11 @@ import choral.utils.Pair;
 
 /**
  * Knowledge of choice inference.
- * Iterates through a program and at every if-statement and switch-statement
- * sends a selection to every role but itself.
+ * Iterates through a program and at every IfStatement and SwitchStatement sends a selection to every 
+ * role but itself, that takes part in at least one branch in that Statement.
  * <p>
- * retruns a Selections object with all the selections to insert. the Data 
- * inference module needs to insert them.
+ * Returns a Selections object with all the selections to insert. These selections will need to be 
+ * inserted seperately (presumably by the data inference module).
  */
 public class BasicKOCInference {
 
@@ -54,10 +54,12 @@ public class BasicKOCInference {
             List< World > classWorlds = cls.worldParameters().stream().map( world -> (World)world.typeAnnotation().get() ).toList();
 
 			for( ConstructorDefinition constructor : cls.constructors() ){
+                // Visits all constructors and builds the selections map for them
 				new VisitStatement( classWorlds, constructor.signature().typeAnnotation().get().channels() ).visit(constructor.body());
 			}
 			
 			for( ClassMethodDefinition method : cls.methods() ){
+                // Visits all other methods and builds the selections map for them
 				if( method.body().isPresent() ){
 					new VisitStatement( classWorlds, method.signature().typeAnnotation().get().channels() ).visit(method.body().get());
 				}
@@ -67,7 +69,18 @@ public class BasicKOCInference {
         return new Selections(selections, enumerator);
     }
 
-
+    /**
+     * Iterates through Statements and ignores everything but IfStatements and SwitchStatements. 
+     * Examines which worlds need selections for each of the IfStatements and SwitchStatements, and 
+     * fills the selections map with these selections.
+     * <p>
+     * Also creates an enumerator of size equal to number of cases in the largest SwitchStatement, or 
+     * size two if only IfStatements are found, unless an enumerator of sufficient size has already 
+     * been created.
+     * <p>
+     * If no selections are needed, the selections map remains unchanged and no enumerator will be 
+     * created.
+     */
 	private class VisitStatement extends AbstractChoralVisitor< Void >{
 		
         List< World > allWorlds;
@@ -112,8 +125,6 @@ public class BasicKOCInference {
                 return null; // TODO throw some error
             }
             World sender = (World)senders.get(0);
-            System.out.println( "Sender: " + sender );
-            System.out.println( "AllWorlds: " + allWorlds );
 
             List<World> recipients = getParticipants(sender, List.of(n.ifBranch(), n.elseBranch()));
             if( recipients.size() > 0 ){
@@ -175,6 +186,12 @@ public class BasicKOCInference {
             return new Pair<>(ifSelections, elseSelections);
         }
 
+        /**
+         * Finds selection methods for a sender and a list of recipients. If the sender cannot directly
+         * reach each recipient, the reachable recipients are considered as senders. 
+         * <p>
+         * Throws an error if at least one recipient cannot be reached. 
+         */
         private List<SelectionMethod> findSelectionMethods( World initialSender, List<World> recipientsList ){
             List<SelectionMethod> selectionList = new ArrayList<>();
             List<World> senders = new ArrayList<>();
@@ -188,12 +205,12 @@ public class BasicKOCInference {
                     SelectionMethod selectionMethod = findSelectionMethod(sender, recipient);
                     if( selectionMethod != null ){
                         // If a recipient is reachable, it becomes a new potential sender
-                        senders.add(recipient);
+                        senders.add( recipient );
                         selectionList.add( selectionMethod );
                     }
                 }
                 // Remove all the recipients that have already been reached
-                recipients.removeAll(senders);
+                recipients.removeAll( senders );
             }
 
             if( !recipients.isEmpty() ){
@@ -206,6 +223,10 @@ public class BasicKOCInference {
             return selectionList;
         }
 
+        /**
+         * Iterates through the chanels to find a suitable selection method between the sender and 
+         * recipient. Returns null if no viable selection method was found.
+         */
         private SelectionMethod findSelectionMethod( World sender, World recipient ){
             for( Pair<String, GroundInterface> channelPair : methodChannels ){
             
@@ -227,13 +248,13 @@ public class BasicKOCInference {
         }
 
         /**
-         * Returns an enumerator with the specified amount of cases. If no such 
-         * enumerator exists, one is created.
+         * Returns an enumerator with the specified amount of cases. If no such enumerator exists, one 
+         * is created.
          */
         private Enum getEnum( int numCases ){
-            // Checks that an enumerator with enough cases has previously been created
+            // Checks if an enumerator with enough cases has previously been created
             if( enumerator == null || enumerator.cases().size() < numCases ){
-                // If not, creates one
+                // If not, creates one, and overwrites the current enumerator
                 List<EnumConstant> cases = new ArrayList<>();
                 for( int i = 0; i < numCases; i++ ){
                     cases.add( new EnumConstant(new Name( "CASE" + i ), Collections.emptyList(), null) );
@@ -250,6 +271,10 @@ public class BasicKOCInference {
             return enumerator;
         }
 
+        /**
+         * Retreives a list of all the worlds that partake in at least one Statement, excluding the 
+         * sender.
+         */
         private List<World> getParticipants( World sender, List<Statement> statements ){
             Set<World> participants = new HashSet<>();
             for( Statement statement : statements ){
@@ -262,6 +287,9 @@ public class BasicKOCInference {
 
 	}
 
+    /**
+     * A class to represent a selection method
+     */
     private class SelectionMethod{
         private String channelIdentifier;
         private GroundInterface channel;
@@ -296,6 +324,10 @@ public class BasicKOCInference {
             return sender;
         }
 
+        /**
+         * Creates a selections expression from this SelectionMethod object on the enumerator given as 
+         * input.
+         */
         public ScopedExpression createSelectionExpression( Enum enumerator, EnumConstant enumCons ){
 			
             TypeExpression typeExpression = new TypeExpression( 
@@ -306,7 +338,7 @@ public class BasicKOCInference {
 
             TypeExpression argScope = new TypeExpression(
                 enumerator.name(), 
-                List.of( new WorldArgument( new Name(sender.identifier() )) ), 
+                List.of( new WorldArgument( new Name(sender.identifier() )) ), // this needs a worldargument
                 Collections.emptyList(),
                 position); // TODO proper position
 
@@ -325,15 +357,21 @@ public class BasicKOCInference {
 			
 			MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments, position); // TODO proper position
 			
-			// The comMethod is a method inside its channel, so we need to make the channel its scope
+			// The selection method is a method inside its channel, so we need to make the channel its scope
 			FieldAccessExpression scope = new FieldAccessExpression(new Name(channelIdentifier), position); // TODO proper position
 			
-			// Something like channel.< Type >com( Expression )
+			// Something like channel.< enumerator >select( enumerator@sender.enumCons )
 			return new ScopedExpression(scope, scopedExpression, position);
         }
 
     }
 
+    /**
+     * Iterates through Statements and uses GetExpressionParticipants to get participants of any 
+     * Expressions of the Statements. 
+     * <p>
+     * Use it be calling getParticipants() on some statement.
+     */
     private class GetStatementParticipants extends AbstractChoralVisitor< Void >{
 		
         Set< World > participants = new HashSet<>();
@@ -392,8 +430,7 @@ public class BasicKOCInference {
 
 		@Override // TODO
 		public Void visit( SwitchStatement n ) {
-			// We do not check for participants inside nested switch statements. Switch statements will
-            // be considered on their own.
+			
 			return visitContinutation(n.continuation()); 
 		}
 
@@ -418,11 +455,10 @@ public class BasicKOCInference {
 		}
 
         /**
-		 * If there is no initializer, return the given {@code VaraibleDeclaration} without 
-		 * change, otherwise visit its initializer and return a new {@code VaraibleDeclaration}
+		 * If there is an initializer, visits its expression and collects participants.
 		 */
 		private Void visitVariableDeclaration( VariableDeclaration vd ){
-            // TODO look at vs's type's worldarguments
+            // TODO look at vd's type's worldarguments
 			
 			if( !vd.initializer().isEmpty() ){
                 Set<World> initializerParticipants = new GetExpressionParticipants().GetParticipants(vd.initializer().get());
@@ -434,6 +470,11 @@ public class BasicKOCInference {
 
 	}
 
+    /**
+     * Iterates through Expressions to collect participants. 
+     * <p>
+     * Use it be calling getParticipants() on some Expression.
+     */
     private class GetExpressionParticipants extends AbstractChoralVisitor< Void >{
         
         private Set<World> participants = new HashSet<>();
@@ -468,8 +509,7 @@ public class BasicKOCInference {
 		}
 
 		@Override
-		public Void visit( MethodCallExpression n ) {
-			
+		public Void visit( MethodCallExpression n ) {		
             if( !n.methodAnnotation().get().returnType().isVoid() ){
                 GroundDataType returnType = (GroundDataType)n.methodAnnotation().get().returnType();
                 participants.addAll(returnType.worldArguments());
@@ -510,7 +550,7 @@ public class BasicKOCInference {
 
 		@Override
 		public Void visit( ClassInstantiationExpression n ) {
-			// not sure how to get the class's worlds
+			// not sure how to get the class's worlds TODO fix this
 
             for( Expression argument : n.arguments() ){
                 visit(argument);
