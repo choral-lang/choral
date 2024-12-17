@@ -6,6 +6,7 @@ import choral.ast.body.Class;
 import choral.ast.body.ClassMethodDefinition;
 import choral.ast.body.ConstructorDefinition;
 import choral.ast.body.VariableDeclaration;
+import choral.ast.body.Enum;
 import choral.types.GroundClass;
 import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
@@ -45,24 +46,38 @@ import java.util.stream.Stream;
  *String@A a = "var_a,"@A + ch.<String>com( b );
  * }
  * </pre>
+ * Besides inferring data communications, this will also insert the provided selections.
+ * <p>
  * This expects that there are no dependencies on literals and that the resulting {@code CompilationUnit} 
  * will be typed again, since most or all typeannotations will be lost
  */
-public class BasicInference {
-	/*
-	 * Iterate through all dependencies
-	 * Find a channel that can be used (based on typeargument)
-	 * iterate through that channels com methods
-	 * find a com method that can be used (based on input and output worlds)
-	 * if no such method is found, throw an error
-	 * replace the dependency expression with a communication of the dependency expression
+public class BasicDataInference {
+
+	/** An object containing all selections to be inserted */
+	Selections selections;
+	/** a map mapping from a statement to a list of all dependencies within that statement */
+	Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
+
+	public BasicDataInference( Selections selections ){
+		this.selections = selections;
+	}
+
+	public CompilationUnit inferComms( CompilationUnit cu ){
+		
+		// make the map containing all dependencies
+		buildAmendedStatements(cu);
+		
+		// Since everything in a CompilationUnit is final (in particular Statemetns and 
+		// Expressions) we need to create a new CompilationUnit
+		return createNewCompilationUnit( cu ); 
+	}
+
+	/**
+	 * Iterates through all the methods of {@code cu} (including constructors), extracts 
+	 * their dependencies, creates {@code Dependency} objects to store the dependencies 
+	 * and collects them in {@code amendedStatements}.
 	 */
-	// TODO cleanup. This is a mess.
-	public static CompilationUnit inferComms( CompilationUnit cu ){
-		
-		// a map mapping from a statement to a list of all dependency expressions within that statement
-		Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
-		
+	private void buildAmendedStatements( CompilationUnit cu ){
 		for( HigherCallable method : getMethods(cu) ){
 			for( Entry<World, List<Pair<Expression, Statement>>> entryset : method.worldDependencies().entrySet() ){
 				
@@ -74,25 +89,8 @@ public class BasicInference {
 
 					Dependency newDependency = new Dependency(dependencyExpression);
 
-					// Extract senders from dependency (what world(s) needs to send data)
-					List<? extends World> senders;
-					if( dependencyExpression instanceof MethodCallExpression ){
-						// MethodCallExpressions dont use typeAnnotation but instead use methodAnnotation
-						GroundDataType methodReturnType = (GroundDataType)((MethodCallExpression)dependencyExpression).methodAnnotation().get().returnType();
-						// Set typeannotation = returntype here for more easy access to an expression's type
-						dependencyExpression.setTypeAnnotation(methodReturnType); 
-						senders = methodReturnType.worldArguments();
-					} else {
-						senders = ((GroundDataType)dependencyExpression.typeAnnotation().get()).worldArguments();
-					}
-					
-					if( senders.size() != 1 ){
-						// We don't accept dependencies with multiple sender worlds
-						System.out.println( "Found Dependency with " + senders.size() + "senders, expected 1" );
-						return null;
-						// TODO throw some exception
-					}
-					World sender = senders.get(0);
+					// Extract sender from dependency (what world needs to send data)
+					World sender = getSender(dependencyExpression);
 					
 					System.out.println( "Role " + receiver + " needs " + dependencyExpression + " from role " + sender );
 					
@@ -100,17 +98,16 @@ public class BasicInference {
 					Pair<Pair<String, GroundInterface>, HigherMethod> comPair = findComMethod(
 						receiver, 
 						sender, 
-						(GroundDataType)dependencyExpression.typeAnnotation().get(), 
+						(GroundDataType)dependencyExpression.typeAnnotation().get(),
 						method.channels());
-
+					
 					if( comPair == null ){
 						// No viable communication method was found.
 						System.out.println( "No viable communication method was found for the dependency " + dependencyExpression );
 						// TODO throw some exception
-						return null;
 					}
 
-					// The pair consists of the channel's identifier and its type.
+					// This pair consists of the channel's identifier and its type.
 					Pair<String, GroundInterface> comChannelPair = comPair.left();
 					
 					newDependency.setChannel( comChannelPair.left(), comChannelPair.right() );
@@ -121,23 +118,59 @@ public class BasicInference {
 					amendedStatements.get(dependencyStatement).add( newDependency );
 				}
 			}
-			method.clearDependencies();
+			// clears the dependencies of the method so they won't accidentally considered twice
+			// (probably not needed) 
+			method.clearDependencies(); 
 		}
-
-		// Since everything in a CompilationUnit is final (in particular Statemetns and 
-		// Expressions) we need to create a new CompilationUnit
-		return createNewCompilationUnit(cu, amendedStatements); 
 	}
 
 	/**
-	 * Returns the first viable com method based on the input, or null is none is found. 
-	 * That is a method with name "com" which takes a type at world {@code sender} and 
-	 * retruns a type at world {@code receiver}.
+	 * Returns the world from a dependency expression that needs to send data. If the 
+	 * dependency expression has more than one sender worldm an error is thrown.
 	 * <p>
-	 * TODO also check that the channel can send the type of the dependency (need to take
-	 * another parameter)
+	 * If the dependency expression is a method call, the type-annotation is set to 
+	 * be equal to the method annotation.
 	 */
-	private static Pair<Pair<String, GroundInterface>, HigherMethod> findComMethod(World recepient, World sender, GroundDataType dependencyType, List<Pair<String, GroundInterface>> channels){
+	private World getSender( Expression dependencyExpression ){
+		// Extract senders from dependency (what world(s) needs to send data)
+		List<? extends World> senders;
+		if( dependencyExpression instanceof MethodCallExpression ){
+			// MethodCallExpressions don't use typeAnnotation but instead use methodAnnotation
+			GroundDataType methodReturnType = (GroundDataType)((MethodCallExpression)dependencyExpression).methodAnnotation().get().returnType();
+			// Set typeannotation = returntype here for more easy access to an expression's type
+			dependencyExpression.setTypeAnnotation(methodReturnType); 
+			senders = methodReturnType.worldArguments();
+		} else {
+			senders = ((GroundDataType)dependencyExpression.typeAnnotation().get()).worldArguments();
+		}
+		
+		if( senders.size() != 1 ){
+			// We don't accept dependencies with multiple sender worlds
+			System.out.println( "Found Dependency with " + senders.size() + "senders, expected 1" );
+			return null;
+			// TODO throw some exception
+		}
+		return senders.get(0);
+	}
+
+	/**
+	 * Searches through the methods of {@code channels} and returns the first viable com 
+	 * method based on the input. 
+	 * <p>
+	 * A viable method means:
+	 * <ul>
+	 * <li>{@code dependencyType} is a subtype of the channel's type</li>
+	 * <li>The method identifer is "com"</li>
+	 * <li>It rakes a parameter at world {@code sender}</li>
+	 * <li>It returns something at world {@code recipient}</li>
+	 * </ul>
+	 * Returns null if no such method is found.
+	 */
+	private Pair<Pair<String, GroundInterface>, HigherMethod> findComMethod(
+		World recepient, 
+		World sender, 
+		GroundDataType dependencyType, 
+		List<Pair<String, GroundInterface>> channels){
 		
 		for( Pair<String, GroundInterface> channelPair : channels ){
 
@@ -165,9 +198,9 @@ public class BasicInference {
 	}
 
 	/**
-	 * Retreives all methods from the {@code CompilationUnit}
+	 * Retreives all methods from the {@code CompilationUnit} including constructors
 	 */
-	private static List<HigherCallable> getMethods( CompilationUnit cu ){
+	private List<HigherCallable> getMethods( CompilationUnit cu ){
 		return Stream.concat( 
 			cu.classes().stream()
 				.flatMap( cls -> cls.methods().stream() )
@@ -182,15 +215,16 @@ public class BasicInference {
 	 * Creates a new {@code CompilationUnit} from the old, with amended method bodies (changed to 
 	 * include communications) 
 	 * <p>
-	 * We need to create a new {@code CompilationUnit} since everything in a {@code CompilationUnit} (in 
-	 * particular {@code Statements} and {@code Expressions}) are final, and can therefore not be changed.
+	 * We need to create a new {@code CompilationUnit} since everything in a {@code CompilationUnit} 
+	 * (in particular {@code Statements} and {@code Expressions}) are final, and can therefore not 
+	 * be modified.
 	 */
-	private static CompilationUnit createNewCompilationUnit( CompilationUnit old, Map<Statement, List<Dependency>> amendedStatements ){
+	private CompilationUnit createNewCompilationUnit( CompilationUnit old ){
 		List<Class> newClasses = new ArrayList<>();
 		for( Class cls : old.classes() ){
 			List<ConstructorDefinition> newConstructors = new ArrayList<>();
 			for( ConstructorDefinition constructor : cls.constructors() ){
-				Statement newBody = new VisitStatement(amendedStatements).visit(constructor.body());
+				Statement newBody = new VisitStatement().visit(constructor.body());
 
 				newConstructors.add(new ConstructorDefinition(
 					constructor.signature(), 
@@ -205,8 +239,7 @@ public class BasicInference {
 			for( ClassMethodDefinition method : cls.methods() ){
 				Statement newBody = null;
 				if( method.body().isPresent() ){
-					newBody = new VisitStatement(amendedStatements).visit(method.body().get());
-					// newBody = method.body().get();
+					newBody = new VisitStatement().visit(method.body().get());
 				}
 
 				newMethods.add(new ClassMethodDefinition(
@@ -231,12 +264,16 @@ public class BasicInference {
 				cls.position()));
 		}
 
+		List<Enum> newEnums = old.enums();
+		if( selections.enumerator() != null ) 
+			newEnums.add( selections.enumerator() ); // insert enum created by KOC inference 
+
 		return new CompilationUnit(
 			old.packageDeclaration(), 
 			old.imports(), 
 			old.interfaces(), 
 			newClasses, 
-			old.enums(), 
+			newEnums, 
 			old.position().sourceFile());
 	}
 
@@ -247,17 +284,10 @@ public class BasicInference {
 	 * Statement} is in the {@code amendedStatements} map, the {@code Expression}s of that 
 	 * {@code Statement} are visited by {@code VisitExpression}
 	 */
-	private static class VisitStatement extends AbstractChoralVisitor< Statement >{
+	private class VisitStatement extends AbstractChoralVisitor< Statement >{
 		
-		/** A map mapping Statements to a list of all dependencies within that Statement 
-		 * <p>
-		 * Mapping form a {@code Statement} to a {@code List} of {@code Dependency}s. Each 
-		 */
-		Map<Statement, List<Dependency>> amendedStatements;
 		
-		public VisitStatement(Map<Statement, List<Dependency>> amendedStatements){
-			this.amendedStatements = amendedStatements;
-		}
+		public VisitStatement(){}
 
 		@Override
 		public Statement visit( Statement n ) {
@@ -322,16 +352,25 @@ public class BasicInference {
 			List<Dependency> dependencyList = amendedStatements.get(n);
 			Expression newCondition;
 			if( dependencyList == null ){
-				// If this statement has no dependencies, there is no reason to visit its expression
+				// If this statement has no dependencies, there is no reason to visit its condition
 				newCondition = n.condition();
 			} else{
 				newCondition = visitExpression(dependencyList, n.condition());
 			}
 
+			// Insert selections if there are any
+			Statement newIfBranch = visitContinutation(n.ifBranch());
+			Statement newElseBranch = visitContinutation(n.elseBranch());
+			List<List<Expression>> selectionsToInsert = selections.selections().get( n );
+			if( selectionsToInsert != null ){
+				newIfBranch = Selections.chainSelections( newIfBranch , selectionsToInsert.get(0));
+				newElseBranch = Selections.chainSelections( newElseBranch , selectionsToInsert.get(1));
+			}
+
 			return new IfStatement(
 				newCondition, 
-				visit(n.ifBranch()), 
-				visit(n.elseBranch()), 
+				newIfBranch,
+				newElseBranch, 
 				visitContinutation(n.continuation()), n.position());
 		}
 
@@ -394,9 +433,9 @@ public class BasicInference {
 		}
 
 		/**
-		 * For some initial {@code Expression} and a list of {@code dependencyPair}s, visits the 
-		 * initial {@code Expression} once for each dependencyPair.
-		 * @param dependencyPairList must not be empty
+		 * For some initial {@code Expression} and a list of {@code Dependency}s, visits the 
+		 * initial {@code Expression} with the dependency list.
+		 * @param dependencyList must not be empty
 		 */
 		private Expression visitExpression( List<Dependency> dependencyList, Expression first ){
 			
@@ -413,7 +452,7 @@ public class BasicInference {
 		}
 
 		/**
-		 * if there is no initializer, return the given {@code VaraibleDeclaration} without 
+		 * If there is no initializer, return the given {@code VaraibleDeclaration} without 
 		 * change, otherwise visit its initializer and return a new {@code VaraibleDeclaration}
 		 */
 		private VariableDeclaration visitVariableDeclaration( List<Dependency> dependencyList, VariableDeclaration vd ){
@@ -437,35 +476,13 @@ public class BasicInference {
 	 * anything inside {@code dependencyList}. If an {@code Expression} is 
 	 * equal to a dependency it is replaced with a communication.
 	 */
-	private static class VisitExpression extends AbstractChoralVisitor< Expression >{
-		/*
-		 * TODO
-		 * comExpressions need to be made on the fly.
-		 * This is because we might have nested dependencies.
-		 * for example, consider the expression (taken from the simplemethodcalls example)
-		 * c_A.fun_in( c_B.fun_in_out( c_A.fun_out() ) );
-		 * where 
-		 * 		c_A.fun_in() takes a Integer@A, 
-		 * 		c_B.fun_in_out() takes an Integer@B and retruns an Integer@B
-		 * 		c_A.fun_out() returns an Integer@A
-		 * we have two dependencies:
-		 * 		c_A.fun_in() needs c_B.fun_in_out()
-		 * 		c_B.fun_in_out() needs c_A.fun_out()
-		 * we need to make sure that the outer dependency (c_A.fun_in() needs c_B.fun_in_out()) 
-		 * contains the inner dependency (c_B.fun_in_out() needs c_A.fun_out())
-		 * 
-		 * It might be the case that we can simply solve the outer dependency first folowed by 
-		 * the inner dependency.
-		 * We cannot solve the inner solution first, since after this is solved, the outer dependency 
-		 * doesn't match the original problematic expression anymore.
-		 * 
-		 * also TODO support more expressions
-		 */
-
+	private class VisitExpression extends AbstractChoralVisitor< Expression >{
+		// We should be able to return immediately when the dependencylist becomes empty
+		// Maybe its enough to insert a check in checkIfDependency?
+		// TODO implement this
 
 		/** A list of all the dependencies to check in this expression */
 		List<Dependency> dependencyList;
-		
 
 		public VisitExpression(List<Dependency> dependencyList){
 			this.dependencyList = dependencyList;
@@ -506,19 +523,13 @@ public class BasicInference {
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
-			// Otherwise we create a new expression
 
 			List<Expression> newArgs = new ArrayList<>();
 			for(int i = 0; i < n.arguments().size(); i++){
 				Expression argument = n.arguments().get(i);
 				
-				// visit all of the argumetns and add them to the new list of arguments
+				// visit all of the arguments and add them to the new list of arguments
 				newArgs.add( visit(argument) );
-				// We might be able to return quickly if we when we find the originalExpression
-				// for now we don't TODO implement quicker returns
-				// If !visit(argument).equals(argument) then the argument must have been amended, 
-				// and thus the originalExpression must have been found in this argument and we 
-				// should be able to return quickly.
 			}
 
 			return new MethodCallExpression(
@@ -592,13 +603,8 @@ public class BasicInference {
 			for(int i = 0; i < n.arguments().size(); i++){
 				Expression argument = n.arguments().get(i);
 				
-				// visit all of the argumetns and add them to the new list of arguments
+				// visit all of the arguments and add them to the new list of arguments
 				newArgs.add( visit(argument) );
-				// We might be able to return quickly if we when we find the originalExpression
-				// for now we don't TODO implement quicker returns
-				// If !visit(argument).equals(argument) then the argument must have been amended, 
-				// and thus the originalExpression must have been found in this argument and we 
-				// should be able to return quickly.
 			}
 
 			return new ClassInstantiationExpression(
@@ -634,7 +640,7 @@ public class BasicInference {
 
 		@Override
 		public Expression visit( NullExpression n ) {
-			// Nothing can depend on null, so no need to compare to OriginalExpression
+			// Nothing can depend on null, so no need to check dependencies
 			return n;
 		}
 
@@ -673,6 +679,11 @@ public class BasicInference {
 			throw new UnsupportedOperationException("EnumCaseInstantiationExpression not supported\n\tExpression at " + n.position().toString());
 		}
 
+		/**
+		 * Checks if an {@code Expression} is a {@code Dependency}. If so, visits the {@code 
+		 * Expression} and returns the visited expression wrapped in a communication, specified 
+		 * by the {@code Dependency}. Otherwise returns null.
+		 */
 		private Expression checkIfDependency( Expression n ){
 			for( Dependency dependency : dependencyList ){
 				if( n.equals(dependency.originalExpression) ){
@@ -691,7 +702,7 @@ public class BasicInference {
 	 * Has method {@code createComExpression} for creating a communication expression out of
 	 * the stored communication and the provided {@code Expression} argument.
 	 */
-	private static class Dependency {
+	private class Dependency {
 		private Expression originalExpression;
 		private HigherMethod comMethod;
 		private String channelIdentifier;
@@ -736,7 +747,7 @@ public class BasicInference {
 
 		/**
 		 * Creates the {@code Expression} containing the communiction of the dependency. Note
-		 * that the argument of the communication method ({@code visitedExpression}) should 
+		 * that the argument of the communication method ({@code visitedExpression}) must 
 		 * be visited before creating the comExpression.
 		 * <p>
 		 * This expression needs
@@ -746,11 +757,11 @@ public class BasicInference {
 		 * <p>
 		 * 2. Arguments 
 		 * 		- Our {@code visitedDependency} expression. This is expected to be a 
-		 * 		visited version of {@code originalExpression}. Note that his must be 
+		 * 		visited version of {@code originalExpression}. Note that this must be 
 		 * 		visited before calling {@code createComExpression}. This is because 
-		 * 		the visitor uses java's {@code Object.equals()} to check if  an 
-		 * 		expression is a dependency. If {@code createComExpression} is called 
-		 * 		before visiting {@code originalExpression} then dependencies inside
+		 * 		we use java's {@code Object.equals()} to check if  an expression is a 
+		 * 		dependency. If {@code createComExpression} is called before visiting 
+		 * 		{@code originalExpression} then dependencies inside
 		 * 		{@code originalExpression} (nested dependencies) will not be caught. 
 		 * <p>
 		 * 3. type argumetns
@@ -764,7 +775,7 @@ public class BasicInference {
 		 * 		otherwise nested dependencies will not be caught.
 		 */
 		public Expression createComExpression( Expression visitedDependency ){
-			// This cannot be void, since it would indicate that a role depends on a void, maybe add an assert?
+
 			TypeExpression typeExpression;
 			if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
 				typeExpression = getTypeExpression((GroundTypeParameter)originalExpression.typeAnnotation().get());
@@ -778,10 +789,10 @@ public class BasicInference {
 			
 			MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments, visitedDependency.position());
 			
-			// The comMethod is a method inside its channel, so we need to make the channel its scope
+			// The comMethod is a method inside a channel, so we need to make the channel its scope
 			FieldAccessExpression scope = new FieldAccessExpression(new Name(channelIdentifier), visitedDependency.position());
 			
-			// Something like channel.< Type >com( Expression )
+			// Something like channel.< Type >com( visitedDependency )
 			return new ScopedExpression(scope, scopedExpression);
 		}
 

@@ -43,6 +43,7 @@ import choral.utils.Pair;
 import com.google.common.base.Strings;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1118,8 +1119,8 @@ public class RelaxedTyper {
 						for( int i = 0; i < cparams.size(); i++ ) {
 							GroundDataType cp = cparams.get( i ).type();
 							GroundDataType mp = mparams.get( i ).type();
-							mcsub &= mp.isSubtypeOf_relaxed( cp );
-							cmsub &= cp.isSubtypeOf_relaxed( mp );
+							mcsub &= mp.isSubtypeOf( cp );
+							cmsub &= cp.isSubtypeOf( mp );
 						}
 						if( mcsub ) {
 //							System.out.println( "subsumed by most specific candidate " + m );
@@ -1812,6 +1813,7 @@ public class RelaxedTyper {
 							args,
 							t.methods( n.name().identifier() ).filter( this::checkMemberAccess )
 					);
+					Member.GroundMethod selected;
 					if( ms.isEmpty() ) {
 						throw new AstPositionedException( n.position(),
 								new StaticVerificationException( "cannot resolve method '"
@@ -1820,15 +1822,25 @@ public class RelaxedTyper {
 										.joining( ",", "(", ")", "" ) )
 										+ "' in '" + t + "'" ) );
 					} else if( ms.size() > 1 ) {
-						throw new AstPositionedException( n.position(),
+						// Since findMostSpecificCallable has been relaxed to not check world 
+						// corresponcence, if one method is only overloaded on the worlds of 
+						// its parameters, then every overload of that method will be returned 
+						// by findMostSpecificCallable. We prioritize not sending arguments 
+						// for now.
+						selected = checkArgWorlds(ms, args);
+						if( selected == null ){
+							throw new AstPositionedException( n.position(),
 								new StaticVerificationException(
 										"ambiguous method invocation, " +
 												ms.stream().map( Member.GroundCallable::toString )
 														.collect( Collectors.collectingAndThen(
 																Collectors.toList(),
 																Formatting.joiningOxfordComma() ) ) ) );
+						}
+						
+					} else{
+						selected = (Member.GroundMethod) ms.get( 0 );
 					}
-					Member.GroundMethod selected = (Member.GroundMethod) ms.get( 0 );
 					n.setMethodAnnotation( selected );
 					leftStatic = false;
 
@@ -1861,6 +1873,57 @@ public class RelaxedTyper {
 									.joining( ",", "(", ")", "" ) )
 									+ "' in 'void'" ) );
 				}
+			}
+
+			/**
+			 * take a list of methods and a list of arguments and check if the args match any 
+			 * method. 
+			 * <p>
+			 * We iterate over the arguments, and if the argument's worlds are equal to at 
+			 * least one method's corersponding parameter's worlds, then we filter out all 
+			 * methods whose corresponding parameter's worlds don't match the argument's 
+			 * worlds. 
+			 * <p>
+			 * if the argument's worlds are not equal to at least one method's corersponding 
+			 * parameter's worlds, then we check if all methods corresponding parameters are 
+			 * at the same worlds. If so, we continue (the argument will be a dependency of 
+			 * that world). If not we return null (since we don't know which world to make 
+			 * the argument a dependnecy of). We also return null if after iterating through 
+			 * all arguments there is more than one method left (the methodcall is ambiguous).
+			 */
+			private static Member.GroundMethod checkArgWorlds( List< ? extends Member.GroundCallable > methods, List< ? extends GroundDataType > args){
+				
+				for( AtomicInteger i = new AtomicInteger(); i.get() < args.size(); i.incrementAndGet() ){
+					// We use an Atomic integer to be able to reference it inside a lambda
+					List< ? extends World > argWorlds = args.get(i.get()).worldArguments();
+					List< ? extends Member.GroundCallable > matchesWorlds = methods.stream()
+						.filter( method ->  // filter methods whose corresponding parameter's world matches the arg's worlds
+							getParamWorlds(method, i.get()).equals(argWorlds) )
+						.toList();
+					if( matchesWorlds.isEmpty() ){ // no method matches the worlds of the argument
+						List< ? extends World > firstWorlds = getParamWorlds(methods.get(0), i.get());
+						boolean allAtSameWorld = methods.stream().allMatch( method -> getParamWorlds(method, i.get()).equals(firstWorlds) );
+						if( !allAtSameWorld ){
+							// we don't know which world to make the argument a dependency of
+							return null;
+						}
+					} else{
+						// we remove all methods whose parameter's worlds don't match the argument's worlds
+						methods = matchesWorlds;
+					}
+				}
+
+				if( methods.size() != 1 )
+					return null; 
+				else
+					return (Member.GroundMethod)methods.get(0);
+			}
+
+			/**
+			 * Helper for checkArgWorlds
+			 */
+			private static List< ? extends World > getParamWorlds( Member.GroundCallable method, int paramIndex ){
+				return method.higherCallable().innerCallable().signature().parameters().get(paramIndex).type().worldArguments();
 			}
 
 			@Override
