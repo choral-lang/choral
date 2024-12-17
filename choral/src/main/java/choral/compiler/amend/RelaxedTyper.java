@@ -53,11 +53,6 @@ import java.util.stream.Stream;
  */
 public class RelaxedTyper {
 
-	private boolean ignoreOverloads;
-
-	public RelaxedTyper( boolean ignoreOverloads ){
-		this.ignoreOverloads = ignoreOverloads;
-	}
 
 	private enum Phase {
 		TYPE_SYMBOL_DECLARATIONS,
@@ -68,16 +63,17 @@ public class RelaxedTyper {
 		MEMBER_GLOBAL_CHECKS,
 	}
 
-	public Collection< CompilationUnit > annotate(
+	public static Collection< CompilationUnit > annotate(
 			Collection< CompilationUnit > sourceUnits, 
-			Collection< CompilationUnit > headerUnits
+			Collection< CompilationUnit > headerUnits,
+			boolean ignoreOverloads
 	) {
 		TaskQueue taskQueue = new TaskQueue();
 		Universe universe = new Universe();
-		Visitor headerVisitor = new HeaderVisitor( taskQueue, universe );
+		Visitor headerVisitor = new HeaderVisitor( taskQueue, universe, ignoreOverloads );
 		headerUnits.forEach( cu -> taskQueue.enqueue( Phase.TYPE_SYMBOL_DECLARATIONS,
 				() -> headerVisitor.visit( cu ) ) );
-		Visitor sourceVisitor = new SourceVisitor( taskQueue, universe );
+		Visitor sourceVisitor = new SourceVisitor( taskQueue, universe, ignoreOverloads );
 		sourceUnits.forEach( cu -> taskQueue.enqueue( Phase.TYPE_SYMBOL_DECLARATIONS,
 				() -> sourceVisitor.visit( cu ) ) );
 		taskQueue.process();
@@ -91,10 +87,13 @@ public class RelaxedTyper {
 
 		private final TaskQueue taskQueue;
 		private final Universe universe;
+		public boolean ignoreOverloads;
 
-		public Visitor( TaskQueue taskQueue, Universe universe ) {
+		public Visitor( TaskQueue taskQueue, Universe universe, boolean ignoreOverloads ) {
 			this.taskQueue = taskQueue;
 			this.universe = universe;
+			this.ignoreOverloads = ignoreOverloads;
+
 		}
 
 		protected TaskQueue taskQueue() {
@@ -858,8 +857,8 @@ public class RelaxedTyper {
 	}
 
 	private static class HeaderVisitor extends Visitor {
-		public HeaderVisitor( TaskQueue taskQueue, Universe universe ) {
-			super( taskQueue, universe );
+		public HeaderVisitor( TaskQueue taskQueue, Universe universe, boolean ignoreOverloads ) {
+			super( taskQueue, universe, ignoreOverloads );
 		}
 
 		@Override
@@ -898,8 +897,8 @@ public class RelaxedTyper {
 
 	private static class SourceVisitor
 			extends Visitor {
-		public SourceVisitor( TaskQueue taskQueue, Universe universe ) {
-			super( taskQueue, universe );
+		public SourceVisitor( TaskQueue taskQueue, Universe universe, boolean ignoreOverloads ) {
+			super( taskQueue, universe, ignoreOverloads );
 		}
 
 		@Override
@@ -1827,7 +1826,11 @@ public class RelaxedTyper {
 						// its parameters, then every overload of that method will be returned 
 						// by findMostSpecificCallable. We prioritize not sending arguments 
 						// for now.
-						selected = checkArgWorlds(ms, args);
+						selected = null;
+						if( ignoreOverloads ){
+							selected = checkArgWorlds(ms, args);
+						}
+						
 						if( selected == null ){
 							throw new AstPositionedException( n.position(),
 								new StaticVerificationException(

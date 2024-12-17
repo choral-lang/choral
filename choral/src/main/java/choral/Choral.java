@@ -310,8 +310,8 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				// PrintCompilationUnits.printHeaderUnits(headerUnits);
 
 				System.out.println( "-=Typechecking=-" );
-				profilerLog( "typechecking", () -> annotatedUnits.set( new RelaxedTyper( amendOptions.ignoreOverloads() ).annotate( sourceUnits,
-							headerUnits) ) );
+				profilerLog( "typechecking", () -> annotatedUnits.set( RelaxedTyper.annotate( sourceUnits,
+							headerUnits, amendOptions.ignoreOverloads()) ) );
 				// PrintCompilationUnits.printSourceUnits(sourceUnits);
 				// PrintCompilationUnits.printWorldDependenciesAndChannels(sourceUnits);
 				
