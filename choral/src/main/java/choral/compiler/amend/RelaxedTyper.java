@@ -52,6 +52,12 @@ import java.util.stream.Stream;
  */
 public class RelaxedTyper {
 
+	private boolean ignoreOverloads;
+
+	public RelaxedTyper( boolean ignoreOverloads ){
+		this.ignoreOverloads = ignoreOverloads;
+	}
+
 	private enum Phase {
 		TYPE_SYMBOL_DECLARATIONS,
 		HIERARCHY,
@@ -61,7 +67,7 @@ public class RelaxedTyper {
 		MEMBER_GLOBAL_CHECKS,
 	}
 
-	public static Collection< CompilationUnit > annotate(
+	public Collection< CompilationUnit > annotate(
 			Collection< CompilationUnit > sourceUnits, 
 			Collection< CompilationUnit > headerUnits
 	) {

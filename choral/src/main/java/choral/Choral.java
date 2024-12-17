@@ -308,7 +308,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				// PrintCompilationUnits.printHeaderUnits(headerUnits);
 
 				System.out.println( "-=Typechecking=-" );
-				profilerLog( "typechecking", () -> annotatedUnits.set( RelaxedTyper.annotate( sourceUnits,
+				profilerLog( "typechecking", () -> annotatedUnits.set( new RelaxedTyper( amendOptions.ignoreOverloads() ).annotate( sourceUnits,
 							headerUnits) ) );
 				// PrintCompilationUnits.printSourceUnits(sourceUnits);
 				// PrintCompilationUnits.printWorldDependenciesAndChannels(sourceUnits);
@@ -668,6 +668,14 @@ class AmendOptions{
 	@Option( names = { "--epp" },
 			description = "Do end point projection on the amended file." )
 	private boolean epp = false;
+
+	@Option( names = { "--role-overloading" },
+			description = "If a method is found that is overloaded only of the roles of its parameters, use the arguments' worlds to determine the most specific method." )
+	private boolean ignoreMethodsOverloadedOnRoles = false;
+
+	public boolean ignoreOverloads(){
+		return ignoreMethodsOverloadedOnRoles;
+	}
 
 	public boolean project(){
 		return epp;
