@@ -20,6 +20,7 @@ import choral.utils.Pair;
 import choral.ast.Name;
 import choral.ast.type.*;
 import choral.ast.visitors.AbstractChoralVisitor;
+import choral.exceptions.CommunicationInferenceException;
 import choral.ast.statement.*;
 import choral.ast.expression.*;
 
@@ -103,8 +104,7 @@ public class BasicDataInference {
 					
 					if( comPair == null ){
 						// No viable communication method was found.
-						System.out.println( "No viable communication method was found for the dependency " + dependencyExpression );
-						// TODO throw some exception
+						throw new CommunicationInferenceException( "No viable communication method was found for the dependency " + dependencyExpression );
 					}
 
 					// This pair consists of the channel's identifier and its type.
@@ -146,9 +146,7 @@ public class BasicDataInference {
 		
 		if( senders.size() != 1 ){
 			// We don't accept dependencies with multiple sender worlds
-			System.out.println( "Found Dependency with " + senders.size() + "senders, expected 1" );
-			return null;
-			// TODO throw some exception
+			throw new CommunicationInferenceException( "Found Dependency with " + senders.size() + " senders, expected 1" );
 		}
 		return senders.get(0);
 	}
@@ -819,9 +817,7 @@ public class BasicDataInference {
 					Collections.emptyList());
 			}
 			
-			System.out.println( "ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() ); 
-			// TODO throw some exception
-			return null;
+			throw new CommunicationInferenceException( "ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() ); 
 		}
 
 	}

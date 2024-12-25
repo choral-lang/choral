@@ -26,6 +26,8 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
+import choral.exceptions.ChoralCompoundException;
+import choral.exceptions.CommunicationInferenceException;
 import choral.types.GroundDataType;
 import choral.types.GroundInterface;
 import choral.types.Member.HigherMethod;
@@ -121,8 +123,7 @@ public class BasicKOCInference {
 		public Void visit( IfStatement n ) {
 			List< ? extends World > senders = ((GroundDataType)n.condition().typeAnnotation().get()).worldArguments();
             if( senders.size() != 1 ){
-                System.out.println( "Found " + senders.size() + " roles, expected 1" );
-                return null; // TODO throw some error
+                throw new CommunicationInferenceException("Found " + senders.size() + " roles, expected 1");
             }
             World sender = (World)senders.get(0);
 
@@ -214,10 +215,11 @@ public class BasicKOCInference {
             }
 
             if( !recipients.isEmpty() ){
+                List<CommunicationInferenceException> exceptions = new ArrayList<>();
                 for( World recipient : recipients ){
-                    System.out.println( "No viable selection method was found for" + recipient );
+                    exceptions.add( new CommunicationInferenceException("No viable selection method was found for " + recipient + " with sender " + initialSender) );
                 }
-                return null; // TODO throw some error
+                throw new ChoralCompoundException(exceptions);
             }
 
             return selectionList;
@@ -428,10 +430,9 @@ public class BasicKOCInference {
 			return visitContinutation(n.continuation()); 
 		}
 
-		@Override // TODO
+		@Override // Not supported
 		public Void visit( SwitchStatement n ) {
-			
-			return visitContinutation(n.continuation()); 
+			throw new UnsupportedOperationException("SwitchStatement not supported\n\tStatement at " + n.position().toString());
 		}
 
 		@Override
