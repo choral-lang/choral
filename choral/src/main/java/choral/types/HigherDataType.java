@@ -176,8 +176,10 @@ public abstract class HigherDataType extends TypeBase
 	public boolean isSubtypeOf_relaxed( Type type, boolean strict ) {
 		if( type instanceof HigherDataType ) {
 			HigherDataType t = (HigherDataType) type;
-			return applyTo( worldParameters ).isSubtypeOf_relaxed( t.applyTo( worldParameters ),
-					strict );
+			if( worldParameters.size() == t.worldParameters.size() ) {
+				return applyTo( worldParameters ).isSubtypeOf_relaxed( t.applyTo( worldParameters ),
+						strict );
+			}
 		}
 		return false;
 	}

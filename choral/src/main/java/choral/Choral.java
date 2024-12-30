@@ -26,7 +26,11 @@ import choral.ast.Position;
 import choral.compiler.Compiler;
 import choral.compiler.*;
 import choral.compiler.amend.RelaxedTyper;
+import choral.compiler.amend.BasicDataInference;
+import choral.compiler.amend.BasicKOCInference;
+import choral.compiler.amend.InferCommunications;
 import choral.utils.PrintCompilationUnits;
+import choral.utils.Streams.WrappedException;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.ChoralException;
@@ -41,6 +45,7 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -266,16 +271,16 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		@Mixin
 		PathOption.SourcePathOption sourcesPathOption;
 
+		@Mixin
+		AmendOptions amendOptions;
+
 		@Parameters( index = "0", arity = "1" )
 		String symbol;
-
-		@Parameters( index = "1..*", arity = "0..*" )
-		List< String > worlds;
 
 		public Integer call(){
 			System.out.println( "amend called" );
 			try{
-				System.out.println("Collecting sourcefiles");
+				System.out.println( "-=Collecting sourcefiles=-" );
 				Collection< File > sourceFiles = sourcesPathOption.getPaths( true ).stream()
 						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
 							if( Files.isDirectory( q ) ) return false;
@@ -287,12 +292,12 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						.map( Path::toFile )
 						.collect( Collectors.toList() );
 
-				System.out.println("Creating sourceunits");
+				System.out.println( "-=Creating sourceunits=-" );
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 				// PrintCompilationUnits.printSourceUnits(sourceUnits);
 
-				System.out.println("Creating headerunits");
+				System.out.println( "-=Creating headerunits=-" );
 				Collection< CompilationUnit > headerUnits = Stream.concat(
 							HeaderLoader.loadStandardProfile(),
 							HeaderLoader.loadFromPath(
@@ -304,13 +309,52 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				AtomicReference< Collection< CompilationUnit > > annotatedUnits = new AtomicReference<>();
 				// PrintCompilationUnits.printHeaderUnits(headerUnits);
 
-				System.out.println("typechecking");
+				System.out.println( "-=Typechecking=-" );
 				profilerLog( "typechecking", () -> annotatedUnits.set( RelaxedTyper.annotate( sourceUnits,
-							headerUnits) ) );
+							headerUnits, amendOptions.ignoreOverloads()) ) );
 				// PrintCompilationUnits.printSourceUnits(sourceUnits);
 				// PrintCompilationUnits.printWorldDependenciesAndChannels(sourceUnits);
+				
+				
+				System.out.println( "-=Infering communications=-" );
 
-						
+				// TODO maybe use an option to choose inference alghorithm
+				InferCommunications inference = new InferCommunications();
+				List<CompilationUnit> amendedSourceUnits = annotatedUnits.get().stream()
+					.map( inference::inferCommunications ).toList();
+				
+				System.out.println( "-=Typechecking (un-relaxed)=-" );
+					profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( amendedSourceUnits,
+								headerUnits) ) );
+				
+				System.out.println( "-=Checks projectability=-" );
+				Compiler.checkProjectiability( annotatedUnits.get() );
+
+				if( amendOptions.project() ){
+					
+					System.out.println( "-=Projecting amended compilationunits=-" );
+					try {
+						Compiler.project(
+								emissionOptions.isDryRun(),
+								emissionOptions.isAnnotated(),
+								//						emissionOptions.useCanonicalPaths() TODO: implement this
+								//						emissionOptions.isOverwritingAllowed() TODO: implement this
+								annotatedUnits.get(),
+								symbol,
+								Collections.emptyList(),
+								emissionOptions.targetpath()
+						);
+					} catch( IOException e ) {
+						throw new RuntimeException( e );
+					}
+					
+				} else{
+					if( !emissionOptions.isDryRun() ){
+						System.out.println( "-=Converting compulationunits to choral=-" );
+						ChoralCompiler.generateChoralFiles( annotatedUnits.get(), headerUnits, emissionOptions.targetpath() );
+					}
+				}
+	
 			} catch( Exception e ){
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
 				System.out.println( "compilation failed." );
@@ -616,6 +660,26 @@ class EmissionOptions {
 
 	public Optional< Path > targetpath() {
 		return Optional.ofNullable( targetpath );
+	}
+}
+
+@Command()
+class AmendOptions{
+
+	@Option( names = { "--epp" },
+			description = "Do end point projection on the amended file." )
+	private boolean epp = false;
+
+	@Option( names = { "--role-overloading" },
+			description = "If a method is found that is overloaded only on the roles of its parameters, use the arguments' roles to determine the most specific method." )
+	private boolean ignoreMethodsOverloadedOnRoles = false;
+
+	public boolean ignoreOverloads(){
+		return ignoreMethodsOverloadedOnRoles;
+	}
+
+	public boolean project(){
+		return epp;
 	}
 }
 

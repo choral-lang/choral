@@ -76,7 +76,7 @@ public class PrintCompilationUnits {
 						method.signature().typeAnnotation().get().worldDependencies().forEach( (world, depenList) -> {
 							// world dependencies
 							System.out.println( "\tRole " + world + " needs" );
-							depenList.forEach( dependency -> System.out.println( "\t\t" + dependency + " of type " + ((GroundDataType)dependency.typeAnnotation().get()).toString() + " at " + dependency.position() ) );
+							depenList.forEach( dependency -> System.out.println( "\t\t" + dependency.left() + " of type " + ((GroundDataType)dependency.left().typeAnnotation().get()).toString() + " at " + dependency.left().position() ) );
 						} );
 					}else{
 						System.out.println( "\tNone" );
@@ -104,7 +104,7 @@ public class PrintCompilationUnits {
 						method.signature().typeAnnotation().get().worldDependencies().forEach( (world, depenList) -> {
 							// world dependencies
 							System.out.println( "\tRole " + world + " needs" );
-							depenList.forEach( dependency -> System.out.println( "\t\t" + dependency + " of type " + ((GroundDataType)dependency.typeAnnotation().get()).toString() + " at " + dependency.position() ) );
+							depenList.forEach( dependency -> System.out.println( "\t\t" + dependency.left() + " of type " + ((GroundDataType)dependency.left().typeAnnotation().get()).toString() + " at " + dependency.left().position() ) );
 						} );
 					}else{
 						System.out.println( "\t\tNone" );
