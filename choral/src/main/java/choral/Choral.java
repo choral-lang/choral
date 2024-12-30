@@ -671,7 +671,7 @@ class AmendOptions{
 	private boolean epp = false;
 
 	@Option( names = { "--role-overloading" },
-			description = "If a method is found that is overloaded only of the roles of its parameters, use the arguments' worlds to determine the most specific method." )
+			description = "If a method is found that is overloaded only on the roles of its parameters, use the arguments' roles to determine the most specific method." )
 	private boolean ignoreMethodsOverloadedOnRoles = false;
 
 	public boolean ignoreOverloads(){
