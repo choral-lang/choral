@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  * For example, the code
  * <pre>
  * {@code
- * SymChannel@( A, B )<String> channel;
+ * SymChannel@( A, B )<String> ch;
  *String@B b = "var_b"@B;
  *String@A a = "var_a,"@A + b;
  * }
@@ -42,7 +42,7 @@ import java.util.stream.Stream;
  * Would become 
  * <pre>
  * {@code
- * SymChannel@( A, B )<String> channel;
+ * SymChannel@( A, B )<String> ch;
  *String@B b = "var_b"@B;
  *String@A a = "var_a,"@A + ch.<String>com( b );
  * }

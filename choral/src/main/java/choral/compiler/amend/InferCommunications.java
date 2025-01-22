@@ -21,6 +21,6 @@ public class InferCommunications {
          * leave it up to the data inference to insert these selections.
          */
 
-        return new BasicDataInference( selections ).inferComms(cu);
+        return new VariableReplacement( selections ).inferComms(cu);
     }
 }
