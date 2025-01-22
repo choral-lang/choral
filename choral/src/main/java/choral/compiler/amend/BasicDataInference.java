@@ -56,7 +56,7 @@ public class BasicDataInference {
 
 	/** An object containing all selections to be inserted */
 	Selections selections;
-	/** a map mapping from a statement to a list of all dependencies within that statement */
+	/** A map mapping from a statement to a list of all dependencies within that statement */
 	Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
 
 	public BasicDataInference( Selections selections ){
