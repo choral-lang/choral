@@ -20,7 +20,7 @@ import choral.ast.statement.Statement;
  */
 public class Selections {
 
-    private Map< Statement, List<List<Expression>> > selections = new HashMap<>();
+    private Map< Statement, List< List<Expression>> > selections = new HashMap<>();
     private Enum enumerator;
     
     public Selections(

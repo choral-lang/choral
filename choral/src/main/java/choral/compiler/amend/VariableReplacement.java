@@ -436,25 +436,11 @@ public class VariableReplacement{
                 // This continuation contains dependencies. This means we might need to create variables
 				List< VariableDeclaration > variables = new ArrayList<>();
                 for( Dependency dependency : dependencyList ){
-                    if( !hasVariable(dependency) ){
-                        // Create variable
-                        Name variableName = new Name( dependency.originalExpression() + "at" + dependency.recipient());
-                        AssignExpression initializer = new AssignExpression(
-                            dependency.createComExpression( dependency.originalExpression ), 
-                            new FieldAccessExpression(variableName), 
-                            Operator.ASSIGN);
-                        
-                        variables.add(new VariableDeclaration(
-                            variableName, 
-                            dependency.getType(), 
-                            Collections.emptyList(), 
-                            initializer, 
-                            continutation.position()));
-                        dependencyVariables.put(dependency, variableName);
-                    }
+					// Create variable
+					createVariables(dependency, variables, continutation, dependencyList);
                 }
                 if( variables.size() > 0 )
-                    return new VariableDeclarationStatement(variables, visit(continutation));
+					return chainVariables( variables, visit( continutation ) );
                 else
                     return visit(continutation); 
 			}
@@ -472,6 +458,81 @@ public class VariableReplacement{
             }
             return false;
         }
+
+		private Name getVariable( Dependency dependency ){
+			// TODO implement better way to compare expressions/dependencies
+			String dependencyString = dependency.originalExpression().toString();
+            for( Dependency solvedDependency : dependencyVariables.keySet() ){
+                if( solvedDependency.originalExpression().toString().equals(dependencyString) )
+                    return dependencyVariables.get(solvedDependency);
+            }
+            return null;
+		}
+
+		/**
+		 * Creates a variable for the given dependency and all of its nested dependencies.
+		 */
+		private void createVariables( 
+			Dependency dependency, 
+			List< VariableDeclaration > variables,
+			Statement continutation,
+			List<Dependency> dependencyList
+		){
+			Name solvedVariable = getVariable(dependency);
+			if( solvedVariable != null ){
+				System.out.println( "Found solved dependency: " + dependency.originalExpression() + " - solved as variable: " + solvedVariable );
+				dependencyVariables.put(dependency, solvedVariable);
+				return;
+			}
+				
+			System.out.println( "Creating varaiable for dependency: " + dependency.originalExpression() );
+			// find nested dependencies
+			List< Dependency > nestedDependencies = new VisitDependency(dependencyList).getNestedDependencies(dependency);
+			for( Dependency nestedDependency : nestedDependencies ){
+				System.out.println( "Nested Dependency: " + nestedDependency.originalExpression() );
+				createVariables(nestedDependency, variables, continutation, dependencyList);
+			}
+			
+			// the name of the new variable
+			Name variableName = new Name( dependency.originalExpression().hashCode() + "at" + dependency.recipient()); // TODO attatch some random number
+			
+			// visit the dependency to solve nested dependencies
+			Expression visitedDependencyExpression = new VisitExpression().visit(dependency.originalExpression());
+			
+			// create the AssignExpression
+			AssignExpression initializer = new AssignExpression(
+				dependency.createComExpression( visitedDependencyExpression ), 
+				new FieldAccessExpression(variableName), 
+				Operator.ASSIGN);
+			
+			// create the VariableDeclaration and add it to the list of variable declarations
+			variables.add( new VariableDeclaration(
+				variableName, 
+				dependency.getType(), 
+				Collections.emptyList(), 
+				initializer, 
+				continutation.position()));
+			
+			// add the variable's name to the map of dependency variables
+			dependencyVariables.put(dependency, variableName);
+		}
+
+		/**
+		 * Chain together variable declarations.
+		 * <p>
+		 * Puts the continuation as the continuation of the last VariableDeclaration in remainingVariables.
+		 */
+		private Statement chainVariables( List< VariableDeclaration > remainingVariables, Statement continuation ){
+			if( remainingVariables.size() == 0 ){
+                return continuation;
+            }
+            VariableDeclaration variable = remainingVariables.remove(remainingVariables.size()-1);
+            VariableDeclarationStatement variableStaement = new VariableDeclarationStatement(
+                List.of( variable ), 
+                continuation,
+                continuation.position());
+            return chainVariables(remainingVariables, variableStaement);
+		}
 
 		/**
 		 * For some initial {@code Expression} and a list of {@code Dependency}s, visits the 
@@ -507,8 +568,6 @@ public class VariableReplacement{
 		// We should be able to return immediately when the dependencylist becomes empty
 		// Maybe its enough to insert a check in checkIfDependency?
 		// TODO implement this
-
-		/** A list of all the dependencies to check in this expression */
 
 		public VisitExpression(){}
 
@@ -710,7 +769,8 @@ public class VariableReplacement{
 		 */
 		private Expression checkIfDependency( Expression n ){
 			for( Dependency dependency : dependencyVariables.keySet() ){
-				if( n.toString().equals(dependency.originalExpression().toString()) ){
+				// find better way to compare expressions
+				if( n.equals(dependency.originalExpression) ){
 					return new FieldAccessExpression( dependencyVariables.get(dependency) );
 				}
 			}
@@ -718,6 +778,170 @@ public class VariableReplacement{
 		}
 	}
 
+	private class VisitDependency extends AbstractChoralVisitor< Void > {
+		
+		List<Dependency> nestedDependencies = new ArrayList<>();
+		List<Dependency> dependencyList;
+
+		public VisitDependency( List<Dependency> dependencyList ){
+			this.dependencyList = dependencyList;
+		}
+
+		public List< Dependency > getNestedDependencies( Dependency n ){
+			visit(n.originalExpression());
+			return nestedDependencies;
+		}
+
+		@Override
+		public Void visit( Expression n ) {
+			return n.accept( this );
+		}
+
+		@Override
+		public Void visit( ScopedExpression n ) {
+			checkIfDependency(n.scopedExpression());
+
+			return visit(n.scopedExpression());
+		}
+
+		@Override
+		public Void visit( FieldAccessExpression n ) {
+			// no sub expressions to visit
+			return null;
+		}
+
+		@Override
+		public Void visit( MethodCallExpression n ) {
+
+			for(int i = 0; i < n.arguments().size(); i++){
+				Expression argument = n.arguments().get(i);
+				
+				// visit all of the arguments and check if they are a dependency
+				checkIfDependency(argument);
+				visit(argument);
+			}
+
+			return null;
+		}
+		
+		@Override
+		public Void visit( AssignExpression n ) {
+			// AsignExpressions should not be able to be dependencies, and thus should never be visited by this.
+			throw new UnsupportedOperationException("AssignExpression found as dependency\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Void visit( BinaryExpression n ) {
+			
+			checkIfDependency( n.left() );
+			checkIfDependency( n.right() );
+			visit( n.left() );
+			visit( n.right() );
+			
+			return null;
+		}
+
+		@Override
+		public Void visit( EnclosedExpression n ) {
+			
+			checkIfDependency( n.nestedExpression() );
+			return visit( n.nestedExpression() );
+		}
+		
+		@Override
+		public Void visit( StaticAccessExpression n ) {
+			// has no sub expressions to visit/check
+
+			return null;
+		}
+
+		@Override
+		public Void visit( ClassInstantiationExpression n ) {
+
+			for(int i = 0; i < n.arguments().size(); i++){
+				Expression argument = n.arguments().get(i);
+				
+				// visit all of the arguments and check if they are a dependency
+				checkIfDependency(argument);
+				visit(argument);
+			}
+
+			return null;
+		}
+
+		@Override
+		public Void visit( NotExpression n ) {
+			
+			checkIfDependency( n.expression() );
+			
+			return visit( n.expression() );
+		}
+
+		@Override // not supported
+		public Void visit( ThisExpression n ) {
+			throw new UnsupportedOperationException("ThisExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override // not supported
+		public Void visit( SuperExpression n ) {
+			throw new UnsupportedOperationException("SuperExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Void visit( NullExpression n ) {
+			// no sub expressions to check
+			return null;
+		}
+
+		public Void visit( LiteralExpression.BooleanLiteralExpression n ) {
+			// no sub expressions to check
+			return null;
+		}
+
+		public Void visit( LiteralExpression.IntegerLiteralExpression n ) {
+			// no sub expressions to check
+			return null;
+		}
+
+		public Void visit( LiteralExpression.DoubleLiteralExpression n ) {
+			// no sub expressions to check
+			return null;
+		}
+
+		public Void visit( LiteralExpression.StringLiteralExpression n ) {
+			// no sub expressions to check
+			return null;
+		}
+
+		@Override // not supported
+		public Void visit( TypeExpression n ) {
+			throw new UnsupportedOperationException("TypeExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override // not supported
+		public Void visit( BlankExpression n ){
+			throw new UnsupportedOperationException("BlankExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override // not supported
+		public Void visit( EnumCaseInstantiationExpression n ){
+			throw new UnsupportedOperationException("EnumCaseInstantiationExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		/**
+		 * Checks if an {@code Expression} is a {@code Dependency}. If so, visits the {@code 
+		 * Expression} and returns the visited expression wrapped in a communication, specified 
+		 * by the {@code Dependency}. Otherwise returns null.
+		 */
+		private void checkIfDependency( Expression n ){
+			for( Dependency dependency : dependencyList ){
+				// find better way to compare expressions
+				if( n.equals(dependency.originalExpression()) ){
+					nestedDependencies.add(dependency);
+				}
+			}
+		}
+	}
 
     /**
 	 * A class for represent a dependency, consisting of the original dependency expression
