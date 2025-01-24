@@ -17,6 +17,7 @@ import choral.types.Member.HigherCallable;
 import choral.types.Member.HigherMethod;
 import choral.utils.Pair;
 import choral.ast.Name;
+import choral.ast.Position;
 import choral.ast.type.*;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.exceptions.CommunicationInferenceException;
@@ -227,7 +228,7 @@ public class VariableReplacement{
 		for( Class cls : old.classes() ){
 			List<ConstructorDefinition> newConstructors = new ArrayList<>();
 			for( ConstructorDefinition constructor : cls.constructors() ){
-				Statement newBody = new VisitStatement().visit(constructor.body());
+				Statement newBody = new VisitStatement().visitContinutation(constructor.body());
 
 				newConstructors.add(new ConstructorDefinition(
 					constructor.signature(), 
@@ -242,7 +243,7 @@ public class VariableReplacement{
 			for( ClassMethodDefinition method : cls.methods() ){
 				Statement newBody = null;
 				if( method.body().isPresent() ){
-					newBody = new VisitStatement().visit(method.body().get());
+					newBody = new VisitStatement().visitContinutation(method.body().get());
 				}
 
 				newMethods.add(new ClassMethodDefinition(
@@ -426,6 +427,7 @@ public class VariableReplacement{
 		 * Visits the continuation if there is one 
 		 */
 		private Statement visitContinutation( Statement continutation ){
+			
 			if( continutation == null )
                 return null;
             
@@ -437,7 +439,7 @@ public class VariableReplacement{
 				List< VariableDeclaration > variables = new ArrayList<>();
                 for( Dependency dependency : dependencyList ){
 					// Create variable
-					createVariables(dependency, variables, continutation, dependencyList);
+					createVariables(dependency, variables, continutation.position(), dependencyList);
                 }
                 if( variables.size() > 0 )
 					return chainVariables( variables, visit( continutation ) );
@@ -463,8 +465,12 @@ public class VariableReplacement{
 			// TODO implement better way to compare expressions/dependencies
 			String dependencyString = dependency.originalExpression().toString();
             for( Dependency solvedDependency : dependencyVariables.keySet() ){
-                if( solvedDependency.originalExpression().toString().equals(dependencyString) )
-                    return dependencyVariables.get(solvedDependency);
+                if( solvedDependency.originalExpression().toString().equals(dependencyString) ){
+					if( dependency.recipient().equals(solvedDependency.recipient()) ){
+						return dependencyVariables.get(solvedDependency);
+					}
+				}
+                    
             }
             return null;
 		}
@@ -475,7 +481,7 @@ public class VariableReplacement{
 		private void createVariables( 
 			Dependency dependency, 
 			List< VariableDeclaration > variables,
-			Statement continutation,
+			Position position,
 			List<Dependency> dependencyList
 		){
 			Name solvedVariable = getVariable(dependency);
@@ -490,7 +496,7 @@ public class VariableReplacement{
 			List< Dependency > nestedDependencies = new VisitDependency(dependencyList).getNestedDependencies(dependency);
 			for( Dependency nestedDependency : nestedDependencies ){
 				System.out.println( "Nested Dependency: " + nestedDependency.originalExpression() );
-				createVariables(nestedDependency, variables, continutation, dependencyList);
+				createVariables(nestedDependency, variables, position, dependencyList);
 			}
 			
 			// the name of the new variable
@@ -511,7 +517,7 @@ public class VariableReplacement{
 				dependency.getType(), 
 				Collections.emptyList(), 
 				initializer, 
-				continutation.position()));
+				position));
 			
 			// add the variable's name to the map of dependency variables
 			dependencyVariables.put(dependency, variableName);
