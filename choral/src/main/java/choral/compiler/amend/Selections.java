@@ -23,6 +23,8 @@ public class Selections {
     private Map< Statement, List<List<Expression>> > selections = new HashMap<>();
     private Enum enumerator;
     
+    public Selections(){}
+
     public Selections(
         Map< Statement, List<List<Expression>> > selections,
         Enum enumerator

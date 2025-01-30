@@ -340,7 +340,7 @@ public class BasicDataInference {
 			// contain Statemetns that then might contain Expressions) and 
 			// thus do not need to be checked for dependencies 
 			return new BlockStatement(
-				n.enclosedStatement(), 
+				visit(n.enclosedStatement()), 
 				visitContinutation(n.continuation()), 
 				n.position());
 		}

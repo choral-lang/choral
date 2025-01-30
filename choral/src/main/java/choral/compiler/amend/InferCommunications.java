@@ -1,26 +1,26 @@
 package choral.compiler.amend;
 
+import java.util.Collection;
+import java.util.List;
+
 import choral.ast.CompilationUnit;
 
 public class InferCommunications {
 
     public InferCommunications(){}
-    
-    public CompilationUnit inferCommunications( CompilationUnit cu ){
 
-        Selections selections = new BasicKOCInference().inferKOC( cu );
+    public CompilationUnit inferCommunications( 
+        CompilationUnit cu, 
+        Collection<CompilationUnit> headers ){
 
-        /* 
-         * I want to keep the two types of inference (knowledge of choice and data 
-         * inference) seperated, but they want accesss to the original 
-         * CompilationUnit. KOC wants to be able to see which roles are part of a 
-         * statement, and data wants to compare the original expressions to a list 
-         * of dependencies. 
-         * Because of this, I cannot have the KOC inference return a changed 
-         * CompilationUnit, so I instead have it return a Selections Object, and 
-         * leave it up to the data inference to insert these selections.
-         */
+        CompilationUnit dataComCu = new BasicDataInference( new Selections() ).inferComms(cu);
+        // Since dataComCu is now without type annotations, we need to re-annotate them again
+        RelaxedTyper.annotate( List.of(dataComCu), headers, true ); // Since coms are methods overloaded on roles we need to ignore these
 
-        return new BasicDataInference( selections ).inferComms(cu);
+        Selections selections = new BasicKOCInference().inferKOC( dataComCu );
+        CompilationUnit fullComCu = new InsertSelections( selections ).insertSelections( dataComCu );
+
+        return fullComCu;
+        
     }
 }
