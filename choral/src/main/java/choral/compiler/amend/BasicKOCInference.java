@@ -26,7 +26,12 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
+import choral.ast.visitors.PrettyPrinterVisitor;
+import choral.compiler.merge.MergeException;
+import choral.compiler.merge.StatementsMerger;
+import choral.compiler.soloist.StatementsProjector;
 import choral.exceptions.ChoralCompoundException;
+import choral.exceptions.ChoralException;
 import choral.exceptions.CommunicationInferenceException;
 import choral.types.GroundDataType;
 import choral.types.GroundInterface;
@@ -284,7 +289,42 @@ public class BasicKOCInference {
             }
             participants.remove(sender);
 
-            return participants.stream().toList();
+            return getNeedsKOC(participants, statements);
+        }
+
+        /**
+         * takes a list of worlds and statements and returns the worlds that need knowledge
+         * of choice based on the projection of the statements on the participants
+         */
+        private List<World> getNeedsKOC( Set<World> participants, List<Statement> statements ){
+            List<World> needsKOC = new ArrayList<>();
+
+            for( World participant : participants ){
+                System.out.println( "Looking at world: " + participant );
+    
+                // If either the projector or the merger throws an error, then the current participant 
+                // needs KOC. Otherwise, the participant does not need KOC
+                try {
+                    // create projections of the statements on the current participant
+                    List< Statement > projectedStatements = new ArrayList<>(statements).stream().map( 
+                    statement -> 
+                        StatementsProjector.visit( new WorldArgument( new Name(participant.identifier() )), statement ) ).toList();
+                    
+                    // merge the projected statements
+                    StatementsMerger.merge(projectedStatements);
+                    
+                    System.out.println( "World " + participant + " does not need KOC" );
+                    for( Statement statement : projectedStatements ){
+                        System.out.println( new PrettyPrinterVisitor().visit(statement) );
+                    }
+
+                } catch ( Exception e ){ // since not all implementations of merge() throws MergeException, we match on all exceptions
+                    System.out.println( "World " + participant + " needs KOC" );
+                    needsKOC.add(participant);
+                }
+            }
+            
+            return needsKOC;
         }
 
 	}
