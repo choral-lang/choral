@@ -25,6 +25,7 @@ import choral.ast.statement.*;
 import choral.ast.expression.*;
 import choral.ast.expression.AssignExpression.Operator;
 
+import java.lang.Math;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
@@ -500,7 +501,7 @@ public class VariableReplacement{
 			}
 			
 			// the name of the new variable
-			Name variableName = new Name( dependency.originalExpression().hashCode() + "at" + dependency.recipient()); // TODO attatch some random number
+			Name variableName = new Name( "dependencyAt" + dependency.recipient() + "_" + Math.abs(dependency.originalExpression().hashCode()) ); // TODO attatch some random number
 			
 			// visit the dependency to solve nested dependencies
 			Expression visitedDependencyExpression = new VisitExpression().visit(dependency.originalExpression());
