@@ -71,7 +71,7 @@ public class VariableReplacement{
 
     public CompilationUnit inferComms( CompilationUnit cu ){
 		
-		// make the map containing all dependencies
+		// Make the map containing all dependencies
 		buildAmendedStatements(cu);
 		
 		// Since everything in a CompilationUnit is final (in particular Statemetns and 
@@ -133,7 +133,7 @@ public class VariableReplacement{
 
 	/**
 	 * Returns the world from a dependency expression that needs to send data. If the 
-	 * dependency expression has more than one sender worldm an error is thrown.
+	 * dependency expression has more than one sender world an error is thrown.
 	 * <p>
 	 * If the dependency expression is a method call, the type-annotation is set to 
 	 * be equal to the method annotation.
@@ -203,7 +203,7 @@ public class VariableReplacement{
 	}
 
 	/**
-	 * Retreives all methods from the {@code CompilationUnit} including constructors
+	 * Retrieves all methods from the {@code CompilationUnit} including constructors
 	 */
 	private List<HigherCallable> getMethods( CompilationUnit cu ){
 		return Stream.concat( 
@@ -282,7 +282,13 @@ public class VariableReplacement{
 			old.position().sourceFile());
 	}
 
-    // TODO add description
+    /**
+	 * Adds communications to {@code Statements}.
+	 * <p>
+	 * Iterates through {@code Statement}s and their continuations, and anytime a {@code 
+	 * Statement} is in the {@code amendedStatements} map, the {@code Expression}s of that 
+	 * {@code Statement} are visited by {@code VisitExpression}
+	 */
 	private class VisitStatement extends AbstractChoralVisitor< Statement >{
 		
 		
@@ -570,11 +576,14 @@ public class VariableReplacement{
 
 	}
 
-	// TODO add description
+	/**
+	 * Adds communications to {@code Expressions}.
+	 * <p>
+	 * Iterates through {@code Expression}s and checks if they are equal to 
+	 * anything inside {@code dependencyVariables}. If an {@code Expression} is 
+	 * equal to a dependency it is replaced with a variable.
+	 */
 	private class VisitExpression extends AbstractChoralVisitor< Expression >{
-		// We should be able to return immediately when the dependencylist becomes empty
-		// Maybe its enough to insert a check in checkIfDependency?
-		// TODO implement this
 
 		public VisitExpression(){}
 
@@ -776,7 +785,6 @@ public class VariableReplacement{
 		 */
 		private Expression checkIfDependency( Expression n ){
 			for( Dependency dependency : dependencyVariables.keySet() ){
-				// find better way to compare expressions
 				if( n.equals(dependency.originalExpression) ){
 					return new FieldAccessExpression( dependencyVariables.get(dependency) );
 				}
@@ -942,7 +950,6 @@ public class VariableReplacement{
 		 */
 		private void checkIfDependency( Expression n ){
 			for( Dependency dependency : dependencyList ){
-				// find better way to compare expressions
 				if( n.equals(dependency.originalExpression()) ){
 					nestedDependencies.add(dependency);
 				}
