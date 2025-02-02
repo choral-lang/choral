@@ -493,16 +493,13 @@ public class VariableReplacement{
 		){
 			Name solvedVariable = getVariable(dependency);
 			if( solvedVariable != null ){
-				System.out.println( "Found solved dependency: " + dependency.originalExpression() + " - solved as variable: " + solvedVariable );
 				dependencyVariables.put(dependency, solvedVariable);
 				return;
 			}
 				
-			System.out.println( "Creating varaiable for dependency: " + dependency.originalExpression() );
 			// find nested dependencies
 			List< Dependency > nestedDependencies = new VisitDependency(dependencyList).getNestedDependencies(dependency);
 			for( Dependency nestedDependency : nestedDependencies ){
-				System.out.println( "Nested Dependency: " + nestedDependency.originalExpression() );
 				createVariables(nestedDependency, variables, position, dependencyList);
 			}
 			
@@ -526,6 +523,9 @@ public class VariableReplacement{
 				initializer, 
 				position));
 			
+			System.out.println( "Dependency: Role " + dependency.recipient() + " needs " + dependency.originalExpression() );
+			System.out.println( "Saved in variable: " + variableName );
+
 			// add the variable's name to the map of dependency variables
 			dependencyVariables.put(dependency, variableName);
 		}
