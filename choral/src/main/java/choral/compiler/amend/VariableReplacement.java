@@ -1,6 +1,5 @@
 package choral.compiler.amend;
 
-
 import choral.ast.CompilationUnit;
 import choral.ast.body.Class;
 import choral.ast.body.ClassMethodDefinition;
@@ -18,33 +17,38 @@ import choral.types.Member.HigherCallable;
 import choral.types.Member.HigherMethod;
 import choral.utils.Pair;
 import choral.ast.Name;
+import choral.ast.Position;
 import choral.ast.type.*;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.exceptions.CommunicationInferenceException;
 import choral.ast.statement.*;
 import choral.ast.expression.*;
+import choral.ast.expression.AssignExpression.Operator;
 
+import java.lang.Math;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 /**
- * A basic communication inference. Replace a dependency with a communication of that dependency.
+ * Variable replacement for data communications. replace a dependency with a new variable containing 
+ * the communicated dependency.
  * <p>
  * For example, the code
  * <pre>
  * {@code
- * SymChannel@( A, B )<String> ch;
- *String@B b = "var_b"@B;
- *String@A a = "var_a,"@A + b;
+ * SymChannel@( A, B )<Integer> ch;
+ *Integer@A a = 0@A;
+ *Integer@B b = a + a + 1@B;
  * }
  * </pre>
  * Would become 
  * <pre>
  * {@code
- * SymChannel@( A, B )<String> ch;
- *String@B b = "var_b"@B;
- *String@A a = "var_a,"@A + ch.<String>com( b );
+ * SymChannel@( A, B )<Integer> ch;
+ *Integer@A a = 0@A;
+ *Integer@B aatB = ch.<Integer>com( a );
+ *Integer@B b = aatB + aatB + 1@B;
  * }
  * </pre>
  * Besides inferring data communications, this will also insert the provided selections.
@@ -52,20 +56,22 @@ import java.util.stream.Stream;
  * This expects that there are no dependencies on literals and that the resulting {@code CompilationUnit} 
  * will be typed again, since most or all typeannotations will be lost
  */
-public class BasicDataInference {
+public class VariableReplacement{
 
-	/** An object containing all selections to be inserted */
-	Selections selections;
-	/** A map mapping from a statement to a list of all dependencies within that statement */
+    /** An object containing all selections to be inserted */
+    Selections selections;
+    /** A map mapping from a statement to a list of all dependencies within that statement */
 	Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
+    /** A map mapping from a dependency to the variable containing the communicated dependency */
+    Map<Dependency, Name> dependencyVariables = new HashMap<>();
 
-	public BasicDataInference( Selections selections ){
+    public VariableReplacement( Selections selections ){
 		this.selections = selections;
 	}
 
-	public CompilationUnit inferComms( CompilationUnit cu ){
+    public CompilationUnit inferComms( CompilationUnit cu ){
 		
-		// make the map containing all dependencies
+		// Make the map containing all dependencies
 		buildAmendedStatements(cu);
 		
 		// Since everything in a CompilationUnit is final (in particular Statemetns and 
@@ -73,7 +79,7 @@ public class BasicDataInference {
 		return createNewCompilationUnit( cu ); 
 	}
 
-	/**
+    /**
 	 * Iterates through all the methods of {@code cu} (including constructors), extracts 
 	 * their dependencies, creates {@code Dependency} objects to store the dependencies 
 	 * and collects them in {@code amendedStatements}.
@@ -89,6 +95,7 @@ public class BasicDataInference {
 					Statement dependencyStatement = dependencyPair.right();
 
 					Dependency newDependency = new Dependency(dependencyExpression);
+                    newDependency.setRecipient(receiver);
 
 					// Extract sender from dependency (what world needs to send data)
 					World sender = getSender(dependencyExpression);
@@ -126,7 +133,7 @@ public class BasicDataInference {
 
 	/**
 	 * Returns the world from a dependency expression that needs to send data. If the 
-	 * dependency expression has more than one sender worldm an error is thrown.
+	 * dependency expression has more than one sender world an error is thrown.
 	 * <p>
 	 * If the dependency expression is a method call, the type-annotation is set to 
 	 * be equal to the method annotation.
@@ -196,7 +203,7 @@ public class BasicDataInference {
 	}
 
 	/**
-	 * Retreives all methods from the {@code CompilationUnit} including constructors
+	 * Retrieves all methods from the {@code CompilationUnit} including constructors
 	 */
 	private List<HigherCallable> getMethods( CompilationUnit cu ){
 		return Stream.concat( 
@@ -222,7 +229,7 @@ public class BasicDataInference {
 		for( Class cls : old.classes() ){
 			List<ConstructorDefinition> newConstructors = new ArrayList<>();
 			for( ConstructorDefinition constructor : cls.constructors() ){
-				Statement newBody = new VisitStatement().visit(constructor.body());
+				Statement newBody = new VisitStatement().visitContinutation(constructor.body());
 
 				newConstructors.add(new ConstructorDefinition(
 					constructor.signature(), 
@@ -237,7 +244,7 @@ public class BasicDataInference {
 			for( ClassMethodDefinition method : cls.methods() ){
 				Statement newBody = null;
 				if( method.body().isPresent() ){
-					newBody = new VisitStatement().visit(method.body().get());
+					newBody = new VisitStatement().visitContinutation(method.body().get());
 				}
 
 				newMethods.add(new ClassMethodDefinition(
@@ -275,8 +282,8 @@ public class BasicDataInference {
 			old.position().sourceFile());
 	}
 
-	/**
-	 * Amends {@code Statements}.
+    /**
+	 * Adds communications to {@code Statements}.
 	 * <p>
 	 * Iterates through {@code Statement}s and their continuations, and anytime a {@code 
 	 * Statement} is in the {@code amendedStatements} map, the {@code Expression}s of that 
@@ -340,7 +347,7 @@ public class BasicDataInference {
 			// contain Statemetns that then might contain Expressions) and 
 			// thus do not need to be checked for dependencies 
 			return new BlockStatement(
-				visit(n.enclosedStatement()), 
+				n.enclosedStatement(), 
 				visitContinutation(n.continuation()), 
 				n.position());
 		}
@@ -427,7 +434,117 @@ public class BasicDataInference {
 		 * Visits the continuation if there is one 
 		 */
 		private Statement visitContinutation( Statement continutation ){
-			return continutation == null ? null : visit(continutation);
+			
+			if( continutation == null )
+                return null;
+            
+            List<Dependency> dependencyList = amendedStatements.get(continutation);
+            if( dependencyList == null ){
+				return visit(continutation);
+			} else{
+                // This continuation contains dependencies. This means we might need to create variables
+				List< VariableDeclaration > variables = new ArrayList<>();
+                for( Dependency dependency : dependencyList ){
+					// Create variable
+					createVariables(dependency, variables, continutation.position(), dependencyList);
+                }
+                if( variables.size() > 0 )
+					return chainVariables( variables, visit( continutation ) );
+                else
+                    return visit(continutation); 
+			}
+		}
+
+        /**
+         * Checks if a dependency already has a variable associated with it.
+         */
+        private boolean hasVariable( Dependency dependency ){ 
+            // TODO implement better way to compare expressions/dependencies
+            String dependencyString = dependency.originalExpression().toString();
+            for( Dependency solvedDependency : dependencyVariables.keySet() ){
+                if( solvedDependency.originalExpression().toString().equals(dependencyString) )
+                    return true;
+            }
+            return false;
+        }
+
+		private Name getVariable( Dependency dependency ){
+			// TODO implement better way to compare expressions/dependencies
+			String dependencyString = dependency.originalExpression().toString();
+            for( Dependency solvedDependency : dependencyVariables.keySet() ){
+                if( solvedDependency.originalExpression().toString().equals(dependencyString) ){
+					if( dependency.recipient().equals(solvedDependency.recipient()) ){
+						return dependencyVariables.get(solvedDependency);
+					}
+				}
+                    
+            }
+            return null;
+		}
+
+		/**
+		 * Creates a variable for the given dependency and all of its nested dependencies.
+		 */
+		private void createVariables( 
+			Dependency dependency, 
+			List< VariableDeclaration > variables,
+			Position position,
+			List<Dependency> dependencyList
+		){
+			Name solvedVariable = getVariable(dependency);
+			if( solvedVariable != null ){
+				dependencyVariables.put(dependency, solvedVariable);
+				return;
+			}
+				
+			// find nested dependencies
+			List< Dependency > nestedDependencies = new VisitDependency(dependencyList).getNestedDependencies(dependency);
+			for( Dependency nestedDependency : nestedDependencies ){
+				createVariables(nestedDependency, variables, position, dependencyList);
+			}
+			
+			// the name of the new variable
+			Name variableName = new Name( "dependencyAt" + dependency.recipient() + "_" + Math.abs(dependency.originalExpression().hashCode()) ); // TODO attatch some random number
+			
+			// visit the dependency to solve nested dependencies
+			Expression visitedDependencyExpression = new VisitExpression().visit(dependency.originalExpression());
+			
+			// create the AssignExpression
+			AssignExpression initializer = new AssignExpression(
+				dependency.createComExpression( visitedDependencyExpression ), 
+				new FieldAccessExpression(variableName), 
+				Operator.ASSIGN);
+			
+			// create the VariableDeclaration and add it to the list of variable declarations
+			variables.add( new VariableDeclaration(
+				variableName, 
+				dependency.getType(), 
+				Collections.emptyList(), 
+				initializer, 
+				position));
+			
+			System.out.println( "Dependency: Role " + dependency.recipient() + " needs " + dependency.originalExpression() );
+			System.out.println( "Saved in variable: " + variableName );
+
+			// add the variable's name to the map of dependency variables
+			dependencyVariables.put(dependency, variableName);
+		}
+
+		/**
+		 * Chain together variable declarations.
+		 * <p>
+		 * Puts the continuation as the continuation of the last VariableDeclaration in remainingVariables.
+		 */
+		private Statement chainVariables( List< VariableDeclaration > remainingVariables, Statement continuation ){
+			if( remainingVariables.size() == 0 ){
+                return continuation;
+            }
+            VariableDeclaration variable = remainingVariables.remove(remainingVariables.size()-1);
+            VariableDeclarationStatement variableStaement = new VariableDeclarationStatement(
+                List.of( variable ), 
+                continuation,
+                continuation.position());
+            return chainVariables(remainingVariables, variableStaement);
 		}
 
 		/**
@@ -437,14 +554,7 @@ public class BasicDataInference {
 		 */
 		private Expression visitExpression( List<Dependency> dependencyList, Expression first ){
 			
-			Expression newExpression = new VisitExpression(dependencyList).visit(first);
-
-			if( !dependencyList.isEmpty() ){ 
-				System.out.println( "ERROR! Could not resole the following dependencies" );
-				for( Dependency dependency  : dependencyList ){
-					System.out.println( "\t" + dependency.originalExpression() );
-				}
-			}
+			Expression newExpression = new VisitExpression().visit(first);
 
 			return newExpression;
 		}
@@ -456,7 +566,6 @@ public class BasicDataInference {
 		private VariableDeclaration visitVariableDeclaration( List<Dependency> dependencyList, VariableDeclaration vd ){
 			if( vd.initializer().isEmpty() )
 				return vd;
-			
 			return new VariableDeclaration(
 				vd.name(), 
 				vd.type(), 
@@ -468,23 +577,15 @@ public class BasicDataInference {
 	}
 
 	/**
-	 * Amends {@code Expressions}.
+	 * Adds communications to {@code Expressions}.
 	 * <p>
 	 * Iterates through {@code Expression}s and checks if they are equal to 
-	 * anything inside {@code dependencyList}. If an {@code Expression} is 
-	 * equal to a dependency it is replaced with a communication.
+	 * anything inside {@code dependencyVariables}. If an {@code Expression} is 
+	 * equal to a dependency it is replaced with a variable.
 	 */
 	private class VisitExpression extends AbstractChoralVisitor< Expression >{
-		// We should be able to return immediately when the dependencylist becomes empty
-		// Maybe its enough to insert a check in checkIfDependency?
-		// TODO implement this
 
-		/** A list of all the dependencies to check in this expression */
-		List<Dependency> dependencyList;
-
-		public VisitExpression(List<Dependency> dependencyList){
-			this.dependencyList = dependencyList;
-		}
+		public VisitExpression(){}
 
 		@Override
 		public Expression visit( Expression n ) {
@@ -683,17 +784,180 @@ public class BasicDataInference {
 		 * by the {@code Dependency}. Otherwise returns null.
 		 */
 		private Expression checkIfDependency( Expression n ){
-			for( Dependency dependency : dependencyList ){
+			for( Dependency dependency : dependencyVariables.keySet() ){
 				if( n.equals(dependency.originalExpression) ){
-					dependencyList.remove(dependency);
-					return dependency.createComExpression(visit(n));
+					return new FieldAccessExpression( dependencyVariables.get(dependency) );
 				}
 			}
 			return null;
 		}
 	}
 
-	/**
+	private class VisitDependency extends AbstractChoralVisitor< Void > {
+		
+		List<Dependency> nestedDependencies = new ArrayList<>();
+		List<Dependency> dependencyList;
+
+		public VisitDependency( List<Dependency> dependencyList ){
+			this.dependencyList = dependencyList;
+		}
+
+		public List< Dependency > getNestedDependencies( Dependency n ){
+			visit(n.originalExpression());
+			return nestedDependencies;
+		}
+
+		@Override
+		public Void visit( Expression n ) {
+			return n.accept( this );
+		}
+
+		@Override
+		public Void visit( ScopedExpression n ) {
+			checkIfDependency(n.scopedExpression());
+
+			return visit(n.scopedExpression());
+		}
+
+		@Override
+		public Void visit( FieldAccessExpression n ) {
+			// no sub expressions to visit
+			return null;
+		}
+
+		@Override
+		public Void visit( MethodCallExpression n ) {
+
+			for(int i = 0; i < n.arguments().size(); i++){
+				Expression argument = n.arguments().get(i);
+				
+				// visit all of the arguments and check if they are a dependency
+				checkIfDependency(argument);
+				visit(argument);
+			}
+
+			return null;
+		}
+		
+		@Override
+		public Void visit( AssignExpression n ) {
+			// AsignExpressions should not be able to be dependencies, and thus should never be visited by this.
+			throw new UnsupportedOperationException("AssignExpression found as dependency\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Void visit( BinaryExpression n ) {
+			
+			checkIfDependency( n.left() );
+			checkIfDependency( n.right() );
+			visit( n.left() );
+			visit( n.right() );
+			
+			return null;
+		}
+
+		@Override
+		public Void visit( EnclosedExpression n ) {
+			
+			checkIfDependency( n.nestedExpression() );
+			return visit( n.nestedExpression() );
+		}
+		
+		@Override
+		public Void visit( StaticAccessExpression n ) {
+			// has no sub expressions to visit/check
+
+			return null;
+		}
+
+		@Override
+		public Void visit( ClassInstantiationExpression n ) {
+
+			for(int i = 0; i < n.arguments().size(); i++){
+				Expression argument = n.arguments().get(i);
+				
+				// visit all of the arguments and check if they are a dependency
+				checkIfDependency(argument);
+				visit(argument);
+			}
+
+			return null;
+		}
+
+		@Override
+		public Void visit( NotExpression n ) {
+			
+			checkIfDependency( n.expression() );
+			
+			return visit( n.expression() );
+		}
+
+		@Override // not supported
+		public Void visit( ThisExpression n ) {
+			throw new UnsupportedOperationException("ThisExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override // not supported
+		public Void visit( SuperExpression n ) {
+			throw new UnsupportedOperationException("SuperExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override
+		public Void visit( NullExpression n ) {
+			// no sub expressions to check
+			return null;
+		}
+
+		public Void visit( LiteralExpression.BooleanLiteralExpression n ) {
+			// no sub expressions to check
+			return null;
+		}
+
+		public Void visit( LiteralExpression.IntegerLiteralExpression n ) {
+			// no sub expressions to check
+			return null;
+		}
+
+		public Void visit( LiteralExpression.DoubleLiteralExpression n ) {
+			// no sub expressions to check
+			return null;
+		}
+
+		public Void visit( LiteralExpression.StringLiteralExpression n ) {
+			// no sub expressions to check
+			return null;
+		}
+
+		@Override // not supported
+		public Void visit( TypeExpression n ) {
+			throw new UnsupportedOperationException("TypeExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override // not supported
+		public Void visit( BlankExpression n ){
+			throw new UnsupportedOperationException("BlankExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		@Override // not supported
+		public Void visit( EnumCaseInstantiationExpression n ){
+			throw new UnsupportedOperationException("EnumCaseInstantiationExpression not supported\n\tExpression at " + n.position().toString());
+		}
+
+		/**
+		 * Checks if an {@code Expression} is a {@code Dependency}. If so, visits the {@code 
+		 * Expression} and returns the visited expression wrapped in a communication, specified 
+		 * by the {@code Dependency}. Otherwise returns null.
+		 */
+		private void checkIfDependency( Expression n ){
+			for( Dependency dependency : dependencyList ){
+				if( n.equals(dependency.originalExpression()) ){
+					nestedDependencies.add(dependency);
+				}
+			}
+		}
+	}
+
+    /**
 	 * A class for represent a dependency, consisting of the original dependency expression
 	 * and a communication (both channel and method) for satisfying this dependency.
 	 * <p>
@@ -705,6 +969,7 @@ public class BasicDataInference {
 		private HigherMethod comMethod;
 		private String channelIdentifier;
 		private GroundInterface channel;
+        private World recipient;
 
 		public Dependency( Expression originalExpression ){
 			this.originalExpression = originalExpression;
@@ -726,6 +991,10 @@ public class BasicDataInference {
 			return channel;
 		}
 
+        public World recipient(){
+			return recipient;
+		}
+
 		public void setChannel( GroundInterface channel ){
 			this.channel = channel;
 		}
@@ -742,6 +1011,10 @@ public class BasicDataInference {
 		public void setChannelIdentifier( String channelIdentifier ){
 			this.channelIdentifier = channelIdentifier;
 		}
+
+        public void setRecipient( World recipient ){
+            this.recipient = recipient;
+        }
 
 		/**
 		 * Creates the {@code Expression} containing the communiction of the dependency. Note
@@ -775,12 +1048,12 @@ public class BasicDataInference {
 		public Expression createComExpression( Expression visitedDependency ){
 
 			TypeExpression typeExpression;
-			if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
+            if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
 				typeExpression = getTypeExpression((GroundTypeParameter)originalExpression.typeAnnotation().get());
-			} else {
+            } else{ 
 				typeExpression = getTypeExpression((GroundClassOrInterface)originalExpression.typeAnnotation().get());
 			}
-			
+
 			final List<Expression> arguments = List.of( visitedDependency );
 			final Name name = new Name(comMethod.identifier());
 			final List<TypeExpression> typeArguments = List.of( typeExpression );
@@ -820,5 +1093,46 @@ public class BasicDataInference {
 			throw new CommunicationInferenceException( "ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() ); 
 		}
 
+        /**
+         * returns the type of the dependency's original expression as a TypeExpression
+         * @return
+         */
+        public TypeExpression getType(){
+            if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
+				return getType((GroundTypeParameter)originalExpression.typeAnnotation().get());
+            } else{ 
+				return getType((GroundClassOrInterface)originalExpression.typeAnnotation().get());
+			}
+        }
+
+        private TypeExpression getType( GroundClassOrInterface type ){
+
+            return new TypeExpression(
+				new Name(type.typeConstructor().identifier()),
+				List.of( new WorldArgument(new Name(recipient.identifier()), null) ), 
+				type.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
+		}
+
+		private TypeExpression getType( GroundReferenceType type ){
+            
+            if( type instanceof GroundClass ){ // I think this is only not true for primitive types, which cannot be communicated
+				GroundClass typeGC = (GroundClass)type;
+				return new TypeExpression(
+					new Name(typeGC.typeConstructor().identifier()),
+					List.of( new WorldArgument(new Name(recipient.identifier()), null) ), 
+					typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
+			}
+			if( type instanceof GroundTypeParameter ){
+				GroundTypeParameter typeGTP = (GroundTypeParameter)type;
+				return new TypeExpression(
+					new Name(typeGTP.typeConstructor().identifier()),
+					List.of( new WorldArgument(new Name(recipient.identifier()), null) ), 
+					Collections.emptyList());
+			}
+			
+			throw new CommunicationInferenceException( "ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() ); 
+		}
+
 	}
+
 }
