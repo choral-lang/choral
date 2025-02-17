@@ -13,7 +13,7 @@ public class InferCommunications {
         CompilationUnit cu, 
         Collection<CompilationUnit> headers ){
 
-        CompilationUnit dataComCu = new BasicDataInference( new Selections() ).inferComms(cu);
+        CompilationUnit dataComCu = new VariableReplacement( new Selections() ).inferComms(cu);
         // Since dataComCu is now without type annotations, we need to re-annotate them again
         RelaxedTyper.annotate( List.of(dataComCu), headers, true ); // Since coms are methods overloaded on roles we need to ignore these
 
