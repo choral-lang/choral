@@ -1,5 +1,6 @@
 package choral.compiler.amend;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -9,18 +10,22 @@ public class InferCommunications {
 
     public InferCommunications(){}
 
-    public CompilationUnit inferCommunications( 
-        CompilationUnit cu, 
-        Collection<CompilationUnit> headers ){
-
-        CompilationUnit dataComCu = new VariableReplacement( new Selections() ).inferComms(cu);
+    public List< CompilationUnit > inferCommunications( 
+        Collection< CompilationUnit > cus, 
+        Collection< CompilationUnit > headers ){
+        
+        Collection<CompilationUnit> dataComCus = cus.stream().map( cu -> new VariableReplacement( new Selections() ).inferComms(cu) ).toList();
         // Since dataComCu is now without type annotations, we need to re-annotate them again
-        RelaxedTyper.annotate( List.of(dataComCu), headers, true ); // Since coms are methods overloaded on roles we need to ignore these
+        RelaxedTyper.annotate( dataComCus, headers, true ); // Since coms are methods overloaded on roles we need to ignore these
 
-        Selections selections = new BasicKOCInference().inferKOC( dataComCu );
-        CompilationUnit fullComCu = new InsertSelections( selections ).insertSelections( dataComCu );
-
-        return fullComCu;
+        List<CompilationUnit> fullComCus = new ArrayList<>();
+        for( CompilationUnit dataComCu : dataComCus ){
+            Selections selections = new BasicKOCInference().inferKOC( dataComCu );
+            CompilationUnit fullComCu = new InsertSelections( selections ).insertSelections( dataComCu );
+            fullComCus.add(fullComCu);
+        }
+        
+        return fullComCus;
         
     }
 }

@@ -320,8 +320,9 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 
 				// TODO maybe use an option to choose inference alghorithm
 				InferCommunications inference = new InferCommunications();
-				List<CompilationUnit> amendedSourceUnits = annotatedUnits.get().stream() 
-					.map( cu -> inference.inferCommunications( cu, headerUnits ) ).toList();
+
+				List<CompilationUnit> amendedSourceUnits = inference.inferCommunications( annotatedUnits.get(), headerUnits );
+				
 				
 				System.out.println( "-=Typechecking (un-relaxed)=-" );
 					profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( amendedSourceUnits,
