@@ -12,11 +12,13 @@ public class InferCommunications {
 
     public List< CompilationUnit > inferCommunications( 
         Collection< CompilationUnit > cus, 
-        Collection< CompilationUnit > headers ){
+        Collection< CompilationUnit > headers,
+        boolean ignoreOverloads ){
+        
         
         Collection<CompilationUnit> dataComCus = cus.stream().map( cu -> new VariableReplacement( new Selections() ).inferComms(cu) ).toList();
         // Since dataComCu is now without type annotations, we need to re-annotate them again
-        RelaxedTyper.annotate( dataComCus, headers, true ); // Since coms are methods overloaded on roles we need to ignore these
+        RelaxedTyper.annotate( dataComCus, headers, ignoreOverloads );
 
         List<CompilationUnit> fullComCus = new ArrayList<>();
         for( CompilationUnit dataComCu : dataComCus ){

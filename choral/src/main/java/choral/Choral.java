@@ -321,7 +321,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				// TODO maybe use an option to choose inference alghorithm
 				InferCommunications inference = new InferCommunications();
 
-				List<CompilationUnit> amendedSourceUnits = inference.inferCommunications( annotatedUnits.get(), headerUnits );
+				List<CompilationUnit> amendedSourceUnits = inference.inferCommunications( annotatedUnits.get(), headerUnits, amendOptions.ignoreOverloads() );
 				
 				
 				System.out.println( "-=Typechecking (un-relaxed)=-" );
