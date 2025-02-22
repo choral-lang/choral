@@ -31,6 +31,7 @@ import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.exceptions.AstPositionedException;
+import choral.exceptions.ChoralException;
 import choral.exceptions.StaticVerificationException;
 import choral.types.*;
 import choral.types.Member.HigherCallable;
@@ -1852,13 +1853,21 @@ public class RelaxedTyper {
 					// between the arguments and the selected method's parameters.
 					for( int i = 0; i < args.size(); i++ ){
 						Expression argument = n.arguments().get(i);
-						if( argument.typeAnnotation().isPresent() ){ // Some arguments might not have a type annotation
+						List<? extends World> argWorlds;
+						if( argument.typeAnnotation().isPresent() ){
+							argWorlds = ((GroundDataType)argument.typeAnnotation().get()).worldArguments();
+						} else if( argument instanceof MethodCallExpression ){ // Method calls don't have typeAnnotations, but rather use methodAnnotations
+							GroundDataTypeOrVoid returntype = ((MethodCallExpression)argument).methodAnnotation().get().returnType();
+							argWorlds = ((GroundDataType)returntype).worldArguments();
+						} else {
+							// don't know if any expression besides MethodCallExpression does not use typeAnnotation
+							throw new ChoralException( "Cannot determine the type of argument " + argument + " passed to method " + n.name() );
+						}
+						
 							List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
-							List<? extends World> argWorlds = ((GroundDataType)argument.typeAnnotation().get()).worldArguments();
 							// We call a variation of the inferCommunications, that checks 
 							// location on a given list of worlds instead of using homeworlds
 							inferCommunications(argWorlds, expectedArgWorlds, argument);
-						}
 					}
 
 					// If the selected method doesn't return Void
