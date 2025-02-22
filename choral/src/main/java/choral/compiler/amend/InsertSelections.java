@@ -46,7 +46,7 @@ public class InsertSelections {
 		for( Class cls : old.classes() ){
 			List<ConstructorDefinition> newConstructors = new ArrayList<>();
 			for( ConstructorDefinition constructor : cls.constructors() ){
-				Statement newBody = new VisitStatement().visit(constructor.body());
+				Statement newBody = new VisitStatement().visit(constructor.blockStatements());
 
 				newConstructors.add(new ConstructorDefinition(
 					constructor.signature(), 
