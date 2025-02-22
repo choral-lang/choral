@@ -1828,7 +1828,7 @@ public class RelaxedTyper {
 						// by findMostSpecificCallable. We prioritize not sending arguments 
 						// for now.
 						selected = null;
-						if( ignoreOverloads ){
+						if( ignoreOverloads || n.name().identifier().equals("com") ){
 							selected = checkArgWorlds(ms, args);
 						}
 						
@@ -1864,10 +1864,10 @@ public class RelaxedTyper {
 							throw new ChoralException( "Cannot determine the type of argument " + argument + " passed to method " + n.name() );
 						}
 						
-							List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
-							// We call a variation of the inferCommunications, that checks 
-							// location on a given list of worlds instead of using homeworlds
-							inferCommunications(argWorlds, expectedArgWorlds, argument);
+						List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
+						// We call a variation of the inferCommunications, that checks 
+						// location on a given list of worlds instead of using homeworlds
+						inferCommunications(argWorlds, expectedArgWorlds, argument);
 					}
 
 					// If the selected method doesn't return Void
