@@ -26,10 +26,8 @@ import choral.ast.Position;
 import choral.compiler.Compiler;
 import choral.compiler.*;
 import choral.compiler.amend.RelaxedTyper;
-import choral.compiler.amend.BasicDataInference;
-import choral.compiler.amend.BasicKOCInference;
 import choral.compiler.amend.InferCommunications;
-import choral.utils.PrintCompilationUnits;
+import choral.utils.FilterSourceUnits;
 import choral.utils.Streams.WrappedException;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralCompoundException;
@@ -45,7 +43,6 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -92,7 +89,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				description = "ignore headers in the same folder of the source files, unless specified by -l/--headers." )
 		boolean strictHeaderSearch = false;
 
-		@Option( names = { "--no-projectability" },
+		@Option( names = { "--no-projectabilkity" },
 				description = "skip projectability checks." )
 		boolean skipProjectability = false;
 
@@ -293,9 +290,14 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						.collect( Collectors.toList() );
 
 				System.out.println( "-=Creating sourceunits=-" );
-				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
+				Collection< CompilationUnit > allSourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
-				// PrintCompilationUnits.printSourceUnits(sourceUnits);
+				
+				
+				Collection< CompilationUnit > sourceUnits = FilterSourceUnits.filterSourceUnits(allSourceUnits, symbol);
+
+				System.out.println( "Filtered sources: " + sourceUnits.stream().map( cu -> cu.primaryType() ).toList() );
+
 
 				System.out.println( "-=Creating headerunits=-" );
 				Collection< CompilationUnit > headerUnits = Stream.concat(
@@ -307,13 +309,10 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 					)
 					.collect( Collectors.toList() );
 				AtomicReference< Collection< CompilationUnit > > annotatedUnits = new AtomicReference<>();
-				// PrintCompilationUnits.printHeaderUnits(headerUnits);
 
 				System.out.println( "-=Typechecking=-" );
 				profilerLog( "typechecking", () -> annotatedUnits.set( RelaxedTyper.annotate( sourceUnits,
 							headerUnits, amendOptions.ignoreOverloads()) ) );
-				// PrintCompilationUnits.printSourceUnits(sourceUnits);
-				// PrintCompilationUnits.printWorldDependenciesAndChannels(sourceUnits);
 				
 				
 				System.out.println( "-=Infering communications=-" );
