@@ -12,8 +12,30 @@ public class FilterSourceUnits {
     /**
      * Method made to filter source CompilationUnits. 
      * <p>
-     * Takes a Collection of CompilationUnits and a symbol and returns the CompilationUnit 
-     * matching the symbol as well as any imported CompilationUnits
+     * Takes a Collection of CompilationUnits and a symbol and returns the CompilationUnit matching 
+     * the symbol as CompilationUnits matching any imports.
+     * <p>
+     * Say you have the following filesystem:
+     * <pre>
+     * src
+     * ├─ proj1
+     * │  └─ Project1.ch
+     * ├─ proj2
+     * │  └─ Project2.ch
+     * └─ utils
+     *    └─ Utils.ch
+     * </pre>
+     * And you want to compile Project1.ch which relies on Utils.ch. This means you would need to set 
+     * the source folder to src. The way choral collects files to project is by finding all ".ch" files
+     * inside the source folder, and parse and type all of them, then only projecting your desired 
+     * file (here, Project1.ch).
+     * <p>
+     * This means, however, that Project2.ch would also be typed (despite not being imported by 
+     * Project1.ch), and if it contains errors it would cause the compiler to throw an error and not
+     * project Project1.ch.
+     * <p>
+     * With FilterSourceUnits we can filter out those CompilationUnits that our main CompilationUnit
+     * (the one matching symbol) doesn't need.
      */
     public static Collection< CompilationUnit > filterSourceUnits(
         Collection< CompilationUnit > allSourceUnits,

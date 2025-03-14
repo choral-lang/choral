@@ -293,6 +293,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				Collection< CompilationUnit > allSourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 				
+				System.out.println( "Un-filtered sources: " + allSourceUnits.stream().map( cu -> cu.primaryType() ).toList() );
 				
 				Collection< CompilationUnit > sourceUnits = FilterSourceUnits.filterSourceUnits(allSourceUnits, symbol);
 
