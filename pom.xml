@@ -27,7 +27,7 @@
         <repository>
         <id>github</id>
         <name>GitHub Packages</name>
-        <url>https://maven.pkg.github.com/viktorstrate/choral</url>
+        <url>https://maven.pkg.github.com/choral-lang/choral</url>
         </repository>
     </distributionManagement>
 </project>
