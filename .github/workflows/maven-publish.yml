@@ -3,6 +3,9 @@
 
 name: Maven Package
 
+permissions:
+  contents: write
+
 on:
   release:
     types: [created]
