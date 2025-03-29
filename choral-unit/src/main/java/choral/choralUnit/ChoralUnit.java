@@ -25,6 +25,7 @@ import choral.annotations.Choreography;
 import choral.choralUnit.annotations.Test;
 import io.github.classgraph.*;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -57,6 +58,11 @@ public class ChoralUnit {
 		MethodInfoList methods = classes.get( 0 ).getMethodInfo().filter(
 				m -> m.hasAnnotation( Test.class.getName() ) );
 
+		// Thread exceptions are collected in order to rethrow them from the main thread.
+		// This enabled automated unit tests, either directly from Java,
+		// or by inspecting the return code when running from the command line.
+		ArrayList<Throwable> threadExceptions = new ArrayList<>();
+
 		for( MethodInfo method : methods ) {
 			List< Thread > threadList = new ArrayList<>();
 			for( ClassInfo cls : classes ) {
@@ -76,18 +82,28 @@ public class ChoralUnit {
 								}
 							} catch( ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e ) {
 								e.printStackTrace();
+								threadExceptions.add(e);
 							}
 						} )
 				);
 			}
-			threadList.forEach( Thread::start );
-			threadList.forEach( t -> {
+
+			UncaughtExceptionHandler exceptionHandler = (thread, exception) -> {
+				threadExceptions.add(exception);
+			};
+			threadList.forEach(t -> t.setUncaughtExceptionHandler(exceptionHandler));
+	
+			threadList.forEach(Thread::start);
+			threadList.forEach(t -> {
 				try {
 					t.join();
-				} catch( InterruptedException e ) {
+				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-			} );
+			});
+	
+			if (!threadExceptions.isEmpty())
+				throw new RuntimeException(threadExceptions.get(0));
 		}
 
 	}
