@@ -31,10 +31,12 @@ jobs:
     - name: Unit Tests
       run: mvn test --file pom.xml
 
-    - name: Upload artefacts
+    - name: Upload Release Artefacts
       uses: softprops/action-gh-release@v2
       with:
         files: dist/target/choral-*.zip
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
 
     - name: Publish to GitHub Packages Apache Maven
       run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
