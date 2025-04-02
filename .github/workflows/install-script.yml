@@ -13,4 +13,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test install script
-        run: ./scripts/install.sh
+        run: ./scripts/install.sh --assume-yes
