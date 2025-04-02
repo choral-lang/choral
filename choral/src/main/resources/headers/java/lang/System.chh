@@ -11,4 +11,7 @@ public final class System@A {
 
     public final static PrintStream@A err;
 
+    public static long currentTimeMillis();
+    public static long nanoTime();
+
 }
