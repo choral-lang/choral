@@ -19,6 +19,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
+
+        <!-- publish package to maven repository -->
+        <maven.deploy.skip>false</maven.deploy.skip>
 	</properties>
 
     <build>
