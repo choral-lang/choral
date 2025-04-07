@@ -3,14 +3,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.choral-lang</groupId>
 	<artifactId>distribution</artifactId>
-	<version>1.0.0</version>
+	<version>${choral.version}</version>
 	<packaging>pom</packaging>
     <properties>
-        <choral.version>0.1.5</choral.version>
+        <choral.version>0.1.6</choral.version>
         <choral.url>https://www.choral-lang.org/</choral.url>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
 
     <modules>
