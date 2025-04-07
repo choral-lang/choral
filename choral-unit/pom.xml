@@ -6,9 +6,9 @@
 		<groupId>org.choral-lang</groupId>
 		<artifactId>distribution</artifactId>
 		<relativePath>../pom.xml</relativePath>
-		<version>${choral.version}</version>
+		<version>${revision}</version>
 	</parent>
-	<version>${choral.version}</version>
+	<version>${revision}</version>
 	<groupId>org.choral-lang</groupId>
 	<artifactId>choral-unit</artifactId>
 	<name>Choral-Unit</name>
@@ -62,7 +62,7 @@
         <dependency>
             <groupId>org.choral-lang</groupId>
             <artifactId>runtime</artifactId>
-            <version>${choral.version}</version>
+            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>io.github.classgraph</groupId>

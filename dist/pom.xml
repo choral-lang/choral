@@ -5,9 +5,9 @@
 		<groupId>org.choral-lang</groupId>
 		<artifactId>distribution</artifactId>
 		<relativePath>../pom.xml</relativePath>
-		<version>${choral.version}</version>
+		<version>${revision}</version>
 	</parent>
-	<version>${choral.version}</version>
+	<version>${revision}</version>
 	<groupId>org.choral-lang</groupId>
 	<artifactId>choral-zip</artifactId>
 	<url>${choral.url}</url>
@@ -18,31 +18,31 @@
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>base</artifactId>
-			<version>${choral.version}</version>
+			<version>${revision}</version>
 			<type>jar</type>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>choral</artifactId>
-			<version>${choral.version}</version>
+			<version>${revision}</version>
 			<type>jar</type>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>choral-unit</artifactId>
-			<version>${choral.version}</version>
+			<version>${revision}</version>
 			<type>jar</type>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>compare</artifactId>
-			<version>${choral.version}</version>
+			<version>${revision}</version>
 			<type>jar</type>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>runtime</artifactId>
-			<version>${choral.version}</version>
+			<version>${revision}</version>
 			<type>jar</type>
 		</dependency>
 	</dependencies>
@@ -62,7 +62,7 @@
 							<descriptors>
 								<descriptor>assembly.xml</descriptor>
 							</descriptors>
-							<finalName>choral-${choral.version}</finalName>
+							<finalName>choral-${revision}</finalName>
 							<appendAssemblyId>false</appendAssemblyId>
 						</configuration>
 					</execution>
@@ -81,7 +81,7 @@
 									<mainClass>choral.Choral</mainClass>
 								</manifest>
 							</archive>
-							<!-- <finalName>choral-v${choral.version}-standalone</finalName> -->
+							<!-- <finalName>choral-v${revision}-standalone</finalName> -->
 							<finalName>choral-standalone</finalName>
 							<appendAssemblyId>false</appendAssemblyId>
 						</configuration>
