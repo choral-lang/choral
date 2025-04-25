@@ -14,6 +14,10 @@ public class InferCommunications {
         Collection< CompilationUnit > cus, 
         Collection< CompilationUnit > headers,
         boolean ignoreOverloads ){
+
+        for( CompilationUnit cu : cus ){
+            new MiniZincInference().inferComms(cu);
+        }
         
         
         Collection<CompilationUnit> dataComCus = cus.stream().map( cu -> new VariableReplacement( new Selections() ).inferComms(cu) ).toList();
