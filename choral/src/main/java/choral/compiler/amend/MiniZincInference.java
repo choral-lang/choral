@@ -1,5 +1,8 @@
 package choral.compiler.amend;
 
+import static choral.utils.Streams.toLinkedHashMap;
+
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -8,6 +11,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import javax.print.attribute.standard.MediaSize.Other;
 
 import org.apache.commons.lang.ObjectUtils.Null;
 
@@ -40,12 +45,18 @@ import choral.ast.statement.Statement;
 import choral.ast.statement.SwitchStatement;
 import choral.ast.statement.TryCatchStatement;
 import choral.ast.statement.VariableDeclarationStatement;
+import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
+import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
+import choral.compiler.merge.ExpressionsMerger;
+import choral.compiler.merge.StatementsMerger;
+import choral.compiler.soloist.StatementsProjector;
 import choral.exceptions.CommunicationInferenceException;
 import choral.types.GroundClass;
 import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
+import choral.types.GroundDataTypeOrVoid;
 import choral.types.GroundInterface;
 import choral.types.GroundReferenceType;
 import choral.types.GroundTypeParameter;
@@ -58,8 +69,6 @@ import choral.utils.Pair;
 
 public class MiniZincInference {
 
-    /** A map mapping from a statement to a list of all dependencies within that statement */
-	Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
    	Map<HigherCallable, MiniZincInput> allInputs = new HashMap<>();
 
     public MiniZincInference(){}
@@ -84,69 +93,77 @@ public class MiniZincInference {
 		for( Pair<HigherCallable, Statement> methodPair : getMethods(cu) ){
 			HigherCallable method = methodPair.left();
 			Statement methodStatement = methodPair.right();
+			//* maps an expression to the index of the dependency it belongs to */
+			Map<Expression, Integer> dependencyExpressions = new HashMap<>();
+			Map<Integer, Dependency> dependencyMap = new HashMap<>();
 
 			MiniZincInput input = new MiniZincInput();
 			
 			for( Entry<World, List<Pair<Expression, Statement>>> entryset : method.worldDependencies().entrySet() ){    
-				World receiver = entryset.getKey();
+				World recipient = entryset.getKey();
 				
 				for( Pair<Expression, Statement> dependencyPair : entryset.getValue() ){
 					Expression dependencyExpression = dependencyPair.left();
 					Statement dependencyStatement = dependencyPair.right();
 
-                    System.out.println( "recipient: " + receiver + 
-                        "\ndep: " + dependencyExpression );
-
-					Dependency newDependency = new Dependency(dependencyExpression);
-
 					// Extract sender from dependency (what world needs to send data)
 					World sender = getSender(dependencyExpression);
-					
-					// Find a viable communication method
-					Pair<Pair<String, GroundInterface>, HigherMethod> comPair = findComMethod(
-						receiver, 
-						sender, 
-						(GroundDataType)dependencyExpression.typeAnnotation().get(),
-						method.channels());
-					
-					if( comPair == null ){
-						// No viable communication method was found.
-						throw new CommunicationInferenceException( "No viable communication method was found for the dependency " + dependencyExpression );
-					}
 
-					// This pair consists of the channel's identifier and its type.
-					Pair<String, GroundInterface> comChannelPair = comPair.left();
+					Dependency dependency = new Dependency(dependencyExpression, sender, recipient);
+					setComMethod(dependency, method.channels());
+
 					
-					newDependency.setChannel( comChannelPair.left(), comChannelPair.right() );
-					newDependency.setComMethod( comPair.right() );
-
-					// Put the dependency in a list to be accessible later
-					amendedStatements.putIfAbsent(dependencyStatement, new ArrayList<>());
-					amendedStatements.get(dependencyStatement).add( newDependency );
-
                     // add dependency to MiniZinc input
-					// TODO check if dependency already exists
-                    input.num_deps ++;
-                    input.dependencies.add(dependencyExpression.toString());
-                    input.dep_from.add(sender);
-                    input.dep_to.add(receiver);
-					input.dep_def_at.add( 0 ); // TODO fix
-                    input.dep_used_at.add(new MiniZincInput.Dep_use(input.num_deps, dependencyStatement));
+					if( !isDuplicateDependency( dependencyExpression, dependencyExpressions ) ){
+						input.num_deps ++;
+						dependencyExpressions.put(dependencyExpression, input.num_deps);
+						input.dependencies.add(dependencyExpression.toString());
+						input.dep_from.add(sender);
+						input.dep_to.add(recipient);
+						input.dep_def_at.add( 0 ); // TODO fix
+					} 
+					dependencyMap.put(input.num_deps, dependency);
+                    
 				}
 			}
-			// clears the dependencies of the method so they won't accidentally considered twice
-			// (probably not needed) 
-			method.clearDependencies();
+			
 
+			// Add everything else to the MiniZinc input
 			input.num_blocks ++;
-			input.blocks.add(new MiniZincInput.Block(-1, 0, 0));
-			new VisitStatement( input ).visitContinutation(methodStatement);
+			input.blocks.add(new MiniZincInput.Block(0, 0, 0)); // global block
+			System.out.println( "dependencyExpressions: " + dependencyExpressions );
+			new VisitStatement( input, dependencyExpressions ).visitContinutation(methodStatement); // visit method bodt
 			input.blocks.get(0).end = input.in_size;
+			List<World> worlds = cu.classes().stream() // collect all roles in method
+				.flatMap( cls -> cls.worldParameters().stream() )
+				.map( formalWorld -> new World( new Universe(), formalWorld.name().identifier() ) )
+				.toList();
+			input.roles = worlds;
 
 			System.out.println( "input: \"\n" + input + "\n\"" );
 
 			allInputs.put( method, input );
 		}
+	}
+
+	private boolean isDuplicateDependency( 
+		Expression target, Map<Expression, 
+		Integer> allExpressions
+	){
+		for( Expression otherExpression : allExpressions.keySet() ){
+			try {
+				ExpressionsMerger.mergeExpressions(target, otherExpression);
+
+				System.out.println( "Expression: " + target + " is a duplicate" );
+				allExpressions.put(target, allExpressions.get(otherExpression));
+				return true;
+
+			} catch (Exception e) {
+				
+			}
+		}
+		System.out.println( "Expression: " + target + " is NOT a duplicate" );
+		return false;
 	}
 
     /**
@@ -209,11 +226,13 @@ public class MiniZincInference {
 	 * </ul>
 	 * Returns null if no such method is found.
 	 */
-	private Pair<Pair<String, GroundInterface>, HigherMethod> findComMethod(
-		World recepient, 
-		World sender, 
-		GroundDataType dependencyType, 
-		List<Pair<String, GroundInterface>> channels){
+	private void setComMethod(
+		Dependency dependency, 
+		List<Pair<String, GroundInterface>> channels
+	){
+		World sender = dependency.sender();
+		World recepient = dependency.recipient();
+		GroundDataType type = dependency.type();
 		
 		for( Pair<String, GroundInterface> channelPair : channels ){
 
@@ -221,7 +240,7 @@ public class MiniZincInference {
 			// the datatype from the sender. Since we only store one type for the 
 			// dependency we assume that all types in a channel are the same.
 			GroundInterface channel = channelPair.right();
-			if( channel.typeArguments().stream().anyMatch( typeArg -> dependencyType.typeConstructor().isSubtypeOf( typeArg ) ) ){
+			if( channel.typeArguments().stream().anyMatch( typeArg -> type.typeConstructor().isSubtypeOf( typeArg ) ) ){
 				
 				Optional<? extends HigherMethod> comMethodOptional = 
 					channelPair.right().methods()
@@ -233,32 +252,40 @@ public class MiniZincInference {
 						.findAny();
 				
 				if( comMethodOptional.isPresent() ){
-					return new Pair<>( channelPair, comMethodOptional.get());
+					dependency.setChannel( channelPair );
+					dependency.setComMethod( comMethodOptional.get() );
+					return;
 				}
 			}
 		}
-		return null;
+		throw new CommunicationInferenceException( "No viable communication method was found for the dependency " + dependency.originalExpression() );
 	}
 
-    /**
-	 * A class for represent a dependency, consisting of the original dependency expression
-	 * and a communication (both channel and method) for satisfying this dependency.
-	 * <p>
-	 * Has method {@code createComExpression} for creating a communication expression out of
-	 * the stored communication and the provided {@code Expression} argument.
-	 */
 	private class Dependency {
 		private Expression originalExpression;
 		private HigherMethod comMethod;
 		private String channelIdentifier;
 		private GroundInterface channel;
+		private GroundDataType type;
+        private World sender;
+        private World recipient;
 
-		public Dependency( Expression originalExpression ){
+		public Dependency( Expression originalExpression, World sender, World recipient ){
 			this.originalExpression = originalExpression;
+			GroundDataTypeOrVoid t = originalExpression.typeAnnotation().get();
+			if( t.isVoid() )
+				throw new CommunicationInferenceException( "Dependency cannot be of type void: " + originalExpression );
+			this.type = (GroundDataType)t;
+			this.recipient = recipient;
+			this.sender = sender;
 		}
 
 		public Expression originalExpression(){
 			return originalExpression;
+		}
+
+		public GroundDataType type(){
+			return type;
 		}
 
 		public HigherMethod comMethod(){
@@ -273,21 +300,21 @@ public class MiniZincInference {
 			return channel;
 		}
 
-		public void setChannel( GroundInterface channel ){
-			this.channel = channel;
+        public World recipient(){
+			return recipient;
 		}
 
-		public void setChannel( String channelIdentifier, GroundInterface channel ){
-			this.channelIdentifier = channelIdentifier;
-			this.channel = channel;
+		public World sender(){
+			return sender;
+		}
+
+		public void setChannel( Pair<String, GroundInterface> channelPair ){
+			this.channelIdentifier = channelPair.left();
+			this.channel = channelPair.right();
 		}
 
 		public void setComMethod( HigherMethod comMethod ){
 			this.comMethod = comMethod;
-		}
-
-		public void setChannelIdentifier( String channelIdentifier ){
-			this.channelIdentifier = channelIdentifier;
 		}
 
 		/**
@@ -322,12 +349,12 @@ public class MiniZincInference {
 		public Expression createComExpression( Expression visitedDependency ){
 
 			TypeExpression typeExpression;
-			if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
+            if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
 				typeExpression = getTypeExpression((GroundTypeParameter)originalExpression.typeAnnotation().get());
-			} else {
+            } else{ 
 				typeExpression = getTypeExpression((GroundClassOrInterface)originalExpression.typeAnnotation().get());
 			}
-			
+
 			final List<Expression> arguments = List.of( visitedDependency );
 			final Name name = new Name(comMethod.identifier());
 			final List<TypeExpression> typeArguments = List.of( typeExpression );
@@ -367,8 +394,46 @@ public class MiniZincInference {
 			throw new CommunicationInferenceException( "ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() ); 
 		}
 
+        /**
+         * returns the type of the dependency's original expression as a TypeExpression
+         * @return
+         */
+        public TypeExpression getType(){
+            if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
+				return getType((GroundTypeParameter)originalExpression.typeAnnotation().get());
+            } else{ 
+				return getType((GroundClassOrInterface)originalExpression.typeAnnotation().get());
+			}
+        }
+
+        private TypeExpression getType( GroundClassOrInterface type ){
+            return new TypeExpression(
+				new Name(type.typeConstructor().identifier()),
+				List.of( new WorldArgument(new Name(recipient.identifier()), null) ), 
+				type.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
+		}
+
+		private TypeExpression getType( GroundReferenceType type ){
+            if( type instanceof GroundClass ){ // I think this is only not true for primitive types, which cannot be communicated
+				GroundClass typeGC = (GroundClass)type;
+				return new TypeExpression(
+					new Name(typeGC.typeConstructor().identifier()),
+					List.of( new WorldArgument(new Name(recipient.identifier()), null) ), 
+					typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
+			}
+			if( type instanceof GroundTypeParameter ){
+				GroundTypeParameter typeGTP = (GroundTypeParameter)type;
+				return new TypeExpression(
+					new Name(typeGTP.typeConstructor().identifier()),
+					List.of( new WorldArgument(new Name(recipient.identifier()), null) ), 
+					Collections.emptyList());
+			}
+			
+			throw new CommunicationInferenceException( "ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() ); 
+		}
+
 	}
-    
+	
     private static class MiniZincInput {
         public int in_size = 0;
         public List<String> statements = new ArrayList<>();
@@ -409,7 +474,7 @@ public class MiniZincInference {
 			inputString += "num_blocks = " + num_blocks + ";\n";
 			inputString += "blocks = ";
 			inputString += blocks.stream()
-				.map( block -> block.start + "," + block.end + "," + block.parent )
+				.map( block -> (block.start) + "," + (block.end) + "," + (block.parent) )
 				.collect(Formatting.joining("|\n", "[|\n", "|];", "[];"));
 			inputString += "\n";
 
@@ -435,6 +500,7 @@ public class MiniZincInference {
 			inputString += roles.stream()
 				.map( role -> role.identifier() )
 				.collect(Formatting.joining(",", "[", "];", "[];"));
+			inputString += "\n";
 			
 			inputString += "num_deps = " + num_deps + ";\n";
 			inputString += "dependencies = ";
@@ -458,7 +524,10 @@ public class MiniZincInference {
 			inputString += "\n";
 			inputString += "dep_used_at = ";
 			inputString += dep_used_at.stream()
-				.map( dep_use -> "DEPS[" + dep_use.dependency + "], " + dep_use.used_at )
+				.map( dep_use -> "DEPS[" + dep_use.dependency + "], " + 
+					(dep_use.nested_dependency ? 
+						"DEPS[" + (dep_use.used_at) + "]":
+						(dep_use.used_at)) )
 				.collect(Formatting.joining("|\n", "[|\n", "|];", "[];"));
 			inputString += "\n";
 			
@@ -468,24 +537,27 @@ public class MiniZincInference {
 
 
         public static class Block{
-            public Block( int start, int end, int parent ){
+            int start;
+            int end;
+            int parent;
+			
+			public Block( int start, int end, int parent ){
                 this.start = start;
                 this.end = end;
                 this.parent = parent;
             }
-            int start;
-            int end;
-            int parent;
+            
         }
 
         public static class Dep_use{
-            public Dep_use( int dep, Statement stm ){
-                this.dependency = dep;
-                this.used_at_stm = stm;
-            }
             int dependency;
             int used_at;
-			Statement used_at_stm;
+			boolean nested_dependency = false; // implement
+			
+			public Dep_use( int dep ){
+                this.dependency = dep;
+            }
+            
         }
     }
 
@@ -499,10 +571,13 @@ public class MiniZincInference {
 	private class VisitStatement extends AbstractChoralVisitor< Void >{
 		
 		MiniZincInput input;
-		int currentBlock = 0;
+		int currentBlock;
+		Map< Expression, Integer > dependencyExpressions;
 		
-		public VisitStatement( MiniZincInput input ){
+		public VisitStatement( MiniZincInput input, Map< Expression, Integer > dependencyExpressions ){
 			this.input = input;
+			this.currentBlock = input.num_blocks;
+			this.dependencyExpressions = dependencyExpressions;
 		}
 
 		@Override
@@ -515,15 +590,11 @@ public class MiniZincInference {
 			input.in_size ++;
 			input.statements.add(n.expression().toString());
 			input.statements_blocks.add(currentBlock);
-			input.statements_roles.add(((GroundDataType)n.expression().typeAnnotation().get()).worldArguments().get(0));
+			input.statements_roles.add(getWorld(n.expression()));
 
-			if( input.dep_used_at.stream().anyMatch( dep_use -> dep_use.used_at_stm == n ) ){
-				for( MiniZincInput.Dep_use dep_use : input.dep_used_at ){
-					if(dep_use.used_at_stm == n)
-						dep_use.used_at = input.in_size;
-				}
-				visitExpression(n.expression(), n);
-			}
+			
+			visitExpression(n.expression(), n);
+			
 			return visitContinutation(n.continuation());
 		}
 
@@ -531,7 +602,7 @@ public class MiniZincInference {
 		public Void visit( VariableDeclarationStatement n ) {
 			
 			for( VariableDeclaration v : n.variables() ){
-				visitVariableDeclaration(null, v, n);
+				visitVariableDeclaration( v, n );
 			}
 			return visitContinutation(n.continuation());
 		}
@@ -569,11 +640,14 @@ public class MiniZincInference {
 
 		@Override
 		public Void visit( IfStatement n ) {
+			System.out.println( "if start num_block: " + input.num_blocks );
 			input.in_size ++;
 			input.statements.add( "if(" + n.condition() + "){" );
 			input.statements_blocks.add(currentBlock);
 			World if_role = ((GroundDataType)n.condition().typeAnnotation().get()).worldArguments().get(0);
 			input.statements_roles.add( if_role );
+
+			visitExpression(n.condition(), n);
 
 			int if_start = input.in_size;
 			int if_parent = currentBlock;
@@ -581,6 +655,7 @@ public class MiniZincInference {
 			input.num_blocks ++;
 			int then_block = input.num_blocks;
 			currentBlock = then_block;
+			input.blocks.add(new MiniZincInput.Block( if_start, 0, if_parent ));
 
 			visitContinutation(n.ifBranch());
 
@@ -589,13 +664,14 @@ public class MiniZincInference {
 			input.statements_blocks.add(currentBlock);
 			input.statements_roles.add(null);
 
-			input.blocks.add(new MiniZincInput.Block( if_start, input.in_size, if_parent ));
+			input.blocks.get(then_block-1).end = input.in_size;
 
 			int else_start = input.in_size;
 
 			input.num_blocks ++;
 			int else_block = input.num_blocks;
 			currentBlock = else_block;
+			input.blocks.add(new MiniZincInput.Block(else_start, 0, if_parent));
 
 			visitContinutation(n.elseBranch());
 
@@ -604,13 +680,14 @@ public class MiniZincInference {
 			input.statements_blocks.add(currentBlock);
 			input.statements_roles.add(null);
 
-			input.blocks.add(new MiniZincInput.Block(else_start, input.in_size, if_parent));
+			input.blocks.get(else_block-1).end = input.in_size;
 			currentBlock = if_parent;
 
 			input.num_ifs ++;
 			input.if_roles.add(if_role);
 			input.if_blocks.add(new Pair<>(then_block, else_block));
 
+			System.out.println( "if end num_block: " + input.num_blocks );
 			return visitContinutation(n.continuation());
 		}
 
@@ -629,15 +706,10 @@ public class MiniZincInference {
 			input.in_size ++;
 			input.statements.add( "return " + n.returnExpression().toString() );
 			input.statements_blocks.add(currentBlock);
+			
 			input.statements_roles.add(((GroundDataType)n.returnExpression().typeAnnotation().get()).worldArguments().get(0));
-
-			if( input.dep_used_at.stream().anyMatch( dep_use -> dep_use.used_at_stm == n ) ){
-				for( MiniZincInput.Dep_use dep_use : input.dep_used_at ){
-					if( dep_use.used_at_stm == n )
-						dep_use.used_at = input.in_size;
-				}
-				visitExpression(n.returnExpression(), n);
-			}
+			
+			visitExpression(n.returnExpression(), n);
 			return visitContinutation(n.continuation());
 		}
 
@@ -653,14 +725,14 @@ public class MiniZincInference {
 		 */
 		private void visitExpression( Expression expression, Statement n ){
 			
-			new VisitExpression( input, amendedStatements.get(n) ).visit(expression);
+			new VisitExpression( input, dependencyExpressions ).visit(expression);
 		}
 
 		/**
 		 * If there is no initializer, return the given {@code VaraibleDeclaration} without 
 		 * change, otherwise visit its initializer and return a new {@code VaraibleDeclaration}
 		 */
-		private void visitVariableDeclaration( List<Dependency> dependencyList, VariableDeclaration vd, Statement n ){
+		private void visitVariableDeclaration( VariableDeclaration vd, Statement n ){
 			String variable = vd.type().typeAnnotation().get() + " " + vd.name();
 			input.in_size ++;
 			
@@ -673,15 +745,26 @@ public class MiniZincInference {
 			}
 			input.statements.add( variable + " = " + vd.initializer().get() );
 
-			if( input.dep_used_at.stream().anyMatch( dep_use -> dep_use.used_at_stm == n ) ){
-				for( MiniZincInput.Dep_use dep_use : input.dep_used_at ){
-					if( dep_use.used_at_stm == n )
-						dep_use.used_at = input.in_size;
-				}
-				visitExpression(vd.initializer().get(), n);
-			}
+			
+			visitExpression(vd.initializer().get(), n);
 
 			
+		}
+
+		private World getWorld( Expression e ){
+			World w;
+			if( e instanceof MethodCallExpression ){
+				MethodCallExpression me = (MethodCallExpression) e;
+				w = me.methodAnnotation().get().higherCallable().declarationContext().worldArguments().get(0);
+			} else if( e instanceof ScopedExpression ) {
+				ScopedExpression s = (ScopedExpression)e;
+				w = getWorld( s.scopedExpression() );
+			} else {
+				GroundDataType typeAnnotation = (GroundDataType)e.typeAnnotation().get();
+				w = typeAnnotation.worldArguments().get(0);
+			}
+			System.out.println( "World for expression " + e  + " : " + w );
+			return w;
 		}
 
 	}
@@ -696,14 +779,41 @@ public class MiniZincInference {
 	private class VisitExpression extends AbstractChoralVisitor< Void >{
 
 		MiniZincInput input;
-		List<Dependency> dependencyList;
+		Map< Expression, Integer > dependencyExpressions;
 
 		/** the current innermost dependency */
 		Expression innerDependency = null;
 
-		public VisitExpression( MiniZincInput input, List<Dependency> dependencyList ){
+		public VisitExpression( 
+			MiniZincInput input, 
+			Map< Expression, Integer > dependencyExpressions 
+		){
 			this.input = input;
-			this.dependencyList = dependencyList;
+			this.dependencyExpressions = dependencyExpressions;
+		}
+
+		public Void checkIfDependency( Expression n ){
+			Integer dependency = dependencyExpressions.get(n);
+			if( dependency == null ){
+				visit(n);
+			} else{
+				Expression parentDependency = innerDependency;
+				if( innerDependency == null ){
+					MiniZincInput.Dep_use dep = new MiniZincInput.Dep_use(dependencyExpressions.get(n));
+					dep.used_at = input.in_size;
+					input.dep_used_at.add(dep);
+				} else {
+					MiniZincInput.Dep_use dep = new MiniZincInput.Dep_use(dependencyExpressions.get(n));
+					dep.nested_dependency = true;
+					dep.used_at = dependencyExpressions.get(innerDependency);
+					input.dep_used_at.add(dep);
+				}
+				innerDependency = n;
+				visit(n);
+				innerDependency = parentDependency;
+			}
+
+			return null;
 		}
 
 		@Override
@@ -713,6 +823,9 @@ public class MiniZincInference {
 
 		@Override
 		public Void visit( ScopedExpression n ) {
+			checkIfDependency(n.scope());
+			checkIfDependency(n.scopedExpression());
+			
 			return null;
 		}
 
@@ -723,22 +836,27 @@ public class MiniZincInference {
 
 		@Override
 		public Void visit( MethodCallExpression n ) {
+			for( Expression e : n.arguments() )
+				checkIfDependency(e);
 			return null;
 		}
 		
 		@Override
 		public Void visit( AssignExpression n ) {
-			// an assignExpression cannot itself be a dependency, but its value() might
+			checkIfDependency(n.value());
 			return null;
 		}
 
 		@Override
 		public Void visit( BinaryExpression n ) {
+			checkIfDependency(n.left());
+			checkIfDependency(n.right());
 			return null;
 		}
 
 		@Override
 		public Void visit( EnclosedExpression n ) {
+			checkIfDependency(n.nestedExpression());
 			return null;
 		}
 		
@@ -749,11 +867,14 @@ public class MiniZincInference {
 
 		@Override
 		public Void visit( ClassInstantiationExpression n ) {
+			for( Expression e : n.arguments() )
+				checkIfDependency(e);
 			return null;
 		}
 
 		@Override
 		public Void visit( NotExpression n ) {
+			checkIfDependency(n.expression());
 			return null;
 		}
 
@@ -769,7 +890,6 @@ public class MiniZincInference {
 
 		@Override
 		public Void visit( NullExpression n ) {
-			// Nothing can depend on null, so no need to check dependencies
 			return null;
 		}
 
@@ -806,15 +926,6 @@ public class MiniZincInference {
 		@Override // not supported
 		public Void visit( EnumCaseInstantiationExpression n ){
 			throw new UnsupportedOperationException("EnumCaseInstantiationExpression not supported\n\tExpression at " + n.position().toString());
-		}
-
-		/**
-		 * Checks if an {@code Expression} is a {@code Dependency}. If so, visits the {@code 
-		 * Expression} and returns the visited expression wrapped in a communication, specified 
-		 * by the {@code Dependency}. Otherwise returns null.
-		 */
-		private Expression checkIfDependency( Expression n ){
-			return null;
 		}
 	}
 
