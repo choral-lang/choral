@@ -1,8 +1,5 @@
-package choral.compiler.amend;
+package choral.compiler.amend.MiniZincInference;
 
-import static choral.utils.Streams.toLinkedHashMap;
-
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,46 +9,15 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import javax.print.attribute.standard.MediaSize.Other;
-
-import org.apache.commons.lang.ObjectUtils.Null;
-
 import choral.ast.CompilationUnit;
 import choral.ast.Name;
-import choral.ast.body.ConstructorDefinition;
 import choral.ast.body.VariableDeclaration;
-import choral.ast.expression.AssignExpression;
-import choral.ast.expression.BinaryExpression;
-import choral.ast.expression.BlankExpression;
-import choral.ast.expression.ClassInstantiationExpression;
-import choral.ast.expression.EnclosedExpression;
-import choral.ast.expression.EnumCaseInstantiationExpression;
-import choral.ast.expression.Expression;
-import choral.ast.expression.FieldAccessExpression;
-import choral.ast.expression.LiteralExpression;
-import choral.ast.expression.MethodCallExpression;
-import choral.ast.expression.NotExpression;
-import choral.ast.expression.NullExpression;
-import choral.ast.expression.ScopedExpression;
-import choral.ast.expression.StaticAccessExpression;
-import choral.ast.expression.SuperExpression;
-import choral.ast.expression.ThisExpression;
-import choral.ast.statement.BlockStatement;
-import choral.ast.statement.ExpressionStatement;
-import choral.ast.statement.IfStatement;
-import choral.ast.statement.NilStatement;
-import choral.ast.statement.ReturnStatement;
-import choral.ast.statement.Statement;
-import choral.ast.statement.SwitchStatement;
-import choral.ast.statement.TryCatchStatement;
-import choral.ast.statement.VariableDeclarationStatement;
-import choral.ast.type.FormalWorldParameter;
+import choral.ast.expression.*;
+import choral.ast.statement.*;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.compiler.merge.ExpressionsMerger;
-import choral.compiler.merge.StatementsMerger;
-import choral.compiler.soloist.StatementsProjector;
 import choral.exceptions.CommunicationInferenceException;
 import choral.types.GroundClass;
 import choral.types.GroundClassOrInterface;
@@ -64,31 +30,23 @@ import choral.types.Universe;
 import choral.types.Member.HigherCallable;
 import choral.types.Member.HigherMethod;
 import choral.types.World;
-import choral.utils.Formatting;
 import choral.utils.Pair;
 
-public class MiniZincInference {
+public class GenerateMiniZincInputs {
 
-   	Map<HigherCallable, MiniZincInput> allInputs = new HashMap<>();
+	Map<HigherCallable, MiniZincInput> allInputs = new HashMap<>();
 
-    public MiniZincInference(){}
+    public GenerateMiniZincInputs(){}
 
-    public CompilationUnit inferComms( CompilationUnit cu ){
+    public Map<HigherCallable, MiniZincInput> inferComms( CompilationUnit cu ){
 		
-		// make the map containing all dependencies
+		// Generate the MiniZinc inputs from the CompilationUnit
 		buildMiniZincInput(cu);
 
-		
-		// Since everything in a CompilationUnit is final (in particular Statemetns and 
-		// Expressions) we need to create a new CompilationUnit
-		return null;
+		return allInputs;
 	}
 
-    /**
-	 * Iterates through all the methods of {@code cu} (including constructors), extracts 
-	 * their dependencies, creates {@code Dependency} objects to store the dependencies 
-	 * and collects them in {@code amendedStatements}.
-	 */
+    
 	private void buildMiniZincInput( CompilationUnit cu ){
 		for( Pair<HigherCallable, Statement> methodPair : getMethods(cu) ){
 			HigherCallable method = methodPair.left();
@@ -104,7 +62,6 @@ public class MiniZincInference {
 				
 				for( Pair<Expression, Statement> dependencyPair : entryset.getValue() ){
 					Expression dependencyExpression = dependencyPair.left();
-					Statement dependencyStatement = dependencyPair.right();
 
 					// Extract sender from dependency (what world needs to send data)
 					World sender = getSender(dependencyExpression);
@@ -120,7 +77,7 @@ public class MiniZincInference {
 						input.dependencies.add(dependencyExpression.toString());
 						input.dep_from.add(sender);
 						input.dep_to.add(recipient);
-						input.dep_def_at.add( 0 ); // TODO fix
+						input.dep_def_at.add( 0 );
 					} 
 					dependencyMap.put(input.num_deps, dependency);
                     
@@ -139,8 +96,6 @@ public class MiniZincInference {
 				.map( formalWorld -> new World( new Universe(), formalWorld.name().identifier() ) )
 				.toList();
 			input.roles = worlds;
-
-			System.out.println( "input: \"\n" + input + "\n\"" );
 
 			allInputs.put( method, input );
 		}
@@ -188,7 +143,7 @@ public class MiniZincInference {
 
     /**
 	 * Returns the world from a dependency expression that needs to send data. If the 
-	 * dependency expression has more than one sender worldm an error is thrown.
+	 * dependency expression has more than one sender world an error is thrown.
 	 * <p>
 	 * If the dependency expression is a method call, the type-annotation is set to 
 	 * be equal to the method annotation.
@@ -213,19 +168,7 @@ public class MiniZincInference {
 		return senders.get(0);
 	}
 
-    /**
-	 * Searches through the methods of {@code channels} and returns the first viable com 
-	 * method based on the input. 
-	 * <p>
-	 * A viable method means:
-	 * <ul>
-	 * <li>{@code dependencyType} is a subtype of the channel's type</li>
-	 * <li>The method identifer is "com"</li>
-	 * <li>It rakes a parameter at world {@code sender}</li>
-	 * <li>It returns something at world {@code recipient}</li>
-	 * </ul>
-	 * Returns null if no such method is found.
-	 */
+    
 	private void setComMethod(
 		Dependency dependency, 
 		List<Pair<String, GroundInterface>> channels
@@ -433,146 +376,13 @@ public class MiniZincInference {
 		}
 
 	}
-	
-    private static class MiniZincInput {
-        public int in_size = 0;
-        public List<String> statements = new ArrayList<>();
-        public List<World> statements_roles = new ArrayList<>();
-        public List<Integer> statements_blocks = new ArrayList<>();
 
-        public int num_blocks = 0;
-        public List<Block> blocks = new ArrayList<>();
-        
-        public List<World> roles = new ArrayList<>();
-
-        public int num_ifs = 0;
-        public List<Pair<Integer,Integer>> if_blocks = new ArrayList<>();
-        public List<World> if_roles = new ArrayList<>();
-
-        public int num_deps = 0;
-        public List<String> dependencies = new ArrayList<>();
-        public List<World> dep_from = new ArrayList<>();
-        public List<World> dep_to = new ArrayList<>();
-        public List<Integer> dep_def_at = new ArrayList<>();
-        public List<Dep_use> dep_used_at = new ArrayList<>();
-
-		public String toString(){
-			String inputString = "";
-
-			inputString += "in_size = " + in_size + "\n";
-			inputString += "statements = ";
-			inputString += statements.stream()
-				.map( stm -> "\"" + stm + "\"" )
-				.collect(Formatting.joining(",\n", "[\n", "];", "[];"));
-			inputString += "\n";
-			inputString += "statements_roles = ";
-			inputString += statements_roles.stream()
-				.map( r -> r == null ? "NULL" : "r(" + r.identifier() + ")" )
-				.collect(Formatting.joining(",", "[", "];", "[];"));
-			inputString += "\n";
-
-			inputString += "num_blocks = " + num_blocks + ";\n";
-			inputString += "blocks = ";
-			inputString += blocks.stream()
-				.map( block -> (block.start) + "," + (block.end) + "," + (block.parent) )
-				.collect(Formatting.joining("|\n", "[|\n", "|];", "[];"));
-			inputString += "\n";
-
-			inputString += "statements_blocks = ";
-			inputString += statements_blocks.stream()
-				.map( i -> i.toString() )
-				.collect(Formatting.joining(",", "[", "];", "[];"));
-			inputString += "\n";
-
-			inputString += "num_ifs = " + num_ifs + ";\n";
-			inputString += "if_blocks = ";
-			inputString += if_blocks.stream()
-				.map( blocks -> blocks.left() + "," + blocks.right() )
-				.collect(Formatting.joining("|\n", "[|\n", "|];", "[];"));
-			inputString += "\n";
-			inputString += "if_roles = ";
-			inputString += if_roles.stream()
-				.map( role -> role.identifier() )
-				.collect(Formatting.joining(",", "[", "];", "[];"));
-			inputString += "\n";
-
-			inputString += "roles = ";
-			inputString += roles.stream()
-				.map( role -> role.identifier() )
-				.collect(Formatting.joining(",", "[", "];", "[];"));
-			inputString += "\n";
-			
-			inputString += "num_deps = " + num_deps + ";\n";
-			inputString += "dependencies = ";
-			inputString += dependencies.stream()
-				.collect(Formatting.joining(",", "array1d( DEPS, [", "]);", "array1d( DEPS, []);"));
-			inputString += "\n";
-			inputString += "dep_from = ";
-			inputString += dep_from.stream()
-				.map( role -> role.identifier() )
-				.collect(Formatting.joining(",", "array1d( DEPS, [", "]);", "array1d( DEPS, []);"));
-			inputString += "\n";
-			inputString += "dep_to = ";
-			inputString += dep_to.stream()
-				.map( role -> role.identifier() )
-				.collect(Formatting.joining(",", "array1d( DEPS, [", "]);", "array1d( DEPS, []);"));
-			inputString += "\n";
-			inputString += "dep_def_at = ";
-			inputString += dep_def_at.stream()
-				.map( i -> i.toString() )
-				.collect(Formatting.joining(",", "array1d( DEPS, [", "]);", "array1d( DEPS, []);"));
-			inputString += "\n";
-			inputString += "dep_used_at = ";
-			inputString += dep_used_at.stream()
-				.map( dep_use -> "DEPS[" + dep_use.dependency + "], " + 
-					(dep_use.nested_dependency ? 
-						"DEPS[" + (dep_use.used_at) + "]":
-						(dep_use.used_at)) )
-				.collect(Formatting.joining("|\n", "[|\n", "|];", "[];"));
-			inputString += "\n";
-			
-
-			return inputString;
-		}
-
-
-        public static class Block{
-            int start;
-            int end;
-            int parent;
-			
-			public Block( int start, int end, int parent ){
-                this.start = start;
-                this.end = end;
-                this.parent = parent;
-            }
-            
-        }
-
-        public static class Dep_use{
-            int dependency;
-            int used_at;
-			boolean nested_dependency = false; // implement
-			
-			public Dep_use( int dep ){
-                this.dependency = dep;
-            }
-            
-        }
-    }
-
-    /**
-	 * Amends {@code Statements}.
-	 * <p>
-	 * Iterates through {@code Statement}s and their continuations, and anytime a {@code 
-	 * Statement} is in the {@code amendedStatements} map, the {@code Expression}s of that 
-	 * {@code Statement} are visited by {@code VisitExpression}
-	 */
 	private class VisitStatement extends AbstractChoralVisitor< Void >{
 		
 		MiniZincInput input;
 		int currentBlock;
 		Map< Expression, Integer > dependencyExpressions;
+		Map< String, Integer > variableDefinedAt = new HashMap<>();
 		
 		public VisitStatement( MiniZincInput input, Map< Expression, Integer > dependencyExpressions ){
 			this.input = input;
@@ -725,7 +535,7 @@ public class MiniZincInference {
 		 */
 		private void visitExpression( Expression expression, Statement n ){
 			
-			new VisitExpression( input, dependencyExpressions ).visit(expression);
+			new VisitExpression( input, dependencyExpressions, variableDefinedAt ).visit(expression);
 		}
 
 		/**
@@ -733,6 +543,7 @@ public class MiniZincInference {
 		 * change, otherwise visit its initializer and return a new {@code VaraibleDeclaration}
 		 */
 		private void visitVariableDeclaration( VariableDeclaration vd, Statement n ){
+			
 			String variable = vd.type().typeAnnotation().get() + " " + vd.name();
 			input.in_size ++;
 			
@@ -744,7 +555,7 @@ public class MiniZincInference {
 				return;
 			}
 			input.statements.add( variable + " = " + vd.initializer().get() );
-
+			variableDefinedAt.put(vd.name().identifier(), input.in_size);
 			
 			visitExpression(vd.initializer().get(), n);
 
@@ -769,15 +580,10 @@ public class MiniZincInference {
 
 	}
 
-	/**
-	 * Amends {@code Expressions}.
-	 * <p>
-	 * Iterates through {@code Expression}s and checks if they are equal to 
-	 * anything inside {@code dependencyList}. If an {@code Expression} is 
-	 * equal to a dependency it is replaced with a communication.
-	 */
+	
 	private class VisitExpression extends AbstractChoralVisitor< Void >{
 
+		Map<String, Integer> variableDefinedAt;
 		MiniZincInput input;
 		Map< Expression, Integer > dependencyExpressions;
 
@@ -786,10 +592,12 @@ public class MiniZincInference {
 
 		public VisitExpression( 
 			MiniZincInput input, 
-			Map< Expression, Integer > dependencyExpressions 
+			Map< Expression, Integer > dependencyExpressions,
+			Map< String, Integer > variableDefinedAt
 		){
 			this.input = input;
 			this.dependencyExpressions = dependencyExpressions;
+			this.variableDefinedAt = variableDefinedAt;
 		}
 
 		public Void checkIfDependency( Expression n ){
@@ -831,6 +639,12 @@ public class MiniZincInference {
 
 		@Override
 		public Void visit( FieldAccessExpression n ) {
+			if( innerDependency != null ){
+				Integer definedAt = variableDefinedAt.get(n.name().identifier());
+				if( definedAt != null )
+					input.dep_def_at.set(dependencyExpressions.get(innerDependency)-1, definedAt);
+			}
+			
 			return null;
 		}
 
