@@ -5,6 +5,9 @@ import java.util.Collection;
 import java.util.List;
 
 import choral.ast.CompilationUnit;
+import choral.compiler.amend.MiniZincInference.*;
+import choral.types.Member.HigherCallable;
+import choral.utils.Pair;
 
 public class InferCommunications {
 
@@ -16,7 +19,7 @@ public class InferCommunications {
         boolean ignoreOverloads ){
 
         for( CompilationUnit cu : cus ){
-            new MiniZincInference().inferComms(cu);
+            CompilationUnit newCu = InsertMiniZincCommunications.insertCommunications( cu, new GenerateMiniZincInputs().inferComms(cu));
         }
         
         
