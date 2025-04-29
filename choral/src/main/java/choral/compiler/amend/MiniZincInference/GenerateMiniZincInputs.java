@@ -1,13 +1,11 @@
 package choral.compiler.amend.MiniZincInference;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import choral.ast.CompilationUnit;
 import choral.ast.Name;
@@ -17,6 +15,7 @@ import choral.ast.statement.*;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
+import choral.compiler.amend.Utils;
 import choral.compiler.merge.ExpressionsMerger;
 import choral.exceptions.CommunicationInferenceException;
 import choral.types.GroundClass;
@@ -46,31 +45,39 @@ public class GenerateMiniZincInputs {
 		return allInputs;
 	}
 
-    
+    /** 
+	 * Generates a MiniZinc input for all the methods in the CompilationUnit. These inputs are
+	 * stored in the allInputs map.
+	 */
 	private void buildMiniZincInput( CompilationUnit cu ){
-		for( Pair<HigherCallable, Statement> methodPair : getMethods(cu) ){
+		for( Pair<HigherCallable, Statement> methodPair : Utils.getMethods(cu) ){
 			HigherCallable method = methodPair.left();
 			Statement methodStatement = methodPair.right();
+
 			//* maps an expression to the index of the dependency it belongs to */
 			Map<Expression, Integer> dependencyExpressions = new HashMap<>();
+
+			//* maps a dependency index to the matching dependency object */
 			Map<Integer, Dependency> dependencyMap = new HashMap<>();
 
 			MiniZincInput input = new MiniZincInput();
 			
-			for( Entry<World, List<Pair<Expression, Statement>>> entryset : method.worldDependencies().entrySet() ){    
-				World recipient = entryset.getKey();
+			for( Entry<World, List<Pair<Expression, Statement>>> dependencySet : method.worldDependencies().entrySet() ){    
+				World recipient = dependencySet.getKey();
 				
-				for( Pair<Expression, Statement> dependencyPair : entryset.getValue() ){
+				for( Pair<Expression, Statement> dependencyPair : dependencySet.getValue() ){
 					Expression dependencyExpression = dependencyPair.left();
 
 					// Extract sender from dependency (what world needs to send data)
 					World sender = getSender(dependencyExpression);
 
+					// create Dependency object and find a valid channel
 					Dependency dependency = new Dependency(dependencyExpression, sender, recipient);
 					setComMethod(dependency, method.channels());
 
 					
                     // add dependency to MiniZinc input
+					// unless the dependency already exists
 					if( !isDuplicateDependency( dependencyExpression, dependencyExpressions ) ){
 						input.num_deps ++;
 						dependencyExpressions.put(dependencyExpression, input.num_deps);
@@ -78,7 +85,7 @@ public class GenerateMiniZincInputs {
 						input.dep_from.add(sender);
 						input.dep_to.add(recipient);
 						input.dep_def_at.add( 0 );
-					} 
+					}
 					dependencyMap.put(input.num_deps, dependency);
                     
 				}
@@ -88,9 +95,10 @@ public class GenerateMiniZincInputs {
 			// Add everything else to the MiniZinc input
 			input.num_blocks ++;
 			input.blocks.add(new MiniZincInput.Block(0, 0, 0)); // global block
-			System.out.println( "dependencyExpressions: " + dependencyExpressions );
-			new VisitStatement( input, dependencyExpressions ).visitContinutation(methodStatement); // visit method bodt
-			input.blocks.get(0).end = input.in_size;
+
+			new VisitStatement( input, dependencyExpressions ).visitContinutation(methodStatement); // visit method body
+			input.blocks.get(0).end = input.in_size; // set end of global block
+
 			List<World> worlds = cu.classes().stream() // collect all roles in method
 				.flatMap( cls -> cls.worldParameters().stream() )
 				.map( formalWorld -> new World( new Universe(), formalWorld.name().identifier() ) )
@@ -101,44 +109,27 @@ public class GenerateMiniZincInputs {
 		}
 	}
 
+	/**
+	 * Checks whether or not the target expression is already a dependency.
+	 */
 	private boolean isDuplicateDependency( 
-		Expression target, Map<Expression, 
-		Integer> allExpressions
+		Expression target, 
+		Map<Expression, Integer> allExpressions
 	){
 		for( Expression otherExpression : allExpressions.keySet() ){
-			try {
+			// try to merge target with otherExpression. If success, then target is a duplicate of 
+			// otherExpression. If failure, then target is not a duplicate of otherExpression
+			try { 
 				ExpressionsMerger.mergeExpressions(target, otherExpression);
 
-				System.out.println( "Expression: " + target + " is a duplicate" );
+				// add target to allExpressions and map it to the dependency it is a duplicate of
 				allExpressions.put(target, allExpressions.get(otherExpression));
 				return true;
 
-			} catch (Exception e) {
-				
-			}
+			} catch (Exception e) { }
 		}
-		System.out.println( "Expression: " + target + " is NOT a duplicate" );
+		// if all merges fail then target is not a duplicate
 		return false;
-	}
-
-    /**
-	 * Retreives all methods from the {@code CompilationUnit} including constructors
-	 */
-	private List<Pair<HigherCallable, Statement>> getMethods( CompilationUnit cu ){
-		return Stream.concat( 
-			cu.classes().stream()
-				.flatMap( cls -> cls.methods().stream() )
-				.map( method -> 
-					new Pair<HigherCallable, Statement>(
-						method.signature().typeAnnotation().get(), // we assume that methods are type-annotated
-						method.body().orElse(null)) ), 
-			cu.classes().stream()
-				.flatMap(cls -> cls.constructors().stream()
-				.map( method -> 
-					new Pair<HigherCallable, Statement>(
-						method.signature().typeAnnotation().get(), 
-						method.blockStatements()) )
-				)).toList();
 	}
 
     /**
@@ -168,7 +159,11 @@ public class GenerateMiniZincInputs {
 		return senders.get(0);
 	}
 
-    
+    /**
+	 * Find and set a valid channel and communication method for the given dependency.
+	 * <p>
+	 * If no viable channel can be found, an exsception is thrown.
+	 */
 	private void setComMethod(
 		Dependency dependency, 
 		List<Pair<String, GroundInterface>> channels
@@ -377,6 +372,9 @@ public class GenerateMiniZincInputs {
 
 	}
 
+	/**
+	 * Populates the given MiniZinc input. Also visits all expressions.
+	 */
 	private class VisitStatement extends AbstractChoralVisitor< Void >{
 		
 		MiniZincInput input;
@@ -535,12 +533,12 @@ public class GenerateMiniZincInputs {
 		 */
 		private void visitExpression( Expression expression, Statement n ){
 			
-			new VisitExpression( input, dependencyExpressions, variableDefinedAt ).visit(expression);
+			new VisitExpression( input, dependencyExpressions, variableDefinedAt ).checkIfDependency(expression);
 		}
 
 		/**
-		 * If there is no initializer, return the given {@code VaraibleDeclaration} without 
-		 * change, otherwise visit its initializer and return a new {@code VaraibleDeclaration}
+		 * Insert a variable declaration into the MiniZinc input. Also visits the initializer 
+		 * if there is one.
 		 */
 		private void visitVariableDeclaration( VariableDeclaration vd, Statement n ){
 			
@@ -558,10 +556,11 @@ public class GenerateMiniZincInputs {
 			variableDefinedAt.put(vd.name().identifier(), input.in_size);
 			
 			visitExpression(vd.initializer().get(), n);
-
-			
 		}
 
+		/**
+		 * Returns the homeworld of an expression.
+		 */
 		private World getWorld( Expression e ){
 			World w;
 			if( e instanceof MethodCallExpression ){
@@ -577,17 +576,22 @@ public class GenerateMiniZincInputs {
 			System.out.println( "World for expression " + e  + " : " + w );
 			return w;
 		}
-
 	}
 
-	
+	/**
+	 * Checks for nested dependencies and usage of variables. Adds to {@code dep_used_at} and 
+	 * sets {@code dep_def_at} in the {@code MiniZincInput}.
+	 * <p>
+	 * Should called through {@code checkIfDependency()}
+	 */
 	private class VisitExpression extends AbstractChoralVisitor< Void >{
-
+		
+		/** Maps variable identifiers to the statement in which they are defined */
 		Map<String, Integer> variableDefinedAt;
 		MiniZincInput input;
+		/** If an expression is a dependency, this map maps it to that dependency's index in the input */
 		Map< Expression, Integer > dependencyExpressions;
-
-		/** the current innermost dependency */
+		/** The current innermost dependency */
 		Expression innerDependency = null;
 
 		public VisitExpression( 
@@ -600,6 +604,9 @@ public class GenerateMiniZincInputs {
 			this.variableDefinedAt = variableDefinedAt;
 		}
 
+		/**
+		 * Checks if the given Expression is a dependency, then visits that Expression
+		 */
 		public Void checkIfDependency( Expression n ){
 			Integer dependency = dependencyExpressions.get(n);
 			if( dependency == null ){
@@ -639,6 +646,7 @@ public class GenerateMiniZincInputs {
 
 		@Override
 		public Void visit( FieldAccessExpression n ) {
+			// If we are inside a dependency, then we need to set dep_def_at
 			if( innerDependency != null ){
 				Integer definedAt = variableDefinedAt.get(n.name().identifier());
 				if( definedAt != null )

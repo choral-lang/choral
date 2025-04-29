@@ -85,7 +85,7 @@ public class VariableReplacement{
 	 * and collects them in {@code amendedStatements}.
 	 */
 	private void buildAmendedStatements( CompilationUnit cu ){
-		for( HigherCallable method : getMethods(cu) ){
+		for( HigherCallable method : Utils.getJustMethods(cu) ){
 			for( Entry<World, List<Pair<Expression, Statement>>> entryset : method.worldDependencies().entrySet() ){
 				
 				World receiver = entryset.getKey();
@@ -200,20 +200,6 @@ public class VariableReplacement{
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Retrieves all methods from the {@code CompilationUnit} including constructors
-	 */
-	private List<HigherCallable> getMethods( CompilationUnit cu ){
-		return Stream.concat( 
-			cu.classes().stream()
-				.flatMap( cls -> cls.methods().stream() )
-				.map( method -> method.signature().typeAnnotation().get() ), // we assume that methods are type-annotated
-			cu.classes().stream()
-				.flatMap(cls -> cls.constructors().stream()
-				.map( method -> method.signature().typeAnnotation().get() )
-				)).toList();
 	}
 
 	/**

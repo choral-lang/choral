@@ -19,7 +19,7 @@ public class InferCommunications {
         boolean ignoreOverloads ){
 
         for( CompilationUnit cu : cus ){
-            CompilationUnit newCu = InsertMiniZincCommunications.insertCommunications( cu, new GenerateMiniZincInputs().inferComms(cu));
+            CompilationUnit newCu = new InsertMiniZincCommunications(new GenerateMiniZincInputs().inferComms(cu)).insertCommunications( cu );
         }
         
         

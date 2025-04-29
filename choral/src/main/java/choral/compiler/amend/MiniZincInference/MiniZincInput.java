@@ -7,6 +7,11 @@ import choral.types.World;
 import choral.utils.Formatting;
 import choral.utils.Pair;
 
+/**
+ * An object to store all data needed to create an input for the MiniZinc model. 
+ * <p>
+ * Generate the input as a string using {@code toString()}
+ */
 public class MiniZincInput {
     public int in_size = 0;
     public List<String> statements = new ArrayList<>();
@@ -126,7 +131,7 @@ public class MiniZincInput {
     public static class Dep_use{
         int dependency;
         int used_at;
-        boolean nested_dependency = false; // implement
+        boolean nested_dependency = false;
         
         public Dep_use( int dep ){
             this.dependency = dep;
