@@ -463,7 +463,6 @@ public class VariableReplacement{
 						return dependencyVariables.get(solvedDependency);
 					}
 				}
-                    
             }
             return null;
 		}
@@ -490,7 +489,7 @@ public class VariableReplacement{
 			}
 			
 			// the name of the new variable
-			Name variableName = new Name( "dependencyAt" + dependency.recipient() + "_" + Math.abs(dependency.originalExpression().hashCode()) ); // TODO attatch some random number
+			Name variableName = new Name( "dependencyAt" + dependency.recipient() + "_" + Math.abs(dependency.originalExpression().hashCode()) );
 			
 			// visit the dependency to solve nested dependencies
 			Expression visitedDependencyExpression = new VisitExpression().visit(dependency.originalExpression());

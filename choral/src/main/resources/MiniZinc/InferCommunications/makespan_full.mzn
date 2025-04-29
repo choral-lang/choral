@@ -243,21 +243,22 @@ constraint forall( role in roles )(
 
 solve minimize max( [ runtimes[r, in_size+1] | r in roles ] );
 output 
+
+
+[ "Output list: \n" ]++
+[ "\(out_prog_idx[DEPS[1]])" ] ++ 
+[ " \(out_prog_idx[i])" | i in DEPS where i > DEPS[1] ] ++ 
+[ "\n" ] ++
 [ "Selections: \n" ] ++
 [ concat([ concat(
-  [ "[" ] ++
+  [ "" ] ++
   [ concat(
     [ if(r==roles[1]) then " " else "" endif ] ++
     ["\(selections[i, branch, r])"] ++ 
-    [if(r < roles[card(roles)]) then ", " else " " endif]
+    [if(r < roles[card(roles)]) then " " else " " endif]
     ) | r in roles ] ++
-  [ "]" ]
+  [ "|" ]
 ) | branch in 1..2 ] ++ ["\n"]) | i in NUM_IFS] ++
-
-[ "Output list: \n" ]++
-[ "[ \(out_prog_idx[DEPS[1]])" ] ++ 
-[ ", \(out_prog_idx[i])" | i in DEPS where i > DEPS[1] ] ++ 
-[ " ]\n" ] /*++
 
 [ "Output program: \n" ]++
 [ concat(
@@ -286,7 +287,7 @@ output
   ["\(i): "] ++ 
   ["\(runtimes[i,j]), " ++ 
   if(fix(runtimes[i,j]) < 10) then " " else "" endif | j in index_set_2of2(runtimes) ] ++ 
-  [ "\n" ] )  | i in index_set_1of2(runtimes)]*/;
+  [ "\n" ] )  | i in index_set_1of2(runtimes)];
 
 
 

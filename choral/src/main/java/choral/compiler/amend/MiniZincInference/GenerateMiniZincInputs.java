@@ -1,5 +1,6 @@
 package choral.compiler.amend.MiniZincInference;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -57,9 +58,6 @@ public class GenerateMiniZincInputs {
 			//* maps an expression to the index of the dependency it belongs to */
 			Map<Expression, Integer> dependencyExpressions = new HashMap<>();
 
-			//* maps a dependency index to the matching dependency object */
-			Map<Integer, Dependency> dependencyMap = new HashMap<>();
-
 			MiniZincInput input = new MiniZincInput();
 			
 			for( Entry<World, List<Pair<Expression, Statement>>> dependencySet : method.worldDependencies().entrySet() ){    
@@ -72,21 +70,21 @@ public class GenerateMiniZincInputs {
 					World sender = getSender(dependencyExpression);
 
 					// create Dependency object and find a valid channel
-					Dependency dependency = new Dependency(dependencyExpression, sender, recipient);
-					setComMethod(dependency, method.channels());
+					MiniZincInput.Dependency dependency = new MiniZincInput.Dependency(dependencyExpression, sender, recipient);
+					dependency.setComMethod(method.channels());
 
 					
                     // add dependency to MiniZinc input
 					// unless the dependency already exists
 					if( !isDuplicateDependency( dependencyExpression, dependencyExpressions ) ){
 						input.num_deps ++;
+						input.dependencies.add(dependency);
 						dependencyExpressions.put(dependencyExpression, input.num_deps);
-						input.dependencies.add(dependencyExpression.toString());
+						input.dependencyStrings.add(dependencyExpression.toString());
 						input.dep_from.add(sender);
 						input.dep_to.add(recipient);
 						input.dep_def_at.add( 0 );
 					}
-					dependencyMap.put(input.num_deps, dependency);
                     
 				}
 			}
@@ -157,46 +155,6 @@ public class GenerateMiniZincInputs {
 			throw new CommunicationInferenceException( "Found Dependency with " + senders.size() + " senders, expected 1" );
 		}
 		return senders.get(0);
-	}
-
-    /**
-	 * Find and set a valid channel and communication method for the given dependency.
-	 * <p>
-	 * If no viable channel can be found, an exsception is thrown.
-	 */
-	private void setComMethod(
-		Dependency dependency, 
-		List<Pair<String, GroundInterface>> channels
-	){
-		World sender = dependency.sender();
-		World recepient = dependency.recipient();
-		GroundDataType type = dependency.type();
-		
-		for( Pair<String, GroundInterface> channelPair : channels ){
-
-			// Data channels might not return the same datatype at the receiver as 
-			// the datatype from the sender. Since we only store one type for the 
-			// dependency we assume that all types in a channel are the same.
-			GroundInterface channel = channelPair.right();
-			if( channel.typeArguments().stream().anyMatch( typeArg -> type.typeConstructor().isSubtypeOf( typeArg ) ) ){
-				
-				Optional<? extends HigherMethod> comMethodOptional = 
-					channelPair.right().methods()
-						.filter( method ->
-							method.identifier().equals("com") && // it is a com method (only checked through name)
-							method.innerCallable().signature().parameters().get(0).type().worldArguments().equals(List.of(sender)) && // its parameter's worlds are equal to our dependency's world(s)
-							method.innerCallable().returnType() instanceof GroundDataType && // probably redundant check, returntype should not be able to be void
-							((GroundDataType)method.innerCallable().returnType()).worldArguments().get(0).equals(recepient) ) // its returntype's world is equal to our dependency recipient
-						.findAny();
-				
-				if( comMethodOptional.isPresent() ){
-					dependency.setChannel( channelPair );
-					dependency.setComMethod( comMethodOptional.get() );
-					return;
-				}
-			}
-		}
-		throw new CommunicationInferenceException( "No viable communication method was found for the dependency " + dependency.originalExpression() );
 	}
 
 	private class Dependency {
@@ -399,6 +357,7 @@ public class GenerateMiniZincInputs {
 			input.statements.add(n.expression().toString());
 			input.statements_blocks.add(currentBlock);
 			input.statements_roles.add(getWorld(n.expression()));
+			input.statementIndices.put(n, List.of(input.in_size));
 
 			
 			visitExpression(n.expression(), n);
@@ -408,10 +367,13 @@ public class GenerateMiniZincInputs {
 
 		@Override
 		public Void visit( VariableDeclarationStatement n ) {
+			List<Integer> indices = new ArrayList<>();
 			
 			for( VariableDeclaration v : n.variables() ){
 				visitVariableDeclaration( v, n );
+				indices.add(input.in_size);
 			}
+			input.statementIndices.put(n, indices);
 			return visitContinutation(n.continuation());
 		}
 
@@ -422,10 +384,12 @@ public class GenerateMiniZincInputs {
 
 		@Override
 		public Void visit( BlockStatement n ) {
+			List<Integer> indices = new ArrayList<>();
 			input.in_size ++;
 			input.statements.add("{");
 			input.statements_blocks.add(currentBlock);
 			input.statements_roles.add(null);
+			indices.add(input.in_size);
 
 			int block_start = input.in_size;
 			int block_parent = currentBlock;
@@ -439,63 +403,76 @@ public class GenerateMiniZincInputs {
 			input.statements.add("}");
 			input.statements_blocks.add(currentBlock);
 			input.statements_roles.add(null);
+			indices.add(input.in_size);
 
 			input.blocks.add(new MiniZincInput.Block(block_start, input.in_size, block_parent));
 			currentBlock = block_parent;
+			input.statementIndices.put(n, indices);
 
 			return visitContinutation(n.continuation());
 		}
 
 		@Override
 		public Void visit( IfStatement n ) {
-			System.out.println( "if start num_block: " + input.num_blocks );
+			List<Integer> indices = new ArrayList<>();
+
+			// condition
 			input.in_size ++;
 			input.statements.add( "if(" + n.condition() + "){" );
 			input.statements_blocks.add(currentBlock);
 			World if_role = ((GroundDataType)n.condition().typeAnnotation().get()).worldArguments().get(0);
 			input.statements_roles.add( if_role );
+			indices.add(input.in_size);
 
 			visitExpression(n.condition(), n);
-
-			int if_start = input.in_size;
+			
 			int if_parent = currentBlock;
+
+			// if-branch
+			int if_start = input.in_size;
 
 			input.num_blocks ++;
 			int then_block = input.num_blocks;
 			currentBlock = then_block;
-			input.blocks.add(new MiniZincInput.Block( if_start, 0, if_parent ));
+			// inserting the block into the list to make sure the index of the then-block matches "then_block"
+			input.blocks.add(new MiniZincInput.Block( if_start, 0, if_parent )); // the end of the block will be set later
 
 			visitContinutation(n.ifBranch());
 
+			// adding the "} else {"
 			input.in_size ++;
 			input.statements.add( "} else {" );
 			input.statements_blocks.add(currentBlock);
 			input.statements_roles.add(null);
+			indices.add(input.in_size);
 
-			input.blocks.get(then_block-1).end = input.in_size;
+			input.blocks.get(then_block-1).end = input.in_size; // set the end of the then-block
 
+			// else-branch
 			int else_start = input.in_size;
 
 			input.num_blocks ++;
 			int else_block = input.num_blocks;
 			currentBlock = else_block;
-			input.blocks.add(new MiniZincInput.Block(else_start, 0, if_parent));
+			// inserting the block into the list to make sure the index of the else-block matches "else_block"
+			input.blocks.add(new MiniZincInput.Block(else_start, 0, if_parent)); // the end of the block will be set later
 
 			visitContinutation(n.elseBranch());
 
+			// adding the final "}"
 			input.in_size ++;
 			input.statements.add("}");
 			input.statements_blocks.add(currentBlock);
 			input.statements_roles.add(null);
+			indices.add(input.in_size);
 
-			input.blocks.get(else_block-1).end = input.in_size;
+			input.blocks.get(else_block-1).end = input.in_size; // set the end of the else-block
 			currentBlock = if_parent;
 
 			input.num_ifs ++;
 			input.if_roles.add(if_role);
 			input.if_blocks.add(new Pair<>(then_block, else_block));
-
-			System.out.println( "if end num_block: " + input.num_blocks );
+			input.statementIndices.put(n, indices);
 			return visitContinutation(n.continuation());
 		}
 
@@ -504,9 +481,9 @@ public class GenerateMiniZincInputs {
 			throw new UnsupportedOperationException("SwitchStatement not supported\n\tStatement at " + n.position().toString());
 		}
 
-		@Override
+		@Override // not supported
 		public Void visit( TryCatchStatement n ) {
-			return visitContinutation(n.continuation());
+			throw new UnsupportedOperationException("TryCatchStatement not supported\n\tStatement at " + n.position().toString());
 		}
 
 		@Override
@@ -516,6 +493,8 @@ public class GenerateMiniZincInputs {
 			input.statements_blocks.add(currentBlock);
 			
 			input.statements_roles.add(((GroundDataType)n.returnExpression().typeAnnotation().get()).worldArguments().get(0));
+
+			input.statementIndices.put(n, List.of(input.in_size));
 			
 			visitExpression(n.returnExpression(), n);
 			return visitContinutation(n.continuation());
