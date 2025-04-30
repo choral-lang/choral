@@ -19,6 +19,9 @@ import choral.ast.type.WorldArgument;
 import choral.types.GroundInterface;
 import choral.types.Member.HigherMethod;
 
+/**
+ * A class to store everything needed to create a specific selection except the Enum.
+ */
 public class MiniZincSelectionMethod{
 
     protected String channelIdentifier;

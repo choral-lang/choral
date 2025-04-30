@@ -29,6 +29,9 @@ import choral.compiler.amend.MiniZincInference.MiniZincInput.Dependency;
 import choral.types.Member.HigherCallable;
 import choral.utils.Continuation;
 
+/**
+ * A class to insert all the communications generated through MiniZinc in some CompilationUnit.
+ */
 public class InsertMiniZincCommunications {
 
     Map<HigherCallable, MiniZincInput> inputs;
@@ -251,7 +254,7 @@ public class InsertMiniZincCommunications {
 			throw new UnsupportedOperationException("SwitchStatement not supported\n\tStatement at " + n.position().toString());
 		}
 
-		@Override
+		@Override // not supported
 		public Statement visit( TryCatchStatement n ) {
 			
 			return new TryCatchStatement(
@@ -284,23 +287,12 @@ public class InsertMiniZincCommunications {
 		}
 
 		/**
-		 * Creates a communication of all the dependencies given. These statements are chained 
-		 * together, and the first statement is returned. 
+		 * Creates all the communications to be inserted at the given statementIndex.
+		 * <p>
+		 * Returns a statement containing the first communication. All other communications 
+		 * are continuations of this statement.
+		 * Returns null if there are no communications to be inserted.
 		 */
-        private Statement createCommunications( List<Dependency> dependencies, Position pos ){
-            if( dependencies == null )
-				return null;
-			List< VariableDeclaration > variables = new ArrayList<>();
-            for( Dependency dependency : dependencies ){
-                createVariables(dependency, variables, pos);
-            }
-
-            if( variables.size() > 0 )
-                return chainVariables(variables, new NilStatement(pos));
-            else
-                return null; 
-        }
-		
 		private Statement createCommunications( Integer statementIndex, Position pos ){
             Statement selections = createSelections(output.selections.get(statementIndex), pos); 
             Statement dataCommunications = createDataCommunications(output.dataCommunications.get(statementIndex), pos); 
@@ -313,6 +305,13 @@ public class InsertMiniZincCommunications {
 			return Continuation.continuationAfter(selections, dataCommunications);
         }
 
+		/**
+		 * Creates selections for all selection methods in selectionsToInsert.
+		 * <p>
+		 * Returns a statement containing the first selection. All other selections are 
+		 * continuations of this statement.
+		 * Returns null if selectionsToInsert is null.
+		 */
 		private Statement createSelections( List<MiniZincSelectionMethod> selectionsToInsert, Position pos ){
 			if( selectionsToInsert == null )
 				return null;
@@ -349,6 +348,13 @@ public class InsertMiniZincCommunications {
             return enum_;
         }
 
+		/**
+		 * Creates communications for all dependencies in dependenciesToInsert.
+		 * <p>
+		 * Returns a statement containing the first communication. All other communications are 
+		 * continuations of this statement.
+		 * Returns null if dependenciesToInsert is null.
+		 */
 		private Statement createDataCommunications( List<Dependency> dependenciesToInsert, Position pos ){
 			if( dependenciesToInsert == null )
 				return null;
@@ -364,7 +370,8 @@ public class InsertMiniZincCommunications {
 		}
 
 		/**
-		 * Creates a variable for the given dependency and all of its nested dependencies.
+		 * Creates a VariableDeclaration for the given dependency adds it to the given variables 
+		 * list.
 		 */
 		private void createVariables( 
 			Dependency dependency, 
@@ -399,7 +406,7 @@ public class InsertMiniZincCommunications {
 		}
 
         /**
-         * Retreives the nested dependencies of a dependency
+         * Retreives the nested dependencies of a given dependency.
          */
         private List<Dependency> getNestedDependencies( Dependency dependency ){
             List<Dependency> nestedDeps = new ArrayList<>();
@@ -413,7 +420,7 @@ public class InsertMiniZincCommunications {
         }
 
 		/**
-		 * Retruns all the dependencies that are used at the given statement index
+		 * Retruns all the dependencies that are used at the given statement index.
 		 */
 		private List<Dependency> getDependenciesUsedAt( Integer statementIndex ){
 			List<Dependency> used_at = new ArrayList<>();
@@ -426,9 +433,9 @@ public class InsertMiniZincCommunications {
 		}
 
 		/**
-		 * Chain together variable declarations.
-		 * <p>
-		 * Puts the continuation as the continuation of the last VariableDeclaration in remainingVariables.
+		 * Create a {@code VariableDeclarationStatement} from each {@code VariableDeclaration} 
+		 * in remainigVariables. Chains these {@code VariableDeclarationStatement}s together and
+		 * set continuation as the continuation of the last {@code VariableDeclarationStatement}.
 		 */
 		private Statement chainVariables( List< VariableDeclaration > remainingVariables, Statement continuation ){
 			if( remainingVariables.size() == 0 ){
@@ -443,16 +450,15 @@ public class InsertMiniZincCommunications {
 		}
 
 		/**
-		 * For some initial {@code Expression} and a list of {@code Dependency}s, visits the 
-		 * initial {@code Expression} with the dependency list.
+		 * Visits some Expression through {@code VisitExpression}.
 		 */
-		private Expression visitExpression( List<Dependency> dependencyList, Expression first ){
-			return new VisitExpression( output.dependencyVariables, dependencyList ).visit(first);
+		private Expression visitExpression( List<Dependency> dependencyList, Expression expression ){
+			return new VisitExpression( output.dependencyVariables, dependencyList ).visit(expression);
 		}
 
 		/**
-		 * If there is no initializer, return the given {@code VaraibleDeclaration} without 
-		 * change, otherwise visit its initializer and return a new {@code VaraibleDeclaration}
+		 * For the given {@code VariableDeclaration}, create the needed communications amd 
+		 * visits the {@code VariableDeclaration}'s initializer
 		 */
 		private Statement visitVariableDeclaration( 
 			Integer statementIndex,
@@ -479,6 +485,12 @@ public class InsertMiniZincCommunications {
 					vd.position()));
 		}
 
+		/**
+		 * Places the communications {@code Statements} in front of the statement 
+		 * {@code Statement}. 
+		 * <p>
+		 * Returns statement if communications is null.
+		 */
 		private Statement insertCommunicationsBefore( Statement communications, Statement statement ){
 			if( communications == null || communications instanceof NilStatement )
 				return statement;
@@ -486,6 +498,11 @@ public class InsertMiniZincCommunications {
 			return Continuation.continuationAfter(communications, statement);
 		}
 
+		/**
+		 * Places the communications {@code Statements} behind the statement {@code Statement}. 
+		 * <p>
+		 * Returns statement if communications is null.
+		 */
 		private Statement insertCommunicationsAfter( Statement statement, Statement communications ){
 			if( communications == null || communications instanceof NilStatement )
 				return statement;

@@ -1,7 +1,5 @@
 package choral.compiler.amend.MiniZincInference;
 
-import static choral.ast.body.ConstructorModifier.valueOf;
-
 import java.util.Map;
 
 import choral.ast.CompilationUnit;

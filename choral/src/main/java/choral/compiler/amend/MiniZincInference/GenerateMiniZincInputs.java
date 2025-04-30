@@ -21,6 +21,11 @@ import choral.types.Member.HigherCallable;
 import choral.types.World;
 import choral.utils.Pair;
 
+/**
+ * Class used to generate all MiniZinc inputs for a given CompilationUnit.
+ * <p>
+ * Returns a map, mapping each method in the CompilationUnit to a MiniZincInput.
+ */
 public class GenerateMiniZincInputs {
 
 	Map<HigherCallable, MiniZincInput> allInputs = new HashMap<>();

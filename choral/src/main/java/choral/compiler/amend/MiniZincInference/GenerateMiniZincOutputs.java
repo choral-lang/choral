@@ -6,7 +6,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,10 +14,14 @@ import choral.Choral;
 import choral.ast.CompilationUnit;
 import choral.ast.statement.Statement;
 import choral.compiler.amend.Utils;
+import choral.exceptions.CommunicationInferenceException;
 import choral.types.GroundInterface;
 import choral.types.Member.HigherCallable;
 import choral.utils.Pair;
 
+/**
+ * A class to run MiniZinc on the methods in come CompilationUnit using the inputs from inputs.
+ */
 public class GenerateMiniZincOutputs {
 
     private final String MZN_FILENAME = "makespan_full.mzn";
@@ -45,7 +48,7 @@ public class GenerateMiniZincOutputs {
         try {
             createMiniZincFile();
         } catch (IOException e) {
-            System.out.println( "An error occured while trying to create the MiniZinc file" );
+            throw new CommunicationInferenceException( "An error occured while trying to create the MiniZinc file" );
         }
         
         for( Pair<HigherCallable, Statement> methodPair : Utils.getMethods(cu) ){
@@ -65,10 +68,7 @@ public class GenerateMiniZincOutputs {
                     createOutput(out, methodPair.right(), input, method.channels());
                 }
             } catch (Exception e) {
-                System.out.println( "An error occured while running the MiniZinc program on method " + method );
-				System.out.println( e.getMessage() );
-				e.printStackTrace();
-				System.exit(1);
+                throw new CommunicationInferenceException( "An error occured while running the MiniZinc program on method " + method );
             }
         }
     }
@@ -102,10 +102,12 @@ public class GenerateMiniZincOutputs {
 	){
         MiniZincOutput output = new MiniZincOutput();
         List<String> outString = out.lines().toList();
+        /*
         System.out.println( "Full out: \n" );
         for( String s : outString )
             System.out.println( s ); 
-		
+		*/
+        
 		// parse data communications
         String dataComs = outString.get(1);
         String[] dataComIdx = dataComs.split(" ");
@@ -133,7 +135,4 @@ public class GenerateMiniZincOutputs {
         }
 		outputs.put(input, output);
     }
-
-	
-    
 }
