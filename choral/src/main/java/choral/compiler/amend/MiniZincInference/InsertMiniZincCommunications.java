@@ -34,8 +34,8 @@ public class InsertMiniZincCommunications {
     Map<HigherCallable, MiniZincInput> inputs;
     Map<MiniZincInput, MiniZincOutput> outputs;
 
-    Enum enum_ = null;
-	Position enumPosition;
+    Enum enum_ = null; // enum used in selections
+	Position enumPosition; // the enum needs to have some position
 
     public InsertMiniZincCommunications(  
         Map<HigherCallable, MiniZincInput> inputs,
@@ -47,7 +47,7 @@ public class InsertMiniZincCommunications {
 
 
     public CompilationUnit insertComs( CompilationUnit cu ){
-        enumPosition = cu.position();
+        enumPosition = cu.position(); 
 		return createNewCompilationUnit(cu);
     }
 
@@ -155,10 +155,10 @@ public class InsertMiniZincCommunications {
             Integer statementIndex = input.statementIndices.get(n).get(0);
 			List<Dependency> used_at_n = getDependenciesUsedAt( statementIndex );
             
-            Statement dataComs = createCommunications(statementIndex, n.position()); 
+            Statement communicaitons = createCommunications(statementIndex, n.position()); 
 
 			return insertCommunicationsBefore(
-					dataComs, 
+					communicaitons, 
 					new ExpressionStatement(
 						visitExpression(used_at_n, n.expression()), 
 						visitContinutation(n.continuation()), 
@@ -176,10 +176,9 @@ public class InsertMiniZincCommunications {
 			List<Statement> vds = new ArrayList<>();
 			for( int i = 0; i < n.variables().size(); i++ ){
 				Integer statementIndex = statementIndices.get(i);
-				List<Dependency> dependenciesToInsert = output.dataCommunications.get(statementIndex);
 				List<Dependency> used_at_n = getDependenciesUsedAt( statementIndex );
 
-				vds.add(visitVariableDeclaration(n.variables().get(i), dependenciesToInsert, used_at_n));
+				vds.add(visitVariableDeclaration(statementIndex, n.variables().get(i), used_at_n));
 			}
 			return Utils.chainStatements(vds, visitContinutation(n.continuation()));
 		}
@@ -195,16 +194,14 @@ public class InsertMiniZincCommunications {
 			assert statementIndices.size() == 2;
 			
 			Integer beforeBlockIndex = statementIndices.get(0);
-			List<Dependency> dependenciesToInsertBeforeBlock = output.dataCommunications.get(beforeBlockIndex);
 			// The before block statement is "{". No dependency can be used in this statement
-			Statement comsBeforeBlock = createCommunications(dependenciesToInsertBeforeBlock, n.position());
+			Statement comsBeforeBlock = createCommunications(beforeBlockIndex, n.position());
 
 			Statement newEnclosedStatement = visit(n.enclosedStatement());
 
 			Integer beforeEndOfBlockIndex = statementIndices.get(1);
-			List<Dependency> dependenciesToInsertBeforeEndOfBlock = output.dataCommunications.get(beforeEndOfBlockIndex);
 			// The before block statement is "{". No dependency can be used in this statement
-			Statement comsBeforeEndOfBlock = createCommunications(dependenciesToInsertBeforeEndOfBlock, n.position());
+			Statement comsBeforeEndOfBlock = createCommunications(beforeEndOfBlockIndex, n.position());
 
 			return insertCommunicationsBefore(
 				comsBeforeBlock, 
@@ -222,24 +219,21 @@ public class InsertMiniZincCommunications {
 			Enum enum_ = getEnum(2);
 
 			Integer conditionIndex = statementIndices.get(0);
-			List<Dependency> dependenciesToInsertAtCondition = output.dataCommunications.get(conditionIndex);
 			List<Dependency> used_at_condition = getDependenciesUsedAt( conditionIndex );
-			Statement comsBeforeCondition = createCommunications(dependenciesToInsertAtCondition, n.position());
+			Statement comsBeforeCondition = createCommunications(conditionIndex, n.position());
 			Expression newCondition = visitExpression(used_at_condition, n.condition());
 
 			currentEnumConstant = enum_.cases().get(0);
 			Statement newThen = visit(n.ifBranch());
 			Integer endOfThenIndex = statementIndices.get(1);
-			List<Dependency> dependenciesToInsertAtEndOfThen = output.dataCommunications.get(endOfThenIndex);
 			// The end of then statement is "} else {". No dependency can be used in this statement
-			Statement comsBeforeEndOfThen = createCommunications(dependenciesToInsertAtEndOfThen, n.position());
+			Statement comsBeforeEndOfThen = createCommunications(endOfThenIndex, n.position());
 
 			currentEnumConstant = enum_.cases().get(1);
 			Statement newElse = visit(n.elseBranch());
 			Integer endOfElseIndex = statementIndices.get(2);
-			List<Dependency> dependenciesToInsertAtEndOfElse = output.dataCommunications.get(endOfElseIndex);
 			// The end of else statement is "}". No dependency can be used in this statement
-			Statement comsBeforeEndOfElse = createCommunications(dependenciesToInsertAtEndOfElse, n.position());
+			Statement comsBeforeEndOfElse = createCommunications(endOfElseIndex, n.position());
 			
 			currentEnumConstant = enumConstantBeforeIf;
 			return insertCommunicationsBefore(
@@ -270,10 +264,9 @@ public class InsertMiniZincCommunications {
 		@Override
 		public Statement visit( ReturnStatement n ) {
 			Integer statementIndex = input.statementIndices.get(n).get(0);
-			List<Dependency> dependenciesToInsert = output.dataCommunications.get(statementIndex);
 			List<Dependency> used_at_n = getDependenciesUsedAt( statementIndex );
 
-			Statement dataComs = createCommunications(dependenciesToInsert, n.position());
+			Statement dataComs = createCommunications(statementIndex, n.position());
 
 			return insertCommunicationsBefore(
 				dataComs, 
@@ -307,7 +300,7 @@ public class InsertMiniZincCommunications {
             else
                 return null; 
         }
-
+		
 		private Statement createCommunications( Integer statementIndex, Position pos ){
             Statement selections = createSelections(output.selections.get(statementIndex), pos); 
             Statement dataCommunications = createDataCommunications(output.dataCommunications.get(statementIndex), pos); 
@@ -462,11 +455,11 @@ public class InsertMiniZincCommunications {
 		 * change, otherwise visit its initializer and return a new {@code VaraibleDeclaration}
 		 */
 		private Statement visitVariableDeclaration( 
+			Integer statementIndex,
 			VariableDeclaration vd, 
-			List<Dependency> dependenciesToInsert,
 			List<Dependency> used_at_n
 		){
-			Statement coms = createCommunications(dependenciesToInsert, vd.position());
+			Statement coms = createCommunications(statementIndex, vd.position());
 			VariableDeclaration newVd;
 			if( vd.initializer().isEmpty() )
 				newVd = vd;
