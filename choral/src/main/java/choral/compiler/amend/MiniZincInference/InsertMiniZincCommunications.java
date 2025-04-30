@@ -148,25 +148,22 @@ public class InsertMiniZincCommunications {
 			List<Dependency> dependenciesToInsert = output.dataCommunications.get(statementIndex);
 			List<Dependency> used_at_n = getDependenciesUsedAt( statementIndex );
             
-            Statement dataComs; 
-			if( dependenciesToInsert == null ){
-				return new ExpressionStatement(
-					visitExpression(used_at_n, n.expression()), 
-					visitContinutation(n.continuation()), 
-					n.position());
-			} else{
-                dataComs = createCommunications(dependenciesToInsert, n.position());
-				return insertCommunications(
+            Statement dataComs = createCommunications(dependenciesToInsert, n.position()); 
+
+			return insertCommunications(
 					dataComs, 
 					new ExpressionStatement(
 						visitExpression(used_at_n, n.expression()), 
 						visitContinutation(n.continuation()), 
 						n.position()));
-			}
 		}
 
 		@Override
 		public Statement visit( VariableDeclarationStatement n ) {
+			// VariableDeclarationStatements can consist of multiple VariableDeclarations
+			// though since we want to be able to insert communications before any of these 
+			// VariableDeclarations we turn each VariableDeclaration into its own 
+			// VariableDeclarationStatement
 			List<Integer> statementIndices = input.statementIndices.get(n);
 
 			List<Statement> vds = new ArrayList<>();
@@ -245,11 +242,18 @@ public class InsertMiniZincCommunications {
 
 		@Override
 		public Statement visit( ReturnStatement n ) {
+			Integer statementIndex = input.statementIndices.get(n).get(0);
+			List<Dependency> dependenciesToInsert = output.dataCommunications.get(statementIndex);
+			List<Dependency> used_at_n = getDependenciesUsedAt( statementIndex );
 
-			return new ReturnStatement(
-				n.returnExpression(), 
-				visitContinutation(n.continuation()), 
-				n.position());
+			Statement dataComs = createCommunications(dependenciesToInsert, n.position());
+
+			return insertCommunications(
+				dataComs, 
+				new ReturnStatement(
+					visitExpression(used_at_n, n.returnExpression()), 
+					visitContinutation(n.continuation()), 
+					n.position()));
 		}
 
 		/** 
