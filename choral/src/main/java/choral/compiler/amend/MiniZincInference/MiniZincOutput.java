@@ -14,6 +14,9 @@ import choral.types.Member.HigherMethod;
 import choral.types.World;
 import choral.utils.Pair;
 
+/**
+ * A class to store all data generated from MiniZinc, used to create communications. 
+ */
 public class MiniZincOutput{
     Map<Integer, List<Dependency>> dataCommunications = new HashMap<>();
     Map<Dependency, Name> dependencyVariables = new HashMap<>();
