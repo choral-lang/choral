@@ -145,18 +145,18 @@ public class InsertMiniZincCommunications {
 		@Override
 		public Statement visit( ExpressionStatement n ) {
             Integer statementIndex = input.statementIndices.get(n).get(0);
-			List<Dependency> dependencyList = output.dataCommunications.get(statementIndex);
+			List<Dependency> dependenciesToInsert = output.dataCommunications.get(statementIndex);
 			List<Dependency> used_at_n = getDependenciesUsedAt( statementIndex );
             
             Statement dataComs; 
-			if( dependencyList == null ){
+			if( dependenciesToInsert == null ){
 				return new ExpressionStatement(
 					visitExpression(used_at_n, n.expression()), 
 					visitContinutation(n.continuation()), 
 					n.position());
 			} else{
-                dataComs = createCommunications(dependencyList, n.position());
-				return Continuation.continuationAfter(
+                dataComs = createCommunications(dependenciesToInsert, n.position());
+				return insertCommunications(
 					dataComs, 
 					new ExpressionStatement(
 						visitExpression(used_at_n, n.expression()), 
@@ -196,12 +196,36 @@ public class InsertMiniZincCommunications {
 
 		@Override
 		public Statement visit( IfStatement n ) {
+			List<Integer> statementIndices = input.statementIndices.get(n);
+			assert statementIndices.size() == 3;
 
-			return new IfStatement(
-				n.condition(), 
-				visit(n.ifBranch()),
-				visit(n.elseBranch()), 
-				visitContinutation(n.continuation()), n.position());
+			Integer conditionIndex = statementIndices.get(0);
+			List<Dependency> dependenciesToInsertAtCondition = output.dataCommunications.get(conditionIndex);
+			List<Dependency> used_at_condition = getDependenciesUsedAt( conditionIndex );
+			Statement comsBeforeCondition = createCommunications(dependenciesToInsertAtCondition, n.position());
+			Expression newCondition = visitExpression(used_at_condition, n.condition());
+
+			Statement newThen = visit(n.ifBranch());
+			Integer endOfThenIndex = statementIndices.get(1);
+			List<Dependency> dependenciesToInsertAtEndOfThen = output.dataCommunications.get(endOfThenIndex);
+			// The end of then statement is "} else {". No dependency can be used in this statement
+			Statement comsBeforeEndOfThen = createCommunications(dependenciesToInsertAtEndOfThen, n.position());
+
+			Statement newElse = visit(n.elseBranch());
+			Integer endOfElseIndex = statementIndices.get(2);
+			List<Dependency> dependenciesToInsertAtEndOfElse = output.dataCommunications.get(endOfElseIndex);
+			// The end of then statement is "} else {". No dependency can be used in this statement
+			Statement comsBeforeEndOfElse = createCommunications(dependenciesToInsertAtEndOfElse, n.position());
+			
+
+			return insertCommunications(
+				comsBeforeCondition, 
+				new IfStatement(
+					newCondition, 
+					insertCommunications(newThen, comsBeforeEndOfThen), 
+					insertCommunications(newElse, comsBeforeEndOfElse), 
+					visitContinutation(n.continuation()), 
+					n.position()));
 		}
 
 		@Override // not supported
@@ -240,7 +264,9 @@ public class InsertMiniZincCommunications {
 		 * together, and the first statement is returned. 
 		 */
         private Statement createCommunications( List<Dependency> dependencies, Position pos ){
-            List< VariableDeclaration > variables = new ArrayList<>();
+            if( dependencies == null )
+				return null;
+			List< VariableDeclaration > variables = new ArrayList<>();
             for( Dependency dependency : dependencies ){
                 createVariables(dependency, variables, pos);
             }
@@ -359,12 +385,19 @@ public class InsertMiniZincCommunications {
 					(AssignExpression)visitExpression(used_at_n, vd.initializer().get()),
 					vd.position());
 			
-			return Continuation.continuationAfter(
+			return insertCommunications(
 				coms, 
 				new VariableDeclarationStatement(
 					List.of(newVd), 
 					new NilStatement( vd.position() ), 
 					vd.position()));
+		}
+
+		private Statement insertCommunications( Statement communications, Statement statement){
+			if( communications == null || communications instanceof NilStatement )
+				return statement;
+
+			return Continuation.continuationAfter(communications, statement);
 		}
 
 	}
