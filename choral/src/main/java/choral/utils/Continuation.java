@@ -13,6 +13,14 @@ import choral.ast.visitors.AbstractChoralVisitor;
 
 public class Continuation {
 
+	/**
+	 * Puts continuation as the continuation of the statement at the end of statement's 
+	 * "continuation-chain".
+	 * <p>
+	 * The "continuation-chain" is what you get when continuously following the continuation 
+	 * field of a statement. Continuation-chains will end in a null continuation or a 
+	 * NilStatement continuation.
+	 */
     public static Statement continuationAfter( Statement statement, Statement continuation ){
         if( statement == null || statement instanceof NilStatement )
             return continuation;

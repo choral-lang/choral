@@ -1,34 +1,23 @@
 package choral.compiler.amend.MiniZincInference;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 
 import choral.ast.CompilationUnit;
-import choral.ast.Name;
 import choral.ast.body.VariableDeclaration;
 import choral.ast.expression.*;
 import choral.ast.statement.*;
 import choral.ast.type.TypeExpression;
-import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.compiler.amend.Utils;
 import choral.compiler.merge.ExpressionsMerger;
 import choral.exceptions.CommunicationInferenceException;
-import choral.types.GroundClass;
-import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
-import choral.types.GroundDataTypeOrVoid;
-import choral.types.GroundInterface;
-import choral.types.GroundReferenceType;
-import choral.types.GroundTypeParameter;
 import choral.types.Universe;
 import choral.types.Member.HigherCallable;
-import choral.types.Member.HigherMethod;
 import choral.types.World;
 import choral.utils.Pair;
 
@@ -155,179 +144,6 @@ public class GenerateMiniZincInputs {
 			throw new CommunicationInferenceException( "Found Dependency with " + senders.size() + " senders, expected 1" );
 		}
 		return senders.get(0);
-	}
-
-	private class Dependency {
-		private Expression originalExpression;
-		private HigherMethod comMethod;
-		private String channelIdentifier;
-		private GroundInterface channel;
-		private GroundDataType type;
-        private World sender;
-        private World recipient;
-
-		public Dependency( Expression originalExpression, World sender, World recipient ){
-			this.originalExpression = originalExpression;
-			GroundDataTypeOrVoid t = originalExpression.typeAnnotation().get();
-			if( t.isVoid() )
-				throw new CommunicationInferenceException( "Dependency cannot be of type void: " + originalExpression );
-			this.type = (GroundDataType)t;
-			this.recipient = recipient;
-			this.sender = sender;
-		}
-
-		public Expression originalExpression(){
-			return originalExpression;
-		}
-
-		public GroundDataType type(){
-			return type;
-		}
-
-		public HigherMethod comMethod(){
-			return comMethod;
-		}
-
-		public String channelIdentifier(){
-			return channelIdentifier;
-		}
-
-		public GroundInterface channel(){
-			return channel;
-		}
-
-        public World recipient(){
-			return recipient;
-		}
-
-		public World sender(){
-			return sender;
-		}
-
-		public void setChannel( Pair<String, GroundInterface> channelPair ){
-			this.channelIdentifier = channelPair.left();
-			this.channel = channelPair.right();
-		}
-
-		public void setComMethod( HigherMethod comMethod ){
-			this.comMethod = comMethod;
-		}
-
-		/**
-		 * Creates the {@code Expression} containing the communiction of the dependency. Note
-		 * that the argument of the communication method ({@code visitedExpression}) must 
-		 * be visited before creating the comExpression.
-		 * <p>
-		 * This expression needs
-		 * <p>
-		 * 1. A name
-		 * 		- The name of out communication method (com)
-		 * <p>
-		 * 2. Arguments 
-		 * 		- Our {@code visitedDependency} expression. This is expected to be a 
-		 * 		visited version of {@code originalExpression}. Note that this must be 
-		 * 		visited before calling {@code createComExpression}. This is because 
-		 * 		we use java's {@code Object.equals()} to check if  an expression is a 
-		 * 		dependency. If {@code createComExpression} is called before visiting 
-		 * 		{@code originalExpression} then dependencies inside
-		 * 		{@code originalExpression} (nested dependencies) will not be caught. 
-		 * <p>
-		 * 3. type argumetns
-		 * 		- com methods always need the type of the data they are communicating. 
-		 * 		This is stored as a {@code TypeExpression}. These TypeExpressions contain
-		 * 		the unqualified name of the type (e.g. not "java.lang.Object", only 
-		 * 		"Object") and composite types (types containing other types (like 
-		 * 		{@code List})) also have a list of {@code TypeExpression}s representing 
-		 * 		its inner types.
-		 * @param visitedDependency - Must be visited before calling this method, 
-		 * 		otherwise nested dependencies will not be caught.
-		 */
-		public Expression createComExpression( Expression visitedDependency ){
-
-			TypeExpression typeExpression;
-            if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
-				typeExpression = getTypeExpression((GroundTypeParameter)originalExpression.typeAnnotation().get());
-            } else{ 
-				typeExpression = getTypeExpression((GroundClassOrInterface)originalExpression.typeAnnotation().get());
-			}
-
-			final List<Expression> arguments = List.of( visitedDependency );
-			final Name name = new Name(comMethod.identifier());
-			final List<TypeExpression> typeArguments = List.of( typeExpression );
-			
-			MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments, visitedDependency.position());
-			
-			// The comMethod is a method inside a channel, so we need to make the channel its scope
-			FieldAccessExpression scope = new FieldAccessExpression(new Name(channelIdentifier), visitedDependency.position());
-			
-			// Something like channel.< Type >com( visitedDependency )
-			return new ScopedExpression(scope, scopedExpression);
-		}
-
-		private TypeExpression getTypeExpression( GroundClassOrInterface type ){
-			return new TypeExpression(
-				new Name(type.typeConstructor().identifier()),
-				Collections.emptyList(), 
-				type.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
-		}
-
-		private TypeExpression getTypeExpression( GroundReferenceType type ){
-			if( type instanceof GroundClass ){ // I think this is only not true for primitive types, which cannot be communicated
-				GroundClass typeGC = (GroundClass)type;
-				return new TypeExpression(
-					new Name(typeGC.typeConstructor().identifier()),
-					Collections.emptyList(), 
-					typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
-			}
-			if( type instanceof GroundTypeParameter ){
-				GroundTypeParameter typeGTP = (GroundTypeParameter)type;
-				return new TypeExpression(
-					new Name(typeGTP.typeConstructor().identifier()),
-					Collections.emptyList(), 
-					Collections.emptyList());
-			}
-			
-			throw new CommunicationInferenceException( "ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() ); 
-		}
-
-        /**
-         * returns the type of the dependency's original expression as a TypeExpression
-         * @return
-         */
-        public TypeExpression getType(){
-            if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
-				return getType((GroundTypeParameter)originalExpression.typeAnnotation().get());
-            } else{ 
-				return getType((GroundClassOrInterface)originalExpression.typeAnnotation().get());
-			}
-        }
-
-        private TypeExpression getType( GroundClassOrInterface type ){
-            return new TypeExpression(
-				new Name(type.typeConstructor().identifier()),
-				List.of( new WorldArgument(new Name(recipient.identifier()), null) ), 
-				type.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
-		}
-
-		private TypeExpression getType( GroundReferenceType type ){
-            if( type instanceof GroundClass ){ // I think this is only not true for primitive types, which cannot be communicated
-				GroundClass typeGC = (GroundClass)type;
-				return new TypeExpression(
-					new Name(typeGC.typeConstructor().identifier()),
-					List.of( new WorldArgument(new Name(recipient.identifier()), null) ), 
-					typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
-			}
-			if( type instanceof GroundTypeParameter ){
-				GroundTypeParameter typeGTP = (GroundTypeParameter)type;
-				return new TypeExpression(
-					new Name(typeGTP.typeConstructor().identifier()),
-					List.of( new WorldArgument(new Name(recipient.identifier()), null) ), 
-					Collections.emptyList());
-			}
-			
-			throw new CommunicationInferenceException( "ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() ); 
-		}
-
 	}
 
 	/**

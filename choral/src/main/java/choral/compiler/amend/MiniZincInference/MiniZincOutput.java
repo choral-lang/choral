@@ -1,5 +1,7 @@
 package choral.compiler.amend.MiniZincInference;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,12 +14,13 @@ import choral.types.World;
 import choral.utils.Pair;
 
 public class MiniZincOutput{
-    Map<Integer, Dependency> dataCommunications;
-    Map<Dependency, Name> dependencyVariables;
-    Map<Integer, MiniZincSelectionMethod> selections;
+    Map<Integer, List<Dependency>> dataCommunications = new HashMap<>();
+    Map<Dependency, Name> dependencyVariables = new HashMap<>();
+    Map<Integer, MiniZincSelectionMethod> selections = new HashMap<>();
 
     public void insertDataCom( Integer idx, Dependency dep ){
-        dataCommunications.put(idx, dep);
+        dataCommunications.putIfAbsent(idx, new ArrayList<>());
+        dataCommunications.get(idx).add(dep);
         dependencyVariables.put(dep, new Name( "dependencyAt" + dep.recipient() + "_" + Math.abs(dep.originalExpression().hashCode()) ));
     }
 

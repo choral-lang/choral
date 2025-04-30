@@ -5,12 +5,16 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import choral.ast.CompilationUnit;
+import choral.ast.expression.Expression;
+import choral.ast.statement.NilStatement;
 import choral.ast.statement.Statement;
+import choral.compiler.merge.ExpressionsMerger;
 import choral.types.GroundDataType;
 import choral.types.GroundInterface;
 import choral.types.Member.HigherCallable;
 import choral.types.Member.HigherMethod;
 import choral.types.World;
+import choral.utils.Continuation;
 import choral.utils.Pair;
 
 public class Utils {
@@ -19,15 +23,18 @@ public class Utils {
 	 * Retreives all methods from the {@code CompilationUnit} including constructors.
      * <p>
      * Returns a List of Pair of the methods typeannotation and the first statement in its body.
+	 * <p>
+	 * filters out all methods that has no method body.
 	 */
     public static List<Pair<HigherCallable, Statement>> getMethods( CompilationUnit cu ){
 		return Stream.concat( 
 			cu.classes().stream()
 				.flatMap( cls -> cls.methods().stream() )
+				.filter( method -> method.body().isPresent() && !(method.body().get() instanceof NilStatement) )
 				.map( method -> 
 					new Pair<HigherCallable, Statement>(
 						method.signature().typeAnnotation().get(), // we assume that methods are type-annotated
-						method.body().orElse(null)) ), 
+						method.body().get()) ), 
 			cu.classes().stream()
 				.flatMap(cls -> cls.constructors().stream()
 				.map( method -> 
@@ -137,5 +144,43 @@ public class Utils {
 		}
 		// no viable selectionmethod was found
 		return null;
+	}
+
+	/**
+	 * Returns whether or not he two expressions are the same expression.
+	 * <p>
+	 * Two expressions are equal if ExpressionsMerger can successfully merge them.
+	 */
+	public static boolean isSameExpression( Expression e1, Expression e2 ){
+		try { 
+			ExpressionsMerger.mergeExpressions(e1, e2);
+			return true;
+
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Chains Statements together through continuations.
+	 * <p>
+	 * Given a list of statements {@code stms}, it returns the {@code stms[0]} with its 
+	 * continuation set to {@code stms[1]}, and {@code stms[1]}'s continuation set to 
+	 * {@code stms[2]} and so on.
+	 */
+	public static Statement chainStatements( List<Statement> statements ){
+		if( statements.size() == 1 )
+			return statements.get(0);
+		
+		Statement last = statements.remove(statements.size()-1);
+		return chainStatements(statements, last);
+	}
+
+	public static Statement chainStatements( List<Statement> statements, Statement last ){
+		if( statements.size() == 0 )
+			return last;
+		
+		Statement stm = statements.remove(statements.size()-1);
+		return chainStatements(statements, Continuation.continuationAfter(stm, last));
 	}
 }

@@ -64,7 +64,8 @@ public class GenerateMiniZincOutputs {
                     createOutput(out, methodPair.right(), input, method.channels());
                 }
             } catch (Exception e) {
-                System.out.println( "An error occured while running the MiniZinc program" );
+                System.out.println( "An error occured while running the MiniZinc program on method " + method );
+				System.out.println( e.getMessage() );
             }
         }
     }
