@@ -17,7 +17,7 @@ import choral.utils.Pair;
 public class MiniZincOutput{
     Map<Integer, List<Dependency>> dataCommunications = new HashMap<>();
     Map<Dependency, Name> dependencyVariables = new HashMap<>();
-    Map<Integer, MiniZincSelectionMethod> selections = new HashMap<>();
+    Map<Integer, List<MiniZincSelectionMethod>> selections = new HashMap<>();
 
     public void insertDataCom( Integer idx, Dependency dep ){
         dataCommunications.putIfAbsent(idx, new ArrayList<>());
@@ -35,8 +35,8 @@ public class MiniZincOutput{
             Utils.findSelectionMethod(recipient, sender, channels);
         if( selectionMethod == null )
             throw new CommunicationInferenceException("No viable selection method was found for " + recipient + " with sender " + sender);
-        selections.put(
-            idx, 
+        selections.putIfAbsent(idx, new ArrayList<>());
+        selections.get(idx).add(
             new MiniZincSelectionMethod(
                 selectionMethod.left().left(), 
                 selectionMethod.left().right(), 

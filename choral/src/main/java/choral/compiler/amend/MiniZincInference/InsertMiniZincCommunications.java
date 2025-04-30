@@ -2,6 +2,7 @@ package choral.compiler.amend.MiniZincInference;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -10,14 +11,18 @@ import choral.ast.Name;
 import choral.ast.Position;
 import choral.ast.body.Class;
 import choral.ast.body.ClassMethodDefinition;
+import choral.ast.body.ClassModifier;
 import choral.ast.body.ConstructorDefinition;
 import choral.ast.body.Enum;
+import choral.ast.body.EnumConstant;
 import choral.ast.body.VariableDeclaration;
 import choral.ast.expression.*;
 import choral.ast.expression.AssignExpression.Operator;
 import choral.ast.statement.*;
+import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.visitors.AbstractChoralVisitor;
+import choral.compiler.amend.Selections;
 import choral.compiler.amend.Utils;
 import choral.compiler.amend.MiniZincInference.MiniZincInput.Dep_use;
 import choral.compiler.amend.MiniZincInference.MiniZincInput.Dependency;
@@ -30,6 +35,7 @@ public class InsertMiniZincCommunications {
     Map<MiniZincInput, MiniZincOutput> outputs;
 
     Enum enum_ = null;
+	Position enumPosition;
 
     public InsertMiniZincCommunications(  
         Map<HigherCallable, MiniZincInput> inputs,
@@ -41,7 +47,8 @@ public class InsertMiniZincCommunications {
 
 
     public CompilationUnit insertComs( CompilationUnit cu ){
-        return createNewCompilationUnit(cu);
+        enumPosition = cu.position();
+		return createNewCompilationUnit(cu);
     }
 
     /**
@@ -131,6 +138,7 @@ public class InsertMiniZincCommunications {
 
         MiniZincInput input;
         MiniZincOutput output;
+		EnumConstant currentEnumConstant = null;
 		
 		public VisitStatement(MiniZincInput input, MiniZincOutput output){
             this.input = input;
@@ -145,10 +153,9 @@ public class InsertMiniZincCommunications {
 		@Override
 		public Statement visit( ExpressionStatement n ) {
             Integer statementIndex = input.statementIndices.get(n).get(0);
-			List<Dependency> dependenciesToInsert = output.dataCommunications.get(statementIndex);
 			List<Dependency> used_at_n = getDependenciesUsedAt( statementIndex );
             
-            Statement dataComs = createCommunications(dependenciesToInsert, n.position()); 
+            Statement dataComs = createCommunications(statementIndex, n.position()); 
 
 			return insertCommunicationsBefore(
 					dataComs, 
@@ -211,6 +218,8 @@ public class InsertMiniZincCommunications {
 		public Statement visit( IfStatement n ) {
 			List<Integer> statementIndices = input.statementIndices.get(n);
 			assert statementIndices.size() == 3;
+			EnumConstant enumConstantBeforeIf = currentEnumConstant;
+			Enum enum_ = getEnum(2);
 
 			Integer conditionIndex = statementIndices.get(0);
 			List<Dependency> dependenciesToInsertAtCondition = output.dataCommunications.get(conditionIndex);
@@ -218,19 +227,21 @@ public class InsertMiniZincCommunications {
 			Statement comsBeforeCondition = createCommunications(dependenciesToInsertAtCondition, n.position());
 			Expression newCondition = visitExpression(used_at_condition, n.condition());
 
+			currentEnumConstant = enum_.cases().get(0);
 			Statement newThen = visit(n.ifBranch());
 			Integer endOfThenIndex = statementIndices.get(1);
 			List<Dependency> dependenciesToInsertAtEndOfThen = output.dataCommunications.get(endOfThenIndex);
 			// The end of then statement is "} else {". No dependency can be used in this statement
 			Statement comsBeforeEndOfThen = createCommunications(dependenciesToInsertAtEndOfThen, n.position());
 
+			currentEnumConstant = enum_.cases().get(1);
 			Statement newElse = visit(n.elseBranch());
 			Integer endOfElseIndex = statementIndices.get(2);
 			List<Dependency> dependenciesToInsertAtEndOfElse = output.dataCommunications.get(endOfElseIndex);
 			// The end of else statement is "}". No dependency can be used in this statement
 			Statement comsBeforeEndOfElse = createCommunications(dependenciesToInsertAtEndOfElse, n.position());
 			
-
+			currentEnumConstant = enumConstantBeforeIf;
 			return insertCommunicationsBefore(
 				comsBeforeCondition, 
 				new IfStatement(
@@ -296,6 +307,68 @@ public class InsertMiniZincCommunications {
             else
                 return null; 
         }
+
+		private Statement createCommunications( Integer statementIndex, Position pos ){
+            Statement selections = createSelections(output.selections.get(statementIndex), pos); 
+            Statement dataCommunications = createDataCommunications(output.dataCommunications.get(statementIndex), pos); 
+			if( selections == null && dataCommunications == null )
+				return null;
+			if( selections == null )
+				return dataCommunications;
+			if( dataCommunications == null )
+				return selections;
+			return Continuation.continuationAfter(selections, dataCommunications);
+        }
+
+		private Statement createSelections( List<MiniZincSelectionMethod> selectionsToInsert, Position pos ){
+			if( selectionsToInsert == null )
+				return null;
+			List< Expression > selectionExpressions = new ArrayList<>();
+            for( MiniZincSelectionMethod selectionMethod : selectionsToInsert ){
+                selectionExpressions.add(
+					selectionMethod.createSelectionExpression(enum_, currentEnumConstant, pos));
+            }
+
+            return Selections.chainSelections(new NilStatement(), selectionExpressions); 
+		}
+
+		/**
+         * Returns an enumerator with the specified amount of cases. If no such enumerator exists, one 
+         * is created.
+         */
+        private Enum getEnum( int numCases ){
+            // Checks if an enum with enough cases has previously been created
+            if( enum_ == null || enum_.cases().size() < numCases ){
+                // If not, creates one, and overwrites the current enumerator
+                List<EnumConstant> cases = new ArrayList<>();
+                for( int i = 0; i < numCases; i++ ){
+                    cases.add( new EnumConstant(new Name( "CASE" + i ), Collections.emptyList(), null) );
+                }
+                
+                enum_ = new Enum(
+                    new Name( "KOCEnum" ), 
+                    new FormalWorldParameter( new Name( "R" ) ), 
+                    cases, 
+                    Collections.emptyList(), 
+                    EnumSet.noneOf( ClassModifier.class ), 
+                    enumPosition);
+            }
+            return enum_;
+        }
+
+		private Statement createDataCommunications( List<Dependency> dependenciesToInsert, Position pos ){
+			if( dependenciesToInsert == null )
+				return null;
+			List< VariableDeclaration > variables = new ArrayList<>();
+            for( Dependency dependency : dependenciesToInsert ){
+                createVariables(dependency, variables, pos);
+            }
+
+            if( variables.size() > 0 )
+                return chainVariables(variables, new NilStatement(pos));
+            else
+                return null; 
+		}
 
 		/**
 		 * Creates a variable for the given dependency and all of its nested dependencies.
