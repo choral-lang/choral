@@ -38,7 +38,7 @@ public class GenerateMiniZincInputs {
 
     public GenerateMiniZincInputs(){}
 
-    public Map<HigherCallable, MiniZincInput> inferComms( CompilationUnit cu ){
+    public Map<HigherCallable, MiniZincInput> generateInputs( CompilationUnit cu ){
 		
 		// Generate the MiniZinc inputs from the CompilationUnit
 		buildMiniZincInput(cu);
