@@ -150,7 +150,7 @@ public class InsertMiniZincCommunications {
             
             Statement dataComs = createCommunications(dependenciesToInsert, n.position()); 
 
-			return insertCommunications(
+			return insertCommunicationsBefore(
 					dataComs, 
 					new ExpressionStatement(
 						visitExpression(used_at_n, n.expression()), 
@@ -184,11 +184,27 @@ public class InsertMiniZincCommunications {
 
 		@Override
 		public Statement visit( BlockStatement n ) {
+			List<Integer> statementIndices = input.statementIndices.get(n);
+			assert statementIndices.size() == 2;
 			
-			return new BlockStatement(
-				n.enclosedStatement(), 
-				visitContinutation(n.continuation()), 
-				n.position());
+			Integer beforeBlockIndex = statementIndices.get(0);
+			List<Dependency> dependenciesToInsertBeforeBlock = output.dataCommunications.get(beforeBlockIndex);
+			// The before block statement is "{". No dependency can be used in this statement
+			Statement comsBeforeBlock = createCommunications(dependenciesToInsertBeforeBlock, n.position());
+
+			Statement newEnclosedStatement = visit(n.enclosedStatement());
+
+			Integer beforeEndOfBlockIndex = statementIndices.get(1);
+			List<Dependency> dependenciesToInsertBeforeEndOfBlock = output.dataCommunications.get(beforeEndOfBlockIndex);
+			// The before block statement is "{". No dependency can be used in this statement
+			Statement comsBeforeEndOfBlock = createCommunications(dependenciesToInsertBeforeEndOfBlock, n.position());
+
+			return insertCommunicationsBefore(
+				comsBeforeBlock, 
+				new BlockStatement(
+					insertCommunicationsAfter(newEnclosedStatement, comsBeforeEndOfBlock), 
+					visitContinutation(n.continuation()), 
+					n.position()));
 		}
 
 		@Override
@@ -211,16 +227,16 @@ public class InsertMiniZincCommunications {
 			Statement newElse = visit(n.elseBranch());
 			Integer endOfElseIndex = statementIndices.get(2);
 			List<Dependency> dependenciesToInsertAtEndOfElse = output.dataCommunications.get(endOfElseIndex);
-			// The end of then statement is "} else {". No dependency can be used in this statement
+			// The end of else statement is "}". No dependency can be used in this statement
 			Statement comsBeforeEndOfElse = createCommunications(dependenciesToInsertAtEndOfElse, n.position());
 			
 
-			return insertCommunications(
+			return insertCommunicationsBefore(
 				comsBeforeCondition, 
 				new IfStatement(
 					newCondition, 
-					insertCommunications(newThen, comsBeforeEndOfThen), 
-					insertCommunications(newElse, comsBeforeEndOfElse), 
+					insertCommunicationsAfter(newThen, comsBeforeEndOfThen), 
+					insertCommunicationsAfter(newElse, comsBeforeEndOfElse), 
 					visitContinutation(n.continuation()), 
 					n.position()));
 		}
@@ -248,7 +264,7 @@ public class InsertMiniZincCommunications {
 
 			Statement dataComs = createCommunications(dependenciesToInsert, n.position());
 
-			return insertCommunications(
+			return insertCommunicationsBefore(
 				dataComs, 
 				new ReturnStatement(
 					visitExpression(used_at_n, n.returnExpression()), 
@@ -389,7 +405,7 @@ public class InsertMiniZincCommunications {
 					(AssignExpression)visitExpression(used_at_n, vd.initializer().get()),
 					vd.position());
 			
-			return insertCommunications(
+			return insertCommunicationsBefore(
 				coms, 
 				new VariableDeclarationStatement(
 					List.of(newVd), 
@@ -397,11 +413,18 @@ public class InsertMiniZincCommunications {
 					vd.position()));
 		}
 
-		private Statement insertCommunications( Statement communications, Statement statement){
+		private Statement insertCommunicationsBefore( Statement communications, Statement statement ){
 			if( communications == null || communications instanceof NilStatement )
 				return statement;
 
 			return Continuation.continuationAfter(communications, statement);
+		}
+
+		private Statement insertCommunicationsAfter( Statement statement, Statement communications ){
+			if( communications == null || communications instanceof NilStatement )
+				return statement;
+
+			return Continuation.continuationAfter(statement, communications);
 		}
 
 	}
