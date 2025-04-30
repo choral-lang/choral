@@ -24,7 +24,8 @@ array[IN_SIZE] of string: statements; % a list of all the original statements
 array[IN_SIZE] of roles_andNull: statements_roles; % a list of the roles of the originals statements
 array[IN_SIZE] of int: statements_runtimes = [1 | i in IN_SIZE]; % a list of runtimes for each statement 
                                                                   % (default if 1 for every statement)
-array[NUM_BLOCKS, 1..3] of int: blocks; 
+array[NUM_BLOCKS, 1..3] of int: blocks;
+array[NUM_BLOCKS] of int: block_returns;
 array[IN_SIZE] of int: statements_blocks;
 array[NUM_IFS, 1..2] of NUM_BLOCKS: if_blocks;
 array[NUM_IFS] of roles: if_roles;
@@ -74,16 +75,16 @@ constraint forall( x in index_set_1of2(dep_used_at) )( % makes sure each communi
   in_statement_block(dep_used_at[x, 1], dep_used_at[x, 2])
 );
 
-constraint forall( if_ in NUM_IFS ) (
+constraint forall( if_ in NUM_IFS ) ( % makes sure that an if-statement doesn't send selections to the owner of the condition
   forall( branch in 1..2 ) (
     selections[if_, branch, if_roles[if_]] = <>
   )
 );
 
-constraint forall( if_ in NUM_IFS ) (
+constraint forall( if_ in NUM_IFS ) ( % makes sure that any role that has an action in an if-statement gets a selection
   forall( branch in 1..2 )(
     forall( role in roles where role != if_roles[if_]) (
-      if( exists(
+      if( exists( % checks if the current role has at least one statement in either branch of the current if-statement
         [ true | s in IN_SIZE
         where
           (
@@ -100,7 +101,7 @@ constraint forall( if_ in NUM_IFS ) (
   )
 );
 
-constraint forall( if_ in NUM_IFS ) (
+constraint forall( if_ in NUM_IFS ) ( % makes sure that every selection comes before every statement belonging to its recipient in that branch
   forall( role in roles )(
     forall( branch in 1..2 )(
       forall( stm in IN_SIZE where
@@ -111,6 +112,34 @@ constraint forall( if_ in NUM_IFS ) (
       )
     )
   )
+);
+
+constraint forall( if_ in NUM_IFS ) ( % makes sure that every selection comes before every communication involving its recipient in that branch
+  forall( role in roles )(
+    forall( branch in 1..2 )(
+      forall( dep in DEPS where
+        statements_blocks[out_prog_idx[dep]] == if_blocks[if_, branch] /\
+        (
+          dep_from[dep] == role \/
+          dep_to[dep] == role
+        )
+      )(
+        selections[if_, branch, role] <= out_prog_idx[dep]
+      )
+    )
+  )
+);
+
+constraint forall( if_ in NUM_IFS ) ( % makes sure that all selections comes before any return statements in that branch
+  forall( role in roles )(
+    forall( branch in 1..2 )(
+        selections[if_, branch, role] <= block_returns[if_blocks[if_,branch]]
+    )
+  )
+);
+
+constraint forall( dep in DEPS ) ( % makes sure that all communications comes before any return statements in that branch 
+  out_prog_idx[dep] <= block_returns[statements_blocks[out_prog_idx[dep]]]
 );
 
 

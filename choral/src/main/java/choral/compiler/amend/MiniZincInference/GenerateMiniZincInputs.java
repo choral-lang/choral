@@ -311,6 +311,8 @@ public class GenerateMiniZincInputs {
 			input.statements_roles.add(((GroundDataType)n.returnExpression().typeAnnotation().get()).worldArguments().get(0));
 
 			input.statementIndices.put(n, List.of(input.in_size));
+
+			input.blocks.get(currentBlock-1).returns = input.in_size;
 			
 			visitExpression(n.returnExpression(), n);
 			return visitContinutation(n.continuation());

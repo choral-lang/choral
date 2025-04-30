@@ -79,6 +79,14 @@ public class MiniZincInput {
             .map( block -> (block.start) + "," + (block.end) + "," + (block.parent) )
             .collect(Formatting.joining("|\n", "[|\n", "|];", "[];"));
         inputString += "\n";
+		inputString += "block_returns = ";
+        inputString += blocks.stream()
+            .map( block -> 
+				(block.returns == null) ? 
+					"blocks[" + (blocks.indexOf(block)+1) + ",2]" : 
+					block.returns.toString() )
+            .collect(Formatting.joining(",", "[", "];", "[];"));
+		inputString += "\n";
 
         inputString += "statements_blocks = ";
         inputString += statements_blocks.stream()
@@ -142,6 +150,7 @@ public class MiniZincInput {
         int start;
         int end;
         int parent;
+		Integer returns = null;
         
         public Block( int start, int end, int parent ){
             this.start = start;
@@ -155,6 +164,7 @@ public class MiniZincInput {
         int dependency;
         int used_at;
         boolean nested_dependency = false;
+
         
         public Dep_use( int dep ){
             this.dependency = dep;
