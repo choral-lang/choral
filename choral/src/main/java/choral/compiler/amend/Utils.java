@@ -117,11 +117,11 @@ public class Utils {
 	 * </ul>
 	 * Returns null if no such method is found.
 	 */
-	public static SelectionMethod findSelectionMethod(
+	public static Pair<Pair<String, GroundInterface>, HigherMethod> findSelectionMethod(
 		World recipient, 
 		World sender, 
-		List<Pair<String, GroundInterface>> channels){
-
+		List<Pair<String, GroundInterface>> channels
+	){
 		for( Pair<String, GroundInterface> channelPair : channels ){
             
 			Optional<? extends HigherMethod> selectMethodOptional = 
@@ -134,12 +134,7 @@ public class Utils {
 					.findAny();
 		
 			if( selectMethodOptional.isPresent() ){
-				return new SelectionMethod(
-					channelPair.left(),
-					channelPair.right(),
-					selectMethodOptional.get(),
-					sender
-				);
+				return new Pair<>(channelPair, selectMethodOptional.get());
 			}
 		}
 		// no viable selectionmethod was found

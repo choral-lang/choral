@@ -10,6 +10,7 @@ import choral.compiler.amend.Utils;
 import choral.compiler.amend.MiniZincInference.MiniZincInput.Dependency;
 import choral.exceptions.CommunicationInferenceException;
 import choral.types.GroundInterface;
+import choral.types.Member.HigherMethod;
 import choral.types.World;
 import choral.utils.Pair;
 
@@ -27,14 +28,20 @@ public class MiniZincOutput{
     public void insertSelection( 
         World recipient, 
         World sender, 
-        List<Pair<String, GroundInterface>> chanels,
+        List<Pair<String, GroundInterface>> channels,
         Integer idx
     ){
-        MiniZincSelectionMethod selectionMethod = 
-            (MiniZincSelectionMethod)Utils.findSelectionMethod(recipient, sender, chanels);
+        Pair<Pair<String, GroundInterface>, HigherMethod> selectionMethod = 
+            Utils.findSelectionMethod(recipient, sender, channels);
         if( selectionMethod == null )
             throw new CommunicationInferenceException("No viable selection method was found for " + recipient + " with sender " + sender);
-        selections.put(idx, selectionMethod);
+        selections.put(
+            idx, 
+            new MiniZincSelectionMethod(
+                selectionMethod.left().left(), 
+                selectionMethod.left().right(), 
+                selectionMethod.right(), 
+                sender));
     }
 
 }

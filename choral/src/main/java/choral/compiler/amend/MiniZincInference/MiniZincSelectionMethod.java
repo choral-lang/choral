@@ -16,11 +16,15 @@ import choral.ast.expression.ScopedExpression;
 import choral.ast.expression.StaticAccessExpression;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
-import choral.compiler.amend.SelectionMethod;
 import choral.types.GroundInterface;
 import choral.types.Member.HigherMethod;
 
-public class MiniZincSelectionMethod extends SelectionMethod{
+public class MiniZincSelectionMethod{
+
+    protected String channelIdentifier;
+    protected GroundInterface channel;
+    protected HigherMethod selectionMethod;
+    protected World sender;
 
     public MiniZincSelectionMethod( 
         String channelIdentifier,
@@ -28,11 +32,26 @@ public class MiniZincSelectionMethod extends SelectionMethod{
         HigherMethod selectionMethod,
         World sender 
     ){
-        super( 
-            channelIdentifier,
-            channel,
-            selectionMethod,
-            sender );
+        this.channelIdentifier = channelIdentifier;
+        this.channel = channel;
+        this.selectionMethod = selectionMethod;
+        this.sender = sender;
+    }
+
+    public String channelIdentifier(){
+        return channelIdentifier;
+    }
+
+    public GroundInterface channel(){
+        return channel;
+    }
+
+    public HigherMethod selectionMethod(){
+        return selectionMethod;
+    }
+
+    public World sender(){
+        return sender;
     }
 
     /**

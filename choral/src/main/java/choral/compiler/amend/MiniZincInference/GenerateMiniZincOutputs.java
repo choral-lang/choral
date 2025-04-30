@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +67,8 @@ public class GenerateMiniZincOutputs {
             } catch (Exception e) {
                 System.out.println( "An error occured while running the MiniZinc program on method " + method );
 				System.out.println( e.getMessage() );
+				e.printStackTrace();
+				System.exit(1);
             }
         }
     }
@@ -114,9 +117,9 @@ public class GenerateMiniZincOutputs {
 		// parse selections
         List<String> allSelections = outString.subList(3, 3 + input.num_ifs);
         for( int if_ = 0; if_ < input.num_ifs; if_++ ){
-            String[] ifSelections = allSelections.get(if_).split("|");
+            String[] ifSelections = allSelections.get(if_).split("\\|"); // split takes a regex, so we need to escape the "|" character
             for( int branch = 0; branch < 2; branch++ ){
-				String[] branchSelections = ifSelections[branch].split(" ");
+				String[] branchSelections = ifSelections[branch].strip().split(" ");
 				for( int recipient = 0; recipient < input.roles.size(); recipient++ ){
 					if( !branchSelections[recipient].equals("<>") ){
 						output.insertSelection(

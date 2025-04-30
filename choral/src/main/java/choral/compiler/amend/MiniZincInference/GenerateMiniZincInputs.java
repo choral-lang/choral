@@ -88,7 +88,7 @@ public class GenerateMiniZincInputs {
 
 			List<World> worlds = cu.classes().stream() // collect all roles in method
 				.flatMap( cls -> cls.worldParameters().stream() )
-				.map( formalWorld -> new World( new Universe(), formalWorld.name().identifier() ) )
+				.map( formalWorld -> (World)formalWorld.typeAnnotation().get() )
 				.toList();
 			input.roles = worlds;
 
