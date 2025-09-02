@@ -8,8 +8,24 @@ public final class System@A {
     private System() { }
 
     public static final PrintStream@A out;
-
     public final static PrintStream@A err;
+
+    public arraycopy(Object@ src, int@A srcPos, Object@ dest, int@A destPos, int@A length);
+
+    public exit(int@A status);
+    public gc();
+
+    public getenv(String@A name);
+    public getProperty(String@A key);
+    public getProperty(String@A key, String@A def);
+
+    public identityHashCode(Object@A x);
+
+    public lineSeparator();
+
+    public load(String@A filename);
+    public loadLibrary(String@A libname);
+    public runFinalization();
 
     public static Long@A currentTimeMillis();
     public static Long@A nanoTime();
