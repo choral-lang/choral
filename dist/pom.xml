@@ -53,20 +53,6 @@
 				<artifactId>maven-assembly-plugin</artifactId>
 				<executions>
 					<execution>
-						<id>make-bundles</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-						<configuration>
-							<descriptors>
-								<descriptor>assembly.xml</descriptor>
-							</descriptors>
-							<finalName>choral-${revision}</finalName>
-							<appendAssemblyId>false</appendAssemblyId>
-						</configuration>
-					</execution>
-					<execution>
 						<id>make-uberjar</id>
 						<phase>package</phase>
 						<goals>
@@ -83,6 +69,20 @@
 							</archive>
 							<!-- <finalName>choral-v${revision}-standalone</finalName> -->
 							<finalName>choral-standalone</finalName>
+							<appendAssemblyId>false</appendAssemblyId>
+						</configuration>
+					</execution>
+					<execution>
+						<id>make-bundles</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<descriptors>
+								<descriptor>assembly.xml</descriptor>
+							</descriptors>
+							<finalName>choral-${revision}</finalName>
 							<appendAssemblyId>false</appendAssemblyId>
 						</configuration>
 					</execution>
