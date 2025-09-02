@@ -31,17 +31,18 @@ jobs:
     - name: Unit Tests
       run: mvn test --file pom.xml
 
-    - name: Prepare Artefact Name
+    - name: Prepare Artifact
       run: |
         TAG_NAME=${{github.event.release.tag_name}}
         VERSION=$(echo $TAG_NAME | sed -e 's/v\(.*\)/\1/')
         echo "choralVersion=$VERSION" >> $GITHUB_ENV
+        unzip "dist/target/choral-$VERSION" -d "dist/target/choral-$VERSION"
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: choral-${{env.choralVersion}}
-        path: dist/target/choral-${{env.choralVersion}}.zip
+        path: dist/target/choral-${{env.choralVersion}}/*
 
     - name: Publish to GitHub Packages Apache Maven
       run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
