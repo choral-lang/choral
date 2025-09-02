@@ -10,22 +10,22 @@ public final class System@A {
     public static final PrintStream@A out;
     public final static PrintStream@A err;
 
-    public arraycopy(Object@ src, int@A srcPos, Object@ dest, int@A destPos, int@A length);
+    public static void arraycopy(Object@A src, Integer@A srcPos, Object@A dest, Integer@A destPos, Integer@A length);
 
-    public exit(int@A status);
-    public gc();
+    public static void exit(Integer@A status);
+    public static void gc();
 
-    public getenv(String@A name);
-    public getProperty(String@A key);
-    public getProperty(String@A key, String@A def);
+    public static String@A getenv(String@A name);
+    public static String@A getProperty(String@A key);
+    public static String@A getProperty(String@A key, String@A def);
 
-    public identityHashCode(Object@A x);
+    public static Integer@A identityHashCode(Object@A x);
 
-    public lineSeparator();
+    public static String@A lineSeparator();
 
-    public load(String@A filename);
-    public loadLibrary(String@A libname);
-    public runFinalization();
+    public static void load(String@A filename);
+    public static void loadLibrary(String@A libname);
+    public static void runFinalization();
 
     public static Long@A currentTimeMillis();
     public static Long@A nanoTime();
