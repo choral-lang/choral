@@ -28,10 +28,10 @@ choral epp HelloRoles
 
 Notice, that when compiling a choral file, it is the name of the choral class you wish to compile, that you give as argument to the `epp` command, not the name of the file containing the class.
 
-Example of what not to do:
+Example of what not to do: \
 ```choral epp HelloRoles.ch```
 
-Example of what to do:
+Example of what to do: \
 ```choral epp HelloRoles``` 
 
 When using the choral compiler, remember to also not compile things from root, as this will cause the choral compiler to attempt to compile all choral files found in subdirectories, some of which might be broken at a given time. The ```scripts``` folder works well for this purpose. 
