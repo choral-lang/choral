@@ -27,8 +27,10 @@ choral epp HelloRoles
 ```
 
 Notice, that when compiling a choral file, it is the name of the choral class you wish to compile, that you give as argument to the `epp` command, not the name of the file containing the class.
+
 Example of what not to do:
 ```choral epp HelloRoles.ch```
+
 Example of what to do:
 ```choral epp HelloRoles``` 
 
