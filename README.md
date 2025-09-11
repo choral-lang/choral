@@ -34,7 +34,7 @@ Example of what not to do: \
 Example of what to do: \
 ```choral epp HelloRoles``` 
 
-When using the choral compiler, remember to also not compile things from root, as this will cause the choral compiler to attempt to compile all choral files found in subdirectories, some of which might be broken at a given time. The ```scripts``` folder works well for this purpose. 
+When using the choral compiler, remember to also compile from a different folder than root, as compiling from root will cause the choral compiler to attempt to compile all choral files found in subdirectories, some of which might be broken at a given time. The ```scripts``` folder works well for this purpose. 
 
 ## Issuing a new release
 
