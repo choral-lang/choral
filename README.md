@@ -14,6 +14,26 @@ This will generate `dist/target/choral-standalone.jar`, which can be run with
 java -jar ./dist/target/choral-standalone.jar
 ```
 
+Remember to update the PATH and CHORAL_HOME environment variables:
+```
+export PATH="PATH_TO_CHORAL/scripts:$PATH"
+
+export CHORAL_HOME="PATH_TO_CHORAL/dist/target"
+```
+
+This will allow you to compile choral files using the following command instead:
+```
+choral epp HelloRoles
+```
+
+Notice, that when compiling a choral file, it is the name of the choral class you wish to compile, that you give as argument to the `epp` command, not the name of the file containing the class.
+Example of what not to do:
+```choral epp HelloRoles.ch```
+Example of what to do:
+```choral epp HelloRoles``` 
+
+When using the choral compiler, remember to also not compile things from root, as this will cause the choral compiler to attempt to compile all choral files found in subdirectories, some of which might be broken at a given time. The ```scripts``` folder works well for this purpose. 
+
 ## Issuing a new release
 
 To issue a new version of Choral:
