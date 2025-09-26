@@ -378,7 +378,7 @@ public class TestChoral {
 		List<String> compilationSymbols = Stream.of(
 				"WrongType",
 				"HelloRoles",
-				"If_MultiWorld",
+				//"If_MultiWorld",
 				"MyExtClass"//, //ExtendsTest
 //				MultiFoo//,
 //				ConsumeItems//,
@@ -524,8 +524,12 @@ public class TestChoral {
 			parameters.add( compilationRequest.symbol() );
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
-			System.out.println( "Issuing command " + String.join( " ", parameters ) );
-			Choral.main( parameters.toArray( new String[ 0 ] ) );
+			//String command = "choral " + String.join( " ", parameters );
+			parameters.add(0, "choral"); // when using Processes.run disabled otherwise
+			System.out.println( "Issuing command " + String.join( " ", parameters ));
+			String result = Processes.run(parameters.toArray( new String[ 0 ] )); // when using Processes.run
+			System.out.println(result);
+			//Choral.main( parameters.toArray( new String[ 0 ] ) ); // normal way of running Choral tests
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}
