@@ -19,17 +19,31 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package choral.examples;
-
-import choral.Choral;
+//package choral.examples;
+package choral;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
+
+//import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
+//import org.junit.jupiter.api.Test;
+
+//import choral.choralUnit.annotations.Test;
+
+//import org.junit.jupiter.params.ParameterizedTest;
 
 public class TestChoral {
 
@@ -87,6 +101,13 @@ public class TestChoral {
 	static final String runtimeMainFolder = "runtime/src/main/choral";
 	static final String choralUnitMainFolder = "choral-unit/src/main/choral" ;
 
+	//@Test
+	// public void runTests(){
+	// 	assertDoesNotThrow(() -> {
+    //         main(new String[]{});
+    //     });
+	// }
+
 	public static void main( String[] args ) {
 
 		final String HelloRoles = "HelloRoles";
@@ -114,9 +135,22 @@ public class TestChoral {
 		final String Retwis = "Retwis";
 		final String If_MultiWorld = "If_MultiWorld";
 		final String TestSwitch = "TestSwitch";
+		
+		final String WrongType = "WrongType";
 
 		List< CompilationRequest > allCompilationRequests = Stream.of(
-
+				new CompilationRequest(
+						List.of( subFolder(sourceFolder, "WrongType")),
+						targetFolder,
+						Collections.emptyList(),
+						WrongType, ALL_WORLDS)
+				,
+				// new CompilationRequest(
+				// 		List.of(subFolder(sourceFolder, "MustFail")),
+				// 		targetFolder,
+				// 		Collections.emptyList(),
+				// 		If_MultiWorld, ALL_WORLDS)
+				// ,
 				new CompilationRequest(
 						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
 						targetFolder,
@@ -327,14 +361,14 @@ public class TestChoral {
 						),
 						Retwis, ALL_WORLDS )
 				,
-				new CompilationRequest(
-					List.of( choralMainFolder + "/MustFail" ),
-					targetFolder,
-					List.of(
-							runtimeMainFolder
-					),
-					If_MultiWorld, ALL_WORLDS )
-				,
+				// new CompilationRequest(
+				// 	List.of( choralMainFolder + "/MustFail" ),
+				// 	targetFolder,
+				// 	List.of(
+				// 			runtimeMainFolder
+				// 	),
+				// 	If_MultiWorld, ALL_WORLDS )
+				// ,
 				new CompilationRequest(
 						List.of( subFolder( sourceFolder, "TestSwitch" ) ),
 						targetFolder,
@@ -342,7 +376,9 @@ public class TestChoral {
 						TestSwitch, ALL_WORLDS )
 		).toList();
 		List<String> compilationSymbols = Stream.of(
-//				HelloRoles//,
+				"WrongType",
+				"HelloRoles",
+				"If_MultiWorld",
 				"MyExtClass"//, //ExtendsTest
 //				MultiFoo//,
 //				ConsumeItems//,
@@ -367,6 +403,7 @@ public class TestChoral {
 //		} );
 //		projectionPerformance( compilationRequests );
 //		compilationRequests.forEach( TestChoral::printProgramSizes );
+		System.out.println("Amount of requests made: " + compilationRequests.size());
 		compilationRequests.forEach( TestChoral::project );
 //		version();
 
@@ -479,8 +516,7 @@ public class TestChoral {
 			parameters.add( "epp" );
 			parameters.add( "--verbosity=DEBUG" );
 			if( !compilationRequest.headersFolders().isEmpty() )
-				parameters.add( "--headers=" + String.join( ":",
-						compilationRequest.headersFolders() ) );
+				parameters.add( "--headers=" + String.join( ":", compilationRequest.headersFolders() ) );
 			parameters.add( "-t" );
 			parameters.add( compilationRequest.targetFolder() );
 			parameters.add( "-s" );

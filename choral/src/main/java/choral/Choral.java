@@ -63,7 +63,8 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		CommandLine cl = new CommandLine( new Choral() );
 		cl.setToggleBooleanFlags( true );
 		cl.setCaseInsensitiveEnumValuesAllowed( true );
-		System.exit( cl.execute( args ) );
+		cl.execute( args );
+		//System.exit( cl.execute( args ) );
 	}
 
 	@Override
