@@ -524,12 +524,11 @@ public class TestChoral {
 			parameters.add( compilationRequest.symbol() );
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
-			//String command = "choral " + String.join( " ", parameters );
-			parameters.add(0, "choral"); // when using Processes.run disabled otherwise
+			//parameters.add(0, "choral"); // when using Processes.run disabled otherwise
 			System.out.println( "Issuing command " + String.join( " ", parameters ));
-			String result = Processes.run(parameters.toArray( new String[ 0 ] )); // when using Processes.run
-			System.out.println(result);
-			//Choral.main( parameters.toArray( new String[ 0 ] ) ); // normal way of running Choral tests
+			//String result = Processes.run(parameters.toArray( new String[ 0 ] )); // when using Processes.run
+			//System.out.println(result); // also disabled if using Choral.main will produce duplicate terminal output otherwise
+			Choral.main( parameters.toArray( new String[ 0 ] ) ); // normal way of running Choral tests
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}
