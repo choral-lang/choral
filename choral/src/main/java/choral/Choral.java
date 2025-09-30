@@ -21,6 +21,8 @@
 
 package choral;
 
+import java.io.ByteArrayOutputStream;
+
 import choral.ast.CompilationUnit;
 import choral.ast.Position;
 import choral.compiler.Compiler;
@@ -28,6 +30,7 @@ import choral.compiler.*;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.ChoralException;
+import choral.utils.Streams.WrappedException;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 import picocli.CommandLine.*;
@@ -35,6 +38,7 @@ import picocli.CommandLine.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -61,10 +65,29 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 
 	public static void main( String[] args ) {
 		CommandLine cl = new CommandLine( new Choral() );
-		cl.setToggleBooleanFlags( true );
-		cl.setCaseInsensitiveEnumValuesAllowed( true );
-		cl.execute( args );
-		//System.exit( cl.execute( args ) );
+		ByteArrayOutputStream appOut = new ByteArrayOutputStream();
+		ByteArrayOutputStream appErr = new ByteArrayOutputStream();
+		PrintStream ogOut = System.out;
+		PrintStream ogErr = System.err;
+		try {
+			System.setOut(new PrintStream(appOut));
+			System.setErr(new PrintStream(appErr));
+
+			cl.setToggleBooleanFlags( true );
+			cl.setCaseInsensitiveEnumValuesAllowed( true );
+			cl.execute( args );
+
+			String appOutString = appOut.toString();
+			String appErrString = appErr.toString();
+
+			System.setOut(ogOut);
+			System.out.println("out: " + appOutString);
+			System.out.println("err: " + appErrString);
+
+		} finally {
+			System.setOut(ogOut);
+			System.setErr(ogErr);
+		}
 	}
 
 	@Override
