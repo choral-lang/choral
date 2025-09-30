@@ -53,19 +53,22 @@ public class TestChoral {
 		private final List< String > headersFolders;
 		private final String symbol;
 		private final List< String > worlds;
+		private final String[] expectedResults;
 
 		public CompilationRequest(
 				List< String > sourceFolder,
 				String targetFolder,
 				List< String > headersFolders,
 				String symbol,
-				List< String > worlds
+				List< String > worlds,
+				String... expectedResults
 		) {
 			this.sourceFolder = sourceFolder;
 			this.targetFolder = targetFolder;
 			this.headersFolders = headersFolders;
 			this.symbol = symbol;
 			this.worlds = worlds;
+			this.expectedResults = expectedResults;
 		}
 
 		public List< String > sourceFolder() {
@@ -143,7 +146,7 @@ public class TestChoral {
 						List.of( subFolder(sourceFolder, "WrongType")),
 						targetFolder,
 						Collections.emptyList(),
-						WrongType, ALL_WORLDS)
+						WrongType, ALL_WORLDS, "StaticVerificationException", "required type 'java.lang.String@(A)', found 'int@(A)'") 
 				,
 				// new CompilationRequest(
 				// 		List.of(subFolder(sourceFolder, "MustFail")),
@@ -403,7 +406,7 @@ public class TestChoral {
 //		} );
 //		projectionPerformance( compilationRequests );
 //		compilationRequests.forEach( TestChoral::printProgramSizes );
-		System.out.println("Amount of requests made: " + compilationRequests.size());
+		System.out.println("Amount of tests ran: " + compilationRequests.size());
 		compilationRequests.forEach( TestChoral::project );
 //		version();
 
@@ -524,11 +527,8 @@ public class TestChoral {
 			parameters.add( compilationRequest.symbol() );
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
-			//parameters.add(0, "choral"); // when using Processes.run disabled otherwise
 			System.out.println( "Issuing command " + String.join( " ", parameters ));
-			//String result = Processes.run(parameters.toArray( new String[ 0 ] )); // when using Processes.run
-			//System.out.println(result); // also disabled if using Choral.main will produce duplicate terminal output otherwise
-			Choral.main( parameters.toArray( new String[ 0 ] ) ); // normal way of running Choral tests
+			Choral.main( parameters.toArray( new String[ 0 ] ), compilationRequest.expectedResults);
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}

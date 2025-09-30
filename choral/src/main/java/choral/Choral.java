@@ -63,27 +63,53 @@ import static choral.utils.Streams.*;
 )
 public class Choral extends ChoralCommand implements Callable< Integer > {
 
-	public static void main( String[] args ) {
+	/**
+	 * @param expectedResults the various errors and exceptions that a given test is expected to run into. Leave empty if given test is expected to compile correctly.
+	 */
+	public static void main( String[] args, String... expectedResults) {
 		CommandLine cl = new CommandLine( new Choral() );
-		ByteArrayOutputStream appOut = new ByteArrayOutputStream();
-		ByteArrayOutputStream appErr = new ByteArrayOutputStream();
-		PrintStream ogOut = System.out;
-		PrintStream ogErr = System.err;
+		ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
+		ByteArrayOutputStream testError = new ByteArrayOutputStream();
+		PrintStream originalOutput = System.out;
+		PrintStream originalError = System.err;
+		int exitCode;
 		try {
-			System.setOut(new PrintStream(appOut));
-			System.setErr(new PrintStream(appErr));
+			System.setOut(new PrintStream(testOutput));
+			System.setErr(new PrintStream(testError));
 
 			cl.setToggleBooleanFlags( true );
 			cl.setCaseInsensitiveEnumValuesAllowed( true );
-			cl.execute( args );
+			exitCode = cl.execute( args );
 
 		} finally {
-			System.setOut(ogOut);
-			System.setErr(ogErr);
+			System.setOut(originalOutput);
+			System.setErr(originalError);
+		}
+		
+		String stringTestOutput = testOutput.toString();
+		String stringTestError = testError.toString();
+		//System.out.println("out: " + stringTestOutput);
+		//System.out.println("err: " + stringTestError);
+
+		String[] linesOfError = stringTestError.split("\n");
+		int foundResults = 0;
+
+		for (String result : expectedResults){			
+			if (!linesOfError[0].contains(result)) {
+				System.out.println("Found unexpected result: " + result);
+				System.out.println("Actual error line: " + linesOfError[0]);
+				continue;
+			}
+			foundResults++;
 		}
 
-		System.out.println("out: " + appOut.toString());
-		System.out.println("err: " + appErr.toString());
+		if (foundResults > 0 ) {
+			System.out.println("Found " + foundResults + " expected result(s) in the executed test");
+			if (exitCode <= 0 ) System.out.println("Wrong exit code found, expected >0 got " + exitCode);
+		}
+		else {
+			if (exitCode > 0 ) System.out.println("Wrong exit code found, expected 0 got " + exitCode);
+		}
 	}
 
 	@Override
