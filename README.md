@@ -26,6 +26,12 @@ This will allow you to compile choral files using the following command instead:
 
 where HelloRoles is the name of the class you're compiling.
 
+## Testing
+
+For now only the initial infrastructure for running tests is up and running.
+
+To activate this, run the following command `mvn -pl tests exec:java -Prun-choral-test`
+
 ## Issuing a new release
 
 To issue a new version of Choral:
