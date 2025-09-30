@@ -77,17 +77,13 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 			cl.setCaseInsensitiveEnumValuesAllowed( true );
 			cl.execute( args );
 
-			String appOutString = appOut.toString();
-			String appErrString = appErr.toString();
-
-			System.setOut(ogOut);
-			System.out.println("out: " + appOutString);
-			System.out.println("err: " + appErrString);
-
 		} finally {
 			System.setOut(ogOut);
 			System.setErr(ogErr);
 		}
+
+		System.out.println("out: " + appOut.toString());
+		System.out.println("err: " + appErr.toString());
 	}
 
 	@Override
