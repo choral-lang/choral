@@ -36,7 +36,13 @@ This command can only be run from root currently.
 
 The command supports options in the following format: `mvn -pl tests exec:java -Prun-choral-test -Dtest.pass="true" -Dtest.fail="true" -Dtest.runtime="true"`
 
+Where `-Dtest.pass` determines whether tests that should pass are run
 
+And `-Dtest.fail` determines whether tests that should fail are run
+
+And `-Dtest.runtime` determines whether runtime tests are run
+
+If any of the above options are left empty, the corresponding tests are not run. So if all of the three arguments are left empty, no test is run.
 
 ## Issuing a new release
 
