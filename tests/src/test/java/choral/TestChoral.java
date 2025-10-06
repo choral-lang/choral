@@ -37,6 +37,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import com.sun.jdi.Mirror;
+
 //import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 //import org.junit.jupiter.api.Test;
@@ -104,12 +106,9 @@ public class TestChoral {
 	static final String runtimeMainFolder = "runtime/src/main/choral";
 	static final String choralUnitMainFolder = "choral-unit/src/main/choral" ;
 
-	//@Test
-	// public void runTests(){
-	// 	assertDoesNotThrow(() -> {
-    //         main(new String[]{});
-    //     });
-	// }
+	static final String mustFailFolder = "tests/src/main/choral/MustFail";
+	static final String mustPassFolder = "tests/src/main/choral/MustPass";
+	static final String runtimeFolder = "tests/src/main/choral/Runtime";
 
 	public static void main( String[] args ) {
 
@@ -140,22 +139,32 @@ public class TestChoral {
 		final String TestSwitch = "TestSwitch";
 		
 		final String WrongType = "WrongType";
+		final String SwitchTest = "SwitchTest";
+		final String VariableDeclarations = "VariableDeclarations";
+		final String CyclicInheritanceA = "CyclicInheritance_A"; 
+		final String CyclicInheritanceB = "CyclicInheritance_B"; 
+		final String LotsOfErrors = "A";
+		final String NestedReturnInChoices = "ReturnChoice";
+		final String MirrorChannel = "MirrorChannel";
+		final String LoggerExample = "LoggingChannel";
+		final String IfDesugar = "IfDesugarTest";
+		final String IllegalInheritance = "TwoWorldList";
+		final String NonMatchingReturnType = "C4";
+		final String Enums = "EnumClassTest";
+		final String Channel = "JSONChannel";
+		final String ChainingOperator = "ChainingExample";
+		final String AutoBoxing = "Autoboxing";
+		final String ValidAnnotations = "ValidAnnotationPositions";
 
 		List< CompilationRequest > allCompilationRequests = Stream.of(
 				new CompilationRequest(
-						List.of( subFolder(sourceFolder, "WrongType")),
+						List.of( subFolder(mustFailFolder, "WrongType")),
 						targetFolder,
 						Collections.emptyList(),
 						WrongType, ALL_WORLDS, "StaticVerificationException", "required type 'java.lang.String@(A)', found 'int@(A)'") 
 				,
-				// new CompilationRequest(
-				// 		List.of(subFolder(sourceFolder, "MustFail")),
-				// 		targetFolder,
-				// 		Collections.emptyList(),
-				// 		If_MultiWorld, ALL_WORLDS)
-				// ,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "HelloRoles" ) ),
+						List.of( subFolder(mustPassFolder, "HelloRoles") ),
 						targetFolder,
 						Collections.emptyList(),
 						HelloRoles, ALL_WORLDS )
@@ -167,25 +176,25 @@ public class TestChoral {
 						BiPair, ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "ConsumeItems" ) ),
+						List.of( subFolder(mustPassFolder, "ConsumeItems") ),
 						targetFolder,
 						Collections.emptyList(),
 						ConsumeItems, ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "MultiFoo") ),
+						List.of( subFolder( mustFailFolder, "MultiFoo") ),
 						targetFolder,
 						Collections.emptyList(),
-						MultiFoo, ALL_WORLDS )
+						MultiFoo, ALL_WORLDS, "StaticVerificationException", "cannot reference 'super' before supertype constructor has been called" )
 				,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "ExtendsTest") ),
+						List.of( subFolder(mustPassFolder, "ExtendsTest")),
 						targetFolder,
 						Collections.emptyList(),
 						"MyExtClass", ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "RemoteFunction") ),
+						List.of( subFolder( mustPassFolder, "RemoteFunction") ),
 						targetFolder,
 						Collections.emptyList(),
 						RemoteFunction, ALL_WORLDS )
@@ -288,7 +297,7 @@ public class TestChoral {
 						MergesortTest, ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "BuyerSellerShipper" ) ),
+						List.of( subFolder( mustPassFolder, "BuyerSellerShipper" ) ),
 						targetFolder,
 						List.of(
 								choralMainFolder + "/examples/BuyerSellerShipper",
@@ -338,12 +347,9 @@ public class TestChoral {
 				KaratsubaTest, ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "DiffieHellman" ) ),
+						List.of( subFolder(mustPassFolder, "DiffieHellman") ),
 						targetFolder,
-						List.of(
-								choralMainFolder + "/examples/BiPair",
-								choralMainFolder + "/examples/DiffieHellman"
-						),
+						Collections.emptyList(),
 						DiffieHellman, ALL_WORLDS )
 				,
 				new CompilationRequest(
@@ -364,41 +370,173 @@ public class TestChoral {
 						),
 						Retwis, ALL_WORLDS )
 				,
-				// new CompilationRequest(
-				// 	List.of( choralMainFolder + "/MustFail" ),
-				// 	targetFolder,
-				// 	List.of(
-				// 			runtimeMainFolder
-				// 	),
-				// 	If_MultiWorld, ALL_WORLDS )
-				// ,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "TestSwitch" ) ),
+					List.of( subFolder(mustFailFolder, "IfMultiWorld") ),
+					targetFolder,
+					List.of(
+							runtimeMainFolder
+					),
+					If_MultiWorld, ALL_WORLDS, "ChoralException", "Found unprojectable expression. Right-hand side of short-circuited boolean expression contains multi-role objects: true@A && ch1.< Boolean >com( false@B )" )
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustPassFolder, "TestSwitch") ),
 						targetFolder,
 						Collections.emptyList(),
 						TestSwitch, ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustFailFolder, "CyclicInheritance") ),
+						targetFolder,
+						Collections.emptyList(),
+						CyclicInheritanceA, ALL_WORLDS, "StaticVerificationException", "Cyclic inheritance: 'CyclicInheritance_B@(W)' cannot extend 'CyclicInheritance_A@(W)'" )
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustFailFolder, "LotsOfErrors") ),
+						targetFolder,
+						Collections.emptyList(),
+						LotsOfErrors, ALL_WORLDS, "StaticVerificationException", "duplicate role parameter 'W'" )
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustPassFolder, "SwitchTest") ),
+						targetFolder,
+						Collections.emptyList(),
+						SwitchTest, ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( mustFailFolder ),
+						targetFolder,
+						Collections.emptyList(),
+						VariableDeclarations, ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustPassFolder, "NestedReturnInChoices") ),
+						targetFolder,
+						Collections.emptyList(),
+						NestedReturnInChoices, ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustPassFolder, "MirrorChannel") ),
+						targetFolder,
+						Collections.emptyList(),
+						MirrorChannel, ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustFailFolder, "LoggerExample") ),
+						targetFolder,
+						Collections.emptyList(),
+						LoggerExample, ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustPassFolder, "IfDesugar") ),
+						targetFolder,
+						Collections.emptyList(),
+						IfDesugar, ALL_WORLDS )
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustFailFolder, "IllegalInheritance") ),
+						targetFolder,
+						Collections.emptyList(),
+						IllegalInheritance, ALL_WORLDS, "StaticVerificationException", "illegal inheritance, 'List@(W1)<Q>' and 'TwoWorldList@(W1,W2)<Q,R>' must have the same roles" )
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustFailFolder, "NonMatchingReturnType") ),
+						targetFolder,
+						Collections.emptyList(),
+						NonMatchingReturnType, ALL_WORLDS, "StaticVerificationException", "method 'm(java.lang.Object@(X))' in 'foo.I3@(X)' clashes with method 'm(java.lang.Object@(X))' in 'foo.I0@(X)', attempting to use incompatible return type")
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustFailFolder, "Enums") ),
+						targetFolder,
+						Collections.emptyList(),
+						Enums, ALL_WORLDS)
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustFailFolder, "Channel") ),
+						targetFolder,
+						Collections.emptyList(),
+						Channel, ALL_WORLDS)
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustPassFolder, "ChainingOperator") ),
+						targetFolder,
+						Collections.emptyList(),
+						ChainingOperator, ALL_WORLDS)
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustPassFolder, "AutoBoxing") ),
+						targetFolder,
+						Collections.emptyList(),
+						AutoBoxing, ALL_WORLDS)
+				,
+				new CompilationRequest(
+						List.of( subFolder(mustPassFolder, "Annotations") ),
+						targetFolder,
+						Collections.emptyList(),
+						ValidAnnotations, ALL_WORLDS)
 		).toList();
-		List<String> compilationSymbols = Stream.of(
-				"WrongType",
-				"HelloRoles",
-				//"If_MultiWorld",
-				"MyExtClass"//, //ExtendsTest
-//				MultiFoo//,
-//				ConsumeItems//,
+
+		if (Boolean.parseBoolean(System.getProperty("test.pass"))){
+			List<String> passCompilationSymbols = Stream.of(
+				HelloRoles,
+				ConsumeItems,
+				DiffieHellman,
+				TestSwitch,
+				RemoteFunction, // works perfectly fine, but what is this even testing??
 //				BuyerSellerShipper//,
 //				DistAuth//,
 //				VitalsStreaming//,
-//				DiffieHellman//,
 //				Mergesort//,
 //				Quicksort//,
 //				Karatsuba//,
 //				DistAuth5//,
 //				DistAuth10//,
-//				TestSwitch
-		).toList();
-		List< CompilationRequest > compilationRequests = compilationSymbols.stream()
+				//ValidAnnotations, // produces A LOT of unrunnable java code
+				//AutoBoxing, // produces ast traversal error
+				//ChainingOperator, // doesn't pass, bug in compiler
+				//Channel, // nothing bad, but the error seems incorrect
+				//Enums, // once again multiple errors ???
+				//IfDesugar // also contains multiple errors ???
+				//LoggerExample, // compiler reports multiple errors ???
+				//MirrorChannel, // creates unrunnable java code
+				//NestedReturnInChoices, // compiler reports multiple errors ???
+				//VariableDeclarations, // possible compiler bug, unclear if should pass or fail
+				//SwitchTest, // will create unrunable java code if included
+				"MyExtClass"//ExtendsTest
+			).toList();
+
+			List< CompilationRequest > passCompilationRequests = passCompilationSymbols.stream()
 				.map( s -> allCompilationRequests.stream().filter( c -> c.symbol.equalsIgnoreCase( s ) ).findFirst() )
 				.filter( Optional::isPresent ).map( Optional::get ).toList();
+
+			System.out.println("Now running tests that must pass");
+			passCompilationRequests.forEach( TestChoral::project );
+			System.out.println("Amount of tests ran: " + passCompilationRequests.size());
+			System.out.println("");
+		}
+		if (Boolean.parseBoolean(System.getProperty("test.fail"))){
+			List<String> failCompilationSymbols = Stream.of(
+				IllegalInheritance,
+				MultiFoo,
+				CyclicInheritanceA,
+				If_MultiWorld,
+				LotsOfErrors,
+				NonMatchingReturnType,
+				WrongType
+			).toList();
+
+			List<CompilationRequest> failCompilationRequests = failCompilationSymbols.stream()
+				.map( s -> allCompilationRequests.stream().filter( c -> c.symbol.equalsIgnoreCase( s ) ).findFirst() )
+				.filter( Optional::isPresent ).map( Optional::get ).toList();
+
+			System.out.println("Now running tests that must fail");
+			failCompilationRequests.forEach( TestChoral::project);
+			System.out.println("Amount of tests ran: " + failCompilationRequests.size());
+			System.out.println("");
+		}
+		if (Boolean.parseBoolean(System.getProperty("test.runtime"))){
+			System.out.println("Running runtime");
+		}
+
 //		generateCHH( headersRequest );
 //		check( compilationRequests );
 //		compilationRequests.forEach( c -> {
@@ -406,8 +544,6 @@ public class TestChoral {
 //		} );
 //		projectionPerformance( compilationRequests );
 //		compilationRequests.forEach( TestChoral::printProgramSizes );
-		System.out.println("Amount of tests ran: " + compilationRequests.size());
-		compilationRequests.forEach( TestChoral::project );
 //		version();
 
 	}

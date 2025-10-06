@@ -32,6 +32,12 @@ For now only the initial infrastructure for running tests is up and running.
 
 To activate this, run the following command `mvn -pl tests exec:java -Prun-choral-test`
 
+This command can only be run from root currently. 
+
+The command supports options in the following format: `mvn -pl tests exec:java -Prun-choral-test -Dtest.pass="true" -Dtest.fail="true" -Dtest.runtime="true"`
+
+
+
 ## Issuing a new release
 
 To issue a new version of Choral:

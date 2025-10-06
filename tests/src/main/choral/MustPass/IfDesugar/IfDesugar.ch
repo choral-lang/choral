@@ -1,4 +1,4 @@
-//import java.utils.Random;
+import java.utils.Random;
 
 class IfDesugarTest@( P ) {
 
