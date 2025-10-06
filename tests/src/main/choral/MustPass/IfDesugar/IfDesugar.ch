@@ -2,19 +2,11 @@ import java.utils.Random;
 
 class IfDesugarTest@( P ) {
 
-	void@( P ) main() {
+	void main() {
 		if( Random@( P ).nextBoolean() ){
-			System@( P ).out.println( "Even" );
+			System@( P ).out.println( "Even"@P );
 		} else {
-			System@( P ).out.println( "Odd" );
-		}
-		match( Random@( P ).nextBoolean() ){
-			True : {
-				System@( P ).out.println( "Even" );
-			}
-			False f : {
-				System@( P ).out.println( "Odd" );
-			}
+			System@( P ).out.println( "Odd"@P );
 		}
 	}
 
