@@ -32,7 +32,7 @@ For now only the initial infrastructure for running tests is up and running.
 
 To activate this, run the following command `mvn -pl tests exec:java -Prun-choral-test`
 
-This command can only be run from root currently. 
+This command can only be run from root currently. If errors occur when running the command, it might be necessary to run the `mvn clean install` command. 
 
 The command supports options in the following format: `mvn -pl tests exec:java -Prun-choral-test -Dtest.pass="true" -Dtest.fail="true" -Dtest.runtime="true"`
 
@@ -42,7 +42,9 @@ And `-Dtest.fail` determines whether tests that should fail are run
 
 And `-Dtest.runtime` determines whether runtime tests are run
 
-If any of the above options are left empty, the corresponding tests are not run. So if all of the three arguments are left empty, no test is run.
+If any of the above options are not set to `true` then the corresponding tests are not run. 
+
+If none of the above options are passed, then the testing framework defaults to running all tests. 
 
 ## Issuing a new release
 

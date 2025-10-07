@@ -88,7 +88,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		
 		String stringTestOutput = testOutput.toString();
 		String stringTestError = testError.toString();
-		//System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
+		System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
 
 		String[] linesOfError = stringTestError.split("\n");
 		int foundResults = 0;

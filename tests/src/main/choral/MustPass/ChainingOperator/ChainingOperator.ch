@@ -6,7 +6,7 @@ class ChainingExample@( A, B ) {
 		this.c = c;
 	}
 
-	static void@( A, B ) main(){
+	static void main(){
 		String@B msg;
 		msg = "Hello" >> this::encrypt >> c::com >> this::decrypt;
 	}

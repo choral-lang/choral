@@ -39,6 +39,8 @@ import java.util.stream.Stream;
 
 import com.sun.jdi.Mirror;
 
+import choral.TestChoral.TestType;
+
 //import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 //import org.junit.jupiter.api.Test;
@@ -92,6 +94,12 @@ public class TestChoral {
 		public List< String > headersFolders() {
 			return headersFolders;
 		}
+	}
+
+	enum TestType {
+		MUSTPASS,
+		MUSTFAIL,
+		RUNTIME
 	}
 
 	static final List< String > ALL_WORLDS = Collections.singletonList( "" );
@@ -200,19 +208,20 @@ public class TestChoral {
 						RemoteFunction, ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "AuthResult" ), subFolder( sourceFolder, "BiPair" ) ),
+						List.of( subFolder( mustPassFolder, "AuthResult" ), subFolder( mustPassFolder, "BiPair" ) ),
 						targetFolder,
-						List.of( choralMainFolder + "/examples/BiPair", choralMainFolder + "/examples/DistAuth" ),
+						//Collections.emptyList(),
+						List.of( subFolder( mustPassFolder, "DistAuth" ) ),
 						AuthResult, ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "DistAuth" ),
-								subFolder( sourceFolder, "AuthResult" ),
-								subFolder( sourceFolder, "BiPair" )
+						List.of( subFolder( mustPassFolder, "DistAuth" ),
+								subFolder( mustPassFolder, "AuthResult" ),
+								subFolder( mustPassFolder, "BiPair" )
 						),
 						targetFolder,
 						List.of(
-								choralMainFolder + "/examples/DistAuth",
+								subFolder( mustPassFolder, "DistAuth" ),
 //								"src/tests/choral/examples/AuthResult",
 //								"src/tests/choral/examples/BiPair",
 								runtimeMainFolder,
@@ -300,7 +309,7 @@ public class TestChoral {
 						List.of( subFolder( mustPassFolder, "BuyerSellerShipper" ) ),
 						targetFolder,
 						List.of(
-								choralMainFolder + "/examples/BuyerSellerShipper",
+								subFolder( mustPassFolder, "BuyerSellerShipper" ),
 								runtimeMainFolder,
 								choralUnitMainFolder
 						),
@@ -347,25 +356,25 @@ public class TestChoral {
 				KaratsubaTest, ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "DiffieHellman") ),
+						List.of( subFolder(mustPassFolder, "DiffieHellman"), subFolder(mustPassFolder, "BiPair") ),
 						targetFolder,
 						Collections.emptyList(),
 						DiffieHellman, ALL_WORLDS )
+				// ,
+				// new CompilationRequest(
+				// 		List.of( subFolder( sourceFolder, "RetwisChoral" ) ),
+				// 		targetFolder,
+				// 		List.of(
+				// 				choralMainFolder + "/examples/RetwisChoral",
+				// 				runtimeMainFolder
+				// 		),
+				// 		RetwisLoginManager, ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "RetwisChoral" ) ),
+						List.of( subFolder( mustPassFolder, "RetwisChoral" ) ),
 						targetFolder,
 						List.of(
-								choralMainFolder + "/examples/RetwisChoral",
-								runtimeMainFolder
-						),
-						RetwisLoginManager, ALL_WORLDS )
-				,
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "RetwisChoral" ) ),
-						targetFolder,
-						List.of(
-								choralMainFolder + "/examples/RetwisChoral",
+								subFolder( mustPassFolder, "RetwisChoral" ),
 								runtimeMainFolder
 						),
 						Retwis, ALL_WORLDS )
@@ -403,7 +412,7 @@ public class TestChoral {
 						SwitchTest, ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( mustFailFolder ),
+						List.of( subFolder(mustPassFolder, "VariableDeclarations") ),
 						targetFolder,
 						Collections.emptyList(),
 						VariableDeclarations, ALL_WORLDS )
@@ -475,15 +484,14 @@ public class TestChoral {
 						ValidAnnotations, ALL_WORLDS)
 		).toList();
 
-		if (Boolean.parseBoolean(System.getProperty("test.pass"))){
-			List<String> passCompilationSymbols = Stream.of(
+		boolean notRun = true;
+
+		List<String> passCompilationSymbols = Stream.of(
 				HelloRoles,
 				ConsumeItems,
 				DiffieHellman,
 				TestSwitch,
-				RemoteFunction, // works perfectly fine, but what is this even testing??
-//				BuyerSellerShipper//,
-//				DistAuth//,
+				RemoteFunction, 
 //				VitalsStreaming//,
 //				Mergesort//,
 //				Quicksort//,
@@ -495,26 +503,20 @@ public class TestChoral {
 				//ChainingOperator, // doesn't pass, bug in compiler
 				//Channel, // nothing bad, but the error seems incorrect
 				//Enums, // once again multiple errors ???
-				//IfDesugar // also contains multiple errors ???
-				//LoggerExample, // compiler reports multiple errors ???
+				//IfDesugar, // 
+				//LoggerExample, 
 				//MirrorChannel, // creates unrunnable java code
 				//NestedReturnInChoices, // compiler reports multiple errors ???
-				//VariableDeclarations, // possible compiler bug, unclear if should pass or fail
+				VariableDeclarations, // possible compiler bug, unclear if should pass or fail
 				//SwitchTest, // will create unrunable java code if included
+				Retwis,
+				AuthResult,
+				BuyerSellerShipper,
+				DistAuth,
 				"MyExtClass"//ExtendsTest
 			).toList();
 
-			List< CompilationRequest > passCompilationRequests = passCompilationSymbols.stream()
-				.map( s -> allCompilationRequests.stream().filter( c -> c.symbol.equalsIgnoreCase( s ) ).findFirst() )
-				.filter( Optional::isPresent ).map( Optional::get ).toList();
-
-			System.out.println("Now running tests that must pass");
-			passCompilationRequests.forEach( TestChoral::project );
-			System.out.println("Amount of tests ran: " + passCompilationRequests.size());
-			System.out.println("");
-		}
-		if (Boolean.parseBoolean(System.getProperty("test.fail"))){
-			List<String> failCompilationSymbols = Stream.of(
+		List<String> failCompilationSymbols = Stream.of(
 				IllegalInheritance,
 				MultiFoo,
 				CyclicInheritanceA,
@@ -524,17 +526,21 @@ public class TestChoral {
 				WrongType
 			).toList();
 
-			List<CompilationRequest> failCompilationRequests = failCompilationSymbols.stream()
-				.map( s -> allCompilationRequests.stream().filter( c -> c.symbol.equalsIgnoreCase( s ) ).findFirst() )
-				.filter( Optional::isPresent ).map( Optional::get ).toList();
-
-			System.out.println("Now running tests that must fail");
-			failCompilationRequests.forEach( TestChoral::project);
-			System.out.println("Amount of tests ran: " + failCompilationRequests.size());
-			System.out.println("");
+		if (Boolean.parseBoolean(System.getProperty("test.pass"))){
+			notRun = false;
+			runTests(passCompilationSymbols, allCompilationRequests, TestType.MUSTPASS);
+		}
+		if (Boolean.parseBoolean(System.getProperty("test.fail"))){
+			notRun = false;
+			runTests(failCompilationSymbols, allCompilationRequests, TestType.MUSTFAIL);
 		}
 		if (Boolean.parseBoolean(System.getProperty("test.runtime"))){
+			notRun = false;
 			System.out.println("Running runtime");
+		}
+		if (notRun){
+			runTests(passCompilationSymbols, allCompilationRequests, TestType.MUSTPASS);
+			runTests(failCompilationSymbols, allCompilationRequests, TestType.MUSTFAIL);
 		}
 
 //		generateCHH( headersRequest );
@@ -546,6 +552,36 @@ public class TestChoral {
 //		compilationRequests.forEach( TestChoral::printProgramSizes );
 //		version();
 
+	}
+
+	private static void runTests(List<String> symbols, List<CompilationRequest> compilationRequests, TestType testType){
+		List< CompilationRequest > passCompilationRequests = symbols.stream()
+		.map( s -> compilationRequests.stream().filter( c -> c.symbol.equalsIgnoreCase( s ) ).findFirst() )
+		.filter( Optional::isPresent ).map( Optional::get ).toList();
+
+		if (null != testType)
+		switch (testType) {
+                case MUSTPASS -> {
+                    System.out.println("Now running tests that must pass");
+                    passCompilationRequests.forEach( TestChoral::project );
+                    System.out.println("Amount of tests ran: " + passCompilationRequests.size());
+                    System.out.println("");
+                    }
+                case MUSTFAIL -> {
+                    System.out.println("Now running tests that must fail");
+                    passCompilationRequests.forEach( TestChoral::project );
+                    System.out.println("Amount of tests ran: " + passCompilationRequests.size());
+                    System.out.println("");
+                    }
+                case RUNTIME -> {
+                    System.out.println("Now running runtime tests");
+                    passCompilationRequests.forEach( TestChoral::project );
+                    System.out.println("Amount of tests ran: " + passCompilationRequests.size());
+                    System.out.println("");
+                    }
+                default -> {
+                    }
+            }
 	}
 
 	private static void printProgramSizes( CompilationRequest compilationRequest ){

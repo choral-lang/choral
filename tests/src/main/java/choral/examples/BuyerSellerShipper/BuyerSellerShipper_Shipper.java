@@ -1,9 +1,9 @@
 package choral.examples.BuyerSellerShipper;
 
-import choral.annotations.Choreography;
-import choral.lang.Unit;
 import choral.channels.SymChannel_A;
 import choral.runtime.UI.Panel;
+import choral.annotations.Choreography;
+import choral.lang.Unit;
 
 @Choreography( role = "Shipper", name = "BuyerSellerShipper" )
 class BuyerSellerShipper_Shipper {
@@ -12,7 +12,7 @@ class BuyerSellerShipper_Shipper {
 	BuyerSellerShipper_Shipper( Unit c, SymChannel_A < Object > cb ) {
 		this( cb );
 	}
-
+	
 	BuyerSellerShipper_Shipper( SymChannel_A < Object > cb ) {
 		this.cb = cb;
 	}
@@ -20,7 +20,7 @@ class BuyerSellerShipper_Shipper {
 	void run( Unit catalogue, Unit customer ) {
 		run();
 	}
-
+	
 	void run() {
 		{
 			switch( cb.< EnumBoolean >select( Unit.id ) ){
@@ -31,20 +31,20 @@ class BuyerSellerShipper_Shipper {
 								String operation = cb.< String >com( Unit.id );
 								Panel.show( "Shipper", "Buyer shipped " + operation );
 							}
+							case False -> {
+								
+							}
 							default -> {
 								throw new RuntimeException( "Received unexpected label from select operation" );
-							}
-							case False -> {
-
 							}
 						}
 					}
 				}
+				case False -> {
+					
+				}
 				default -> {
 					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
-				case False -> {
-
 				}
 			}
 		}
