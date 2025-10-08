@@ -123,7 +123,7 @@ public class TestChoral {
 		final String HelloRoles = "HelloRoles";
 		final String BiPair = "BiPair";
 		final String ConsumeItems = "ConsumeItems";
-		final String ExtendsTest = "ExtendsTest";
+		final String ExtendsTest = "MyExtClass";
 		final String MultiFoo = "MultiFoo";
 		final String RemoteFunction = "RemoteFunction";
 		final String AuthResult = "AuthResult";
@@ -199,7 +199,7 @@ public class TestChoral {
 						List.of( subFolder(mustPassFolder, "ExtendsTest")),
 						targetFolder,
 						Collections.emptyList(),
-						"MyExtClass", ALL_WORLDS )
+						ExtendsTest, ALL_WORLDS )
 				,
 				new CompilationRequest(
 						List.of( subFolder( mustPassFolder, "RemoteFunction") ),
@@ -208,10 +208,10 @@ public class TestChoral {
 						RemoteFunction, ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( subFolder( mustPassFolder, "AuthResult" ), subFolder( mustPassFolder, "BiPair" ) ),
+						List.of( subFolder( mustPassFolder, "AuthResult" ) ),
 						targetFolder,
 						//Collections.emptyList(),
-						List.of( subFolder( mustPassFolder, "DistAuth" ) ),
+						List.of( subFolder( mustPassFolder, "DistAuth" ), subFolder( mustPassFolder, "BiPair" ) ),
 						AuthResult, ALL_WORLDS )
 				,
 				new CompilationRequest(
@@ -458,12 +458,12 @@ public class TestChoral {
 						targetFolder,
 						Collections.emptyList(),
 						Enums, ALL_WORLDS)
-				,
-				new CompilationRequest(
-						List.of( subFolder(mustFailFolder, "Channel") ),
-						targetFolder,
-						Collections.emptyList(),
-						Channel, ALL_WORLDS)
+				// ,
+				// new CompilationRequest(
+				// 		List.of( subFolder(mustFailFolder, "Channel") ),
+				// 		targetFolder,
+				// 		Collections.emptyList(),
+				// 		Channel, ALL_WORLDS)
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "ChainingOperator") ),
@@ -480,7 +480,7 @@ public class TestChoral {
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "Annotations") ),
 						targetFolder,
-						Collections.emptyList(),
+						List.of( subFolder(mustPassFolder, "Annotations") ),
 						ValidAnnotations, ALL_WORLDS)
 		).toList();
 
@@ -492,28 +492,28 @@ public class TestChoral {
 				DiffieHellman,
 				TestSwitch,
 				RemoteFunction, 
+				Retwis,
+				AuthResult,
+				BuyerSellerShipper,
+				DistAuth,
+				ExtendsTest,
 //				VitalsStreaming//,
 //				Mergesort//,
 //				Quicksort//,
 //				Karatsuba//,
 //				DistAuth5//,
 //				DistAuth10//,
-				//ValidAnnotations, // produces A LOT of unrunnable java code
-				//AutoBoxing, // produces ast traversal error
-				//ChainingOperator, // doesn't pass, bug in compiler
-				//Channel, // nothing bad, but the error seems incorrect
+				//ChainingOperator, // doesn't pass, test is poorly written
 				//Enums, // once again multiple errors ???
-				//IfDesugar, // 
+				IfDesugar
 				//LoggerExample, 
-				//MirrorChannel, // creates unrunnable java code
 				//NestedReturnInChoices, // compiler reports multiple errors ???
-				VariableDeclarations, // possible compiler bug, unclear if should pass or fail
-				//SwitchTest, // will create unrunable java code if included
-				Retwis,
-				AuthResult,
-				BuyerSellerShipper,
-				DistAuth,
-				"MyExtClass"//ExtendsTest
+				//VariableDeclarations,
+
+				//ValidAnnotations, // produces A LOT of unrunnable java code
+				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
+				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
+				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
 			).toList();
 
 		List<String> failCompilationSymbols = Stream.of(

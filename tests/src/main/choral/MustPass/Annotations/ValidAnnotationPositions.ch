@@ -41,7 +41,6 @@ class MyExtensionBaseClass@A< @TypeParamAnnotation1 @TypeParamAnnotation2 T@A > 
 @InterfaceAnnotation2
 interface MyInterface@A< @TypeParamAnnotation1 @TypeParamAnnotation2 K@A extends InterfaceA@A & InterfaceB@A, V@A > {
 	@InterfaceMethodAnnotation1
-	@InterfaceMethodAnnotation1
 	< T@A extends K@A > List@A< T > interface_method( T@A param );
 }
 

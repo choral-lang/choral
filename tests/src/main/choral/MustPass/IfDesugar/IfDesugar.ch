@@ -1,3 +1,5 @@
+package choral.MustPass.IfDesugar;
+
 import java.utils.Random;
 
 class IfDesugarTest@( P ) {
