@@ -2,11 +2,11 @@ import choral.annotations.Choreography;
 
 @Choreography( role = "P", name = "B" )
 class B {
-	Boolean b1;
-	Boolean b2;
-	Integer i;
-	Double f;
-	String s;
+	static Boolean b1;
+	static Boolean b2;
+	static Integer i;
+	static Double f;
+	static String s;
 
 	static void main() {
 		b1 = true;

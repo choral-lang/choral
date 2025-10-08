@@ -454,7 +454,7 @@ public class TestChoral {
 						NonMatchingReturnType, ALL_WORLDS, "StaticVerificationException", "method 'm(java.lang.Object@(X))' in 'foo.I3@(X)' clashes with method 'm(java.lang.Object@(X))' in 'foo.I0@(X)', attempting to use incompatible return type")
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustFailFolder, "Enums") ),
+						List.of( subFolder(mustPassFolder, "Enums") ),
 						targetFolder,
 						Collections.emptyList(),
 						Enums, ALL_WORLDS)

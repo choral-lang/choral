@@ -3,10 +3,10 @@ interface Logger@( L ) {
 }
 
 class B@( P ) {
-	Boolean@( P ) b1, b2;
-	Integer@( P ) i;
-	Double@( P ) f;
-	String@( P ) s;
+	static Boolean@( P ) b1, b2;
+	static Integer@( P ) i;
+	static Double@( P ) f;
+	static String@( P ) s;
 
 	static void main() {
 		b1 = true@P;
