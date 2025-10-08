@@ -88,7 +88,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		
 		String stringTestOutput = testOutput.toString();
 		String stringTestError = testError.toString();
-		System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
+		//System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
 
 		String[] linesOfError = stringTestError.split("\n");
 		int foundResults = 0;
@@ -107,8 +107,12 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 			if (exitCode == 0 ) System.out.println("Wrong exit code found, expected >0 got " + exitCode);
 		}
 		else {
-			if (exitCode > 0 ) System.out.println("Wrong exit code found, expected 0 got " + exitCode);
+			if (exitCode > 0 ){ 
+				System.out.println("Wrong exit code found, expected 0 got " + exitCode);
+				System.out.println("Error: " + linesOfError[0]);
+			}
 		}
+		System.out.println("");
 	}
 
 	@Override

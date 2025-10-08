@@ -355,7 +355,7 @@ public class TestChoral {
 				),
 				KaratsubaTest, ALL_WORLDS )
 				,
-				new CompilationRequest(
+				new CompilationRequest( 
 						List.of( subFolder(mustPassFolder, "DiffieHellman"), subFolder(mustPassFolder, "BiPair") ),
 						targetFolder,
 						Collections.emptyList(),
@@ -504,9 +504,9 @@ public class TestChoral {
 //				DistAuth5//,
 //				DistAuth10//,
 				//ChainingOperator, // doesn't pass, test is poorly written
-				//Enums, // once again multiple errors ???
+				//Enums, // fails because enums don't accept generic types in choral
 				//IfDesugar,
-				//NestedReturnInChoices, // compiler reports multiple errors ???
+				//NestedReturnInChoices, // What is this testing?
 				//VariableDeclarations,
 
 				//ValidAnnotations, // produces A LOT of unrunnable java code
