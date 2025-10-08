@@ -1,7 +1,7 @@
 package choral.examples.TestSwitch;
 
-import choral.annotations.Choreography;
 import choral.channels.*;
+import choral.annotations.Choreography;
 
 @Choreography( role = "A", name = "C" )
 enum C {

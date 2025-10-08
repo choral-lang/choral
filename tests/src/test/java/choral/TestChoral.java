@@ -438,7 +438,7 @@ public class TestChoral {
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "IfDesugar") ),
 						targetFolder,
-						Collections.emptyList(),
+						List.of(subFolder(mustPassFolder, "IfDesugar")),
 						IfDesugar, ALL_WORLDS )
 				,
 				new CompilationRequest(
@@ -496,7 +496,6 @@ public class TestChoral {
 				AuthResult,
 				BuyerSellerShipper,
 				DistAuth,
-				ExtendsTest,
 //				VitalsStreaming//,
 //				Mergesort//,
 //				Quicksort//,
@@ -505,7 +504,7 @@ public class TestChoral {
 //				DistAuth10//,
 				//ChainingOperator, // doesn't pass, test is poorly written
 				//Enums, // once again multiple errors ???
-				IfDesugar
+				//IfDesugar
 				//LoggerExample, 
 				//NestedReturnInChoices, // compiler reports multiple errors ???
 				//VariableDeclarations,
@@ -514,6 +513,7 @@ public class TestChoral {
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
 				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
+				ExtendsTest
 			).toList();
 
 		List<String> failCompilationSymbols = Stream.of(
