@@ -154,7 +154,7 @@ public class TestChoral {
 		final String LotsOfErrors = "A";
 		final String NestedReturnInChoices = "ReturnChoice";
 		final String MirrorChannel = "MirrorChannel";
-		final String LoggerExample = "LoggingChannel";
+		final String LoggerExample = "B";
 		final String IfDesugar = "IfDesugarTest";
 		final String IllegalInheritance = "TwoWorldList";
 		final String NonMatchingReturnType = "C4";
@@ -430,7 +430,7 @@ public class TestChoral {
 						MirrorChannel, ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustFailFolder, "LoggerExample") ),
+						List.of( subFolder(mustPassFolder, "LoggerExample") ),
 						targetFolder,
 						Collections.emptyList(),
 						LoggerExample, ALL_WORLDS )
@@ -496,6 +496,7 @@ public class TestChoral {
 				AuthResult,
 				BuyerSellerShipper,
 				DistAuth,
+				LoggerExample, 
 //				VitalsStreaming//,
 //				Mergesort//,
 //				Quicksort//,
@@ -504,8 +505,7 @@ public class TestChoral {
 //				DistAuth10//,
 				//ChainingOperator, // doesn't pass, test is poorly written
 				//Enums, // once again multiple errors ???
-				//IfDesugar
-				//LoggerExample, 
+				//IfDesugar,
 				//NestedReturnInChoices, // compiler reports multiple errors ???
 				//VariableDeclarations,
 

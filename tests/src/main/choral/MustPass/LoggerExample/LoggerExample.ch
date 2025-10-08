@@ -5,11 +5,11 @@ interface Logger@( L ) {
 class B@( P ) {
 	Boolean@( P ) b1, b2;
 	Integer@( P ) i;
-	Float@( P ) f;
+	Double@( P ) f;
 	String@( P ) s;
 
 	static void main() {
-		b = true@P;
+		b1 = true@P;
 		i = 42@P;
 		f = 3.14@P;
 		s = "Ciao"@P;
@@ -24,8 +24,8 @@ class Random@( A ) {
 		this.seed = seed;
 	}
 
-	static Integer@( A ) getRandom(){
-		return Math@( A ).getRandom();
+	static Double@( A ) getRandom(){
+		return Math@( A ).random();
 	}
 
 }
