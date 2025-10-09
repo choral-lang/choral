@@ -1,8 +1,8 @@
 package choral.examples.TestSwitch;
 
-import choral.lang.Unit;
-import choral.channels.*;
 import choral.annotations.Choreography;
+import choral.channels.*;
+import choral.lang.Unit;
 
 @Choreography( role = "A", name = "TestSwitch" )
 class TestSwitch_A {

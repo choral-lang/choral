@@ -14,7 +14,8 @@ target/
 .flattened-pom.xml
 # ANTLR generated files
 /choral/src/main/java/choral/grammar/
+
 /build
 /choral/src/main/antlr4/
 .vscode/*
-tests/src/main/java/*
+# /tests/src/main/java/

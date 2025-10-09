@@ -483,7 +483,7 @@ public class TestChoral {
 //				DistAuth5//,
 //				DistAuth10//,
 				//ChainingOperator, // doesn't pass, test is poorly written
-				//IfDesugar,
+				IfDesugar,
 				//VariableDeclarations,
 
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
