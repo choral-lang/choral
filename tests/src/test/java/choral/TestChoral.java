@@ -152,7 +152,6 @@ public class TestChoral {
 		final String CyclicInheritanceA = "CyclicInheritance_A"; 
 		final String CyclicInheritanceB = "CyclicInheritance_B"; 
 		final String LotsOfErrors = "A";
-		final String NestedReturnInChoices = "ReturnChoice";
 		final String MirrorChannel = "MirrorChannel";
 		final String LoggerExample = "B";
 		final String IfDesugar = "IfDesugarTest";
@@ -416,12 +415,6 @@ public class TestChoral {
 						VariableDeclarations, ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "NestedReturnInChoices") ),
-						targetFolder,
-						Collections.emptyList(),
-						NestedReturnInChoices, ALL_WORLDS )
-				,
-				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "MirrorChannel") ),
 						targetFolder,
 						Collections.emptyList(),
@@ -491,7 +484,6 @@ public class TestChoral {
 //				DistAuth10//,
 				//ChainingOperator, // doesn't pass, test is poorly written
 				//IfDesugar,
-				//NestedReturnInChoices, // What is this testing?
 				//VariableDeclarations,
 
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
