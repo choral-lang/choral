@@ -482,7 +482,7 @@ public class TestChoral {
 //				Karatsuba//,
 //				DistAuth5//,
 //				DistAuth10//,
-				//ChainingOperator, // doesn't pass, test is poorly written
+				ChainingOperator, // doesn't pass, test is poorly written
 				//IfDesugar,
 				//VariableDeclarations,
 

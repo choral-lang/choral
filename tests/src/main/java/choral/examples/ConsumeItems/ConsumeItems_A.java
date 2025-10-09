@@ -1,9 +1,9 @@
 package choral.examples.ConsumeItems;
 
 import choral.channels.DiChannel_A;
-import java.util.Iterator;
-import choral.annotations.Choreography;
 import choral.lang.Unit;
+import choral.annotations.Choreography;
+import java.util.Iterator;
 
 @Choreography( role = "A", name = "ConsumeItems" )
 public class ConsumeItems_A {

@@ -2,19 +2,19 @@ import choral.channels.SymChannel;
 
 class ChainingExample@( A, B ) {
 
-	SymChannel@( A, B ) c;
+	SymChannel@( A, B )<String> c;
 
-	ChainingExample@( A, B ) ChainingExample( SymChannel@( A, B ) c ){
+	ChainingExample( SymChannel@( A, B )<String> c ){
 		this.c = c;
 	}
 
-	static void main(){
-		String@B msg;
-		msg = "Hello"@B >> this::encrypt >> c::com >> this::decrypt;
+	void main(){
+		String@A msg;
+		msg = "Hello"@A >> this::encrypt >> c::<String>com >> this::decrypt;
 	}
 
-	static String@A encrypt( String@A s ){ /* implementation */ }
+	static String@A encrypt( String@A s ){ return ""@A; }
 
-	static String@B decrypt( String@B s ){ /* implementation */ }
+	static String@B decrypt( String@B s ){ return ""@B; }
 
 }

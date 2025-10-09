@@ -18,4 +18,4 @@ target/
 /build
 /choral/src/main/antlr4/
 .vscode/*
-# /tests/src/main/java/
+/tests/src/main/java/
