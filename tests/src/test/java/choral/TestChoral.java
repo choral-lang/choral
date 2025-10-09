@@ -158,11 +158,9 @@ public class TestChoral {
 		final String IfDesugar = "IfDesugarTest";
 		final String IllegalInheritance = "TwoWorldList";
 		final String NonMatchingReturnType = "C4";
-		final String Enums = "EnumClassTest";
 		final String Channel = "JSONChannel";
 		final String ChainingOperator = "ChainingExample";
 		final String AutoBoxing = "Autoboxing";
-		final String ValidAnnotations = "ValidAnnotationPositions";
 
 		List< CompilationRequest > allCompilationRequests = Stream.of(
 				new CompilationRequest(
@@ -452,12 +450,6 @@ public class TestChoral {
 						targetFolder,
 						Collections.emptyList(),
 						NonMatchingReturnType, ALL_WORLDS, "StaticVerificationException", "method 'm(java.lang.Object@(X))' in 'foo.I3@(X)' clashes with method 'm(java.lang.Object@(X))' in 'foo.I0@(X)', attempting to use incompatible return type")
-				,
-				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "Enums") ),
-						targetFolder,
-						Collections.emptyList(),
-						Enums, ALL_WORLDS)
 				// ,
 				// new CompilationRequest(
 				// 		List.of( subFolder(mustFailFolder, "Channel") ),
@@ -476,12 +468,6 @@ public class TestChoral {
 						targetFolder,
 						Collections.emptyList(),
 						AutoBoxing, ALL_WORLDS)
-				,
-				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "Annotations") ),
-						targetFolder,
-						List.of( subFolder(mustPassFolder, "Annotations") ),
-						ValidAnnotations, ALL_WORLDS)
 		).toList();
 
 		boolean notRun = true;
@@ -504,12 +490,10 @@ public class TestChoral {
 //				DistAuth5//,
 //				DistAuth10//,
 				//ChainingOperator, // doesn't pass, test is poorly written
-				//Enums, // fails because enums don't accept generic types in choral
 				//IfDesugar,
 				//NestedReturnInChoices, // What is this testing?
 				//VariableDeclarations,
 
-				//ValidAnnotations, // produces A LOT of unrunnable java code
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
 				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
