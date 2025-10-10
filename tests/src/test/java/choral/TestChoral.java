@@ -39,11 +39,12 @@ import java.util.stream.Stream;
 
 import com.sun.jdi.Mirror;
 
-import choral.TestChoral.TestType;
+//import choral.TestChoral.TestType;
+//import choral.choralUnit.annotations.Test;
 
 //import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-//import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Test;
 
 //import choral.choralUnit.annotations.Test;
 
@@ -111,12 +112,12 @@ public class TestChoral {
 	static final String sourceFolder = "tests/src/main/choral/examples";
 	static final String targetFolder = "tests/src/main/java";
 	static final String choralMainFolder = "tests/src/main/choral";
-	static final String runtimeMainFolder = "runtime/src/main/choral";
-	static final String choralUnitMainFolder = "choral-unit/src/main/choral" ;
+	static final String runtimeMainFolder = "../runtime/src/main/choral";
+	static final String choralUnitMainFolder = "../choral-unit/src/main/choral" ;
 
-	static final String mustFailFolder = "tests/src/main/choral/MustFail";
-	static final String mustPassFolder = "tests/src/main/choral/MustPass";
-	static final String runtimeFolder = "tests/src/main/choral/Runtime";
+	static final String mustFailFolder = "src/main/choral/MustFail";
+	static final String mustPassFolder = "src/main/choral/MustPass";
+	static final String runtimeFolder = "src/main/choral/Runtime";
 
 	public static void main( String[] args ) {
 
@@ -157,7 +158,6 @@ public class TestChoral {
 		final String IfDesugar = "IfDesugarTest";
 		final String IllegalInheritance = "TwoWorldList";
 		final String NonMatchingReturnType = "C4";
-		final String Channel = "JSONChannel";
 		final String ChainingOperator = "ChainingExample";
 		final String AutoBoxing = "Autoboxing";
 
@@ -476,13 +476,13 @@ public class TestChoral {
 				BuyerSellerShipper,
 				DistAuth,
 				LoggerExample, 
+				ChainingOperator, 
 //				VitalsStreaming//,
 //				Mergesort//,
 //				Quicksort//,
 //				Karatsuba//,
 //				DistAuth5//,
 //				DistAuth10//,
-				ChainingOperator, // doesn't pass, test is poorly written
 				//IfDesugar,
 				//VariableDeclarations,
 
@@ -540,13 +540,13 @@ public class TestChoral {
                 case MUSTPASS -> {
                     System.out.println("Now running tests that must pass");
                     passCompilationRequests.forEach( TestChoral::project );
-                    System.out.println("Amount of tests ran: " + passCompilationRequests.size());
+                    System.out.println("\u001B[32m" + "Amount of tests ran: " + passCompilationRequests.size() + "\u001B[0m");
                     System.out.println("");
                     }
                 case MUSTFAIL -> {
                     System.out.println("Now running tests that must fail");
                     passCompilationRequests.forEach( TestChoral::project );
-                    System.out.println("Amount of tests ran: " + passCompilationRequests.size());
+                    System.out.println("\u001B[32m" + "Amount of tests ran: " + passCompilationRequests.size() + "\u001B[0m");
                     System.out.println("");
                     }
                 case RUNTIME -> {
@@ -558,6 +558,12 @@ public class TestChoral {
                 default -> {
                     }
             }
+	}
+
+	@Test
+	public void mvnTestMethod(){
+		String[] lol = new String[10];
+		main(lol);
 	}
 
 	private static void printProgramSizes( CompilationRequest compilationRequest ){

@@ -19,3 +19,4 @@ target/
 /choral/src/main/antlr4/
 .vscode/*
 /tests/src/main/java/
+/tests/tests/src/main/java

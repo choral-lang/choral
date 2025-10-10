@@ -30,11 +30,11 @@ where HelloRoles is the name of the class you're compiling.
 
 For now only the initial infrastructure for running tests is up and running.
 
-To activate this, run the following command `mvn -pl tests exec:java -Prun-choral-test`
+To activate this, run the following command `mvn clean test`
 
-This command can only be run from root currently. If errors occur when running the command, it might be necessary to run the `mvn clean install` command. 
+The command supports options in the following format: 
 
-The command supports options in the following format: `mvn -pl tests exec:java -Prun-choral-test -Dtest.pass="true" -Dtest.fail="true" -Dtest.runtime="true"`
+`mvn clean test -Dtest.pass="true" -Dtest.fail="true" -Dtest.runtime="true"`
 
 Where `-Dtest.pass` determines whether tests that should pass are run
 
