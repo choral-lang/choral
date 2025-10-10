@@ -19,7 +19,6 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-//package choral.examples;
 package choral;
 
 import java.io.File;
@@ -31,12 +30,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
+
+import choral.types.World;
+import choral.types.Universe;
 
 public class TestChoral {
 
@@ -548,9 +552,38 @@ public class TestChoral {
             }
 	}
 
+	private static void whiteBoxTests(){	
+		System.out.println("Running white box tests \n");
+		
+		Map<String, Supplier<Boolean>> testsMap = new LinkedHashMap<>();
+		testsMap.put("World creation test", () -> {
+			Universe testUniverse = new Universe();
+			World lmao = new World(testUniverse, "lmao");
+			return lmao.identifier().equals("lmao");
+		});
+		testsMap.put("intentionally wrong test", () -> {
+			return false;
+		});
+		Map<String, Boolean> functionResults = new LinkedHashMap<>();
+    	testsMap.forEach((name, test) -> {
+			try {
+				functionResults.put(name, test.get());
+			} catch (Exception e) {
+				System.err.println(name + " ran into an error: " + e);
+				functionResults.put(name, false);
+			}
+		});
+
+		long count = functionResults.values().stream().filter(result -> result).count();
+		functionResults.forEach((name, result) -> System.out.println(name + ": " + result));
+		System.out.println("\nRan " + testsMap.size() + " tests");
+		System.out.println("Succesful tests: " + count);
+	}
+
 	@Test
 	public void mvnTestMethod(){
 		main(new String[10]);
+		whiteBoxTests();
 	}
 
 	private static void printProgramSizes( CompilationRequest compilationRequest ){
