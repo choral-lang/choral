@@ -483,8 +483,8 @@ public class TestChoral {
 //				Karatsuba//,
 //				DistAuth5//,
 //				DistAuth10//,
-				//IfDesugar,
-				//VariableDeclarations,
+				//IfDesugar, // header files don't work
+				//VariableDeclarations, // doesn't fail but should
 
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
@@ -500,7 +500,7 @@ public class TestChoral {
 				LotsOfErrors,
 				NonMatchingReturnType,
 				WrongType
-			).toList();
+			).toList(); 
 
 		if (Boolean.parseBoolean(System.getProperty("test.pass"))){
 			notRun = false;
