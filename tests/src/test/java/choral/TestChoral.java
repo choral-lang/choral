@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,18 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import com.sun.jdi.Mirror;
-
-//import choral.TestChoral.TestType;
-//import choral.choralUnit.annotations.Test;
-
-//import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-
 import org.junit.jupiter.api.Test;
-
-//import choral.choralUnit.annotations.Test;
-
-//import org.junit.jupiter.params.ParameterizedTest;
 
 public class TestChoral {
 
@@ -562,8 +550,7 @@ public class TestChoral {
 
 	@Test
 	public void mvnTestMethod(){
-		String[] lol = new String[10];
-		main(lol);
+		main(new String[10]);
 	}
 
 	private static void printProgramSizes( CompilationRequest compilationRequest ){
