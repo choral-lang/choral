@@ -552,7 +552,7 @@ public class TestChoral {
             }
 	}
 
-	private static void whiteBoxTests(){	
+	private void whiteBoxTests(){	
 		System.out.println("Running white box tests \n");
 		
 		Map<String, Supplier<Boolean>> testsMap = new LinkedHashMap<>();
@@ -577,7 +577,7 @@ public class TestChoral {
 		long count = functionResults.values().stream().filter(result -> result).count();
 		functionResults.forEach((name, result) -> System.out.println(name + ": " + result));
 		System.out.println("\nRan " + testsMap.size() + " tests");
-		System.out.println("Succesful tests: " + count);
+		System.out.println("Succesful tests: " + count + "\n");
 	}
 
 	@Test
