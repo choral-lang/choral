@@ -7,7 +7,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import choral.choralUnit.ChoralUnit;
 
-public class ChoralUnitTests {
+public class ChoralRuntimeTests {
 
     @ParameterizedTest
     @ValueSource(strings = {

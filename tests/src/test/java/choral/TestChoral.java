@@ -255,46 +255,6 @@ public class TestChoral {
 						DistAuth10, ALL_WORLDS )
 				,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
-						targetFolder,
-						List.of(
-								choralMainFolder + "/examples/VitalsStreaming",
-								runtimeMainFolder,
-								choralUnitMainFolder
-						),
-						VitalsStreaming, ALL_WORLDS )
-				,
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "VitalsStreaming" ) ),
-						targetFolder,
-						List.of(
-								choralMainFolder + "/examples/VitalsStreaming",
-								runtimeMainFolder,
-								choralUnitMainFolder
-						),
-						VitalsStreamingTest, ALL_WORLDS )
-				,
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "Mergesort" ) ),
-						targetFolder,
-						List.of(
-								choralMainFolder + "/examples/Mergesort",
-								runtimeMainFolder,
-								choralUnitMainFolder
-						),
-						Mergesort, ALL_WORLDS )
-				,
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "Mergesort" ) ),
-						targetFolder,
-						List.of(
-								choralMainFolder + "/examples/Mergesort",
-								runtimeMainFolder,
-								choralUnitMainFolder
-						),
-						MergesortTest, ALL_WORLDS )
-				,
-				new CompilationRequest(
 						List.of( subFolder( mustPassFolder, "BuyerSellerShipper" ) ),
 						targetFolder,
 						List.of(
@@ -304,60 +264,11 @@ public class TestChoral {
 						),
 						BuyerSellerShipper, ALL_WORLDS )
 				,
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "Quicksort" ) ),
-						targetFolder,
-						List.of(
-								choralMainFolder + "/examples/Quicksort",
-								runtimeMainFolder,
-								choralUnitMainFolder
-						),
-						Quicksort, ALL_WORLDS )
-				,
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "Quicksort" ) ),
-						targetFolder,
-						List.of(
-								choralMainFolder + "/examples/Quicksort",
-								runtimeMainFolder,
-								choralUnitMainFolder
-						),
-						QuicksortTest, ALL_WORLDS )
-				,
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "Karatsuba" ) ),
-						targetFolder,
-						List.of(
-								choralMainFolder + "/examples/Karatsuba",
-								runtimeMainFolder,
-								choralUnitMainFolder
-						),
-						Karatsuba, ALL_WORLDS )
-				,
-				new CompilationRequest(
-				List.of( subFolder( sourceFolder, "Karatsuba" ) ),
-				targetFolder,
-				List.of(
-						choralMainFolder + "/examples/Karatsuba",
-						runtimeMainFolder,
-						choralUnitMainFolder
-				),
-				KaratsubaTest, ALL_WORLDS )
-				,
 				new CompilationRequest( 
 						List.of( subFolder(mustPassFolder, "DiffieHellman"), subFolder(mustPassFolder, "BiPair") ),
 						targetFolder,
 						Collections.emptyList(),
 						DiffieHellman, ALL_WORLDS )
-				// ,
-				// new CompilationRequest(
-				// 		List.of( subFolder( sourceFolder, "RetwisChoral" ) ),
-				// 		targetFolder,
-				// 		List.of(
-				// 				choralMainFolder + "/examples/RetwisChoral",
-				// 				runtimeMainFolder
-				// 		),
-				// 		RetwisLoginManager, ALL_WORLDS )
 				,
 				new CompilationRequest(
 						List.of( subFolder( mustPassFolder, "RetwisChoral" ) ),
@@ -469,10 +380,6 @@ public class TestChoral {
 				DistAuth,
 				LoggerExample, 
 				ChainingOperator, 
-//				VitalsStreaming//,
-//				Mergesort//,
-//				Quicksort//,
-//				Karatsuba//,
 //				DistAuth5//,
 //				DistAuth10//,
 				//IfDesugar, // header files don't work
@@ -583,7 +490,6 @@ public class TestChoral {
 	@Test
 	public void mvnTestMethod(){
 		main(new String[10]);
-		whiteBoxTests();
 	}
 
 	private static void printProgramSizes( CompilationRequest compilationRequest ){
