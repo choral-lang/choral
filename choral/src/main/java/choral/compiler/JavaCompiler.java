@@ -46,6 +46,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Collections;
 
+import choral.ast.ImportDeclaration;
+
 public class JavaCompiler extends PrettyPrinterVisitor {
 
 	private static final String NEWLINE = "\n";
@@ -61,7 +63,9 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 		List< JavaSourceObject > c = new LinkedList<>();
 		JavaCompiler jc = new JavaCompiler();
 		Path sourcePath = Paths.get( n.position().sourceFile() );
-		String imports = jc.visitAndCollect( n.imports(), SEMICOLON + NEWLINE,
+		List<ImportDeclaration> temp = n.imports();
+		Collections.sort(temp);
+		String imports = jc.visitAndCollect( temp, SEMICOLON + NEWLINE,
 				SEMICOLON + _2NEWLINE );
 		String packageDeclaration = n.packageDeclaration().isPresent() ? PACKAGE + " " + n.packageDeclaration().get() + SEMICOLON + _2NEWLINE : "";
 		n.interfaces().forEach( x -> c.add(
