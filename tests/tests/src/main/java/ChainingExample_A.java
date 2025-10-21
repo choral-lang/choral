@@ -1,6 +1,6 @@
 import choral.annotations.Choreography;
-import choral.lang.Unit;
 import choral.channels.SymChannel_A;
+import choral.lang.Unit;
 
 @Choreography( role = "A", name = "ChainingExample" )
 class ChainingExample_A {
