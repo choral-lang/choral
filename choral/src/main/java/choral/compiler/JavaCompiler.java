@@ -39,15 +39,11 @@ import choral.compiler.SourceObject.JavaSourceObject;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Collections;
-
-import choral.ast.ImportDeclaration;
 
 public class JavaCompiler extends PrettyPrinterVisitor {
 
@@ -64,9 +60,7 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 		List< JavaSourceObject > c = new LinkedList<>();
 		JavaCompiler jc = new JavaCompiler();
 		Path sourcePath = Paths.get( n.position().sourceFile() );
-		List<ImportDeclaration> temp = new ArrayList<>(n.imports());
-		Collections.sort(temp);
-		String imports = jc.visitAndCollect( temp, SEMICOLON + NEWLINE,
+		String imports = jc.visitAndCollect( n.imports(), SEMICOLON + NEWLINE,
 				SEMICOLON + _2NEWLINE );
 		String packageDeclaration = n.packageDeclaration().isPresent() ? PACKAGE + " " + n.packageDeclaration().get() + SEMICOLON + _2NEWLINE : "";
 		n.interfaces().forEach( x -> c.add(
