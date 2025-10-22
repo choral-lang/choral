@@ -1,7 +1,7 @@
 package choral.examples.RetwisChoral;
 
-import choral.annotations.Choreography;
 import choral.channels.SymChannel_B;
+import choral.annotations.Choreography;
 import choral.lang.Unit;
 
 @Choreography( role = "Repository", name = "Retwis" )

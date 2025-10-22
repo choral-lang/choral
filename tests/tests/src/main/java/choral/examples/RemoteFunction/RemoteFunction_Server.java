@@ -1,8 +1,8 @@
 package choral.examples.RemoteFunction;
 
-import choral.annotations.Choreography;
 import choral.channels.BiDataChannel_B;
 import choral.lang.Unit;
+import choral.annotations.Choreography;
 import java.util.function.Function;
 
 @Choreography( role = "Server", name = "RemoteFunction" )
