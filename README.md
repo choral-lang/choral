@@ -34,13 +34,11 @@ To activate this, run the following command `mvn clean test`
 
 The command supports options in the following format: 
 
-`mvn clean test -Dtest.pass="true" -Dtest.fail="true" -Dtest.runtime="true"`
+`mvn clean test -Dtest.pass="true" -Dtest.fail="true"`
 
 Where `-Dtest.pass` determines whether tests that should pass are run
 
 And `-Dtest.fail` determines whether tests that should fail are run
-
-And `-Dtest.runtime` determines whether runtime tests are run
 
 If any of the above options are not set to `true` then the corresponding tests are not run. 
 

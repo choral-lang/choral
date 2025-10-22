@@ -1,9 +1,9 @@
 package choral.examples.diffieHellman;
 
-import choral.channels.SymDataChannel_B;
 import choral.lang.Unit;
-import java.math.BigInteger;
+import choral.channels.SymDataChannel_B;
 import choral.examples.BiPair.BiPair_B;
+import java.math.BigInteger;
 import choral.annotations.Choreography;
 
 @Choreography( role = "Bob", name = "DiffieHellman" )

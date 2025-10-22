@@ -1,9 +1,9 @@
 package choral.examples.AuthResult;
 
 import choral.lang.Unit;
+import choral.examples.BiPair.BiPair_B;
 import java.util.Optional;
 import choral.examples.DistAuthUtils.AuthToken;
-import choral.examples.BiPair.BiPair_B;
 import choral.annotations.Choreography;
 
 @Choreography( role = "B", name = "AuthResult" )

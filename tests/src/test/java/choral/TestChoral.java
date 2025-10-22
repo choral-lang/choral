@@ -21,8 +21,10 @@
 
 package choral;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,17 +32,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
-import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
-
-import choral.types.World;
-import choral.types.Universe;
 
 public class TestChoral {
 
@@ -409,10 +406,6 @@ public class TestChoral {
 			notRun = false;
 			runTests(failCompilationSymbols, allCompilationRequests, TestType.MUSTFAIL);
 		}
-		if (Boolean.parseBoolean(System.getProperty("test.runtime"))){
-			notRun = false;
-			System.out.println("Running runtime");
-		}
 		if (notRun){
 			runTests(passCompilationSymbols, allCompilationRequests, TestType.MUSTPASS);
 			runTests(failCompilationSymbols, allCompilationRequests, TestType.MUSTFAIL);
@@ -444,14 +437,8 @@ public class TestChoral {
                     }
                 case MUSTFAIL -> {
                     System.out.println("Now running tests that must fail");
-                    passCompilationRequests.forEach( TestChoral::project );
+                    passCompilationRequests.forEach( TestChoral::projectFail );
                     System.out.println("\u001B[32m" + "Amount of tests ran: " + passCompilationRequests.size() + "\u001B[0m");
-                    System.out.println("");
-                    }
-                case RUNTIME -> {
-                    System.out.println("Now running runtime tests");
-                    passCompilationRequests.forEach( TestChoral::project );
-                    System.out.println("Amount of tests ran: " + passCompilationRequests.size());
                     System.out.println("");
                     }
                 default -> {
@@ -580,7 +567,78 @@ public class TestChoral {
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
 			System.out.println( "Issuing command " + String.join( " ", parameters ));
-			Choral.main( parameters.toArray( new String[ 0 ] ), compilationRequest.expectedResults);
+			Choral.main( parameters.toArray( new String[ 0 ] ));
+			System.out.println("");
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void projectFail( CompilationRequest compilationRequest ) {
+		try {
+			ArrayList< String > parameters = new ArrayList<>();
+			parameters.add( "epp" );
+			parameters.add( "--verbosity=DEBUG" );
+			if( !compilationRequest.headersFolders().isEmpty() )
+				parameters.add( "--headers=" + String.join( ":", compilationRequest.headersFolders() ) );
+			parameters.add( "-t" );
+			parameters.add( compilationRequest.targetFolder() );
+			parameters.add( "-s" );
+			parameters.add( String.join( ":", compilationRequest.sourceFolder() ) );
+			parameters.add( compilationRequest.symbol() );
+			parameters.addAll( compilationRequest.worlds() );
+			parameters.add( "--annotate" );
+			System.out.println( "Issuing command " + String.join( " ", parameters ));
+
+			ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
+			ByteArrayOutputStream testError = new ByteArrayOutputStream();
+			PrintStream originalOutput = System.out;
+			PrintStream originalError = System.err;
+
+			try {
+				System.setOut(new PrintStream(testOutput));
+				System.setErr(new PrintStream(testError));
+
+				Choral.main( parameters.toArray( new String[ 0 ] ));
+			} finally {
+				System.setOut(originalOutput);
+				System.setErr(originalError);
+			}
+			
+			String stringTestOutput = testOutput.toString();
+			String stringTestError = testError.toString();
+
+			String[] linesOfError = stringTestError.split("\n");
+			int foundResults = 0;
+
+			for (String result : compilationRequest.expectedResults){			
+				if (!linesOfError[0].contains(result)) {
+					System.out.println("Found unexpected result: " + result);
+					System.out.println("Actual error line: " + linesOfError[0]);
+					continue;
+				}
+				foundResults++;
+			}
+
+			int exitCode = Choral.exitCode; // in case of 'volatile' variable
+
+			if (foundResults > 0 ) {
+				System.out.println("Found " + foundResults + " expected result(s) out of " + compilationRequest.expectedResults.length + " in the executed test");
+				if (Choral.exitCode == 0 ) {
+					System.out.println("Wrong exit code found, expected >0 got " + exitCode);
+					System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
+				}
+			}
+			else {
+				if (exitCode > 0 ){ 
+					System.out.println("Wrong exit code found, expected 0 got " + exitCode);
+					System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
+				}
+			}
+
+			//System.out.println(stringTestError);
+			System.out.println(stringTestOutput + ": " + stringTestOutput.split("\n").length);
+			System.out.println("");
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}

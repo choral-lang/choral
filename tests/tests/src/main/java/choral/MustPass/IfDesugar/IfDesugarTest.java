@@ -1,7 +1,7 @@
 package choral.MustPass.IfDesugar;
 
-import java.utils.Random;
 import choral.annotations.Choreography;
+import java.utils.Random;
 
 @Choreography( role = "P", name = "IfDesugarTest" )
 class IfDesugarTest {

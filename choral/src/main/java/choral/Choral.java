@@ -62,59 +62,13 @@ import static choral.utils.Streams.*;
 		}
 )
 public class Choral extends ChoralCommand implements Callable< Integer > {
+	public static int exitCode;
 
-	/**
-	 * @param expectedResults the various errors and exceptions that a given test is expected to run into. Leave empty if given test is expected to compile correctly.
-	 */
-	public static void main( String[] args, String... expectedResults) {
+	public static void main( String[] args) {
 		CommandLine cl = new CommandLine( new Choral() );
-		ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
-		ByteArrayOutputStream testError = new ByteArrayOutputStream();
-		PrintStream originalOutput = System.out;
-		PrintStream originalError = System.err;
-		int exitCode;
-		try {
-			System.setOut(new PrintStream(testOutput));
-			System.setErr(new PrintStream(testError));
-
-			cl.setToggleBooleanFlags( true );
-			cl.setCaseInsensitiveEnumValuesAllowed( true );
-			exitCode = cl.execute( args );
-
-		} finally {
-			System.setOut(originalOutput);
-			System.setErr(originalError);
-		}
-		
-		String stringTestOutput = testOutput.toString();
-		String stringTestError = testError.toString();
-
-		String[] linesOfError = stringTestError.split("\n");
-		int foundResults = 0;
-
-		for (String result : expectedResults){			
-			if (!linesOfError[0].contains(result)) {
-				System.out.println("Found unexpected result: " + result);
-				System.out.println("Actual error line: " + linesOfError[0]);
-				continue;
-			}
-			foundResults++;
-		}
-
-		if (foundResults > 0 ) {
-			System.out.println("Found " + foundResults + " expected result(s) out of " + expectedResults.length + " in the executed test");
-			if (exitCode == 0 ) {
-				System.out.println("Wrong exit code found, expected >0 got " + exitCode);
-				System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
-			}
-		}
-		else {
-			if (exitCode > 0 ){ 
-				System.out.println("Wrong exit code found, expected 0 got " + exitCode);
-				System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
-			}
-		}
-		System.out.println("");
+		cl.setToggleBooleanFlags( true );
+		cl.setCaseInsensitiveEnumValuesAllowed( true );
+		exitCode = cl.execute(args);
 	}
 
 	@Override
