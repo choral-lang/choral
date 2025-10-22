@@ -21,7 +21,18 @@
 
 package choral.compiler;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import choral.ast.CompilationUnit;
+import choral.ast.ImportDeclaration;
 import choral.ast.body.ConstructorSignature;
 import choral.ast.body.MethodSignature;
 import choral.ast.body.RefType;
@@ -36,18 +47,6 @@ import choral.ast.type.TypeExpression;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.ast.visitors.templates.Utils;
 import choral.compiler.SourceObject.JavaSourceObject;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.Collections;
-
-import choral.ast.ImportDeclaration;
 
 public class JavaCompiler extends PrettyPrinterVisitor {
 
@@ -64,9 +63,9 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 		List< JavaSourceObject > c = new LinkedList<>();
 		JavaCompiler jc = new JavaCompiler();
 		Path sourcePath = Paths.get( n.position().sourceFile() );
-		List<ImportDeclaration> temp = new ArrayList<>(n.imports());
-		Collections.sort(temp);
-		String imports = jc.visitAndCollect( temp, SEMICOLON + NEWLINE,
+		List<ImportDeclaration> sortedImports = new ArrayList<>(n.imports());
+		Collections.sort(sortedImports);
+		String imports = jc.visitAndCollect( sortedImports, SEMICOLON + NEWLINE,
 				SEMICOLON + _2NEWLINE );
 		String packageDeclaration = n.packageDeclaration().isPresent() ? PACKAGE + " " + n.packageDeclaration().get() + SEMICOLON + _2NEWLINE : "";
 		n.interfaces().forEach( x -> c.add(
