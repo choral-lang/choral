@@ -27,7 +27,7 @@ import choral.types.HigherClassOrInterface;
 import java.util.Optional;
 
 public class ImportDeclaration extends Node
-		implements WithTypeAnnotation< HigherClassOrInterface > {
+		implements WithTypeAnnotation< HigherClassOrInterface >, Comparable<ImportDeclaration> {
 
 	private final String name;
 
@@ -59,4 +59,8 @@ public class ImportDeclaration extends Node
 		return v.visit( this );
 	}
 
+	@Override
+	public int compareTo(ImportDeclaration iD){
+		return this.name.compareTo(iD.name);
+	}
 }

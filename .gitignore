@@ -17,3 +17,4 @@ target/
 /build
 /choral/src/main/antlr4/
 .vscode/*
+CLAUDE.md
