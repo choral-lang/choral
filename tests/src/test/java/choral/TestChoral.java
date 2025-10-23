@@ -631,7 +631,7 @@ public class TestChoral {
 							continue;
 						}
 						while (nextOccurence != -1){
-							errorLineNumbers.add(new AbstractMap.SimpleEntry<>(i, fileContent[i].substring(nextOccurence, endOfError))); 
+							errorLineNumbers.add(new AbstractMap.SimpleEntry<>(i, fileContent[i].substring(nextOccurence + 14, endOfError).trim())); 
 							nextOccurence = fileContent[i].indexOf("expectedError:", nextOccurence + 1);
 							endOfError = fileContent[i].indexOf(";", nextOccurence);
 						}
@@ -641,7 +641,7 @@ public class TestChoral {
 				System.out.println("\nFile found: " + testFiles.get(0) + " with " + errorLineNumbers.size() + " expected errors");
 
 				for(Map.Entry<Integer, String> line : errorLineNumbers){
-					System.out.println("Expected error on line: " + line.getKey());
+					System.out.println("Expected error: " + line.getValue() + "on line: " + line.getKey());
 				}
 			}
 			else System.err.println(String.format("Directory not found: '%s'", directoryPath));
