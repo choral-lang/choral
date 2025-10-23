@@ -567,7 +567,7 @@ public class TestChoral {
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
 			System.out.println( "Issuing command " + String.join( " ", parameters ));
-			Choral.main( parameters.toArray( new String[ 0 ] ));
+			Choral.compileTest( parameters.toArray( new String[ 0 ] ));
 			System.out.println("");
 		} catch( Exception e ) {
 			e.printStackTrace();
@@ -599,7 +599,7 @@ public class TestChoral {
 				System.setOut(new PrintStream(testOutput));
 				System.setErr(new PrintStream(testError));
 
-				Choral.main( parameters.toArray( new String[ 0 ] ));
+				Choral.compileTest( parameters.toArray( new String[ 0 ] ));
 			} finally {
 				System.setOut(originalOutput);
 				System.setErr(originalError);
