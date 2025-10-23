@@ -32,12 +32,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+
+import java.util.AbstractMap;
 
 public class TestChoral {
 
@@ -608,33 +612,69 @@ public class TestChoral {
 			String stringTestOutput = testOutput.toString();
 			String stringTestError = testError.toString();
 
-			String[] linesOfError = stringTestError.split("\n");
-			int foundResults = 0;
 
-			for (String result : compilationRequest.expectedResults){			
-				if (!linesOfError[0].contains(result)) {
-					System.out.println("Found unexpected result: " + result);
-					System.out.println("Actual error line: " + linesOfError[0]);
-					continue;
-				}
-				foundResults++;
-			}
+			Path directoryPath = Path.of(compilationRequest.sourceFolder().get(0));
+			if (Files.isDirectory(directoryPath)){
+				List<Path> testFiles = Files.walk(directoryPath)
+										.filter(path -> path.toString().endsWith(".ch"))
+										.collect(Collectors.toList());
+				String[] fileContent = Files.readString(testFiles.get(0)).split("\n");
+				
+				List<Map.Entry<Integer, String>> errorLineNumbers = new ArrayList<>(); // change name to expectedErrorsFound
 
-			int exitCode = Choral.exitCode; // in case of 'volatile' variable
+				for (int i = 0; i < fileContent.length; i++){
+					if (fileContent[i].contains("expectedError:")){
+						int nextOccurence = fileContent[i].indexOf("expectedError:");
+						int endOfError = fileContent[i].indexOf(";", nextOccurence);
+						if (endOfError == -1) {
+							System.out.println("End of error could not be found in "+ testFiles.get(0) +" on line " + i + ", did you forget a ; somewhere?");
+							continue;
+						}
+						while (nextOccurence != -1){
+							errorLineNumbers.add(new AbstractMap.SimpleEntry<>(i, fileContent[i].substring(nextOccurence, endOfError))); 
+							nextOccurence = fileContent[i].indexOf("expectedError:", nextOccurence + 1);
+							endOfError = fileContent[i].indexOf(";", nextOccurence);
+						}
+					}
+				}
 
-			if (foundResults > 0 ) {
-				System.out.println("Found " + foundResults + " expected result(s) out of " + compilationRequest.expectedResults.length + " in the executed test");
-				if (Choral.exitCode == 0 ) {
-					System.out.println("Wrong exit code found, expected >0 got " + exitCode);
-					System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
+				System.out.println("\nFile found: " + testFiles.get(0) + " with " + errorLineNumbers.size() + " expected errors");
+
+				for(Map.Entry<Integer, String> line : errorLineNumbers){
+					System.out.println("Expected error on line: " + line.getKey());
 				}
 			}
-			else {
-				if (exitCode > 0 ){ 
-					System.out.println("Wrong exit code found, expected 0 got " + exitCode);
-					System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
-				}
-			}
+			else System.err.println(String.format("Directory not found: '%s'", directoryPath));
+
+
+
+			// String[] linesOfError = stringTestError.split("\n");
+			// int foundResults = 0;
+
+			// for (String result : compilationRequest.expectedResults){			
+			// 	if (!linesOfError[0].contains(result)) {
+			// 		System.out.println("Found unexpected result: " + result);
+			// 		System.out.println("Actual error line: " + linesOfError[0]);
+			// 		continue;
+			// 	}
+			// 	foundResults++;
+			// }
+
+			// int exitCode = Choral.exitCode; // in case of 'volatile' field
+
+			// if (foundResults > 0 ) {
+			// 	System.out.println("Found " + foundResults + " expected result(s) out of " + compilationRequest.expectedResults.length + " in the executed test");
+			// 	if (Choral.exitCode == 0 ) {
+			// 		System.out.println("Wrong exit code found, expected >0 got " + exitCode);
+			// 		System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
+			// 	}
+			// }
+			// else {
+			// 	if (exitCode > 0 ){ 
+			// 		System.out.println("Wrong exit code found, expected 0 got " + exitCode);
+			// 		System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
+			// 	}
+			// }
 
 			//System.out.println(stringTestError);
 			System.out.println(stringTestOutput + ": " + stringTestOutput.split("\n").length);
