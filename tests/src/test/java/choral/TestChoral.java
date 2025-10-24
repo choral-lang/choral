@@ -602,7 +602,6 @@ public class TestChoral {
 			try {
 				System.setOut(new PrintStream(testOutput));
 				System.setErr(new PrintStream(testError));
-
 				Choral.compileTest( parameters.toArray( new String[ 0 ] ));
 			} finally {
 				System.setOut(originalOutput);
@@ -610,6 +609,7 @@ public class TestChoral {
 			}
 			
 			String stringTestOutput = testOutput.toString();
+			String[] outputLines = stringTestOutput.split("\n");
 			String stringTestError = testError.toString();
 
 
@@ -631,18 +631,41 @@ public class TestChoral {
 							continue;
 						}
 						while (nextOccurence != -1){
-							errorLineNumbers.add(new AbstractMap.SimpleEntry<>(i, fileContent[i].substring(nextOccurence + 14, endOfError).trim())); 
+							errorLineNumbers.add(new AbstractMap.SimpleEntry<>(i, fileContent[i].substring(nextOccurence + 14, endOfError).trim())); // 'expectedError:' = 14 characters
 							nextOccurence = fileContent[i].indexOf("expectedError:", nextOccurence + 1);
 							endOfError = fileContent[i].indexOf(";", nextOccurence);
 						}
 					}
 				}
 
-				System.out.println("\nFile found: " + testFiles.get(0) + " with " + errorLineNumbers.size() + " expected errors");
+				int errorsFound = 0;
+				int nextErrorLine = 0;
+				int lineNumber = Character.getNumericValue(outputLines[nextErrorLine].charAt(outputLines[nextErrorLine].indexOf("ch:") + 3) - 1);
+				for (Map.Entry<Integer, String> line : errorLineNumbers){
+					if (lineNumber == line.getKey()){
+						boolean errorFound = outputLines[nextErrorLine].contains(line.getValue());
+						System.out.println("Does expected error appear in actual error: " + errorFound);
+						if (errorFound) errorsFound++;
+					}
+					else System.out.println("First error line number doesn't match, did you put the expected error on the wrong line?");
+					
+					if (errorsFound > 0) break; // temporary statement, will be removed once choral reports multiple errors
 
-				for(Map.Entry<Integer, String> line : errorLineNumbers){
-					System.out.println("Expected error: " + line.getValue() + "on line: " + line.getKey());
-				}
+					for (int i = nextErrorLine; i < outputLines.length; i++){
+						if (outputLines[i].equals("compilation failed.")){
+							nextErrorLine += i;
+							break;
+						}
+					} 
+					lineNumber = Character.getNumericValue(outputLines[nextErrorLine].charAt(outputLines[nextErrorLine].indexOf("ch:") + 3) - 1);
+				} 
+				
+
+				System.out.println("");
+				System.out.println("Found " + errorsFound + "/" + errorLineNumbers.size() + " errors in " + testFiles.get(0));
+				System.out.println("");
+
+				
 			}
 			else System.err.println(String.format("Directory not found: '%s'", directoryPath));
 
@@ -677,7 +700,7 @@ public class TestChoral {
 			// }
 
 			//System.out.println(stringTestError);
-			System.out.println(stringTestOutput + ": " + stringTestOutput.split("\n").length);
+			System.out.println(stringTestOutput + ": " + outputLines.length);
 			System.out.println("");
 		} catch( Exception e ) {
 			e.printStackTrace();
