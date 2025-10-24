@@ -107,7 +107,6 @@ public class TestChoral {
 	static final String choralMainFolder = "tests/src/main/choral";
 	static final String runtimeMainFolder = "../runtime/src/main/choral";
 	static final String choralUnitMainFolder = "../choral-unit/src/main/choral" ;
-
 	static final String mustFailFolder = "src/main/choral/MustFail";
 	static final String mustPassFolder = "src/main/choral/MustPass";
 	static final String runtimeFolder = "src/main/choral/Runtime";
@@ -575,6 +574,20 @@ public class TestChoral {
 			int exitCode = Choral.exitCode;
 			if (exitCode != 0) System.err.print("Got " + exitCode + " as exit code when 0 was expected");
 			System.out.println("");
+
+			for (String folder : compilationRequest.sourceFolder()){
+				Path path = Path.of(folder);
+				List<Path> sourceFiles = Files.walk(path).filter( file -> file.endsWith(".ch")).collect(Collectors.toList());
+				List<Path> headerFiles = Files.walk(path).filter( file -> file.endsWith(".chh")).collect(Collectors.toList());
+				for (Path file : sourceFiles){
+					String fileContent = Files.readString(file);
+					String pathString = fileContent.substring(7, fileContent.indexOf(";")).trim();
+					String targetFolderString = targetFolder + pathString;
+					Path targetFolder = Path.of(targetFolderString);
+					List<Path> projectedJavaFiles = Files.walk(targetFolder).filter(javaFile -> javaFile.endsWith(".java")).collect(Collectors.toList());
+					// then compare with expected java output
+				}
+			}
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}

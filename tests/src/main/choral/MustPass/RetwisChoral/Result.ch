@@ -1,4 +1,4 @@
-package choral.examples.RetwisChoral;
+package choral.MustPass.RetwisChoral;
 import choral.runtime.Serializers.KryoSerializable;
 
 @KryoSerializable

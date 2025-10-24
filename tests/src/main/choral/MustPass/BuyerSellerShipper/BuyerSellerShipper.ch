@@ -1,8 +1,8 @@
-package choral.examples.BuyerSellerShipper;
+package choral.MustPass.BuyerSellerShipper;
 
-import choral.examples.BuyerSellerShipperUtils.Customer;
-import choral.examples.BuyerSellerShipperUtils.Price;
-import choral.examples.BuyerSellerShipperUtils.Catalogue;
+import choral.MustPass.BuyerSellerShipperUtils.Customer;
+import choral.MustPass.BuyerSellerShipperUtils.Price;
+import choral.MustPass.BuyerSellerShipperUtils.Catalogue;
 import choral.channels.SymChannel;
 import choral.runtime.UI.Panel;
 

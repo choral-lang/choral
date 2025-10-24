@@ -1,3 +1,5 @@
+package choral.MustPass.VariableDeclarations;
+
 class VariableDeclarations@(A, B) {
 	void method() {
 		// Single variable declaration

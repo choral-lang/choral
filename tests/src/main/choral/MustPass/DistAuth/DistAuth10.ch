@@ -1,10 +1,10 @@
-package choral.examples.DistAuth10;
+package choral.MustPass.DistAuth10;
 
-import choral.examples.AuthResult.AuthResult;
-import choral.examples.DistAuthUtils.AuthToken;
-import choral.examples.DistAuthUtils.Base64_Encoder;
-import choral.examples.DistAuthUtils.ClientRegistry;
-import choral.examples.DistAuthUtils.Credentials;
+import choral.MustPass.AuthResult.AuthResult;
+import choral.MustPass.DistAuthUtils.AuthToken;
+import choral.MustPass.DistAuthUtils.Base64_Encoder;
+import choral.MustPass.DistAuthUtils.ClientRegistry;
+import choral.MustPass.DistAuthUtils.Credentials;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

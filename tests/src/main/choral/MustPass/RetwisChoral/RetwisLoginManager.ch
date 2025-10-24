@@ -1,4 +1,4 @@
-package choral.examples.RetwisChoral;
+package choral.MustPass.RetwisChoral;
 
 import choral.channels.SymChannel;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package choral.examples.DistAuthUtils;
+package choral.MustPass.DistAuthUtils;
 
 import java.util.Optional;
 

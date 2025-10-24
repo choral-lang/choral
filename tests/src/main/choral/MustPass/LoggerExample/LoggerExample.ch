@@ -1,3 +1,5 @@
+package choral.MustPass.LoggerExample;
+
 interface Logger@( L ) {
     void write( String@( L ) msg );
 }

@@ -1,3 +1,5 @@
+packe choral.MustPass.AutoBoxing;
+
 public class AutoBoxing@( A, B ) {
         public void f(){
             int@A numberPrimitive;

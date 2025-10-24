@@ -20,4 +20,4 @@ target/
 .vscode/*
 CLAUDE.md
 
-/tests/tests/src/main/java/choral/examples/**
+/tests/tests/src/main/java/**

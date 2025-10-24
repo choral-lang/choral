@@ -1,8 +1,8 @@
-package choral.examples.DistAuth.ChoralUnit;
+package choral.MustPass.DistAuth.ChoralUnit;
 
-import choral.examples.AuthResult.AuthResult;
-import choral.examples.DistAuth.DistAuth;
-import choral.examples.DistAuthUtils.Credentials;
+import choral.MustPass.AuthResult.AuthResult;
+import choral.MustPass.DistAuth.DistAuth;
+import choral.MustPass.DistAuthUtils.Credentials;
 import choral.choralUnit.testUtils.TestUtils;
 import choral.runtime.TLSChannel.TLSChannel;
 import choral.choralUnit.annotations.Test;

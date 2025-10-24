@@ -1,4 +1,4 @@
-package choral.examples.BuyerSellerShipperUtils;
+package choral.MustPass.BuyerSellerShipperUtils;
 
 public class Customer@A {
 	public final String@A name;

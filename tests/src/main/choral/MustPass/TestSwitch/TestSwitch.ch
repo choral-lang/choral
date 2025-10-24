@@ -1,4 +1,4 @@
-package choral.examples.TestSwitch;
+package choral.MustPass.TestSwitch;
 
 import choral.channels.*;
 

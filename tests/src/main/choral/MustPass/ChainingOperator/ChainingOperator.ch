@@ -1,3 +1,5 @@
+package choral.MustPass.ChainingOperator;
+
 import choral.channels.SymChannel;
 
 class ChainingExample@( A, B ) {

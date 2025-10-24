@@ -1,3 +1,5 @@
+package choral.MustPass.MirrorChannel;
+
 import choral.channels.DiChannel;
 import choral.channels.SymChannel;
 

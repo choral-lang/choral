@@ -1,3 +1,5 @@
+package choral.MustPass.SwitchTest;
+
 public class SwitchTest@(A,B) {
 
     int@A m1(Choice@A c) {

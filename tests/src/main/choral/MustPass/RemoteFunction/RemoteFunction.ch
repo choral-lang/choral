@@ -1,4 +1,4 @@
-package choral.examples.RemoteFunction;
+package choral.MustPass.RemoteFunction;
 
 import choral.channels.BiDataChannel;
 import java.util.function.Function;
