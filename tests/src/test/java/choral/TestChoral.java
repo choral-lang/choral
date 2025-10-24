@@ -573,7 +573,7 @@ public class TestChoral {
 			System.out.println( "Issuing command " + String.join( " ", parameters ));
 			Choral.compileTest( parameters.toArray( new String[ 0 ] ));
 			int exitCode = Choral.exitCode;
-			if (exitCode != 0) System.err.print("Got " + exitCode + " as error code when 0 was expected");
+			if (exitCode != 0) System.err.print("Got " + exitCode + " as exit code when 0 was expected");
 			System.out.println("");
 		} catch( Exception e ) {
 			e.printStackTrace();
