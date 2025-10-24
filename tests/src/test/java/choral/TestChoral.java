@@ -572,6 +572,8 @@ public class TestChoral {
 			parameters.add( "--annotate" );
 			System.out.println( "Issuing command " + String.join( " ", parameters ));
 			Choral.compileTest( parameters.toArray( new String[ 0 ] ));
+			int exitCode = Choral.exitCode;
+			if (exitCode != 0) System.err.print("Got " + exitCode + " as error code when 0 was expected");
 			System.out.println("");
 		} catch( Exception e ) {
 			e.printStackTrace();
@@ -669,35 +671,8 @@ public class TestChoral {
 			}
 			else System.err.println(String.format("Directory not found: '%s'", directoryPath));
 
-
-
-			// String[] linesOfError = stringTestError.split("\n");
-			// int foundResults = 0;
-
-			// for (String result : compilationRequest.expectedResults){			
-			// 	if (!linesOfError[0].contains(result)) {
-			// 		System.out.println("Found unexpected result: " + result);
-			// 		System.out.println("Actual error line: " + linesOfError[0]);
-			// 		continue;
-			// 	}
-			// 	foundResults++;
-			// }
-
-			// int exitCode = Choral.exitCode; // in case of 'volatile' field
-
-			// if (foundResults > 0 ) {
-			// 	System.out.println("Found " + foundResults + " expected result(s) out of " + compilationRequest.expectedResults.length + " in the executed test");
-			// 	if (Choral.exitCode == 0 ) {
-			// 		System.out.println("Wrong exit code found, expected >0 got " + exitCode);
-			// 		System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
-			// 	}
-			// }
-			// else {
-			// 	if (exitCode > 0 ){ 
-			// 		System.out.println("Wrong exit code found, expected 0 got " + exitCode);
-			// 		System.out.println("out: " + stringTestOutput); System.out.println("err: " + stringTestError);
-			// 	}
-			// }
+			int exitCode = Choral.exitCode; // in case of 'volatile' field
+			if (exitCode == 0) System.err.println("Program received 0 as exitcode, which means no errors were found. This test should have errors");
 
 			//System.out.println(stringTestError);
 			System.out.println(stringTestOutput + ": " + outputLines.length);
