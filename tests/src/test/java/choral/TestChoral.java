@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -588,6 +589,9 @@ public class TestChoral {
 						projectFolder = Path.of(targetFolderString);
 						List<Path> projectedJavaFiles = Files.walk(projectFolder).filter(javaFile -> javaFile.endsWith(".java")).collect(Collectors.toList());
 						// then compare with expected java output
+					} catch (InvalidPathException e){
+						System.err.println("Invalid package definition in: " + file);
+						System.err.println("Remember to define a package at the top of the file");
 					} catch (Exception e){
 						e.printStackTrace();
 					}
