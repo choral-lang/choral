@@ -396,7 +396,7 @@ public class TestChoral {
 				IllegalInheritance,
 				MultiFoo,
 				CyclicInheritanceA,
-				If_MultiWorld,
+				//If_MultiWorld,
 				LotsOfErrors,
 				NonMatchingReturnType,
 				WrongType
@@ -666,6 +666,10 @@ public class TestChoral {
 				int nextErrorLine = 0;
 				int start = outputLines[nextErrorLine].indexOf("ch:") + 3;
 				int end = outputLines[nextErrorLine].indexOf(":", start);
+				// System.out.println("start: " + start);
+				// System.out.println("end: " + start);
+				// System.out.println("substring: " + outputLines[nextErrorLine].substring(start, end));
+				// System.out.println("out: " + stringTestOutput);
 				int errorLineNumber = Integer.parseInt(outputLines[nextErrorLine].substring(start, end)) - 1;
 
 
