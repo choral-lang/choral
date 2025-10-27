@@ -616,7 +616,7 @@ public class TestChoral {
 			parameters.add( compilationRequest.symbol() );
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
-			System.out.println( "Issuing command " + String.join( " ", parameters ));
+			System.out.println( "Issuing command " + String.join( " ", parameters ) + "\n");
 
 			ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
 			ByteArrayOutputStream testError = new ByteArrayOutputStream();
@@ -664,9 +664,13 @@ public class TestChoral {
 
 				int errorsFound = 0;
 				int nextErrorLine = 0;
-				int lineNumber = Character.getNumericValue(outputLines[nextErrorLine].charAt(outputLines[nextErrorLine].indexOf("ch:") + 3) - 1);
+				int start = outputLines[nextErrorLine].indexOf("ch:") + 3;
+				int end = outputLines[nextErrorLine].indexOf(":", start);
+				int errorLineNumber = Integer.parseInt(outputLines[nextErrorLine].substring(start, end)) - 1;
+
+
 				for (Map.Entry<Integer, String> line : errorLineNumbers){
-					if (lineNumber == line.getKey()){
+					if (errorLineNumber == line.getKey()){
 						boolean errorFound = outputLines[nextErrorLine].contains(line.getValue());
 						System.out.println("Does expected error appear in actual error: " + errorFound);
 						if (errorFound) errorsFound++;
@@ -681,11 +685,12 @@ public class TestChoral {
 							break;
 						}
 					} 
-					lineNumber = Character.getNumericValue(outputLines[nextErrorLine].charAt(outputLines[nextErrorLine].indexOf("ch:") + 3) - 1);
+					start = outputLines[nextErrorLine].indexOf("ch:") + 3;
+					end = outputLines[nextErrorLine].indexOf(":", start);
+					errorLineNumber = Integer.parseInt(outputLines[nextErrorLine].substring(start, end)) - 1;
 				} 
 				
 
-				System.out.println("");
 				System.out.println("Found " + errorsFound + "/" + errorLineNumbers.size() + " errors in " + testFiles.get(0));
 				System.out.println("");
 

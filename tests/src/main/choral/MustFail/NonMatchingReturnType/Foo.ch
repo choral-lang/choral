@@ -31,7 +31,7 @@ class C2@A implements I1@A, I2@A {
 
 }
 
-class C4@A<T@X extends I0@X & I3@X> {
+class C4@A<T@X extends I0@X & I3@X> { // expectedError: Method 'm(java.lang.Object@(X))' in 'foo.I3@(X)' clashes with method 'm(java.lang.Object@(X))' in 'foo.I0@(X)', attempting to use incompatible return type;
 
 }
 
