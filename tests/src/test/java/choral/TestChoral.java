@@ -583,8 +583,8 @@ public class TestChoral {
 					String fileContent = Files.readString(file);
 					String pathString = fileContent.substring(7, fileContent.indexOf(";")).trim();
 					String targetFolderString = targetFolder + pathString;
-					Path targetFolder = Path.of(targetFolderString);
-					List<Path> projectedJavaFiles = Files.walk(targetFolder).filter(javaFile -> javaFile.endsWith(".java")).collect(Collectors.toList());
+					Path projectFolder = Path.of(targetFolderString);
+					List<Path> projectedJavaFiles = Files.walk(projectFolder).filter(javaFile -> javaFile.endsWith(".java")).collect(Collectors.toList());
 					// then compare with expected java output
 				}
 			}
