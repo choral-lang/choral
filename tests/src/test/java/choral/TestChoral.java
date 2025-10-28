@@ -104,7 +104,7 @@ public class TestChoral {
 	}
 
 	static final String sourceFolder = "tests/src/main/choral/examples";
-	static final String targetFolder = "tests/src/main/java";
+	static final String targetFolder = "projectedOutput";
 	static final String choralMainFolder = "tests/src/main/choral";
 	static final String runtimeMainFolder = "../runtime/src/main/choral";
 	static final String choralUnitMainFolder = "../choral-unit/src/main/choral" ;
