@@ -1,9 +1,9 @@
 package choral.MustPass.diffieHellman;
 
-import choral.lang.Unit;
-import choral.annotations.Choreography;
 import choral.MustPass.BiPair.BiPair_A;
+import choral.annotations.Choreography;
 import choral.channels.SymDataChannel_A;
+import choral.lang.Unit;
 import java.math.BigInteger;
 
 @Choreography( role = "Alice", name = "DiffieHellman" )

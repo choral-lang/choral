@@ -18,7 +18,7 @@ public class MultiFoo@( E, F ) extends SingleFoo@( E, F ){
 	Bar@( E, F )< Foo > x;
 
 	public MultiFoo( SingleFoo@( E, F ) y ){
-		super( super.staticMethod() ); // expectedError: Cannot reference 'super' before supertype constructor has been called;
+		super( super.staticMethod() ); // expectedError: Cannot reference 'super' before supertype constructor has been called
 	}
 
 }

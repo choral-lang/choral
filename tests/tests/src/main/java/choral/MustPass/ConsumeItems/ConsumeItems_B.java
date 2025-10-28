@@ -1,8 +1,8 @@
 package choral.MustPass.ConsumeItems;
 
+import choral.annotations.Choreography;
 import choral.channels.DiChannel_B;
 import choral.lang.Unit;
-import choral.annotations.Choreography;
 import java.util.function.Consumer;
 
 @Choreography( role = "B", name = "ConsumeItems" )

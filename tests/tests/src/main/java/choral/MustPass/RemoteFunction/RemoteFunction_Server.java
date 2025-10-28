@@ -1,8 +1,8 @@
 package choral.MustPass.RemoteFunction;
 
 import choral.annotations.Choreography;
-import choral.lang.Unit;
 import choral.channels.BiDataChannel_B;
+import choral.lang.Unit;
 import java.util.function.Function;
 
 @Choreography( role = "Server", name = "RemoteFunction" )

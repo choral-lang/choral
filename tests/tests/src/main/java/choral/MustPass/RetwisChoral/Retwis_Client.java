@@ -1,8 +1,8 @@
 package choral.MustPass.RetwisChoral;
 
-import choral.lang.Unit;
 import choral.annotations.Choreography;
 import choral.channels.SymChannel_A;
+import choral.lang.Unit;
 
 @Choreography( role = "Client", name = "Retwis" )
 public class Retwis_Client {

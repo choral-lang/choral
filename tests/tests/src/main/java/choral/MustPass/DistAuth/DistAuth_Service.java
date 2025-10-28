@@ -1,11 +1,11 @@
 package choral.MustPass.DistAuth;
 
-import choral.lang.Unit;
-import choral.MustPass.DistAuthUtils.AuthToken;
-import choral.runtime.TLSChannel.TLSChannel_A;
 import choral.DistAuth.EnumBoolean;
 import choral.MustPass.AuthResult.AuthResult_B;
+import choral.MustPass.DistAuthUtils.AuthToken;
 import choral.annotations.Choreography;
+import choral.lang.Unit;
+import choral.runtime.TLSChannel.TLSChannel_A;
 
 @Choreography( role = "Service", name = "DistAuth" )
 public class DistAuth_Service {

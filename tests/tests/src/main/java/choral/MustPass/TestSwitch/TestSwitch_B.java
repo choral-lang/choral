@@ -1,8 +1,8 @@
 package choral.MustPass.TestSwitch;
 
-import choral.lang.Unit;
-import choral.channels.*;
 import choral.annotations.Choreography;
+import choral.channels.*;
+import choral.lang.Unit;
 
 @Choreography( role = "B", name = "TestSwitch" )
 class TestSwitch_B {

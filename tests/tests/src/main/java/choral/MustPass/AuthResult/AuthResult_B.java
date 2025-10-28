@@ -1,10 +1,10 @@
 package choral.MustPass.AuthResult;
 
-import choral.lang.Unit;
 import choral.MustPass.BiPair.BiPair_B;
-import java.util.Optional;
 import choral.MustPass.DistAuthUtils.AuthToken;
 import choral.annotations.Choreography;
+import choral.lang.Unit;
+import java.util.Optional;
 
 @Choreography( role = "B", name = "AuthResult" )
 public class AuthResult_B extends BiPair_B < Optional < AuthToken >, Optional < AuthToken > > {

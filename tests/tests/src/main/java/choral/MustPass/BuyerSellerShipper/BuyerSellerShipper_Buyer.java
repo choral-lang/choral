@@ -1,11 +1,11 @@
 package choral.MustPass.BuyerSellerShipper;
 
-import choral.lang.Unit;
-import choral.MustPass.BuyerSellerShipperUtils.Price;
-import choral.runtime.UI.Panel;
 import choral.MustPass.BuyerSellerShipperUtils.Customer;
+import choral.MustPass.BuyerSellerShipperUtils.Price;
 import choral.annotations.Choreography;
 import choral.channels.SymChannel_B;
+import choral.lang.Unit;
+import choral.runtime.UI.Panel;
 
 @Choreography( role = "Buyer", name = "BuyerSellerShipper" )
 class BuyerSellerShipper_Buyer {

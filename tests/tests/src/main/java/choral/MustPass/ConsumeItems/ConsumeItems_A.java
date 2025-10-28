@@ -1,9 +1,9 @@
 package choral.MustPass.ConsumeItems;
 
-import choral.lang.Unit;
-import choral.channels.DiChannel_A;
-import java.util.Iterator;
 import choral.annotations.Choreography;
+import choral.channels.DiChannel_A;
+import choral.lang.Unit;
+import java.util.Iterator;
 
 @Choreography( role = "A", name = "ConsumeItems" )
 public class ConsumeItems_A {

@@ -1,8 +1,8 @@
 package choral.MustPass.ChainingOperator;
 
+import choral.annotations.Choreography;
 import choral.channels.SymChannel_A;
 import choral.lang.Unit;
-import choral.annotations.Choreography;
 
 @Choreography( role = "A", name = "ChainingExample" )
 class ChainingExample_A {

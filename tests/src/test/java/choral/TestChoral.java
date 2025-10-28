@@ -393,10 +393,10 @@ public class TestChoral {
 			).toList();
 
 		List<String> failCompilationSymbols = Stream.of(
+				//If_MultiWorld,
 				IllegalInheritance,
 				MultiFoo,
 				CyclicInheritanceA,
-				//If_MultiWorld,
 				LotsOfErrors,
 				NonMatchingReturnType,
 				WrongType
@@ -650,16 +650,13 @@ public class TestChoral {
 				for (int i = 0; i < fileContent.length; i++){
 					if (fileContent[i].contains("expectedError:")){
 						int nextOccurence = fileContent[i].indexOf("expectedError:");
-						int endOfError = fileContent[i].indexOf(";", nextOccurence);
-						// check for double slash or end of line
-						if (endOfError == -1) {
-							System.out.println("End of error could not be found in "+ testFiles.get(0) +" on line " + i + ", did you forget a ; somewhere?");
-							continue;
-						}
+						int endOfError = fileContent[i].indexOf("//", nextOccurence);
+						if (endOfError == -1) endOfError = fileContent[i].length();
 						while (nextOccurence != -1){
 							errorLineNumbers.add(new AbstractMap.SimpleEntry<>(i, fileContent[i].substring(nextOccurence + 14, endOfError).trim())); // 'expectedError:' = 14 characters
 							nextOccurence = fileContent[i].indexOf("expectedError:", nextOccurence + 1);
-							endOfError = fileContent[i].indexOf(";", nextOccurence);
+							endOfError = fileContent[i].indexOf("//", nextOccurence);
+							if (endOfError == -1) endOfError = fileContent[i].length();
 						}
 					}
 				}

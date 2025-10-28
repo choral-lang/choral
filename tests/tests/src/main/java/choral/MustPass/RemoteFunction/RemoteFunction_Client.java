@@ -1,8 +1,8 @@
 package choral.MustPass.RemoteFunction;
 
-import choral.lang.Unit;
 import choral.annotations.Choreography;
 import choral.channels.BiDataChannel_A;
+import choral.lang.Unit;
 
 @Choreography( role = "Client", name = "RemoteFunction" )
 class RemoteFunction_Client< T, R > {
