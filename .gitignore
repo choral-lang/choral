@@ -20,4 +20,4 @@ target/
 .vscode/*
 CLAUDE.md
 
-/tests/tests/src/main/java/**
+#/tests/tests/src/main/java/**

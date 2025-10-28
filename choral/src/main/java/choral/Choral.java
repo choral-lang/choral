@@ -71,11 +71,11 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		System.exit(cl.execute(args));
 	}
 
-	public static void compileTest( String[] args) {
+	public static int compileTest( String[] args) {
 		CommandLine cl = new CommandLine( new Choral() );
 		cl.setToggleBooleanFlags( true );
 		cl.setCaseInsensitiveEnumValuesAllowed( true );
-		exitCode = cl.execute(args);
+		return cl.execute(args);
 	}
 
 	@Override

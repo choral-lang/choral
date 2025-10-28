@@ -571,8 +571,7 @@ public class TestChoral {
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
 			System.out.println( "Issuing command " + String.join( " ", parameters ));
-			Choral.compileTest( parameters.toArray( new String[ 0 ] ));
-			int exitCode = Choral.exitCode;
+			int exitCode = Choral.compileTest( parameters.toArray( new String[ 0 ] ));
 			if (exitCode != 0) System.err.print("Got " + exitCode + " as exit code when 0 was expected");
 			System.out.println("");
 
@@ -623,10 +622,12 @@ public class TestChoral {
 			PrintStream originalOutput = System.out;
 			PrintStream originalError = System.err;
 
+			int exitCode;
+
 			try {
 				System.setOut(new PrintStream(testOutput));
 				System.setErr(new PrintStream(testError));
-				Choral.compileTest( parameters.toArray( new String[ 0 ] ));
+				exitCode = Choral.compileTest( parameters.toArray( new String[ 0 ] ));
 			} finally {
 				System.setOut(originalOutput);
 				System.setErr(originalError);
@@ -650,6 +651,7 @@ public class TestChoral {
 					if (fileContent[i].contains("expectedError:")){
 						int nextOccurence = fileContent[i].indexOf("expectedError:");
 						int endOfError = fileContent[i].indexOf(";", nextOccurence);
+						// check for double slash or end of line
 						if (endOfError == -1) {
 							System.out.println("End of error could not be found in "+ testFiles.get(0) +" on line " + i + ", did you forget a ; somewhere?");
 							continue;
@@ -702,7 +704,7 @@ public class TestChoral {
 			}
 			else System.err.println(String.format("Directory not found: '%s'", directoryPath));
 
-			int exitCode = Choral.exitCode; // in case of 'volatile' field
+			//int exitCode = Choral.exitCode; // in case of 'volatile' field
 			if (exitCode == 0) System.err.println("Program received 0 as exitcode, which means no errors were found. This test should have errors");
 
 			//System.out.println(stringTestError);
