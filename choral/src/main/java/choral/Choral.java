@@ -62,7 +62,6 @@ import static choral.utils.Streams.*;
 		}
 )
 public class Choral extends ChoralCommand implements Callable< Integer > {
-	public static int exitCode;
 
 	public static void main( String[] args) {
 		CommandLine cl = new CommandLine( new Choral() );
