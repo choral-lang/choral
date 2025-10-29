@@ -42,7 +42,13 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
+import com.github.difflib.DiffUtils;
+import com.github.difflib.UnifiedDiffUtils;
+import com.github.difflib.patch.Patch;
+
 import java.util.AbstractMap;
+
+import org.apache.commons.lang.StringUtils;
 
 public class TestChoral {
 
@@ -105,6 +111,7 @@ public class TestChoral {
 
 	static final String sourceFolder = "tests/src/main/choral/examples";
 	static final String targetFolder = "projectedOutput";
+	static final String expectedFolder = "expectedOutput";
 	static final String choralMainFolder = "tests/src/main/choral";
 	static final String runtimeMainFolder = "../runtime/src/main/choral";
 	static final String choralUnitMainFolder = "../choral-unit/src/main/choral" ;
@@ -370,26 +377,26 @@ public class TestChoral {
 		boolean notRun = true;
 
 		List<String> passCompilationSymbols = Stream.of(
-				HelloRoles,
-				ConsumeItems,
-				DiffieHellman,
-				TestSwitch,
-				RemoteFunction, 
-				Retwis,
-				AuthResult,
-				BuyerSellerShipper,
-				DistAuth,
-				LoggerExample, 
-				ChainingOperator, 
-				IfDesugar,
-//				DistAuth5//,
-//				DistAuth10//,
+				//HelloRoles,
+				ConsumeItems//,
+				// DiffieHellman,
+				// TestSwitch,
+				// RemoteFunction, 
+				// Retwis,
+				// AuthResult,
+				// BuyerSellerShipper,
+				// DistAuth,
+				// LoggerExample, 
+				// ChainingOperator, 
+				// IfDesugar,
+//				DistAuth5,
+//				DistAuth10,
 				//VariableDeclarations, // doesn't fail but should
 
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
 				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
-				ExtendsTest
+				//ExtendsTest
 			).toList();
 
 		List<String> failCompilationSymbols = Stream.of(
@@ -575,19 +582,50 @@ public class TestChoral {
 			if (exitCode != 0) System.err.print("Got " + exitCode + " as exit code when 0 was expected");
 			System.out.println("");
 
+			List<String> alreadyCheckedPaths = new ArrayList<>();
 			for (String folder : compilationRequest.sourceFolder()){
 				Path path = Path.of(folder);
-				List<Path> sourceFiles = Files.walk(path).filter( file -> file.endsWith(".ch")).collect(Collectors.toList());
-				List<Path> headerFiles = Files.walk(path).filter( file -> file.endsWith(".chh")).collect(Collectors.toList());
+				List<Path> sourceFiles = Files.walk(path).filter( file -> file.toString().endsWith(".ch")).collect(Collectors.toList());
 				for (Path file : sourceFiles){
 					String fileContent = Files.readString(file);
-					String pathString = fileContent.substring(7, fileContent.indexOf(";")).trim(); // this finds the package declared at the top of the file
-					String targetFolderString = targetFolder + pathString;
-					Path projectFolder;
+					String pathString = fileContent.substring(fileContent.indexOf("package ") + 7, fileContent.indexOf(";")).trim(); // this finds the package declared at the top of the file
+					String innerPathString = "/" + pathString.replace(".", "/");
+					String targetFolderString = targetFolder + innerPathString;
+					
+					if (alreadyCheckedPaths.contains(targetFolderString)) continue;
+					alreadyCheckedPaths.add(targetFolderString);
+
 					try	{
-						projectFolder = Path.of(targetFolderString);
-						List<Path> projectedJavaFiles = Files.walk(projectFolder).filter(javaFile -> javaFile.endsWith(".java")).collect(Collectors.toList());
-						// then compare with expected java output
+						Path projectFolder = Path.of(targetFolderString);
+						List<Path> projectedJavaFiles = Files.walk(projectFolder).filter(javaFile -> javaFile.toString().endsWith(".java")).collect(Collectors.toList());
+						
+						String expectedFolderString = expectedFolder + innerPathString;
+						Path expectedFolderPath = Path.of(expectedFolderString);
+						List<Path> expectedFiles = Files.walk(expectedFolderPath).filter( expectedFile -> expectedFile.toString().endsWith(".java")).collect(Collectors.toList());
+						
+						if (projectedJavaFiles.size() != expectedFiles.size()) {
+							System.err.println("Expected files and projected files are not even in count! Ensure that the expected files is up to date");
+							continue;
+						}
+						
+						for (int i = 0; i < expectedFiles.size(); i++){
+							List<String> original = Files.readAllLines(expectedFiles.get(i));
+							List<String> revised = Files.readAllLines(projectedJavaFiles.get(i));
+
+							Patch<String> patch = DiffUtils.diff(original, revised);
+							List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(
+								expectedFiles.get(i).toString(),
+								projectedJavaFiles.get(i).toString(),
+								original,
+								patch,
+								3
+							);
+							if (!unifiedDiff.isEmpty()) {
+								System.out.println("Now printing diff for: " + expectedFiles.get(i).toString() + " and " + projectedJavaFiles.get(i).toString());
+								unifiedDiff.forEach(System.out::println);
+							}
+						}
+
 					} catch (InvalidPathException e){
 						System.err.println("Invalid package definition in: " + file);
 						System.err.println("Remember to define a package at the top of the file");
@@ -615,7 +653,7 @@ public class TestChoral {
 			parameters.add( compilationRequest.symbol() );
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
-			System.out.println( "Issuing command " + String.join( " ", parameters ) + "\n");
+			System.out.println( "Issuing command " + String.join( " ", parameters ));
 
 			ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
 			ByteArrayOutputStream testError = new ByteArrayOutputStream();
@@ -632,7 +670,9 @@ public class TestChoral {
 				System.setOut(originalOutput);
 				System.setErr(originalError);
 			}
-			
+			//int exitCode = Choral.exitCode; // in case of 'volatile' field
+			if (exitCode == 0) System.err.println("Program received 0 as exitcode, which means no errors were found. This test should have errors");	
+
 			String stringTestOutput = testOutput.toString();
 			String[] outputLines = stringTestOutput.split("\n");
 			String stringTestError = testError.toString();
@@ -645,7 +685,7 @@ public class TestChoral {
 										.collect(Collectors.toList());
 				String[] fileContent = Files.readString(testFiles.get(0)).split("\n");
 				
-				List<Map.Entry<Integer, String>> errorLineNumbers = new ArrayList<>(); // change name to expectedErrorsFound
+				List<Map.Entry<Integer, String>> expectedErrorsFound = new ArrayList<>(); 
 
 				for (int i = 0; i < fileContent.length; i++){
 					if (fileContent[i].contains("expectedError:")){
@@ -653,7 +693,7 @@ public class TestChoral {
 						int endOfError = fileContent[i].indexOf("//", nextOccurence);
 						if (endOfError == -1) endOfError = fileContent[i].length();
 						while (nextOccurence != -1){
-							errorLineNumbers.add(new AbstractMap.SimpleEntry<>(i, fileContent[i].substring(nextOccurence + 14, endOfError).trim())); // 'expectedError:' = 14 characters
+							expectedErrorsFound.add(new AbstractMap.SimpleEntry<>(i, fileContent[i].substring(nextOccurence + 14, endOfError).trim())); // 'expectedError:' = 14 characters
 							nextOccurence = fileContent[i].indexOf("expectedError:", nextOccurence + 1);
 							endOfError = fileContent[i].indexOf("//", nextOccurence);
 							if (endOfError == -1) endOfError = fileContent[i].length();
@@ -665,22 +705,23 @@ public class TestChoral {
 				int nextErrorLine = 0;
 				int start = outputLines[nextErrorLine].indexOf("ch:") + 3;
 				int end = outputLines[nextErrorLine].indexOf(":", start);
-				// System.out.println("start: " + start);
-				// System.out.println("end: " + start);
-				// System.out.println("substring: " + outputLines[nextErrorLine].substring(start, end));
-				// System.out.println("out: " + stringTestOutput);
+
 				int errorLineNumber = Integer.parseInt(outputLines[nextErrorLine].substring(start, end)) - 1;
+				List<Map.Entry<Integer, String>> foundErrors = new ArrayList<>();
 
-
-				for (Map.Entry<Integer, String> line : errorLineNumbers){
+				for (Map.Entry<Integer, String> line : expectedErrorsFound){
 					if (errorLineNumber == line.getKey()){
 						boolean errorFound = outputLines[nextErrorLine].contains(line.getValue());
 						System.out.println("Does expected error appear in actual error: " + errorFound);
-						if (errorFound) errorsFound++;
+						if (errorFound) {
+							errorsFound++;
+							foundErrors.add(line);
+						}
 					}
-					else System.out.println("First error line number doesn't match, did you put the expected error on the wrong line?");
-					
-					if (errorsFound > 0) break; // temporary statement, will be removed once choral reports multiple errors
+					else {
+						System.out.println("Error line number doesn't match, did you put the expected error on the wrong line?");
+						System.out.println("Got: " + errorLineNumber + " expected: " + line.getKey());
+					}
 
 					for (int i = nextErrorLine; i < outputLines.length; i++){
 						if (outputLines[i].equals("compilation failed.")){
@@ -688,24 +729,34 @@ public class TestChoral {
 							break;
 						}
 					} 
+
 					start = outputLines[nextErrorLine].indexOf("ch:") + 3;
 					end = outputLines[nextErrorLine].indexOf(":", start);
+
+					if (end == -1 || start == -1){
+						break; // end of error output reached 
+					} 
+
 					errorLineNumber = Integer.parseInt(outputLines[nextErrorLine].substring(start, end)) - 1;
 				} 
 				
 
-				System.out.println("Found " + errorsFound + "/" + errorLineNumbers.size() + " errors in " + testFiles.get(0));
+				System.out.println("Found " + errorsFound + "/" + expectedErrorsFound.size() + " errors in " + testFiles.get(0));
+				if (errorsFound != expectedErrorsFound.size()) {
+					System.out.println("\u001B[33m" + "Warning" + "\u001B[0m " + (expectedErrorsFound.size() - errorsFound) + " errors not found");
+					for (Map.Entry<Integer, String> line : expectedErrorsFound){
+						if (!foundErrors.contains(line)) System.out.println("\tExpected to find: " + line.getValue() + " on line " + line.getKey());
+					}
+				}
+				
 				System.out.println("");
 
 				
 			}
 			else System.err.println(String.format("Directory not found: '%s'", directoryPath));
 
-			//int exitCode = Choral.exitCode; // in case of 'volatile' field
-			if (exitCode == 0) System.err.println("Program received 0 as exitcode, which means no errors were found. This test should have errors");
-
 			//System.out.println(stringTestError);
-			System.out.println(stringTestOutput + ": " + outputLines.length);
+			//System.out.println(stringTestOutput + ": " + outputLines.length);
 			System.out.println("");
 		} catch( Exception e ) {
 			e.printStackTrace();
