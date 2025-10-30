@@ -6,7 +6,7 @@ import choral.lang.Unit;
 import java.util.Iterator;
 
 @Choreography( role = "A", name = "ConsumeItems" )
-public class ConsumeItems_A {
+public class ConsumeItems_A { // here is a difference
 	public static void consumeItems( DiChannel_A < Integer > ch, Iterator < Integer > it, Unit consumer ) {
 		consumeItems( ch, it );
 	}

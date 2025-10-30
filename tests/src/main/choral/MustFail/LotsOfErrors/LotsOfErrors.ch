@@ -20,7 +20,7 @@ enum E@W {
     // no cases
 }
 
-class D@(W,W /* duplicate world parameter */ ){} // expectedError: Duplicate role parameter 'W'
+class D@(W,W /* duplicate world parameter */ ){} //! Duplicate role parameter 'W'
 
 class C@(W1,W2) { C(){} } // this is ok
 

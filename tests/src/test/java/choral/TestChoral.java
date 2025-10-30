@@ -130,15 +130,7 @@ public class TestChoral {
 		final String DistAuthTest = "DistAuthTest";
 		final String DistAuth5 = "DistAuth5";
 		final String DistAuth10 = "DistAuth10";
-		final String VitalsStreaming = "VitalsStreaming";
-		final String VitalsStreamingTest = "VitalsStreamingTest";
-		final String Mergesort = "Mergesort";
-		final String MergesortTest = "MergesortTest";
 		final String BuyerSellerShipper = "BuyerSellerShipper";
-		final String Quicksort = "Quicksort";
-		final String QuicksortTest = "QuicksortTest";
-		final String Karatsuba = "Karatsuba";
-		final String KaratsubaTest = "KaratsubaTest";
 		final String DiffieHellman = "DiffieHellman";
 		final String RetwisLoginManager = "RetwisLoginManager";
 		final String Retwis = "Retwis";
@@ -158,6 +150,7 @@ public class TestChoral {
 		final String NonMatchingReturnType = "C4";
 		final String ChainingOperator = "ChainingExample";
 		final String AutoBoxing = "Autoboxing";
+		final String BookSellingSoloist = "BuyBook2";
 
 		List< CompilationRequest > allCompilationRequests = Stream.of(
 				new CompilationRequest(
@@ -352,12 +345,6 @@ public class TestChoral {
 						targetFolder,
 						Collections.emptyList(),
 						NonMatchingReturnType, ALL_WORLDS, "StaticVerificationException", "method 'm(java.lang.Object@(X))' in 'foo.I3@(X)' clashes with method 'm(java.lang.Object@(X))' in 'foo.I0@(X)', attempting to use incompatible return type")
-				// ,
-				// new CompilationRequest(
-				// 		List.of( subFolder(mustFailFolder, "Channel") ),
-				// 		targetFolder,
-				// 		Collections.emptyList(),
-				// 		Channel, ALL_WORLDS)
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "ChainingOperator") ),
@@ -369,32 +356,37 @@ public class TestChoral {
 						List.of( subFolder(mustPassFolder, "AutoBoxing") ),
 						targetFolder,
 						Collections.emptyList(),
-						AutoBoxing, ALL_WORLDS)
+						AutoBoxing, ALL_WORLDS),
+				new CompilationRequest(
+						List.of( subFolder(mustPassFolder, "BookSellingSoloist") ),
+						targetFolder,
+						List.of(
+							runtimeMainFolder
+						),
+						BookSellingSoloist, ALL_WORLDS)
 		).toList();
 
-		boolean notRun = true;
-
 		List<String> passCompilationSymbols = Stream.of(
-				//HelloRoles,
-				ConsumeItems//,
-				// DiffieHellman,
-				// TestSwitch,
-				// RemoteFunction, 
-				// Retwis,
-				// AuthResult,
-				// BuyerSellerShipper,
-				// DistAuth,
-				// LoggerExample, 
-				// ChainingOperator, 
-				// IfDesugar,
+				HelloRoles,
+				ConsumeItems,
+				DiffieHellman,
+				TestSwitch,
+				RemoteFunction, 
+				Retwis,
+				AuthResult,
+				BuyerSellerShipper,
+				LoggerExample, 
+				ChainingOperator, 
+				IfDesugar,
+				//DistAuth,
 //				DistAuth5,
 //				DistAuth10,
-				//VariableDeclarations, // doesn't fail but should
+				//VariableDeclarations, // doesn't fail but should, because the erroneous lines are commented out
 
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
 				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
-				//ExtendsTest
+				ExtendsTest
 			).toList();
 
 		List<String> failCompilationSymbols = Stream.of(
@@ -406,6 +398,8 @@ public class TestChoral {
 				NonMatchingReturnType,
 				WrongType
 			).toList(); 
+
+		boolean notRun = true;
 
 		if (Boolean.parseBoolean(System.getProperty("test.pass"))){
 			notRun = false;
@@ -668,12 +662,10 @@ public class TestChoral {
 				System.setOut(originalOutput);
 				System.setErr(originalError);
 			}
-			//int exitCode = Choral.exitCode; // in case of 'volatile' field
 			if (exitCode == 0) System.err.println("Program received 0 as exitcode, which means no errors were found. This test should have errors");	
 
 			String stringTestOutput = testOutput.toString();
 			String[] outputLines = stringTestOutput.split("\n");
-			String stringTestError = testError.toString();
 
 
 			Path directoryPath = Path.of(compilationRequest.sourceFolder().get(0));
@@ -686,14 +678,16 @@ public class TestChoral {
 				List<Map.Entry<Integer, String>> expectedErrorsFound = new ArrayList<>(); 
 
 				for (int i = 0; i < fileContent.length; i++){
-					if (fileContent[i].contains("expectedError:")){
-						int nextOccurence = fileContent[i].indexOf("expectedError:");
-						int endOfError = fileContent[i].indexOf("//", nextOccurence);
+					if (fileContent[i].contains("//!")){
+						int nextOccurence = fileContent[i].indexOf("//!");
+						//System.out.println("nextOccurence: " + nextOccurence);
+						int endOfError = fileContent[i].indexOf("//", nextOccurence + 1);
+						//System.out.println("endOfError" + endOfError);
 						if (endOfError == -1) endOfError = fileContent[i].length();
 						while (nextOccurence != -1){
-							expectedErrorsFound.add(new AbstractMap.SimpleEntry<>(i, fileContent[i].substring(nextOccurence + 14, endOfError).trim())); // 'expectedError:' = 14 characters
-							nextOccurence = fileContent[i].indexOf("expectedError:", nextOccurence + 1);
-							endOfError = fileContent[i].indexOf("//", nextOccurence);
+							expectedErrorsFound.add(new AbstractMap.SimpleEntry<>(i, fileContent[i].substring(nextOccurence + 3, endOfError).trim())); // '//!' = 3 characters
+							nextOccurence = fileContent[i].indexOf("//!", endOfError);
+							endOfError = fileContent[i].indexOf("//", nextOccurence + 1);
 							if (endOfError == -1) endOfError = fileContent[i].length();
 						}
 					}
@@ -706,6 +700,7 @@ public class TestChoral {
 
 				int errorLineNumber = Integer.parseInt(outputLines[nextErrorLine].substring(start, end)) - 1;
 				List<Map.Entry<Integer, String>> foundErrors = new ArrayList<>();
+				List<String> missedErrors = new ArrayList<>();
 
 				for (Map.Entry<Integer, String> line : expectedErrorsFound){
 					if (errorLineNumber == line.getKey()){
@@ -747,13 +742,19 @@ public class TestChoral {
 					}
 				}
 				
+				if (!missedErrors.isEmpty()){
+					System.out.println("Found " + missedErrors.size() + " errors not expected");
+					for (String error : missedErrors){
+						System.out.println(error);
+					}
+				}
+
 				System.out.println("");
 
 				
 			}
 			else System.err.println(String.format("Directory not found: '%s'", directoryPath));
 
-			//System.out.println(stringTestError);
 			//System.out.println(stringTestOutput + ": " + outputLines.length);
 			System.out.println("");
 		} catch( Exception e ) {

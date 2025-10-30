@@ -1,8 +1,8 @@
-//import choral.BookSelling.com.books.*;
-//import com.choral.runtime.UI.Panel;
-//import com.choral.runtime.Channel1;
-//import com.choral.runtime.Channel2;
-//import com.choral.runtime.Enum.EnumBoolean;
+import choral.BookSelling.com.books.*;
+import com.choral.runtime.UI.Panel;
+import com.choral.runtime.Channel1;
+import com.choral.runtime.Channel2;
+import com.choral.runtime.Enum.EnumBoolean;
 
 class BuyBook1@Seller {
 Channel1@Seller< Object > c;
@@ -11,7 +11,7 @@ BuyBook1( Channel1@Seller< Object > c ) {
 		this.c = c;
 }
 
-void@Seller run ( Catalogue@Seller catalogue ){
+void run ( Catalogue@Seller catalogue ){
 	String@Seller title;
 	title = null@Seller;
 	try {
@@ -37,7 +37,7 @@ class BuyBook2@Buyer{
 			this.c = c;
 	}
 
-	void@Buyer run ( Customer@Buyer customer ){
+	void run ( Customer@Buyer customer ){
 		String@Buyer book;
 		book = Panel@Buyer.prompt( "Buyer"@Buyer, "Insert the title of the book"@Buyer );
 		try {
