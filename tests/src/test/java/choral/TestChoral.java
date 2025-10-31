@@ -736,7 +736,7 @@ public class TestChoral {
 
 				System.out.println("Found " + errorsFound + "/" + expectedErrorsFound.size() + " errors in " + testFiles.get(0));
 				if (errorsFound != expectedErrorsFound.size()) {
-					System.out.println("\u001B[33m" + "Warning" + "\u001B[0m " + (expectedErrorsFound.size() - errorsFound) + " errors not found");
+					System.out.println("\u001B[31m" + "Error" + "\u001B[0m " + (expectedErrorsFound.size() - errorsFound) + " errors not found");
 					for (Map.Entry<Integer, String> line : expectedErrorsFound){
 						if (!foundErrors.contains(line)) System.out.println("\tExpected to find: " + line.getValue() + " on line " + line.getKey());
 					}
