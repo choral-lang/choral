@@ -358,10 +358,11 @@ public class TestChoral {
 						Collections.emptyList(),
 						AutoBoxing, ALL_WORLDS),
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "BookSellingSoloist") ),
+						List.of( subFolder(mustPassFolder, "BookSellingSoloist")),
 						targetFolder,
 						List.of(
-							runtimeMainFolder
+							runtimeMainFolder,
+							choralUnitMainFolder
 						),
 						BookSellingSoloist, ALL_WORLDS)
 		).toList();
@@ -386,6 +387,7 @@ public class TestChoral {
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
 				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
+				BookSellingSoloist,
 				ExtendsTest
 			).toList();
 
