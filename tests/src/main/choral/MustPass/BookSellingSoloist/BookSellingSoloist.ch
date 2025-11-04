@@ -53,10 +53,10 @@ class BuyBook1@(Seller, Buyer) {
 			Panel@Seller.show( "Seller"@Seller, e );
 		}
 		if( catalogue.includes( title ) ){
-			c.<EnumBoolean >select( EnumBoolean@Seller.True );
+			c.<EnumBoolean>select( EnumBoolean@Buyer.True );
 			c.< Integer >com( catalogue.quote( title ) );
 		} else {
-			c.< EnumBoolean >select( EnumBoolean@Seller.False );
+			c.<EnumBoolean>select( EnumBoolean@Buyer.False );
 		}
 	}
 }

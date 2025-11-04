@@ -389,7 +389,7 @@ public class TestChoral {
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
 				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
-				//BookSellingSoloist,
+				BookSellingSoloist,
 				ExtendsTest
 			).toList();
 
