@@ -6,15 +6,15 @@
 *    - undefined and duplicated world arguments in type applications
 ***********************************************************************************************************************/
 
-class A@W<T@X extends A@W>{
-    A@W f;
+class LotsOfErrors@W<T@X extends A@W>{
+    LotsOfErrors@W f;
     T@W f;     // duplicate field
-    A@Y g;     // undefined world argument
-    A@(W,W) h; // world arguments are not distinct and incompatible kinds in type application
-    A i;
+    LotsOfErrors@Y g;     // undefined world argument
+    LotsOfErrors@(W,W) h; // world arguments are not distinct and incompatible kinds in type application
+    LotsOfErrors i;
 }
 
-class B@W extends A@W2 /* undefined world argument*/ { B(){} }
+class B@W extends LotsOfErrors@W2 /* undefined world argument*/ { B(){} }
 
 enum E@W {
     // no cases

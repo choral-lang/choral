@@ -17,17 +17,22 @@ class Panel@A {
 
 }
 
-class Catalogue@Seller {
+class Catalogue@A {
 
-	public void addTitle( String@Seller t, int@Seller p ){
+	public void addTitle( String@A t, int@A p ){
 	}
 
-	public Boolean@Seller includes( String@Seller t ){
-		return true@Seller;
+	public Boolean@A includes( String@A t ){
+		if (t == ""@A){
+			return false@A;
+		}
+		else {
+			return true@A;
+		}
 	}
 
-	public Integer@Seller quote( String@Seller t ){
-		return 0@Seller;
+	public Integer@A quote( String@A t ){
+		return 0@A;
 	}
 
 }
@@ -39,11 +44,11 @@ class BuyBook1@(Seller, Buyer) {
 		this.c = c;
 	}
 
-	void run ( Catalogue@Seller catalogue ){
-		String@Seller title;
-		title = null@Seller;
+	void run ( Catalogue@Buyer catalogue ){
+		String@Buyer title;
+		title = null@Buyer;
 		try { 
-			title = c.< String >com(  );
+			title = c.< String >com( ""@Seller );
 		} catch ( Exception@Seller e ){
 			Panel@Seller.show( "Seller"@Seller, e );
 		}

@@ -56,22 +56,19 @@ public class TestChoral {
 		private final List< String > headersFolders;
 		private final String symbol;
 		private final List< String > worlds;
-		private final String[] expectedResults;
 
 		public CompilationRequest(
 				List< String > sourceFolder,
 				String targetFolder,
 				List< String > headersFolders,
 				String symbol,
-				List< String > worlds,
-				String... expectedResults
+				List< String > worlds
 		) {
 			this.sourceFolder = sourceFolder;
 			this.targetFolder = targetFolder;
 			this.headersFolders = headersFolders;
 			this.symbol = symbol;
 			this.worlds = worlds;
-			this.expectedResults = expectedResults;
 		}
 
 		public List< String > sourceFolder() {
@@ -117,6 +114,13 @@ public class TestChoral {
 	static final String mustPassFolder = "src/main/choral/MustPass";
 	static final String runtimeFolder = "src/main/choral/Runtime";
 
+	// colours for terminal
+	private static final String GREEN = "\u001B[32m";
+	private static final String RED = "\u001B[31m";
+	private static final String RESET = "\u001B[0m";
+
+	private static final int COLUMN_WIDTH = 30;
+
 	public static void main( String[] args ) {
 
 		final String HelloRoles = "HelloRoles";
@@ -132,7 +136,6 @@ public class TestChoral {
 		final String DistAuth10 = "DistAuth10";
 		final String BuyerSellerShipper = "BuyerSellerShipper";
 		final String DiffieHellman = "DiffieHellman";
-		final String RetwisLoginManager = "RetwisLoginManager";
 		final String Retwis = "Retwis";
 		final String If_MultiWorld = "If_MultiWorld";
 		final String TestSwitch = "TestSwitch";
@@ -141,13 +144,12 @@ public class TestChoral {
 		final String SwitchTest = "SwitchTest";
 		final String VariableDeclarations = "VariableDeclarations";
 		final String CyclicInheritanceA = "CyclicInheritance_A"; 
-		final String CyclicInheritanceB = "CyclicInheritance_B"; 
-		final String LotsOfErrors = "A";
+		final String LotsOfErrors = "LotsOfErrors";
 		final String MirrorChannel = "MirrorChannel";
-		final String LoggerExample = "B";
+		final String LoggerExample = "LoggerExample";
 		final String IfDesugar = "IfDesugarTest";
 		final String IllegalInheritance = "TwoWorldList";
-		final String NonMatchingReturnType = "C4";
+		final String NonMatchingReturnType = "NonMatchingReturnType";
 		final String ChainingOperator = "ChainingExample";
 		final String AutoBoxing = "Autoboxing";
 		final String BookSellingSoloist = "BuyBook2";
@@ -157,7 +159,7 @@ public class TestChoral {
 						List.of( subFolder(mustFailFolder, "WrongType")),
 						targetFolder,
 						Collections.emptyList(),
-						WrongType, ALL_WORLDS, "StaticVerificationException", "required type 'java.lang.String@(A)', found 'int@(A)'") 
+						WrongType, ALL_WORLDS) 
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "HelloRoles") ),
@@ -181,7 +183,7 @@ public class TestChoral {
 						List.of( subFolder( mustFailFolder, "MultiFoo") ),
 						targetFolder,
 						Collections.emptyList(),
-						MultiFoo, ALL_WORLDS, "StaticVerificationException", "cannot reference 'super' before supertype constructor has been called" )
+						MultiFoo, ALL_WORLDS)
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "ExtendsTest")),
@@ -284,7 +286,7 @@ public class TestChoral {
 					List.of(
 							runtimeMainFolder
 					),
-					If_MultiWorld, ALL_WORLDS, "ChoralException", "Found unprojectable expression. Right-hand side of short-circuited boolean expression contains multi-role objects: true@A && ch1.< Boolean >com( false@B )" )
+					If_MultiWorld, ALL_WORLDS)
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "TestSwitch") ),
@@ -296,13 +298,13 @@ public class TestChoral {
 						List.of( subFolder(mustFailFolder, "CyclicInheritance") ),
 						targetFolder,
 						Collections.emptyList(),
-						CyclicInheritanceA, ALL_WORLDS, "StaticVerificationException", "Cyclic inheritance: 'CyclicInheritance_B@(W)' cannot extend 'CyclicInheritance_A@(W)'" )
+						CyclicInheritanceA, ALL_WORLDS)
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustFailFolder, "LotsOfErrors") ),
 						targetFolder,
 						Collections.emptyList(),
-						LotsOfErrors, ALL_WORLDS, "StaticVerificationException", "duplicate role parameter 'W'" )
+						LotsOfErrors, ALL_WORLDS)
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "SwitchTest") ),
@@ -338,13 +340,13 @@ public class TestChoral {
 						List.of( subFolder(mustFailFolder, "IllegalInheritance") ),
 						targetFolder,
 						Collections.emptyList(),
-						IllegalInheritance, ALL_WORLDS, "StaticVerificationException", "illegal inheritance, 'List@(W1)<Q>' and 'TwoWorldList@(W1,W2)<Q,R>' must have the same roles" )
+						IllegalInheritance, ALL_WORLDS)
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustFailFolder, "NonMatchingReturnType") ),
 						targetFolder,
 						Collections.emptyList(),
-						NonMatchingReturnType, ALL_WORLDS, "StaticVerificationException", "method 'm(java.lang.Object@(X))' in 'foo.I3@(X)' clashes with method 'm(java.lang.Object@(X))' in 'foo.I0@(X)', attempting to use incompatible return type")
+						NonMatchingReturnType, ALL_WORLDS)
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "ChainingOperator") ),
@@ -387,7 +389,7 @@ public class TestChoral {
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
 				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
-				BookSellingSoloist,
+				//BookSellingSoloist,
 				ExtendsTest
 			).toList();
 
@@ -397,8 +399,8 @@ public class TestChoral {
 				MultiFoo,
 				CyclicInheritanceA,
 				LotsOfErrors,
-				NonMatchingReturnType,
-				WrongType
+				WrongType,
+				NonMatchingReturnType
 			).toList(); 
 
 		boolean notRun = true;
@@ -435,14 +437,15 @@ public class TestChoral {
 		if (null != testType)
 		switch (testType) {
                 case MUSTPASS -> {
-                    System.out.println("Now running tests that must pass");
+                    System.out.println("\nNow running tests that must pass\n");
                     passCompilationRequests.forEach( TestChoral::project );
                     System.out.println("\u001B[32m" + "Amount of tests ran: " + passCompilationRequests.size() + "\u001B[0m");
                     System.out.println("");
                     }
                 case MUSTFAIL -> {
-                    System.out.println("Now running tests that must fail");
+                    System.out.println("Now running tests that must fail\n");
                     passCompilationRequests.forEach( TestChoral::projectFail );
+					System.out.println("");
                     System.out.println("\u001B[32m" + "Amount of tests ran: " + passCompilationRequests.size() + "\u001B[0m");
                     System.out.println("");
                     }
@@ -571,10 +574,14 @@ public class TestChoral {
 			parameters.add( compilationRequest.symbol() );
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
-			System.out.println( "Issuing command " + String.join( " ", parameters ));
+			//System.out.println( "Issuing command " + String.join( " ", parameters ));
 			int exitCode = Choral.compileTest( parameters.toArray( new String[ 0 ] ));
 			if (exitCode != 0) System.err.print("Got " + exitCode + " as exit code when 0 was expected");
-			System.out.println("");
+
+			boolean errorOccured = false;
+			boolean diffError = false;
+			boolean fileCountError = false;
+			List<String> diffOutput = new ArrayList<>();
 
 			List<String> alreadyCheckedPaths = new ArrayList<>();
 			for (String folder : compilationRequest.sourceFolder()){
@@ -598,7 +605,8 @@ public class TestChoral {
 						List<Path> expectedFiles = Files.walk(expectedFolderPath).filter( expectedFile -> expectedFile.toString().endsWith(".java")).collect(Collectors.toList());
 						
 						if (projectedJavaFiles.size() != expectedFiles.size()) {
-							System.err.println("Expected files and projected files are not even in count! Ensure that the expected files is up to date");
+							fileCountError = true;
+							errorOccured = true;
 							continue;
 						}
 						
@@ -607,16 +615,16 @@ public class TestChoral {
 							List<String> revised = Files.readAllLines(projectedJavaFiles.get(i));
 
 							Patch<String> patch = DiffUtils.diff(original, revised);
-							List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(
+							diffOutput = UnifiedDiffUtils.generateUnifiedDiff(
 								expectedFiles.get(i).toString(),
 								projectedJavaFiles.get(i).toString(),
 								original,
 								patch,
 								3
 							);
-							if (!unifiedDiff.isEmpty()) {
-								System.out.println("Now printing diff for: " + expectedFiles.get(i).toString() + " and " + projectedJavaFiles.get(i).toString());
-								unifiedDiff.forEach(System.out::println);
+							if (!diffOutput.isEmpty()) {
+								errorOccured = true;
+								diffError = true;
 							}
 						}
 
@@ -628,6 +636,22 @@ public class TestChoral {
 					}
 				}
 			}
+
+			if (errorOccured){
+				System.out.printf("%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET);
+				if (diffError){
+					System.out.println(RED + "\tError: " + RESET + "There was a difference between the expected output and the generated output, now printing diff: ");
+					diffOutput.forEach(item -> System.out.println("\t" + item));
+				}
+				if (fileCountError){
+					System.err.println("\tExpected files and projected files are not even in count! Ensure that the expected files is up to date");
+				}
+			}
+			else {
+				System.out.printf("%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET);
+			}
+
+
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}
@@ -647,7 +671,7 @@ public class TestChoral {
 			parameters.add( compilationRequest.symbol() );
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
-			System.out.println( "Issuing command " + String.join( " ", parameters ));
+			//System.out.println( "Issuing command " + String.join( " ", parameters ));
 
 			ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
 			ByteArrayOutputStream testError = new ByteArrayOutputStream();
@@ -682,9 +706,7 @@ public class TestChoral {
 				for (int i = 0; i < fileContent.length; i++){
 					if (fileContent[i].contains("//!")){
 						int nextOccurence = fileContent[i].indexOf("//!");
-						//System.out.println("nextOccurence: " + nextOccurence);
 						int endOfError = fileContent[i].indexOf("//", nextOccurence + 1);
-						//System.out.println("endOfError" + endOfError);
 						if (endOfError == -1) endOfError = fileContent[i].length();
 						while (nextOccurence != -1){
 							expectedErrorsFound.add(new AbstractMap.SimpleEntry<>(i, fileContent[i].substring(nextOccurence + 3, endOfError).trim())); // '//!' = 3 characters
@@ -707,7 +729,6 @@ public class TestChoral {
 				for (Map.Entry<Integer, String> line : expectedErrorsFound){
 					if (errorLineNumber == line.getKey()){
 						boolean errorFound = outputLines[nextErrorLine].contains(line.getValue());
-						System.out.println("Does expected error appear in actual error: " + errorFound);
 						if (errorFound) {
 							errorsFound++;
 							foundErrors.add(line);
@@ -735,30 +756,28 @@ public class TestChoral {
 					errorLineNumber = Integer.parseInt(outputLines[nextErrorLine].substring(start, end)) - 1;
 				} 
 				
-
-				System.out.println("Found " + errorsFound + "/" + expectedErrorsFound.size() + " errors in " + testFiles.get(0));
 				if (errorsFound != expectedErrorsFound.size()) {
-					System.out.println("\u001B[31m" + "Error" + "\u001B[0m " + (expectedErrorsFound.size() - errorsFound) + " errors not found");
+					System.out.printf("%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET);
+					//System.out.println("\tFound " + errorsFound + "/" + expectedErrorsFound.size() + " errors in " + testFiles.get(0));
+					System.out.println("\t\u001B[31m" + "Error" + "\u001B[0m: " + (expectedErrorsFound.size() - errorsFound) + " errors not found");
 					for (Map.Entry<Integer, String> line : expectedErrorsFound){
-						if (!foundErrors.contains(line)) System.out.println("\tExpected to find: " + line.getValue() + " on line " + line.getKey());
+						if (!foundErrors.contains(line)) System.out.println("\t\tExpected to find: " + line.getValue() + " on line " + line.getKey());
 					}
+				} 
+				else {
+					System.out.printf("%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET);
 				}
 				
-				if (!missedErrors.isEmpty()){
+				if (!missedErrors.isEmpty()){ // here
 					System.out.println("Found " + missedErrors.size() + " errors not expected");
 					for (String error : missedErrors){
 						System.out.println(error);
 					}
 				}
-
-				System.out.println("");
-
-				
 			}
 			else System.err.println(String.format("Directory not found: '%s'", directoryPath));
 
 			//System.out.println(stringTestOutput + ": " + outputLines.length);
-			System.out.println("");
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}

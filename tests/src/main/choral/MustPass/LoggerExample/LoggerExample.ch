@@ -4,7 +4,7 @@ interface Logger@( L ) {
     void write( String@( L ) msg );
 }
 
-class B@( P ) {
+class LoggerExample@( P ) {
 	static Boolean@( P ) b1, b2;
 	static Integer@( P ) i;
 	static Double@( P ) f;
