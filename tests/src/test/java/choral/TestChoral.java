@@ -454,9 +454,8 @@ public class TestChoral {
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
 				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
-				//BookSellingSoloist,
-				ExtendsTest,
-				LoggerExample 
+				BookSellingSoloist,
+				ExtendsTest
 			).toList();
 
 		List<String> failCompilationSymbols = Stream.of(
