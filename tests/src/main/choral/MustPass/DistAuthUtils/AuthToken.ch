@@ -1,7 +1,12 @@
 package choral.MustPass.DistAuthUtils;
 
 public class AuthToken@A {
-	public AuthToken( String@A id ) {}
-	public String@A id () {}
-	public static AuthToken@A create () {}
+	private String@A id;
+
+	public AuthToken( String@A id ) {
+		this.id = id;
+	}
+	public String@A id () {
+		return id;
+	}
 }

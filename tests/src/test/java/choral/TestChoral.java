@@ -429,7 +429,6 @@ public class TestChoral {
 				DiffieHellman,
 				TestSwitch,
 				RemoteFunction, 
-				//AuthResult,
 				BuyerSellerShipper,
 				ChainingOperator, 
 				IfDesugar,
@@ -437,13 +436,14 @@ public class TestChoral {
 				//DistAuth,
 //				DistAuth5,
 //				DistAuth10,
-				//VariableDeclarations, // doesn't fail but should, because the erroneous lines are commented out
+				//VariableDeclarations, // doesn't fail but should,  because the erroneous lines are commented out
 
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
 				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
 				BookSellingSoloist,
-				ExtendsTest
+				ExtendsTest,				
+				AuthResult
 			).toList();
 
 		List<String> failCompilationSymbols = Stream.of(
