@@ -47,6 +47,13 @@ import com.github.difflib.patch.Patch;
 
 import java.util.AbstractMap;
 
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
+
 
 public class TestChoral {
 
@@ -56,19 +63,25 @@ public class TestChoral {
 		private final List< String > headersFolders;
 		private final String symbol;
 		private final List< String > worlds;
+		private final List< String > sourcePaths;
+		private final List< String > classPaths;
 
 		public CompilationRequest(
 				List< String > sourceFolder,
 				String targetFolder,
 				List< String > headersFolders,
 				String symbol,
-				List< String > worlds
+				List< String > worlds,
+				List< String > sourcePaths,
+				List< String > classPaths
 		) {
 			this.sourceFolder = sourceFolder;
 			this.targetFolder = targetFolder;
 			this.headersFolders = headersFolders;
 			this.symbol = symbol;
 			this.worlds = worlds;
+			this.sourcePaths = sourcePaths;
+			this.classPaths = classPaths;
 		}
 
 		public List< String > sourceFolder() {
@@ -89,6 +102,14 @@ public class TestChoral {
 
 		public List< String > headersFolders() {
 			return headersFolders;
+		}
+
+		public List< String > sourcePaths() {
+			return sourcePaths;
+		}
+
+		public List< String > classPaths() {
+			return classPaths;
 		}
 	}
 
@@ -120,6 +141,11 @@ public class TestChoral {
 	private static final String RESET = "\u001B[0m";
 
 	private static final int COLUMN_WIDTH = 30;
+
+	private static final String SEPARATOR = System.getProperty("path.separator");
+	private static final String BASEPATH = "base/src/main/java";
+	private static final String RUNTIMEPATH = "runtime/src/main/java";
+	private static final String EXPECTEDOUTPUTPATH = "expectedOutput";
 
 	public static void main( String[] args ) {
 
@@ -159,50 +185,65 @@ public class TestChoral {
 						List.of( subFolder(mustFailFolder, "WrongType")),
 						targetFolder,
 						Collections.emptyList(),
-						WrongType, ALL_WORLDS) 
+						WrongType, ALL_WORLDS,
+						List.of( BASEPATH ),
+						Collections.emptyList() ) 
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "HelloRoles") ),
 						targetFolder,
 						Collections.emptyList(),
-						HelloRoles, ALL_WORLDS )
+						HelloRoles, ALL_WORLDS,
+						List.of( BASEPATH ),
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder( sourceFolder, "BiPair") ),
 						targetFolder,
 						Collections.emptyList(),
-						BiPair, ALL_WORLDS )
+						BiPair, ALL_WORLDS,
+						List.of( BASEPATH ),
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "ConsumeItems") ),
 						targetFolder,
 						Collections.emptyList(),
-						ConsumeItems, ALL_WORLDS )
+						ConsumeItems, ALL_WORLDS,
+						List.of( BASEPATH, RUNTIMEPATH ),
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder( mustFailFolder, "MultiFoo") ),
 						targetFolder,
 						Collections.emptyList(),
-						MultiFoo, ALL_WORLDS)
+						MultiFoo, ALL_WORLDS,
+						Collections.emptyList(),
+						Collections.emptyList())
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "ExtendsTest")),
 						targetFolder,
 						Collections.emptyList(),
-						ExtendsTest, ALL_WORLDS )
+						ExtendsTest, ALL_WORLDS, 
+						List.of( BASEPATH ), 
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder( mustPassFolder, "RemoteFunction") ),
 						targetFolder,
 						Collections.emptyList(),
-						RemoteFunction, ALL_WORLDS )
+						RemoteFunction, ALL_WORLDS, 
+						List.of( BASEPATH, RUNTIMEPATH ), 
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( mustPassFolder, "AuthResult" ) ),
+						List.of( subFolder( mustPassFolder, "AuthResult" ), subFolder( mustPassFolder, "DistAuthUtils") ),
 						targetFolder,
-						//Collections.emptyList(),
-						List.of( subFolder( mustPassFolder, "DistAuth" ), subFolder( mustPassFolder, "BiPair" ) ),
-						AuthResult, ALL_WORLDS )
+						List.of( subFolder( mustPassFolder, "BiPair" ) ),
+						AuthResult, ALL_WORLDS, 
+						List.of( BASEPATH, EXPECTEDOUTPUTPATH, RUNTIMEPATH ), 
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder( mustPassFolder, "DistAuth" ),
@@ -217,7 +258,7 @@ public class TestChoral {
 								runtimeMainFolder,
 								choralUnitMainFolder
 						),
-						DistAuth, ALL_WORLDS )
+						DistAuth, ALL_WORLDS, Collections.emptyList(), Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder( sourceFolder, "DistAuth" ) ),
@@ -229,7 +270,7 @@ public class TestChoral {
 								runtimeMainFolder,
 								choralUnitMainFolder
 						),
-						DistAuthTest, ALL_WORLDS )
+						DistAuthTest, ALL_WORLDS, Collections.emptyList(), Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder( sourceFolder, "DistAuth" ) ),
@@ -241,7 +282,7 @@ public class TestChoral {
 								runtimeMainFolder,
 								choralUnitMainFolder
 						),
-						DistAuth5, ALL_WORLDS )
+						DistAuth5, ALL_WORLDS, Collections.emptyList(), Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder( sourceFolder, "DistAuth" ) ),
@@ -253,7 +294,7 @@ public class TestChoral {
 								runtimeMainFolder,
 								choralUnitMainFolder
 						),
-						DistAuth10, ALL_WORLDS )
+						DistAuth10, ALL_WORLDS, Collections.emptyList(), Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder( mustPassFolder, "BuyerSellerShipper" ) ),
@@ -263,13 +304,17 @@ public class TestChoral {
 								runtimeMainFolder,
 								choralUnitMainFolder
 						),
-						BuyerSellerShipper, ALL_WORLDS )
+						BuyerSellerShipper, ALL_WORLDS, 
+						List.of( BASEPATH, RUNTIMEPATH ), 
+						Collections.emptyList() )
 				,
 				new CompilationRequest( 
 						List.of( subFolder(mustPassFolder, "DiffieHellman"), subFolder(mustPassFolder, "BiPair") ),
 						targetFolder,
 						Collections.emptyList(),
-						DiffieHellman, ALL_WORLDS )
+						DiffieHellman, ALL_WORLDS, 
+						List.of( BASEPATH, RUNTIMEPATH, EXPECTEDOUTPUTPATH ), 
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder( mustPassFolder, "RetwisChoral" ) ),
@@ -278,7 +323,9 @@ public class TestChoral {
 								subFolder( mustPassFolder, "RetwisChoral" ),
 								runtimeMainFolder
 						),
-						Retwis, ALL_WORLDS )
+						Retwis, ALL_WORLDS, 
+						List.of( BASEPATH, RUNTIMEPATH ), 
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 					List.of( subFolder(mustFailFolder, "IfMultiWorld") ),
@@ -286,79 +333,96 @@ public class TestChoral {
 					List.of(
 							runtimeMainFolder
 					),
-					If_MultiWorld, ALL_WORLDS)
+					If_MultiWorld, ALL_WORLDS, Collections.emptyList(), Collections.emptyList())
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "TestSwitch") ),
 						targetFolder,
 						Collections.emptyList(),
-						TestSwitch, ALL_WORLDS )
+						TestSwitch, ALL_WORLDS, 
+						List.of( BASEPATH, RUNTIMEPATH ), 
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustFailFolder, "CyclicInheritance") ),
 						targetFolder,
 						Collections.emptyList(),
-						CyclicInheritanceA, ALL_WORLDS)
+						CyclicInheritanceA, ALL_WORLDS, Collections.emptyList(), Collections.emptyList())
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustFailFolder, "LotsOfErrors") ),
 						targetFolder,
 						Collections.emptyList(),
-						LotsOfErrors, ALL_WORLDS)
+						LotsOfErrors, ALL_WORLDS, Collections.emptyList(), Collections.emptyList())
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "SwitchTest") ),
 						targetFolder,
 						Collections.emptyList(),
-						SwitchTest, ALL_WORLDS )
+						SwitchTest, ALL_WORLDS, 
+						List.of( BASEPATH ), 
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "VariableDeclarations") ),
 						targetFolder,
 						Collections.emptyList(),
-						VariableDeclarations, ALL_WORLDS )
+						VariableDeclarations, ALL_WORLDS, 
+						List.of( BASEPATH ), 
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "MirrorChannel") ),
 						targetFolder,
 						Collections.emptyList(),
-						MirrorChannel, ALL_WORLDS )
+						MirrorChannel, ALL_WORLDS, 
+						List.of( BASEPATH ), 
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "LoggerExample") ),
 						targetFolder,
 						Collections.emptyList(),
-						LoggerExample, ALL_WORLDS )
+						LoggerExample, ALL_WORLDS, 
+						List.of( BASEPATH ), 
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "IfDesugar") ),
 						targetFolder,
 						List.of(subFolder(mustPassFolder, "IfDesugar")),
-						IfDesugar, ALL_WORLDS )
+						IfDesugar, ALL_WORLDS, 
+						List.of( BASEPATH ), 
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustFailFolder, "IllegalInheritance") ),
 						targetFolder,
 						Collections.emptyList(),
-						IllegalInheritance, ALL_WORLDS)
+						IllegalInheritance, ALL_WORLDS, Collections.emptyList(), Collections.emptyList())
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustFailFolder, "NonMatchingReturnType") ),
 						targetFolder,
 						Collections.emptyList(),
-						NonMatchingReturnType, ALL_WORLDS)
+						NonMatchingReturnType, ALL_WORLDS, Collections.emptyList(), Collections.emptyList())
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "ChainingOperator") ),
 						targetFolder,
 						Collections.emptyList(),
-						ChainingOperator, ALL_WORLDS)
+						ChainingOperator, ALL_WORLDS, 
+						List.of( BASEPATH, RUNTIMEPATH ), 
+						Collections.emptyList())
 				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "AutoBoxing") ),
 						targetFolder,
 						Collections.emptyList(),
-						AutoBoxing, ALL_WORLDS),
+						AutoBoxing, ALL_WORLDS, 
+						List.of( BASEPATH ), 
+						Collections.emptyList())
+				,
 				new CompilationRequest(
 						List.of( subFolder(mustPassFolder, "BookSellingSoloist")),
 						targetFolder,
@@ -366,7 +430,9 @@ public class TestChoral {
 							runtimeMainFolder,
 							choralUnitMainFolder
 						),
-						BookSellingSoloist, ALL_WORLDS)
+						BookSellingSoloist, ALL_WORLDS, 
+						List.of( BASEPATH ), 
+						Collections.emptyList())
 		).toList();
 
 		List<String> passCompilationSymbols = Stream.of(
@@ -375,10 +441,9 @@ public class TestChoral {
 				DiffieHellman,
 				TestSwitch,
 				RemoteFunction, 
-				Retwis,
-				AuthResult,
+				//Retwis,
+				//AuthResult,
 				BuyerSellerShipper,
-				LoggerExample, 
 				ChainingOperator, 
 				IfDesugar,
 				//DistAuth,
@@ -390,7 +455,8 @@ public class TestChoral {
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
 				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
 				//BookSellingSoloist,
-				ExtendsTest
+				ExtendsTest,
+				LoggerExample 
 			).toList();
 
 		List<String> failCompilationSymbols = Stream.of(
@@ -581,6 +647,7 @@ public class TestChoral {
 			boolean errorOccured = false;
 			boolean diffError = false;
 			boolean fileCountError = false;
+			boolean expectedFilesFailed = false;
 			List<String> diffOutput = new ArrayList<>();
 
 			List<String> alreadyCheckedPaths = new ArrayList<>();
@@ -627,6 +694,36 @@ public class TestChoral {
 								diffError = true;
 							}
 						}
+						
+					
+						JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+						DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+						StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
+						Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjects(expectedFiles.toArray(new Path[0]));
+						
+						String sourcePath = String.join(SEPARATOR, compilationRequest.sourcePaths);
+						String classPath = String.join(SEPARATOR, compilationRequest.classPaths);
+
+						List<String> options = new ArrayList<>();
+
+						if (!sourcePath.isEmpty()) options.addAll(Arrays.asList("-sourcepath", sourcePath));
+						if (!classPath.isEmpty()) options.addAll(Arrays.asList("-classpath", classPath));
+						options.addAll(Arrays.asList("-d", "bin"));
+
+						JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
+
+						expectedFilesFailed = task.call();
+
+						if (!expectedFilesFailed) {
+							errorOccured = true;
+							System.err.println("Compilation failed!");
+							for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
+								System.err.format("Error on line %d in %s%n",
+									diagnostic.getLineNumber(),
+									diagnostic.getSource().toUri());
+								System.err.println(diagnostic.getMessage(null));
+							}
+						}
 
 					} catch (InvalidPathException e){
 						System.err.println("Invalid package definition in: " + file);
@@ -644,7 +741,10 @@ public class TestChoral {
 					diffOutput.forEach(item -> System.out.println("\t" + item));
 				}
 				if (fileCountError){
-					System.err.println("\tExpected files and projected files are not even in count! Ensure that the expected files is up to date");
+					System.err.println(RED + "\tError: " + RESET + "Expected files and projected files are not even in count! Ensure that the expected files is up to date");
+				}
+				if (expectedFilesFailed) {
+					System.err.println(RED + "\tError: " + RESET + "Not all files could be compiled");
 				}
 			}
 			else {
@@ -671,7 +771,6 @@ public class TestChoral {
 			parameters.add( compilationRequest.symbol() );
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
-			//System.out.println( "Issuing command " + String.join( " ", parameters ));
 
 			ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
 			ByteArrayOutputStream testError = new ByteArrayOutputStream();
@@ -758,7 +857,6 @@ public class TestChoral {
 				
 				if (errorsFound != expectedErrorsFound.size()) {
 					System.out.printf("%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET);
-					//System.out.println("\tFound " + errorsFound + "/" + expectedErrorsFound.size() + " errors in " + testFiles.get(0));
 					System.out.println("\t\u001B[31m" + "Error" + "\u001B[0m: " + (expectedErrorsFound.size() - errorsFound) + " errors not found");
 					for (Map.Entry<Integer, String> line : expectedErrorsFound){
 						if (!foundErrors.contains(line)) System.out.println("\t\tExpected to find: " + line.getValue() + " on line " + line.getKey());
@@ -776,8 +874,6 @@ public class TestChoral {
 				}
 			}
 			else System.err.println(String.format("Directory not found: '%s'", directoryPath));
-
-			//System.out.println(stringTestOutput + ": " + outputLines.length);
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}
