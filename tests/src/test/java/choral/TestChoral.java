@@ -162,7 +162,6 @@ public class TestChoral {
 		final String DistAuth10 = "DistAuth10";
 		final String BuyerSellerShipper = "BuyerSellerShipper";
 		final String DiffieHellman = "DiffieHellman";
-		final String Retwis = "Retwis";
 		final String If_MultiWorld = "If_MultiWorld";
 		final String TestSwitch = "TestSwitch";
 		
@@ -305,7 +304,7 @@ public class TestChoral {
 								choralUnitMainFolder
 						),
 						BuyerSellerShipper, ALL_WORLDS, 
-						List.of( BASEPATH, RUNTIMEPATH ), 
+						List.of( BASEPATH, RUNTIMEPATH, EXPECTEDOUTPUTPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest( 
@@ -314,17 +313,6 @@ public class TestChoral {
 						Collections.emptyList(),
 						DiffieHellman, ALL_WORLDS, 
 						List.of( BASEPATH, RUNTIMEPATH, EXPECTEDOUTPUTPATH ), 
-						Collections.emptyList() )
-				,
-				new CompilationRequest(
-						List.of( subFolder( mustPassFolder, "RetwisChoral" ) ),
-						targetFolder,
-						List.of(
-								subFolder( mustPassFolder, "RetwisChoral" ),
-								runtimeMainFolder
-						),
-						Retwis, ALL_WORLDS, 
-						List.of( BASEPATH, RUNTIMEPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
@@ -441,11 +429,11 @@ public class TestChoral {
 				DiffieHellman,
 				TestSwitch,
 				RemoteFunction, 
-				//Retwis,
 				//AuthResult,
 				BuyerSellerShipper,
 				ChainingOperator, 
 				IfDesugar,
+				LoggerExample,
 				//DistAuth,
 //				DistAuth5,
 //				DistAuth10,
@@ -482,16 +470,6 @@ public class TestChoral {
 			runTests(passCompilationSymbols, allCompilationRequests, TestType.MUSTPASS);
 			runTests(failCompilationSymbols, allCompilationRequests, TestType.MUSTFAIL);
 		}
-
-//		generateCHH( headersRequest );
-//		check( compilationRequests );
-//		compilationRequests.forEach( c -> {
-//			TestChoral.performanceProject( Collections.singletonList( c ), new HashMap<>() );
-//		} );
-//		projectionPerformance( compilationRequests );
-//		compilationRequests.forEach( TestChoral::printProgramSizes );
-//		version();
-
 	}
 
 	private static void runTests(List<String> symbols, List<CompilationRequest> compilationRequests, TestType testType){
@@ -589,20 +567,6 @@ public class TestChoral {
 		}
 	}
 
-//	private static void check( List< CompilationRequest > compilationRequests ) {
-//		for( CompilationRequest compilationRequest : compilationRequests ) {
-//			Choral.main( (String[]) ArrayUtils.addAll(
-//					new String[] {
-//							"check",
-//							"--verbosity=DEBUG",
-////							"--headers=src/tests/choral/Prelude",
-//							compilationRequest.sourceFolder().get( 0 ) + File.separator + compilationRequest.symbol + ".ch"
-//					},
-//					new String[] {}
-//			) );
-//		}
-//	}
-
 	private static void check( List< CompilationRequest > compilationRequests ) {
 		try {
 			for( CompilationRequest compilationRequest : compilationRequests ) {
@@ -648,6 +612,8 @@ public class TestChoral {
 			boolean fileCountError = false;
 			boolean expectedFilesFailed = false;
 			List<String> diffOutput = new ArrayList<>();
+
+			List<String> javaCompilationErrors = new ArrayList<>();
 
 			List<String> alreadyCheckedPaths = new ArrayList<>();
 			for (String folder : compilationRequest.sourceFolder()){
@@ -711,16 +677,15 @@ public class TestChoral {
 
 						JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
 
-						expectedFilesFailed = task.call();
+						expectedFilesFailed = !task.call();
 
-						if (!expectedFilesFailed) {
+						if (expectedFilesFailed) {
 							errorOccured = true;
-							System.err.println("Compilation failed!");
 							for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
-								System.err.format("Error on line %d in %s%n",
+								javaCompilationErrors.add(String.format("Error on line %d in %s%n",
 									diagnostic.getLineNumber(),
-									diagnostic.getSource().toUri());
-								System.err.println(diagnostic.getMessage(null));
+									diagnostic.getSource().toUri()));
+								javaCompilationErrors.add(diagnostic.getMessage(null));
 							}
 						}
 
@@ -744,6 +709,7 @@ public class TestChoral {
 				}
 				if (expectedFilesFailed) {
 					System.err.println(RED + "\tError: " + RESET + "Not all files could be compiled");
+					javaCompilationErrors.forEach(errorLine -> System.err.println("\t" + errorLine));
 				}
 			}
 			else {

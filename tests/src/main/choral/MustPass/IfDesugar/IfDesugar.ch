@@ -1,11 +1,12 @@
 package choral.MustPass.IfDesugar;
 
-import java.utils.Random;
+import java.util.Random;
 
 class IfDesugarTest@( P ) {
 
 	void main() {
-		if( Random@( P ).nextBoolean() ){
+		Random@P random = new Random@P();
+		if( random.nextBoolean() ){
 			System@( P ).out.println( "Even"@P );
 		} else {
 			System@( P ).out.println( "Odd"@P );

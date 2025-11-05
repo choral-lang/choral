@@ -66,6 +66,8 @@ class Customer@Buyer {
 	public final String@Buyer address;
 
 	public Customer( String@Buyer name, String@Buyer address ){
+		this.name = name;
+		this.address = address;
 	}
 
 }

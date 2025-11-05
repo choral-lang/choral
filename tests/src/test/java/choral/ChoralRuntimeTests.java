@@ -11,7 +11,6 @@ public class ChoralRuntimeTests {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            // "DistAuthTest", // disabled since TCPChannels fails
             "VitalsStreamingTest",
             "MergesortTest",
             "QuicksortTest",
