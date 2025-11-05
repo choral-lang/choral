@@ -1,8 +1,8 @@
 package choral.MustPass.DistAuth;
 
 import choral.DistAuth.EnumBoolean;
+import choral.MustPass.DistAuth.ClientRegistry;
 import choral.MustPass.DistAuthUtils.AuthToken;
-import choral.MustPass.DistAuthUtils.ClientRegistry;
 import choral.annotations.Choreography;
 import choral.lang.Unit;
 import choral.runtime.TLSChannel.TLSChannel_B;

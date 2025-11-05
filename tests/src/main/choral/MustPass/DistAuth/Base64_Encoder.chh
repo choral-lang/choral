@@ -1,4 +1,4 @@
-package choral.MustPass.DistAuthUtils;
+package choral.MustPass.DistAuth;
 
 import java.nio.ByteBuffer;
 

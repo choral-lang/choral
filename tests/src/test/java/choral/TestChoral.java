@@ -245,19 +245,19 @@ public class TestChoral {
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( mustPassFolder, "DistAuth" ),
-								subFolder( mustPassFolder, "AuthResult" ),
-								subFolder( mustPassFolder, "BiPair" )
+						List.of( subFolder( mustPassFolder, "DistAuth" ), subFolder( mustPassFolder, "DistAuthUtils")
 						),
 						targetFolder,
 						List.of(
 								subFolder( mustPassFolder, "DistAuth" ),
-//								"src/tests/choral/examples/AuthResult",
-//								"src/tests/choral/examples/BiPair",
+								subFolder( mustPassFolder, "AuthResult"),
+								subFolder( mustPassFolder, "BiPair"),
 								runtimeMainFolder,
 								choralUnitMainFolder
 						),
-						DistAuth, ALL_WORLDS, Collections.emptyList(), Collections.emptyList() )
+						DistAuth, ALL_WORLDS, 
+						List.of( BASEPATH, RUNTIMEPATH, EXPECTEDOUTPUTPATH ), 
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder( sourceFolder, "DistAuth" ) ),
@@ -352,7 +352,7 @@ public class TestChoral {
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "VariableDeclarations") ),
+						List.of( subFolder(mustFailFolder, "VariableDeclarations") ),
 						targetFolder,
 						Collections.emptyList(),
 						VariableDeclarations, ALL_WORLDS, 
@@ -433,17 +433,15 @@ public class TestChoral {
 				ChainingOperator, 
 				IfDesugar,
 				LoggerExample,
-				//DistAuth,
 //				DistAuth5,
 //				DistAuth10,
-				//VariableDeclarations, // doesn't fail but should,  because the erroneous lines are commented out
-
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
 				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
 				BookSellingSoloist,
 				ExtendsTest,				
-				AuthResult
+				AuthResult,
+				DistAuth
 			).toList();
 
 		List<String> failCompilationSymbols = Stream.of(
@@ -453,6 +451,7 @@ public class TestChoral {
 				CyclicInheritanceA,
 				LotsOfErrors,
 				WrongType,
+				VariableDeclarations, 
 				NonMatchingReturnType
 			).toList(); 
 
@@ -677,9 +676,9 @@ public class TestChoral {
 
 						JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
 
-						expectedFilesFailed = !task.call();
-
-						if (expectedFilesFailed) {
+						if (!task.call()) {
+							expectedFilesFailed = true;
+							System.out.println("compilation error");
 							errorOccured = true;
 							for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
 								javaCompilationErrors.add(String.format("Error on line %d in %s%n",
@@ -708,6 +707,7 @@ public class TestChoral {
 					System.err.println(RED + "\tError: " + RESET + "Expected files and projected files are not even in count! Ensure that the expected files is up to date");
 				}
 				if (expectedFilesFailed) {
+					System.out.println("printing correctly");
 					System.err.println(RED + "\tError: " + RESET + "Not all files could be compiled");
 					javaCompilationErrors.forEach(errorLine -> System.err.println("\t" + errorLine));
 				}

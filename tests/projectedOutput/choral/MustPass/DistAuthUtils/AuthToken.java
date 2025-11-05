@@ -13,5 +13,9 @@ public class AuthToken {
 	public String id() {
 		return id;
 	}
+	
+	public static AuthToken create() {
+		return new AuthToken( "standardID" );
+	}
 
 }

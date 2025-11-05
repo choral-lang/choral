@@ -18,9 +18,9 @@ class VariableDeclarations@(A, B) {
 		Integer@A g, h = 13@A, i = 2@A, j, k, l = 1337@A;
 
 		// Declaration with assignment at wrong role - SHOULD FAIL
-		// String@A m = "test"@B;
+		String@A m = "test"@B; //! Required type 'java.lang.String@(A)', found 'java.lang.String@(B)'
 
 		// Declaration with assignment of wrong type - SHOULD FAIL
-		// Integer@A n, o = 3@A, p = "fail"@A, r;
+		Integer@A n, o = 3@A, p = "fail"@A, r;
 	}
 }

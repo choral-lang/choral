@@ -9,4 +9,8 @@ public class AuthToken@A {
 	public String@A id () {
 		return id;
 	}
+
+	public static AuthToken@A create () {
+		return new AuthToken@A("standardID"@A);
+	}
 }
