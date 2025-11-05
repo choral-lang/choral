@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,20 +40,18 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Test;
-
-import com.github.difflib.DiffUtils;
-import com.github.difflib.UnifiedDiffUtils;
-import com.github.difflib.patch.Patch;
-
-import java.util.AbstractMap;
-
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
+
+import org.junit.jupiter.api.Test;
+
+import com.github.difflib.DiffUtils;
+import com.github.difflib.UnifiedDiffUtils;
+import com.github.difflib.patch.Patch;
 
 
 public class TestChoral {
@@ -125,15 +124,15 @@ public class TestChoral {
 		return sourceFolder + File.separator + subFolder;
 	}
 
-	static final String sourceFolder = "tests/src/main/choral/examples";
-	static final String targetFolder = "projectedOutput";
-	static final String expectedFolder = "expectedOutput";
-	static final String choralMainFolder = "tests/src/main/choral";
-	static final String runtimeMainFolder = "../runtime/src/main/choral";
-	static final String choralUnitMainFolder = "../choral-unit/src/main/choral" ;
-	static final String mustFailFolder = "src/main/choral/MustFail";
-	static final String mustPassFolder = "src/main/choral/MustPass";
-	static final String runtimeFolder = "src/main/choral/Runtime";
+	static final String SOURCEFOLDER = "tests/src/main/choral/examples";
+	static final String TARGETFOLDER = "projectedOutput";
+	static final String EXPECTEDFOLDER = "expectedOutput";
+	static final String CHORALMAINFOLDER = "tests/src/main/choral";
+	static final String RUNTIMEMAINFOLDER = "../runtime/src/main/choral";
+	static final String CHORALUNITMAINFOLDER = "../choral-unit/src/main/choral" ;
+	static final String MUSTFAILFOLDER = "src/main/choral/MustFail";
+	static final String MUSTPASSFOLDER = "src/main/choral/MustPass";
+	static final String RUNTIMEFOLDER = "src/main/choral/Runtime";
 
 	// colours for terminal
 	private static final String GREEN = "\u001B[32m";
@@ -157,12 +156,8 @@ public class TestChoral {
 		final String RemoteFunction = "RemoteFunction";
 		final String AuthResult = "AuthResult";
 		final String DistAuth = "DistAuth";
-		final String DistAuthTest = "DistAuthTest";
-		final String DistAuth5 = "DistAuth5";
-		final String DistAuth10 = "DistAuth10";
 		final String BuyerSellerShipper = "BuyerSellerShipper";
 		final String DiffieHellman = "DiffieHellman";
-		final String If_MultiWorld = "If_MultiWorld";
 		final String TestSwitch = "TestSwitch";
 		
 		final String WrongType = "WrongType";
@@ -181,242 +176,202 @@ public class TestChoral {
 
 		List< CompilationRequest > allCompilationRequests = Stream.of(
 				new CompilationRequest(
-						List.of( subFolder(mustFailFolder, "WrongType")),
-						targetFolder,
+						List.of( subFolder(MUSTFAILFOLDER, "WrongType")),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						WrongType, ALL_WORLDS,
 						List.of( BASEPATH ),
 						Collections.emptyList() ) 
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "HelloRoles") ),
-						targetFolder,
+						List.of( subFolder(MUSTPASSFOLDER, "HelloRoles") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						HelloRoles, ALL_WORLDS,
 						List.of( BASEPATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "BiPair") ),
-						targetFolder,
+						List.of( subFolder( SOURCEFOLDER, "BiPair") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						BiPair, ALL_WORLDS,
 						List.of( BASEPATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "ConsumeItems") ),
-						targetFolder,
+						List.of( subFolder(MUSTPASSFOLDER, "ConsumeItems") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						ConsumeItems, ALL_WORLDS,
 						List.of( BASEPATH, RUNTIMEPATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( mustFailFolder, "MultiFoo") ),
-						targetFolder,
+						List.of( subFolder( MUSTFAILFOLDER, "MultiFoo") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						MultiFoo, ALL_WORLDS,
 						Collections.emptyList(),
 						Collections.emptyList())
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "ExtendsTest")),
-						targetFolder,
+						List.of( subFolder(MUSTPASSFOLDER, "ExtendsTest")),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						ExtendsTest, ALL_WORLDS, 
 						List.of( BASEPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( mustPassFolder, "RemoteFunction") ),
-						targetFolder,
+						List.of( subFolder( MUSTPASSFOLDER, "RemoteFunction") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						RemoteFunction, ALL_WORLDS, 
 						List.of( BASEPATH, RUNTIMEPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( mustPassFolder, "AuthResult" ), subFolder( mustPassFolder, "DistAuthUtils") ),
-						targetFolder,
-						List.of( subFolder( mustPassFolder, "BiPair" ) ),
+						List.of( subFolder( MUSTPASSFOLDER, "AuthResult" ), subFolder( MUSTPASSFOLDER, "DistAuthUtils") ),
+						TARGETFOLDER,
+						List.of( subFolder( MUSTPASSFOLDER, "BiPair" ) ),
 						AuthResult, ALL_WORLDS, 
 						List.of( BASEPATH, EXPECTEDOUTPUTPATH, RUNTIMEPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( mustPassFolder, "DistAuth" ), subFolder( mustPassFolder, "DistAuthUtils")
+						List.of( subFolder( MUSTPASSFOLDER, "DistAuth" ), subFolder( MUSTPASSFOLDER, "DistAuthUtils")
 						),
-						targetFolder,
+						TARGETFOLDER,
 						List.of(
-								subFolder( mustPassFolder, "DistAuth" ),
-								subFolder( mustPassFolder, "AuthResult"),
-								subFolder( mustPassFolder, "BiPair"),
-								runtimeMainFolder,
-								choralUnitMainFolder
+								subFolder( MUSTPASSFOLDER, "DistAuth" ),
+								subFolder( MUSTPASSFOLDER, "AuthResult"),
+								subFolder( MUSTPASSFOLDER, "BiPair"),
+								RUNTIMEMAINFOLDER,
+								CHORALUNITMAINFOLDER
 						),
 						DistAuth, ALL_WORLDS, 
 						List.of( BASEPATH, RUNTIMEPATH, EXPECTEDOUTPUTPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "DistAuth" ) ),
-						targetFolder,
+						List.of( subFolder( MUSTPASSFOLDER, "BuyerSellerShipper" ) ),
+						TARGETFOLDER,
 						List.of(
-								choralMainFolder + "/examples/DistAuth",
-								choralMainFolder + "/examples/AuthResult",
-								choralMainFolder + "/examples/BiPair",
-								runtimeMainFolder,
-								choralUnitMainFolder
-						),
-						DistAuthTest, ALL_WORLDS, Collections.emptyList(), Collections.emptyList() )
-				,
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "DistAuth" ) ),
-						targetFolder,
-						List.of(
-								choralMainFolder + "/examples/DistAuth",
-								choralMainFolder + "/examples/AuthResult",
-								choralMainFolder + "/examples/BiPair",
-								runtimeMainFolder,
-								choralUnitMainFolder
-						),
-						DistAuth5, ALL_WORLDS, Collections.emptyList(), Collections.emptyList() )
-				,
-				new CompilationRequest(
-						List.of( subFolder( sourceFolder, "DistAuth" ) ),
-						targetFolder,
-						List.of(
-								choralMainFolder + "/examples/DistAuth",
-								choralMainFolder + "/examples/AuthResult",
-								choralMainFolder + "/examples/BiPair",
-								runtimeMainFolder,
-								choralUnitMainFolder
-						),
-						DistAuth10, ALL_WORLDS, Collections.emptyList(), Collections.emptyList() )
-				,
-				new CompilationRequest(
-						List.of( subFolder( mustPassFolder, "BuyerSellerShipper" ) ),
-						targetFolder,
-						List.of(
-								subFolder( mustPassFolder, "BuyerSellerShipper" ),
-								runtimeMainFolder,
-								choralUnitMainFolder
+								subFolder( MUSTPASSFOLDER, "BuyerSellerShipper" ),
+								RUNTIMEMAINFOLDER,
+								CHORALUNITMAINFOLDER
 						),
 						BuyerSellerShipper, ALL_WORLDS, 
 						List.of( BASEPATH, RUNTIMEPATH, EXPECTEDOUTPUTPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest( 
-						List.of( subFolder(mustPassFolder, "DiffieHellman"), subFolder(mustPassFolder, "BiPair") ),
-						targetFolder,
+						List.of( subFolder(MUSTPASSFOLDER, "DiffieHellman"), subFolder(MUSTPASSFOLDER, "BiPair") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						DiffieHellman, ALL_WORLDS, 
 						List.of( BASEPATH, RUNTIMEPATH, EXPECTEDOUTPUTPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-					List.of( subFolder(mustFailFolder, "IfMultiWorld") ),
-					targetFolder,
-					List.of(
-							runtimeMainFolder
-					),
-					If_MultiWorld, ALL_WORLDS, Collections.emptyList(), Collections.emptyList())
-				,
-				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "TestSwitch") ),
-						targetFolder,
+						List.of( subFolder(MUSTPASSFOLDER, "TestSwitch") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						TestSwitch, ALL_WORLDS, 
 						List.of( BASEPATH, RUNTIMEPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustFailFolder, "CyclicInheritance") ),
-						targetFolder,
+						List.of( subFolder(MUSTFAILFOLDER, "CyclicInheritance") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						CyclicInheritanceA, ALL_WORLDS, Collections.emptyList(), Collections.emptyList())
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustFailFolder, "LotsOfErrors") ),
-						targetFolder,
+						List.of( subFolder(MUSTFAILFOLDER, "LotsOfErrors") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						LotsOfErrors, ALL_WORLDS, Collections.emptyList(), Collections.emptyList())
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "SwitchTest") ),
-						targetFolder,
+						List.of( subFolder(MUSTPASSFOLDER, "SwitchTest") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						SwitchTest, ALL_WORLDS, 
 						List.of( BASEPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustFailFolder, "VariableDeclarations") ),
-						targetFolder,
+						List.of( subFolder(MUSTFAILFOLDER, "VariableDeclarations") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						VariableDeclarations, ALL_WORLDS, 
 						List.of( BASEPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "MirrorChannel") ),
-						targetFolder,
+						List.of( subFolder(MUSTPASSFOLDER, "MirrorChannel") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						MirrorChannel, ALL_WORLDS, 
 						List.of( BASEPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "LoggerExample") ),
-						targetFolder,
+						List.of( subFolder(MUSTPASSFOLDER, "LoggerExample") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						LoggerExample, ALL_WORLDS, 
 						List.of( BASEPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "IfDesugar") ),
-						targetFolder,
-						List.of(subFolder(mustPassFolder, "IfDesugar")),
+						List.of( subFolder(MUSTPASSFOLDER, "IfDesugar") ),
+						TARGETFOLDER,
+						List.of(subFolder(MUSTPASSFOLDER, "IfDesugar")),
 						IfDesugar, ALL_WORLDS, 
 						List.of( BASEPATH ), 
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustFailFolder, "IllegalInheritance") ),
-						targetFolder,
+						List.of( subFolder(MUSTFAILFOLDER, "IllegalInheritance") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
-						IllegalInheritance, ALL_WORLDS, Collections.emptyList(), Collections.emptyList())
+						IllegalInheritance, ALL_WORLDS, 
+						Collections.emptyList(), 
+						Collections.emptyList())
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustFailFolder, "NonMatchingReturnType") ),
-						targetFolder,
+						List.of( subFolder(MUSTFAILFOLDER, "NonMatchingReturnType") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
-						NonMatchingReturnType, ALL_WORLDS, Collections.emptyList(), Collections.emptyList())
+						NonMatchingReturnType, ALL_WORLDS, 
+						Collections.emptyList(), 
+						Collections.emptyList())
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "ChainingOperator") ),
-						targetFolder,
+						List.of( subFolder(MUSTPASSFOLDER, "ChainingOperator") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						ChainingOperator, ALL_WORLDS, 
 						List.of( BASEPATH, RUNTIMEPATH ), 
 						Collections.emptyList())
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "AutoBoxing") ),
-						targetFolder,
+						List.of( subFolder(MUSTPASSFOLDER, "AutoBoxing") ),
+						TARGETFOLDER,
 						Collections.emptyList(),
 						AutoBoxing, ALL_WORLDS, 
 						List.of( BASEPATH ), 
 						Collections.emptyList())
 				,
 				new CompilationRequest(
-						List.of( subFolder(mustPassFolder, "BookSellingSoloist")),
-						targetFolder,
+						List.of( subFolder(MUSTPASSFOLDER, "BookSellingSoloist")),
+						TARGETFOLDER,
 						List.of(
-							runtimeMainFolder,
-							choralUnitMainFolder
+							RUNTIMEMAINFOLDER,
+							CHORALUNITMAINFOLDER
 						),
 						BookSellingSoloist, ALL_WORLDS, 
 						List.of( BASEPATH ), 
@@ -433,8 +388,6 @@ public class TestChoral {
 				ChainingOperator, 
 				IfDesugar,
 				LoggerExample,
-//				DistAuth5,
-//				DistAuth10,
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
 				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
@@ -445,7 +398,6 @@ public class TestChoral {
 			).toList();
 
 		List<String> failCompilationSymbols = Stream.of(
-				//If_MultiWorld,
 				IllegalInheritance,
 				MultiFoo,
 				CyclicInheritanceA,
@@ -622,16 +574,17 @@ public class TestChoral {
 					String fileContent = Files.readString(file);
 					String pathString = fileContent.substring(fileContent.indexOf("package ") + 7, fileContent.indexOf(";")).trim(); // this finds the package declared at the top of the file
 					String innerPathString = "/" + pathString.replace(".", "/");
-					String targetFolderString = targetFolder + innerPathString;
+					String targetFolderString = TARGETFOLDER + innerPathString;
 					
 					if (alreadyCheckedPaths.contains(targetFolderString)) continue;
+					
 					alreadyCheckedPaths.add(targetFolderString);
 
 					try	{
 						Path projectFolder = Path.of(targetFolderString);
 						List<Path> projectedJavaFiles = Files.walk(projectFolder).filter(javaFile -> javaFile.toString().endsWith(".java")).collect(Collectors.toList());
 						
-						String expectedFolderString = expectedFolder + innerPathString;
+						String expectedFolderString = EXPECTEDFOLDER + innerPathString;
 						Path expectedFolderPath = Path.of(expectedFolderString);
 						List<Path> expectedFiles = Files.walk(expectedFolderPath).filter( expectedFile -> expectedFile.toString().endsWith(".java")).collect(Collectors.toList());
 						
@@ -672,6 +625,7 @@ public class TestChoral {
 
 						if (!sourcePath.isEmpty()) options.addAll(Arrays.asList("-sourcepath", sourcePath));
 						if (!classPath.isEmpty()) options.addAll(Arrays.asList("-classpath", classPath));
+						
 						options.addAll(Arrays.asList("-d", "bin"));
 
 						JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
@@ -712,9 +666,7 @@ public class TestChoral {
 					javaCompilationErrors.forEach(errorLine -> System.err.println("\t" + errorLine));
 				}
 			}
-			else {
-				System.out.printf("%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET);
-			}
+			else System.out.printf("%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET);
 
 
 		} catch( Exception e ) {
@@ -752,7 +704,7 @@ public class TestChoral {
 				System.setOut(originalOutput);
 				System.setErr(originalError);
 			}
-			if (exitCode == 0) System.err.println("Program received 0 as exitcode, which means no errors were found. This test should have errors");	
+			if (exitCode == 0) System.err.println("Program received 0 as exitcode, which means no errors were found. This test is expected to have errors");	
 
 			String stringTestOutput = testOutput.toString();
 			String[] outputLines = stringTestOutput.split("\n");
@@ -772,10 +724,12 @@ public class TestChoral {
 						int nextOccurence = fileContent[i].indexOf("//!");
 						int endOfError = fileContent[i].indexOf("//", nextOccurence + 1);
 						if (endOfError == -1) endOfError = fileContent[i].length();
+						
 						while (nextOccurence != -1){
 							expectedErrorsFound.add(new AbstractMap.SimpleEntry<>(i, fileContent[i].substring(nextOccurence + 3, endOfError).trim())); // '//!' = 3 characters
 							nextOccurence = fileContent[i].indexOf("//!", endOfError);
 							endOfError = fileContent[i].indexOf("//", nextOccurence + 1);
+							
 							if (endOfError == -1) endOfError = fileContent[i].length();
 						}
 					}
@@ -789,6 +743,8 @@ public class TestChoral {
 				int errorLineNumber = Integer.parseInt(outputLines[nextErrorLine].substring(start, end)) - 1;
 				List<Map.Entry<Integer, String>> foundErrors = new ArrayList<>();
 				List<String> missedErrors = new ArrayList<>();
+
+				boolean endOfOutputReached = false;
 
 				for (Map.Entry<Integer, String> line : expectedErrorsFound){
 					if (errorLineNumber == line.getKey()){
@@ -805,38 +761,73 @@ public class TestChoral {
 
 					for (int i = nextErrorLine; i < outputLines.length; i++){
 						if (outputLines[i].equals("compilation failed.")){
-							nextErrorLine += i;
+							nextErrorLine = i + 2;
 							break;
 						}
 					} 
+
+					if (nextErrorLine >= outputLines.length) {
+						endOfOutputReached = true;
+						break; // end of error output reached
+					}
 
 					start = outputLines[nextErrorLine].indexOf("ch:") + 3;
 					end = outputLines[nextErrorLine].indexOf(":", start);
 
 					if (end == -1 || start == -1){
+						endOfOutputReached = true;
 						break; // end of error output reached 
 					} 
 
 					errorLineNumber = Integer.parseInt(outputLines[nextErrorLine].substring(start, end)) - 1;
 				} 
 				
-				if (errorsFound != expectedErrorsFound.size()) {
+				List<String> unExpectedErrors = new ArrayList<>();
+				if (!endOfOutputReached){
+					while(start != -1 || end != -1){
+						unExpectedErrors.add(outputLines[nextErrorLine]);
+						
+						for (int i = nextErrorLine; i < outputLines.length; i++){
+							if (outputLines[i].equals("compilation failed.")){
+								nextErrorLine = i + 2;
+								break;
+							}
+						}
+
+						if (nextErrorLine >= outputLines.length) break;
+
+						start = outputLines[nextErrorLine].indexOf("ch:") + 3;
+						end = outputLines[nextErrorLine].indexOf(":", start);
+					}					
+				}
+
+				boolean allErrorsFound = errorsFound != expectedErrorsFound.size();
+				boolean anyErrorsMissed = !missedErrors.isEmpty();
+				boolean anyErrorsNotExpected = !unExpectedErrors.isEmpty();
+
+				if (allErrorsFound || anyErrorsMissed || anyErrorsNotExpected) {
 					System.out.printf("%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET);
-					System.out.println("\t\u001B[31m" + "Error" + "\u001B[0m: " + (expectedErrorsFound.size() - errorsFound) + " errors not found");
-					for (Map.Entry<Integer, String> line : expectedErrorsFound){
-						if (!foundErrors.contains(line)) System.out.println("\t\tExpected to find: " + line.getValue() + " on line " + line.getKey());
+
+					if (allErrorsFound){
+						System.out.println("\t\u001B[31m" + "Error" + "\u001B[0m: " + (expectedErrorsFound.size() - errorsFound) + " errors not found");
+						for (Map.Entry<Integer, String> line : expectedErrorsFound){
+							if (!foundErrors.contains(line)) System.out.println("\t\tExpected to find: " + line.getValue() + " on line " + line.getKey());
+						}
+					}
+					if (anyErrorsMissed){
+						System.out.println("Found " + missedErrors.size() + " errors not expected");
+						for (String error : missedErrors){
+							System.out.println(error);
+						}
+					}
+					if (anyErrorsNotExpected){
+						System.out.println("Found errors reported by the compiler not annotated in test:");
+						for (String error : unExpectedErrors){
+							System.out.println(error);
+						}
 					}
 				} 
-				else {
-					System.out.printf("%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET);
-				}
-				
-				if (!missedErrors.isEmpty()){ // here
-					System.out.println("Found " + missedErrors.size() + " errors not expected");
-					for (String error : missedErrors){
-						System.out.println(error);
-					}
-				}
+				else System.out.printf("%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET);
 			}
 			else System.err.println(String.format("Directory not found: '%s'", directoryPath));
 		} catch( Exception e ) {
