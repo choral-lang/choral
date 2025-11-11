@@ -21,35 +21,50 @@
 
 package choral;
 
-import java.io.ByteArrayOutputStream;
+import static choral.utils.Streams.skip;
+import static choral.utils.Streams.wrapConsumer;
+import static choral.utils.Streams.wrapFunction;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import choral.ast.CompilationUnit;
 import choral.ast.Position;
 import choral.compiler.Compiler;
-import choral.compiler.*;
+import choral.compiler.HeaderCompiler;
+import choral.compiler.HeaderLoader;
+import choral.compiler.Parser;
+import choral.compiler.SourceObject;
+import choral.compiler.SourceWriter;
+import choral.compiler.Typer;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.ChoralException;
 import choral.utils.Streams.WrappedException;
 import picocli.AutoComplete;
 import picocli.CommandLine;
-import picocli.CommandLine.*;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static choral.utils.Streams.*;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.IVersionProvider;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 @Command(
 		name = "choral",
