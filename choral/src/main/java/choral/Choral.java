@@ -54,7 +54,8 @@ import static choral.utils.Streams.*;
 				Choral.Checker.class,
 				Choral.Projector.class,
 				Choral.HeaderGenerator.class,
-				AutoComplete.GenerateCompletion.class
+				AutoComplete.GenerateCompletion.class,
+				Choral.LSPCommand.class
 		}
 )
 public class Choral extends ChoralCommand implements Callable< Integer > {
@@ -113,6 +114,24 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
 				System.out.println( "compilation failed." );
 				return 1;
+			}
+			return 0;
+		}
+	}
+
+	@Command( name = "language-server-protocol", aliases = { "lsp" },
+			description = "Runs choral as an LSP, mainly intended to be called by IDE's")
+	static class LSPCommand extends ChoralCommand implements Callable< Integer > {
+		
+		@Option( names = { "--lsp-debug" }, 
+				description = "Enables debug messages for the Language Server Protocol")
+		boolean debug = false;
+		
+		@Override
+		public Integer call() {
+			System.out.println("LSP Activated!");
+			if (debug) {
+				System.out.println("Debugging also activated!");
 			}
 			return 0;
 		}
