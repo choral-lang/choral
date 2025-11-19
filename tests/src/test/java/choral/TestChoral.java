@@ -407,20 +407,8 @@ public class TestChoral {
 				NonMatchingReturnType
 			).toList(); 
 
-		boolean notRun = true;
-
-		if (Boolean.parseBoolean(System.getProperty("test.pass"))){
-			notRun = false;
-			runTests(passCompilationSymbols, allCompilationRequests, TestType.MUSTPASS);
-		}
-		if (Boolean.parseBoolean(System.getProperty("test.fail"))){
-			notRun = false;
-			runTests(failCompilationSymbols, allCompilationRequests, TestType.MUSTFAIL);
-		}
-		if (notRun){
-			runTests(passCompilationSymbols, allCompilationRequests, TestType.MUSTPASS);
-			runTests(failCompilationSymbols, allCompilationRequests, TestType.MUSTFAIL);
-		}
+		runTests(passCompilationSymbols, allCompilationRequests, TestType.MUSTPASS);
+		runTests(failCompilationSymbols, allCompilationRequests, TestType.MUSTFAIL);
 	}
 
 	private static void runTests(List<String> symbols, List<CompilationRequest> compilationRequests, TestType testType){
