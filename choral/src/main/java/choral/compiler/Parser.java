@@ -24,6 +24,7 @@ package choral.compiler;
 import choral.ast.CompilationUnit;
 import choral.exceptions.ChoralCompoundException;
 import choral.grammar.ChoralLexer;
+
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -32,6 +33,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+
 public class Parser {
 
     /* ToDo: parse choral source from string
@@ -39,6 +43,25 @@ public class Parser {
         // InputStream targetStream = new ByteArrayInputStream(initialString.getBytes());
         throw new UnsupportedOperationException();
     } */
+	public static CompilationUnit parseString(String sourceCode) throws IOException {
+		CharStream charStream = CharStreams.fromString(sourceCode);
+		ChoralLexer lexer = new ChoralLexer(charStream);
+		CommonTokenStream tokens = new CommonTokenStream(lexer);
+		choral.grammar.ChoralParser cp = new choral.grammar.ChoralParser(tokens);
+		cp.removeErrorListeners();
+		ParsingErrorListener errorListener = new ParsingErrorListener(sourceCode);
+		cp.addErrorListener( errorListener );
+		choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
+		// solution 1:
+		String sourceCodeName = "parsingFromString";
+		if( errorListener.getErrors().isEmpty() ) {
+			return AstOptimizer
+					.loadParameters( /* new String[]{ "showDebug" } */ )
+					.optimise( ctx, null );
+		} else {
+			throw new ChoralCompoundException( errorListener.getErrors() );
+		}
+	}
 
 	public static CompilationUnit parseSourceFile(
 			File file
@@ -49,7 +72,8 @@ public class Parser {
 	public static CompilationUnit parseSourceFile(
 			String file
 	) throws IOException {
-		ANTLRInputStream input = new ANTLRFileStream( file );
+		// ANTLRInputStream input = new ANTLRFileStream( file );
+		CharStream input = CharStreams.fromFileName(file);
 		ChoralLexer lexer = new ChoralLexer( input );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		choral.grammar.ChoralParser cp = new choral.grammar.ChoralParser( tokens );
@@ -60,7 +84,7 @@ public class Parser {
 		if( errorListener.getErrors().isEmpty() ) {
 			return AstOptimizer
 					.loadParameters( /* new String[]{ "showDebug" } */ )
-					.optimise( ctx, file );
+					.optimise( ctx, file  );
 		} else {
 			throw new ChoralCompoundException( errorListener.getErrors() );
 		}
