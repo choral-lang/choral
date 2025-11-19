@@ -543,7 +543,7 @@ public class TestChoral {
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
 			//System.out.println( "Issuing command " + String.join( " ", parameters ));
-			int exitCode = Choral.compileTest( parameters.toArray( new String[ 0 ] ));
+			int exitCode = Choral.compile( parameters.toArray( new String[ 0 ] ));
 			if (exitCode != 0) System.err.print("Got " + exitCode + " as exit code when 0 was expected");
 
 			boolean errorOccured = false;
@@ -687,7 +687,7 @@ public class TestChoral {
 			try {
 				System.setOut(new PrintStream(testOutput));
 				System.setErr(new PrintStream(testError));
-				exitCode = Choral.compileTest( parameters.toArray( new String[ 0 ] ));
+				exitCode = Choral.compile( parameters.toArray( new String[ 0 ] ));
 			} finally {
 				System.setOut(originalOutput);
 				System.setErr(originalError);

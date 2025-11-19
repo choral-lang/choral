@@ -3,11 +3,11 @@ import org.junit.jupiter.api.Test;
 import choral.types.Universe;
 import choral.types.World;
 
-public class WhiteBoxTests {
+public class WorldTest {
     @Test
-    public void worldCreationTest () {
+    public void worldCreationTest() {
         Universe testUniverse = new Universe();
-		World lmao = new World(testUniverse, "lmao");
-		assert lmao.identifier().equals("lmao");
+		World alice = new World(testUniverse, "Alice");
+		assert alice.identifier().equals("Alice");
     }
 }

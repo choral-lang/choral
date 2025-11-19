@@ -21,8 +21,6 @@
 
 package choral;
 
-import java.io.ByteArrayOutputStream;
-
 import choral.ast.CompilationUnit;
 import choral.ast.Position;
 import choral.compiler.Compiler;
@@ -38,7 +36,6 @@ import picocli.CommandLine.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,13 +61,10 @@ import static choral.utils.Streams.*;
 public class Choral extends ChoralCommand implements Callable< Integer > {
 
 	public static void main( String[] args) {
-		CommandLine cl = new CommandLine( new Choral() );
-		cl.setToggleBooleanFlags( true );
-		cl.setCaseInsensitiveEnumValuesAllowed( true );
-		System.exit(cl.execute(args));
+		System.exit( compile(args) );
 	}
 
-	public static int compileTest( String[] args) {
+	public static int compile( String[] args) {
 		CommandLine cl = new CommandLine( new Choral() );
 		cl.setToggleBooleanFlags( true );
 		cl.setCaseInsensitiveEnumValuesAllowed( true );
