@@ -56,61 +56,13 @@ import com.github.difflib.patch.Patch;
 
 public class TestChoral {
 
-	private static class CompilationRequest {
-		private final List< String > sourceFolder;
-		private final String targetFolder;
-		private final List< String > headersFolders;
-		private final String symbol;
-		private final List< String > worlds;
-		private final List< String > sourcePaths;
-		private final List< String > classPaths;
-
-		public CompilationRequest(
-				List< String > sourceFolder,
-				String targetFolder,
-				List< String > headersFolders,
-				String symbol,
-				List< String > worlds,
-				List< String > sourcePaths,
-				List< String > classPaths
-		) {
-			this.sourceFolder = sourceFolder;
-			this.targetFolder = targetFolder;
-			this.headersFolders = headersFolders;
-			this.symbol = symbol;
-			this.worlds = worlds;
-			this.sourcePaths = sourcePaths;
-			this.classPaths = classPaths;
-		}
-
-		public List< String > sourceFolder() {
-			return sourceFolder;
-		}
-
-		public String targetFolder() {
-			return targetFolder;
-		}
-
-		public String symbol() {
-			return symbol;
-		}
-
-		public List< String > worlds() {
-			return worlds;
-		}
-
-		public List< String > headersFolders() {
-			return headersFolders;
-		}
-
-		public List< String > sourcePaths() {
-			return sourcePaths;
-		}
-
-		public List< String > classPaths() {
-			return classPaths;
-		}
-	}
+	private record CompilationRequest(List< String > sourceFolder,
+									  String targetFolder,
+									  List< String > headersFolders,
+									  String symbol,
+									  List< String > worlds,
+									  List< String > sourcePaths,
+									  List< String > classPaths) {}
 
 	enum TestType {
 		MUSTPASS,
@@ -124,27 +76,23 @@ public class TestChoral {
 		return sourceFolder + File.separator + subFolder;
 	}
 
-	static final String SOURCEFOLDER = "tests/src/main/choral/examples";
-	static final String TARGETFOLDER = "projectedOutput";
-	static final String EXPECTEDFOLDER = "expectedOutput";
-	static final String CHORALMAINFOLDER = "tests/src/main/choral";
-	static final String RUNTIMEMAINFOLDER = "../runtime/src/main/choral";
-	static final String CHORALUNITMAINFOLDER = "../choral-unit/src/main/choral" ;
-	static final String MUSTFAILFOLDER = "src/main/choral/MustFail";
-	static final String MUSTPASSFOLDER = "src/main/choral/MustPass";
-	static final String RUNTIMEFOLDER = "src/main/choral/Runtime";
+	private static final String SEPARATOR = System.getProperty( "path.separator" );
+	private static final String SOURCE_FOLDER = "tests/src/main/choral/examples";
+	private static final String TARGET_FOLDER = "projectedOutput";
+	private static final String EXPECTED_FOLDER = "expectedOutput";
+	private static final String RUNTIME_MAIN_FOLDER = "../runtime/src/main/choral";
+	private static final String CHORALUNIT_MAIN_FOLDER = "../choral-unit/src/main/choral";
+	private static final String MUSTFAIL_FOLDER = "src/main/choral/MustFail";
+	private static final String MUSTPASS_FOLDER = "src/main/choral/MustPass";
+	private static final String BASE_PATH = "base/src/main/java";
+	private static final String RUNTIME_PATH = "runtime/src/main/java";
+	private static final String EXPECTEDOUTPUT_PATH = "expectedOutput";
 
-	// colours for terminal
+	// formatting for terminal output
 	private static final String GREEN = "\u001B[32m";
 	private static final String RED = "\u001B[31m";
 	private static final String RESET = "\u001B[0m";
-
 	private static final int COLUMN_WIDTH = 30;
-
-	private static final String SEPARATOR = System.getProperty("path.separator");
-	private static final String BASEPATH = "base/src/main/java";
-	private static final String RUNTIMEPATH = "runtime/src/main/java";
-	private static final String EXPECTEDOUTPUTPATH = "expectedOutput";
 
 	public static void main( String[] args ) {
 
@@ -159,11 +107,11 @@ public class TestChoral {
 		final String BuyerSellerShipper = "BuyerSellerShipper";
 		final String DiffieHellman = "DiffieHellman";
 		final String TestSwitch = "TestSwitch";
-		
+
 		final String WrongType = "WrongType";
 		final String SwitchTest = "SwitchTest";
 		final String VariableDeclarations = "VariableDeclarations";
-		final String CyclicInheritanceA = "CyclicInheritance_A"; 
+		final String CyclicInheritanceA = "CyclicInheritance_A";
 		final String LotsOfErrors = "LotsOfErrors";
 		final String MirrorChannel = "MirrorChannel";
 		final String LoggerExample = "LoggerExample";
@@ -176,287 +124,300 @@ public class TestChoral {
 
 		List< CompilationRequest > allCompilationRequests = Stream.of(
 				new CompilationRequest(
-						List.of( subFolder(MUSTFAILFOLDER, "WrongType")),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTFAIL_FOLDER, "WrongType" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
 						WrongType, ALL_WORLDS,
-						List.of( BASEPATH ),
-						Collections.emptyList() ) 
+						List.of( BASE_PATH ),
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTPASSFOLDER, "HelloRoles") ),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTPASS_FOLDER, "HelloRoles" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
 						HelloRoles, ALL_WORLDS,
-						List.of( BASEPATH ),
+						List.of( BASE_PATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( SOURCEFOLDER, "BiPair") ),
-						TARGETFOLDER,
+						List.of( subFolder( SOURCE_FOLDER, "BiPair" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
 						BiPair, ALL_WORLDS,
-						List.of( BASEPATH ),
+						List.of( BASE_PATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTPASSFOLDER, "ConsumeItems") ),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTPASS_FOLDER, "ConsumeItems" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
 						ConsumeItems, ALL_WORLDS,
-						List.of( BASEPATH, RUNTIMEPATH ),
+						List.of( BASE_PATH, RUNTIME_PATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( MUSTFAILFOLDER, "MultiFoo") ),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTFAIL_FOLDER, "MultiFoo" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
 						MultiFoo, ALL_WORLDS,
 						Collections.emptyList(),
-						Collections.emptyList())
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTPASSFOLDER, "ExtendsTest")),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTPASS_FOLDER, "ExtendsTest" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
-						ExtendsTest, ALL_WORLDS, 
-						List.of( BASEPATH ), 
+						ExtendsTest, ALL_WORLDS,
+						List.of( BASE_PATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( MUSTPASSFOLDER, "RemoteFunction") ),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTPASS_FOLDER, "RemoteFunction" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
-						RemoteFunction, ALL_WORLDS, 
-						List.of( BASEPATH, RUNTIMEPATH ), 
+						RemoteFunction, ALL_WORLDS,
+						List.of( BASE_PATH, RUNTIME_PATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( MUSTPASSFOLDER, "AuthResult" ), subFolder( MUSTPASSFOLDER, "DistAuthUtils") ),
-						TARGETFOLDER,
-						List.of( subFolder( MUSTPASSFOLDER, "BiPair" ) ),
-						AuthResult, ALL_WORLDS, 
-						List.of( BASEPATH, EXPECTEDOUTPUTPATH, RUNTIMEPATH ), 
+						List.of( subFolder( MUSTPASS_FOLDER, "AuthResult" ),
+								subFolder( MUSTPASS_FOLDER, "DistAuthUtils" ) ),
+						TARGET_FOLDER,
+						List.of( subFolder( MUSTPASS_FOLDER, "BiPair" ) ),
+						AuthResult, ALL_WORLDS,
+						List.of( BASE_PATH, EXPECTEDOUTPUT_PATH, RUNTIME_PATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( MUSTPASSFOLDER, "DistAuth" ), subFolder( MUSTPASSFOLDER, "DistAuthUtils")
+						List.of( subFolder( MUSTPASS_FOLDER, "DistAuth" ),
+								subFolder( MUSTPASS_FOLDER, "DistAuthUtils" )
 						),
-						TARGETFOLDER,
+						TARGET_FOLDER,
 						List.of(
-								subFolder( MUSTPASSFOLDER, "DistAuth" ),
-								subFolder( MUSTPASSFOLDER, "AuthResult"),
-								subFolder( MUSTPASSFOLDER, "BiPair"),
-								RUNTIMEMAINFOLDER,
-								CHORALUNITMAINFOLDER
+								subFolder( MUSTPASS_FOLDER, "DistAuth" ),
+								subFolder( MUSTPASS_FOLDER, "AuthResult" ),
+								subFolder( MUSTPASS_FOLDER, "BiPair" ),
+								RUNTIME_MAIN_FOLDER,
+								CHORALUNIT_MAIN_FOLDER
 						),
-						DistAuth, ALL_WORLDS, 
-						List.of( BASEPATH, RUNTIMEPATH, EXPECTEDOUTPUTPATH ), 
+						DistAuth, ALL_WORLDS,
+						List.of( BASE_PATH, RUNTIME_PATH, EXPECTEDOUTPUT_PATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder( MUSTPASSFOLDER, "BuyerSellerShipper" ) ),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTPASS_FOLDER, "BuyerSellerShipper" ) ),
+						TARGET_FOLDER,
 						List.of(
-								subFolder( MUSTPASSFOLDER, "BuyerSellerShipper" ),
-								RUNTIMEMAINFOLDER,
-								CHORALUNITMAINFOLDER
+								subFolder( MUSTPASS_FOLDER, "BuyerSellerShipper" ),
+								RUNTIME_MAIN_FOLDER,
+								CHORALUNIT_MAIN_FOLDER
 						),
-						BuyerSellerShipper, ALL_WORLDS, 
-						List.of( BASEPATH, RUNTIMEPATH, EXPECTEDOUTPUTPATH ), 
-						Collections.emptyList() )
-				,
-				new CompilationRequest( 
-						List.of( subFolder(MUSTPASSFOLDER, "DiffieHellman"), subFolder(MUSTPASSFOLDER, "BiPair") ),
-						TARGETFOLDER,
-						Collections.emptyList(),
-						DiffieHellman, ALL_WORLDS, 
-						List.of( BASEPATH, RUNTIMEPATH, EXPECTEDOUTPUTPATH ), 
+						BuyerSellerShipper, ALL_WORLDS,
+						List.of( BASE_PATH, RUNTIME_PATH, EXPECTEDOUTPUT_PATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTPASSFOLDER, "TestSwitch") ),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTPASS_FOLDER, "DiffieHellman" ),
+								subFolder( MUSTPASS_FOLDER, "BiPair" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
-						TestSwitch, ALL_WORLDS, 
-						List.of( BASEPATH, RUNTIMEPATH ), 
+						DiffieHellman, ALL_WORLDS,
+						List.of( BASE_PATH, RUNTIME_PATH, EXPECTEDOUTPUT_PATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTFAILFOLDER, "CyclicInheritance") ),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTPASS_FOLDER, "TestSwitch" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
-						CyclicInheritanceA, ALL_WORLDS, Collections.emptyList(), Collections.emptyList())
-				,
-				new CompilationRequest(
-						List.of( subFolder(MUSTFAILFOLDER, "LotsOfErrors") ),
-						TARGETFOLDER,
-						Collections.emptyList(),
-						LotsOfErrors, ALL_WORLDS, Collections.emptyList(), Collections.emptyList())
-				,
-				new CompilationRequest(
-						List.of( subFolder(MUSTPASSFOLDER, "SwitchTest") ),
-						TARGETFOLDER,
-						Collections.emptyList(),
-						SwitchTest, ALL_WORLDS, 
-						List.of( BASEPATH ), 
+						TestSwitch, ALL_WORLDS,
+						List.of( BASE_PATH, RUNTIME_PATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTFAILFOLDER, "VariableDeclarations") ),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTFAIL_FOLDER, "CyclicInheritance" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
-						VariableDeclarations, ALL_WORLDS, 
-						List.of( BASEPATH ), 
+						CyclicInheritanceA, ALL_WORLDS, Collections.emptyList(),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTPASSFOLDER, "MirrorChannel") ),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTFAIL_FOLDER, "LotsOfErrors" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
-						MirrorChannel, ALL_WORLDS, 
-						List.of( BASEPATH ), 
+						LotsOfErrors, ALL_WORLDS, Collections.emptyList(), Collections.emptyList() )
+				,
+				new CompilationRequest(
+						List.of( subFolder( MUSTPASS_FOLDER, "SwitchTest" ) ),
+						TARGET_FOLDER,
+						Collections.emptyList(),
+						SwitchTest, ALL_WORLDS,
+						List.of( BASE_PATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTPASSFOLDER, "LoggerExample") ),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTFAIL_FOLDER, "VariableDeclarations" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
-						LoggerExample, ALL_WORLDS, 
-						List.of( BASEPATH ), 
+						VariableDeclarations, ALL_WORLDS,
+						List.of( BASE_PATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTPASSFOLDER, "IfDesugar") ),
-						TARGETFOLDER,
-						List.of(subFolder(MUSTPASSFOLDER, "IfDesugar")),
-						IfDesugar, ALL_WORLDS, 
-						List.of( BASEPATH ), 
+						List.of( subFolder( MUSTPASS_FOLDER, "MirrorChannel" ) ),
+						TARGET_FOLDER,
+						Collections.emptyList(),
+						MirrorChannel, ALL_WORLDS,
+						List.of( BASE_PATH ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTFAILFOLDER, "IllegalInheritance") ),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTPASS_FOLDER, "LoggerExample" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
-						IllegalInheritance, ALL_WORLDS, 
-						Collections.emptyList(), 
-						Collections.emptyList())
+						LoggerExample, ALL_WORLDS,
+						List.of( BASE_PATH ),
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTFAILFOLDER, "NonMatchingReturnType") ),
-						TARGETFOLDER,
-						Collections.emptyList(),
-						NonMatchingReturnType, ALL_WORLDS, 
-						Collections.emptyList(), 
-						Collections.emptyList())
+						List.of( subFolder( MUSTPASS_FOLDER, "IfDesugar" ) ),
+						TARGET_FOLDER,
+						List.of( subFolder( MUSTPASS_FOLDER, "IfDesugar" ) ),
+						IfDesugar, ALL_WORLDS,
+						List.of( BASE_PATH ),
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTPASSFOLDER, "ChainingOperator") ),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTFAIL_FOLDER, "IllegalInheritance" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
-						ChainingOperator, ALL_WORLDS, 
-						List.of( BASEPATH, RUNTIMEPATH ), 
-						Collections.emptyList())
+						IllegalInheritance, ALL_WORLDS,
+						Collections.emptyList(),
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTPASSFOLDER, "AutoBoxing") ),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTFAIL_FOLDER, "NonMatchingReturnType" ) ),
+						TARGET_FOLDER,
 						Collections.emptyList(),
-						AutoBoxing, ALL_WORLDS, 
-						List.of( BASEPATH ), 
-						Collections.emptyList())
+						NonMatchingReturnType, ALL_WORLDS,
+						Collections.emptyList(),
+						Collections.emptyList() )
 				,
 				new CompilationRequest(
-						List.of( subFolder(MUSTPASSFOLDER, "BookSellingSoloist")),
-						TARGETFOLDER,
+						List.of( subFolder( MUSTPASS_FOLDER, "ChainingOperator" ) ),
+						TARGET_FOLDER,
+						Collections.emptyList(),
+						ChainingOperator, ALL_WORLDS,
+						List.of( BASE_PATH, RUNTIME_PATH ),
+						Collections.emptyList() )
+				,
+				new CompilationRequest(
+						List.of( subFolder( MUSTPASS_FOLDER, "AutoBoxing" ) ),
+						TARGET_FOLDER,
+						Collections.emptyList(),
+						AutoBoxing, ALL_WORLDS,
+						List.of( BASE_PATH ),
+						Collections.emptyList() )
+				,
+				new CompilationRequest(
+						List.of( subFolder( MUSTPASS_FOLDER, "BookSellingSoloist" ) ),
+						TARGET_FOLDER,
 						List.of(
-							RUNTIMEMAINFOLDER,
-							CHORALUNITMAINFOLDER
+								RUNTIME_MAIN_FOLDER,
+								CHORALUNIT_MAIN_FOLDER
 						),
-						BookSellingSoloist, ALL_WORLDS, 
-						List.of( BASEPATH ), 
-						Collections.emptyList())
+						BookSellingSoloist, ALL_WORLDS,
+						List.of( BASE_PATH ),
+						Collections.emptyList() )
 		).toList();
 
-		List<String> passCompilationSymbols = Stream.of(
+		List< String > passCompilationSymbols = Stream.of(
 				HelloRoles,
 				ConsumeItems,
 				DiffieHellman,
 				TestSwitch,
-				RemoteFunction, 
+				RemoteFunction,
 				BuyerSellerShipper,
-				ChainingOperator, 
+				ChainingOperator,
 				IfDesugar,
 				LoggerExample,
 				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
 				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
 				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
 				BookSellingSoloist,
-				ExtendsTest,				
+				ExtendsTest,
 				AuthResult,
 				DistAuth
-			).toList();
+		).toList();
 
-		List<String> failCompilationSymbols = Stream.of(
+		List< String > failCompilationSymbols = Stream.of(
 				IllegalInheritance,
 				MultiFoo,
 				CyclicInheritanceA,
 				LotsOfErrors,
 				WrongType,
-				VariableDeclarations, 
+				VariableDeclarations,
 				NonMatchingReturnType
-			).toList(); 
+		).toList();
 
-		runTests(passCompilationSymbols, allCompilationRequests, TestType.MUSTPASS);
-		runTests(failCompilationSymbols, allCompilationRequests, TestType.MUSTFAIL);
+		runTests( passCompilationSymbols, allCompilationRequests, TestType.MUSTPASS );
+		runTests( failCompilationSymbols, allCompilationRequests, TestType.MUSTFAIL );
 	}
 
-	private static void runTests(List<String> symbols, List<CompilationRequest> compilationRequests, TestType testType){
+	private static void runTests(
+			List< String > symbols, List< CompilationRequest > compilationRequests,
+			TestType testType
+	) {
 		List< CompilationRequest > passCompilationRequests = symbols.stream()
-		.map( s -> compilationRequests.stream().filter( c -> c.symbol.equalsIgnoreCase( s ) ).findFirst() )
-		.filter( Optional::isPresent ).map( Optional::get ).toList();
+				.map( s -> compilationRequests.stream().filter(
+						c -> c.symbol.equalsIgnoreCase( s ) ).findFirst() )
+				.filter( Optional::isPresent ).map( Optional::get ).toList();
 
-		if (null != testType)
-		switch (testType) {
-                case MUSTPASS -> {
-                    System.out.println("\nNow running tests that must pass\n");
-                    passCompilationRequests.forEach( TestChoral::project );
-                    System.out.println("\u001B[32m" + "Amount of tests ran: " + passCompilationRequests.size() + "\u001B[0m");
-                    System.out.println("");
-                    }
-                case MUSTFAIL -> {
-                    System.out.println("Now running tests that must fail\n");
-                    passCompilationRequests.forEach( TestChoral::projectFail );
-					System.out.println("");
-                    System.out.println("\u001B[32m" + "Amount of tests ran: " + passCompilationRequests.size() + "\u001B[0m");
-                    System.out.println("");
-                    }
-                default -> {
-                    }
-            }
+		if( null != testType )
+			switch( testType ) {
+				case MUSTPASS -> {
+					System.out.println( "\nNow running tests that must pass\n" );
+					passCompilationRequests.forEach( TestChoral::project );
+					System.out.println(
+							"\u001B[32m" + "Amount of tests ran: " + passCompilationRequests.size() + "\u001B[0m" );
+					System.out.println();
+				}
+				case MUSTFAIL -> {
+					System.out.println( "Now running tests that must fail\n" );
+					passCompilationRequests.forEach( TestChoral::projectFail );
+					System.out.println();
+					System.out.println(
+							"\u001B[32m" + "Amount of tests ran: " + passCompilationRequests.size() + "\u001B[0m" );
+					System.out.println();
+				}
+				default -> {
+				}
+			}
 	}
 
 	@Test
-	public void mvnTestMethod(){
-		main(new String[10]);
+	public void mvnTestMethod() {
+		main( new String[ 10 ] );
 	}
 
-	private static void printProgramSizes( CompilationRequest compilationRequest ){
+	private static void printProgramSizes( CompilationRequest compilationRequest ) {
 		try {
-			System.out.println( "Projecting");
+			System.out.println( "Projecting" );
 			performanceProject( Collections.singletonList( compilationRequest ), new HashMap<>() );
-			System.out.println( "Computing lines");
-			Path sourcePath = Paths.get( compilationRequest.sourceFolder.get( 0 ) + "/" + compilationRequest.symbol + ".ch" );
+			System.out.println( "Computing lines" );
+			Path sourcePath = Paths.get( compilationRequest.sourceFolder.get(
+					0 ) + "/" + compilationRequest.symbol + ".ch" );
 			String source = Files.readString( sourcePath );
 			int sourceSize = getProgramSize( source );
 			System.out.println( "source " + sourcePath + " of size: " + sourceSize );
-			Path targetPath = Paths.get( compilationRequest.targetFolder() + "/choral/examples/" + compilationRequest.symbol );
+			Path targetPath = Paths.get(
+					compilationRequest.targetFolder() + "/choral/examples/" + compilationRequest.symbol );
 
 			int totalSize = Arrays.stream( targetPath.toFile().listFiles() )
 					.filter( p -> p.getPath().indexOf( ".java" ) > 0 )
 					.map( targetFile -> {
 						try {
-							String targetSource = Files.readString( targetFile.toPath().toAbsolutePath() );
+							String targetSource = Files.readString(
+									targetFile.toPath().toAbsolutePath() );
 							int psize = getProgramSize( targetSource );
 							System.out.println( "source " + targetFile + " of size: " + psize );
 							return psize;
@@ -466,16 +427,18 @@ public class TestChoral {
 						}
 					} ).reduce( Integer::sum ).orElse( 0 );
 			System.out.println( "Java total LOCS: " + totalSize );
-			int ratio = Math.round( Math.round( ( ( (double) totalSize - sourceSize )/sourceSize )*10000 )/100 );
+			int ratio = Math.round( Math.round(
+					( ( (double) totalSize - sourceSize ) / sourceSize ) * 10000 ) / 100 );
 			System.out.println( "Java total increase vs source: " + ratio + "% more" );
-			System.out.println( compilationRequest.symbol + " & " + sourceSize + " & " + totalSize + " & " + ratio + "\\%" );
+			System.out.println(
+					compilationRequest.symbol + " & " + sourceSize + " & " + totalSize + " & " + ratio + "\\%" );
 			System.out.println( "- - - - - - - - - - - - - - - -" );
 		} catch( IOException e ) {
 			e.printStackTrace();
 		}
 	}
 
-	private static int getProgramSize( String p ){
+	private static int getProgramSize( String p ) {
 		p = p.replaceAll( "\\n{2,}", "\n" );
 		return p.split( "\\n" ).length;
 	}
@@ -534,7 +497,8 @@ public class TestChoral {
 			parameters.add( "epp" );
 			parameters.add( "--verbosity=DEBUG" );
 			if( !compilationRequest.headersFolders().isEmpty() )
-				parameters.add( "--headers=" + String.join( ":", compilationRequest.headersFolders() ) );
+				parameters.add(
+						"--headers=" + String.join( ":", compilationRequest.headersFolders() ) );
 			parameters.add( "-t" );
 			parameters.add( compilationRequest.targetFolder() );
 			parameters.add( "-s" );
@@ -543,118 +507,140 @@ public class TestChoral {
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
 			//System.out.println( "Issuing command " + String.join( " ", parameters ));
-			int exitCode = Choral.compile( parameters.toArray( new String[ 0 ] ));
-			if (exitCode != 0) System.err.print("Got " + exitCode + " as exit code when 0 was expected");
+			int exitCode = Choral.compile( parameters.toArray( new String[ 0 ] ) );
+			if( exitCode != 0 )
+				System.err.print( "Got " + exitCode + " as exit code when 0 was expected" );
 
 			boolean errorOccured = false;
 			boolean diffError = false;
 			boolean fileCountError = false;
 			boolean expectedFilesFailed = false;
-			List<String> diffOutput = new ArrayList<>();
+			List< String > diffOutput = new ArrayList<>();
 
-			List<String> javaCompilationErrors = new ArrayList<>();
+			List< String > javaCompilationErrors = new ArrayList<>();
 
-			List<String> alreadyCheckedPaths = new ArrayList<>();
-			for (String folder : compilationRequest.sourceFolder()){
-				Path path = Path.of(folder);
-				List<Path> sourceFiles = Files.walk(path).filter( file -> file.toString().endsWith(".ch")).collect(Collectors.toList());
-				for (Path file : sourceFiles){
-					String fileContent = Files.readString(file);
-					String pathString = fileContent.substring(fileContent.indexOf("package ") + 7, fileContent.indexOf(";")).trim(); // this finds the package declared at the top of the file
-					String innerPathString = "/" + pathString.replace(".", "/");
-					String targetFolderString = TARGETFOLDER + innerPathString;
-					
-					if (alreadyCheckedPaths.contains(targetFolderString)) continue;
-					
-					alreadyCheckedPaths.add(targetFolderString);
+			List< String > alreadyCheckedPaths = new ArrayList<>();
+			for( String folder : compilationRequest.sourceFolder() ) {
+				Path path = Path.of( folder );
+				List< Path > sourceFiles = Files.walk( path ).filter(
+						file -> file.toString().endsWith( ".ch" ) ).collect( Collectors.toList() );
+				for( Path file : sourceFiles ) {
+					String fileContent = Files.readString( file );
+					String pathString = fileContent.substring(
+							fileContent.indexOf( "package " ) + 7, fileContent.indexOf(
+									";" ) ).trim(); // this finds the package declared at the top of the file
+					String innerPathString = "/" + pathString.replace( ".", "/" );
+					String targetFolderString = TARGET_FOLDER + innerPathString;
 
-					try	{
-						Path projectFolder = Path.of(targetFolderString);
-						List<Path> projectedJavaFiles = Files.walk(projectFolder).filter(javaFile -> javaFile.toString().endsWith(".java")).collect(Collectors.toList());
-						
-						String expectedFolderString = EXPECTEDFOLDER + innerPathString;
-						Path expectedFolderPath = Path.of(expectedFolderString);
-						List<Path> expectedFiles = Files.walk(expectedFolderPath).filter( expectedFile -> expectedFile.toString().endsWith(".java")).collect(Collectors.toList());
-						
-						if (projectedJavaFiles.size() != expectedFiles.size()) {
+					if( alreadyCheckedPaths.contains( targetFolderString ) ) continue;
+
+					alreadyCheckedPaths.add( targetFolderString );
+
+					try {
+						Path projectFolder = Path.of( targetFolderString );
+						List< Path > projectedJavaFiles = Files.walk( projectFolder ).filter(
+								javaFile -> javaFile.toString().endsWith( ".java" ) ).collect(
+								Collectors.toList() );
+
+						String expectedFolderString = EXPECTED_FOLDER + innerPathString;
+						Path expectedFolderPath = Path.of( expectedFolderString );
+						List< Path > expectedFiles = Files.walk( expectedFolderPath ).filter(
+								expectedFile -> expectedFile.toString().endsWith(
+										".java" ) ).collect( Collectors.toList() );
+
+						if( projectedJavaFiles.size() != expectedFiles.size() ) {
 							fileCountError = true;
 							errorOccured = true;
 							continue;
 						}
-						
-						for (int i = 0; i < expectedFiles.size(); i++){
-							List<String> original = Files.readAllLines(expectedFiles.get(i));
-							List<String> revised = Files.readAllLines(projectedJavaFiles.get(i));
 
-							Patch<String> patch = DiffUtils.diff(original, revised);
+						for( int i = 0; i < expectedFiles.size(); i++ ) {
+							List< String > original = Files.readAllLines( expectedFiles.get( i ) );
+							List< String > revised = Files.readAllLines(
+									projectedJavaFiles.get( i ) );
+
+							Patch< String > patch = DiffUtils.diff( original, revised );
 							diffOutput = UnifiedDiffUtils.generateUnifiedDiff(
-								expectedFiles.get(i).toString(),
-								projectedJavaFiles.get(i).toString(),
-								original,
-								patch,
-								3
+									expectedFiles.get( i ).toString(),
+									projectedJavaFiles.get( i ).toString(),
+									original,
+									patch,
+									3
 							);
-							if (!diffOutput.isEmpty()) {
+							if( !diffOutput.isEmpty() ) {
 								errorOccured = true;
 								diffError = true;
 							}
 						}
-						
-					
+
+
 						JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-						DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-						StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
-						Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjects(expectedFiles.toArray(new Path[0]));
-						
-						String sourcePath = String.join(SEPARATOR, compilationRequest.sourcePaths);
-						String classPath = String.join(SEPARATOR, compilationRequest.classPaths);
+						DiagnosticCollector< JavaFileObject > diagnostics = new DiagnosticCollector<>();
+						StandardJavaFileManager fileManager = compiler.getStandardFileManager(
+								diagnostics, null, null );
+						Iterable< ? extends JavaFileObject > compilationUnits = fileManager.getJavaFileObjects(
+								expectedFiles.toArray( new Path[ 0 ] ) );
 
-						List<String> options = new ArrayList<>();
+						String sourcePath = String.join( SEPARATOR,
+								compilationRequest.sourcePaths );
+						String classPath = String.join( SEPARATOR, compilationRequest.classPaths );
 
-						if (!sourcePath.isEmpty()) options.addAll(Arrays.asList("-sourcepath", sourcePath));
-						if (!classPath.isEmpty()) options.addAll(Arrays.asList("-classpath", classPath));
-						
-						options.addAll(Arrays.asList("-d", "bin"));
+						List< String > options = new ArrayList<>();
 
-						JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
+						if( !sourcePath.isEmpty() )
+							options.addAll( Arrays.asList( "-sourcepath", sourcePath ) );
+						if( !classPath.isEmpty() )
+							options.addAll( Arrays.asList( "-classpath", classPath ) );
 
-						if (!task.call()) {
+						options.addAll( Arrays.asList( "-d", "bin" ) );
+
+						JavaCompiler.CompilationTask task = compiler.getTask( null, fileManager,
+								diagnostics, options, null, compilationUnits );
+
+						if( !task.call() ) {
 							expectedFilesFailed = true;
-							System.out.println("compilation error");
+							System.out.println( "compilation error" );
 							errorOccured = true;
-							for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
-								javaCompilationErrors.add(String.format("Error on line %d in %s%n",
-									diagnostic.getLineNumber(),
-									diagnostic.getSource().toUri()));
-								javaCompilationErrors.add(diagnostic.getMessage(null));
+							for( Diagnostic< ? extends JavaFileObject > diagnostic : diagnostics.getDiagnostics() ) {
+								javaCompilationErrors.add(
+										String.format( "Error on line %d in %s%n",
+												diagnostic.getLineNumber(),
+												diagnostic.getSource().toUri() ) );
+								javaCompilationErrors.add( diagnostic.getMessage( null ) );
 							}
 						}
 
-					} catch (InvalidPathException e){
-						System.err.println("Invalid package definition in: " + file);
-						System.err.println("Remember to define a package at the top of the file");
-					} catch (Exception e){
+					} catch( InvalidPathException e ) {
+						System.err.println( "Invalid package definition in: " + file );
+						System.err.println( "Remember to define a package at the top of the file" );
+					} catch( Exception e ) {
 						e.printStackTrace();
 					}
 				}
 			}
 
-			if (errorOccured){
-				System.out.printf("%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET);
-				if (diffError){
-					System.out.println(RED + "\tError: " + RESET + "There was a difference between the expected output and the generated output, now printing diff: ");
-					diffOutput.forEach(item -> System.out.println("\t" + item));
+			if( errorOccured ) {
+				System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n",
+						compilationRequest.symbol, RED, RESET );
+				if( diffError ) {
+					System.out.println(
+							RED + "\tError: " + RESET + "There was a difference between the expected output and the generated output, now printing diff: " );
+					diffOutput.forEach( item -> System.out.println( "\t" + item ) );
 				}
-				if (fileCountError){
-					System.err.println(RED + "\tError: " + RESET + "Expected files and projected files are not even in count! Ensure that the expected files is up to date");
+				if( fileCountError ) {
+					System.err.println(
+							RED + "\tError: " + RESET + "Expected files and projected files are not even in count! Ensure that the expected files is up to date" );
 				}
-				if (expectedFilesFailed) {
-					System.out.println("printing correctly");
-					System.err.println(RED + "\tError: " + RESET + "Not all files could be compiled");
-					javaCompilationErrors.forEach(errorLine -> System.err.println("\t" + errorLine));
+				if( expectedFilesFailed ) {
+					System.out.println( "printing correctly" );
+					System.err.println(
+							RED + "\tError: " + RESET + "Not all files could be compiled" );
+					javaCompilationErrors.forEach(
+							errorLine -> System.err.println( "\t" + errorLine ) );
 				}
-			}
-			else System.out.printf("%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET);
+			} else
+				System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol,
+						GREEN, RESET );
 
 
 		} catch( Exception e ) {
@@ -668,7 +654,8 @@ public class TestChoral {
 			parameters.add( "epp" );
 			parameters.add( "--verbosity=DEBUG" );
 			if( !compilationRequest.headersFolders().isEmpty() )
-				parameters.add( "--headers=" + String.join( ":", compilationRequest.headersFolders() ) );
+				parameters.add(
+						"--headers=" + String.join( ":", compilationRequest.headersFolders() ) );
 			parameters.add( "-t" );
 			parameters.add( compilationRequest.targetFolder() );
 			parameters.add( "-s" );
@@ -685,139 +672,151 @@ public class TestChoral {
 			int exitCode;
 
 			try {
-				System.setOut(new PrintStream(testOutput));
-				System.setErr(new PrintStream(testError));
-				exitCode = Choral.compile( parameters.toArray( new String[ 0 ] ));
+				System.setOut( new PrintStream( testOutput ) );
+				System.setErr( new PrintStream( testError ) );
+				exitCode = Choral.compile( parameters.toArray( new String[ 0 ] ) );
 			} finally {
-				System.setOut(originalOutput);
-				System.setErr(originalError);
+				System.setOut( originalOutput );
+				System.setErr( originalError );
 			}
-			if (exitCode == 0) System.err.println("Program received 0 as exitcode, which means no errors were found. This test is expected to have errors");	
+			if( exitCode == 0 ) System.err.println(
+					"Program received 0 as exitcode, which means no errors were found. This test is expected to have errors" );
 
 			String stringTestOutput = testOutput.toString();
-			String[] outputLines = stringTestOutput.split("\n");
+			String[] outputLines = stringTestOutput.split( "\n" );
 
 
-			Path directoryPath = Path.of(compilationRequest.sourceFolder().get(0));
-			if (Files.isDirectory(directoryPath)){
-				List<Path> testFiles = Files.walk(directoryPath)
-										.filter(path -> path.toString().endsWith(".ch"))
-										.collect(Collectors.toList());
-				String[] fileContent = Files.readString(testFiles.get(0)).split("\n");
-				
-				List<Map.Entry<Integer, String>> expectedErrorsFound = new ArrayList<>(); 
+			Path directoryPath = Path.of( compilationRequest.sourceFolder().get( 0 ) );
+			if( Files.isDirectory( directoryPath ) ) {
+				List< Path > testFiles = Files.walk( directoryPath )
+						.filter( path -> path.toString().endsWith( ".ch" ) )
+						.collect( Collectors.toList() );
+				String[] fileContent = Files.readString( testFiles.get( 0 ) ).split( "\n" );
 
-				for (int i = 0; i < fileContent.length; i++){
-					if (fileContent[i].contains("//!")){
-						int nextOccurence = fileContent[i].indexOf("//!");
-						int endOfError = fileContent[i].indexOf("//", nextOccurence + 1);
-						if (endOfError == -1) endOfError = fileContent[i].length();
-						
-						while (nextOccurence != -1){
-							expectedErrorsFound.add(new AbstractMap.SimpleEntry<>(i, fileContent[i].substring(nextOccurence + 3, endOfError).trim())); // '//!' = 3 characters
-							nextOccurence = fileContent[i].indexOf("//!", endOfError);
-							endOfError = fileContent[i].indexOf("//", nextOccurence + 1);
-							
-							if (endOfError == -1) endOfError = fileContent[i].length();
+				List< Map.Entry< Integer, String > > expectedErrorsFound = new ArrayList<>();
+
+				for( int i = 0; i < fileContent.length; i++ ) {
+					if( fileContent[ i ].contains( "//!" ) ) {
+						int nextOccurence = fileContent[ i ].indexOf( "//!" );
+						int endOfError = fileContent[ i ].indexOf( "//", nextOccurence + 1 );
+						if( endOfError == -1 ) endOfError = fileContent[ i ].length();
+
+						while( nextOccurence != -1 ) {
+							expectedErrorsFound.add( new AbstractMap.SimpleEntry<>( i,
+									fileContent[ i ].substring( nextOccurence + 3,
+											endOfError ).trim() ) ); // '//!' = 3 characters
+							nextOccurence = fileContent[ i ].indexOf( "//!", endOfError );
+							endOfError = fileContent[ i ].indexOf( "//", nextOccurence + 1 );
+
+							if( endOfError == -1 ) endOfError = fileContent[ i ].length();
 						}
 					}
 				}
 
 				int errorsFound = 0;
 				int nextErrorLine = 0;
-				int start = outputLines[nextErrorLine].indexOf("ch:") + 3;
-				int end = outputLines[nextErrorLine].indexOf(":", start);
+				int start = outputLines[ nextErrorLine ].indexOf( "ch:" ) + 3;
+				int end = outputLines[ nextErrorLine ].indexOf( ":", start );
 
-				int errorLineNumber = Integer.parseInt(outputLines[nextErrorLine].substring(start, end)) - 1;
-				List<Map.Entry<Integer, String>> foundErrors = new ArrayList<>();
-				List<String> missedErrors = new ArrayList<>();
+				int errorLineNumber = Integer.parseInt(
+						outputLines[ nextErrorLine ].substring( start, end ) ) - 1;
+				List< Map.Entry< Integer, String > > foundErrors = new ArrayList<>();
+				List< String > missedErrors = new ArrayList<>();
 
 				boolean endOfOutputReached = false;
 
-				for (Map.Entry<Integer, String> line : expectedErrorsFound){
-					if (errorLineNumber == line.getKey()){
-						boolean errorFound = outputLines[nextErrorLine].contains(line.getValue());
-						if (errorFound) {
+				for( Map.Entry< Integer, String > line : expectedErrorsFound ) {
+					if( errorLineNumber == line.getKey() ) {
+						boolean errorFound = outputLines[ nextErrorLine ].contains(
+								line.getValue() );
+						if( errorFound ) {
 							errorsFound++;
-							foundErrors.add(line);
+							foundErrors.add( line );
 						}
-					}
-					else {
-						System.out.println("Error line number doesn't match, did you put the expected error on the wrong line?");
-						System.out.println("Got: " + errorLineNumber + " expected: " + line.getKey());
+					} else {
+						System.out.println(
+								"Error line number doesn't match, did you put the expected error on the wrong line?" );
+						System.out.println(
+								"Got: " + errorLineNumber + " expected: " + line.getKey() );
 					}
 
-					for (int i = nextErrorLine; i < outputLines.length; i++){
-						if (outputLines[i].equals("compilation failed.")){
+					for( int i = nextErrorLine; i < outputLines.length; i++ ) {
+						if( outputLines[ i ].equals( "compilation failed." ) ) {
 							nextErrorLine = i + 2;
 							break;
 						}
-					} 
+					}
 
-					if (nextErrorLine >= outputLines.length) {
+					if( nextErrorLine >= outputLines.length ) {
 						endOfOutputReached = true;
 						break; // end of error output reached
 					}
 
-					start = outputLines[nextErrorLine].indexOf("ch:") + 3;
-					end = outputLines[nextErrorLine].indexOf(":", start);
+					start = outputLines[ nextErrorLine ].indexOf( "ch:" ) + 3;
+					end = outputLines[ nextErrorLine ].indexOf( ":", start );
 
-					if (end == -1 || start == -1){
+					if( end == -1 || start == -1 ) {
 						endOfOutputReached = true;
 						break; // end of error output reached 
-					} 
+					}
 
-					errorLineNumber = Integer.parseInt(outputLines[nextErrorLine].substring(start, end)) - 1;
-				} 
-				
-				List<String> unExpectedErrors = new ArrayList<>();
-				if (!endOfOutputReached){
-					while(start != -1 || end != -1){
-						unExpectedErrors.add(outputLines[nextErrorLine]);
-						
-						for (int i = nextErrorLine; i < outputLines.length; i++){
-							if (outputLines[i].equals("compilation failed.")){
+					errorLineNumber = Integer.parseInt(
+							outputLines[ nextErrorLine ].substring( start, end ) ) - 1;
+				}
+
+				List< String > unExpectedErrors = new ArrayList<>();
+				if( !endOfOutputReached ) {
+					while( start != -1 || end != -1 ) {
+						unExpectedErrors.add( outputLines[ nextErrorLine ] );
+
+						for( int i = nextErrorLine; i < outputLines.length; i++ ) {
+							if( outputLines[ i ].equals( "compilation failed." ) ) {
 								nextErrorLine = i + 2;
 								break;
 							}
 						}
 
-						if (nextErrorLine >= outputLines.length) break;
+						if( nextErrorLine >= outputLines.length ) break;
 
-						start = outputLines[nextErrorLine].indexOf("ch:") + 3;
-						end = outputLines[nextErrorLine].indexOf(":", start);
-					}					
+						start = outputLines[ nextErrorLine ].indexOf( "ch:" ) + 3;
+						end = outputLines[ nextErrorLine ].indexOf( ":", start );
+					}
 				}
 
 				boolean allErrorsFound = errorsFound != expectedErrorsFound.size();
 				boolean anyErrorsMissed = !missedErrors.isEmpty();
 				boolean anyErrorsNotExpected = !unExpectedErrors.isEmpty();
 
-				if (allErrorsFound || anyErrorsMissed || anyErrorsNotExpected) {
-					System.out.printf("%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET);
+				if( allErrorsFound || anyErrorsMissed || anyErrorsNotExpected ) {
+					System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n",
+							compilationRequest.symbol, RED, RESET );
 
-					if (allErrorsFound){
-						System.out.println("\t\u001B[31m" + "Error" + "\u001B[0m: " + (expectedErrorsFound.size() - errorsFound) + " errors not found");
-						for (Map.Entry<Integer, String> line : expectedErrorsFound){
-							if (!foundErrors.contains(line)) System.out.println("\t\tExpected to find: " + line.getValue() + " on line " + line.getKey());
+					if( allErrorsFound ) {
+						System.out.println(
+								"\t\u001B[31m" + "Error" + "\u001B[0m: " + ( expectedErrorsFound.size() - errorsFound ) + " errors not found" );
+						for( Map.Entry< Integer, String > line : expectedErrorsFound ) {
+							if( !foundErrors.contains( line ) ) System.out.println(
+									"\t\tExpected to find: " + line.getValue() + " on line " + line.getKey() );
 						}
 					}
-					if (anyErrorsMissed){
-						System.out.println("Found " + missedErrors.size() + " errors not expected");
-						for (String error : missedErrors){
-							System.out.println(error);
+					if( anyErrorsMissed ) {
+						System.out.println(
+								"Found " + missedErrors.size() + " errors not expected" );
+						for( String error : missedErrors ) {
+							System.out.println( error );
 						}
 					}
-					if (anyErrorsNotExpected){
-						System.out.println("Found errors reported by the compiler not annotated in test:");
-						for (String error : unExpectedErrors){
-							System.out.println(error);
+					if( anyErrorsNotExpected ) {
+						System.out.println(
+								"Found errors reported by the compiler not annotated in test:" );
+						for( String error : unExpectedErrors ) {
+							System.out.println( error );
 						}
 					}
-				} 
-				else System.out.printf("%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET);
-			}
-			else System.err.println(String.format("Directory not found: '%s'", directoryPath));
+				} else System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n",
+						compilationRequest.symbol, GREEN, RESET );
+			} else
+				System.err.printf( "Directory not found: '%s'%n", directoryPath );
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}
