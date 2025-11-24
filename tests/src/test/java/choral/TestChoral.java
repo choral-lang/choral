@@ -367,26 +367,25 @@ public class TestChoral {
 			List< String > symbols, List< CompilationRequest > compilationRequests,
 			TestType testType
 	) {
-		List< CompilationRequest > passCompilationRequests = symbols.stream()
-				.map( s -> compilationRequests.stream().filter(
-						c -> c.symbol.equalsIgnoreCase( s ) ).findFirst() )
-				.filter( Optional::isPresent ).map( Optional::get ).toList();
+		List< CompilationRequest > finalCompilationRequests = compilationRequests.stream()
+				.filter( c -> symbols.contains(c.symbol))
+				.toList();
 
 		if( null != testType )
 			switch( testType ) {
 				case MUSTPASS -> {
 					System.out.println( "\nNow running tests that must pass\n" );
-					passCompilationRequests.forEach( TestChoral::project );
+					finalCompilationRequests.forEach( TestChoral::project );
 					System.out.println(
-							"\u001B[32m" + "Amount of tests ran: " + passCompilationRequests.size() + "\u001B[0m" );
+							"\u001B[32m" + "Amount of tests ran: " + finalCompilationRequests.size() + "\u001B[0m" );
 					System.out.println();
 				}
 				case MUSTFAIL -> {
 					System.out.println( "Now running tests that must fail\n" );
-					passCompilationRequests.forEach( TestChoral::projectFail );
+					finalCompilationRequests.forEach( TestChoral::projectFail );
 					System.out.println();
 					System.out.println(
-							"\u001B[32m" + "Amount of tests ran: " + passCompilationRequests.size() + "\u001B[0m" );
+							"\u001B[32m" + "Amount of tests ran: " + finalCompilationRequests.size() + "\u001B[0m" );
 					System.out.println();
 				}
 				default -> {
