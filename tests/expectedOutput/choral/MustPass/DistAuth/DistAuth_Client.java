@@ -1,9 +1,9 @@
 package choral.MustPass.DistAuth;
 
-import choral.DistAuth.EnumBoolean;
 import choral.MustPass.AuthResult.AuthResult_A;
 import choral.MustPass.DistAuth.Base64_Encoder;
 import choral.MustPass.DistAuth.Credentials;
+import choral.MustPass.DistAuth.EnumBoolean;
 import choral.MustPass.DistAuthUtils.AuthToken;
 import choral.annotations.Choreography;
 import choral.lang.Unit;

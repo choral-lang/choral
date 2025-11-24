@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import choral.runtime.TLSChannel.TLSChannel;
-import choral.DistAuth.EnumBoolean;
+import choral.MustPass.DistAuth.EnumBoolean;
 
 public class DistAuth@( Client, Service, IP ){
 	private TLSChannel@( Client, IP )< Object > ch_Client_IP;

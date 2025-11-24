@@ -1,4 +1,4 @@
-package choral.DistAuth;
+package choral.MustPass.DistAuth;
 
 import choral.runtime.Serializers.KryoSerializable;
 
