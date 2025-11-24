@@ -47,9 +47,8 @@ public class Position {
 	}
 
 	public String formattedPosition() {
-		// solution 2
-		if (sourceFile.startsWith("<") && sourceFile.endsWith(">")){ // CharStreams.fromString defaults name to <unknown>
-			return String.format( "file '%s' line %d column %d", sourceFile, line, column );
+		if (sourceFile == null){ 
+			return String.format( "line %d column %d", line, column );
 		}
 
 		String relativePath = Paths.get( "." ).toAbsolutePath().relativize(

@@ -42,18 +42,18 @@ import choral.grammar.ChoralLexer;
 
 public class Parser {
 
-	private static CompilationUnit parsingHelper(String source, CharStream content){
+	private static CompilationUnit parsingHelper(String fileName, CharStream content){
 		ChoralLexer lexer = new ChoralLexer(content);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		choral.grammar.ChoralParser cp = new choral.grammar.ChoralParser(tokens);
 		cp.removeErrorListeners();
-		ParsingErrorListener errorListener = new ParsingErrorListener(source);
+		ParsingErrorListener errorListener = new ParsingErrorListener(fileName);
 		cp.addErrorListener( errorListener );
 		choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
 		if( errorListener.getErrors().isEmpty() ) {
 			return AstOptimizer
 					.loadParameters( /* new String[]{ "showDebug" } */ )
-					.optimise( ctx, null ); //null when parsing string, source otherwise 
+					.optimise( ctx, fileName );
 		} else {
 			List<? extends AstPositionedException> errors = errorListener.getErrors();
 			List<Position> positions = new ArrayList<>();
@@ -66,7 +66,7 @@ public class Parser {
 
 	public static CompilationUnit parseString(String sourceCode) throws IOException {
 		CharStream content = CharStreams.fromString(sourceCode);
-		return parsingHelper(sourceCode, content);
+		return parsingHelper(null, content);
 	}
 
 	public static CompilationUnit parseSourceFile(
