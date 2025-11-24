@@ -50,6 +50,8 @@ import org.junit.jupiter.api.Test;
 import com.github.difflib.DiffUtils;
 import com.github.difflib.UnifiedDiffUtils;
 import com.github.difflib.patch.Patch;
+import com.github.difflib.text.DiffRow;
+import com.github.difflib.text.DiffRowGenerator;
 
 
 public class TestChoral {
@@ -339,9 +341,9 @@ public class TestChoral {
 				ChainingOperator,
 				IfDesugar,
 				LoggerExample,
-				//SwitchTest, // https://github.com/choral-lang/choral/issues/29
-				//MirrorChannel, // https://github.com/choral-lang/choral/issues/27
-				//AutoBoxing, // https://github.com/choral-lang/choral/issues/28
+				// SwitchTest, // https://github.com/choral-lang/choral/issues/29
+				// MirrorChannel, // https://github.com/choral-lang/choral/issues/27
+				// AutoBoxing, // https://github.com/choral-lang/choral/issues/28
 				BookSellingSoloist,
 				ExtendsTest,
 				AuthResult,
@@ -518,7 +520,7 @@ public class TestChoral {
 			boolean diffError = false;
 			boolean fileCountError = false;
 			boolean expectedFilesFailed = false;
-			List< String > diffOutput = new ArrayList<>();
+			List< List< String >> diffOutputs = new ArrayList<>();
 
 			List< String > javaCompilationErrors = new ArrayList<>();
 
@@ -558,20 +560,22 @@ public class TestChoral {
 
 						for( int i = 0; i < expectedFiles.size(); i++ ) {
 							List< String > original = Files.readAllLines( expectedFiles.get( i ) );
-							List< String > revised = Files.readAllLines(
-									projectedJavaFiles.get( i ) );
+							List< String > revised = Files.readAllLines( projectedJavaFiles.get( i ) );
 
 							Patch< String > patch = DiffUtils.diff( original, revised );
-							diffOutput = UnifiedDiffUtils.generateUnifiedDiff(
+
+							List<String> diffOutput = UnifiedDiffUtils.generateUnifiedDiff(
 									expectedFiles.get( i ).toString(),
 									projectedJavaFiles.get( i ).toString(),
 									original,
 									patch,
 									3
 							);
+
 							if( !diffOutput.isEmpty() ) {
 								errorOccured = true;
 								diffError = true;
+								diffOutputs.add(diffOutput);
 							}
 						}
 
@@ -627,7 +631,9 @@ public class TestChoral {
 				if( diffError ) {
 					System.out.println(
 							RED + "\tError: " + RESET + "There was a difference between the expected output and the generated output, now printing diff: " );
-					diffOutput.forEach( item -> System.out.println( "\t" + item ) );
+					for (List<String> diffOutput : diffOutputs){
+						diffOutput.forEach( item -> System.out.println( "\t" + item ) );
+					}
 				}
 				if( fileCountError ) {
 					System.err.println(
