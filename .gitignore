@@ -19,3 +19,4 @@ target/
 .vscode/*
 CLAUDE.md
 /tests/bin
+/tests/projectedOutput

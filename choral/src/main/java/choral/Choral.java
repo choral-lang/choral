@@ -21,18 +21,6 @@
 
 package choral;
 
-import choral.ast.CompilationUnit;
-import choral.ast.Position;
-import choral.compiler.Compiler;
-import choral.compiler.*;
-import choral.exceptions.AstPositionedException;
-import choral.exceptions.ChoralCompoundException;
-import choral.exceptions.ChoralException;
-import choral.utils.Streams.WrappedException;
-import picocli.AutoComplete;
-import picocli.CommandLine;
-import picocli.CommandLine.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,6 +54,9 @@ import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.ChoralException;
 import choral.utils.Streams.WrappedException;
+import static choral.utils.Streams.wrapFunction;
+import static choral.utils.Streams.wrapConsumer;
+import static choral.utils.Streams.skip;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
