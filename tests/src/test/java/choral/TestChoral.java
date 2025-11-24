@@ -50,8 +50,6 @@ import org.junit.jupiter.api.Test;
 import com.github.difflib.DiffUtils;
 import com.github.difflib.UnifiedDiffUtils;
 import com.github.difflib.patch.Patch;
-import com.github.difflib.text.DiffRow;
-import com.github.difflib.text.DiffRowGenerator;
 
 
 public class TestChoral {
@@ -76,6 +74,7 @@ public class TestChoral {
 		return sourceFolder + File.separator + subFolder;
 	}
 
+	/**Thi */
 	private static final String FILESEPARATOR = System.getProperty( "path.separator" );
 	private static final String PATHSEPARATOR = File.separator;
 	private static final String SOURCE_FOLDER = "tests/src/main/choral/examples";
@@ -372,123 +371,30 @@ public class TestChoral {
 				.filter( c -> symbols.contains(c.symbol))
 				.toList();
 
-		if( null != testType )
-			switch( testType ) {
-				case MUSTPASS -> {
-					System.out.println( "\nNow running tests that must pass\n" );
-					finalCompilationRequests.forEach( TestChoral::project );
-					System.out.println(
-							"\u001B[32m" + "Amount of tests ran: " + finalCompilationRequests.size() + "\u001B[0m" );
-					System.out.println();
-				}
-				case MUSTFAIL -> {
-					System.out.println( "Now running tests that must fail\n" );
-					finalCompilationRequests.forEach( TestChoral::projectFail );
-					System.out.println();
-					System.out.println(
-							"\u001B[32m" + "Amount of tests ran: " + finalCompilationRequests.size() + "\u001B[0m" );
-					System.out.println();
-				}
-				default -> {
-				}
+		switch( testType ) {
+			case MUSTPASS -> {
+				System.out.println( "\nNow running tests that must pass\n" );
+				finalCompilationRequests.forEach( TestChoral::project );
+				System.out.println(
+						"\u001B[32m" + "Amount of tests ran: " + finalCompilationRequests.size() + "\u001B[0m" );
+				System.out.println();
 			}
+			case MUSTFAIL -> {
+				System.out.println( "Now running tests that must fail\n" );
+				finalCompilationRequests.forEach( TestChoral::projectFail );
+				System.out.println();
+				System.out.println(
+						"\u001B[32m" + "Amount of tests ran: " + finalCompilationRequests.size() + "\u001B[0m" );
+				System.out.println();
+			}
+			default -> {
+			}
+		}
 	}
 
 	@Test
 	public void mvnTestMethod() {
 		main( new String[ 10 ] );
-	}
-
-	private static void printProgramSizes( CompilationRequest compilationRequest ) {
-		try {
-			System.out.println( "Projecting" );
-			performanceProject( Collections.singletonList( compilationRequest ), new HashMap<>() );
-			System.out.println( "Computing lines" );
-			Path sourcePath = Paths.get( compilationRequest.sourceFolder.get(
-					0 ) + "/" + compilationRequest.symbol + ".ch" );
-			String source = Files.readString( sourcePath );
-			int sourceSize = getProgramSize( source );
-			System.out.println( "source " + sourcePath + " of size: " + sourceSize );
-			Path targetPath = Paths.get(
-					compilationRequest.targetFolder() + "/choral/examples/" + compilationRequest.symbol );
-
-			int totalSize = Arrays.stream( targetPath.toFile().listFiles() )
-					.filter( p -> p.getPath().indexOf( ".java" ) > 0 )
-					.map( targetFile -> {
-						try {
-							String targetSource = Files.readString(
-									targetFile.toPath().toAbsolutePath() );
-							int psize = getProgramSize( targetSource );
-							System.out.println( "source " + targetFile + " of size: " + psize );
-							return psize;
-						} catch( IOException e ) {
-							e.printStackTrace();
-							return 0;
-						}
-					} ).reduce( Integer::sum ).orElse( 0 );
-			System.out.println( "Java total LOCS: " + totalSize );
-			int ratio = Math.round( Math.round(
-					( ( (double) totalSize - sourceSize ) / sourceSize ) * 10000 ) / 100 );
-			System.out.println( "Java total increase vs source: " + ratio + "% more" );
-			System.out.println(
-					compilationRequest.symbol + " & " + sourceSize + " & " + totalSize + " & " + ratio + "\\%" );
-			System.out.println( "- - - - - - - - - - - - - - - -" );
-		} catch( IOException e ) {
-			e.printStackTrace();
-		}
-	}
-
-	private static int getProgramSize( String p ) {
-		p = p.replaceAll( "\\n{2,}", "\n" );
-		return p.split( "\\n" ).length;
-	}
-
-	private static void projectionPerformance( List< CompilationRequest > compilationRequests ) {
-		boolean firstRun = true;
-		for( CompilationRequest compilationRequest : compilationRequests ) {
-			int runs = firstRun ? 2000 : 1000;
-			int skip = firstRun ? 1000 : 0;
-			int interval = runs / 100;
-			firstRun = false;
-			Map< String, ArrayList< Long > > log = new HashMap<>();
-			System.out.println(
-					"Compilation performance for symbol: " + compilationRequest.symbol );
-			for( int i = 0; i < runs; i++ ) {
-				if( i % interval == 0 )
-					System.out.print(
-							"\rRun: " + i + " of " + runs + " (" + ( 100 * i / runs ) + "%)" );
-				performanceProject( Collections.singletonList( compilationRequest ), log );
-			}
-			System.out.print( "\rDone\n" );
-			log.forEach( ( key, values ) -> {
-				System.out.println( key + ": " + values.stream().skip( skip ).mapToLong(
-						i -> i ).average().orElse( 0 ) / Math.pow( 10, 6 ) );
-			} );
-
-			System.out.println( "- - - - - - - - - - - - - - - -" );
-		}
-	}
-
-	private static void check( List< CompilationRequest > compilationRequests ) {
-		try {
-			for( CompilationRequest compilationRequest : compilationRequests ) {
-				ArrayList< String > parameters = new ArrayList<>();
-				parameters.add( "check" );
-				parameters.add( "--verbosity=DEBUG" );
-				if( !compilationRequest.headersFolders().isEmpty() )
-					parameters.add( "--headers=" + String.join( ":",
-							compilationRequest.headersFolders() ) );
-				parameters.add(
-						compilationRequest.sourceFolder().get( 0 )
-								+ File.separator
-								+ compilationRequest.symbol + ".ch"
-				);
-				System.out.println( "Issuing command " + String.join( " ", parameters ) );
-				Choral.main( parameters.toArray( new String[ 0 ] ) );
-			}
-		} catch( Exception e ) {
-			e.printStackTrace();
-		}
 	}
 
 	private static ArrayList< String > generateParameters(CompilationRequest compilationRequest){
@@ -817,38 +723,8 @@ public class TestChoral {
 		}
 	}
 
-	private static void performanceProject(
-			List< CompilationRequest > compilationRequests, Map< String, ArrayList< Long > > log
-	) {
-		try {
-			for( CompilationRequest compilationRequest : compilationRequests ) {
-				ArrayList< String > parameters = new ArrayList<>();
-				parameters.add( "epp" );
-				parameters.add( "--verbosity=DEBUG" );
-				if( !compilationRequest.headersFolders().isEmpty() )
-					parameters.add( "--headers=" + String.join( ":",
-							compilationRequest.headersFolders() ) );
-				parameters.add( "-t" );
-				parameters.add( compilationRequest.targetFolder() );
-				parameters.add( "-s" );
-				parameters.add( String.join( ":", compilationRequest.sourceFolder() ) );
-				parameters.add( compilationRequest.symbol() );
-				parameters.addAll( compilationRequest.worlds() );
-//				parameters.add( "--annotate" );
-//				parameters.add( "--dry-run" );
-//				System.out.println( "Issuing command " + String.join( " ", parameters ) );
-				Choral.mainProfiler( parameters.toArray( new String[ 0 ] ), log );
+	
 
-			}
-		} catch( Exception e ) {
-			e.printStackTrace();
-		}
-	}
-
-	private static void version() {
-		ArrayList< String > parameters = new ArrayList<>();
-		parameters.add( "--version" );
-		Choral.main( parameters.toArray( new String[ 0 ] ) );
-	}
+	
 
 }
