@@ -492,21 +492,27 @@ public class TestChoral {
 		}
 	}
 
+	private static ArrayList< String > generateParameters(CompilationRequest compilationRequest){
+		ArrayList< String > parameters = new ArrayList<>();
+		parameters.add( "epp" );
+		parameters.add( "--verbosity=DEBUG" );
+		if( !compilationRequest.headersFolders().isEmpty() )
+			parameters.add(
+					"--headers=" + String.join( FILESEPARATOR, compilationRequest.headersFolders() ) );
+		parameters.add( "-t" );
+		parameters.add( compilationRequest.targetFolder() );
+		parameters.add( "-s" );
+		parameters.add( String.join( FILESEPARATOR, compilationRequest.sourceFolder() ) );
+		parameters.add( compilationRequest.symbol() );
+		parameters.addAll( compilationRequest.worlds() );
+		parameters.add( "--annotate" );
+		return parameters;
+	}
+
 	private static void project( CompilationRequest compilationRequest ) {
 		try {
-			ArrayList< String > parameters = new ArrayList<>();
-			parameters.add( "epp" );
-			parameters.add( "--verbosity=DEBUG" );
-			if( !compilationRequest.headersFolders().isEmpty() )
-				parameters.add(
-						"--headers=" + String.join( FILESEPARATOR, compilationRequest.headersFolders() ) );
-			parameters.add( "-t" );
-			parameters.add( compilationRequest.targetFolder() );
-			parameters.add( "-s" );
-			parameters.add( String.join( FILESEPARATOR, compilationRequest.sourceFolder() ) );
-			parameters.add( compilationRequest.symbol() );
-			parameters.addAll( compilationRequest.worlds() );
-			parameters.add( "--annotate" );
+			ArrayList< String > parameters = generateParameters(compilationRequest);
+			
 			int exitCode = Choral.compile( parameters.toArray( new String[ 0 ] ) );
 			if( exitCode != 0 )
 				System.err.print( "Got " + exitCode + " as exit code when 0 was expected" );
@@ -642,7 +648,6 @@ public class TestChoral {
 				System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol,
 						GREEN, RESET );
 
-
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}
@@ -650,19 +655,7 @@ public class TestChoral {
 
 	private static void projectFail( CompilationRequest compilationRequest ) {
 		try {
-			ArrayList< String > parameters = new ArrayList<>();
-			parameters.add( "epp" );
-			parameters.add( "--verbosity=DEBUG" );
-			if( !compilationRequest.headersFolders().isEmpty() )
-				parameters.add(
-						"--headers=" + String.join( FILESEPARATOR, compilationRequest.headersFolders() ) );
-			parameters.add( "-t" );
-			parameters.add( compilationRequest.targetFolder() );
-			parameters.add( "-s" );
-			parameters.add( String.join( FILESEPARATOR, compilationRequest.sourceFolder() ) );
-			parameters.add( compilationRequest.symbol() );
-			parameters.addAll( compilationRequest.worlds() );
-			parameters.add( "--annotate" );
+			ArrayList< String > parameters = generateParameters(compilationRequest);
 
 			ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
 			ByteArrayOutputStream testError = new ByteArrayOutputStream();
