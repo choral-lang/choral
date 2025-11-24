@@ -503,7 +503,7 @@ public class TestChoral {
 			parameters.add( "-t" );
 			parameters.add( compilationRequest.targetFolder() );
 			parameters.add( "-s" );
-			parameters.add( String.join( ":", compilationRequest.sourceFolder() ) );
+			parameters.add( String.join( FILESEPARATOR, compilationRequest.sourceFolder() ) );
 			parameters.add( compilationRequest.symbol() );
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
