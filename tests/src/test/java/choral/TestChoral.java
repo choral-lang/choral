@@ -36,11 +36,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.swing.JPopupMenu;
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
@@ -529,7 +526,7 @@ public class TestChoral {
 			for( String folder : compilationRequest.sourceFolder() ) {
 				Path path = Path.of( folder );
 				List< Path > sourceFiles = Files.walk( path ).filter(
-						file -> file.toString().endsWith( ".ch" ) ).collect( Collectors.toList() );
+						file -> file.toString().endsWith( ".ch" ) ).toList();
 				for( Path file : sourceFiles ) {
 					String fileContent = Files.readString( file );
 					String pathString = fileContent.substring(
@@ -545,14 +542,13 @@ public class TestChoral {
 					try {
 						Path projectFolder = Path.of( targetFolderString );
 						List< Path > projectedJavaFiles = Files.walk( projectFolder ).filter(
-								javaFile -> javaFile.toString().endsWith( ".java" ) ).collect(
-								Collectors.toList() );
+								javaFile -> javaFile.toString().endsWith( ".java" ) ).toList();
 
 						String expectedFolderString = EXPECTED_FOLDER + innerPathString;
 						Path expectedFolderPath = Path.of( expectedFolderString );
 						List< Path > expectedFiles = Files.walk( expectedFolderPath ).filter(
 								expectedFile -> expectedFile.toString().endsWith(
-										".java" ) ).collect( Collectors.toList() );
+										".java" ) ).toList();
 
 						if( projectedJavaFiles.size() != expectedFiles.size() ) {
 							fileCountError = true;
@@ -683,7 +679,7 @@ public class TestChoral {
 			if( Files.isDirectory( directoryPath ) ) {
 				List< Path > testFiles = Files.walk( directoryPath )
 						.filter( path -> path.toString().endsWith( ".ch" ) )
-						.collect( Collectors.toList() );
+						.toList();
 				String[] fileContent = Files.readString( testFiles.get( 0 ) ).split( "\n" );
 
 				List< Map.Entry< Integer, String > > expectedErrorsFound = new ArrayList<>();
