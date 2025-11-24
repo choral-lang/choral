@@ -40,6 +40,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.swing.JPopupMenu;
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
@@ -76,7 +77,8 @@ public class TestChoral {
 		return sourceFolder + File.separator + subFolder;
 	}
 
-	private static final String SEPARATOR = System.getProperty( "path.separator" );
+	private static final String FILESEPARATOR = System.getProperty( "path.separator" );
+	private static final String PATHSEPARATOR = File.separator;
 	private static final String SOURCE_FOLDER = "tests/src/main/choral/examples";
 	private static final String TARGET_FOLDER = "projectedOutput";
 	private static final String EXPECTED_FOLDER = "expectedOutput";
@@ -528,7 +530,7 @@ public class TestChoral {
 					String pathString = fileContent.substring(
 							fileContent.indexOf( "package " ) + 7, fileContent.indexOf(
 									";" ) ).trim(); // this finds the package declared at the top of the file
-					String innerPathString = "/" + pathString.replace( ".", "/" );
+					String innerPathString = PATHSEPARATOR + pathString.replace( ".", PATHSEPARATOR );
 					String targetFolderString = TARGET_FOLDER + innerPathString;
 
 					if( alreadyCheckedPaths.contains( targetFolderString ) ) continue;
@@ -580,9 +582,9 @@ public class TestChoral {
 						Iterable< ? extends JavaFileObject > compilationUnits = fileManager.getJavaFileObjects(
 								expectedFiles.toArray( new Path[ 0 ] ) );
 
-						String sourcePath = String.join( SEPARATOR,
+						String sourcePath = String.join( FILESEPARATOR,
 								compilationRequest.sourcePaths );
-						String classPath = String.join( SEPARATOR, compilationRequest.classPaths );
+						String classPath = String.join( FILESEPARATOR, compilationRequest.classPaths );
 
 						List< String > options = new ArrayList<>();
 
@@ -654,11 +656,11 @@ public class TestChoral {
 			parameters.add( "--verbosity=DEBUG" );
 			if( !compilationRequest.headersFolders().isEmpty() )
 				parameters.add(
-						"--headers=" + String.join( ":", compilationRequest.headersFolders() ) );
+						"--headers=" + String.join( FILESEPARATOR, compilationRequest.headersFolders() ) );
 			parameters.add( "-t" );
 			parameters.add( compilationRequest.targetFolder() );
 			parameters.add( "-s" );
-			parameters.add( String.join( ":", compilationRequest.sourceFolder() ) );
+			parameters.add( String.join( FILESEPARATOR, compilationRequest.sourceFolder() ) );
 			parameters.add( compilationRequest.symbol() );
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
