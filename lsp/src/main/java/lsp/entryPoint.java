@@ -20,7 +20,7 @@ public class entryPoint {
             }""";
 
         String notOkayCode = """
-                clas WrongType@( A ) {
+                class WrongType@( A ) {
                     public void sayHello() {
                         String@A a = "Hello from A"@A;
                         int@A lol = 5@A;
@@ -30,7 +30,9 @@ public class entryPoint {
                 }
                 """; // int@A = 5.5@A; // a = "lol";
         List<Diagnostic> diagnostics = diag.analyze("", notOkayCode);
+        Diagnostic diagnostic = diagnostics.get(0);
         
         System.out.println("Errors: " + diagnostics.size());
+        System.out.println("Error 1 position: " + diagnostic.getRange());
     }
 }

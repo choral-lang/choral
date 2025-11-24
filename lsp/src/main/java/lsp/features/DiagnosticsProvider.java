@@ -22,19 +22,27 @@ public class DiagnosticsProvider {
             CompilationUnit compUnit = Parser.parseString(content);
             System.out.println("Should never be reached");
         } catch (ChoralCompoundException e) {
+            List<choral.ast.Position> positions = e.getPositions();
+            int positionCounter = 0;
+            
             for (ChoralException cause : e.getCauses()){
                 Diagnostic diagnostic = new Diagnostic();
                 
                 String message = cause.getMessage();
                 System.out.println(message);
 
-                Range range = new Range(new Position(0, 0), new Position(0, 0));
+                                
+                choral.ast.Position position = positions.get(positionCounter);
+                Range range = new Range(new Position(position.line(), position.column()), 
+                                        new Position(position.line(), position.column()));
                 diagnostic.setRange(range);
                 diagnostic.setSeverity(DiagnosticSeverity.Error);
                 diagnostic.setMessage(cause.getMessage());
                 diagnostic.setSource("choral-compiler");
 
                 diagnostics.add(diagnostic);
+
+                positionCounter++;
             } 
         } catch (Exception e){
             e.printStackTrace();
