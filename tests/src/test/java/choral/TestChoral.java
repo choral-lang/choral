@@ -499,7 +499,7 @@ public class TestChoral {
 			parameters.add( "--verbosity=DEBUG" );
 			if( !compilationRequest.headersFolders().isEmpty() )
 				parameters.add(
-						"--headers=" + String.join( ":", compilationRequest.headersFolders() ) );
+						"--headers=" + String.join( FILESEPARATOR, compilationRequest.headersFolders() ) );
 			parameters.add( "-t" );
 			parameters.add( compilationRequest.targetFolder() );
 			parameters.add( "-s" );
@@ -507,7 +507,6 @@ public class TestChoral {
 			parameters.add( compilationRequest.symbol() );
 			parameters.addAll( compilationRequest.worlds() );
 			parameters.add( "--annotate" );
-			//System.out.println( "Issuing command " + String.join( " ", parameters ));
 			int exitCode = Choral.compile( parameters.toArray( new String[ 0 ] ) );
 			if( exitCode != 0 )
 				System.err.print( "Got " + exitCode + " as exit code when 0 was expected" );
