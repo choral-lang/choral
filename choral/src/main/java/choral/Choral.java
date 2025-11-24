@@ -21,9 +21,17 @@
 
 package choral;
 
-import static choral.utils.Streams.skip;
-import static choral.utils.Streams.wrapConsumer;
-import static choral.utils.Streams.wrapFunction;
+import choral.ast.CompilationUnit;
+import choral.ast.Position;
+import choral.compiler.Compiler;
+import choral.compiler.*;
+import choral.exceptions.AstPositionedException;
+import choral.exceptions.ChoralCompoundException;
+import choral.exceptions.ChoralException;
+import choral.utils.Streams.WrappedException;
+import picocli.AutoComplete;
+import picocli.CommandLine;
+import picocli.CommandLine.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,13 +87,10 @@ import picocli.CommandLine.Parameters;
 public class Choral extends ChoralCommand implements Callable< Integer > {
 
 	public static void main( String[] args) {
-		CommandLine cl = new CommandLine( new Choral() );
-		cl.setToggleBooleanFlags( true );
-		cl.setCaseInsensitiveEnumValuesAllowed( true );
-		System.exit(cl.execute(args));
+		System.exit( compile(args) );
 	}
 
-	public static int compileTest( String[] args) {
+	public static int compile( String[] args) {
 		CommandLine cl = new CommandLine( new Choral() );
 		cl.setToggleBooleanFlags( true );
 		cl.setCaseInsensitiveEnumValuesAllowed( true );

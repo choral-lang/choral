@@ -15,8 +15,12 @@ public class QuicksortTest@( A, B, C ) {
 		SymChannel@( A, B )< Object > ch_AB = TestUtils@( A, B ).newLocalChannel( "ch_AB"@[ A, B ] );
 		SymChannel@( B, C )< Object > ch_BC = TestUtils@( B, C ).newLocalChannel( "ch_BC"@[ B, C ] );
 		SymChannel@( C, A )< Object > ch_CA = TestUtils@( C, A ).newLocalChannel( "ch_CA"@[ C, A ] );
-		new Quicksort@( A, B, C )( ch_AB, ch_BC, ch_CA ).sort( a )
-			>> System@A.out::println;
+		Assert@A.assertEquals(
+			new Quicksort@( A, B, C )( ch_AB, ch_BC, ch_CA ).sort( a ),
+			[1@A, 2@A, 5@A, 7@A, 12@A, 22@A, 45@A ],
+			"success"@A,
+			"failure"@A
+		);
 	}
 
 }
