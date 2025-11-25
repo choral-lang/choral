@@ -1,6 +1,7 @@
 package lsp.features;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -22,12 +23,10 @@ public class DiagnosticsProvider {
 
         try {
             CompilationUnit compUnit = Parser.parseString(content);
-
-            List<CompilationUnit> compUnits = new ArrayList<>();
-            compUnits.add(compUnit);
             
             List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
-            Collection<CompilationUnit> typedUnits = Typer.annotate(compUnits, headerUnits);
+
+            Collection<CompilationUnit> typedUnits = Typer.annotate(Arrays.asList(compUnit), headerUnits);
 
             System.out.println("Finished typing");
         } catch (ChoralCompoundException e) {
