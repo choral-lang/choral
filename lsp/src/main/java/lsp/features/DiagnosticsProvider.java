@@ -16,6 +16,7 @@ import choral.compiler.Parser;
 import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.ChoralException;
 import choral.compiler.Typer;
+import choral.exceptions.AstPositionedException;
 
 public class DiagnosticsProvider {
     public List<Diagnostic> analyze(String uri, String content){
@@ -25,6 +26,7 @@ public class DiagnosticsProvider {
             CompilationUnit compUnit = Parser.parseString(content);
             
             List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
+            System.out.println("Finished parsing");
 
             Collection<CompilationUnit> typedUnits = Typer.annotate(Arrays.asList(compUnit), headerUnits);
 
@@ -36,9 +38,6 @@ public class DiagnosticsProvider {
             for (ChoralException cause : e.getCauses()){
                 Diagnostic diagnostic = new Diagnostic();
                 
-                String message = cause.getMessage();
-                System.out.println(message);
-
                                 
                 choral.ast.Position position = positions.get(positionCounter);
                 Range range = new Range(new Position(position.line(), position.column()), 
@@ -52,10 +51,23 @@ public class DiagnosticsProvider {
 
                 positionCounter++;
             } 
+        } catch (AstPositionedException e) {
+            System.out.println("Ast catch");
+
+            Diagnostic diagnostic = new Diagnostic();
+
+            choral.ast.Position position = e.position();
+            Range range = new Range(new Position(position.line(), position.column()), 
+                                    new Position(position.line(), position.column()));
+            diagnostic.setRange(range);
+            diagnostic.setSeverity(DiagnosticSeverity.Error);
+            diagnostic.setMessage(e.getMessage());
+            diagnostic.setSource("choral-compiler");
+
+            diagnostics.add(diagnostic);            
         } catch (Exception e){
-            
             e.printStackTrace();
-            System.out.println("Default catch check");
+            System.out.println("Default catch");
         }
 
         return diagnostics;
