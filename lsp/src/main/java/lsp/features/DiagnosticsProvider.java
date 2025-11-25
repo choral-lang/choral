@@ -1,6 +1,7 @@
 package lsp.features;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.lsp4j.Diagnostic;
@@ -9,18 +10,26 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 
 import choral.ast.CompilationUnit;
+import choral.compiler.HeaderLoader;
 import choral.compiler.Parser;
 import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.ChoralException;
+import choral.compiler.Typer;
 
 public class DiagnosticsProvider {
     public List<Diagnostic> analyze(String uri, String content){
         List<Diagnostic> diagnostics = new ArrayList<>();
 
-        // only analyzes via parser
         try {
             CompilationUnit compUnit = Parser.parseString(content);
-            System.out.println("Should never be reached");
+
+            List<CompilationUnit> compUnits = new ArrayList<>();
+            compUnits.add(compUnit);
+            
+            List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
+            Collection<CompilationUnit> typedUnits = Typer.annotate(compUnits, headerUnits);
+
+            System.out.println("Finished typing");
         } catch (ChoralCompoundException e) {
             List<choral.ast.Position> positions = e.getPositions();
             int positionCounter = 0;
@@ -45,7 +54,9 @@ public class DiagnosticsProvider {
                 positionCounter++;
             } 
         } catch (Exception e){
+            
             e.printStackTrace();
+            System.out.println("Default catch check");
         }
 
         return diagnostics;
