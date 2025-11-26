@@ -26,18 +26,15 @@ public class DiagnosticsProvider {
             CompilationUnit compUnit = Parser.parseString(content);
             
             List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
-            System.out.println("Finished parsing");
 
             Collection<CompilationUnit> typedUnits = Typer.annotate(Arrays.asList(compUnit), headerUnits);
 
-            System.out.println("Finished typing");
         } catch (ChoralCompoundException e) {
             List<choral.ast.Position> positions = e.getPositions();
             int positionCounter = 0;
             
             for (ChoralException cause : e.getCauses()){
                 Diagnostic diagnostic = new Diagnostic();
-                
                                 
                 choral.ast.Position position = positions.get(positionCounter);
                 Range range = new Range(new Position(position.line(), position.column()), 
@@ -52,8 +49,6 @@ public class DiagnosticsProvider {
                 positionCounter++;
             } 
         } catch (AstPositionedException e) {
-            System.out.println("Ast catch");
-
             Diagnostic diagnostic = new Diagnostic();
 
             choral.ast.Position position = e.position();
@@ -67,7 +62,6 @@ public class DiagnosticsProvider {
             diagnostics.add(diagnostic);            
         } catch (Exception e){
             e.printStackTrace();
-            System.out.println("Default catch");
         }
 
         return diagnostics;
