@@ -47,6 +47,8 @@ import java.util.stream.Stream;
 
 import static choral.utils.Streams.*;
 
+import lsp.LSP;
+
 @Command(
 		name = "choral",
 		description = "A compiler for the Choral programming language.%nhttps://choral-lang.org/",
@@ -129,10 +131,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		
 		@Override
 		public Integer call() {
-			System.out.println("LSP Activated!");
-			if (debug) {
-				System.out.println("Debugging also activated!");
-			}
+			LSP.main(new String[]{}, debug);
 			return 0;
 		}
 	}

@@ -19,7 +19,6 @@
         <module>compare</module>
         <module>runtime</module>
         <module>tests</module>
-        <module>lsp</module>
     </modules>
 
     <distributionManagement>
