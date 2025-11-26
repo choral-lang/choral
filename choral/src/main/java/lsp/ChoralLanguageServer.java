@@ -55,6 +55,7 @@ public class ChoralLanguageServer implements LanguageServer, LanguageClientAware
 
     @Override
     public void connect(LanguageClient client){
+        System.err.println("Client connected in Language Server");
         this.client = client;
         textDocumentService.setClient(client);
     }

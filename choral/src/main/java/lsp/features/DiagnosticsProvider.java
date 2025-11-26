@@ -37,8 +37,8 @@ public class DiagnosticsProvider {
                 Diagnostic diagnostic = new Diagnostic();
                                 
                 choral.ast.Position position = positions.get(positionCounter);
-                Range range = new Range(new Position(position.line(), position.column()), 
-                                        new Position(position.line(), position.column()));
+                Range range = new Range(new Position(position.line() - 1, position.column()), 
+                                        new Position(position.line() - 1, position.column()));
                 diagnostic.setRange(range);
                 diagnostic.setSeverity(DiagnosticSeverity.Error);
                 diagnostic.setMessage(cause.getMessage());
@@ -52,8 +52,8 @@ public class DiagnosticsProvider {
             Diagnostic diagnostic = new Diagnostic();
 
             choral.ast.Position position = e.position();
-            Range range = new Range(new Position(position.line(), position.column()), 
-                                    new Position(position.line(), position.column()));
+            Range range = new Range(new Position(position.line() - 1, position.column()), 
+                                    new Position(position.line() - 1, position.column()));
             diagnostic.setRange(range);
             diagnostic.setSeverity(DiagnosticSeverity.Error);
             diagnostic.setMessage(e.getMessage());
@@ -62,6 +62,10 @@ public class DiagnosticsProvider {
             diagnostics.add(diagnostic);            
         } catch (Exception e){
             e.printStackTrace();
+        }
+
+        for (Diagnostic d : diagnostics) {
+            System.err.println("  - " + d.getMessage() + " at line " + d.getRange().getStart().getLine() + " and at column " + d.getRange().getStart().getCharacter());
         }
 
         return diagnostics;
