@@ -23,17 +23,12 @@ package choral;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 import javax.tools.Diagnostic;
@@ -59,6 +54,42 @@ public class TestChoral {
 									  List< String > worlds,
 									  List< String > sourcePaths,
 									  List< String > classPaths) {}
+
+	private record CompilationResults(int exitCode, String stdout, String stderr) {}
+
+	private static CompilationResults compile(CompilationRequest compilationRequest){
+		ArrayList< String > parameters = new ArrayList<>();
+		parameters.add( "epp" );
+		parameters.add( "--verbosity=DEBUG" );
+		if( !compilationRequest.headersFolders().isEmpty() )
+			parameters.add(
+					"--headers=" + String.join( FILESEPARATOR, compilationRequest.headersFolders() ) );
+		parameters.add( "-t" );
+		parameters.add( compilationRequest.targetFolder() );
+		parameters.add( "-s" );
+		parameters.add( String.join( FILESEPARATOR, compilationRequest.sourceFolder() ) );
+		parameters.add( compilationRequest.symbol() );
+		parameters.addAll( compilationRequest.worlds() );
+		parameters.add( "--annotate" );
+
+		int exitCode;
+		ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
+		ByteArrayOutputStream testError = new ByteArrayOutputStream();
+		PrintStream originalOutput = System.out;
+		PrintStream originalError = System.err;
+
+		try {
+			System.setOut( new PrintStream( testOutput ) );
+			System.setErr( new PrintStream( testError ) );
+			exitCode = Choral.compile( parameters.toArray( new String[ 0 ] ) );
+		} finally {
+			System.setOut( originalOutput );
+			System.setErr( originalError );
+		}
+
+		return new CompilationResults( exitCode, testOutput.toString(), testError.toString() );
+	}
+
 
 	enum TestType {
 		MUSTPASS,
@@ -395,195 +426,145 @@ public class TestChoral {
 		main( new String[ 10 ] );
 	}
 
-	private static ArrayList< String > generateParameters(CompilationRequest compilationRequest){
-		ArrayList< String > parameters = new ArrayList<>();
-		parameters.add( "epp" );
-		parameters.add( "--verbosity=DEBUG" );
-		if( !compilationRequest.headersFolders().isEmpty() )
-			parameters.add(
-					"--headers=" + String.join( FILESEPARATOR, compilationRequest.headersFolders() ) );
-		parameters.add( "-t" );
-		parameters.add( compilationRequest.targetFolder() );
-		parameters.add( "-s" );
-		parameters.add( String.join( FILESEPARATOR, compilationRequest.sourceFolder() ) );
-		parameters.add( compilationRequest.symbol() );
-		parameters.addAll( compilationRequest.worlds() );
-		parameters.add( "--annotate" );
-		return parameters;
+	/** Returns list of package names declared in the source folders of the compilation request */
+	private static HashSet<String> getPackageNames( CompilationRequest compilationRequest ) {
+		HashSet< String > packages = new HashSet<>();
+		try {
+			for( String folder : compilationRequest.sourceFolder() ) {
+				Path path = Path.of( folder );
+				List< Path > choralFiles = Files.walk( path ).filter(
+					file -> file.toString().endsWith( ".ch" )
+				).toList();
+				for( Path file : choralFiles ) {
+					String fileContent = Files.readString( file );
+					// Find the package declared at the top of the file
+					int i = fileContent.indexOf( "package " );
+					int j = fileContent.indexOf( ";" );
+					if ( i == -1 || j == -1 ) {
+						System.err.println( "Missing package declaration in file: " + file );
+						continue;
+					}
+					String pathString = fileContent.substring(i + 7, j).trim();
+					packages.add( pathString );
+				}
+			}
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
+		return packages;
 	}
 
 	private static void project( CompilationRequest compilationRequest ) {
-		try {
-			ArrayList< String > parameters = generateParameters(compilationRequest);
-			
-			int exitCode = Choral.compile( parameters.toArray( new String[ 0 ] ) );
-			if( exitCode != 0 )
-				System.err.print( "Got " + exitCode + " as exit code when 0 was expected" );
+		ArrayList< String > errors = new ArrayList<>();
 
-			boolean errorOccured = false;
-			boolean diffError = false;
-			boolean fileCountError = false;
-			boolean expectedFilesFailed = false;
-			List< List< String >> diffOutputs = new ArrayList<>();
+		var results = compile(compilationRequest);
+		if( results.exitCode != 0 )
+			errors.add( "Compilation failed with exit code " + results.exitCode );
 
-			List< String > javaCompilationErrors = new ArrayList<>();
+		for( String packageName : getPackageNames(compilationRequest) ) {
+			try {
+				String[] packageList = packageName.split( "\\." );
 
-			List< String > alreadyCheckedPaths = new ArrayList<>();
-			for( String folder : compilationRequest.sourceFolder() ) {
-				Path path = Path.of( folder );
-				List< Path > sourceFiles = Files.walk( path ).filter(
-						file -> file.toString().endsWith( ".ch" ) ).toList();
-				for( Path file : sourceFiles ) {
-					String fileContent = Files.readString( file );
-					String pathString = fileContent.substring(
-							fileContent.indexOf( "package " ) + 7, fileContent.indexOf(
-									";" ) ).trim(); // this finds the package declared at the top of the file
-					String innerPathString = PATHSEPARATOR + pathString.replace( ".", PATHSEPARATOR );
-					String targetFolderString = TARGET_FOLDER + innerPathString;
+				// Get all the projected and expected Java files
+				Path projectFolder = Path.of( TARGET_FOLDER, packageList );
+				List< Path > projectedJavaFiles = Files.walk( projectFolder ).filter(
+						javaFile -> javaFile.toString().endsWith( ".java" )
+				).sorted().toList();
 
-					if( alreadyCheckedPaths.contains( targetFolderString ) ) continue;
+				Path expectedFolderPath = Path.of( EXPECTED_FOLDER, packageList );
+				List< Path > expectedFiles = Files.walk( expectedFolderPath ).filter(
+						expectedFile -> expectedFile.toString().endsWith( ".java" )
+				).sorted().toList();
 
-					alreadyCheckedPaths.add( targetFolderString );
+				// PHASE 1: CHECK IF EXPECTED AND PROJECTED CODE DIFFER
 
-					try {
-						Path projectFolder = Path.of( targetFolderString );
-						List< Path > projectedJavaFiles = Files.walk( projectFolder ).filter(
-								javaFile -> javaFile.toString().endsWith( ".java" ) ).toList();
+				if( projectedJavaFiles.size() != expectedFiles.size() ) {
+					errors.add("The number of projected files does not equal the number of expected files");
+					continue;
+				}
 
-						String expectedFolderString = EXPECTED_FOLDER + innerPathString;
-						Path expectedFolderPath = Path.of( expectedFolderString );
-						List< Path > expectedFiles = Files.walk( expectedFolderPath ).filter(
-								expectedFile -> expectedFile.toString().endsWith(
-										".java" ) ).toList();
+				for( int i = 0; i < expectedFiles.size(); i++ ) {
+					List< String > original = Files.readAllLines( expectedFiles.get( i ) );
+					List< String > projected = Files.readAllLines( projectedJavaFiles.get( i ) );
 
-						if( projectedJavaFiles.size() != expectedFiles.size() ) {
-							fileCountError = true;
-							errorOccured = true;
-							continue;
-						}
+					Patch< String > patch = DiffUtils.diff( original, projected );
 
-						for( int i = 0; i < expectedFiles.size(); i++ ) {
-							List< String > original = Files.readAllLines( expectedFiles.get( i ) );
-							List< String > revised = Files.readAllLines( projectedJavaFiles.get( i ) );
+					List<String> diffOutput = UnifiedDiffUtils.generateUnifiedDiff(
+							expectedFiles.get( i ).toString(),
+							projectedJavaFiles.get( i ).toString(),
+							original,
+							patch,
+							3
+					);
 
-							Patch< String > patch = DiffUtils.diff( original, revised );
-
-							List<String> diffOutput = UnifiedDiffUtils.generateUnifiedDiff(
-									expectedFiles.get( i ).toString(),
-									projectedJavaFiles.get( i ).toString(),
-									original,
-									patch,
-									3
-							);
-
-							if( !diffOutput.isEmpty() ) {
-								errorOccured = true;
-								diffError = true;
-								diffOutputs.add(diffOutput);
-							}
-						}
-
-
-						JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-						DiagnosticCollector< JavaFileObject > diagnostics = new DiagnosticCollector<>();
-						StandardJavaFileManager fileManager = compiler.getStandardFileManager(
-								diagnostics, null, null );
-						Iterable< ? extends JavaFileObject > compilationUnits = fileManager.getJavaFileObjects(
-								expectedFiles.toArray( new Path[ 0 ] ) );
-
-						String sourcePath = String.join( FILESEPARATOR,
-								compilationRequest.sourcePaths );
-						String classPath = String.join( FILESEPARATOR, compilationRequest.classPaths );
-
-						List< String > options = new ArrayList<>();
-
-						if( !sourcePath.isEmpty() )
-							options.addAll( Arrays.asList( "-sourcepath", sourcePath ) );
-						if( !classPath.isEmpty() )
-							options.addAll( Arrays.asList( "-classpath", classPath ) );
-
-						options.addAll( Arrays.asList( "-d", "bin" ) );
-
-						JavaCompiler.CompilationTask task = compiler.getTask( null, fileManager,
-								diagnostics, options, null, compilationUnits );
-
-						if( !task.call() ) {
-							expectedFilesFailed = true;
-							System.out.println( "compilation error" );
-							errorOccured = true;
-							for( Diagnostic< ? extends JavaFileObject > diagnostic : diagnostics.getDiagnostics() ) {
-								javaCompilationErrors.add(
-										String.format( "Error on line %d in %s%n",
-												diagnostic.getLineNumber(),
-												diagnostic.getSource().toUri() ) );
-								javaCompilationErrors.add( diagnostic.getMessage( null ) );
-							}
-						}
-
-					} catch( InvalidPathException e ) {
-						System.err.println( "Invalid package definition in: " + file );
-						System.err.println( "Remember to define a package at the top of the file" );
-					} catch( Exception e ) {
-						e.printStackTrace();
+					if( !diffOutput.isEmpty() ) {
+						String diff = String.join( "\n", diffOutput );
+						errors.add("There was a difference between the expected output and " +
+								"the generated output, now printing diff:\n" + diff);
 					}
 				}
+
+				// PHASE 2: TRY COMPILING THE EXPECTED JAVA CODE
+
+				JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+				DiagnosticCollector< JavaFileObject > diagnostics = new DiagnosticCollector<>();
+				StandardJavaFileManager fileManager = compiler.getStandardFileManager(
+						diagnostics, null, null );
+				Iterable< ? extends JavaFileObject > compilationUnits = fileManager.getJavaFileObjects(
+						expectedFiles.toArray( new Path[ 0 ] ) );
+
+				List< String > options = new ArrayList<>();
+				if( !compilationRequest.sourcePaths.isEmpty() ) {
+					options.add( "-sourcepath" );
+					options.add( String.join( FILESEPARATOR, compilationRequest.sourcePaths ) );
+				}
+				if( !compilationRequest.classPaths.isEmpty() ) {
+					options.add( "-classpath" );
+					options.add( String.join( FILESEPARATOR, compilationRequest.classPaths ) );
+				}
+				options.addAll( Arrays.asList( "-d", "bin" ) );
+
+				JavaCompiler.CompilationTask task = compiler.getTask( null, fileManager,
+						diagnostics, options, null, compilationUnits );
+
+				if( !task.call() ) {
+					List< String > javaCompilationErrors = new ArrayList<>();
+					for( Diagnostic< ? extends JavaFileObject > diagnostic : diagnostics.getDiagnostics() ) {
+						javaCompilationErrors.add(
+								String.format( "Error on line %d in %s%n",
+										diagnostic.getLineNumber(),
+										diagnostic.getSource().toUri() ) );
+						javaCompilationErrors.add( diagnostic.getMessage( null ) );
+					}
+					String javaErrors = String.join( "", javaCompilationErrors );
+					errors.add( "Expected Java code does not compile:\n" + javaErrors );
+				}
+
+			} catch( IOException e ) {
+				e.printStackTrace();
 			}
+		}
 
-			if( errorOccured ) {
-				System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n",
-						compilationRequest.symbol, RED, RESET );
-				if( diffError ) {
-					System.out.println(
-							RED + "\tError: " + RESET + "There was a difference between the expected output and the generated output, now printing diff: " );
-					for (List<String> diffOutput : diffOutputs){
-						diffOutput.forEach( item -> System.out.println( "\t" + item ) );
-					}
-				}
-				if( fileCountError ) {
-					System.err.println(
-							RED + "\tError: " + RESET + "Expected files and projected files are not even in count! Ensure that the expected files is up to date" );
-				}
-				if( expectedFilesFailed ) {
-					System.out.println( "printing correctly" );
-					System.err.println(
-							RED + "\tError: " + RESET + "Not all files could be compiled" );
-					javaCompilationErrors.forEach(
-							errorLine -> System.err.println( "\t" + errorLine ) );
-				}
-			} else
-				System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol,
-						GREEN, RESET );
-
-		} catch( Exception e ) {
-			e.printStackTrace();
+		if( !errors.isEmpty() ) {
+			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n",
+					compilationRequest.symbol, RED, RESET );
+			for ( String error : errors ) {
+				System.out.println(RED + "Error: " + RESET + error );
+			}
+		} else {
+			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n",
+					compilationRequest.symbol, GREEN, RESET );
 		}
 	}
 
 	private static void projectFail( CompilationRequest compilationRequest ) {
 		try {
-			ArrayList< String > parameters = generateParameters(compilationRequest);
+			var results = compile(compilationRequest);
 
-			ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
-			ByteArrayOutputStream testError = new ByteArrayOutputStream();
-			PrintStream originalOutput = System.out;
-			PrintStream originalError = System.err;
-
-			int exitCode;
-
-			try {
-				System.setOut( new PrintStream( testOutput ) );
-				System.setErr( new PrintStream( testError ) );
-				exitCode = Choral.compile( parameters.toArray( new String[ 0 ] ) );
-			} finally {
-				System.setOut( originalOutput );
-				System.setErr( originalError );
-			}
-			if( exitCode == 0 ) System.err.println(
+			if( results.exitCode == 0 ) System.err.println(
 					"Program received 0 as exitcode, which means no errors were found. This test is expected to have errors" );
 
-			String stringTestOutput = testOutput.toString();
-			String[] outputLines = stringTestOutput.split( "\n" );
-
+			String[] outputLines = results.stdout.split( "\n" );
 
 			Path directoryPath = Path.of( compilationRequest.sourceFolder().get( 0 ) );
 			if( Files.isDirectory( directoryPath ) ) {
