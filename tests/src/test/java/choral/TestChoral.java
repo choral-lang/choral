@@ -457,7 +457,7 @@ public class TestChoral {
 	private static void project( CompilationRequest compilationRequest ) {
 		ArrayList< String > errors = new ArrayList<>();
 
-		var results = compile(compilationRequest);
+		CompilationResults results = compile(compilationRequest);
 		if( results.exitCode != 0 )
 			errors.add( "Compilation failed with exit code " + results.exitCode );
 
@@ -557,12 +557,38 @@ public class TestChoral {
 		}
 	}
 
-	private static void projectFail( CompilationRequest compilationRequest ) {
-		try {
-			var results = compile(compilationRequest);
+	private static List<Map.Entry<Integer, String>> findExpectedErrors (String[] fileContent){
+		List< Map.Entry< Integer, String > > expectedErrors = new ArrayList<>();
 
-			if( results.exitCode == 0 ) System.err.println(
-					"Program received 0 as exitcode, which means no errors were found. This test is expected to have errors" );
+		for( int i = 0; i < fileContent.length; i++ ) {
+			if( fileContent[ i ].contains( "//!" ) ) {
+				int nextOccurence = fileContent[ i ].indexOf( "//!" );
+				int endOfError = fileContent[ i ].indexOf( "//", nextOccurence + 1 );
+				if( endOfError == -1 ) endOfError = fileContent[ i ].length();
+
+				while( nextOccurence != -1 ) {
+					expectedErrors.add( new AbstractMap.SimpleEntry<>( i,
+							fileContent[ i ].substring( nextOccurence + 3,
+									endOfError ).trim() ) ); // '//!' = 3 characters
+					nextOccurence = fileContent[ i ].indexOf( "//!", endOfError );
+					endOfError = fileContent[ i ].indexOf( "//", nextOccurence + 1 );
+
+					if( endOfError == -1 ) endOfError = fileContent[ i ].length();
+				}
+			}
+		}
+
+		return expectedErrors;
+	}
+
+	private static void projectFail( CompilationRequest compilationRequest ) {
+		List<String> errors = new ArrayList<>();
+
+		try {
+			CompilationResults results = compile(compilationRequest);
+
+			if( results.exitCode == 0 )
+					errors.add("Program received 0 as exitcode, which means no errors were found. This test is expected to have errors" );
 
 			String[] outputLines = results.stdout.split( "\n" );
 
@@ -573,51 +599,28 @@ public class TestChoral {
 						.toList();
 				String[] fileContent = Files.readString( testFiles.get( 0 ) ).split( "\n" );
 
-				List< Map.Entry< Integer, String > > expectedErrorsFound = new ArrayList<>();
+				List< Map.Entry< Integer, String > > expectedErrors = findExpectedErrors(fileContent);
 
-				for( int i = 0; i < fileContent.length; i++ ) {
-					if( fileContent[ i ].contains( "//!" ) ) {
-						int nextOccurence = fileContent[ i ].indexOf( "//!" );
-						int endOfError = fileContent[ i ].indexOf( "//", nextOccurence + 1 );
-						if( endOfError == -1 ) endOfError = fileContent[ i ].length();
-
-						while( nextOccurence != -1 ) {
-							expectedErrorsFound.add( new AbstractMap.SimpleEntry<>( i,
-									fileContent[ i ].substring( nextOccurence + 3,
-											endOfError ).trim() ) ); // '//!' = 3 characters
-							nextOccurence = fileContent[ i ].indexOf( "//!", endOfError );
-							endOfError = fileContent[ i ].indexOf( "//", nextOccurence + 1 );
-
-							if( endOfError == -1 ) endOfError = fileContent[ i ].length();
-						}
-					}
-				}
-
-				int errorsFound = 0;
 				int nextErrorLine = 0;
 				int start = outputLines[ nextErrorLine ].indexOf( "ch:" ) + 3;
 				int end = outputLines[ nextErrorLine ].indexOf( ":", start );
 
 				int errorLineNumber = Integer.parseInt(
 						outputLines[ nextErrorLine ].substring( start, end ) ) - 1;
-				List< Map.Entry< Integer, String > > foundErrors = new ArrayList<>();
-				List< String > missedErrors = new ArrayList<>();
-
 				boolean endOfOutputReached = false;
 
-				for( Map.Entry< Integer, String > line : expectedErrorsFound ) {
+				// Search through compiler output, looking for all the expected errors. 
+				for( Map.Entry< Integer, String > line : expectedErrors ) {
 					if( errorLineNumber == line.getKey() ) {
 						boolean errorFound = outputLines[ nextErrorLine ].contains(
 								line.getValue() );
-						if( errorFound ) {
-							errorsFound++;
-							foundErrors.add( line );
+						if( !errorFound ) {
+							errors.add("Compiler output: " + outputLines[ nextErrorLine ] + "does not contain expected error: " + line.getValue());
 						}
 					} else {
-						System.out.println(
-								"Error line number doesn't match, did you put the expected error on the wrong line?" );
-						System.out.println(
-								"Got: " + errorLineNumber + " expected: " + line.getKey() );
+						errors.add(
+								"Error line number doesn't match, did you put the expected error on the wrong line?" +
+								" Got: " + errorLineNumber + " expected: " + line.getKey() );
 					}
 
 					for( int i = nextErrorLine; i < outputLines.length; i++ ) {
@@ -626,7 +629,6 @@ public class TestChoral {
 							break;
 						}
 					}
-
 					if( nextErrorLine >= outputLines.length ) {
 						endOfOutputReached = true;
 						break; // end of error output reached
@@ -634,7 +636,6 @@ public class TestChoral {
 
 					start = outputLines[ nextErrorLine ].indexOf( "ch:" ) + 3;
 					end = outputLines[ nextErrorLine ].indexOf( ":", start );
-
 					if( end == -1 || start == -1 ) {
 						endOfOutputReached = true;
 						break; // end of error output reached 
@@ -644,10 +645,11 @@ public class TestChoral {
 							outputLines[ nextErrorLine ].substring( start, end ) ) - 1;
 				}
 
-				List< String > unExpectedErrors = new ArrayList<>();
+				// If all expected errors have been searched for, but the output from the compiler is not empty
+				// Look for more errors in the rest of the output
 				if( !endOfOutputReached ) {
 					while( start != -1 || end != -1 ) {
-						unExpectedErrors.add( outputLines[ nextErrorLine ] );
+						errors.add("Compiler reported an error not specified in the file: " + outputLines[ nextErrorLine ] );
 
 						for( int i = nextErrorLine; i < outputLines.length; i++ ) {
 							if( outputLines[ i ].equals( "compilation failed." ) ) {
@@ -662,48 +664,22 @@ public class TestChoral {
 						end = outputLines[ nextErrorLine ].indexOf( ":", start );
 					}
 				}
-
-				boolean allErrorsFound = errorsFound != expectedErrorsFound.size();
-				boolean anyErrorsMissed = !missedErrors.isEmpty();
-				boolean anyErrorsNotExpected = !unExpectedErrors.isEmpty();
-
-				if( allErrorsFound || anyErrorsMissed || anyErrorsNotExpected ) {
-					System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n",
-							compilationRequest.symbol, RED, RESET );
-
-					if( allErrorsFound ) {
-						System.out.println(
-								"\t\u001B[31m" + "Error" + "\u001B[0m: " + ( expectedErrorsFound.size() - errorsFound ) + " errors not found" );
-						for( Map.Entry< Integer, String > line : expectedErrorsFound ) {
-							if( !foundErrors.contains( line ) ) System.out.println(
-									"\t\tExpected to find: " + line.getValue() + " on line " + line.getKey() );
-						}
-					}
-					if( anyErrorsMissed ) {
-						System.out.println(
-								"Found " + missedErrors.size() + " errors not expected" );
-						for( String error : missedErrors ) {
-							System.out.println( error );
-						}
-					}
-					if( anyErrorsNotExpected ) {
-						System.out.println(
-								"Found errors reported by the compiler not annotated in test:" );
-						for( String error : unExpectedErrors ) {
-							System.out.println( error );
-						}
-					}
-				} else System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n",
-						compilationRequest.symbol, GREEN, RESET );
 			} else
-				System.err.printf( "Directory not found: '%s'%n", directoryPath );
-		} catch( Exception e ) {
+				errors.add( "Directory not found: " + directoryPath );
+		} catch( IOException e ) {
 			e.printStackTrace();
 		}
+
+		if (errors.isEmpty()){
+			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n",
+						compilationRequest.symbol, GREEN, RESET );
+		}
+		else {
+			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n",
+							compilationRequest.symbol, RED, RESET );
+			for (String error : errors){
+				System.out.println(RED + "Error: " + RESET + error);
+			}
+		}
 	}
-
-	
-
-	
-
 }
