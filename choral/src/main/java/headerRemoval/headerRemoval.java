@@ -1,28 +1,8 @@
 package headerRemoval;
 
-import java.lang.annotation.Annotation;
-import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReference;
-import java.lang.reflect.TypeVariable;
-import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import choral.ast.CompilationUnit;
-import choral.ast.body.Interface;
-import choral.ast.type.FormalTypeParameter;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
-import io.github.classgraph.PackageInfo;
 import io.github.classgraph.ScanResult;
 
 public class headerRemoval {
