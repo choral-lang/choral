@@ -1,28 +1,29 @@
 package headerRemoval;
 
-import java.lang.module.*;
-import java.security.ProtectionDomain;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.io.File;
 import java.lang.annotation.Annotation;
-import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.Instrumentation;
-import java.lang.reflect.*;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
+import java.lang.reflect.TypeVariable;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import choral.ast.CompilationUnit;
 import choral.ast.body.Interface;
 import choral.ast.type.FormalTypeParameter;
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ClassInfo;
+import io.github.classgraph.ClassInfoList;
+import io.github.classgraph.PackageInfo;
+import io.github.classgraph.ScanResult;
 
 public class headerRemoval {
 
@@ -47,98 +48,23 @@ public class headerRemoval {
     //     });
     // }
 
-    public static void main(String[] args) {
-        ModuleFinder finder = ModuleFinder.ofSystem();
-        Set<ModuleReference> foundModules = finder.findAll();
-    
-        String javaHome = System.getProperty("java.home");
-        System.out.println("Java Home: " + javaHome);
-    
-        FileSystem jrtFS = FileSystems.getFileSystem(URI.create("jrt:/"));
-
-        for (ModuleReference mref : foundModules) {
-            String moduleName = mref.descriptor().name();
-
-            if (!moduleName.equals("java.logging")) continue;
-            
-            System.out.println("=== MODULE: " + moduleName + " ===\n");
-            
-            try (var reader = mref.open()) {
-                reader.list()
-                    .filter(name -> name.endsWith(".class"))
-                    .filter(name -> !name.equals("module-info.class"))
-                    .filter(name -> !name.contains("$"))  // Enable this line to skip inner classes
-                    .limit(13)  // limit classes to avoid going through all the thousands of classes that can be found
-                    .forEach(classFile -> {
-                        String className = classFile
-                            .replace('/', '.')
-                            .substring(0, classFile.length() - 6);
-                        
-                        try {
-                            Class<?> loadedClass = Class.forName(className);
-                            System.out.println("Class: " + className);
-                           
-                            Path sourceFile = jrtFS.getPath("modules", moduleName, classFile);
-                            System.out.println("sourceFile: " + sourceFile);
-                            
-                            List<Class<?>> enums = Stream.of(loadedClass.getClasses())
-                                                    .filter( innerClass -> innerClass.isEnum() )
-                                                    .collect(Collectors.toList());
-
-                            // List<Class<?>> classes = Stream.of(loadedClass.getClasses())
-                            //                         .filter( innerClass -> !innerClass.isEnum() && !innerClass.isInterface())
-                            //                         .collect(Collectors.toList());
-
-                            List<Class<?>> interfaces = Stream.of(loadedClass.getClasses())
-                                                    .filter( innerClass -> innerClass.isInterface())
-                                                    .collect(Collectors.toList());
-                            System.out.println("Interfaces: " + interfaces.size());
-                            List<Interface> interfaceObjects;
-                            
-
-                            // codeblock below should probably be its own method at this point
-                            if (!interfaces.isEmpty()) {
-                                Class<?> temp = interfaces.get(0);
-                                System.out.println("Name: " + temp.getName());
-                                
-                                // 'FormalWorldParameter' is empty for now (should it be?)
-                                
-                                TypeVariable<? extends Class<?>>[] typeParams = temp.getTypeParameters();
-                                System.out.println("do we have type params: " + (typeParams.length != 0));
-                                List<FormalTypeParameter> formalTypeParams = new ArrayList<>();
-                                for (TypeVariable<? extends Class<?>> typeParam : typeParams){
-                                    System.out.println("typeParam: " + typeParam.toString());
-                                    //Type[] bounds = typeParam.getBounds(); // skipping this, since no idea how to create 'TypeExpression'
-                                    Annotation[] annotations = typeParam.getAnnotations(); // would need to be translate to choral.ast.Annotation
-                                }
-                            }
-                            
-                            
-                            // for (Class<?> intface : interfaces){
-                            //     String name = intface.getName();
-                            // }
-                            
-                            String loadedClassPackage = loadedClass.getPackage().getName();
-                            System.out.println("loadedClassPackage: " + loadedClassPackage);
-
-                            CompilationUnit compUnit = new CompilationUnit(
-                                            Optional.of(loadedClassPackage), 
-                                            Collections.emptyList(), // no imports in .class files
-                                            null, 
-                                            null, 
-                                            null, 
-                                            sourceFile.toString()
-                                            ); 
-                            
-                            System.out.println();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
-            } catch (Exception e) {
-                e.printStackTrace();
+    private static void getClassGraphPackage(String packageName, String... className){
+        try (ScanResult scanResult = new ClassGraph().verbose().enableAllInfo().acceptPackages(packageName).scan()){
+            ClassInfo classInfo;
+            if (className.length != 0) {
+                classInfo = scanResult.getClassInfo(className[0]);
+                if (classInfo == null) System.err.println("Class " + className[0] + " does not exist in package " + packageName);
+            }
+            else {
+                ClassInfoList classInfoList = scanResult.getAllStandardClasses();
+                ClassInfoList interfaceInfoList = scanResult.getAllInterfaces();
+                ClassInfoList enumInfoList = scanResult.getAllEnums();
+                
             }
         }
+    }
 
+    public static void main(String[] args) {    
+        
     }
 }
