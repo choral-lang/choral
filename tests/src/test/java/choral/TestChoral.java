@@ -444,7 +444,7 @@ public class TestChoral {
 						System.err.println( "Missing package declaration in file: " + file );
 						continue;
 					}
-					String pathString = fileContent.substring(i + 7, j).trim();
+					String pathString = fileContent.substring(i + 7, j).trim(); // 'package' = 7 characters
 					packages.add( pathString );
 				}
 			}
@@ -557,6 +557,7 @@ public class TestChoral {
 		}
 	}
 
+	// explain
 	private static List<Map.Entry<Integer, String>> findExpectedErrors (String[] fileContent){
 		List< Map.Entry< Integer, String > > expectedErrors = new ArrayList<>();
 
@@ -653,7 +654,8 @@ public class TestChoral {
 
 						for( int i = nextErrorLine; i < outputLines.length; i++ ) {
 							if( outputLines[ i ].equals( "compilation failed." ) ) {
-								nextErrorLine = i + 2;
+								nextErrorLine = i + 2; // The line that contains 'compilation failed' is considered the end of the error.
+								// The line following that is always an empty line, so the next error starts 2 lines after the one containing 'compilation failed'
 								break;
 							}
 						}
