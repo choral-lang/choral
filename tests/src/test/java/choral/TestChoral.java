@@ -44,7 +44,6 @@ import com.github.difflib.DiffUtils;
 import com.github.difflib.UnifiedDiffUtils;
 import com.github.difflib.patch.Patch;
 
-
 public class TestChoral {
 
 	private record CompilationRequest(List< String > sourceFolder,
@@ -56,6 +55,21 @@ public class TestChoral {
 									  List< String > classPaths) {}
 
 	private record CompilationResults(int exitCode, String stdout, String stderr) {}
+
+	private record TestError(int line, String message) {
+		@Override
+		public boolean equals(Object obj){
+			if (this == obj) return true;
+			if (obj == null || getClass() != obj.getClass()) return false;
+			TestError testError = (TestError)obj;
+			return line == testError.line && (message.contains(testError.message) || (testError.message.contains(message))); 
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(line);
+		}
+	}
 
 	private static CompilationResults compile(CompilationRequest compilationRequest){
 		ArrayList< String > parameters = new ArrayList<>();
@@ -557,9 +571,10 @@ public class TestChoral {
 		}
 	}
 
-	// explain
-	private static List<Map.Entry<Integer, String>> findExpectedErrors (String[] fileContent){
-		List< Map.Entry< Integer, String > > expectedErrors = new ArrayList<>();
+	// Finds all of the expected errors in the give file content
+	// An expected file is declared by a comment starting with '//!'
+	private static List<TestError> findExpectedErrors(String[] fileContent){
+		List<TestError> testErrors = new ArrayList<>();
 
 		for( int i = 0; i < fileContent.length; i++ ) {
 			if( fileContent[ i ].contains( "//!" ) ) {
@@ -568,9 +583,7 @@ public class TestChoral {
 				if( endOfError == -1 ) endOfError = fileContent[ i ].length();
 
 				while( nextOccurence != -1 ) {
-					expectedErrors.add( new AbstractMap.SimpleEntry<>( i,
-							fileContent[ i ].substring( nextOccurence + 3,
-									endOfError ).trim() ) ); // '//!' = 3 characters
+					testErrors.add(new TestError(i + 1, fileContent[i].substring(nextOccurence + 3, endOfError).trim())); // '//!' = 3 characters
 					nextOccurence = fileContent[ i ].indexOf( "//!", endOfError );
 					endOfError = fileContent[ i ].indexOf( "//", nextOccurence + 1 );
 
@@ -578,8 +591,49 @@ public class TestChoral {
 				}
 			}
 		}
+		return testErrors;
+	}
 
-		return expectedErrors;
+	private static List<TestError> findActualErrors(String[] outputLines){
+		List<TestError> actualErrors = new ArrayList<>();
+
+		// Initialization
+		int nextErrorLine = 0;
+		int start = outputLines[ nextErrorLine ].indexOf( "ch:" ) + 3;
+		// ch: is to represent the end of the choral file the error occured in.
+		// + 3 is to get past the 'ch:' characters.
+		// The index "start" is then positioned at the start of the error.
+		int end = outputLines[ nextErrorLine ].indexOf( ":", start );
+		// The end of a error is marked by a ':' in the choral compiler output.
+		int errorLineNumber = Integer.parseInt(outputLines[ nextErrorLine ].substring( start, end ) ) - 1;
+
+		// Main loop.
+		while (start != -1 || end != -1){ 
+			// if String.indexOf() can't find an instance of a given string it will simply return -1
+			// so by checking for -1, we check for whether an instance of the given string exists
+			actualErrors.add(new TestError(errorLineNumber + 1, outputLines[nextErrorLine]));
+
+			for (int i = nextErrorLine; i < outputLines.length; i++){
+				if( outputLines[ i ].equals( "compilation failed." ) ) {
+					nextErrorLine = i + 2; 
+					// 2 is the amount of lines we need to skip to get to the next error
+					// when i is the line number for a line that contains 'compilation failed'
+					break;
+				}
+			}
+
+			if( nextErrorLine >= outputLines.length ) break; // end of error output reached
+
+			start = outputLines[ nextErrorLine ].indexOf( "ch:" ) + 3;
+			end = outputLines[ nextErrorLine ].indexOf( ":", start );
+
+			if( end == -1 || start == -1 ) break; // end of error output reached 
+			// this extra check is to avoid passing -1 to String.substring
+			// as doing that causes java to die. 
+			errorLineNumber = Integer.parseInt(outputLines[ nextErrorLine ].substring( start, end ) ) - 1;
+		}		
+
+		return actualErrors;
 	}
 
 	private static void projectFail( CompilationRequest compilationRequest ) {
@@ -593,81 +647,50 @@ public class TestChoral {
 
 			String[] outputLines = results.stdout.split( "\n" );
 
+			// Find the choral file in the testing directory
+			// Only the first file is used, because the MustFail tests only involve a single
+			// If a MustFail test is ever made using multiple source files, it is considered a mistake
 			Path directoryPath = Path.of( compilationRequest.sourceFolder().get( 0 ) );
-			if( Files.isDirectory( directoryPath ) ) {
-				List< Path > testFiles = Files.walk( directoryPath )
-						.filter( path -> path.toString().endsWith( ".ch" ) )
-						.toList();
-				String[] fileContent = Files.readString( testFiles.get( 0 ) ).split( "\n" );
-
-				List< Map.Entry< Integer, String > > expectedErrors = findExpectedErrors(fileContent);
-
-				int nextErrorLine = 0;
-				int start = outputLines[ nextErrorLine ].indexOf( "ch:" ) + 3;
-				int end = outputLines[ nextErrorLine ].indexOf( ":", start );
-
-				int errorLineNumber = Integer.parseInt(
-						outputLines[ nextErrorLine ].substring( start, end ) ) - 1;
-				boolean endOfOutputReached = false;
-
-				// Search through compiler output, looking for all the expected errors. 
-				for( Map.Entry< Integer, String > line : expectedErrors ) {
-					if( errorLineNumber == line.getKey() ) {
-						boolean errorFound = outputLines[ nextErrorLine ].contains(
-								line.getValue() );
-						if( !errorFound ) {
-							errors.add("Compiler output: " + outputLines[ nextErrorLine ] + "does not contain expected error: " + line.getValue());
-						}
-					} else {
-						errors.add(
-								"Error line number doesn't match, did you put the expected error on the wrong line?" +
-								" Got: " + errorLineNumber + " expected: " + line.getKey() );
-					}
-
-					for( int i = nextErrorLine; i < outputLines.length; i++ ) {
-						if( outputLines[ i ].equals( "compilation failed." ) ) {
-							nextErrorLine = i + 2;
-							break;
-						}
-					}
-					if( nextErrorLine >= outputLines.length ) {
-						endOfOutputReached = true;
-						break; // end of error output reached
-					}
-
-					start = outputLines[ nextErrorLine ].indexOf( "ch:" ) + 3;
-					end = outputLines[ nextErrorLine ].indexOf( ":", start );
-					if( end == -1 || start == -1 ) {
-						endOfOutputReached = true;
-						break; // end of error output reached 
-					}
-
-					errorLineNumber = Integer.parseInt(
-							outputLines[ nextErrorLine ].substring( start, end ) ) - 1;
-				}
-
-				// If all expected errors have been searched for, but the output from the compiler is not empty
-				// Look for more errors in the rest of the output
-				if( !endOfOutputReached ) {
-					while( start != -1 || end != -1 ) {
-						errors.add("Compiler reported an error not specified in the file: " + outputLines[ nextErrorLine ] );
-
-						for( int i = nextErrorLine; i < outputLines.length; i++ ) {
-							if( outputLines[ i ].equals( "compilation failed." ) ) {
-								nextErrorLine = i + 2; // The line that contains 'compilation failed' is considered the end of the error.
-								// The line following that is always an empty line, so the next error starts 2 lines after the one containing 'compilation failed'
-								break;
-							}
-						}
-
-						if( nextErrorLine >= outputLines.length ) break;
-
-						start = outputLines[ nextErrorLine ].indexOf( "ch:" ) + 3;
-						end = outputLines[ nextErrorLine ].indexOf( ":", start );
-					}
-				}
-			} else
+			if (!Files.isDirectory(directoryPath)){
 				errors.add( "Directory not found: " + directoryPath );
+			} 
+			List< Path > testFiles = Files.walk( directoryPath )
+					.filter( path -> path.toString().endsWith( ".ch" ) )
+					.toList();
+			String[] fileContent = Files.readString( testFiles.get( 0 ) ).split( "\n" );
+
+			List<TestError> expectedErrors = findExpectedErrors(fileContent);
+
+			List<TestError> actualErrors = findActualErrors(outputLines);
+
+			// Count how many times each expected error occurs
+			// This is to account for cases where the same error occurs multiple times on one line
+			Map<TestError, Integer> countExpectedErrors = new HashMap<>();
+			for (TestError testError : expectedErrors){
+				countExpectedErrors.put(testError, countExpectedErrors.getOrDefault(testError, 0) + 1);
+			}
+
+			// Find errors reported by the compiler, not found in the list of expected errors
+			for (TestError testError : actualErrors){
+				int count = countExpectedErrors.getOrDefault(testError, 0);
+				if (count > 0) {
+					// If entry in actualErrors is found, decrement count 
+					// This is to say that one match between expected and actual has been found
+					countExpectedErrors.put(testError, count - 1);
+				} else {
+					errors.add("Error appeared in compiler output that wasn't declared in file: " + testError.message);
+				}
+			}
+
+			// Since the previous loop reduced the count of expectedErrors already
+			// The remaining count, is how many times an error was expected, but didn't appear in compiler output
+			for (Map.Entry<TestError, Integer> expectedError : countExpectedErrors.entrySet()){
+				int count = expectedError.getValue();
+				for (int i = 0; i < count; i++){
+					errors.add("Expected error: " + expectedError.getKey().message + " on line: " + expectedError.getKey().line + " was not found in output of compiler");
+				}
+			}
+
 		} catch( IOException e ) {
 			e.printStackTrace();
 		}
