@@ -21,6 +21,8 @@
 
 package choral;
 
+import static org.junit.jupiter.api.DynamicTest.dynamicTest;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +40,10 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.Assertions;
 
 import com.github.difflib.DiffUtils;
 import com.github.difflib.UnifiedDiffUtils;
@@ -137,7 +142,8 @@ public class TestChoral {
 	private static final String RESET = "\u001B[0m";
 	private static final int COLUMN_WIDTH = 30;
 
-	public static void main( String[] args ) {
+	@TestFactory
+	public Stream<DynamicTest> main(  ) {
 
 		final String HelloRoles = "HelloRoles";
 		final String BiPair = "BiPair";
@@ -402,11 +408,12 @@ public class TestChoral {
 				NonMatchingReturnType
 		).toList();
 
-		runTests( passCompilationSymbols, allCompilationRequests, TestType.MUSTPASS );
-		runTests( failCompilationSymbols, allCompilationRequests, TestType.MUSTFAIL );
+		Stream<DynamicTest> passTests = runTests( passCompilationSymbols, allCompilationRequests, TestType.MUSTPASS );
+		Stream<DynamicTest> failTests =	runTests( failCompilationSymbols, allCompilationRequests, TestType.MUSTFAIL );
+		return Stream.concat(passTests, failTests);
 	}
 
-	private static void runTests(
+	private static Stream<DynamicTest> runTests(
 			List< String > symbols, List< CompilationRequest > compilationRequests,
 			TestType testType
 	) {
@@ -418,26 +425,19 @@ public class TestChoral {
 			case MUSTPASS -> {
 				System.out.println( "\nNow running tests that must pass\n" );
 				finalCompilationRequests.forEach( TestChoral::project );
-				System.out.println(
-						"\u001B[32m" + "Amount of tests ran: " + finalCompilationRequests.size() + "\u001B[0m" );
-				System.out.println();
+				return finalCompilationRequests.stream()
+					.map(request -> dynamicTest(request.symbol, () -> project(request)));
 			}
 			case MUSTFAIL -> {
-				System.out.println( "Now running tests that must fail\n" );
+				System.out.println( "\nNow running tests that must fail\n" );
 				finalCompilationRequests.forEach( TestChoral::projectFail );
-				System.out.println();
-				System.out.println(
-						"\u001B[32m" + "Amount of tests ran: " + finalCompilationRequests.size() + "\u001B[0m" );
-				System.out.println();
+				return finalCompilationRequests.stream()
+					.map(request -> dynamicTest(request.symbol, () -> projectFail(request)));
 			}
 			default -> {
+				return Stream.empty();
 			}
 		}
-	}
-
-	@Test
-	public void mvnTestMethod() {
-		main( new String[ 10 ] );
 	}
 
 	/** Returns list of package names declared in the source folders of the compilation request */
@@ -560,14 +560,14 @@ public class TestChoral {
 		}
 
 		if( !errors.isEmpty() ) {
-			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n",
-					compilationRequest.symbol, RED, RESET );
-			for ( String error : errors ) {
-				System.out.println(RED + "Error: " + RESET + error );
-			}
+			//System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
+			// for ( String error : errors ) {
+			// 	System.out.println(RED + "Error: " + RESET + error );
+			// }
+			String errorMessages = String.join("\n", errors);
+			Assertions.fail(errorMessages);
 		} else {
-			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n",
-					compilationRequest.symbol, GREEN, RESET );
+			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET );
 		}
 	}
 
@@ -696,15 +696,15 @@ public class TestChoral {
 		}
 
 		if (errors.isEmpty()){
-			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n",
-						compilationRequest.symbol, GREEN, RESET );
+			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET );
 		}
 		else {
-			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n",
-							compilationRequest.symbol, RED, RESET );
-			for (String error : errors){
-				System.out.println(RED + "Error: " + RESET + error);
-			}
+			//System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
+			// for (String error : errors){
+			// 	System.out.println(RED + "Error: " + RESET + error);
+			// }
+			String errorMessages = String.join("\n", errors);
+			Assertions.fail(errorMessages);
 		}
 	}
 }
