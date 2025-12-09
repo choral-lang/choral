@@ -650,7 +650,6 @@ public class TestChoral {
 			if( results.exitCode == 0 )
 					errors.add("Program received 0 as exitcode, which means no errors were found. This test is expected to have errors" );
 
-			//System.out.println(results.stdout);
 			String[] outputLines = results.stdout.split( "\n" );
 			
 			List<TestError> actualErrors = findActualErrors(outputLines);
