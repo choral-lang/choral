@@ -556,10 +556,10 @@ public class TestChoral {
 		}
 
 		if( !errors.isEmpty() ) {
-			//System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
-			// for ( String error : errors ) {
-			// 	System.out.println(RED + "Error: " + RESET + error );
-			// }
+			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
+			for ( String error : errors ) {
+				System.out.println(RED + "Error: " + RESET + error );
+			}
 			String errorMessages = String.join("\n", errors);
 			Assertions.fail(errorMessages);
 		} else {
@@ -695,10 +695,10 @@ public class TestChoral {
 			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET );
 		}
 		else {
-			//System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
-			// for (String error : errors){
-			// 	System.out.println(RED + "Error: " + RESET + error);
-			// }
+			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
+			for (String error : errors){
+				System.out.println(RED + "Error: " + RESET + error);
+			}
 			String errorMessages = String.join("\n", errors);
 			Assertions.fail(errorMessages);
 		}
