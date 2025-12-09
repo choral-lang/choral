@@ -423,14 +423,10 @@ public class TestChoral {
 
 		switch( testType ) {
 			case MUSTPASS -> {
-				System.out.println( "\nNow running tests that must pass\n" );
-				finalCompilationRequests.forEach( TestChoral::project );
 				return finalCompilationRequests.stream()
 					.map(request -> dynamicTest(request.symbol, () -> project(request)));
 			}
 			case MUSTFAIL -> {
-				System.out.println( "\nNow running tests that must fail\n" );
-				finalCompilationRequests.forEach( TestChoral::projectFail );
 				return finalCompilationRequests.stream()
 					.map(request -> dynamicTest(request.symbol, () -> projectFail(request)));
 			}
