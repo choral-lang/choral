@@ -170,6 +170,8 @@ public class TestChoral {
 		final String ChainingOperator = "ChainingExample";
 		final String AutoBoxing = "Autoboxing";
 		final String BookSellingSoloist = "BuyBook2";
+		final String MultiFileError = "MultiFileError";
+		final String MultiFileErrorUtil = "MultiFileErrorUtil";
 
 		List< CompilationRequest > allCompilationRequests = Stream.of(
 				new CompilationRequest(
@@ -377,6 +379,15 @@ public class TestChoral {
 						BookSellingSoloist, ALL_WORLDS,
 						List.of( BASE_PATH ),
 						Collections.emptyList() )
+				,
+				new CompilationRequest(
+						List.of(subFolder(MUSTFAIL_FOLDER, MultiFileError),
+								subFolder(MUSTFAIL_FOLDER, MultiFileErrorUtil)), 
+						TARGET_FOLDER, 
+						Collections.emptyList(), 
+						MultiFileError, ALL_WORLDS, 
+						List.of(BASE_PATH), 
+						Collections.emptyList())
 		).toList();
 
 		List< String > passCompilationSymbols = Stream.of(
@@ -405,7 +416,8 @@ public class TestChoral {
 				LotsOfErrors,
 				WrongType,
 				VariableDeclarations,
-				NonMatchingReturnType
+				NonMatchingReturnType,
+				MultiFileError
 		).toList();
 
 		Stream<DynamicTest> passTests = runTests( passCompilationSymbols, allCompilationRequests, TestType.MUSTPASS );
@@ -557,9 +569,6 @@ public class TestChoral {
 
 		if( !errors.isEmpty() ) {
 			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
-			for ( String error : errors ) {
-				System.out.println(RED + "Error: " + RESET + error );
-			}
 			String errorMessages = String.join("\n", errors);
 			Assertions.fail(errorMessages);
 		} else {
@@ -641,49 +650,65 @@ public class TestChoral {
 			if( results.exitCode == 0 )
 					errors.add("Program received 0 as exitcode, which means no errors were found. This test is expected to have errors" );
 
+			//System.out.println(results.stdout);
 			String[] outputLines = results.stdout.split( "\n" );
-
-			// Find the choral file in the testing directory
-			// Only the first file is used, because the MustFail tests only involve a single
-			// If a MustFail test is ever made using multiple source files, it is considered a mistake
-			Path directoryPath = Path.of( compilationRequest.sourceFolder().get( 0 ) );
-			if (!Files.isDirectory(directoryPath)){
-				errors.add( "Directory not found: " + directoryPath );
-			} 
-			List< Path > testFiles = Files.walk( directoryPath )
-					.filter( path -> path.toString().endsWith( ".ch" ) )
-					.toList();
-			String[] fileContent = Files.readString( testFiles.get( 0 ) ).split( "\n" );
-
-			List<TestError> expectedErrors = findExpectedErrors(fileContent);
-
+			
 			List<TestError> actualErrors = findActualErrors(outputLines);
+			Map<TestError, Integer> countActualErrors = new HashMap<>();
+			for (TestError actualError : actualErrors){
+				countActualErrors.put(actualError, countActualErrors.getOrDefault(actualError, 0) + 1);
+			} 
 
-			// Count how many times each expected error occurs
-			// This is to account for cases where the same error occurs multiple times on one line
-			Map<TestError, Integer> countExpectedErrors = new HashMap<>();
-			for (TestError testError : expectedErrors){
-				countExpectedErrors.put(testError, countExpectedErrors.getOrDefault(testError, 0) + 1);
-			}
+			// Find all files in all source folders
+			for (String path : compilationRequest.sourceFolder()){
+				Path directoryPath = Path.of(path);
+				if (!Files.isDirectory(directoryPath)){
+					errors.add( "Directory not found: " + directoryPath );
+				} 
+				List< Path > testFiles = Files.walk( directoryPath )
+						.filter( pathToFile -> pathToFile.toString().endsWith( ".ch" ) )
+						.toList();
+				for (Path file : testFiles){
+					String[] fileContent = Files.readString( file ).split( "\n" );
 
-			// Find errors reported by the compiler, not found in the list of expected errors
-			for (TestError testError : actualErrors){
-				int count = countExpectedErrors.getOrDefault(testError, 0);
-				if (count > 0) {
-					// If entry in actualErrors is found, decrement count 
-					// This is to say that one match between expected and actual has been found
-					countExpectedErrors.put(testError, count - 1);
-				} else {
-					errors.add("Error appeared in compiler output that wasn't declared in file: " + testError.message);
+					List<TestError> expectedErrors = findExpectedErrors(fileContent);
+
+					// Count how many times each expected error occurs
+					// This is to account for cases where the same error occurs multiple times on one line
+					Map<TestError, Integer> countExpectedErrors = new HashMap<>();
+					for (TestError testError : expectedErrors){
+						countExpectedErrors.put(testError, countExpectedErrors.getOrDefault(testError, 0) + 1);
+					}
+
+					// Find errors reported by the compiler, not found in the list of expected errors
+					for (TestError testError : expectedErrors){
+						int count = countActualErrors.getOrDefault(testError, 0);
+						if (count > 0) {
+							// If entry in actualErrors is found, decrement count 
+							// This is to say that one match between expected and actual has been found
+							countExpectedErrors.put(testError, countExpectedErrors.getOrDefault(testError, 0) - 1);
+							// Also decrement count in actualErrors, to indicate a match has been found
+							countActualErrors.put(testError, count - 1);
+						} 
+					}
+
+					// Since the previous loop reduced the count of expectedErrors already
+					// The remaining count is how many times an error was expected, but didn't appear in compiler output
+					for (Map.Entry<TestError, Integer> expectedError : countExpectedErrors.entrySet()){
+						int count = expectedError.getValue();
+						for (int i = 0; i < count; i++){
+							errors.add("Expected error: " + expectedError.getKey().message + " on line: " + expectedError.getKey().line + " was not found in output of compiler");
+						}
+					}
 				}
 			}
 
-			// Since the previous loop reduced the count of expectedErrors already
-			// The remaining count, is how many times an error was expected, but didn't appear in compiler output
-			for (Map.Entry<TestError, Integer> expectedError : countExpectedErrors.entrySet()){
-				int count = expectedError.getValue();
-				for (int i = 0; i < count; i++){
-					errors.add("Expected error: " + expectedError.getKey().message + " on line: " + expectedError.getKey().line + " was not found in output of compiler");
+			// By this point all expected errors from all files has been compared with compiler output
+			// Any errors left in actualErrors with a count above 0 indicate errors not found in expectedErrors
+			for (Map.Entry<TestError, Integer> actualError : countActualErrors.entrySet()){
+				int count = actualError.getValue();
+				for (int i = 0; i < count; i ++){
+					errors.add("Error appeared in compiler output that wasn't declared in file: " + actualError.getKey());
 				}
 			}
 
@@ -696,9 +721,6 @@ public class TestChoral {
 		}
 		else {
 			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
-			for (String error : errors){
-				System.out.println(RED + "Error: " + RESET + error);
-			}
 			String errorMessages = String.join("\n", errors);
 			Assertions.fail(errorMessages);
 		}
