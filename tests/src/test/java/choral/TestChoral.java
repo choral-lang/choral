@@ -51,6 +51,10 @@ import com.github.difflib.patch.Patch;
 
 public class TestChoral {
 
+
+	///////////////////////////////// DATATYPES /////////////////////////////////////
+
+
 	private record CompilationRequest(List< String > sourceFolder,
 									  String targetFolder,
 									  List< String > headersFolders,
@@ -62,6 +66,7 @@ public class TestChoral {
 	private record CompilationResults(int exitCode, String stdout, String stderr) {}
 
 	private record TestError(int line, String message) {
+		// TODO Why the unusual behavior? Can we get rid of it?
 		@Override
 		public boolean equals(Object obj){
 			if (this == obj) return true;
@@ -76,6 +81,41 @@ public class TestChoral {
 		}
 	}
 
+	enum TestType {
+		MUSTPASS,
+		MUSTFAIL,
+		RUNTIME
+	}
+
+
+	///////////////////////////////// CONSTANTS /////////////////////////////////////
+
+
+	static final List< String > ALL_WORLDS = Collections.singletonList( "" );
+	private static final String FILESEPARATOR = System.getProperty( "path.separator" );
+	private static final String PATHSEPARATOR = File.separator;
+	private static final String SOURCE_FOLDER = Paths.get("tests", "src", "main", "choral", "examples").toString();
+	private static final String TARGET_FOLDER = "projectedOutput";
+	private static final String EXPECTED_FOLDER = "expectedOutput";
+	private static final String RUNTIME_MAIN_FOLDER = Paths.get("..", "runtime", "src", "main", "choral").toString();
+	private static final String CHORALUNIT_MAIN_FOLDER = Paths.get("..", "choral-unit", "src", "main", "choral").toString();
+	private static final String MUSTFAIL_FOLDER = Paths.get("src", "main", "choral", "MustFail").toString();
+	private static final String MUSTPASS_FOLDER = Paths.get("src", "main", "choral", "MustPass").toString();
+	private static final String BASE_PATH = Paths.get("base", "src", "main", "java").toString();
+	private static final String RUNTIME_PATH = Paths.get("runtime", "src", "main", "java").toString();
+	private static final String EXPECTEDOUTPUT_PATH = "expectedOutput";
+
+	// formatting for terminal output
+	private static final String GREEN = "\u001B[32m";
+	private static final String RED = "\u001B[31m";
+	private static final String RESET = "\u001B[0m";
+	private static final int COLUMN_WIDTH = 30;
+
+
+	///////////////////////////////// HELPERS /////////////////////////////////////
+
+
+	/** Tries to compile the test and returns the results produced by the Choral compiler. */
 	private static CompilationResults compile(CompilationRequest compilationRequest){
 		ArrayList< String > parameters = new ArrayList<>();
 		parameters.add( "epp" );
@@ -110,37 +150,13 @@ public class TestChoral {
 	}
 
 
-	enum TestType {
-		MUSTPASS,
-		MUSTFAIL,
-		RUNTIME
-	}
-
-	static final List< String > ALL_WORLDS = Collections.singletonList( "" );
-
 	public static String subFolder( String sourceFolder, String subFolder ) {
 		return sourceFolder + File.separator + subFolder;
 	}
 
-	/**Thi */
-	private static final String FILESEPARATOR = System.getProperty( "path.separator" );
-	private static final String PATHSEPARATOR = File.separator;
-	private static final String SOURCE_FOLDER = Paths.get("tests", "src", "main", "choral", "examples").toString();
-	private static final String TARGET_FOLDER = "projectedOutput";
-	private static final String EXPECTED_FOLDER = "expectedOutput";
-	private static final String RUNTIME_MAIN_FOLDER = Paths.get("..", "runtime", "src", "main", "choral").toString();
-	private static final String CHORALUNIT_MAIN_FOLDER = Paths.get("..", "choral-unit", "src", "main", "choral").toString();
-	private static final String MUSTFAIL_FOLDER = Paths.get("src", "main", "choral", "MustFail").toString();
-	private static final String MUSTPASS_FOLDER = Paths.get("src", "main", "choral", "MustPass").toString();
-	private static final String BASE_PATH = Paths.get("base", "src", "main", "java").toString();
-	private static final String RUNTIME_PATH = Paths.get("runtime", "src", "main", "java").toString();
-	private static final String EXPECTEDOUTPUT_PATH = "expectedOutput";
 
-	// formatting for terminal output
-	private static final String GREEN = "\u001B[32m";
-	private static final String RED = "\u001B[31m";
-	private static final String RESET = "\u001B[0m";
-	private static final int COLUMN_WIDTH = 30;
+	///////////////////////////////// ADD TESTS HERE /////////////////////////////////////
+
 
 	@TestFactory
 	public Stream<DynamicTest> main(  ) {
