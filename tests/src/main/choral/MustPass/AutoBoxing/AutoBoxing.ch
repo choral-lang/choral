@@ -1,4 +1,4 @@
-packe choral.MustPass.AutoBoxing;
+package choral.MustPass.AutoBoxing;
 
 public class AutoBoxing@( A, B ) {
         public void f(){

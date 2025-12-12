@@ -258,24 +258,24 @@ public class TestChoral {
                         List.of( BASE_PATH, RUNTIME_PATH ),
                         Collections.emptyList() )
                 ,
-// https://github.com/choral-lang/choral/issues/29
-//                new CompilationRequest(
-//                        List.of( subFolder(MUSTPASS_FOLDER, "SwitchTest" ) ),
-//                        TARGET_FOLDER,
-//                        Collections.emptyList(),
-//                        "SwitchTest", ALL_WORLDS,
-//                        List.of( BASE_PATH ),
-//                        Collections.emptyList() )
-//                ,
-// https://github.com/choral-lang/choral/issues/27
-//                new CompilationRequest(
-//                        List.of( subFolder(MUSTPASS_FOLDER, "MirrorChannel" ) ),
-//                        TARGET_FOLDER,
-//                        Collections.emptyList(),
-//                        "MirrorChannel", ALL_WORLDS,
-//                        List.of( BASE_PATH ),
-//                        Collections.emptyList() )
-//                ,
+				// https://github.com/choral-lang/choral/issues/29
+                new CompilationRequest(
+                        List.of( subFolder(MUSTPASS_FOLDER, "SwitchTest" ) ),
+                        TARGET_FOLDER,
+                        Collections.emptyList(),
+                        "SwitchTest", ALL_WORLDS,
+                        List.of( BASE_PATH ),
+                        Collections.emptyList() )
+                ,
+				// https://github.com/choral-lang/choral/issues/27
+                new CompilationRequest(
+                        List.of( subFolder(MUSTPASS_FOLDER, "MirrorChannel" ) ),
+                        TARGET_FOLDER,
+                        Collections.emptyList(),
+                        "MirrorChannel", ALL_WORLDS,
+                        List.of( BASE_PATH ),
+                        Collections.emptyList() )
+                ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "LoggerExample" ) ),
                         TARGET_FOLDER,
@@ -300,15 +300,15 @@ public class TestChoral {
                         List.of( BASE_PATH, RUNTIME_PATH ),
                         Collections.emptyList() )
                 ,
-// https://github.com/choral-lang/choral/issues/28
-//                new CompilationRequest(
-//                        List.of( subFolder(MUSTPASS_FOLDER, "Autoboxing" ) ),
-//                        TARGET_FOLDER,
-//                        Collections.emptyList(),
-//                        "Autoboxing", ALL_WORLDS,
-//                        List.of( BASE_PATH ),
-//                        Collections.emptyList() )
-//                ,
+				// https://github.com/choral-lang/choral/issues/28
+                new CompilationRequest(
+                        List.of( subFolder(MUSTPASS_FOLDER, "Autoboxing" ) ),
+                        TARGET_FOLDER,
+                        Collections.emptyList(),
+                        "Autoboxing", ALL_WORLDS,
+                        List.of( BASE_PATH ),
+                        Collections.emptyList() )
+                ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "BookSellingSoloist") ),
                         TARGET_FOLDER,
@@ -397,30 +397,6 @@ public class TestChoral {
 		return Stream.concat(mustPassTests, mustFailTests);
 	}
 
-	/** Returns list of package names declared in the source folders of the compilation request */
-	private static HashSet<String> getPackageNames( CompilationRequest compilationRequest ) throws IOException {
-		HashSet< String > packages = new HashSet<>();
-		for( String folder : compilationRequest.sourceFolder() ) {
-			Path path = Path.of( folder );
-			List< Path > choralFiles = Files.walk( path ).filter(
-				file -> file.toString().endsWith( ".ch" )
-			).toList();
-			for( Path file : choralFiles ) {
-				String fileContent = Files.readString( file );
-				// Find the package declared at the top of the file
-				int i = fileContent.indexOf( "package " );
-				int j = fileContent.indexOf( ";" );
-				if ( i == -1 || j == -1 ) {
-					System.err.println( "Missing package declaration in file: " + file );
-					continue;
-				}
-				String pathString = fileContent.substring(i + 7, j).trim(); // 'package' = 7 characters
-				packages.add( pathString );
-			}
-		}
-		return packages;
-	}
-
     /** Compiles the test, expecting it to succeed. */
 	private static void project( CompilationRequest compilationRequest ) {
 		ArrayList< String > errors = new ArrayList<>();
@@ -431,7 +407,30 @@ public class TestChoral {
 					"\n" + results.stdout );
 
 		try {
-			for( String packageName : getPackageNames(compilationRequest) ) {
+			// Get the package names declared in the source folders of the compilation request
+			HashSet< String > packages = new HashSet<>();
+			for( String folder : compilationRequest.sourceFolder() ) {
+				Path path = Path.of( folder );
+				List< Path > choralFiles = Files.walk( path ).filter(
+						file -> file.toString().endsWith( ".ch" )
+				).toList();
+				for( Path file : choralFiles ) {
+					String fileContent = Files.readString( file );
+					// Find the package declared at the top of the file
+					int i = fileContent.indexOf( "package " );
+					int j = fileContent.indexOf( ";" );
+					if ( i == -1 || j == -1 ) {
+						errors.add( "Missing package declaration in file: " + file );
+						continue;
+					}
+					String pathString = fileContent.substring(i + 7, j).trim(); // 'package' = 7 characters
+					packages.add( pathString );
+				}
+			}
+
+			// For each package, compare the projected Java files with the expected ones,
+			// and try compiling the expected ones.
+			for( String packageName : packages ) {
 				String[] packageList = packageName.split( "\\." );
 
 				// Get all the projected and expected Java files
@@ -505,12 +504,12 @@ public class TestChoral {
 										diagnostic.getSource().toUri() ) );
 						javaCompilationErrors.add( diagnostic.getMessage( null ) );
 					}
-					String javaErrors = String.join( "", javaCompilationErrors );
+					String javaErrors = String.join( "\n", javaCompilationErrors );
 					errors.add( "Expected Java code does not compile:\n" + javaErrors );
 				}
 			}
-		} catch( IOException e ) {
-			errors.add( e.getMessage() );
+		} catch( Throwable e ) {
+			errors.add( e.toString() );
 		}
 
 		if( !errors.isEmpty() ) {
