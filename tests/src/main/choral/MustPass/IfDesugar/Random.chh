@@ -1,0 +1,5 @@
+package java.util;
+
+public class Random@A {
+    public static boolean@A nextBoolean();
+}

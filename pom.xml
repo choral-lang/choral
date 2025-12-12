@@ -8,8 +8,10 @@
     <properties>
         <revision>0.1.10</revision>
         <choral.url>https://www.choral-lang.org/</choral.url>
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
+
 
     <modules>
         <module>dist</module>
