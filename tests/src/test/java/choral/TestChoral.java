@@ -31,6 +31,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import javax.tools.Diagnostic;
@@ -547,41 +549,30 @@ public class TestChoral {
 
     /** Searches the compiler output for actual errors produced during compilation. */
 	private static List<TestError> findActualErrors(String[] outputLines){
+		// Choral's error messages look like this:
+		// src/main/choral/MustFail/WrongType/WrongType.ch:7:14: error: Required type 'int@(A)', found 'java.lang.String@(A)'.
+		//
+		//   6 |         int@A lol = 5@A;
+		//   7 |         int@A lul = "Hello"@A; //! Required type 'int@(A)', found 'java.lang.String@(A)'
+		//     | --------------^
+		//   8 |         a = lol;
+		//
+		//compilation failed.
+
+		// Use a regex to get the path to the Choral file, the line number, and the error message.
+		Pattern pattern = Pattern.compile( "(.*\\.ch):(\\d+):(\\d+): error: (.*)" );
 		List<TestError> actualErrors = new ArrayList<>();
 
-		int nextErrorLine = 0;
-		int start = outputLines[ nextErrorLine ].indexOf( "ch:" ) + 3;
-		// ch: is to represent the end of the choral file the error occured in.
-		// + 3 is to get past the 'ch:' characters.
-		// The index "start" is then positioned at the start of the error.
-		int end = outputLines[ nextErrorLine ].indexOf( ":", start );
-		// The end of a error is marked by a ':' in the choral compiler output.
-		int errorLineNumber = Integer.parseInt(outputLines[ nextErrorLine ].substring( start, end ) ) - 1;
+		for (String line : outputLines) {
+			Matcher matcher = pattern.matcher( line );
+			if( !matcher.matches() )
+				continue;
 
-		// Main loop.
-		while (start != -1 || end != -1){
-			// if String.indexOf() can't find an instance of a given string it will simply return -1
-			// so by checking for -1, we check for whether an instance of the given string exists
-			actualErrors.add(new TestError(errorLineNumber + 1, outputLines[nextErrorLine]));
+			String filePath = matcher.group( 1 );
+			int lineNumber = Integer.parseInt( matcher.group( 2 ) );
+			String errorMessage = matcher.group( 4 );
 
-			for (int i = nextErrorLine; i < outputLines.length; i++){
-				if( outputLines[ i ].equals( "compilation failed." ) ) {
-					nextErrorLine = i + 2;
-					// 2 is the amount of lines we need to skip to get to the next error
-					// when i is the line number for a line that contains 'compilation failed'
-					break;
-				}
-			}
-
-			if( nextErrorLine >= outputLines.length ) break; // end of error output reached
-
-			start = outputLines[ nextErrorLine ].indexOf( "ch:" ) + 3;
-			end = outputLines[ nextErrorLine ].indexOf( ":", start );
-
-			if( end == -1 || start == -1 ) break; // end of error output reached
-			// this extra check is to avoid passing -1 to String.substring
-			// as doing that causes java to die.
-			errorLineNumber = Integer.parseInt(outputLines[ nextErrorLine ].substring( start, end ) ) - 1;
+			actualErrors.add(new TestError(lineNumber, errorMessage));
 		}
 
 		return actualErrors;
