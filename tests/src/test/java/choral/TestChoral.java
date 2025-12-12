@@ -67,19 +67,12 @@ public class TestChoral {
 
 	private record CompilationResults(int exitCode, String stdout, String stderr) {}
 
+	// TODO Add the source file too
 	private record TestError(int line, String message) {
-		// TODO Why the unusual behavior? Can we get rid of it?
-		@Override
-		public boolean equals(Object obj){
-			if (this == obj) return true;
-			if (obj == null || getClass() != obj.getClass()) return false;
-			TestError testError = (TestError)obj;
-			return line == testError.line && (message.contains(testError.message) || (testError.message.contains(message)));
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(line);
+		/** Errors match if they occur on the same line and one message is a substring of the other. */
+		boolean matches( TestError that ) {
+			return this.line == that.line &&
+				( this.message.contains( that.message ) || that.message.contains( this.message ) );
 		}
 	}
 
@@ -578,79 +571,51 @@ public class TestChoral {
 		return actualErrors;
 	}
 
+	/** Compiles the test, expecting it to fail. */
 	private static void projectFail( CompilationRequest compilationRequest ) {
 		List<String> errors = new ArrayList<>();
+		CompilationResults results = compile(compilationRequest);
 
-		try {
-			CompilationResults results = compile(compilationRequest);
+		if( results.exitCode == 0 )
+			errors.add("Program compiled with exit code 0, which means no errors were found." +
+				"This test is expected to have errors" );
 
-			if( results.exitCode == 0 )
-                errors.add("Program compiled with exit code 0, which means no errors were found." +
-                    "This test is expected to have errors" );
+		String[] outputLines = results.stdout.split( "\n" );
+		List<TestError> actualErrors = findActualErrors(outputLines);
 
-			String[] outputLines = results.stdout.split( "\n" );
-
-			List<TestError> actualErrors = findActualErrors(outputLines);
-			Map<TestError, Integer> countActualErrors = new HashMap<>();
-			for (TestError actualError : actualErrors){
-				countActualErrors.put(actualError, countActualErrors.getOrDefault(actualError, 0) + 1);
+		// Concatenate all the expected errors in all the files in the source folders
+		ArrayList<TestError> expectedErrors = new ArrayList<>();
+		for (String path : compilationRequest.sourceFolder()){
+			Path directoryPath = Path.of(path);
+			if (!Files.isDirectory(directoryPath)){
+				errors.add( "Directory not found: " + directoryPath );
+				continue;
 			}
-
-			// Find all files in all source folders
-			for (String path : compilationRequest.sourceFolder()){
-				Path directoryPath = Path.of(path);
-				if (!Files.isDirectory(directoryPath)){
-					errors.add( "Directory not found: " + directoryPath );
-				}
-				List< Path > testFiles = Files.walk( directoryPath )
-						.filter( pathToFile -> pathToFile.toString().endsWith( ".ch" ) )
-						.toList();
-				for (Path file : testFiles){
-					String[] fileContent = Files.readString( file ).split( "\n" );
-
-					List<TestError> expectedErrors = findExpectedErrors(fileContent);
-
-					// Count how many times each expected error occurs
-					// This is to account for cases where the same error occurs multiple times on one line
-					Map<TestError, Integer> countExpectedErrors = new HashMap<>();
-					for (TestError testError : expectedErrors){
-						countExpectedErrors.put(testError, countExpectedErrors.getOrDefault(testError, 0) + 1);
-					}
-
-					// Find errors reported by the compiler, not found in the list of expected errors
-					for (TestError testError : expectedErrors){
-						int count = countActualErrors.getOrDefault(testError, 0);
-						if (count > 0) {
-							// If entry in actualErrors is found, decrement count
-							// This is to say that one match between expected and actual has been found
-							countExpectedErrors.put(testError, countExpectedErrors.getOrDefault(testError, 0) - 1);
-							// Also decrement count in actualErrors, to indicate a match has been found
-							countActualErrors.put(testError, count - 1);
+			try (Stream<Path> testFiles = Files.walk(directoryPath)) {
+				testFiles
+					.filter(pathToFile -> pathToFile.toString().endsWith(".ch"))
+					.forEach(file -> {
+						try {
+							String[] fileContent = Files.readString(file).split("\n");
+							expectedErrors.addAll(findExpectedErrors(fileContent));
+						} catch (IOException e) {
+							errors.add("Error reading file '" + file + "': " + e.getMessage());
 						}
-					}
-
-					// Since the previous loop reduced the count of expectedErrors already
-					// The remaining count is how many times an error was expected, but didn't appear in compiler output
-					for (Map.Entry<TestError, Integer> expectedError : countExpectedErrors.entrySet()){
-						int count = expectedError.getValue();
-						for (int i = 0; i < count; i++){
-							errors.add("Expected error: " + expectedError.getKey().message + " on line: " + expectedError.getKey().line + " was not found in output of compiler");
-						}
-					}
-				}
+					});
+			} catch (IOException e) {
+				errors.add("Error reading file '" + directoryPath + "': " + e.getMessage());
 			}
+		}
 
-			// By this point all expected errors from all files has been compared with compiler output
-			// Any errors left in actualErrors with a count above 0 indicate errors not found in expectedErrors
-			for (Map.Entry<TestError, Integer> actualError : countActualErrors.entrySet()){
-				int count = actualError.getValue();
-				for (int i = 0; i < count; i ++){
-					errors.add("Error appeared in compiler output that wasn't declared in file: " + actualError.getKey());
-				}
-			}
-
-		} catch( IOException e ) {
-			e.printStackTrace();
+		// Add an error for each expected error not found in actual errors, and vice versa.
+		// The expected error can be a substring of the actual error.
+		for (TestError expected : subtract(expectedErrors, actualErrors)) {
+			errors.add("Expected error an error on line " + expected.line() +
+				": " + expected.message());
+		}
+		for (TestError actual : subtract(actualErrors, expectedErrors)) {
+			errors.add("Unexpected error on line " + actual.line() +
+				": " + actual.message());
 		}
 
 		if (errors.isEmpty()){
@@ -661,5 +626,22 @@ public class TestChoral {
 			String errorMessages = String.join("\n", errors);
 			Assertions.fail(errorMessages);
 		}
+	}
+
+	/** Returns a list of errors in xs that are not in ys. */
+	private static List<TestError> subtract(List<TestError> original, List<TestError> removed) {
+		ArrayList<TestError> result = new ArrayList<>();
+		for( TestError x : original ) {
+			boolean found = false;
+			for( TestError y : removed ) {
+				if( x.matches(y) ) {
+					found = true;
+					break;
+				}
+			}
+			if( !found )
+				result.add( x );
+		}
+		return result;
 	}
 }
