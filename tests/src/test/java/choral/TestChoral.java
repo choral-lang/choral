@@ -43,13 +43,13 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
 import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.Assertions;
 
 import com.github.difflib.DiffUtils;
 import com.github.difflib.UnifiedDiffUtils;
 import com.github.difflib.patch.Patch;
+import org.junit.jupiter.api.function.Executable;
 
 public class TestChoral {
 
@@ -67,28 +67,34 @@ public class TestChoral {
 
 	private record CompilationResults(int exitCode, String stdout, String stderr) {}
 
-	// TODO Add the source file too
-	private record TestError(int line, String message) {
+	private record TestError(String path, int line, String message) {
 		/** Errors match if they occur on the same line and one message is a substring of the other. */
 		boolean matches( TestError that ) {
-			return this.line == that.line &&
+			return this.path.equals(that.path) &&
+				this.line == that.line &&
 				( this.message.contains( that.message ) || that.message.contains( this.message ) );
 		}
 	}
 
-	enum TestType {
-		MUSTPASS,
-		MUSTFAIL,
-		RUNTIME
+	private record MustFailTest(CompilationRequest compilationRequest) implements Executable {
+		@Override
+		public void execute() {
+			projectFail( compilationRequest );
+		}
 	}
 
+	private record MustPassTest(CompilationRequest compilationRequest) implements Executable {
+		@Override
+		public void execute() {
+			project( compilationRequest );
+		}
+	}
 
 	///////////////////////////////// CONSTANTS /////////////////////////////////////
 
 
 	static final List< String > ALL_WORLDS = Collections.singletonList( "" );
-	private static final String FILESEPARATOR = System.getProperty( "path.separator" );
-	private static final String SOURCE_FOLDER = Paths.get("tests", "src", "main", "choral", "examples").toString();
+	private static final String FILESEPARATOR = File.pathSeparator;
 	private static final String TARGET_FOLDER = "projectedOutput";
 	private static final String EXPECTED_FOLDER = "expectedOutput";
 	private static final String RUNTIME_MAIN_FOLDER = Paths.get("..", "runtime", "src", "main", "choral").toString();
@@ -153,7 +159,7 @@ public class TestChoral {
 
 
 	@TestFactory
-	public Stream<DynamicTest> main(  ) {
+	public Stream<DynamicTest> mainTests(  ) {
 
         //////// MustPass Tests ////////
 
@@ -383,38 +389,34 @@ public class TestChoral {
 		);
 
         Stream<DynamicTest> mustPassTests = mustPassRequests
-            .map(request -> dynamicTest(request.symbol, () -> project(request)));
+            .map(request -> dynamicTest(request.symbol, new MustPassTest( request )));
 
         Stream<DynamicTest> mustFailTests = mustFailRequests
-            .map(request -> dynamicTest(request.symbol, () -> projectFail(request)));
+            .map(request -> dynamicTest(request.symbol, new MustFailTest( request )));
 
 		return Stream.concat(mustPassTests, mustFailTests);
 	}
 
 	/** Returns list of package names declared in the source folders of the compilation request */
-	private static HashSet<String> getPackageNames( CompilationRequest compilationRequest ) {
+	private static HashSet<String> getPackageNames( CompilationRequest compilationRequest ) throws IOException {
 		HashSet< String > packages = new HashSet<>();
-		try {
-			for( String folder : compilationRequest.sourceFolder() ) {
-				Path path = Path.of( folder );
-				List< Path > choralFiles = Files.walk( path ).filter(
-					file -> file.toString().endsWith( ".ch" )
-				).toList();
-				for( Path file : choralFiles ) {
-					String fileContent = Files.readString( file );
-					// Find the package declared at the top of the file
-					int i = fileContent.indexOf( "package " );
-					int j = fileContent.indexOf( ";" );
-					if ( i == -1 || j == -1 ) {
-						System.err.println( "Missing package declaration in file: " + file );
-						continue;
-					}
-					String pathString = fileContent.substring(i + 7, j).trim(); // 'package' = 7 characters
-					packages.add( pathString );
+		for( String folder : compilationRequest.sourceFolder() ) {
+			Path path = Path.of( folder );
+			List< Path > choralFiles = Files.walk( path ).filter(
+				file -> file.toString().endsWith( ".ch" )
+			).toList();
+			for( Path file : choralFiles ) {
+				String fileContent = Files.readString( file );
+				// Find the package declared at the top of the file
+				int i = fileContent.indexOf( "package " );
+				int j = fileContent.indexOf( ";" );
+				if ( i == -1 || j == -1 ) {
+					System.err.println( "Missing package declaration in file: " + file );
+					continue;
 				}
+				String pathString = fileContent.substring(i + 7, j).trim(); // 'package' = 7 characters
+				packages.add( pathString );
 			}
-		} catch( IOException e ) {
-			e.printStackTrace();
 		}
 		return packages;
 	}
@@ -425,10 +427,11 @@ public class TestChoral {
 
 		CompilationResults results = compile(compilationRequest);
 		if( results.exitCode != 0 )
-			errors.add( "Compilation failed with exit code " + results.exitCode );
+			errors.add( "Compilation failed unexpectedly with exit code " + results.exitCode +
+					"\n" + results.stdout );
 
-		for( String packageName : getPackageNames(compilationRequest) ) {
-			try {
+		try {
+			for( String packageName : getPackageNames(compilationRequest) ) {
 				String[] packageList = packageName.split( "\\." );
 
 				// Get all the projected and expected Java files
@@ -505,10 +508,9 @@ public class TestChoral {
 					String javaErrors = String.join( "", javaCompilationErrors );
 					errors.add( "Expected Java code does not compile:\n" + javaErrors );
 				}
-
-			} catch( IOException e ) {
-				e.printStackTrace();
 			}
+		} catch( IOException e ) {
+			errors.add( e.getMessage() );
 		}
 
 		if( !errors.isEmpty() ) {
@@ -524,7 +526,7 @@ public class TestChoral {
      * Finds all of the expected errors in the given file.
      * An expected error is declared by a comment starting with '//!'
      */
-	private static List<TestError> findExpectedErrors(String[] fileContent){
+	private static List<TestError> findExpectedErrors(String path, String[] fileContent){
 		List<TestError> testErrors = new ArrayList<>();
 
 		for( int i = 0; i < fileContent.length; i++ ) {
@@ -534,7 +536,7 @@ public class TestChoral {
 
             for (int j = 1; j < chunks.length; j++) {
                 String message = chunks[j].trim();
-                testErrors.add(new TestError(lineNumber, message));
+                testErrors.add(new TestError(path, lineNumber, message));
             }
 		}
 		return testErrors;
@@ -565,7 +567,7 @@ public class TestChoral {
 			int lineNumber = Integer.parseInt( matcher.group( 2 ) );
 			String errorMessage = matcher.group( 4 );
 
-			actualErrors.add(new TestError(lineNumber, errorMessage));
+			actualErrors.add(new TestError(filePath, lineNumber, errorMessage));
 		}
 
 		return actualErrors;
@@ -593,11 +595,11 @@ public class TestChoral {
 			}
 			try (Stream<Path> testFiles = Files.walk(directoryPath)) {
 				testFiles
-					.filter(pathToFile -> pathToFile.toString().endsWith(".ch"))
+					.filter(file -> file.toString().endsWith(".ch"))
 					.forEach(file -> {
 						try {
 							String[] fileContent = Files.readString(file).split("\n");
-							expectedErrors.addAll(findExpectedErrors(fileContent));
+							expectedErrors.addAll(findExpectedErrors(file.toString(), fileContent));
 						} catch (IOException e) {
 							errors.add("Error reading file '" + file + "': " + e.getMessage());
 						}
@@ -610,11 +612,11 @@ public class TestChoral {
 		// Add an error for each expected error not found in actual errors, and vice versa.
 		// The expected error can be a substring of the actual error.
 		for (TestError expected : subtract(expectedErrors, actualErrors)) {
-			errors.add("Expected error an error on line " + expected.line() +
+			errors.add("Expected to find the following error on line " + expected.line() +
 				": " + expected.message());
 		}
 		for (TestError actual : subtract(actualErrors, expectedErrors)) {
-			errors.add("Unexpected error on line " + actual.line() +
+			errors.add("Got an unexpected error on line " + actual.line() +
 				": " + actual.message());
 		}
 
