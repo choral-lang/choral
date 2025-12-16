@@ -1,11 +1,11 @@
 package choral.examples.DistAuth;
 
+import choral.DistAuth.EnumBoolean;
+import choral.examples.DistAuthUtils.AuthToken;
+import choral.runtime.TLSChannel.TLSChannel_B;
 import choral.annotations.Choreography;
 import choral.lang.Unit;
-import choral.runtime.TLSChannel.TLSChannel_B;
-import choral.examples.DistAuthUtils.AuthToken;
 import choral.examples.DistAuthUtils.ClientRegistry;
-import choral.DistAuth.EnumBoolean;
 
 @Choreography( role = "IP", name = "DistAuth" )
 public class DistAuth_IP {
@@ -22,11 +22,11 @@ public class DistAuth_IP {
 			return Unit.id;
 		}
 	}
-
+	
 	public Unit authenticate( Unit credentials ) {
 		return authenticate();
 	}
-
+	
 	public Unit authenticate() {
 		ch_Client_IP.< String >com( ClientRegistry.getSalt( ch_Client_IP.< String >com( Unit.id ) ) );
 		Boolean valid = ClientRegistry.check( ch_Client_IP.< String >com( calcHash( Unit.id, Unit.id ) ) );
@@ -35,7 +35,7 @@ public class DistAuth_IP {
 			ch_Service_IP.< EnumBoolean >select( EnumBoolean.True );
 			AuthToken t = AuthToken.create();
 			return Unit.id( ch_Client_IP.< AuthToken >com( t ), ch_Service_IP.< AuthToken >com( t ) );
-		} else {
+		} else { 
 			ch_Client_IP.< EnumBoolean >select( EnumBoolean.False );
 			ch_Service_IP.< EnumBoolean >select( EnumBoolean.False );
 			return Unit.id;

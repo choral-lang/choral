@@ -1,30 +1,17 @@
 # Choral
 
-The source code of the Choral programming language. See [https://choral-lang.org/](https://choral-lang.org/).
+A compiler for the Choral programming language. Learn more at [https://choral-lang.org/](https://choral-lang.org/).
 
-To build the project locally, install [Maven](https://maven.apache.org/) and run
+To build the project, install [Maven](https://maven.apache.org/) and run the command `mvn install`.
+Run the command `mvn test` to test the compiler.
 
-```shell
-mvn clean install
-```
-
-This will generate `dist/target/choral-standalone.jar`, which can be run with
-
-```shell
-java -jar ./dist/target/choral-standalone.jar
-```
-
-Remember to update the PATH and CHORAL_HOME environment variables:
+To use the `choral` executable, you'll need to update your `PATH` and 
+`CHORAL_HOME` environment variables:
 ```
 export PATH="PATH_TO_CHORAL/scripts:$PATH"
-
 export CHORAL_HOME="PATH_TO_CHORAL/dist/target"
 ```
-
-This will allow you to compile choral files using the following command instead:
-```choral epp HelloRoles```
-
-where HelloRoles is the name of the class you're compiling.
+To compile a Choral class called `HelloRoles`, run the command `choral epp HelloRoles`.
 
 ## Issuing a new release
 

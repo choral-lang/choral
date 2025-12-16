@@ -21,17 +21,6 @@
 
 package choral;
 
-import choral.ast.CompilationUnit;
-import choral.ast.Position;
-import choral.compiler.Compiler;
-import choral.compiler.*;
-import choral.exceptions.AstPositionedException;
-import choral.exceptions.ChoralCompoundException;
-import choral.exceptions.ChoralException;
-import picocli.AutoComplete;
-import picocli.CommandLine;
-import picocli.CommandLine.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,13 +28,42 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static choral.utils.Streams.*;
+import choral.ast.CompilationUnit;
+import choral.ast.Position;
+import choral.compiler.Compiler;
+import choral.compiler.HeaderCompiler;
+import choral.compiler.HeaderLoader;
+import choral.compiler.Parser;
+import choral.compiler.SourceObject;
+import choral.compiler.SourceWriter;
+import choral.compiler.Typer;
+import choral.exceptions.AstPositionedException;
+import choral.exceptions.ChoralCompoundException;
+import choral.exceptions.ChoralException;
+import choral.utils.Streams.WrappedException;
+import static choral.utils.Streams.wrapFunction;
+import static choral.utils.Streams.wrapConsumer;
+import static choral.utils.Streams.skip;
+import picocli.AutoComplete;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.IVersionProvider;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 import lsp.LSP;
 
@@ -62,11 +80,15 @@ import lsp.LSP;
 )
 public class Choral extends ChoralCommand implements Callable< Integer > {
 
-	public static void main( String[] args ) {
+	public static void main( String[] args) {
+		System.exit( compile(args) );
+	}
+
+	public static int compile( String[] args) {
 		CommandLine cl = new CommandLine( new Choral() );
 		cl.setToggleBooleanFlags( true );
 		cl.setCaseInsensitiveEnumValuesAllowed( true );
-		System.exit( cl.execute( args ) );
+		return cl.execute(args);
 	}
 
 	@Override
