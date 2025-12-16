@@ -17,6 +17,7 @@ import choral.ast.body.ClassMethodModifier;
 import choral.ast.body.ClassModifier;
 import choral.ast.body.Field;
 import choral.ast.body.FieldModifier;
+import choral.ast.body.FormalMethodParameter;
 import choral.ast.body.MethodSignature;
 import choral.ast.expression.LiteralExpression;
 import choral.ast.expression.LiteralExpression.BooleanLiteralExpression;
@@ -42,6 +43,7 @@ import io.github.classgraph.MethodParameterInfo;
 import io.github.classgraph.MethodTypeSignature;
 import io.github.classgraph.ScanResult;
 import io.github.classgraph.TypeArgument;
+import io.github.classgraph.TypeParameter;
 import io.github.classgraph.TypeSignature;
 
 public class headerRemoval {
@@ -183,23 +185,29 @@ public class headerRemoval {
                 
                 EnumSet<ClassMethodModifier> methodModifiers = parseModifiers(ClassMethodModifier.class, methodInfo.getModifiersStr());
 
+                MethodTypeSignature methodTypeSig = methodInfo.getTypeSignatureOrTypeDescriptor();
+
                 MethodParameterInfo[] methodParams = methodInfo.getParameterInfo();
+                List<FormalMethodParameter> parameters = new ArrayList<>();
                 for (MethodParameterInfo param : methodParams){
-                    System.out.println(methodInfo.getName() + ": " + param.toString());
+                    parameters.add(new FormalMethodParameter(
+                        new Name(param.getName(), NO_POSITION), // param.getName() will very likely return null  
+                        getTypeExpressions(param.getTypeSignatureOrTypeDescriptor()), 
+                        Collections.emptyList(), // ignore annotations for now 
+                        NO_POSITION));
                 }
 
-                MethodTypeSignature methodTypeSig = methodInfo.getTypeDescriptor();
-                System.out.println(methodTypeSig);
+                TypeExpression returnType = getTypeExpressions(methodTypeSig.getResultType());
 
                 MethodSignature methodSig = new MethodSignature(
                     new Name(methodInfo.getName(), NO_POSITION), 
-                    null, 
-                    null, 
-                    null,
+                    null, // do we bother handling these now?
+                    parameters, 
+                    returnType,
                     NO_POSITION);
 
                 ClassMethodDefinition method = new ClassMethodDefinition(
-                    null, 
+                    methodSig, 
                     null, 
                     Collections.emptyList(), // ignore annotations for now
                     methodModifiers, 
@@ -226,7 +234,7 @@ public class headerRemoval {
                 List.of(choralClass), 
                 null, 
                 compUnitName);
-            System.out.println(compUnit.primaryType());
+            //System.out.println(compUnit.primaryType());
         }
     }
 
