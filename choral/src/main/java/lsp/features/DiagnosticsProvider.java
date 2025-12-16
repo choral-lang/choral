@@ -33,39 +33,22 @@ public class DiagnosticsProvider {
 
         } catch (ChoralCompoundException e) {
             List<choral.ast.Position> positions = e.getPositions();
-            int positionCounter = 0;
-            
-            for (ChoralException cause : e.getCauses()){
-                Diagnostic diagnostic = new Diagnostic();
-                                
-                choral.ast.Position position = positions.get(positionCounter);
-                // position.line() -1 to account for diff between 0-indexing and 1-indexing
-                Range range = new Range(new Position(position.line() - 1, position.column()), 
-                                        new Position(position.line() - 1, position.column()));
-                diagnostic.setRange(range);
-                diagnostic.setSeverity(DiagnosticSeverity.Error);
-                diagnostic.setMessage(cause.getMessage());
-                diagnostic.setSource("choral-compiler");
+            List<? extends ChoralException> causes = e.getCauses();
 
+            for (int i = 0; i < causes.size(); i++) {
+                Diagnostic diagnostic = errorDiagnostic( positions.get(i), causes.get(i).getMessage() );
                 diagnostics.add(diagnostic);
-
-                positionCounter++;
-            } 
+            }
         } catch (AstPositionedException e) {
-            Diagnostic diagnostic = new Diagnostic();
+            Diagnostic diagnostic = errorDiagnostic( e.position(), e.getMessage() );
+            diagnostics.add(diagnostic);
 
-            choral.ast.Position position = e.position();
-            // position.line() -1 to account for diff between 0-indexing and 1-indexing
-            Range range = new Range(new Position(position.line() - 1, position.column()), 
-                                    new Position(position.line() - 1, position.column()));
-            diagnostic.setRange(range);
-            diagnostic.setSeverity(DiagnosticSeverity.Error);
-            diagnostic.setMessage(e.getMessage());
-            diagnostic.setSource("choral-compiler");
-
-            diagnostics.add(diagnostic);            
         } catch (Exception e){
-            e.printStackTrace();
+            Diagnostic diagnostic = new Diagnostic();
+            diagnostic.setSeverity(DiagnosticSeverity.Error);
+            diagnostic.setMessage("Internal compiler error: " + e.getMessage());
+            diagnostic.setSource("choral-compiler");
+            diagnostics.add(diagnostic);
         }
 
         for (Diagnostic d : diagnostics) {
@@ -74,5 +57,18 @@ public class DiagnosticsProvider {
         }
 
         return diagnostics;
+    }
+
+    private static Diagnostic errorDiagnostic( choral.ast.Position position, String message) {
+        Diagnostic diagnostic = new Diagnostic();
+
+        // position.line() -1 to account for diff between 0-indexing and 1-indexing
+        Range range = new Range(new Position(position.line() - 1, position.column()),
+                                new Position(position.line() - 1, position.column()));
+        diagnostic.setRange(range);
+        diagnostic.setSeverity(DiagnosticSeverity.Error);
+        diagnostic.setMessage(message);
+        diagnostic.setSource("choral-compiler");
+        return diagnostic;
     }
 }

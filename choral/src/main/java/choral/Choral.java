@@ -57,6 +57,11 @@ import choral.utils.Streams.WrappedException;
 import static choral.utils.Streams.wrapFunction;
 import static choral.utils.Streams.wrapConsumer;
 import static choral.utils.Streams.skip;
+
+import lsp.ChoralLanguageServer;
+import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.eclipse.lsp4j.launch.LSPLauncher;
+import org.eclipse.lsp4j.services.LanguageClient;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -64,8 +69,6 @@ import picocli.CommandLine.IVersionProvider;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-
-import lsp.LSP;
 
 @Command(
 		name = "choral",
@@ -144,16 +147,27 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 	}
 
 	@Command( name = "language-server-protocol", aliases = { "lsp" },
-			description = "Runs choral as an LSP, mainly intended to be called by IDE's")
+			description = "Run choral as an LSP server for IDE integration.")
 	static class LSPCommand extends ChoralCommand implements Callable< Integer > {
-		
-		@Option( names = { "--lsp-debug" }, 
-				description = "Enables debug messages for the Language Server Protocol")
-		boolean debug = false;
-		
 		@Override
 		public Integer call() {
-			LSP.main(new String[]{}, debug);
+			ChoralLanguageServer server = new ChoralLanguageServer();
+			Launcher< LanguageClient > launcher = LSPLauncher.createServerLauncher(server, System.in, System.out);
+
+			// TODO What's a proxy?
+			System.err.println("getting proxy");
+			LanguageClient client = launcher.getRemoteProxy();
+
+			// TODO what's happening?
+			System.err.println("connecting client to server");
+			server.connect(client);
+
+			try {
+				System.err.println("Starting listening");
+				launcher.startListening().get();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			return 0;
 		}
 	}

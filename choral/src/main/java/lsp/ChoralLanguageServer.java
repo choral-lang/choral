@@ -33,21 +33,31 @@ public class ChoralLanguageServer implements LanguageServer, LanguageClientAware
         return workspaceService;
     }
 
+    /**
+     * When the client wants the server to shut down, it calls this method, waits for a response,
+     * and then calls {@link #exit()}.
+     */
     @Override
     public CompletableFuture<Object> shutdown(){
-        // perform cleanup before shutdown.
         shutdownReceived = true;
         return CompletableFuture.completedFuture(null);
     }
 
+    /** This method is invoked after {@link #shutdown()}. */
     @Override
     public void exit(){
-        System.exit(shutdownReceived ? 0 : 1);
+        if (shutdownReceived) {
+            System.exit(0);
+        }
+        else {
+            System.exit(1);
+        }
     }
 
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams params){
         ServerCapabilities capabilities = new ServerCapabilities();
+        // Ask the client to send the full content of documents on each change
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
 
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
