@@ -9,6 +9,8 @@ public class Price@A {
 	public final String@A currency;
 
 	public Price( Integer@A amount, String@A currency ){
+		this.amount = amount;
+		this.currency = currency;
 	}
 
 }

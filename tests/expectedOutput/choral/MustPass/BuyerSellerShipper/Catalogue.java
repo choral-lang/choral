@@ -2,20 +2,22 @@ package choral.MustPass.BuyerSellerShipper;
 
 import choral.annotations.Choreography;
 
-@Choreography( role = "A", name = "Catalogue")
+@Choreography( role = "A", name = "Catalogue" )
 public class Catalogue {
-    public void addTitle( String t, Price p ){
+	public void addTitle( String t, Price p ) {
+		
+	}
+	
+	public Boolean includes( String t ) {
+		return true;
+	}
+	
+	public Price quote( String t ) {
+		return null;
+	}
+	
+	public Shipping ship( String title ) {
+		return null;
 	}
 
-    public boolean includes (String t) {
-        return t.isEmpty();
-    }
-
-    public Price quote( String t ){
-        return new Price(0, t);
-	}
-
-    public Shipping ship( String title ){
-        return Shipping.to(title);
-	}
 }

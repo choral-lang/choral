@@ -2,16 +2,18 @@ package choral.MustPass.BuyerSellerShipper;
 
 import choral.annotations.Choreography;
 
-@Choreography( role = "A", name = "Shipping")
+@Choreography( role = "A", name = "Shipping" )
 public class Shipping {
-    private Shipping( String title ){
-        String temp = title;
+	private Shipping( String title ) {
+		
 	}
 
-    public static Shipping to( String address ){
-        return new Shipping(address);
-    }
+	public Shipping to( String address ) {
+		return null;
+	}
+	
+	public void ship() {
+		
+	}
 
-    public void ship(){
-    }
 }

@@ -4,13 +4,12 @@ import choral.annotations.Choreography;
 
 @Choreography( role = "A", name = "Profile" )
 public class Profile {
-    private String id;
-
-    public Profile ( String id ) {
-        this.id = id;
+	public Profile( String id ) {
+		
 	}
 
-	public String id () {
-        return id;
+	public String id() {
+		return "";
 	}
+
 }

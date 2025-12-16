@@ -6,5 +6,6 @@ public class Profile@A {
 	}
 
 	public String@A id () {
+		return ""@A;
 	}
 }
