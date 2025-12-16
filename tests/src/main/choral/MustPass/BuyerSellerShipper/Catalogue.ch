@@ -6,12 +6,15 @@ public class Catalogue@A {
 	}
 
 	public Boolean@A includes( String@A t ){
+		return true@A;
 	}
 
 	public Price@A quote( String@A t ){
+		return null@A;
 	}
 
 	public Shipping@A ship( String@A title ){
+		return null@A;
 	}
 
 }

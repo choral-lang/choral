@@ -6,6 +6,7 @@ public class Shipping@A {
 		}
 
 		public Shipping@A to( String@A address ){
+			return null@A;
 		}
 
 		public void ship(){

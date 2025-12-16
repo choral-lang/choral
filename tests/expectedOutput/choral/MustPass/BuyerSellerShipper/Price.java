@@ -1,14 +1,17 @@
 package choral.MustPass.BuyerSellerShipper;
 
 import choral.annotations.Choreography;
+import choral.runtime.Serializers.KryoSerializable;
 
-@Choreography( role = "A", name = "Price")
+@KryoSerializable
+@Choreography( role = "A", name = "Price" )
 public class Price {
-    public final Integer amount;
+	public final Integer amount;
 	public final String currency;
 
-	public Price( Integer amount, String currency ){
-        this.amount = amount;
-        this.currency = currency;
+	public Price( Integer amount, String currency ) {
+		this.amount = amount;
+		this.currency = currency;
 	}
+
 }
