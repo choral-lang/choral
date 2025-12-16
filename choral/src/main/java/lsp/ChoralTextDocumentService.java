@@ -26,13 +26,7 @@ public class ChoralTextDocumentService implements TextDocumentService {
     public void didOpen(DidOpenTextDocumentParams params){
         String uri = params.getTextDocument().getUri();
         String content = params.getTextDocument().getText();
-
-
-        System.err.println("=== DID OPEN ===");
-        System.err.println("URI: " + uri);
-        System.err.println("Content length: " + content.length());
-        System.err.println("First 100 chars: " + content.substring(0, Math.min(100, content.length())));
-
+        
         analyzeAndPublish(uri, content);
     }
 
@@ -44,7 +38,7 @@ public class ChoralTextDocumentService implements TextDocumentService {
 
     @Override
     public void didSave(DidSaveTextDocumentParams params){
-        String uri = params.getTextDocument().getUri();
+        // missing implementation
     }
 
     @Override

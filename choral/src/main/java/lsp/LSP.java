@@ -7,7 +7,6 @@ import org.eclipse.lsp4j.services.LanguageClientAware;
 
 public class LSP {
     public static void main(String[] args, boolean debug) {
-        boolean temp = debug;
         ChoralLanguageServer server = new ChoralLanguageServer();
         Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, System.in, System.out);
         try {

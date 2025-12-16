@@ -22,7 +22,9 @@ public class DiagnosticsProvider {
     public List<Diagnostic> analyze(String uri, String content){
         List<Diagnostic> diagnostics = new ArrayList<>();
 
-        try {
+        try { // choral compiler errors are reported through exceptions
+              // so try to parse and type program, then catch any exceptions
+              // to pass along error messages to language client
             CompilationUnit compUnit = Parser.parseString(content);
             
             List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
@@ -37,6 +39,7 @@ public class DiagnosticsProvider {
                 Diagnostic diagnostic = new Diagnostic();
                                 
                 choral.ast.Position position = positions.get(positionCounter);
+                // position.line() -1 to account for diff between 0-indexing and 1-indexing
                 Range range = new Range(new Position(position.line() - 1, position.column()), 
                                         new Position(position.line() - 1, position.column()));
                 diagnostic.setRange(range);
@@ -52,6 +55,7 @@ public class DiagnosticsProvider {
             Diagnostic diagnostic = new Diagnostic();
 
             choral.ast.Position position = e.position();
+            // position.line() -1 to account for diff between 0-indexing and 1-indexing
             Range range = new Range(new Position(position.line() - 1, position.column()), 
                                     new Position(position.line() - 1, position.column()));
             diagnostic.setRange(range);
@@ -65,7 +69,8 @@ public class DiagnosticsProvider {
         }
 
         for (Diagnostic d : diagnostics) {
-            System.err.println("  - " + d.getMessage() + " at line " + d.getRange().getStart().getLine() + " and at column " + d.getRange().getStart().getCharacter());
+            System.err.println("  - " + d.getMessage() + " at line " + d.getRange().getStart().getLine()
+            + " and at column " + d.getRange().getStart().getCharacter());
         }
 
         return diagnostics;
