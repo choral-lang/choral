@@ -151,15 +151,11 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 	static class LSPCommand extends ChoralCommand implements Callable< Integer > {
 		@Override
 		public Integer call() {
+			// Create the server, get a handle to the client (the "remote proxy"), and
+			// pass that handle to the server.
 			ChoralLanguageServer server = new ChoralLanguageServer();
 			Launcher< LanguageClient > launcher = LSPLauncher.createServerLauncher(server, System.in, System.out);
-
-			// TODO What's a proxy?
-			System.err.println("getting proxy");
 			LanguageClient client = launcher.getRemoteProxy();
-
-			// TODO what's happening?
-			System.err.println("connecting client to server");
 			server.connect(client);
 
 			try {
