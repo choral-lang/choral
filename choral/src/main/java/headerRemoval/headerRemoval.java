@@ -212,6 +212,7 @@ public class headerRemoval {
                     Collections.emptyList(), // ignore annotations for now
                     methodModifiers, 
                     NO_POSITION);
+                methods.add(method);
             }
 
             choral.ast.body.Class choralClass = new Class(
@@ -221,7 +222,7 @@ public class headerRemoval {
                 null, 
                 null, 
                 choralFields, 
-                null, 
+                methods, 
                 null, 
                 Collections.emptyList(), // ignore annotations for now 
                 modifiers, 
