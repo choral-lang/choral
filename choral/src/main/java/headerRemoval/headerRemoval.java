@@ -119,7 +119,6 @@ public class headerRemoval {
     private static TypeExpression getTypeExpressions(TypeSignature typeSig){
         List<TypeExpression> typeExpressions = new ArrayList<>();
         if (typeSig instanceof ClassRefTypeSignature classref){ // for nested types
-            System.out.println("inside recursive call!");
             String baseClassName = classref.getBaseClassName();
             List<TypeArgument> typeArguments = classref.getTypeArguments();
             if (typeArguments != null && !typeArguments.isEmpty()){
@@ -135,7 +134,6 @@ public class headerRemoval {
                 typeExpressions,
                 NO_POSITION);
         } else if (typeSig instanceof BaseTypeSignature baseRef) { // for primitive types
-            System.out.println("inside primitive call!");
             return new TypeExpression(
                 new Name(baseRef.getTypeStr(), NO_POSITION), 
                 List.of(DEFAULT_WORLD_ARGUMENT), 
@@ -175,7 +173,6 @@ public class headerRemoval {
                     modifiers, 
                     NO_POSITION);
                 choralFields.add(field);
-                System.out.println();
             }
 
             EnumSet<ClassModifier> modifiers = parseModifiers(ClassModifier.class, classInfo.getModifiersStr());
