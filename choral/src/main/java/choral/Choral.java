@@ -57,6 +57,11 @@ import choral.utils.Streams.WrappedException;
 import static choral.utils.Streams.wrapFunction;
 import static choral.utils.Streams.wrapConsumer;
 import static choral.utils.Streams.skip;
+
+import lsp.ChoralLanguageServer;
+import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.eclipse.lsp4j.launch.LSPLauncher;
+import org.eclipse.lsp4j.services.LanguageClient;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -72,7 +77,8 @@ import picocli.CommandLine.Parameters;
 				Choral.Checker.class,
 				Choral.Projector.class,
 				Choral.HeaderGenerator.class,
-				AutoComplete.GenerateCompletion.class
+				AutoComplete.GenerateCompletion.class,
+				Choral.LSPCommand.class
 		}
 )
 public class Choral extends ChoralCommand implements Callable< Integer > {
@@ -135,6 +141,28 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
 				System.out.println( "compilation failed." );
 				return 1;
+			}
+			return 0;
+		}
+	}
+
+	@Command( name = "language-server-protocol", aliases = { "lsp" },
+			description = "Run choral as an LSP server for IDE integration.")
+	static class LSPCommand extends ChoralCommand implements Callable< Integer > {
+		@Override
+		public Integer call() {
+			// Create the server, get a handle to the client (the "remote proxy"), and
+			// pass that handle to the server.
+			ChoralLanguageServer server = new ChoralLanguageServer();
+			Launcher< LanguageClient > launcher = LSPLauncher.createServerLauncher(server, System.in, System.out);
+			LanguageClient client = launcher.getRemoteProxy();
+			server.connect(client);
+
+			try {
+				System.err.println("Starting listening");
+				launcher.startListening().get();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 			return 0;
 		}

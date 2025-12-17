@@ -21,73 +21,51 @@
 
 package choral.compiler;
 
-import choral.ast.CompilationUnit;
-import choral.exceptions.ChoralCompoundException;
-import choral.grammar.ChoralLexer;
-import org.antlr.v4.runtime.ANTLRFileStream;
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+
+import choral.ast.CompilationUnit;
+import choral.exceptions.ChoralCompoundException;
+import choral.grammar.ChoralLexer;
+
 public class Parser {
 
-    /* ToDo: parse choral source from string
-    public static CompilationUnit parseSource(String sourceCode) {
-        // InputStream targetStream = new ByteArrayInputStream(initialString.getBytes());
-        throw new UnsupportedOperationException();
-    } */
-
-	public static CompilationUnit parseSourceFile(
-			File file
-	) throws IOException {
-		return parseSourceFile( file.getCanonicalPath() );
-	}
-
-	public static CompilationUnit parseSourceFile(
-			String file
-	) throws IOException {
-		ANTLRInputStream input = new ANTLRFileStream( file );
-		ChoralLexer lexer = new ChoralLexer( input );
-		CommonTokenStream tokens = new CommonTokenStream( lexer );
-		choral.grammar.ChoralParser cp = new choral.grammar.ChoralParser( tokens );
+	private static CompilationUnit parse( String fileName, CharStream content ){
+		ChoralLexer lexer = new ChoralLexer(content);
+		CommonTokenStream tokens = new CommonTokenStream(lexer);
+		choral.grammar.ChoralParser cp = new choral.grammar.ChoralParser(tokens);
 		cp.removeErrorListeners();
-		ParsingErrorListener errorListener = new ParsingErrorListener( file );
+		ParsingErrorListener errorListener = new ParsingErrorListener(fileName);
 		cp.addErrorListener( errorListener );
 		choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
 		if( errorListener.getErrors().isEmpty() ) {
 			return AstOptimizer
 					.loadParameters( /* new String[]{ "showDebug" } */ )
-					.optimise( ctx, file );
+					.optimise( ctx, fileName );
 		} else {
 			throw new ChoralCompoundException( errorListener.getErrors() );
 		}
 	}
 
-	public static CompilationUnit parseSourceFile(
-			InputStream in, String file
-	) throws IOException {
+	public static CompilationUnit parseString( String sourceCode ) {
+		CharStream content = CharStreams.fromString(sourceCode);
+		return parse(null, content);
+	}
+
+	public static CompilationUnit parseSourceFile( File file ) throws IOException {
+		String filename = file.getCanonicalPath();
+		CharStream input = CharStreams.fromFileName(filename);
+		return parse(filename, input);
+	}
+
+	public static CompilationUnit parseSourceFile( InputStream in, String filename ) throws IOException {
 		ANTLRInputStream input = new ANTLRInputStream( in );
-		ChoralLexer lexer = new ChoralLexer( input );
-		CommonTokenStream tokens = new CommonTokenStream( lexer );
-		choral.grammar.ChoralParser cp = new choral.grammar.ChoralParser( tokens );
-		cp.removeErrorListeners();
-		ParsingErrorListener errorListener = new ParsingErrorListener( file );
-		cp.addErrorListener( errorListener );
-		if( errorListener.getErrors().isEmpty() ) {
-			choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
-			return AstOptimizer
-					.loadParameters( /* new String[]{ "showDebug" } */ )
-					.optimise( ctx, file );
-		} else {
-			throw new ChoralCompoundException( errorListener.getErrors() );
-		}
-//		cp.addErrorListener( new ParsingErrorListener( file ) );
-//		choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
-//		return AstOptimizer
-//				.loadParameters( /* new String[]{ "showDebug" } */ )
-//				.optimise( ctx, file );
+		return parse(filename, input);
 	}
 }
