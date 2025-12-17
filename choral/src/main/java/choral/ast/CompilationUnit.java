@@ -50,9 +50,11 @@ public class CompilationUnit extends Node {
 		this.interfaces = interfaces;
 		this.classes = classes;
 		this.enums = enums;
-		if (sourceFile == null) primaryType = null;
+		if (sourceFile == null) {
+			this.primaryType = null;
+		}
 		else {
-			int k = Math.max( 0, Math.min( sourceFile.length(), sourceFile.lastIndexOf( '.' ) ) );
+			int k = Math.max( 0, sourceFile.lastIndexOf( '.' ) );
 			int j = Math.min( k, sourceFile.lastIndexOf( File.separatorChar ) + 1 );
 			this.primaryType = sourceFile.substring( j, k );
 		}

@@ -32,22 +32,21 @@ public class DiagnosticsProvider {
             Collection<CompilationUnit> typedUnits = Typer.annotate(Arrays.asList(compUnit), headerUnits);
 
         } catch (ChoralCompoundException e) {
-            List<choral.ast.Position> positions = e.getPositions();
-            List<? extends ChoralException> causes = e.getCauses();
-
-            for (int i = 0; i < causes.size(); i++) {
-                Diagnostic diagnostic = errorDiagnostic( positions.get(i), causes.get(i).getMessage() );
-                diagnostics.add(diagnostic);
+            for (ChoralException cause : e.getCauses()) {
+                if ( cause instanceof AstPositionedException ape ) {
+					Diagnostic diagnostic = errorDiagnostic(ape.position(), ape.getMessage());
+                    diagnostics.add(diagnostic);
+                } else {
+                    Diagnostic diagnostic = errorDiagnostic( e.getMessage() );
+                    diagnostics.add(diagnostic);
+                }
             }
         } catch (AstPositionedException e) {
             Diagnostic diagnostic = errorDiagnostic( e.position(), e.getMessage() );
             diagnostics.add(diagnostic);
 
         } catch (Exception e){
-            Diagnostic diagnostic = new Diagnostic();
-            diagnostic.setSeverity(DiagnosticSeverity.Error);
-            diagnostic.setMessage("Internal compiler error: " + e.getMessage());
-            diagnostic.setSource("choral-compiler");
+            Diagnostic diagnostic = errorDiagnostic( "Internal compiler error: " + e.getMessage() );
             diagnostics.add(diagnostic);
         }
 
@@ -60,12 +59,16 @@ public class DiagnosticsProvider {
     }
 
     private static Diagnostic errorDiagnostic( choral.ast.Position position, String message) {
-        Diagnostic diagnostic = new Diagnostic();
-
+        Diagnostic diagnostic = errorDiagnostic(message);
         // position.line() -1 to account for diff between 0-indexing and 1-indexing
         Range range = new Range(new Position(position.line() - 1, position.column()),
                                 new Position(position.line() - 1, position.column()));
         diagnostic.setRange(range);
+        return diagnostic;
+    }
+
+    private static Diagnostic errorDiagnostic( String message ) {
+        Diagnostic diagnostic = new Diagnostic();
         diagnostic.setSeverity(DiagnosticSeverity.Error);
         diagnostic.setMessage(message);
         diagnostic.setSource("choral-compiler");
