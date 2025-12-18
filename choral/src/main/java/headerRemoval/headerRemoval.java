@@ -23,7 +23,6 @@ import choral.ast.body.FieldModifier;
 import choral.ast.body.FormalMethodParameter;
 import choral.ast.body.MethodSignature;
 import choral.ast.expression.LiteralExpression;
-import choral.ast.expression.MethodCallExpression;
 import choral.ast.expression.LiteralExpression.BooleanLiteralExpression;
 import choral.ast.expression.LiteralExpression.DoubleLiteralExpression;
 import choral.ast.expression.LiteralExpression.IntegerLiteralExpression;
@@ -48,7 +47,6 @@ import io.github.classgraph.MethodParameterInfo;
 import io.github.classgraph.MethodTypeSignature;
 import io.github.classgraph.ScanResult;
 import io.github.classgraph.TypeArgument;
-import io.github.classgraph.TypeParameter;
 import io.github.classgraph.TypeSignature;
 
 public class headerRemoval {
@@ -108,6 +106,13 @@ public class headerRemoval {
         return annotations;
     }
 
+    /**
+     * Parses modifiers found by ClassGraph, into modifiers used by choral internals. 
+     * @param <E>
+     * @param enumClass
+     * @param modifiersStr
+     * @return 
+     */
     private static <E extends Enum<E>> EnumSet<E> parseModifiers(java.lang.Class<E> enumClass, String modifiersStr) {
         EnumSet<E> modifiers = EnumSet.noneOf(enumClass);
         String[] modifierStrings = modifiersStr.split(" ");
@@ -161,7 +166,7 @@ public class headerRemoval {
         List<FormalMethodParameter> parameters = new ArrayList<>();
         for (MethodParameterInfo param : methodParams){
             parameters.add(new FormalMethodParameter(
-                // param.getName() will very likely return null as most parameters are unnamed
+                // param.getName() will very likely return null as most parameters found by ClassGraph are unnamed
                 new Name(param.getName(), NO_POSITION),
                 getTypeExpressions(param.getTypeSignatureOrTypeDescriptor()), 
                 Collections.emptyList(), // ignore annotations for now 
@@ -170,36 +175,38 @@ public class headerRemoval {
         return parameters;
     }
 
-    private static void getClassGraphPackage(String packageName){
+    /**
+     * Finds a given java package and translates it into a choral CompilationUnit
+     * @param packageName
+     * @return
+     */
+    private static CompilationUnit getClassGraphPackage(String packageName){
         try (ScanResult scanResult = new ClassGraph()//.verbose()
                             .enableAllInfo()
                             .acceptPackages("headerRemoval") // narrows down the scanned packages. 
                             .scan()){
             ClassInfo classInfo = scanResult.getClassInfo(packageName);
-            int actualNameStart = classInfo.getName().lastIndexOf(".");
-            String actualName = classInfo.getName().substring(actualNameStart + 1);
-            String compUnitName = classInfo.getName();
 
-            Name className = new Name(actualName, NO_POSITION);
+            // TRANSLATE FIELDS
             FieldInfoList fieldInfoList = classInfo.getFieldInfo();
             List<Field> choralFields = new ArrayList<>();
-        
             for (FieldInfo fieldInfo : fieldInfoList){
 
                 EnumSet<FieldModifier> modifiers = parseModifiers(FieldModifier.class, fieldInfo.getModifiersStr());
 
-                TypeSignature typeSig = fieldInfo.getTypeSignatureOrTypeDescriptor();
-                TypeExpression typeExpression = getTypeExpressions(typeSig);
+                TypeSignature fieldTypeSig = fieldInfo.getTypeSignatureOrTypeDescriptor();
+                TypeExpression fielTypeExpression = getTypeExpressions(fieldTypeSig);
 
                 Field field = new Field(
                     new Name(fieldInfo.getName()), 
-                    typeExpression, 
+                    fielTypeExpression, 
                     Collections.emptyList(), // ignore annotations for now 
                     modifiers, 
                     NO_POSITION);
                 choralFields.add(field);
             }
 
+            // TRANSLATE METHODS
             MethodInfoList methodInfoList = classInfo.getMethodInfo();
             List<ClassMethodDefinition> methods = new ArrayList<>();
             for (MethodInfo methodInfo : methodInfoList){
@@ -208,68 +215,69 @@ public class headerRemoval {
 
                 MethodTypeSignature methodTypeSig = methodInfo.getTypeSignatureOrTypeDescriptor();
 
-                if (methodTypeSig.getTypeParameters().size() > 0) continue;
+                if (methodTypeSig.getTypeParameters().size() > 0) continue; // ignore type parameters for now
 
                 MethodParameterInfo[] methodParams = methodInfo.getParameterInfo();
-                List<FormalMethodParameter> parameters = getMethodParameters(methodParams);
+                List<FormalMethodParameter> choralParameters = getMethodParameters(methodParams);
 
                 TypeExpression returnType = getTypeExpressions(methodTypeSig.getResultType());
 
                 MethodSignature methodSig = new MethodSignature(
                     new Name(methodInfo.getName(), NO_POSITION), 
                     Collections.emptyList(), // ignore type parameters for now
-                    parameters, 
+                    choralParameters, 
                     returnType,
                     NO_POSITION);
 
                 ClassMethodDefinition method = new ClassMethodDefinition(
                     methodSig, 
-                    new NilStatement(NO_POSITION), 
+                    new NilStatement(NO_POSITION), // Ignore method body
                     Collections.emptyList(), // ignore annotations for now
                     methodModifiers, 
                     NO_POSITION);
                 methods.add(method);
             }
 
+            // TRANSLATE CONSTRUCTORS
             MethodInfoList constructors = classInfo.getConstructorInfo();
-            List<ConstructorDefinition> constructorsChoral = new ArrayList<>();
+            List<ConstructorDefinition> choralConstructors = new ArrayList<>();
             for (MethodInfo constructor : constructors){
                 EnumSet<ConstructorModifier> modifiersConstructor = parseModifiers(ConstructorModifier.class, constructor.getModifiersStr());
                 
                 MethodParameterInfo[] methodParams = constructor.getParameterInfo();
-                List<FormalMethodParameter> parameters = getMethodParameters(methodParams);
+                List<FormalMethodParameter> choralParameters = getMethodParameters(methodParams);
                 
                 ConstructorSignature constructorSignature = new ConstructorSignature(
-                    new Name(constructor.getName(), NO_POSITION),  
-                    // constructor.getName() will return "<init>" change in future
+                    new Name(classInfo.getName(), NO_POSITION),  
                     Collections.emptyList(), // ignore type parameters for now 
-                    parameters, 
+                    choralParameters, 
                     NO_POSITION);
 
                 ConstructorDefinition constructorChoral = new ConstructorDefinition(
                     constructorSignature, 
                     null, // not supported by ClassGraph 
-                    new NilStatement(NO_POSITION),
+                    // ^Represents calling `this()` or `super()` at the start of a constructor
+                    new NilStatement(NO_POSITION), // ignore constructor body
                     Collections.emptyList(), // ignore annotations for now 
                     modifiersConstructor, 
                     NO_POSITION);
                 
-                constructorsChoral.add(constructorChoral);
+                choralConstructors.add(constructorChoral);
             }
 
-            EnumSet<ClassModifier> modifiers = parseModifiers(ClassModifier.class, classInfo.getModifiersStr());
+            EnumSet<ClassModifier> classModifiers = parseModifiers(ClassModifier.class, classInfo.getModifiersStr());
 
             choral.ast.body.Class choralClass = new Class(
-                className, 
+                new Name(classInfo.getName(), NO_POSITION), 
                 List.of(DEFAULT_WORLD_PARAMETER), 
-                null, 
+                Collections.emptyList(), // ignore type parameters for now 
                 null, 
                 null, 
                 choralFields, 
                 methods, 
-                constructorsChoral, 
+                choralConstructors, 
                 Collections.emptyList(), // ignore annotations for now 
-                modifiers, 
+                classModifiers, 
                 NO_POSITION);
 
             CompilationUnit compUnit = new CompilationUnit(
@@ -278,13 +286,13 @@ public class headerRemoval {
                 null, 
                 List.of(choralClass), 
                 null, 
-                compUnitName);
-            //System.out.println(compUnit.primaryType());
-            System.out.println("end of method");
+                classInfo.getName());
+
+            return compUnit;
         }
     }
 
     public static void main(String[] args) {    
-        getClassGraphPackage("headerRemoval.HelloWorld");
+        CompilationUnit compUnit = getClassGraphPackage("headerRemoval.HelloWorld");
     }
 }
