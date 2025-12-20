@@ -1,7 +1,6 @@
-package headerRemoval;
+package choral.compiler;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 import choral.ast.CompilationUnit;
 import choral.ast.Name;
@@ -27,8 +26,6 @@ import choral.ast.statement.NilStatement;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
-import choral.compiler.HeaderLoader;
-import choral.compiler.Typer;
 import io.github.classgraph.AnnotationInfo;
 import io.github.classgraph.AnnotationInfoList;
 import io.github.classgraph.AnnotationParameterValue;
@@ -47,7 +44,12 @@ import io.github.classgraph.ScanResult;
 import io.github.classgraph.TypeArgument;
 import io.github.classgraph.TypeSignature;
 
-public class headerRemoval {
+/**
+ * ClassLifter is responsible for "lifting" Java class files into Choral's internal AST
+ * representation. This allows Choral code to interact with existing Java classes without
+ * needing to declare Choral headers for them manually.
+ */
+public class ClassLifter {
 
     // public static void premain(String args, Instrumentation inst) {
     //     // addTransformer expects a ClassFileTransformer
@@ -178,10 +180,9 @@ public class headerRemoval {
      * @param packageName
      * @return
      */
-    private static CompilationUnit getClassGraphPackage(String packageName){
+    public static CompilationUnit liftPackage(String packageName){
         try (ScanResult scanResult = new ClassGraph()//.verbose()
                             .enableAllInfo()
-                            .acceptPackages("headerRemoval") // narrows down the scanned packages. 
                             .scan()){
             ClassInfo classInfo = scanResult.getClassInfo(packageName);
 
@@ -293,26 +294,6 @@ public class headerRemoval {
                 classInfo.getName());
 
             return compUnit;
-        }
-    }
-
-    public static void main(String[] args) {
-        try {
-            // Test it out by feeding the CompilationUnit to our old Typer
-            CompilationUnit compUnit = getClassGraphPackage("headerRemoval.HelloWorld");
-            Typer.annotate(
-                List.of(),
-                Stream.concat(
-                    Stream.of(compUnit),
-                    // TODO Right now we need to load the standard profile because Typer complains
-                    //   that java.lang.Object is missing. This is probably a bug in the header
-                    //   removal tool?
-                    HeaderLoader.loadStandardProfile()
-                ).toList()
-            );
-        }
-        catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }

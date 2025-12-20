@@ -1,12 +1,12 @@
-package headerRemoval;
+package supplement;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
 public class HelloWorld {// implements Serializable {
-//    private String message = "World";
-//    private int count = 0;
+    private String message = "World";
+    private int count = 0;
 //    private List<String> listTest;
 //    private Map<String, Integer> mapTest;
 //

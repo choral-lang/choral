@@ -1,0 +1,28 @@
+import choral.ast.CompilationUnit;
+import choral.compiler.ClassLifter;
+import choral.compiler.HeaderLoader;
+import choral.compiler.Typer;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Stream;
+
+public class ClassLifterTest {
+	@Test
+	public void helloWorldTest() throws IOException {
+		// Test it out by feeding the CompilationUnit to our old Typer
+		CompilationUnit compUnit =
+				ClassLifter.liftPackage("supplement.HelloWorld");
+		Typer.annotate(
+				List.of(),
+				Stream.concat(
+						Stream.of(compUnit),
+						// TODO Right now we need to load the standard profile because Typer complains
+						//   that java.lang.Object is missing. This is probably a bug in the header
+						//   removal tool?
+						HeaderLoader.loadStandardProfile()
+				).toList()
+		);
+	}
+}

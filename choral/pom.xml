@@ -44,7 +44,7 @@
                 <version>3.0.0</version>
                 <configuration>
                     <!--<mainClass>choral.compiler.DebuggingParser</mainClass>-->
-                    <mainClass>headerRemoval.headerRemoval</mainClass>
+                    <mainClass>choral.compiler.ClassLifter</mainClass>
                 </configuration>
             </plugin>
             <plugin>
