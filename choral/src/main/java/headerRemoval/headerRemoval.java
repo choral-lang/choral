@@ -304,6 +304,9 @@ public class headerRemoval {
                 List.of(),
                 Stream.concat(
                     Stream.of(compUnit),
+                    // TODO Right now we need to load the standard profile because Typer complains
+                    //   that java.lang.Object is missing. This is probably a bug in the header
+                    //   removal tool?
                     HeaderLoader.loadStandardProfile()
                 ).toList()
             );
