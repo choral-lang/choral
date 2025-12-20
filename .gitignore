@@ -11,7 +11,12 @@ target/
 .project
 .DS_Store
 .factorypath
+.flattened-pom.xml
 # ANTLR generated files
 /choral/src/main/java/choral/grammar/
 /build
-.vscode/settings.json
+/choral/src/main/antlr4/
+.vscode/*
+CLAUDE.md
+/tests/bin
+/tests/projectedOutput

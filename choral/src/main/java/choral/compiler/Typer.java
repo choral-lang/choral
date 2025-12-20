@@ -903,6 +903,7 @@ public class Typer {
 		protected void checkPrimaryTemplate(
 				TemplateDeclaration n, String primaryType, String family
 		) {
+			if (primaryType == null) return;
 			if( n.isPublic() && !n.name().identifier().equals( primaryType ) ) {
 				throw new AstPositionedException( n.position(),
 						new StaticVerificationException( family

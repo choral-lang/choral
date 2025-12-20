@@ -1,9 +1,10 @@
 /* Choral Header Version 0.1 */
 package java.lang;
 
+import java.io.Serializable;
 import java.nio.charset.Charset;
 
-public final class String@A {
+public final class String@A implements Serializable@A {
 
     public String() { }
 

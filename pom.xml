@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.choral-lang</groupId>
-	<artifactId>distribution</artifactId>
-	<version>1.0.0</version>
-	<packaging>pom</packaging>
-
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.choral-lang</groupId>
+    <artifactId>distribution</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
     <properties>
-        <choral.version>0.1.3</choral.version>
+        <revision>0.1.11</revision>
         <choral.url>https://www.choral-lang.org/</choral.url>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
+
     <modules>
         <module>dist</module>
-	    <module>base</module>
+        <module>base</module>
         <module>choral</module>
         <module>choral-unit</module>
         <module>compare</module>
@@ -23,4 +23,46 @@
         <module>tests</module>
     </modules>
 
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/choral-lang/choral</url>
+        </repository>
+    </distributionManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.1.0</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin> 
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+            </plugin>
+        </plugins>
+    </build>
 </project>

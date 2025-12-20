@@ -5,9 +5,9 @@
 		<groupId>org.choral-lang</groupId>
 		<artifactId>distribution</artifactId>
 		<relativePath>../pom.xml</relativePath>
-		<version>1.0.0</version>
+		<version>${revision}</version>
 	</parent>
-	<version>${choral.version}</version>
+	<version>${revision}</version>
 	<groupId>org.choral-lang</groupId>
 	<artifactId>compare</artifactId>
 	<name>Compare</name>
@@ -15,8 +15,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
+		<maven.compiler.release>17</maven.compiler.release>
 	</properties>
 
 	<dependencies>
@@ -28,22 +27,22 @@
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>base</artifactId>
-			<version>${choral.version}</version>
+			<version>${revision}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>runtime</artifactId>
-			<version>${choral.version}</version>
+			<version>${revision}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>choral-unit</artifactId>
-			<version>${choral.version}</version>
+			<version>${revision}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>base</artifactId>
-			<version>${choral.version}</version>
+			<version>${revision}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>

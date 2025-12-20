@@ -8,7 +8,26 @@ public final class System@A {
     private System() { }
 
     public static final PrintStream@A out;
-
     public final static PrintStream@A err;
+
+    public static void arraycopy(Object@A src, Integer@A srcPos, Object@A dest, Integer@A destPos, Integer@A length);
+
+    public static void exit(Integer@A status);
+    public static void gc();
+
+    public static String@A getenv(String@A name);
+    public static String@A getProperty(String@A key);
+    public static String@A getProperty(String@A key, String@A def);
+
+    public static Integer@A identityHashCode(Object@A x);
+
+    public static String@A lineSeparator();
+
+    public static void load(String@A filename);
+    public static void loadLibrary(String@A libname);
+    public static void runFinalization();
+
+    public static Long@A currentTimeMillis();
+    public static Long@A nanoTime();
 
 }

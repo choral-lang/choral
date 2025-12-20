@@ -1,6 +1,8 @@
 package java.util;
 
-public class ArrayList@A< E@X > implements List@A< E >
+import java.io.Serializable;
+
+public class ArrayList@A< E@X > implements List@A< E >, Serializable@A
 {
 	public ArrayList(){}
 	public ArrayList( List@A< E > e ){}
