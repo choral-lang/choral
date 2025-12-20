@@ -89,7 +89,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				description = "ignore headers in the same folder of the source files, unless specified by -l/--headers." )
 		boolean strictHeaderSearch = false;
 
-		@Option( names = { "--no-projectabilkity" },
+		@Option( names = { "--no-projectability" },
 				description = "skip projectability checks." )
 		boolean skipProjectability = false;
 
