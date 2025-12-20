@@ -1,11 +1,7 @@
 package headerRemoval;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Stream;
 
 import choral.ast.CompilationUnit;
 import choral.ast.Name;
@@ -31,6 +27,8 @@ import choral.ast.statement.NilStatement;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
+import choral.compiler.HeaderLoader;
+import choral.compiler.Typer;
 import io.github.classgraph.AnnotationInfo;
 import io.github.classgraph.AnnotationInfoList;
 import io.github.classgraph.AnnotationParameterValue;
@@ -271,8 +269,9 @@ public class headerRemoval {
                 new Name(classInfo.getName(), NO_POSITION), 
                 List.of(DEFAULT_WORLD_PARAMETER), 
                 Collections.emptyList(), // ignore type parameters for now 
-                null, 
-                null, 
+                null,
+                // TODO List of parent interfaces goes here
+                List.of(),
                 choralFields, 
                 methods, 
                 choralConstructors, 
@@ -281,18 +280,36 @@ public class headerRemoval {
                 NO_POSITION);
 
             CompilationUnit compUnit = new CompilationUnit(
-                null, 
-                null, 
-                null, 
-                List.of(choralClass), 
-                null, 
+                // TODO Look up actual package name
+                Optional.of("headerRemoval"),
+                // No imports, because classfiles use fully qualified names
+                List.of(),
+                // TODO If we're lifting an interface instead of a class, I guess we should fill this in?
+                // TODO Make a test case for lifting an interface, ideally something already in the Java standard library
+                List.of(),
+                List.of(choralClass),
+                // TODO Make a test case for lifting an enum, ideally something already in the Java standard library
+                List.of(),
                 classInfo.getName());
 
             return compUnit;
         }
     }
 
-    public static void main(String[] args) {    
-        CompilationUnit compUnit = getClassGraphPackage("headerRemoval.HelloWorld");
+    public static void main(String[] args) {
+        try {
+            // Test it out by feeding the CompilationUnit to our old Typer
+            CompilationUnit compUnit = getClassGraphPackage("headerRemoval.HelloWorld");
+            Typer.annotate(
+                List.of(),
+                Stream.concat(
+                    Stream.of(compUnit),
+                    HeaderLoader.loadStandardProfile()
+                ).toList()
+            );
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
