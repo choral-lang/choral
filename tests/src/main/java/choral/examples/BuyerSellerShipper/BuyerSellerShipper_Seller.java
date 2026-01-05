@@ -1,10 +1,10 @@
 package choral.examples.BuyerSellerShipper;
 
+import choral.annotations.Choreography;
 import choral.channels.SymChannel_A;
 import choral.lang.Unit;
-import choral.annotations.Choreography;
-import choral.examples.BuyerSellerShipperUtils.Price;
 import choral.examples.BuyerSellerShipperUtils.Catalogue;
+import choral.examples.BuyerSellerShipperUtils.Price;
 
 @Choreography( role = "Seller", name = "BuyerSellerShipper" )
 class BuyerSellerShipper_Seller {
@@ -13,7 +13,7 @@ class BuyerSellerShipper_Seller {
 	BuyerSellerShipper_Seller( SymChannel_A < Object > c, Unit cb ) {
 		this( c );
 	}
-
+	
 	BuyerSellerShipper_Seller( SymChannel_A < Object > c ) {
 		this.c = c;
 	}
@@ -21,7 +21,7 @@ class BuyerSellerShipper_Seller {
 	void run( Catalogue catalogue, Unit customer ) {
 		run( catalogue );
 	}
-
+	
 	void run( Catalogue catalogue ) {
 		String title = c.< String >com( Unit.id );
 		if( catalogue.includes( title ) ){
@@ -32,15 +32,15 @@ class BuyerSellerShipper_Seller {
 					case True -> {
 						catalogue.ship( title ).to( c.< String >com( Unit.id ) );
 					}
+					case False -> {
+						
+					}
 					default -> {
 						throw new RuntimeException( "Received unexpected label from select operation" );
 					}
-					case False -> {
-
-					}
 				}
 			}
-		} else {
+		} else { 
 			c.< EnumBoolean >select( EnumBoolean.False );
 		}
 	}

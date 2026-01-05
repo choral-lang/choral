@@ -18,5 +18,5 @@ target/
 /choral/src/main/antlr4/
 .vscode/*
 CLAUDE.md
-tests/bin/*
-tests/projectedOutput/*
+/tests/bin
+/tests/projectedOutput

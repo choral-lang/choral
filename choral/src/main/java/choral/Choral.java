@@ -21,17 +21,6 @@
 
 package choral;
 
-import choral.ast.CompilationUnit;
-import choral.ast.Position;
-import choral.compiler.Compiler;
-import choral.compiler.*;
-import choral.exceptions.AstPositionedException;
-import choral.exceptions.ChoralCompoundException;
-import choral.exceptions.ChoralException;
-import picocli.AutoComplete;
-import picocli.CommandLine;
-import picocli.CommandLine.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,13 +28,47 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static choral.utils.Streams.*;
+import choral.ast.CompilationUnit;
+import choral.ast.Position;
+import choral.compiler.Compiler;
+import choral.compiler.HeaderCompiler;
+import choral.compiler.HeaderLoader;
+import choral.compiler.Parser;
+import choral.compiler.SourceObject;
+import choral.compiler.SourceWriter;
+import choral.compiler.Typer;
+import choral.exceptions.AstPositionedException;
+import choral.exceptions.ChoralCompoundException;
+import choral.exceptions.ChoralException;
+import choral.utils.Streams.WrappedException;
+import static choral.utils.Streams.wrapFunction;
+import static choral.utils.Streams.wrapConsumer;
+import static choral.utils.Streams.skip;
+
+import lsp.ChoralLanguageServer;
+import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.eclipse.lsp4j.launch.LSPLauncher;
+import org.eclipse.lsp4j.services.LanguageClient;
+import picocli.AutoComplete;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.IVersionProvider;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 @Command(
 		name = "choral",
@@ -54,16 +77,21 @@ import static choral.utils.Streams.*;
 				Choral.Checker.class,
 				Choral.Projector.class,
 				Choral.HeaderGenerator.class,
-				AutoComplete.GenerateCompletion.class
+				AutoComplete.GenerateCompletion.class,
+				Choral.LSPCommand.class
 		}
 )
 public class Choral extends ChoralCommand implements Callable< Integer > {
 
-	public static void main( String[] args ) {
+	public static void main( String[] args) {
+		System.exit( compile(args) );
+	}
+
+	public static int compile( String[] args) {
 		CommandLine cl = new CommandLine( new Choral() );
 		cl.setToggleBooleanFlags( true );
 		cl.setCaseInsensitiveEnumValuesAllowed( true );
-		System.exit( cl.execute( args ) );
+		return cl.execute(args);
 	}
 
 	@Override
@@ -113,6 +141,28 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
 				System.out.println( "compilation failed." );
 				return 1;
+			}
+			return 0;
+		}
+	}
+
+	@Command( name = "language-server-protocol", aliases = { "lsp" },
+			description = "Run choral as an LSP server for IDE integration.")
+	static class LSPCommand extends ChoralCommand implements Callable< Integer > {
+		@Override
+		public Integer call() {
+			// Create the server, get a handle to the client (the "remote proxy"), and
+			// pass that handle to the server.
+			ChoralLanguageServer server = new ChoralLanguageServer();
+			Launcher< LanguageClient > launcher = LSPLauncher.createServerLauncher(server, System.in, System.out);
+			LanguageClient client = launcher.getRemoteProxy();
+			server.connect(client);
+
+			try {
+				System.err.println("Starting listening");
+				launcher.startListening().get();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 			return 0;
 		}
