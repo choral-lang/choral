@@ -51,32 +51,11 @@ import io.github.classgraph.TypeSignature;
 
 public class headerRemoval {
 
-    // public static void premain(String args, Instrumentation inst) {
-    //     // addTransformer expects a ClassFileTransformer
-    //     inst.addTransformer(new ClassFileTransformer() {
-    //         @Override
-    //         public byte[] transform(
-    //             ClassLoader loader,              // The classloader loading this class
-    //             String className,                // Name of class being loaded (in internal form: java/lang/String)
-    //             Class<?> classBeingRedefined,   // If redefining, the class being redefined (usually null)
-    //             ProtectionDomain protectionDomain, // Security domain
-    //             byte[] classfileBuffer           // The actual class file bytes
-    //         ) {
-    //             if (className.startsWith("java/") || className.startsWith("javax/")) {
-    //                 System.out.println("Loaded: " + className.replace('/', '.'));
-    //             }
-    //             // Return null means "don't transform, use original bytes"
-    //             // Return modified bytes to instrument/transform the class
-    //             return null;
-    //         }
-    //     });
-    // }
-
     private static final Position NO_POSITION = new Position("NO_POSITION", 0, 0);
     private static final FormalWorldParameter DEFAULT_WORLD_PARAMETER = new FormalWorldParameter(new Name("A", NO_POSITION), NO_POSITION);
     private static final WorldArgument DEFAULT_WORLD_ARGUMENT = new WorldArgument(new Name("A", NO_POSITION), NO_POSITION);
 
-    @Deprecated
+    @Deprecated // comment or annotation
     private static List<Annotation> translateAnnotations(AnnotationInfoList annotationInfoList){
         List<Annotation> annotations = new ArrayList<>();
         
