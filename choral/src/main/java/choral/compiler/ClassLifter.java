@@ -101,6 +101,36 @@ public class ClassLifter {
         return modifiers;
     }
 
+    // Inner types of a nested type should not have any world arguments
+    private static TypeExpression getTypeExpressionsHelper(TypeSignature typeSig){
+        List<TypeExpression> typeExpressions = new ArrayList<>();
+        if (typeSig instanceof ClassRefTypeSignature classref){ // for nested types
+            String baseClassName = classref.getBaseClassName();
+            List<TypeArgument> typeArguments = classref.getTypeArguments();
+            if (typeArguments != null && !typeArguments.isEmpty()){
+                for (int i = 0; i < typeArguments.size(); i++){
+                    TypeArgument arg = typeArguments.get(i);
+                    TypeSignature argType = arg.getTypeSignature();
+                    typeExpressions.add(getTypeExpressionsHelper(argType));
+                }
+            }
+            return new TypeExpression(
+                new Name(baseClassName, NO_POSITION), 
+                Collections.emptyList(), 
+                typeExpressions,
+                NO_POSITION);
+        } else if (typeSig instanceof BaseTypeSignature baseRef) { // for primitive types
+            return new TypeExpression(
+                new Name(baseRef.getTypeStr(), NO_POSITION),
+                Collections.emptyList(), 
+                typeExpressions,
+                NO_POSITION);
+        } else { // implement other typesignatures? (might not be necessary)
+            throw new UnsupportedOperationException("This type of signature is not yet supported: "
+            + typeSig);
+        }
+    }
+
     /**
      * Generates the choral TypeExpression from the given ClassGraph TypeSignature.
      * Does so recursively if given TypeSignature is nested. 
@@ -116,7 +146,7 @@ public class ClassLifter {
                 for (int i = 0; i < typeArguments.size(); i++){
                     TypeArgument arg = typeArguments.get(i);
                     TypeSignature argType = arg.getTypeSignature();
-                    typeExpressions.add(getTypeExpressions(argType));
+                    typeExpressions.add(getTypeExpressionsHelper(argType));
                 }
             }
             return new TypeExpression(
