@@ -15,15 +15,15 @@ public class HelloWorld {// implements Serializable {
 //        this.count = 0;
 //    }
 //
-//    public void setMessage(String message) {
-//        this.message = message;
-//    }
-//
+   public void setMessage(String message) {
+        this.message = message;
+   }
+
 //    public String getMessage() {
 //        return message;
 //    }
-//
-//    public void incrementCount() {
-//        count++;
-//    }
+
+   public void incrementCount() {
+       count++;
+   }
 }

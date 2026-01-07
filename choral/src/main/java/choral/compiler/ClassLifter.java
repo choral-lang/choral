@@ -126,8 +126,9 @@ public class ClassLifter {
                 NO_POSITION);
         } else if (typeSig instanceof BaseTypeSignature baseRef) { // for primitive types
             return new TypeExpression(
-                new Name(baseRef.getTypeStr(), NO_POSITION), 
-                List.of(DEFAULT_WORLD_ARGUMENT), 
+                new Name(baseRef.getTypeStr(), NO_POSITION),
+                // choral compiler complains if void has any worldArguments or typeArguments 
+                baseRef.getTypeStr().equals("void") ? Collections.emptyList() : List.of(DEFAULT_WORLD_ARGUMENT), 
                 typeExpressions,
                 NO_POSITION);
         } else { // implement other typesignatures? (might not be necessary)
