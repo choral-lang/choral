@@ -43,8 +43,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.0.0</version>
                 <configuration>
-                    <!--<mainClass>choral.compiler.DebuggingParser</mainClass>-->
-                    <mainClass>choral.compiler.ClassLifter</mainClass>
+                    <mainClass>choral.compiler.DebuggingParser</mainClass>
                 </configuration>
             </plugin>
             <plugin>

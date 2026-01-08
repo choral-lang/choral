@@ -291,8 +291,7 @@ public class ClassLifter {
                 NO_POSITION);
 
             CompilationUnit compUnit = new CompilationUnit(
-                // TODO Look up actual package name
-                Optional.of("headerRemoval"),
+                Optional.of(classInfo.getName()),
                 // No imports, because classfiles use fully qualified names
                 List.of(),
                 // TODO If we're lifting an interface instead of a class, I guess we should fill this in?
