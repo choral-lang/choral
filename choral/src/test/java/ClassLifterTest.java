@@ -13,7 +13,58 @@ public class ClassLifterTest {
 	public void helloWorldTest() throws IOException {
 		// Test it out by feeding the CompilationUnit to our old Typer
 		CompilationUnit compUnit =
-				ClassLifter.liftPackage("supplement.HelloWorld");
+				ClassLifter.liftPackage("supplement", "supplement.HelloWorld");
+		Typer.annotate(
+				List.of(),
+				Stream.concat(
+						Stream.of(compUnit),
+						// TODO Right now we need to load the standard profile because Typer complains
+						//   that java.lang.Object is missing. This is probably a bug in the header
+						//   removal tool?
+						HeaderLoader.loadStandardProfile()
+				).toList()
+		);
+	}
+
+	@Test
+	public void dayTest() throws IOException {
+		// Test it out by feeding the CompilationUnit to our old Typer
+		CompilationUnit compUnit =
+				ClassLifter.liftPackage("supplement", "supplement.Day");
+		Typer.annotate(
+				List.of(),
+				Stream.concat(
+						Stream.of(compUnit),
+						// TODO Right now we need to load the standard profile because Typer complains
+						//   that java.lang.Object is missing. This is probably a bug in the header
+						//   removal tool?
+						HeaderLoader.loadStandardProfile()
+				).toList()
+		);
+	}
+
+	@Test
+	public void threadStateTest() throws IOException {
+		// Test it out by feeding the CompilationUnit to our old Typer
+		CompilationUnit compUnit =
+				ClassLifter.liftPackage("java.lang", "java.lang.Thread$State");
+		Typer.annotate(
+				List.of(),
+				Stream.concat(
+						Stream.of(compUnit),
+						// TODO Right now we need to load the standard profile because Typer complains
+						//   that java.lang.Object is missing. This is probably a bug in the header
+						//   removal tool?
+						HeaderLoader.loadStandardProfile()
+				).toList()
+		);
+	}
+
+	@Test
+	public void concurrentTimeUnitTest() throws IOException {
+		// Test it out by feeding the CompilationUnit to our old Typer
+		CompilationUnit compUnit =
+				ClassLifter.liftPackage("java.util.concurrent", "java.util.concurrent.TimeUnit");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(

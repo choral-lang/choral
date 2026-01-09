@@ -4,6 +4,12 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
+enum Day {
+    MONDAY,
+    TUESDAY,
+    WEDNESDAY
+}
+
 public class HelloWorld {// implements Serializable {
     private String message = "World";
     private int count = 0;

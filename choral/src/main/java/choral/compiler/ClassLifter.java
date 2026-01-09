@@ -13,9 +13,14 @@ import choral.ast.body.ClassModifier;
 import choral.ast.body.ConstructorDefinition;
 import choral.ast.body.ConstructorModifier;
 import choral.ast.body.ConstructorSignature;
+import choral.ast.body.EnumConstant;
 import choral.ast.body.Field;
 import choral.ast.body.FieldModifier;
 import choral.ast.body.FormalMethodParameter;
+import choral.ast.body.Interface;
+import choral.ast.body.InterfaceMethodDefinition;
+import choral.ast.body.InterfaceMethodModifier;
+import choral.ast.body.InterfaceModifier;
 import choral.ast.body.MethodSignature;
 import choral.ast.expression.LiteralExpression;
 import choral.ast.expression.LiteralExpression.BooleanLiteralExpression;
@@ -33,6 +38,7 @@ import io.github.classgraph.AnnotationParameterValueList;
 import io.github.classgraph.BaseTypeSignature;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
+import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ClassRefTypeSignature;
 import io.github.classgraph.FieldInfo;
 import io.github.classgraph.FieldInfoList;
@@ -185,16 +191,129 @@ public class ClassLifter {
         return parameters;
     }
 
+    // private static CompilationUnit liftClass(ClassInfo classInfo){
+
+    // }
+
+    private static CompilationUnit liftInterface(ClassInfo interfaceInfo){
+        System.out.println("Lifting interface");
+        EnumSet<InterfaceModifier> interfaceModifiers = parseModifiers(InterfaceModifier.class, interfaceInfo.getModifiersStr());
+
+        MethodInfoList interfaceMethods = interfaceInfo.getMethodInfo();
+        List<InterfaceMethodDefinition> choralInterfaceMethods = new ArrayList<>();
+        for (MethodInfo interfaceMethod : interfaceMethods){
+
+            EnumSet<InterfaceMethodModifier> interfaceMethodModifiers = parseModifiers(InterfaceMethodModifier.class, interfaceMethod.getModifiersStr());
+
+            MethodTypeSignature interfaceMethodTypeSignature = interfaceMethod.getTypeSignatureOrTypeDescriptor();
+            TypeExpression returnType = getTypeExpressions(interfaceMethodTypeSignature.getResultType());
+
+            MethodParameterInfo[] methodParams = interfaceMethod.getParameterInfo();
+            List<FormalMethodParameter> inferfaceMethodParameters = getMethodParameters(methodParams);
+
+            MethodSignature interfaceMethodSignature = new MethodSignature(
+                new Name(interfaceMethod.getName(), NO_POSITION), 
+                Collections.emptyList(), // ignore type parameters for now 
+                inferfaceMethodParameters, 
+                returnType, 
+                NO_POSITION);
+
+            InterfaceMethodDefinition choralInterfaceMethod = new InterfaceMethodDefinition(
+                interfaceMethodSignature, 
+                Collections.emptyList(), // ignore annotations for now 
+                interfaceMethodModifiers, 
+                NO_POSITION);
+            choralInterfaceMethods.add(choralInterfaceMethod);
+        }
+
+        Interface choralInterface = new Interface(
+            new Name(interfaceInfo.getName(), NO_POSITION), 
+            List.of(DEFAULT_WORLD_PARAMETER),
+            Collections.emptyList(), // ignore type parameters for now
+            // TODO List of parent interfaces goes here 
+            null, 
+            choralInterfaceMethods, 
+            Collections.emptyList(), // ignore annotations for now 
+            interfaceModifiers, 
+            NO_POSITION);
+
+        return new CompilationUnit(
+                Optional.of(interfaceInfo.getName()),
+                // No imports, because classfiles use fully qualified names
+                Collections.emptyList(),
+                // TODO If we're lifting an interface instead of a class, I guess we should fill this in?
+                // TODO Make a test case for lifting an interface, ideally something already in the Java standard library
+                List.of(choralInterface),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                interfaceInfo.getName());
+    }
+
+    private static CompilationUnit liftEnum(ClassInfo enumInfo){
+        // TRANSLATE ENUMS
+        ClassInfoList javaEnums = enumInfo.getInnerClasses().filter(ClassInfo::isEnum);
+        List<choral.ast.body.Enum> choralEnums = new ArrayList<>();
+        for (ClassInfo javaEnum : javaEnums){
+            EnumSet<ClassModifier> enumModifiers = parseModifiers(ClassModifier.class, javaEnum.getModifiersStr());
+            System.out.println("Enum modifiers: ");
+            enumModifiers.forEach(System.out::println);
+
+            FieldInfoList enumConstants = javaEnum.getFieldInfo().filter(FieldInfo::isEnum);
+            List<EnumConstant> choralEnumConstants = new ArrayList<>();
+            for (FieldInfo constant : enumConstants){
+                EnumConstant newConstant = new EnumConstant(
+                    new Name(constant.getName(), NO_POSITION), 
+                    Collections.emptyList(), // ignore annotations for now 
+                    NO_POSITION);
+                choralEnumConstants.add(newConstant);
+            }
+
+            choral.ast.body.Enum choralEnum = new choral.ast.body.Enum(
+                new Name(javaEnum.getSimpleName(), NO_POSITION), // maybe change to getName 
+                DEFAULT_WORLD_PARAMETER, 
+                choralEnumConstants, 
+                Collections.emptyList(), // ignore annotations for now 
+                enumModifiers, 
+                NO_POSITION);
+            choralEnums.add(choralEnum);
+        }
+
+        // return new CompilationUnit
+        return new CompilationUnit(
+                Optional.of(enumInfo.getName()),
+                // No imports, because classfiles use fully qualified names
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                // TODO Make a test case for lifting an enum, ideally something already in the Java standard library
+                choralEnums,
+                enumInfo.getName());
+    }
+
     /**
      * Finds a given java package and translates it into a choral CompilationUnit
-     * @param packageName
+     * @param packageName Name of the package containing the class to be lifted
+     * @param className Name of class to be lifted. If lifting an inner class, remember the '$' character. 
+     * Example: java.lang.Thread$State
      * @return
      */
-    public static CompilationUnit liftPackage(String packageName){
+    public static CompilationUnit liftPackage(String packageName, String className){
         try (ScanResult scanResult = new ClassGraph()//.verbose()
                             .enableAllInfo()
+                            .enableSystemJarsAndModules()
+                            .acceptPackages(packageName)
                             .scan()){
-            ClassInfo classInfo = scanResult.getClassInfo(packageName);
+            ClassInfo classInfo = scanResult.getClassInfo(className);
+
+            if (classInfo == null){
+                throw new RuntimeException("Could not find class: " + className);
+            }
+
+            if (classInfo.isEnum()){
+                return liftEnum(classInfo);
+            } else if (classInfo.isInterface()){
+                return liftInterface(classInfo);
+            }
 
             // TRANSLATE FIELDS
             FieldInfoList fieldInfoList = classInfo.getFieldInfo();
@@ -293,13 +412,13 @@ public class ClassLifter {
             CompilationUnit compUnit = new CompilationUnit(
                 Optional.of(classInfo.getName()),
                 // No imports, because classfiles use fully qualified names
-                List.of(),
+                Collections.emptyList(),
                 // TODO If we're lifting an interface instead of a class, I guess we should fill this in?
                 // TODO Make a test case for lifting an interface, ideally something already in the Java standard library
-                List.of(),
+                Collections.emptyList(),
                 List.of(choralClass),
                 // TODO Make a test case for lifting an enum, ideally something already in the Java standard library
-                List.of(),
+                Collections.emptyList(),
                 classInfo.getName());
 
             return compUnit;
