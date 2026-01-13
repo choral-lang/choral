@@ -4,6 +4,18 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
+interface testInterface {
+    final int a = 10;
+
+    void display();
+}
+
+interface testInterface2 extends testInterface {
+    final int a = 10;
+
+    void display();
+}
+
 enum Day {
     MONDAY,
     TUESDAY,

@@ -40,6 +40,7 @@ import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ClassRefTypeSignature;
+import io.github.classgraph.ClassTypeSignature;
 import io.github.classgraph.FieldInfo;
 import io.github.classgraph.FieldInfoList;
 import io.github.classgraph.MethodInfo;
@@ -48,6 +49,7 @@ import io.github.classgraph.MethodParameterInfo;
 import io.github.classgraph.MethodTypeSignature;
 import io.github.classgraph.ScanResult;
 import io.github.classgraph.TypeArgument;
+import io.github.classgraph.TypeParameter;
 import io.github.classgraph.TypeSignature;
 
 /**
@@ -196,9 +198,7 @@ public class ClassLifter {
     // }
 
     private static CompilationUnit liftInterface(ClassInfo interfaceInfo){
-        System.out.println("Lifting interface");
         EnumSet<InterfaceModifier> interfaceModifiers = parseModifiers(InterfaceModifier.class, interfaceInfo.getModifiersStr());
-
         MethodInfoList interfaceMethods = interfaceInfo.getMethodInfo();
         List<InterfaceMethodDefinition> choralInterfaceMethods = new ArrayList<>();
         for (MethodInfo interfaceMethod : interfaceMethods){
@@ -226,27 +226,36 @@ public class ClassLifter {
             choralInterfaceMethods.add(choralInterfaceMethod);
         }
 
+        // find interfaces the current interface extends
+        ClassTypeSignature interfaceTypeSignature = interfaceInfo.getTypeSignatureOrTypeDescriptor();
+        List<ClassRefTypeSignature> extendedInterfaceSignatures = interfaceTypeSignature.getSuperinterfaceSignatures();
+        extendedInterfaceSignatures.forEach(System.out::println);
+        List<TypeExpression> choralExtendedInterfaces = new ArrayList<>();
+        for (ClassRefTypeSignature extendedInterfaceSignature : extendedInterfaceSignatures){
+            TypeExpression interfaceExpression = getTypeExpressions(extendedInterfaceSignature);
+            choralExtendedInterfaces.add(interfaceExpression);
+        }
+
         Interface choralInterface = new Interface(
-            new Name(interfaceInfo.getName(), NO_POSITION), 
+            new Name(interfaceInfo.getSimpleName(), NO_POSITION), 
             List.of(DEFAULT_WORLD_PARAMETER),
             Collections.emptyList(), // ignore type parameters for now
-            // TODO List of parent interfaces goes here 
-            null, 
+            choralExtendedInterfaces, // might fail since ClassLifter is not yet recursive
             choralInterfaceMethods, 
             Collections.emptyList(), // ignore annotations for now 
             interfaceModifiers, 
             NO_POSITION);
 
         return new CompilationUnit(
-                Optional.of(interfaceInfo.getName()),
-                // No imports, because classfiles use fully qualified names
-                Collections.emptyList(),
-                // TODO If we're lifting an interface instead of a class, I guess we should fill this in?
-                // TODO Make a test case for lifting an interface, ideally something already in the Java standard library
-                List.of(choralInterface),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                interfaceInfo.getName());
+            Optional.of(interfaceInfo.getPackageName()),
+            // No imports, because classfiles use fully qualified names
+            Collections.emptyList(),
+            // TODO If we're lifting an interface instead of a class, I guess we should fill this in?
+            // TODO Make a test case for lifting an interface, ideally something already in the Java standard library
+            List.of(choralInterface),
+            Collections.emptyList(),
+            Collections.emptyList(),
+            interfaceInfo.getName());
     }
 
     private static CompilationUnit liftEnum(ClassInfo enumInfo){
@@ -280,12 +289,11 @@ public class ClassLifter {
 
         // return new CompilationUnit
         return new CompilationUnit(
-                Optional.of(enumInfo.getName()),
+                Optional.of(enumInfo.getPackageName()),
                 // No imports, because classfiles use fully qualified names
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Collections.emptyList(),
-                // TODO Make a test case for lifting an enum, ideally something already in the Java standard library
                 choralEnums,
                 enumInfo.getName());
     }
@@ -396,7 +404,7 @@ public class ClassLifter {
             EnumSet<ClassModifier> classModifiers = parseModifiers(ClassModifier.class, classInfo.getModifiersStr());
 
             choral.ast.body.Class choralClass = new Class(
-                new Name(classInfo.getName(), NO_POSITION), 
+                new Name(classInfo.getSimpleName(), NO_POSITION), 
                 List.of(DEFAULT_WORLD_PARAMETER), 
                 Collections.emptyList(), // ignore type parameters for now 
                 null,
@@ -410,14 +418,13 @@ public class ClassLifter {
                 NO_POSITION);
 
             CompilationUnit compUnit = new CompilationUnit(
-                Optional.of(classInfo.getName()),
+                Optional.of(classInfo.getPackageName()),
                 // No imports, because classfiles use fully qualified names
                 Collections.emptyList(),
                 // TODO If we're lifting an interface instead of a class, I guess we should fill this in?
                 // TODO Make a test case for lifting an interface, ideally something already in the Java standard library
                 Collections.emptyList(),
                 List.of(choralClass),
-                // TODO Make a test case for lifting an enum, ideally something already in the Java standard library
                 Collections.emptyList(),
                 classInfo.getName());
 
