@@ -300,21 +300,22 @@ public class ClassLifter {
 
     /**
      * Finds a given java package and translates it into a choral CompilationUnit
-     * @param packageName Name of the package containing the class to be lifted
-     * @param className Name of class to be lifted. If lifting an inner class, remember the '$' character. 
+     * @param fullyQualifiedName The fully qualified name of class to be lifted. If lifting an inner class, remember the '$' character. 
      * Example: java.lang.Thread$State
      * @return
      */
-    public static CompilationUnit liftPackage(String packageName, String className){
+    public static CompilationUnit liftPackage(String fullyQualifiedName){
+        int lastSeparator = fullyQualifiedName.lastIndexOf(".");
+        String packageName2 = fullyQualifiedName.substring(0, lastSeparator);
         try (ScanResult scanResult = new ClassGraph()//.verbose()
                             .enableAllInfo()
                             .enableSystemJarsAndModules()
-                            .acceptPackages(packageName)
+                            .acceptPackages(packageName2)
                             .scan()){
-            ClassInfo classInfo = scanResult.getClassInfo(className);
+            ClassInfo classInfo = scanResult.getClassInfo(fullyQualifiedName);
 
             if (classInfo == null){
-                throw new RuntimeException("Could not find class: " + className);
+                throw new RuntimeException("Could not find class: " + fullyQualifiedName);
             }
 
             if (classInfo.isEnum()){

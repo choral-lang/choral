@@ -13,7 +13,7 @@ public class ClassLifterTest {
 	public void helloWorldTest() throws IOException {
 		// Test it out by feeding the CompilationUnit to our old Typer
 		CompilationUnit compUnit =
-				ClassLifter.liftPackage("supplement", "supplement.HelloWorld");
+				ClassLifter.liftPackage("supplement.HelloWorld");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(
@@ -30,7 +30,7 @@ public class ClassLifterTest {
 	public void dayTest() throws IOException {
 		// Test it out by feeding the CompilationUnit to our old Typer
 		CompilationUnit compUnit =
-				ClassLifter.liftPackage("supplement", "supplement.Day");
+				ClassLifter.liftPackage("supplement.Day");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(
@@ -47,7 +47,7 @@ public class ClassLifterTest {
 	public void threadStateTest() throws IOException {
 		// Test it out by feeding the CompilationUnit to our old Typer
 		CompilationUnit compUnit =
-				ClassLifter.liftPackage("java.lang", "java.lang.Thread$State");
+				ClassLifter.liftPackage("java.lang.Thread$State");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(
@@ -64,7 +64,7 @@ public class ClassLifterTest {
 	public void concurrentTimeUnitTest() throws IOException {
 		// Test it out by feeding the CompilationUnit to our old Typer
 		CompilationUnit compUnit =
-				ClassLifter.liftPackage("java.util.concurrent", "java.util.concurrent.TimeUnit");
+				ClassLifter.liftPackage("java.util.concurrent.TimeUnit");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(
@@ -81,7 +81,7 @@ public class ClassLifterTest {
 	public void interfaceTest() throws IOException {
 		// Test it out by feeding the CompilationUnit to our old Typer
 		CompilationUnit compUnit =
-				ClassLifter.liftPackage("supplement", "supplement.testInterface");
+				ClassLifter.liftPackage("supplement.testInterface");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(
@@ -94,12 +94,12 @@ public class ClassLifterTest {
 		);
 	}
 
-	@Test // THIS TEST REQUIRES TOOL TO BE ABLE TO CALL ITSELF
+	@Test 
 	public void interface2Test() throws IOException {
 		// Test it out by feeding the CompilationUnit to our old Typer
 		CompilationUnit compUnit =
-				ClassLifter.liftPackage("supplement", "supplement.testInterface2");
-		CompilationUnit compUnit2 = ClassLifter.liftPackage("supplement", "supplement.testInterface");
+				ClassLifter.liftPackage("supplement.testInterface2");
+		CompilationUnit compUnit2 = ClassLifter.liftPackage("supplement.testInterface");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(
@@ -116,7 +116,7 @@ public class ClassLifterTest {
 	public void serializableTest() throws IOException {
 		// Test it out by feeding the CompilationUnit to the old Typer
 		CompilationUnit compUnit =
-				ClassLifter.liftPackage("java.lang", "java.lang.Cloneable");
+				ClassLifter.liftPackage("java.lang.Cloneable");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(
