@@ -1,5 +1,6 @@
 package choral.compiler;
 
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -199,6 +200,21 @@ public class ClassLifter {
         return parameters;
     }
 
+    private static MethodSignature getMethodSignature(MethodInfo methodInfo){
+        MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
+        TypeExpression returnType = getTypeExpressions(methodTypeSignature.getResultType());
+
+        MethodParameterInfo[] methodParameters = methodInfo.getParameterInfo();
+        List<FormalMethodParameter> choralMethodParameters = getMethodParameters(methodParameters);
+
+        return new MethodSignature(
+            new Name(methodInfo.getName(), NO_POSITION), 
+            Collections.emptyList(), // ignore type parameters for now 
+            choralMethodParameters, 
+            returnType, 
+            NO_POSITION);
+    }
+
     private static CompilationUnit liftInterface(ClassInfo interfaceInfo){
         EnumSet<InterfaceModifier> interfaceModifiers = parseModifiers(InterfaceModifier.class, interfaceInfo.getModifiersStr());
         MethodInfoList interfaceMethods = interfaceInfo.getMethodInfo();
@@ -207,18 +223,7 @@ public class ClassLifter {
 
             EnumSet<InterfaceMethodModifier> interfaceMethodModifiers = parseModifiers(InterfaceMethodModifier.class, interfaceMethod.getModifiersStr());
 
-            MethodTypeSignature interfaceMethodTypeSignature = interfaceMethod.getTypeSignatureOrTypeDescriptor();
-            TypeExpression returnType = getTypeExpressions(interfaceMethodTypeSignature.getResultType());
-
-            MethodParameterInfo[] methodParams = interfaceMethod.getParameterInfo();
-            List<FormalMethodParameter> inferfaceMethodParameters = getMethodParameters(methodParams);
-
-            MethodSignature interfaceMethodSignature = new MethodSignature(
-                new Name(interfaceMethod.getName(), NO_POSITION), 
-                Collections.emptyList(), // ignore type parameters for now 
-                inferfaceMethodParameters, 
-                returnType, 
-                NO_POSITION);
+            MethodSignature interfaceMethodSignature = getMethodSignature(interfaceMethod);
 
             InterfaceMethodDefinition choralInterfaceMethod = new InterfaceMethodDefinition(
                 interfaceMethodSignature, 
@@ -288,20 +293,10 @@ public class ClassLifter {
 
             if (methodTypeSig.getTypeParameters().size() > 0) continue; // ignore type parameters for now
 
-            MethodParameterInfo[] methodParams = methodInfo.getParameterInfo();
-            List<FormalMethodParameter> choralParameters = getMethodParameters(methodParams);
-
-            TypeExpression returnType = getTypeExpressions(methodTypeSig.getResultType());
-
-            MethodSignature methodSig = new MethodSignature(
-                new Name(methodInfo.getName(), NO_POSITION), 
-                Collections.emptyList(), // ignore type parameters for now
-                choralParameters, 
-                returnType,
-                NO_POSITION);
+            MethodSignature methodSignature = getMethodSignature(methodInfo);
 
             ClassMethodDefinition method = new ClassMethodDefinition(
-                methodSig, 
+                methodSignature, 
                 new NilStatement(NO_POSITION), // Ignore method body
                 Collections.emptyList(), // ignore annotations for now
                 methodModifiers, 
