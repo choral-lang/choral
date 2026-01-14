@@ -1,6 +1,10 @@
 package choral.compiler;
 
 import java.util.*;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import choral.ast.CompilationUnit;
 import choral.ast.Name;
@@ -62,6 +66,8 @@ public class ClassLifter {
     private static final Position NO_POSITION = new Position("NO_POSITION", 0, 0);
     private static final FormalWorldParameter DEFAULT_WORLD_PARAMETER = new FormalWorldParameter(new Name("A", NO_POSITION), NO_POSITION);
     private static final WorldArgument DEFAULT_WORLD_ARGUMENT = new WorldArgument(new Name("A", NO_POSITION), NO_POSITION);
+
+    private static final Logger logger = LoggerFactory.getLogger(ClassLifter.class);
 
     @Deprecated // comment or annotation
     private static List<Annotation> translateAnnotations(AnnotationInfoList annotationInfoList){
@@ -193,10 +199,6 @@ public class ClassLifter {
         return parameters;
     }
 
-    // private static CompilationUnit liftClass(ClassInfo classInfo){
-
-    // }
-
     private static CompilationUnit liftInterface(ClassInfo interfaceInfo){
         EnumSet<InterfaceModifier> interfaceModifiers = parseModifiers(InterfaceModifier.class, interfaceInfo.getModifiersStr());
         MethodInfoList interfaceMethods = interfaceInfo.getMethodInfo();
@@ -229,7 +231,6 @@ public class ClassLifter {
         // find interfaces the current interface extends
         ClassTypeSignature interfaceTypeSignature = interfaceInfo.getTypeSignatureOrTypeDescriptor();
         List<ClassRefTypeSignature> extendedInterfaceSignatures = interfaceTypeSignature.getSuperinterfaceSignatures();
-        extendedInterfaceSignatures.forEach(System.out::println);
         List<TypeExpression> choralExtendedInterfaces = new ArrayList<>();
         for (ClassRefTypeSignature extendedInterfaceSignature : extendedInterfaceSignatures){
             TypeExpression interfaceExpression = getTypeExpressions(extendedInterfaceSignature);
@@ -250,12 +251,117 @@ public class ClassLifter {
             Optional.of(interfaceInfo.getPackageName()),
             // No imports, because classfiles use fully qualified names
             Collections.emptyList(),
-            // TODO If we're lifting an interface instead of a class, I guess we should fill this in?
-            // TODO Make a test case for lifting an interface, ideally something already in the Java standard library
             List.of(choralInterface),
             Collections.emptyList(),
             Collections.emptyList(),
             interfaceInfo.getName());
+    }
+
+    private static CompilationUnit liftClass(ClassInfo classInfo){
+        // TRANSLATE FIELDS
+        FieldInfoList fieldInfoList = classInfo.getFieldInfo();
+        List<Field> choralFields = new ArrayList<>();
+        for (FieldInfo fieldInfo : fieldInfoList){
+
+            EnumSet<FieldModifier> modifiers = parseModifiers(FieldModifier.class, fieldInfo.getModifiersStr());
+
+            TypeSignature fieldTypeSig = fieldInfo.getTypeSignatureOrTypeDescriptor();
+            TypeExpression fielTypeExpression = getTypeExpressions(fieldTypeSig);
+
+            Field field = new Field(
+                new Name(fieldInfo.getName()), 
+                fielTypeExpression, 
+                Collections.emptyList(), // ignore annotations for now 
+                modifiers, 
+                NO_POSITION);
+            choralFields.add(field);
+        }
+
+        // TRANSLATE METHODS
+        MethodInfoList methodInfoList = classInfo.getMethodInfo();
+        List<ClassMethodDefinition> methods = new ArrayList<>();
+        for (MethodInfo methodInfo : methodInfoList){
+            
+            EnumSet<ClassMethodModifier> methodModifiers = parseModifiers(ClassMethodModifier.class, methodInfo.getModifiersStr());
+
+            MethodTypeSignature methodTypeSig = methodInfo.getTypeSignatureOrTypeDescriptor();
+
+            if (methodTypeSig.getTypeParameters().size() > 0) continue; // ignore type parameters for now
+
+            MethodParameterInfo[] methodParams = methodInfo.getParameterInfo();
+            List<FormalMethodParameter> choralParameters = getMethodParameters(methodParams);
+
+            TypeExpression returnType = getTypeExpressions(methodTypeSig.getResultType());
+
+            MethodSignature methodSig = new MethodSignature(
+                new Name(methodInfo.getName(), NO_POSITION), 
+                Collections.emptyList(), // ignore type parameters for now
+                choralParameters, 
+                returnType,
+                NO_POSITION);
+
+            ClassMethodDefinition method = new ClassMethodDefinition(
+                methodSig, 
+                new NilStatement(NO_POSITION), // Ignore method body
+                Collections.emptyList(), // ignore annotations for now
+                methodModifiers, 
+                NO_POSITION);
+            methods.add(method);
+        }
+
+        // TRANSLATE CONSTRUCTORS
+        MethodInfoList constructors = classInfo.getConstructorInfo();
+        List<ConstructorDefinition> choralConstructors = new ArrayList<>();
+        for (MethodInfo constructor : constructors){
+            EnumSet<ConstructorModifier> modifiersConstructor = parseModifiers(ConstructorModifier.class, constructor.getModifiersStr());
+            
+            MethodParameterInfo[] methodParams = constructor.getParameterInfo();
+            List<FormalMethodParameter> choralParameters = getMethodParameters(methodParams);
+            
+            ConstructorSignature constructorSignature = new ConstructorSignature(
+                new Name(classInfo.getName(), NO_POSITION),  
+                Collections.emptyList(), // ignore type parameters for now 
+                choralParameters, 
+                NO_POSITION);
+
+            ConstructorDefinition constructorChoral = new ConstructorDefinition(
+                constructorSignature, 
+                null, // not supported by ClassGraph 
+                // ^Represents calling `this()` or `super()` at the start of a constructor
+                new NilStatement(NO_POSITION), // ignore constructor body
+                Collections.emptyList(), // ignore annotations for now 
+                modifiersConstructor, 
+                NO_POSITION);
+            
+            choralConstructors.add(constructorChoral);
+        }
+
+        EnumSet<ClassModifier> classModifiers = parseModifiers(ClassModifier.class, classInfo.getModifiersStr());
+
+        choral.ast.body.Class choralClass = new Class(
+            new Name(classInfo.getSimpleName(), NO_POSITION), 
+            List.of(DEFAULT_WORLD_PARAMETER), 
+            Collections.emptyList(), // ignore type parameters for now 
+            null,
+            // TODO List of parent interfaces goes here
+            List.of(),
+            choralFields, 
+            methods, 
+            choralConstructors, 
+            Collections.emptyList(), // ignore annotations for now 
+            classModifiers, 
+            NO_POSITION);
+
+        CompilationUnit compUnit = new CompilationUnit(
+            Optional.of(classInfo.getPackageName()),
+            // No imports, because classfiles use fully qualified names
+            Collections.emptyList(),
+            Collections.emptyList(),
+            List.of(choralClass),
+            Collections.emptyList(),
+            classInfo.getName());
+
+        return compUnit;     
     }
 
     private static CompilationUnit liftEnum(ClassInfo enumInfo){
@@ -300,136 +406,37 @@ public class ClassLifter {
 
     /**
      * Finds a given java package and translates it into a choral CompilationUnit
-     * @param fullyQualifiedName The fully qualified name of class to be lifted. If lifting an inner class, remember the '$' character. 
-     * Example: java.lang.Thread$State
+     * @param fullyQualifiedName The fully qualified name of class to be lifted. 
      * @return
      */
-    public static CompilationUnit liftPackage(String fullyQualifiedName){
+    public static Stream<CompilationUnit> liftPackage(String fullyQualifiedName){
         int lastSeparator = fullyQualifiedName.lastIndexOf(".");
-        String packageName2 = fullyQualifiedName.substring(0, lastSeparator);
+        String packageName = fullyQualifiedName.substring(0, lastSeparator);
         try (ScanResult scanResult = new ClassGraph()//.verbose()
                             .enableAllInfo()
                             .enableSystemJarsAndModules()
-                            .acceptPackages(packageName2)
-                            .scan()){
+                            .acceptPackages(packageName)
+                            .scan())
+        {
             ClassInfo classInfo = scanResult.getClassInfo(fullyQualifiedName);
 
             if (classInfo == null){
                 throw new RuntimeException("Could not find class: " + fullyQualifiedName);
             }
 
+            // check for inner class
+            if (classInfo.isInnerClass()){
+                logger.warn("Inner class detected: " + fullyQualifiedName + ". Choral does not support inner classes, aborting lifting");
+                return Stream.empty();
+            }
+
             if (classInfo.isEnum()){
-                return liftEnum(classInfo);
+                return Stream.of(liftEnum(classInfo));
             } else if (classInfo.isInterface()){
-                return liftInterface(classInfo);
+                return Stream.of(liftInterface(classInfo));
             }
+            return Stream.of(liftClass(classInfo));
 
-            // TRANSLATE FIELDS
-            FieldInfoList fieldInfoList = classInfo.getFieldInfo();
-            List<Field> choralFields = new ArrayList<>();
-            for (FieldInfo fieldInfo : fieldInfoList){
-
-                EnumSet<FieldModifier> modifiers = parseModifiers(FieldModifier.class, fieldInfo.getModifiersStr());
-
-                TypeSignature fieldTypeSig = fieldInfo.getTypeSignatureOrTypeDescriptor();
-                TypeExpression fielTypeExpression = getTypeExpressions(fieldTypeSig);
-
-                Field field = new Field(
-                    new Name(fieldInfo.getName()), 
-                    fielTypeExpression, 
-                    Collections.emptyList(), // ignore annotations for now 
-                    modifiers, 
-                    NO_POSITION);
-                choralFields.add(field);
-            }
-
-            // TRANSLATE METHODS
-            MethodInfoList methodInfoList = classInfo.getMethodInfo();
-            List<ClassMethodDefinition> methods = new ArrayList<>();
-            for (MethodInfo methodInfo : methodInfoList){
-                
-                EnumSet<ClassMethodModifier> methodModifiers = parseModifiers(ClassMethodModifier.class, methodInfo.getModifiersStr());
-
-                MethodTypeSignature methodTypeSig = methodInfo.getTypeSignatureOrTypeDescriptor();
-
-                if (methodTypeSig.getTypeParameters().size() > 0) continue; // ignore type parameters for now
-
-                MethodParameterInfo[] methodParams = methodInfo.getParameterInfo();
-                List<FormalMethodParameter> choralParameters = getMethodParameters(methodParams);
-
-                TypeExpression returnType = getTypeExpressions(methodTypeSig.getResultType());
-
-                MethodSignature methodSig = new MethodSignature(
-                    new Name(methodInfo.getName(), NO_POSITION), 
-                    Collections.emptyList(), // ignore type parameters for now
-                    choralParameters, 
-                    returnType,
-                    NO_POSITION);
-
-                ClassMethodDefinition method = new ClassMethodDefinition(
-                    methodSig, 
-                    new NilStatement(NO_POSITION), // Ignore method body
-                    Collections.emptyList(), // ignore annotations for now
-                    methodModifiers, 
-                    NO_POSITION);
-                methods.add(method);
-            }
-
-            // TRANSLATE CONSTRUCTORS
-            MethodInfoList constructors = classInfo.getConstructorInfo();
-            List<ConstructorDefinition> choralConstructors = new ArrayList<>();
-            for (MethodInfo constructor : constructors){
-                EnumSet<ConstructorModifier> modifiersConstructor = parseModifiers(ConstructorModifier.class, constructor.getModifiersStr());
-                
-                MethodParameterInfo[] methodParams = constructor.getParameterInfo();
-                List<FormalMethodParameter> choralParameters = getMethodParameters(methodParams);
-                
-                ConstructorSignature constructorSignature = new ConstructorSignature(
-                    new Name(classInfo.getName(), NO_POSITION),  
-                    Collections.emptyList(), // ignore type parameters for now 
-                    choralParameters, 
-                    NO_POSITION);
-
-                ConstructorDefinition constructorChoral = new ConstructorDefinition(
-                    constructorSignature, 
-                    null, // not supported by ClassGraph 
-                    // ^Represents calling `this()` or `super()` at the start of a constructor
-                    new NilStatement(NO_POSITION), // ignore constructor body
-                    Collections.emptyList(), // ignore annotations for now 
-                    modifiersConstructor, 
-                    NO_POSITION);
-                
-                choralConstructors.add(constructorChoral);
-            }
-
-            EnumSet<ClassModifier> classModifiers = parseModifiers(ClassModifier.class, classInfo.getModifiersStr());
-
-            choral.ast.body.Class choralClass = new Class(
-                new Name(classInfo.getSimpleName(), NO_POSITION), 
-                List.of(DEFAULT_WORLD_PARAMETER), 
-                Collections.emptyList(), // ignore type parameters for now 
-                null,
-                // TODO List of parent interfaces goes here
-                List.of(),
-                choralFields, 
-                methods, 
-                choralConstructors, 
-                Collections.emptyList(), // ignore annotations for now 
-                classModifiers, 
-                NO_POSITION);
-
-            CompilationUnit compUnit = new CompilationUnit(
-                Optional.of(classInfo.getPackageName()),
-                // No imports, because classfiles use fully qualified names
-                Collections.emptyList(),
-                // TODO If we're lifting an interface instead of a class, I guess we should fill this in?
-                // TODO Make a test case for lifting an interface, ideally something already in the Java standard library
-                Collections.emptyList(),
-                List.of(choralClass),
-                Collections.emptyList(),
-                classInfo.getName());
-
-            return compUnit;
         }
     }
 }

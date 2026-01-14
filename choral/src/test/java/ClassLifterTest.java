@@ -4,6 +4,8 @@ import choral.compiler.HeaderLoader;
 import choral.compiler.Typer;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
@@ -12,12 +14,12 @@ public class ClassLifterTest {
 	@Test
 	public void helloWorldTest() throws IOException {
 		// Test it out by feeding the CompilationUnit to our old Typer
-		CompilationUnit compUnit =
+		Stream<CompilationUnit> compUnit =
 				ClassLifter.liftPackage("supplement.HelloWorld");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(
-						Stream.of(compUnit),
+						compUnit,
 						// TODO Right now we need to load the standard profile because Typer complains
 						//   that java.lang.Object is missing. This is probably a bug in the header
 						//   removal tool?
@@ -29,12 +31,12 @@ public class ClassLifterTest {
 	@Test
 	public void dayTest() throws IOException {
 		// Test it out by feeding the CompilationUnit to our old Typer
-		CompilationUnit compUnit =
+		Stream<CompilationUnit> compUnit =
 				ClassLifter.liftPackage("supplement.Day");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(
-						Stream.of(compUnit),
+						compUnit,
 						// TODO Right now we need to load the standard profile because Typer complains
 						//   that java.lang.Object is missing. This is probably a bug in the header
 						//   removal tool?
@@ -46,29 +48,21 @@ public class ClassLifterTest {
 	@Test
 	public void threadStateTest() throws IOException {
 		// Test it out by feeding the CompilationUnit to our old Typer
-		CompilationUnit compUnit =
+		Stream<CompilationUnit> compUnit =
 				ClassLifter.liftPackage("java.lang.Thread$State");
-		Typer.annotate(
-				List.of(),
-				Stream.concat(
-						Stream.of(compUnit),
-						// TODO Right now we need to load the standard profile because Typer complains
-						//   that java.lang.Object is missing. This is probably a bug in the header
-						//   removal tool?
-						HeaderLoader.loadStandardProfile()
-				).toList()
-		);
+
+		assertFalse(compUnit.findAny().isPresent(), "A CompilationUnit was created for an inner class. Choral does not support this");
 	}
 
 	@Test
 	public void concurrentTimeUnitTest() throws IOException {
 		// Test it out by feeding the CompilationUnit to our old Typer
-		CompilationUnit compUnit =
+		Stream<CompilationUnit> compUnit =
 				ClassLifter.liftPackage("java.util.concurrent.TimeUnit");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(
-						Stream.of(compUnit),
+						compUnit,
 						// TODO Right now we need to load the standard profile because Typer complains
 						//   that java.lang.Object is missing. This is probably a bug in the header
 						//   removal tool?
@@ -80,12 +74,12 @@ public class ClassLifterTest {
 	@Test
 	public void interfaceTest() throws IOException {
 		// Test it out by feeding the CompilationUnit to our old Typer
-		CompilationUnit compUnit =
+		Stream<CompilationUnit> compUnit =
 				ClassLifter.liftPackage("supplement.testInterface");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(
-						Stream.of(compUnit),
+						compUnit,
 						// TODO Right now we need to load the standard profile because Typer complains
 						//   that java.lang.Object is missing. This is probably a bug in the header
 						//   removal tool?
@@ -97,13 +91,13 @@ public class ClassLifterTest {
 	@Test 
 	public void interface2Test() throws IOException {
 		// Test it out by feeding the CompilationUnit to our old Typer
-		CompilationUnit compUnit =
+		Stream<CompilationUnit> compUnit =
 				ClassLifter.liftPackage("supplement.testInterface2");
-		CompilationUnit compUnit2 = ClassLifter.liftPackage("supplement.testInterface");
+		Stream<CompilationUnit> compUnit2 = ClassLifter.liftPackage("supplement.testInterface");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(
-						Stream.concat(Stream.of(compUnit), Stream.of(compUnit2)),
+						Stream.concat(compUnit, compUnit2),
 						// TODO Right now we need to load the standard profile because Typer complains
 						//   that java.lang.Object is missing. This is probably a bug in the header
 						//   removal tool?
@@ -115,12 +109,12 @@ public class ClassLifterTest {
 	@Test
 	public void serializableTest() throws IOException {
 		// Test it out by feeding the CompilationUnit to the old Typer
-		CompilationUnit compUnit =
+		Stream<CompilationUnit> compUnit =
 				ClassLifter.liftPackage("java.lang.Cloneable");
 		Typer.annotate(
 				List.of(),
 				Stream.concat(
-						Stream.of(compUnit),
+						compUnit,
 						// TODO Right now we need to load the standard profile because Typer complains
 						//   that java.lang.Object is missing. This is probably a bug in the header
 						//   removal tool?
