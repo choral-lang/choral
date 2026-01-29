@@ -1,12 +1,20 @@
 package choral.compiler;
 
-import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import choral.ast.CompilationUnit;
 import choral.ast.Name;
 import choral.ast.Position;
@@ -33,6 +41,7 @@ import choral.ast.expression.LiteralExpression.DoubleLiteralExpression;
 import choral.ast.expression.LiteralExpression.IntegerLiteralExpression;
 import choral.ast.expression.LiteralExpression.StringLiteralExpression;
 import choral.ast.statement.NilStatement;
+import choral.ast.type.FormalTypeParameter;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
@@ -40,6 +49,7 @@ import io.github.classgraph.AnnotationInfo;
 import io.github.classgraph.AnnotationInfoList;
 import io.github.classgraph.AnnotationParameterValue;
 import io.github.classgraph.AnnotationParameterValueList;
+import io.github.classgraph.ArrayTypeSignature;
 import io.github.classgraph.BaseTypeSignature;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
@@ -52,10 +62,25 @@ import io.github.classgraph.MethodInfo;
 import io.github.classgraph.MethodInfoList;
 import io.github.classgraph.MethodParameterInfo;
 import io.github.classgraph.MethodTypeSignature;
+import io.github.classgraph.ReferenceTypeSignature;
 import io.github.classgraph.ScanResult;
 import io.github.classgraph.TypeArgument;
+import io.github.classgraph.TypeArgument.Wildcard;
 import io.github.classgraph.TypeParameter;
 import io.github.classgraph.TypeSignature;
+import io.github.classgraph.TypeVariableSignature;
+
+class UnSupportedArrayException extends Exception{
+    public UnSupportedArrayException(String message){
+        super(message);
+    }
+}
+
+class UnSupportedWildcardException extends Exception{
+    public UnSupportedWildcardException(String message){
+        super(message);
+    }
+}
 
 /**
  * ClassLifter is responsible for "lifting" Java class files into Choral's internal AST
@@ -68,7 +93,686 @@ public class ClassLifter {
     private static final FormalWorldParameter DEFAULT_WORLD_PARAMETER = new FormalWorldParameter(new Name("A", NO_POSITION), NO_POSITION);
     private static final WorldArgument DEFAULT_WORLD_ARGUMENT = new WorldArgument(new Name("A", NO_POSITION), NO_POSITION);
 
-    private static final Logger logger = LoggerFactory.getLogger(ClassLifter.class);
+    private static final Logger logger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+
+    private static Set<String> trackedCompilationUnits = new HashSet<>();
+
+    /**
+     * Finds a given java package and translates it into a choral CompilationUnit
+     * @param fullyQualifiedName The fully qualified name of class to be lifted. 
+     * @return
+     */
+    public static Stream<CompilationUnit> liftPackage(String fullyQualifiedName){
+        int lastSeparator = fullyQualifiedName.lastIndexOf(".");
+        String packageName = fullyQualifiedName.substring(0, lastSeparator);
+
+        try (ScanResult scanResult = new ClassGraph()//.verbose()
+                            .enableAllInfo()
+                            .enableInterClassDependencies()
+                            .enableExternalClasses()
+                            .enableSystemJarsAndModules()
+                            .acceptPackages(packageName)
+                            .scan())
+        {
+            ClassInfo classInfo = scanResult.getClassInfo(fullyQualifiedName);
+
+            if (classInfo == null) {
+                throw new RuntimeException("Could not find class: " + fullyQualifiedName);
+            }
+
+            if (classInfo.isInnerClass()) {
+                logger.warn("Inner class detected: " + fullyQualifiedName + ". Choral does not support inner classes, aborting lift");
+                return Stream.empty();
+            }
+
+            trackedCompilationUnits.add("java.lang.Object");
+            trackedCompilationUnits.add("java.io.Serializable");
+
+            logger.setLevel(Level.ERROR);
+            boolean verbose = Boolean.parseBoolean(System.getProperty("liftVerbose"));
+            if (verbose) logger.setLevel(Level.WARN);
+
+            List<CompilationUnit> compilationUnitAccumulator = new ArrayList<>();
+            trackedCompilationUnits.add(classInfo.getName());
+            if (classInfo.isEnum()){
+                liftEnum(classInfo, compilationUnitAccumulator);
+            } else if (classInfo.isInterface()){
+                liftInterface(classInfo, compilationUnitAccumulator);
+            } else {
+                liftClass(classInfo, compilationUnitAccumulator);
+            }
+            return compilationUnitAccumulator.stream();
+        }
+    }
+
+    // Helper method to avoid passing empty mutable list to `liftPackage()` method
+    private static void liftPackageHelper(String fullyQualifiedName, List<CompilationUnit> compilationUnitAccumulator){
+        int lastSeparator = fullyQualifiedName.lastIndexOf(".");
+        String packageName = fullyQualifiedName.substring(0, lastSeparator);
+                
+        try (ScanResult scanResult = new ClassGraph()
+                            //.verbose()
+                            .enableAllInfo()
+                            .enableInterClassDependencies()
+                            .enableExternalClasses()
+                            .enableSystemJarsAndModules()
+                            .acceptPackages(packageName)
+                            .scan())
+        {
+            ClassInfo classInfo = scanResult.getClassInfo(fullyQualifiedName);
+
+            if (classInfo == null){
+                System.out.println("WARNING: Could not find class: " + fullyQualifiedName);
+                System.out.println("Package scanned: " + packageName);
+                System.out.println("All classes found in scan: " + scanResult.getAllClasses().size());
+                throw new RuntimeException("Could not find class: " + fullyQualifiedName);
+            }
+
+            if (classInfo.isInnerClass()){
+                logger.warn("Inner class detected: " + fullyQualifiedName + ". Choral does not support inner classes, aborting lift");
+                return;
+            }
+
+            if (classInfo.isEnum()){
+                liftEnum(classInfo, compilationUnitAccumulator);
+            } else if (classInfo.isInterface()){
+                liftInterface(classInfo, compilationUnitAccumulator);
+            } else {
+                liftClass(classInfo, compilationUnitAccumulator);
+            }
+        }
+    }
+
+    private static void liftClass(ClassInfo classInfo, List<CompilationUnit> compilationUnitAccumulator){
+        // TRANSLATE FIELDS
+        FieldInfoList fieldInfoList = classInfo.getFieldInfo();
+        List<Field> choralFields = new ArrayList<>();
+        for (FieldInfo fieldInfo : fieldInfoList){
+
+            EnumSet<FieldModifier> modifiers = parseModifiers(FieldModifier.class, fieldInfo.getModifiersStr());
+
+            TypeSignature fieldTypeSig = fieldInfo.getTypeSignatureOrTypeDescriptor();
+            TypeExpression fieldTypeExpression; 
+            try {
+                fieldTypeExpression = getTypeExpressions(fieldTypeSig);
+            } catch (UnSupportedArrayException e){
+                logger.warn("array type field detected, rejecting lift of field: " + fieldInfo.getName());
+                continue;
+            } catch (UnSupportedWildcardException e){
+                logger.warn("wildcard type field detected, rejecting lift of field: " + fieldInfo.getName());
+                continue;
+            }
+
+            Field field = new Field(
+                new Name(fieldInfo.getName()), 
+                fieldTypeExpression, 
+                Collections.emptyList(), // ignore annotations for now 
+                modifiers, 
+                NO_POSITION);
+            choralFields.add(field);
+        }
+
+        // TRANSLATE METHODS
+        MethodInfoList methodInfoList = classInfo.getMethodInfo();
+        List<ClassMethodDefinition> methods = new ArrayList<>();
+        for (MethodInfo methodInfo : methodInfoList){
+            EnumSet<ClassMethodModifier> methodModifiers = parseModifiers(ClassMethodModifier.class, methodInfo.getModifiersStr());
+            MethodSignature methodSignature; 
+            try {
+                methodSignature = getMethodSignature(methodInfo);
+            } catch (UnSupportedArrayException e){
+                continue;
+            } catch (UnSupportedWildcardException e){
+                continue;
+            }
+
+            ClassMethodDefinition method = new ClassMethodDefinition(
+                methodSignature, 
+                new NilStatement(NO_POSITION), // Ignore method body
+                Collections.emptyList(), // ignore annotations for now
+                methodModifiers, 
+                NO_POSITION);
+            methods.add(method);
+        }
+
+        // TRANSLATE CONSTRUCTORS
+        MethodInfoList constructors = classInfo.getConstructorInfo();
+        List<ConstructorDefinition> choralConstructors = new ArrayList<>();
+        for (MethodInfo constructor : constructors){
+            EnumSet<ConstructorModifier> modifiersConstructor = parseModifiers(ConstructorModifier.class, constructor.getModifiersStr());
+            
+            MethodParameterInfo[] methodParams = constructor.getParameterInfo();
+            List<FormalMethodParameter> choralParameters; 
+            try {
+                choralParameters = getMethodParameters(methodParams);
+            } catch (UnSupportedArrayException e){
+                logger.warn("array parameter for constructor of " + classInfo + " found, rejecting lift");
+                continue;
+            } catch (UnSupportedWildcardException e){
+                logger.warn("wildcard parameter for constructor of " + classInfo + " found, rejecting lift");
+                continue;
+            }
+            
+            MethodTypeSignature methodTypeSignature = constructor.getTypeSignatureOrTypeDescriptor();
+            List<FormalTypeParameter> choralTypeParameters; 
+            try {
+                choralTypeParameters = liftTypeParameters(methodTypeSignature.getTypeParameters());
+            } catch (UnSupportedWildcardException e){
+                logger.warn("Wilcard detected. Rejecting lift of constructor for:" + classInfo.getName());
+                continue;
+            } catch (UnSupportedArrayException e) {
+                logger.warn("Array detected in type parameter for constructor of: " + classInfo.getName() + ", rejecting lift");
+                continue;
+            }
+
+            ConstructorSignature constructorSignature = new ConstructorSignature(
+                new Name(classInfo.getName(), NO_POSITION),  
+                choralTypeParameters, 
+                choralParameters, 
+                NO_POSITION);
+
+            ConstructorDefinition constructorChoral = new ConstructorDefinition(
+                constructorSignature, 
+                null, // not supported by ClassGraph 
+                // ^Represents calling `this()` or `super()` at the start of a constructor
+                new NilStatement(NO_POSITION), // ignore constructor body
+                Collections.emptyList(), // ignore annotations for now 
+                modifiersConstructor, 
+                NO_POSITION);
+            
+            choralConstructors.add(constructorChoral);
+        }
+
+        // TRANSLATE TYPE PARAMETERS
+        ClassTypeSignature classTypeSignature = classInfo.getTypeSignatureOrTypeDescriptor();
+        List<FormalTypeParameter> choralTypeParameters; 
+        try {
+            choralTypeParameters = liftTypeParameters(classTypeSignature.getTypeParameters());
+        } catch (UnSupportedArrayException e){
+            logger.warn(classInfo.getName() + " contains array type parameter, rejecting lift.");
+            return;
+        } catch (UnSupportedWildcardException e){
+            logger.warn(classInfo.getName() + " contains wildcard type parameter, rejecting lift");
+            return;
+        }
+
+        // TRANSLATE SUPERINTERFACES
+        ClassRefTypeSignature extendedClassTypeSignature = classTypeSignature.getSuperclassSignature();
+        List<ClassRefTypeSignature> implementedInterfaceTypeSignatures = classTypeSignature.getSuperinterfaceSignatures();
+        List<TypeExpression> parentInterfaces = new ArrayList<>();
+        for (ClassRefTypeSignature implementedTypeSignature : implementedInterfaceTypeSignatures){
+            TypeExpression interfaceExpression;
+            try {
+                interfaceExpression = getTypeExpressions(implementedTypeSignature);
+            } catch (UnSupportedArrayException e) {
+                logger.warn("extended interface: " + implementedTypeSignature.getBaseClassName() 
+                            + "contains array type argument, skipping. ");
+                continue;
+            } catch (UnSupportedWildcardException e){
+                logger.warn("extended interface: " + implementedTypeSignature.getBaseClassName() 
+                            + "contains wildcard type argument, skipping. ");
+                continue;
+            }
+            parentInterfaces.add(interfaceExpression);
+        }
+
+        // TRANSLATE SUPERCLASS
+        TypeExpression extendedExpression = null;
+        if (extendedClassTypeSignature != null){
+            try {
+                extendedExpression = getTypeExpressions(extendedClassTypeSignature);
+            } catch (UnSupportedArrayException e) {
+                logger.warn("extended interface: " + extendedClassTypeSignature.getBaseClassName() 
+                            + "contains array type argument, skipping. ");
+            } catch (UnSupportedWildcardException e){
+                logger.warn("extended interface: " + extendedClassTypeSignature.getBaseClassName() 
+                            + "contains wildcard type argument, skipping. ");
+            }
+        }
+
+        EnumSet<ClassModifier> classModifiers = parseModifiers(ClassModifier.class, classInfo.getModifiersStr());
+
+        choral.ast.body.Class choralClass = new Class(
+            new Name(classInfo.getSimpleName(), NO_POSITION), 
+            List.of(DEFAULT_WORLD_PARAMETER), 
+            choralTypeParameters, 
+            extendedExpression,
+            parentInterfaces,
+            choralFields, 
+            methods, 
+            choralConstructors, 
+            Collections.emptyList(), // ignore annotations for now 
+            classModifiers, 
+            NO_POSITION);
+
+        CompilationUnit compilationUnit = new CompilationUnit(
+            Optional.of(classInfo.getPackageName()),
+            // No imports, because classfiles use fully qualified names
+            Collections.emptyList(),
+            Collections.emptyList(),
+            List.of(choralClass),
+            Collections.emptyList(),
+            classInfo.getName());
+
+        compilationUnitAccumulator.add(compilationUnit);  
+        
+        // recursively visit referenced classfiles
+        ClassInfoList dependencies = classInfo.getClassDependencies();
+        for (ClassInfo dependency : dependencies){
+            if (trackedCompilationUnits.add(dependency.getName())){
+                liftPackageHelper(dependency.getName(), compilationUnitAccumulator);
+            }
+        }
+
+        // recursively visit super class
+        if (extendedClassTypeSignature != null){
+            if (trackedCompilationUnits.add(extendedClassTypeSignature.getBaseClassName())){ 
+                // getBaseClassName returns fully qualified name of class, similarly to getName
+                liftPackageHelper(extendedClassTypeSignature.getBaseClassName(), compilationUnitAccumulator);
+            }
+        }
+    }
+
+    private static void liftInterface(ClassInfo interfaceInfo, List<CompilationUnit> compilationUnitAccumulator){
+        // TRANSLATE METHODS
+        MethodInfoList interfaceMethods = interfaceInfo.getMethodInfo();
+        List<InterfaceMethodDefinition> choralInterfaceMethods = new ArrayList<>();
+        for (MethodInfo interfaceMethod : interfaceMethods){
+
+            EnumSet<InterfaceMethodModifier> interfaceMethodModifiers = parseModifiers(InterfaceMethodModifier.class, interfaceMethod.getModifiersStr());
+
+            MethodSignature interfaceMethodSignature; 
+            try {
+                interfaceMethodSignature = getMethodSignature(interfaceMethod);
+            } catch (UnSupportedArrayException e) {
+                continue;
+            } catch (UnSupportedWildcardException e) {
+                continue;
+            }
+
+            InterfaceMethodDefinition choralInterfaceMethod = new InterfaceMethodDefinition(
+                interfaceMethodSignature, 
+                Collections.emptyList(), // ignore annotations for now 
+                interfaceMethodModifiers, 
+                NO_POSITION);
+            choralInterfaceMethods.add(choralInterfaceMethod);
+        }
+
+        // find super interfaces
+        ClassTypeSignature interfaceTypeSignature = interfaceInfo.getTypeSignatureOrTypeDescriptor();
+        List<ClassRefTypeSignature> extendedInterfaceSignatures = interfaceTypeSignature.getSuperinterfaceSignatures();
+        
+        List<TypeExpression> choralExtendedInterfaces = new ArrayList<>();
+        List<String> extendedInterfaceNames = new ArrayList<>();
+        for (ClassRefTypeSignature extendedInterfaceSignature : extendedInterfaceSignatures){
+            extendedInterfaceNames.add(extendedInterfaceSignature.getBaseClassName());
+            TypeExpression interfaceExpression; 
+            try {
+                interfaceExpression = getTypeExpressions(extendedInterfaceSignature);
+            } catch (UnSupportedArrayException e) {
+                logger.warn("extended interface: " + extendedInterfaceSignature.getBaseClassName() 
+                            + "contains array type argument, skipping. ");
+                continue;
+            } catch (UnSupportedWildcardException e){
+                logger.warn("extended interface: " + extendedInterfaceSignature.getBaseClassName() 
+                            + "contains wildcard type argument, skipping. ");
+                continue;
+            }
+            choralExtendedInterfaces.add(interfaceExpression);
+        }
+        
+        // TRANSLATE TYPE PARAMETERS
+        List<FormalTypeParameter> choralTypeParameters; 
+        try {
+            choralTypeParameters = liftTypeParameters(interfaceTypeSignature.getTypeParameters());
+        } catch (UnSupportedWildcardException e){
+            logger.warn("Wildcard detected in type parameter. Rejecting lift of: " + interfaceInfo.getName());
+            return;
+        } catch (UnSupportedArrayException e){
+            logger.warn("Array detected in type parameter. Rejecting lift of: " + interfaceInfo.getName());
+            return;
+        }
+
+        EnumSet<InterfaceModifier> interfaceModifiers = parseModifiers(InterfaceModifier.class, interfaceInfo.getModifiersStr());
+
+        Interface choralInterface = new Interface(
+            new Name(interfaceInfo.getSimpleName(), NO_POSITION), 
+            List.of(DEFAULT_WORLD_PARAMETER),
+            choralTypeParameters, 
+            choralExtendedInterfaces, 
+            choralInterfaceMethods, 
+            Collections.emptyList(), // ignore annotations for now 
+            interfaceModifiers, 
+            NO_POSITION);
+
+        CompilationUnit compilationUnit =  new CompilationUnit(
+            Optional.of(interfaceInfo.getPackageName()),
+            // No imports, because classfiles use fully qualified names
+            Collections.emptyList(),
+            List.of(choralInterface),
+            Collections.emptyList(),
+            Collections.emptyList(),
+            interfaceInfo.getName());
+
+        compilationUnitAccumulator.add(compilationUnit);
+
+        // recursively visit referenced classfiles
+        ClassInfoList dependencies = interfaceInfo.getClassDependencies();
+        for (ClassInfo dependency : dependencies){
+            if (trackedCompilationUnits.add(dependency.getName())){
+                liftPackageHelper(dependency.getName(), compilationUnitAccumulator);
+            }
+        }
+
+        // recursively visit super interfaces
+        for (String name : extendedInterfaceNames){
+            if (trackedCompilationUnits.add(name)){
+                liftPackageHelper(name, compilationUnitAccumulator);
+            }
+        }
+    }
+
+    private static void liftEnum(ClassInfo enumInfo, List<CompilationUnit> compilationUnitAccumulator){
+        // TRANSLATE CONSTANTS
+        FieldInfoList enumConstants = enumInfo.getFieldInfo().filter(FieldInfo::isEnum);
+        List<EnumConstant> choralEnumConstants = new ArrayList<>();
+        for (FieldInfo constant : enumConstants){
+            EnumConstant newConstant = new EnumConstant(
+                new Name(constant.getName(), NO_POSITION), 
+                Collections.emptyList(), // ignore annotations for now 
+                NO_POSITION);
+            choralEnumConstants.add(newConstant);
+        }
+
+        EnumSet<ClassModifier> enumModifiers = parseModifiers(ClassModifier.class, enumInfo.getModifiersStr());
+        // Enum for enum modifiers in choral internals is the same Enum used for class modifiers
+        // but enums are not allowed to be abstract 
+        enumModifiers.remove(ClassModifier.ABSTRACT);
+
+        choral.ast.body.Enum choralEnum = new choral.ast.body.Enum(
+            new Name(enumInfo.getSimpleName(), NO_POSITION), 
+            DEFAULT_WORLD_PARAMETER, 
+            choralEnumConstants, 
+            Collections.emptyList(), // ignore annotations for now 
+            enumModifiers, 
+            NO_POSITION);
+
+        CompilationUnit compilationUnit = new CompilationUnit(
+            Optional.of(enumInfo.getPackageName()),
+            // No imports, because classfiles use fully qualified names
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Collections.emptyList(),
+            List.of(choralEnum),
+            enumInfo.getName());
+
+        compilationUnitAccumulator.add(compilationUnit);
+    }
+
+    /**
+     * Parses modifiers found by ClassGraph, into modifiers used by choral internals. 
+     * @param <E>
+     * @param enumClass
+     * @param modifiersStr
+     * @return 
+     */
+    private static <E extends Enum<E>> EnumSet<E> parseModifiers(java.lang.Class<E> enumClass, String modifiersStr) {
+        EnumSet<E> modifiers = EnumSet.noneOf(enumClass);
+        String[] modifierStrings = modifiersStr.split(" ");
+        for (String modifierString : modifierStrings) {
+            try {
+                modifiers.add(Enum.valueOf(enumClass, modifierString.toUpperCase()));
+            } catch (IllegalArgumentException e){
+                continue;
+            }
+        }
+        return modifiers;
+    }
+
+    private static List<FormalTypeParameter> liftTypeParameters(List<TypeParameter> typeParameters)
+        throws UnSupportedWildcardException, UnSupportedArrayException {
+        List<FormalTypeParameter> choralTypeParameters = new ArrayList<>();
+        for (TypeParameter typeParameter : typeParameters){
+            // choral does not support lower bounds, so only upper bounds are found
+            List<TypeExpression> upperBounds = new ArrayList<>();
+            
+            ReferenceTypeSignature classBound = typeParameter.getClassBound();
+            if (containsWildcards(classBound)){
+                throw new UnSupportedWildcardException("Wildcard detected, rejecting lift");
+            }
+
+            TypeExpression classBoundExpression; 
+            if (classBound != null){
+                try {
+                    classBoundExpression = getTypeExpressions(classBound);
+                } catch (UnSupportedArrayException e){
+                    throw e;
+                } catch (UnSupportedWildcardException e){ // shouldn't be possible
+                    throw e;
+                }
+                upperBounds.add(classBoundExpression);
+            }
+
+            List<ReferenceTypeSignature> interfaceBounds = typeParameter.getInterfaceBounds();
+            for (ReferenceTypeSignature interfaceBound : interfaceBounds) {
+                if (containsWildcards(interfaceBound)) {
+                    throw new UnSupportedWildcardException("Wildcard detected, rejecting lift");
+                } 
+                try {
+                    upperBounds.add(getTypeExpressions(interfaceBound));
+                } catch (UnSupportedArrayException e){
+                    throw e;
+                } catch (UnSupportedWildcardException e){
+                    throw e;
+                }
+            }
+
+            FormalTypeParameter choralTypeParameter = new FormalTypeParameter(
+                new Name(typeParameter.getName(), NO_POSITION), 
+                List.of(DEFAULT_WORLD_PARAMETER), 
+                upperBounds, 
+                Collections.emptyList(), // ignore annotations for now 
+                NO_POSITION);
+            choralTypeParameters.add(choralTypeParameter);
+        }
+        return choralTypeParameters;
+    }
+
+    // recursively checks whether a type parameter contains a wild card. 
+    // recursion is done to account for nested types
+    private static boolean containsWildcards(TypeSignature typeSignature){
+        if (typeSignature instanceof ClassRefTypeSignature classRef){
+            List<TypeArgument> typeArguments = classRef.getTypeArguments();
+            for (TypeArgument typeArgument : typeArguments){
+                if (typeArgument.getWildcard() != Wildcard.NONE){
+                    return true;
+                }
+                TypeSignature argumentTypeSignature = typeArgument.getTypeSignature();
+                if (argumentTypeSignature != null && containsWildcards(argumentTypeSignature)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }   
+
+    /**
+     * Generates the choral TypeExpression from the given ClassGraph TypeSignature.
+     * Does so recursively if given TypeSignature is nested. 
+     * @param typeSig 
+     * @return
+     */
+    private static TypeExpression getTypeExpressions(TypeSignature typeSig) 
+    throws UnSupportedArrayException, UnSupportedWildcardException{
+        List<TypeExpression> typeExpressions = new ArrayList<>();
+        if (typeSig instanceof ClassRefTypeSignature classref) { // for nested types
+            String baseClassName = classref.getBaseClassName();
+            String simpleName = baseClassName.substring(baseClassName.lastIndexOf('.') + 1);
+            
+            List<TypeArgument> typeArguments = classref.getTypeArguments();
+            if (typeArguments != null){
+                for (int i = 0; i < typeArguments.size(); i++){
+                    TypeArgument arg = typeArguments.get(i);
+                    TypeSignature argType = arg.getTypeSignature();
+                    if (argType == null) { 
+                        throw new UnSupportedWildcardException("detected wildcard, rejecting lift");
+                    }   
+                    TypeExpression typeExpression;
+                    try {
+                        typeExpression = getTypeExpressionsHelper(argType);
+                    } catch (UnSupportedArrayException e) {
+                        throw e;
+                    } catch (UnSupportedWildcardException e){
+                        throw e;
+                    }
+                    typeExpressions.add(typeExpression);
+                }
+            }
+            return new TypeExpression(
+                new Name(simpleName, NO_POSITION), 
+                List.of(DEFAULT_WORLD_ARGUMENT), 
+                typeExpressions,
+                NO_POSITION);
+        } else if (typeSig instanceof BaseTypeSignature baseRef) { // for primitive types
+            return new TypeExpression(
+                new Name(baseRef.getTypeStr(), NO_POSITION),
+                // void should not have world arguments 
+                baseRef.getTypeStr().equals("void") ? Collections.emptyList() : List.of(DEFAULT_WORLD_ARGUMENT), 
+                Collections.emptyList(),
+                NO_POSITION);
+        } else if (typeSig instanceof TypeVariableSignature typeVar) { // for type parameters
+            return new TypeExpression(
+                new Name(typeVar.getName(), NO_POSITION), 
+                List.of(DEFAULT_WORLD_ARGUMENT), 
+                Collections.emptyList(), 
+                NO_POSITION);
+        } else if (typeSig instanceof ArrayTypeSignature arrTypeVar) { // for array types
+            throw new UnSupportedArrayException("Encountered array type, choral does not support arrays. Ignoring: " + arrTypeVar.getElementTypeSignature());
+        } else { 
+            throw new UnsupportedOperationException("This type of signature is not yet supported: "
+            + typeSig + ". Type of signature: " + typeSig.getClass().getName());
+        }
+    }
+    
+    // This helper method exists because inner types of a nested type should not have any world arguments
+    private static TypeExpression getTypeExpressionsHelper(TypeSignature typeSig) 
+    throws UnSupportedArrayException, UnSupportedWildcardException {
+        List<TypeExpression> typeExpressions = new ArrayList<>();
+        if (typeSig instanceof ClassRefTypeSignature classref){ // for nested types
+            String baseClassName = classref.getBaseClassName();
+            List<TypeArgument> typeArguments = classref.getTypeArguments();
+            if (typeArguments != null && !typeArguments.isEmpty()){
+                for (int i = 0; i < typeArguments.size(); i++){
+                    TypeArgument arg = typeArguments.get(i);
+                    TypeSignature argType = arg.getTypeSignature();
+                    if (argType == null) throw new UnSupportedWildcardException("detected wildcard, rejecting lift");
+                    TypeExpression typeExpression = getTypeExpressionsHelper(argType); 
+                    typeExpressions.add(typeExpression);
+                }
+            }
+            return new TypeExpression(
+                new Name(baseClassName, NO_POSITION), 
+                Collections.emptyList(), 
+                typeExpressions,
+                NO_POSITION);
+        } else if (typeSig instanceof BaseTypeSignature baseRef) { // for primitive types
+            return new TypeExpression(
+                new Name(baseRef.getTypeStr(), NO_POSITION),
+                Collections.emptyList(), 
+                typeExpressions,
+                NO_POSITION);
+        } else if (typeSig instanceof TypeVariableSignature typeVar){ // for type parameters
+            return new TypeExpression(
+                new Name(typeVar.getName(), NO_POSITION), 
+                Collections.emptyList(), 
+                Collections.emptyList(), 
+                NO_POSITION);
+        } else if (typeSig instanceof ArrayTypeSignature arrTypeVar){ // for array types
+            throw new UnSupportedArrayException("Encountered array type, choral does not support arrays. Ignoring: " + arrTypeVar.getElementTypeSignature());
+        } else { // implement other typesignatures? (might not be necessary)
+            throw new UnsupportedOperationException("This type of signature is not yet supported: "
+            + typeSig + ". Type of signature: " + typeSig.getClass().getName());
+        }
+    }
+
+    private static MethodSignature getMethodSignature(MethodInfo methodInfo) throws UnSupportedArrayException, UnSupportedWildcardException{
+        MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
+        TypeExpression returnType; 
+        try {
+            returnType = getTypeExpressions(methodTypeSignature.getResultType());
+        } catch (UnSupportedArrayException e){
+            logger.warn("method: " + methodInfo.getName() + " returns array, rejecting lift");
+            throw e;
+        } catch (UnSupportedWildcardException e){
+            logger.warn("method: " + methodInfo.getName() + " returns value containing wildcard, rejecting lift");
+            throw e;
+        }
+
+        MethodParameterInfo[] methodParameters = methodInfo.getParameterInfo();
+        List<FormalMethodParameter> choralMethodParameters;
+        try {
+            choralMethodParameters = getMethodParameters(methodParameters);
+        } catch (UnSupportedArrayException e){
+            logger.warn("method: " + methodInfo.getName() + " contains array parameter, ignoring. ");
+            throw e;
+        } catch (UnSupportedWildcardException e){
+            logger.warn("method: " + methodInfo.getName() + " contains wildcard parameter, ignoring. ");
+            throw e;
+        }
+
+        List<FormalTypeParameter> choralTypeParameters; 
+        try {
+            choralTypeParameters = liftTypeParameters(methodTypeSignature.getTypeParameters());
+        } catch (UnSupportedWildcardException e){
+            logger.warn("ignoring method: " + methodInfo.getName() + ", contains wildcard in parameter");
+            throw e;
+        } catch (UnSupportedArrayException e){
+            logger.warn("ignoring method: " + methodInfo.getName() + ", contains array in parameter");
+            throw e;
+        }
+
+        return new MethodSignature(
+            new Name(methodInfo.getName(), NO_POSITION), 
+            choralTypeParameters, // ignore type parameters for now 
+            choralMethodParameters, 
+            returnType, 
+            NO_POSITION);
+    }
+
+    /**
+     * Translates method parameters from ClassGraph to Choral's internal representation.
+     * @param methodParams
+     * @return
+     */
+    private static List<FormalMethodParameter> getMethodParameters(MethodParameterInfo[] methodParams) 
+    throws UnSupportedArrayException, UnSupportedWildcardException {
+        List<FormalMethodParameter> parameters = new ArrayList<>();
+        for (MethodParameterInfo param : methodParams){
+            TypeExpression type;
+            try {
+                type = getTypeExpressions(param.getTypeSignatureOrTypeDescriptor());
+            } catch (UnSupportedArrayException e){
+                throw e;
+            } catch (UnSupportedWildcardException e){
+                throw e;
+            }
+            parameters.add(new FormalMethodParameter(
+                // param.getName() will very likely return null as most parameters found by ClassGraph are unnamed
+                new Name(param.getName(), NO_POSITION),
+                type,
+                Collections.emptyList(), // ignore annotations for now 
+                NO_POSITION));
+        }
+        return parameters;
+    }
+
+    /**
+     * Clears the set of tracked compilation units that have already been lifted. 
+     * This method should only be called for testing purposes. 
+     */
+    public static void clearTrackedCompilationUnits(){
+        trackedCompilationUnits.clear();;
+    }
 
     @Deprecated // comment or annotation
     private static List<Annotation> translateAnnotations(AnnotationInfoList annotationInfoList){
@@ -98,340 +802,5 @@ public class ClassLifter {
             annotations.add(annotation);
         }
         return annotations;
-    }
-
-    /**
-     * Parses modifiers found by ClassGraph, into modifiers used by choral internals. 
-     * @param <E>
-     * @param enumClass
-     * @param modifiersStr
-     * @return 
-     */
-    private static <E extends Enum<E>> EnumSet<E> parseModifiers(java.lang.Class<E> enumClass, String modifiersStr) {
-        EnumSet<E> modifiers = EnumSet.noneOf(enumClass);
-        String[] modifierStrings = modifiersStr.split(" ");
-        for (String modifierString : modifierStrings) {
-            modifiers.add(Enum.valueOf(enumClass, modifierString.toUpperCase()));
-        }
-        return modifiers;
-    }
-
-    // Inner types of a nested type should not have any world arguments
-    private static TypeExpression getTypeExpressionsHelper(TypeSignature typeSig){
-        List<TypeExpression> typeExpressions = new ArrayList<>();
-        if (typeSig instanceof ClassRefTypeSignature classref){ // for nested types
-            String baseClassName = classref.getBaseClassName();
-            List<TypeArgument> typeArguments = classref.getTypeArguments();
-            if (typeArguments != null && !typeArguments.isEmpty()){
-                for (int i = 0; i < typeArguments.size(); i++){
-                    TypeArgument arg = typeArguments.get(i);
-                    TypeSignature argType = arg.getTypeSignature();
-                    typeExpressions.add(getTypeExpressionsHelper(argType));
-                }
-            }
-            return new TypeExpression(
-                new Name(baseClassName, NO_POSITION), 
-                Collections.emptyList(), 
-                typeExpressions,
-                NO_POSITION);
-        } else if (typeSig instanceof BaseTypeSignature baseRef) { // for primitive types
-            return new TypeExpression(
-                new Name(baseRef.getTypeStr(), NO_POSITION),
-                Collections.emptyList(), 
-                typeExpressions,
-                NO_POSITION);
-        } else { // implement other typesignatures? (might not be necessary)
-            throw new UnsupportedOperationException("This type of signature is not yet supported: "
-            + typeSig);
-        }
-    }
-
-    /**
-     * Generates the choral TypeExpression from the given ClassGraph TypeSignature.
-     * Does so recursively if given TypeSignature is nested. 
-     * @param typeSig 
-     * @return
-     */
-    private static TypeExpression getTypeExpressions(TypeSignature typeSig){
-        List<TypeExpression> typeExpressions = new ArrayList<>();
-        if (typeSig instanceof ClassRefTypeSignature classref){ // for nested types
-            String baseClassName = classref.getBaseClassName();
-            List<TypeArgument> typeArguments = classref.getTypeArguments();
-            if (typeArguments != null && !typeArguments.isEmpty()){
-                for (int i = 0; i < typeArguments.size(); i++){
-                    TypeArgument arg = typeArguments.get(i);
-                    TypeSignature argType = arg.getTypeSignature();
-                    typeExpressions.add(getTypeExpressionsHelper(argType));
-                }
-            }
-            return new TypeExpression(
-                new Name(baseClassName, NO_POSITION), 
-                List.of(DEFAULT_WORLD_ARGUMENT), 
-                typeExpressions,
-                NO_POSITION);
-        } else if (typeSig instanceof BaseTypeSignature baseRef) { // for primitive types
-            return new TypeExpression(
-                new Name(baseRef.getTypeStr(), NO_POSITION),
-                // choral compiler complains if void has any worldArguments or typeArguments 
-                baseRef.getTypeStr().equals("void") ? Collections.emptyList() : List.of(DEFAULT_WORLD_ARGUMENT), 
-                typeExpressions,
-                NO_POSITION);
-        } else { // implement other typesignatures? (might not be necessary)
-            throw new UnsupportedOperationException("This type of signature is not yet supported: "
-            + typeSig);
-        }
-    } 
-
-    /**
-     * Translates method parameters from ClassGraph to Choral's internal representation.
-     * @param methodParams
-     * @return
-     */
-    private static List<FormalMethodParameter> getMethodParameters(MethodParameterInfo[] methodParams){
-        List<FormalMethodParameter> parameters = new ArrayList<>();
-        for (MethodParameterInfo param : methodParams){
-            parameters.add(new FormalMethodParameter(
-                // param.getName() will very likely return null as most parameters found by ClassGraph are unnamed
-                new Name(param.getName(), NO_POSITION),
-                getTypeExpressions(param.getTypeSignatureOrTypeDescriptor()), 
-                Collections.emptyList(), // ignore annotations for now 
-                NO_POSITION));
-        }
-        return parameters;
-    }
-
-    private static MethodSignature getMethodSignature(MethodInfo methodInfo){
-        MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
-        TypeExpression returnType = getTypeExpressions(methodTypeSignature.getResultType());
-
-        MethodParameterInfo[] methodParameters = methodInfo.getParameterInfo();
-        List<FormalMethodParameter> choralMethodParameters = getMethodParameters(methodParameters);
-
-        return new MethodSignature(
-            new Name(methodInfo.getName(), NO_POSITION), 
-            Collections.emptyList(), // ignore type parameters for now 
-            choralMethodParameters, 
-            returnType, 
-            NO_POSITION);
-    }
-
-    private static CompilationUnit liftInterface(ClassInfo interfaceInfo){
-        EnumSet<InterfaceModifier> interfaceModifiers = parseModifiers(InterfaceModifier.class, interfaceInfo.getModifiersStr());
-        MethodInfoList interfaceMethods = interfaceInfo.getMethodInfo();
-        List<InterfaceMethodDefinition> choralInterfaceMethods = new ArrayList<>();
-        for (MethodInfo interfaceMethod : interfaceMethods){
-
-            EnumSet<InterfaceMethodModifier> interfaceMethodModifiers = parseModifiers(InterfaceMethodModifier.class, interfaceMethod.getModifiersStr());
-
-            MethodSignature interfaceMethodSignature = getMethodSignature(interfaceMethod);
-
-            InterfaceMethodDefinition choralInterfaceMethod = new InterfaceMethodDefinition(
-                interfaceMethodSignature, 
-                Collections.emptyList(), // ignore annotations for now 
-                interfaceMethodModifiers, 
-                NO_POSITION);
-            choralInterfaceMethods.add(choralInterfaceMethod);
-        }
-
-        // find interfaces the current interface extends
-        ClassTypeSignature interfaceTypeSignature = interfaceInfo.getTypeSignatureOrTypeDescriptor();
-        List<ClassRefTypeSignature> extendedInterfaceSignatures = interfaceTypeSignature.getSuperinterfaceSignatures();
-        List<TypeExpression> choralExtendedInterfaces = new ArrayList<>();
-        for (ClassRefTypeSignature extendedInterfaceSignature : extendedInterfaceSignatures){
-            TypeExpression interfaceExpression = getTypeExpressions(extendedInterfaceSignature);
-            choralExtendedInterfaces.add(interfaceExpression);
-        }
-
-        Interface choralInterface = new Interface(
-            new Name(interfaceInfo.getSimpleName(), NO_POSITION), 
-            List.of(DEFAULT_WORLD_PARAMETER),
-            Collections.emptyList(), // ignore type parameters for now
-            choralExtendedInterfaces, // might fail since ClassLifter is not yet recursive
-            choralInterfaceMethods, 
-            Collections.emptyList(), // ignore annotations for now 
-            interfaceModifiers, 
-            NO_POSITION);
-
-        return new CompilationUnit(
-            Optional.of(interfaceInfo.getPackageName()),
-            // No imports, because classfiles use fully qualified names
-            Collections.emptyList(),
-            List.of(choralInterface),
-            Collections.emptyList(),
-            Collections.emptyList(),
-            interfaceInfo.getName());
-    }
-
-    private static CompilationUnit liftClass(ClassInfo classInfo){
-        // TRANSLATE FIELDS
-        FieldInfoList fieldInfoList = classInfo.getFieldInfo();
-        List<Field> choralFields = new ArrayList<>();
-        for (FieldInfo fieldInfo : fieldInfoList){
-
-            EnumSet<FieldModifier> modifiers = parseModifiers(FieldModifier.class, fieldInfo.getModifiersStr());
-
-            TypeSignature fieldTypeSig = fieldInfo.getTypeSignatureOrTypeDescriptor();
-            TypeExpression fielTypeExpression = getTypeExpressions(fieldTypeSig);
-
-            Field field = new Field(
-                new Name(fieldInfo.getName()), 
-                fielTypeExpression, 
-                Collections.emptyList(), // ignore annotations for now 
-                modifiers, 
-                NO_POSITION);
-            choralFields.add(field);
-        }
-
-        // TRANSLATE METHODS
-        MethodInfoList methodInfoList = classInfo.getMethodInfo();
-        List<ClassMethodDefinition> methods = new ArrayList<>();
-        for (MethodInfo methodInfo : methodInfoList){
-            
-            EnumSet<ClassMethodModifier> methodModifiers = parseModifiers(ClassMethodModifier.class, methodInfo.getModifiersStr());
-
-            MethodTypeSignature methodTypeSig = methodInfo.getTypeSignatureOrTypeDescriptor();
-
-            if (methodTypeSig.getTypeParameters().size() > 0) continue; // ignore type parameters for now
-
-            MethodSignature methodSignature = getMethodSignature(methodInfo);
-
-            ClassMethodDefinition method = new ClassMethodDefinition(
-                methodSignature, 
-                new NilStatement(NO_POSITION), // Ignore method body
-                Collections.emptyList(), // ignore annotations for now
-                methodModifiers, 
-                NO_POSITION);
-            methods.add(method);
-        }
-
-        // TRANSLATE CONSTRUCTORS
-        MethodInfoList constructors = classInfo.getConstructorInfo();
-        List<ConstructorDefinition> choralConstructors = new ArrayList<>();
-        for (MethodInfo constructor : constructors){
-            EnumSet<ConstructorModifier> modifiersConstructor = parseModifiers(ConstructorModifier.class, constructor.getModifiersStr());
-            
-            MethodParameterInfo[] methodParams = constructor.getParameterInfo();
-            List<FormalMethodParameter> choralParameters = getMethodParameters(methodParams);
-            
-            ConstructorSignature constructorSignature = new ConstructorSignature(
-                new Name(classInfo.getName(), NO_POSITION),  
-                Collections.emptyList(), // ignore type parameters for now 
-                choralParameters, 
-                NO_POSITION);
-
-            ConstructorDefinition constructorChoral = new ConstructorDefinition(
-                constructorSignature, 
-                null, // not supported by ClassGraph 
-                // ^Represents calling `this()` or `super()` at the start of a constructor
-                new NilStatement(NO_POSITION), // ignore constructor body
-                Collections.emptyList(), // ignore annotations for now 
-                modifiersConstructor, 
-                NO_POSITION);
-            
-            choralConstructors.add(constructorChoral);
-        }
-
-        EnumSet<ClassModifier> classModifiers = parseModifiers(ClassModifier.class, classInfo.getModifiersStr());
-
-        choral.ast.body.Class choralClass = new Class(
-            new Name(classInfo.getSimpleName(), NO_POSITION), 
-            List.of(DEFAULT_WORLD_PARAMETER), 
-            Collections.emptyList(), // ignore type parameters for now 
-            null,
-            // TODO List of parent interfaces goes here
-            List.of(),
-            choralFields, 
-            methods, 
-            choralConstructors, 
-            Collections.emptyList(), // ignore annotations for now 
-            classModifiers, 
-            NO_POSITION);
-
-        CompilationUnit compUnit = new CompilationUnit(
-            Optional.of(classInfo.getPackageName()),
-            // No imports, because classfiles use fully qualified names
-            Collections.emptyList(),
-            Collections.emptyList(),
-            List.of(choralClass),
-            Collections.emptyList(),
-            classInfo.getName());
-
-        return compUnit;     
-    }
-
-    private static CompilationUnit liftEnum(ClassInfo enumInfo){
-        // TRANSLATE ENUMS
-        ClassInfoList javaEnums = enumInfo.getInnerClasses().filter(ClassInfo::isEnum);
-        List<choral.ast.body.Enum> choralEnums = new ArrayList<>();
-        for (ClassInfo javaEnum : javaEnums){
-            EnumSet<ClassModifier> enumModifiers = parseModifiers(ClassModifier.class, javaEnum.getModifiersStr());
-            System.out.println("Enum modifiers: ");
-            enumModifiers.forEach(System.out::println);
-
-            FieldInfoList enumConstants = javaEnum.getFieldInfo().filter(FieldInfo::isEnum);
-            List<EnumConstant> choralEnumConstants = new ArrayList<>();
-            for (FieldInfo constant : enumConstants){
-                EnumConstant newConstant = new EnumConstant(
-                    new Name(constant.getName(), NO_POSITION), 
-                    Collections.emptyList(), // ignore annotations for now 
-                    NO_POSITION);
-                choralEnumConstants.add(newConstant);
-            }
-
-            choral.ast.body.Enum choralEnum = new choral.ast.body.Enum(
-                new Name(javaEnum.getSimpleName(), NO_POSITION), // maybe change to getName 
-                DEFAULT_WORLD_PARAMETER, 
-                choralEnumConstants, 
-                Collections.emptyList(), // ignore annotations for now 
-                enumModifiers, 
-                NO_POSITION);
-            choralEnums.add(choralEnum);
-        }
-
-        // return new CompilationUnit
-        return new CompilationUnit(
-                Optional.of(enumInfo.getPackageName()),
-                // No imports, because classfiles use fully qualified names
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                choralEnums,
-                enumInfo.getName());
-    }
-
-    /**
-     * Finds a given java package and translates it into a choral CompilationUnit
-     * @param fullyQualifiedName The fully qualified name of class to be lifted. 
-     * @return
-     */
-    public static Stream<CompilationUnit> liftPackage(String fullyQualifiedName){
-        int lastSeparator = fullyQualifiedName.lastIndexOf(".");
-        String packageName = fullyQualifiedName.substring(0, lastSeparator);
-        try (ScanResult scanResult = new ClassGraph()//.verbose()
-                            .enableAllInfo()
-                            .enableSystemJarsAndModules()
-                            .acceptPackages(packageName)
-                            .scan())
-        {
-            ClassInfo classInfo = scanResult.getClassInfo(fullyQualifiedName);
-
-            if (classInfo == null){
-                throw new RuntimeException("Could not find class: " + fullyQualifiedName);
-            }
-
-            // check for inner class
-            if (classInfo.isInnerClass()){
-                logger.warn("Inner class detected: " + fullyQualifiedName + ". Choral does not support inner classes, aborting lifting");
-                return Stream.empty();
-            }
-
-            if (classInfo.isEnum()){
-                return Stream.of(liftEnum(classInfo));
-            } else if (classInfo.isInterface()){
-                return Stream.of(liftInterface(classInfo));
-            }
-            return Stream.of(liftClass(classInfo));
-
-        }
-    }
+    }    
 }

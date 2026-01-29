@@ -22,7 +22,7 @@ enum Day {
     WEDNESDAY
 }
 
-public class HelloWorld {// implements Serializable {
+public class HelloWorld implements Serializable {
     private String message = "World";
     private int count = 0;
     private List<String> listTest;
