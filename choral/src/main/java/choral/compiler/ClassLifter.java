@@ -91,7 +91,7 @@ class LiftException extends Exception {
  */
 public class ClassLifter {
 
-    private static final Position NO_POSITION = new Position("NO_POSITION", 0, 0);
+    private static final Position NO_POSITION = new Position(null, 0, 0);
     private static final FormalWorldParameter DEFAULT_WORLD_PARAMETER = new FormalWorldParameter(new Name("A", NO_POSITION), NO_POSITION);
     private static final WorldArgument DEFAULT_WORLD_ARGUMENT = new WorldArgument(new Name("A", NO_POSITION), NO_POSITION);
 
@@ -301,7 +301,7 @@ public class ClassLifter {
             Collections.emptyList(),
             List.of(choralClass),
             Collections.emptyList(),
-            classInfo.getName());
+            null);
 
         compilationUnitAccumulator.add(compilationUnit);  
         
@@ -392,7 +392,7 @@ public class ClassLifter {
             List.of(choralInterface),
             Collections.emptyList(),
             Collections.emptyList(),
-            interfaceInfo.getName());
+            null);
 
         compilationUnitAccumulator.add(compilationUnit);
 
@@ -444,7 +444,7 @@ public class ClassLifter {
             Collections.emptyList(),
             Collections.emptyList(),
             List.of(choralEnum),
-            enumInfo.getName());
+            null);
 
         compilationUnitAccumulator.add(compilationUnit);
     }

@@ -37,8 +37,11 @@ public class CompilationUnit extends Node {
 	private final List< Interface > interfaces;
 	private final List< Class > classes;
 	private final List< Enum > enums;
-	private final String primaryType;
 
+	/**
+	 * Default constructor for a CompilationUnit.
+	 * @param sourceFile The path to the source file, or null if no file exists.
+	 */
 	public CompilationUnit(
 			final Optional<String> packageDeclaration, final List< ImportDeclaration > imports,
 			final List< Interface > interfaces, final List< Class > classes,
@@ -50,21 +53,6 @@ public class CompilationUnit extends Node {
 		this.interfaces = interfaces;
 		this.classes = classes;
 		this.enums = enums;
-		if (sourceFile == null) {
-			this.primaryType = null;
-		}
-		else if (sourceFile.lastIndexOf(File.separatorChar) == -1) {
-			this.primaryType = sourceFile;
-		}
-		else {
-			int k = Math.max( 0, sourceFile.lastIndexOf( '.' ) );
-			int j = Math.min( k, sourceFile.lastIndexOf( File.separatorChar ) + 1 );
-			this.primaryType = sourceFile.substring( j, k );
-		}
-	}
-
-	public String primaryType() {
-		return this.primaryType;
 	}
 
 	public List< ImportDeclaration > imports() {
