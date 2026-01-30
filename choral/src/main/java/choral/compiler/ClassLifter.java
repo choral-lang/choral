@@ -70,15 +70,17 @@ import io.github.classgraph.TypeParameter;
 import io.github.classgraph.TypeSignature;
 import io.github.classgraph.TypeVariableSignature;
 
-class UnSupportedArrayException extends Exception{
-    public UnSupportedArrayException(String message){
+class LiftException extends Exception {
+    LiftException(String message) {
         super(message);
     }
-}
 
-class UnSupportedWildcardException extends Exception{
-    public UnSupportedWildcardException(String message){
-        super(message);
+    static LiftException array() {
+        return new LiftException("array");
+    }
+
+    static LiftException wildcard() {
+        return new LiftException("wildcard");
     }
 }
 
@@ -164,21 +166,18 @@ public class ClassLifter {
             TypeExpression fieldTypeExpression; 
             try {
                 fieldTypeExpression = getTypeExpressions(fieldTypeSig);
-            } catch (UnSupportedArrayException e){
-                logger.warn("array type field detected, rejecting lift of field: " + fieldInfo.getName());
-                continue;
-            } catch (UnSupportedWildcardException e){
-                logger.warn("wildcard type field detected, rejecting lift of field: " + fieldInfo.getName());
+            } catch (LiftException e){
+                warn(fieldInfo.getName(), e);
                 continue;
             }
 
-            Field field = new Field(
-                new Name(fieldInfo.getName()), 
-                fieldTypeExpression, 
-                Collections.emptyList(), // ignore annotations for now 
-                modifiers, 
-                NO_POSITION);
-            choralFields.add(field);
+                Field field = new Field(
+                    new Name(fieldInfo.getName()), 
+                    fieldTypeExpression, 
+                    Collections.emptyList(), // ignore annotations for now 
+                    modifiers, 
+                    NO_POSITION);
+                choralFields.add(field);
         }
 
         // TRANSLATE METHODS
@@ -189,9 +188,7 @@ public class ClassLifter {
             MethodSignature methodSignature; 
             try {
                 methodSignature = getMethodSignature(methodInfo);
-            } catch (UnSupportedArrayException e){
-                continue;
-            } catch (UnSupportedWildcardException e){
+            } catch (LiftException e){
                 continue;
             }
 
@@ -208,17 +205,15 @@ public class ClassLifter {
         MethodInfoList constructors = classInfo.getConstructorInfo();
         List<ConstructorDefinition> choralConstructors = new ArrayList<>();
         for (MethodInfo constructor : constructors){
+
             EnumSet<ConstructorModifier> modifiersConstructor = parseModifiers(ConstructorModifier.class, constructor.getModifiersStr());
             
             MethodParameterInfo[] methodParams = constructor.getParameterInfo();
             List<FormalMethodParameter> choralParameters; 
             try {
                 choralParameters = getMethodParameters(methodParams);
-            } catch (UnSupportedArrayException e){
-                logger.warn("array parameter for constructor of " + classInfo + " found, rejecting lift");
-                continue;
-            } catch (UnSupportedWildcardException e){
-                logger.warn("wildcard parameter for constructor of " + classInfo + " found, rejecting lift");
+            } catch (LiftException e){
+                warn(constructor.getName(), e);
                 continue;
             }
             
@@ -226,13 +221,10 @@ public class ClassLifter {
             List<FormalTypeParameter> choralTypeParameters; 
             try {
                 choralTypeParameters = liftTypeParameters(methodTypeSignature.getTypeParameters());
-            } catch (UnSupportedWildcardException e){
-                logger.warn("Wilcard detected. Rejecting lift of constructor for:" + classInfo.getName());
+            } catch (LiftException e){
+                warn(methodTypeSignature.toString(), e);
                 continue;
-            } catch (UnSupportedArrayException e) {
-                logger.warn("Array detected in type parameter for constructor of: " + classInfo.getName() + ", rejecting lift");
-                continue;
-            }
+            } 
 
             ConstructorSignature constructorSignature = new ConstructorSignature(
                 new Name(classInfo.getName(), NO_POSITION),  
@@ -257,11 +249,8 @@ public class ClassLifter {
         List<FormalTypeParameter> choralTypeParameters; 
         try {
             choralTypeParameters = liftTypeParameters(classTypeSignature.getTypeParameters());
-        } catch (UnSupportedArrayException e){
-            logger.warn(classInfo.getName() + " contains array type parameter, rejecting lift.");
-            return;
-        } catch (UnSupportedWildcardException e){
-            logger.warn(classInfo.getName() + " contains wildcard type parameter, rejecting lift");
+        } catch (LiftException e){
+            warn(classTypeSignature.toString(), e);
             return;
         }
 
@@ -273,15 +262,10 @@ public class ClassLifter {
             TypeExpression interfaceExpression;
             try {
                 interfaceExpression = getTypeExpressions(implementedTypeSignature);
-            } catch (UnSupportedArrayException e) {
-                logger.warn("extended interface: " + implementedTypeSignature.getBaseClassName() 
-                            + "contains array type argument, skipping. ");
+            } catch (LiftException e) {
+                warn(implementedTypeSignature.getBaseClassName(), e);
                 continue;
-            } catch (UnSupportedWildcardException e){
-                logger.warn("extended interface: " + implementedTypeSignature.getBaseClassName() 
-                            + "contains wildcard type argument, skipping. ");
-                continue;
-            }
+            } 
             parentInterfaces.add(interfaceExpression);
         }
 
@@ -290,13 +274,9 @@ public class ClassLifter {
         if (extendedClassTypeSignature != null){
             try {
                 extendedExpression = getTypeExpressions(extendedClassTypeSignature);
-            } catch (UnSupportedArrayException e) {
-                logger.warn("extended interface: " + extendedClassTypeSignature.getBaseClassName() 
-                            + "contains array type argument, skipping. ");
-            } catch (UnSupportedWildcardException e){
-                logger.warn("extended interface: " + extendedClassTypeSignature.getBaseClassName() 
-                            + "contains wildcard type argument, skipping. ");
-            }
+            } catch (LiftException e) {
+                warn(extendedClassTypeSignature.getBaseClassName(), e);
+            } 
         }
 
         EnumSet<ClassModifier> classModifiers = parseModifiers(ClassModifier.class, classInfo.getModifiersStr());
@@ -353,11 +333,10 @@ public class ClassLifter {
             MethodSignature interfaceMethodSignature; 
             try {
                 interfaceMethodSignature = getMethodSignature(interfaceMethod);
-            } catch (UnSupportedArrayException e) {
+            } catch (LiftException e) {
+                warn(interfaceMethod.getName(), e);
                 continue;
-            } catch (UnSupportedWildcardException e) {
-                continue;
-            }
+            } 
 
             InterfaceMethodDefinition choralInterfaceMethod = new InterfaceMethodDefinition(
                 interfaceMethodSignature, 
@@ -378,15 +357,10 @@ public class ClassLifter {
             TypeExpression interfaceExpression; 
             try {
                 interfaceExpression = getTypeExpressions(extendedInterfaceSignature);
-            } catch (UnSupportedArrayException e) {
-                logger.warn("extended interface: " + extendedInterfaceSignature.getBaseClassName() 
-                            + "contains array type argument, skipping. ");
+            } catch (LiftException e) {
+                warn(extendedInterfaceSignature.getBaseClassName(), e);
                 continue;
-            } catch (UnSupportedWildcardException e){
-                logger.warn("extended interface: " + extendedInterfaceSignature.getBaseClassName() 
-                            + "contains wildcard type argument, skipping. ");
-                continue;
-            }
+            } 
             choralExtendedInterfaces.add(interfaceExpression);
         }
         
@@ -394,13 +368,10 @@ public class ClassLifter {
         List<FormalTypeParameter> choralTypeParameters; 
         try {
             choralTypeParameters = liftTypeParameters(interfaceTypeSignature.getTypeParameters());
-        } catch (UnSupportedWildcardException e){
-            logger.warn("Wildcard detected in type parameter. Rejecting lift of: " + interfaceInfo.getName());
+        } catch (LiftException e){
+            warn(interfaceTypeSignature.toString(), e);
             return;
-        } catch (UnSupportedArrayException e){
-            logger.warn("Array detected in type parameter. Rejecting lift of: " + interfaceInfo.getName());
-            return;
-        }
+        } 
 
         EnumSet<InterfaceModifier> interfaceModifiers = parseModifiers(InterfaceModifier.class, interfaceInfo.getModifiersStr());
 
@@ -489,17 +460,13 @@ public class ClassLifter {
         EnumSet<E> modifiers = EnumSet.noneOf(enumClass);
         String[] modifierStrings = modifiersStr.split(" ");
         for (String modifierString : modifierStrings) {
-            try {
-                modifiers.add(Enum.valueOf(enumClass, modifierString.toUpperCase()));
-            } catch (IllegalArgumentException e){
-                continue;
-            }
+            modifiers.add(Enum.valueOf(enumClass, modifierString.toUpperCase()));
         }
         return modifiers;
     }
 
     private static List<FormalTypeParameter> liftTypeParameters(List<TypeParameter> typeParameters)
-        throws UnSupportedWildcardException, UnSupportedArrayException {
+        throws LiftException {
         List<FormalTypeParameter> choralTypeParameters = new ArrayList<>();
         for (TypeParameter typeParameter : typeParameters){
             // choral does not support lower bounds, so only upper bounds are found
@@ -507,33 +474,31 @@ public class ClassLifter {
             
             ReferenceTypeSignature classBound = typeParameter.getClassBound();
             if (containsWildcards(classBound)){
-                throw new UnSupportedWildcardException("Wildcard detected, rejecting lift");
+                throw LiftException.wildcard();
             }
 
             TypeExpression classBoundExpression; 
             if (classBound != null){
                 try {
                     classBoundExpression = getTypeExpressions(classBound);
-                } catch (UnSupportedArrayException e){
+                } catch (LiftException e){
+                    warn(typeParameter.getName(), e);
                     throw e;
-                } catch (UnSupportedWildcardException e){ // shouldn't be possible
-                    throw e;
-                }
+                } 
                 upperBounds.add(classBoundExpression);
             }
 
             List<ReferenceTypeSignature> interfaceBounds = typeParameter.getInterfaceBounds();
             for (ReferenceTypeSignature interfaceBound : interfaceBounds) {
                 if (containsWildcards(interfaceBound)) {
-                    throw new UnSupportedWildcardException("Wildcard detected, rejecting lift");
+                    throw LiftException.wildcard();
                 } 
                 try {
                     upperBounds.add(getTypeExpressions(interfaceBound));
-                } catch (UnSupportedArrayException e){
+                } catch (LiftException e){
+                    warn(interfaceBound.toString(), e);
                     throw e;
-                } catch (UnSupportedWildcardException e){
-                    throw e;
-                }
+                } 
             }
 
             FormalTypeParameter choralTypeParameter = new FormalTypeParameter(
@@ -572,7 +537,7 @@ public class ClassLifter {
      * @return
      */
     private static TypeExpression getTypeExpressions(TypeSignature typeSig) 
-    throws UnSupportedArrayException, UnSupportedWildcardException{
+    throws LiftException {
         List<TypeExpression> typeExpressions = new ArrayList<>();
         if (typeSig instanceof ClassRefTypeSignature classref) { // for nested types
             String baseClassName = classref.getBaseClassName();
@@ -584,16 +549,9 @@ public class ClassLifter {
                     TypeArgument arg = typeArguments.get(i);
                     TypeSignature argType = arg.getTypeSignature();
                     if (argType == null) { 
-                        throw new UnSupportedWildcardException("detected wildcard, rejecting lift");
+                        throw LiftException.wildcard();
                     }   
-                    TypeExpression typeExpression;
-                    try {
-                        typeExpression = getTypeExpressionsHelper(argType);
-                    } catch (UnSupportedArrayException e) {
-                        throw e;
-                    } catch (UnSupportedWildcardException e){
-                        throw e;
-                    }
+                    TypeExpression typeExpression = getTypeExpressionsHelper(argType);
                     typeExpressions.add(typeExpression);
                 }
             }
@@ -616,7 +574,7 @@ public class ClassLifter {
                 Collections.emptyList(), 
                 NO_POSITION);
         } else if (typeSig instanceof ArrayTypeSignature arrTypeVar) { // for array types
-            throw new UnSupportedArrayException("Encountered array type, choral does not support arrays. Ignoring: " + arrTypeVar.getElementTypeSignature());
+            throw LiftException.array();
         } else { 
             throw new UnsupportedOperationException("This type of signature is not yet supported: "
             + typeSig + ". Type of signature: " + typeSig.getClass().getName());
@@ -625,7 +583,7 @@ public class ClassLifter {
     
     // This helper method exists because inner types of a nested type should not have any world arguments
     private static TypeExpression getTypeExpressionsHelper(TypeSignature typeSig) 
-    throws UnSupportedArrayException, UnSupportedWildcardException {
+    throws LiftException {
         List<TypeExpression> typeExpressions = new ArrayList<>();
         if (typeSig instanceof ClassRefTypeSignature classref){ // for nested types
             String baseClassName = classref.getBaseClassName();
@@ -634,7 +592,7 @@ public class ClassLifter {
                 for (int i = 0; i < typeArguments.size(); i++){
                     TypeArgument arg = typeArguments.get(i);
                     TypeSignature argType = arg.getTypeSignature();
-                    if (argType == null) throw new UnSupportedWildcardException("detected wildcard, rejecting lift");
+                    if (argType == null) throw LiftException.wildcard();
                     TypeExpression typeExpression = getTypeExpressionsHelper(argType); 
                     typeExpressions.add(typeExpression);
                 }
@@ -656,47 +614,27 @@ public class ClassLifter {
                 Collections.emptyList(), 
                 Collections.emptyList(), 
                 NO_POSITION);
-        } else if (typeSig instanceof ArrayTypeSignature arrTypeVar){ // for array types
-            throw new UnSupportedArrayException("Encountered array type, choral does not support arrays. Ignoring: " + arrTypeVar.getElementTypeSignature());
+        } else if (typeSig instanceof ArrayTypeSignature){ // for array types
+            throw LiftException.array();
         } else { // implement other typesignatures? (might not be necessary)
             throw new UnsupportedOperationException("This type of signature is not yet supported: "
             + typeSig + ". Type of signature: " + typeSig.getClass().getName());
         }
     }
 
-    private static MethodSignature getMethodSignature(MethodInfo methodInfo) throws UnSupportedArrayException, UnSupportedWildcardException{
+    private static MethodSignature getMethodSignature(MethodInfo methodInfo) throws LiftException{
         MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
         TypeExpression returnType; 
-        try {
-            returnType = getTypeExpressions(methodTypeSignature.getResultType());
-        } catch (UnSupportedArrayException e){
-            logger.warn("method: " + methodInfo.getName() + " returns array, rejecting lift");
-            throw e;
-        } catch (UnSupportedWildcardException e){
-            logger.warn("method: " + methodInfo.getName() + " returns value containing wildcard, rejecting lift");
-            throw e;
-        }
-
         MethodParameterInfo[] methodParameters = methodInfo.getParameterInfo();
         List<FormalMethodParameter> choralMethodParameters;
-        try {
-            choralMethodParameters = getMethodParameters(methodParameters);
-        } catch (UnSupportedArrayException e){
-            logger.warn("method: " + methodInfo.getName() + " contains array parameter, ignoring. ");
-            throw e;
-        } catch (UnSupportedWildcardException e){
-            logger.warn("method: " + methodInfo.getName() + " contains wildcard parameter, ignoring. ");
-            throw e;
-        }
-
         List<FormalTypeParameter> choralTypeParameters; 
+        
         try {
+            returnType = getTypeExpressions(methodTypeSignature.getResultType());
+            choralMethodParameters = getMethodParameters(methodParameters);
             choralTypeParameters = liftTypeParameters(methodTypeSignature.getTypeParameters());
-        } catch (UnSupportedWildcardException e){
-            logger.warn("ignoring method: " + methodInfo.getName() + ", contains wildcard in parameter");
-            throw e;
-        } catch (UnSupportedArrayException e){
-            logger.warn("ignoring method: " + methodInfo.getName() + ", contains array in parameter");
+        } catch (LiftException e){
+            warn(methodInfo.getName(), e);
             throw e;
         }
 
@@ -714,17 +652,10 @@ public class ClassLifter {
      * @return
      */
     private static List<FormalMethodParameter> getMethodParameters(MethodParameterInfo[] methodParams) 
-    throws UnSupportedArrayException, UnSupportedWildcardException {
+    throws LiftException {
         List<FormalMethodParameter> parameters = new ArrayList<>();
         for (MethodParameterInfo param : methodParams){
-            TypeExpression type;
-            try {
-                type = getTypeExpressions(param.getTypeSignatureOrTypeDescriptor());
-            } catch (UnSupportedArrayException e){
-                throw e;
-            } catch (UnSupportedWildcardException e){
-                throw e;
-            }
+            TypeExpression type = getTypeExpressions(param.getTypeSignatureOrTypeDescriptor());
             parameters.add(new FormalMethodParameter(
                 // param.getName() will very likely return null as most parameters found by ClassGraph are unnamed
                 new Name(param.getName(), NO_POSITION),
@@ -733,6 +664,10 @@ public class ClassLifter {
                 NO_POSITION));
         }
         return parameters;
+    }
+
+    private static void warn(String id, LiftException e) {
+       logger.warn("Failed to lift {} because {} types are not supported", id, e.getMessage());
     }
 
     /**
