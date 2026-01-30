@@ -95,7 +95,8 @@ public class ClassLifter {
 
     private static final Logger logger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
 
-    private static Set<String> trackedCompilationUnits = new HashSet<>();
+    // private static Set<String> trackedCompilationUnits = new HashSet<>();
+    private static Set<String> trackedCompilationUnits = new HashSet<>(List.of("java.lang.Object", "java.io.Serializable"));
 
     /**
      * Finds a given java package and translates it into a choral CompilationUnit
@@ -103,46 +104,9 @@ public class ClassLifter {
      * @return
      */
     public static Stream<CompilationUnit> liftPackage(String fullyQualifiedName){
-        int lastSeparator = fullyQualifiedName.lastIndexOf(".");
-        String packageName = fullyQualifiedName.substring(0, lastSeparator);
-
-        try (ScanResult scanResult = new ClassGraph()//.verbose()
-                            .enableAllInfo()
-                            .enableInterClassDependencies()
-                            .enableExternalClasses()
-                            .enableSystemJarsAndModules()
-                            .acceptPackages(packageName)
-                            .scan())
-        {
-            ClassInfo classInfo = scanResult.getClassInfo(fullyQualifiedName);
-
-            if (classInfo == null) {
-                throw new RuntimeException("Could not find class: " + fullyQualifiedName);
-            }
-
-            if (classInfo.isInnerClass()) {
-                logger.warn("Inner class detected: " + fullyQualifiedName + ". Choral does not support inner classes, aborting lift");
-                return Stream.empty();
-            }
-
-            trackedCompilationUnits.add("java.lang.Object");
-            trackedCompilationUnits.add("java.io.Serializable");
-
-            logger.setLevel(Level.ERROR);
-            boolean verbose = Boolean.parseBoolean(System.getProperty("liftVerbose"));
-            if (verbose) logger.setLevel(Level.WARN);
-
-            List<CompilationUnit> compilationUnitAccumulator = new ArrayList<>();
-            trackedCompilationUnits.add(classInfo.getName());
-            if (classInfo.isEnum()){
-                liftEnum(classInfo, compilationUnitAccumulator);
-            } else if (classInfo.isInterface()){
-                liftInterface(classInfo, compilationUnitAccumulator);
-            } else {
-                liftClass(classInfo, compilationUnitAccumulator);
-            }
-            return compilationUnitAccumulator.stream();
-        }
+        List<CompilationUnit> compilationUnitAccumulator = new ArrayList<>();
+        liftPackageHelper(fullyQualifiedName, compilationUnitAccumulator);
+        return compilationUnitAccumulator.stream();
     }
 
     // Helper method to avoid passing empty mutable list to `liftPackage()` method
@@ -162,9 +126,9 @@ public class ClassLifter {
             ClassInfo classInfo = scanResult.getClassInfo(fullyQualifiedName);
 
             if (classInfo == null){
-                System.out.println("WARNING: Could not find class: " + fullyQualifiedName);
-                System.out.println("Package scanned: " + packageName);
-                System.out.println("All classes found in scan: " + scanResult.getAllClasses().size());
+                System.err.println("WARNING: Could not find class: " + fullyQualifiedName);
+                System.err.println("Package scanned: " + packageName);
+                System.err.println("All classes found in scan: " + scanResult.getAllClasses().size());
                 throw new RuntimeException("Could not find class: " + fullyQualifiedName);
             }
 
@@ -173,6 +137,11 @@ public class ClassLifter {
                 return;
             }
 
+            logger.setLevel(Level.ERROR);
+            boolean verbose = Boolean.parseBoolean(System.getProperty("liftVerbose"));
+            if (verbose) logger.setLevel(Level.WARN);
+
+            trackedCompilationUnits.add(classInfo.getName());
             if (classInfo.isEnum()){
                 liftEnum(classInfo, compilationUnitAccumulator);
             } else if (classInfo.isInterface()){
