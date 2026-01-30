@@ -601,7 +601,6 @@ public class Typer {
 				HigherTypeParameter p = n.typeAnnotation().get();
 				TypeParameterScope scope = declarationScope.getScope( p );
 				for( TypeExpression m : n.upperBound() ) {
-					//System.out.println("upperbound: " + m.name());
 					p.innerType().addUpperBound(
 							visitGroundReferenceTypeExpression( scope, m, delayBoundChecks ) );
 				}
