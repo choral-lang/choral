@@ -171,13 +171,13 @@ public class ClassLifter {
                 continue;
             }
 
-                Field field = new Field(
-                    new Name(fieldInfo.getName()), 
-                    fieldTypeExpression, 
-                    Collections.emptyList(), // ignore annotations for now 
-                    modifiers, 
-                    NO_POSITION);
-                choralFields.add(field);
+            Field field = new Field(
+                new Name(fieldInfo.getName()),
+                fieldTypeExpression,
+                Collections.emptyList(), // ignore annotations for now
+                modifiers,
+                NO_POSITION);
+            choralFields.add(field);
         }
 
         // TRANSLATE METHODS
@@ -189,6 +189,7 @@ public class ClassLifter {
             try {
                 methodSignature = getMethodSignature(methodInfo);
             } catch (LiftException e){
+                warn(methodInfo.getName(), e);
                 continue;
             }
 
@@ -479,12 +480,7 @@ public class ClassLifter {
 
             TypeExpression classBoundExpression; 
             if (classBound != null){
-                try {
-                    classBoundExpression = getTypeExpressions(classBound);
-                } catch (LiftException e){
-                    warn(typeParameter.getName(), e);
-                    throw e;
-                } 
+                classBoundExpression = getTypeExpressions(classBound);
                 upperBounds.add(classBoundExpression);
             }
 
@@ -493,12 +489,7 @@ public class ClassLifter {
                 if (containsWildcards(interfaceBound)) {
                     throw LiftException.wildcard();
                 } 
-                try {
-                    upperBounds.add(getTypeExpressions(interfaceBound));
-                } catch (LiftException e){
-                    warn(interfaceBound.toString(), e);
-                    throw e;
-                } 
+                upperBounds.add(getTypeExpressions(interfaceBound));
             }
 
             FormalTypeParameter choralTypeParameter = new FormalTypeParameter(
@@ -624,19 +615,11 @@ public class ClassLifter {
 
     private static MethodSignature getMethodSignature(MethodInfo methodInfo) throws LiftException{
         MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
-        TypeExpression returnType; 
         MethodParameterInfo[] methodParameters = methodInfo.getParameterInfo();
-        List<FormalMethodParameter> choralMethodParameters;
-        List<FormalTypeParameter> choralTypeParameters; 
-        
-        try {
-            returnType = getTypeExpressions(methodTypeSignature.getResultType());
-            choralMethodParameters = getMethodParameters(methodParameters);
-            choralTypeParameters = liftTypeParameters(methodTypeSignature.getTypeParameters());
-        } catch (LiftException e){
-            warn(methodInfo.getName(), e);
-            throw e;
-        }
+
+        TypeExpression returnType = getTypeExpressions(methodTypeSignature.getResultType());
+        List<FormalMethodParameter> choralMethodParameters = getMethodParameters(methodParameters);
+        List<FormalTypeParameter> choralTypeParameters = liftTypeParameters(methodTypeSignature.getTypeParameters());
 
         return new MethodSignature(
             new Name(methodInfo.getName(), NO_POSITION), 
