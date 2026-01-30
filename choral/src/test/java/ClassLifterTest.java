@@ -26,7 +26,7 @@ public class ClassLifterTest {
 				// // 		TODO Right now we need to load the standard profile because Typer complains
 				// // 		  that java.lang.Object is missing. This is probably a bug in the header
 				// // 		  removal tool?
-				// 		HeaderLoader.loadProfileForClassLifter("")
+				// 		HeaderLoader.loadAlternateProfile()
 				// ).toList()
 		);
 		ClassLifter.clearTrackedCompilationUnits();

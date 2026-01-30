@@ -48,32 +48,11 @@ public class HeaderLoader {
 	) throws IOException {
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		List< String > files = new LinkedList<>();
+		String profilePath = "headers/" + profile + ".profile";
 		try(
-				InputStream in = cl.getResourceAsStream( "headers/standard.profile" );
-				BufferedReader br = new BufferedReader( new InputStreamReader( in ) ) ) {
-			String file;
-			while( ( file = br.readLine() ) != null ) {
-				files.add( file );
-			}
-		}
-		List< CompilationUnit > headers = new ArrayList<>( files.size() );
-		for( String file : files ) {
-			try( InputStream in = cl.getResourceAsStream( "headers/" + file ) ) {
-				headers.add( Parser.parseSourceFile( in,
-						"headers/" + file ) );
-			}
-		}
-		return headers.stream();
-	}
-
-	public static Stream< CompilationUnit > loadProfileForClassLifter(
-			String profile
-	) throws IOException {
-		ClassLoader cl = Thread.currentThread().getContextClassLoader();
-		List< String > files = new LinkedList<>();
-		try(
-				InputStream in = cl.getResourceAsStream( "headers/alternate.profile" );
-				BufferedReader br = new BufferedReader( new InputStreamReader( in ) ) ) {
+			InputStream in = cl.getResourceAsStream( profilePath );
+			BufferedReader br = new BufferedReader( new InputStreamReader( in ) ) ) {
+			
 			String file;
 			while( ( file = br.readLine() ) != null ) {
 				files.add( file );
@@ -91,6 +70,10 @@ public class HeaderLoader {
 
 	public static Stream< CompilationUnit > loadStandardProfile() throws IOException {
 		return loadProfile( "standard" );
+	}
+
+	public static Stream<CompilationUnit> loadAlternateProfile() throws IOException {
+		return loadProfile("alternate");
 	}
 
 	public static Stream< CompilationUnit > loadFromPath(
