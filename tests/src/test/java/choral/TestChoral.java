@@ -53,17 +53,21 @@ import org.junit.jupiter.api.function.Executable;
 
 public class TestChoral {
 
-	private static final String PROJECTED = "projectedOutput";
-	private static final String EXPECTED = "expectedOutput";
 	private static final String RUNTIME = Paths.get("..", "runtime", "src", "main", "choral").toString();
 	private static final String CHORALUNIT = Paths.get("..", "choral-unit", "src", "main", "choral").toString();
 	private static final String MUSTFAIL = Paths.get("src", "main", "choral", "MustFail").toString();
 	private static final String MUSTPASS = Paths.get("src", "main", "choral", "MustPass").toString();
+	private static final String MOVEMEANT = subFolder( MUSTPASS, "MoveMeant" );
 	private static final String BASE_PATH = Paths.get("base", "src", "main", "java").toString();
 	private static final String RUNTIME_PATH = Paths.get("runtime", "src", "main", "java").toString();
+	/** Location of Java code produced by the Choral compiler. */
+	private static final String PROJECTED = "projectedOutput";
+	/** Location of Java code that we compare against projected code.  */
+	private static final String EXPECTED = "expectedOutput";
+	/** List of paths to search for Java sources when compiling projected code. */
 	private static final List<String> JAVA_SOURCES = List.of( BASE_PATH, RUNTIME_PATH, EXPECTED );
 
-	// formatting for terminal output
+	// Formatting for terminal output
 	private static final String GREEN = "\u001B[32m";
 	private static final String RED = "\u001B[31m";
 	private static final String RESET = "\u001B[0m";
@@ -120,30 +124,50 @@ public class TestChoral {
 				dynamicTest(request.symbol, new MustFailTest( request )));
 	}
 
+	@TestFactory
+	public Stream< DynamicTest > mustPassCommInfer() {
+		CompilationRequestBuilder builder = new CompilationRequestBuilder("--infer-comms");
+		builder.addSources( "SimpleInfer", subFolder( MOVEMEANT, "SimpleInfer" ) );
+
+		return builder.build().map(request ->
+				dynamicTest(request.symbol, new MustPassTest( request )));
+	}
 
 	///////////////////////////////// DATATYPES /////////////////////////////////////
 
 	/**
+	 * Container representing a Choral black-box test case.
+	 *
 	 * @param symbol Name of the Choral class we're trying to compile
 	 * @param sourceFolder Location of the Choral class and its dependencies
 	 * @param javaSources Location of the Java sources needed to compile the expected output (e.g., runtime library)
 	 * @param worlds Which worlds to project. Defaults to all worlds.
 	 * @param classPaths Classpaths needed to compile the expected output (e.g., external libraries).
+	 * @param flags Extra flags to pass to the Choral compiler (e.g., --infer-comms).
 	 */
 	private record CompilationRequest(String symbol,
 									  List< String > sourceFolder,
 									  List< String > javaSources,
 									  List< String > worlds,
-									  List< String > classPaths) {}
+									  List< String > classPaths,
+									  String flags) {}
 
 	/**
-	 * Builder for creating multiple CompilationRequest objects with a fluent API.
-	 * Allows incremental construction of test requests.
+	 * Helper class for building CompilationRequest objects.
 	 */
 	private static class CompilationRequestBuilder {
 		private final Map<String, CompilationRequestData> requests = new LinkedHashMap<>();
+		private final String flags;
 
-		private static class CompilationRequestData {
+		public CompilationRequestBuilder(String flags) {
+			this.flags = flags;
+		}
+
+		public CompilationRequestBuilder() {
+			this("");
+		}
+
+		private class CompilationRequestData {
 			final String symbol;
 			final List<String> sourceFolders = new ArrayList<>();
 			final List<String> javaSources = new ArrayList<>();
@@ -155,7 +179,7 @@ public class TestChoral {
 			}
 
 			CompilationRequest build() {
-				return new CompilationRequest(symbol, sourceFolders, javaSources, worlds, classPaths);
+				return new CompilationRequest(symbol, sourceFolders, javaSources, worlds, classPaths, flags);
 			}
 		}
 
@@ -231,6 +255,7 @@ public class TestChoral {
 		parameters.add( compilationRequest.symbol() );
 		parameters.addAll( compilationRequest.worlds() );
 		parameters.add( "--annotate" );
+		parameters.add( compilationRequest.flags() );
 
 		int exitCode;
 		ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
