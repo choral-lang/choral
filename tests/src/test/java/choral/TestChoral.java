@@ -60,7 +60,7 @@ public class TestChoral {
 	/**
 	 * @param symbol Name of the Choral class we're trying to compile
 	 * @param sourceFolder Location of the Choral class and its dependencies
-	 * @param javaSources Location of the Java sources needed to compile the expected output (e.g., runtime library)
+	 * @param javaSources (Optional) Location of the Java sources needed to compile the expected output (e.g., runtime library)
 	 * @param worlds (Optional) Which worlds to project. Defaults to all worlds.
 	 * @param classPaths (Optional) Classpaths needed to compile the expected output (e.g., external libraries).
 	 */
@@ -69,14 +69,6 @@ public class TestChoral {
 									  List< String > javaSources,
 									  List< String > worlds,
 									  List< String > classPaths) {
-		/**
-		 * @see #CompilationRequest(String, List, List, List, List)
-		 */
-		public CompilationRequest(String symbol,
-								  List< String > sourceFolder,
-								  List< String > javaSources) {
-			this(symbol, sourceFolder, javaSources, Collections.emptyList(), Collections.emptyList());
-		}
 		/**
 		 * @see #CompilationRequest(String, List, List, List, List)
 		 */
@@ -119,6 +111,7 @@ public class TestChoral {
 	private static final String MUSTPASS = Paths.get("src", "main", "choral", "MustPass").toString();
 	private static final String BASE_PATH = Paths.get("base", "src", "main", "java").toString();
 	private static final String RUNTIME_PATH = Paths.get("runtime", "src", "main", "java").toString();
+	private static final List<String> JAVA_SOURCES = List.of( BASE_PATH, RUNTIME_PATH, EXPECTED );
 
 	// formatting for terminal output
 	private static final String GREEN = "\u001B[32m";
@@ -202,26 +195,22 @@ public class TestChoral {
                 new CompilationRequest(
                         "AuthResult",
                         List.of( subFolder( MUSTPASS, "AuthResult" ),
-                                subFolder( MUSTPASS, "DistAuthUtils") ),
-                        List.of( BASE_PATH, EXPECTED, RUNTIME_PATH ) )
+                                subFolder( MUSTPASS, "DistAuthUtils") ) )
                 ,
                 new CompilationRequest(
                         "DistAuth",
                         List.of( subFolder( MUSTPASS, "DistAuth" ),
                                 subFolder( MUSTPASS, "DistAuthUtils")
-                        ),
-                        List.of( EXPECTED ) )
+                        ) )
                 ,
                 new CompilationRequest(
                         "BuyerSellerShipper",
-                        List.of( subFolder( MUSTPASS, "BuyerSellerShipper" ) ),
-                        List.of( EXPECTED ) )
+                        List.of( subFolder( MUSTPASS, "BuyerSellerShipper" ) ) )
                 ,
                 new CompilationRequest(
                         "DiffieHellman",
                         List.of( subFolder( MUSTPASS, "DiffieHellman" ),
-                                subFolder( MUSTPASS, "BiPair" ) ),
-                        List.of( EXPECTED ) )
+                                subFolder( MUSTPASS, "BiPair" ) ) )
                 ,
                 new CompilationRequest(
                         "TestSwitch",
@@ -394,10 +383,12 @@ public class TestChoral {
 						expectedFiles.toArray( new Path[ 0 ] ) );
 
 				List< String > options = new ArrayList<>();
-				options.add( "-sourcepath" );
 
-				options.add( String.join( File.pathSeparator, compilationRequest.javaSources ) +
-						File.pathSeparator + BASE_PATH + File.pathSeparator + RUNTIME_PATH );
+				options.add( "-sourcepath" );
+				var sources = new ArrayList<>( JAVA_SOURCES );
+				sources.addAll( compilationRequest.javaSources() );
+				options.add( String.join( File.pathSeparator, sources ) );
+
 				if( !compilationRequest.classPaths.isEmpty() ) {
 					options.add( "-classpath" );
 					options.add( String.join( File.pathSeparator, compilationRequest.classPaths ) );
