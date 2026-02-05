@@ -60,21 +60,65 @@ public class TestChoral {
 	/**
 	 * @param symbol Name of the Choral class we're trying to compile
 	 * @param sourceFolder Location of the Choral class and its dependencies
-	 * @param javaSources (Optional) Location of the Java sources needed to compile the expected output (e.g., runtime library)
-	 * @param worlds (Optional) Which worlds to project. Defaults to all worlds.
-	 * @param classPaths (Optional) Classpaths needed to compile the expected output (e.g., external libraries).
+	 * @param javaSources Location of the Java sources needed to compile the expected output (e.g., runtime library)
+	 * @param worlds Which worlds to project. Defaults to all worlds.
+	 * @param classPaths Classpaths needed to compile the expected output (e.g., external libraries).
 	 */
 	private record CompilationRequest(String symbol,
 									  List< String > sourceFolder,
 									  List< String > javaSources,
 									  List< String > worlds,
-									  List< String > classPaths) {
-		/**
-		 * @see #CompilationRequest(String, List, List, List, List)
-		 */
-		public CompilationRequest(String symbol,
-								  List< String > sourceFolder) {
-			this(symbol, sourceFolder, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+									  List< String > classPaths) {}
+
+	/**
+	 * Builder for creating multiple CompilationRequest objects with a fluent API.
+	 * Allows incremental construction of test requests.
+	 */
+	private static class CompilationRequestBuilder {
+		private final Map<String, CompilationRequestData> requests = new LinkedHashMap<>();
+
+		private static class CompilationRequestData {
+			final String symbol;
+			final List<String> sourceFolders = new ArrayList<>();
+			final List<String> javaSources = new ArrayList<>();
+			final List<String> worlds = new ArrayList<>();
+			final List<String> classPaths = new ArrayList<>();
+
+			CompilationRequestData(String symbol) {
+				this.symbol = symbol;
+			}
+
+			CompilationRequest build() {
+				return new CompilationRequest(symbol, sourceFolders, javaSources, worlds, classPaths);
+			}
+		}
+
+		public CompilationRequestBuilder addSources(String symbol, String sourceFolder) {
+			requests.computeIfAbsent(symbol, CompilationRequestData::new)
+					.sourceFolders.add(sourceFolder);
+			return this;
+		}
+
+		public CompilationRequestBuilder addJavaSources(String symbol, String javaSources) {
+			requests.computeIfAbsent(symbol, CompilationRequestData::new)
+					.javaSources.add(javaSources);
+			return this;
+		}
+
+		public CompilationRequestBuilder addWorlds(String symbol, String... worlds) {
+			requests.computeIfAbsent(symbol, CompilationRequestData::new)
+					.worlds.addAll(Arrays.asList(worlds));
+			return this;
+		}
+
+		public CompilationRequestBuilder addClassPaths(String symbol, String... classPaths) {
+			requests.computeIfAbsent(symbol, CompilationRequestData::new)
+					.classPaths.addAll(Arrays.asList(classPaths));
+			return this;
+		}
+
+		public Stream<CompilationRequest> build() {
+			return requests.values().stream().map(CompilationRequestData::build);
 		}
 	}
 
@@ -171,123 +215,48 @@ public class TestChoral {
 
         //////// MustPass Tests ////////
 
-        Stream< CompilationRequest > mustPassRequests = Stream.of(
-                new CompilationRequest(
-                        "HelloRoles",
-                        List.of( subFolder( MUSTPASS, "HelloRoles" ) ) )
-                ,
-                new CompilationRequest(
-                        "BiPair",
-                        List.of( subFolder( MUSTPASS, "BiPair" ) ) )
-                ,
-                new CompilationRequest(
-                        "ConsumeItems",
-                        List.of( subFolder( MUSTPASS, "ConsumeItems" ) ) )
-                ,
-                new CompilationRequest(
-                        "MyExtClass",
-                        List.of( subFolder( MUSTPASS, "ExtendsTest") ) )
-                ,
-                new CompilationRequest(
-                        "RemoteFunction",
-                        List.of( subFolder( MUSTPASS, "RemoteFunction" ) ) )
-                ,
-                new CompilationRequest(
-                        "AuthResult",
-                        List.of( subFolder( MUSTPASS, "AuthResult" ),
-                                subFolder( MUSTPASS, "DistAuthUtils") ) )
-                ,
-                new CompilationRequest(
-                        "DistAuth",
-                        List.of( subFolder( MUSTPASS, "DistAuth" ),
-                                subFolder( MUSTPASS, "DistAuthUtils")
-                        ) )
-                ,
-                new CompilationRequest(
-                        "BuyerSellerShipper",
-                        List.of( subFolder( MUSTPASS, "BuyerSellerShipper" ) ) )
-                ,
-                new CompilationRequest(
-                        "DiffieHellman",
-                        List.of( subFolder( MUSTPASS, "DiffieHellman" ),
-                                subFolder( MUSTPASS, "BiPair" ) ) )
-                ,
-                new CompilationRequest(
-                        "TestSwitch",
-                        List.of( subFolder( MUSTPASS, "TestSwitch" ) ) )
-                ,
-//				// https://github.com/choral-lang/choral/issues/29
-//                new CompilationRequest(
-//                        List.of( subFolder(MUSTPASS_FOLDER, "SwitchTest" ) ),
-//                        TARGET_FOLDER,
-//                        "SwitchTest" )
-//                ,
-//				// https://github.com/choral-lang/choral/issues/27
-//                new CompilationRequest(
-//                        List.of( subFolder(MUSTPASS_FOLDER, "MirrorChannel" ) ),
-//                        TARGET_FOLDER,
-//                        "MirrorChannel" )
-//                ,
-                new CompilationRequest(
-                        "LoggerExample",
-                        List.of( subFolder( MUSTPASS, "LoggerExample" ) ) )
-                ,
-                new CompilationRequest(
-                        "IfDesugarTest",
-                        List.of( subFolder( MUSTPASS, "IfDesugar") ) )
-                ,
-                new CompilationRequest(
-                        "ChainingExample",
-                        List.of( subFolder( MUSTPASS, "ChainingOperator") ) )
-                ,
-//				// https://github.com/choral-lang/choral/issues/28
-//                new CompilationRequest(
-//                        List.of( subFolder(MUSTPASS_FOLDER, "Autoboxing" ) ),
-//                        TARGET_FOLDER,
-//                        "Autoboxing" )
-//                ,
-                new CompilationRequest(
-                        "BuyBook2",
-                        List.of( subFolder( MUSTPASS, "BookSellingSoloist") ) )
-        );
+		CompilationRequestBuilder mustPassBuilder = new CompilationRequestBuilder();
+		mustPassBuilder.addSources( "HelloRoles", subFolder( MUSTPASS, "HelloRoles" ) );
+		mustPassBuilder.addSources( "BiPair", subFolder( MUSTPASS, "BiPair" ) );
+		mustPassBuilder.addSources( "ConsumeItems", subFolder( MUSTPASS, "ConsumeItems" ) );
+		mustPassBuilder.addSources( "MyExtClass", subFolder( MUSTPASS, "ExtendsTest" ) );
+		mustPassBuilder.addSources( "RemoteFunction", subFolder( MUSTPASS, "RemoteFunction" ) );
+		mustPassBuilder.addSources( "AuthResult", subFolder( MUSTPASS, "AuthResult" ) );
+		mustPassBuilder.addSources( "AuthResult", subFolder( MUSTPASS, "DistAuthUtils" ) );
+		mustPassBuilder.addSources( "DistAuth", subFolder( MUSTPASS, "DistAuth" ) );
+		mustPassBuilder.addSources( "DistAuth", subFolder( MUSTPASS, "DistAuthUtils" ) );
+		mustPassBuilder.addSources( "BuyerSellerShipper", subFolder( MUSTPASS, "BuyerSellerShipper" ) );
+		mustPassBuilder.addSources( "DiffieHellman", subFolder( MUSTPASS, "DiffieHellman" ) );
+		mustPassBuilder.addSources( "DiffieHellman", subFolder( MUSTPASS, "BiPair" ) );
+		mustPassBuilder.addSources( "TestSwitch", subFolder( MUSTPASS, "TestSwitch" ) );
+		mustPassBuilder.addSources( "LoggerExample", subFolder( MUSTPASS, "LoggerExample" ) );
+		mustPassBuilder.addSources( "IfDesugarTest", subFolder( MUSTPASS, "IfDesugar" ) );
+		mustPassBuilder.addSources( "ChainingExample", subFolder( MUSTPASS, "ChainingOperator" ) );
+		mustPassBuilder.addSources( "BuyBook2", subFolder( MUSTPASS, "BookSellingSoloist" ) );
+		//// https://github.com/choral-lang/choral/issues/29
+		// mustPassBuilder.addSources( "SwitchTest", subFolder( MUSTPASS, "SwitchTest" ) );
+		//// https://github.com/choral-lang/choral/issues/27
+		// mustPassBuilder.addSources( "MirrorChannel", subFolder( MUSTPASS, "MirrorChannel" ) );
+		//// https://github.com/choral-lang/choral/issues/28
+		// mustPassBuilder.addSources( "Autoboxing", subFolder( MUSTPASS, "Autoboxing" ) );
+
+		Stream< CompilationRequest > mustPassRequests = mustPassBuilder.build();
 
 
         //////// MustFail Tests ////////
 
-		Stream< CompilationRequest > mustFailRequests = Stream.of(
-				new CompilationRequest(
-						"WrongType",
-						List.of( subFolder( MUSTFAIL, "WrongType" ) ) )
-				,
-				new CompilationRequest(
-						"MultiFoo",
-						List.of( subFolder( MUSTFAIL, "MultiFoo" ) ) )
-				,
-				new CompilationRequest(
-						"CyclicInheritance_A",
-						List.of( subFolder( MUSTFAIL, "CyclicInheritance") ) )
-				,
-				new CompilationRequest(
-						"LotsOfErrors",
-						List.of( subFolder( MUSTFAIL, "LotsOfErrors" ) ) )
-				,
-				new CompilationRequest(
-						"VariableDeclarations",
-						List.of( subFolder( MUSTFAIL, "VariableDeclarations" ) ) )
-				,
-				new CompilationRequest(
-						"TwoWorldList",
-						List.of( subFolder( MUSTFAIL, "IllegalInheritance") ) )
-				,
-				new CompilationRequest(
-						"NonMatchingReturnType",
-						List.of( subFolder( MUSTFAIL, "NonMatchingReturnType" ) ) )
-				,
-				new CompilationRequest(
-						"MultiFileError",
-						List.of(subFolder( MUSTFAIL, "MultiFileError" ),
-								subFolder( MUSTFAIL, "MultiFileErrorUtil" )) )
-		);
+		CompilationRequestBuilder mustFailBuilder = new CompilationRequestBuilder();
+		mustFailBuilder.addSources( "WrongType", subFolder( MUSTFAIL, "WrongType" ) );
+		mustFailBuilder.addSources( "MultiFoo", subFolder( MUSTFAIL, "MultiFoo" ) );
+		mustFailBuilder.addSources( "CyclicInheritance_A", subFolder( MUSTFAIL, "CyclicInheritance" ) );
+		mustFailBuilder.addSources( "LotsOfErrors", subFolder( MUSTFAIL, "LotsOfErrors" ) );
+		mustFailBuilder.addSources( "VariableDeclarations", subFolder( MUSTFAIL, "VariableDeclarations" ) );
+		mustFailBuilder.addSources( "TwoWorldList", subFolder( MUSTFAIL, "IllegalInheritance" ) );
+		mustFailBuilder.addSources( "NonMatchingReturnType", subFolder( MUSTFAIL, "NonMatchingReturnType" ) );
+		mustFailBuilder.addSources( "MultiFileError", subFolder( MUSTFAIL, "MultiFileError" ) );
+		mustFailBuilder.addSources( "MultiFileError", subFolder( MUSTFAIL, "MultiFileErrorUtil" ) );
+
+		Stream< CompilationRequest > mustFailRequests = mustFailBuilder.build();
 
         Stream<DynamicTest> mustPassTests = mustPassRequests
             .map(request -> dynamicTest(request.symbol, new MustPassTest( request )));
