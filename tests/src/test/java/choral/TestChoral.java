@@ -59,14 +59,18 @@ public class TestChoral {
 
 	private record CompilationRequest(String symbol,
 									  List< String > sourceFolder,
+									  List< String > javaSources,
 									  List< String > worlds,
-									  List< String > sourcePaths,
 									  List< String > classPaths) {
-		// Compact constructor with worlds and classPaths defaulting to empty lists
+		/**
+		 * @param symbol Name of the Choral class we're trying to compile
+		 * @param sourceFolder Location of the Choral class and its dependencies
+		 * @param sourcePaths Location of the Java sources needed to compile the expected output (e.g., runtime library)
+		 */
 		public CompilationRequest(String symbol,
 								  List< String > sourceFolder,
 								  List< String > sourcePaths) {
-			this(symbol, sourceFolder, Collections.emptyList(), sourcePaths, Collections.emptyList());
+			this(symbol, sourceFolder, sourcePaths, Collections.emptyList(), Collections.emptyList());
 		}
 	}
 
@@ -95,19 +99,14 @@ public class TestChoral {
 		}
 	}
 
-	///////////////////////////////// CONSTANTS /////////////////////////////////////
-
-
-	private static final String FILESEPARATOR = File.pathSeparator;
-	private static final String TARGET_FOLDER = "projectedOutput";
-	private static final String EXPECTED_FOLDER = "expectedOutput";
-	private static final String RUNTIME_MAIN_FOLDER = Paths.get("..", "runtime", "src", "main", "choral").toString();
-	private static final String CHORALUNIT_MAIN_FOLDER = Paths.get("..", "choral-unit", "src", "main", "choral").toString();
-	private static final String MUSTFAIL_FOLDER = Paths.get("src", "main", "choral", "MustFail").toString();
-	private static final String MUSTPASS_FOLDER = Paths.get("src", "main", "choral", "MustPass").toString();
+	private static final String PROJECTED = "projectedOutput";
+	private static final String EXPECTED = "expectedOutput";
+	private static final String RUNTIME = Paths.get("..", "runtime", "src", "main", "choral").toString();
+	private static final String CHORALUNIT = Paths.get("..", "choral-unit", "src", "main", "choral").toString();
+	private static final String MUSTFAIL = Paths.get("src", "main", "choral", "MustFail").toString();
+	private static final String MUSTPASS = Paths.get("src", "main", "choral", "MustPass").toString();
 	private static final String BASE_PATH = Paths.get("base", "src", "main", "java").toString();
 	private static final String RUNTIME_PATH = Paths.get("runtime", "src", "main", "java").toString();
-	private static final String EXPECTEDOUTPUT_PATH = "expectedOutput";
 
 	// formatting for terminal output
 	private static final String GREEN = "\u001B[32m";
@@ -125,12 +124,12 @@ public class TestChoral {
 		parameters.add( "epp" );
 		parameters.add( "--verbosity=DEBUG" );
 		parameters.add( "--headers=" +
-				String.join( FILESEPARATOR, compilationRequest.sourceFolder() ) +
-				FILESEPARATOR + RUNTIME_MAIN_FOLDER + FILESEPARATOR + CHORALUNIT_MAIN_FOLDER );
+				String.join( File.pathSeparator, compilationRequest.sourceFolder() ) +
+				File.pathSeparator + RUNTIME + File.pathSeparator + CHORALUNIT );
 		parameters.add( "-t" );
-		parameters.add( TARGET_FOLDER );
+		parameters.add( PROJECTED );
 		parameters.add( "-s" );
-		parameters.add( String.join( FILESEPARATOR, compilationRequest.sourceFolder() ) );
+		parameters.add( String.join( File.pathSeparator, compilationRequest.sourceFolder() ) );
 		parameters.add( compilationRequest.symbol() );
 		parameters.addAll( compilationRequest.worlds() );
 		parameters.add( "--annotate" );
@@ -170,56 +169,56 @@ public class TestChoral {
         Stream< CompilationRequest > mustPassRequests = Stream.of(
                 new CompilationRequest(
                         "HelloRoles",
-                        List.of( subFolder(MUSTPASS_FOLDER, "HelloRoles" ) ),
+                        List.of( subFolder( MUSTPASS, "HelloRoles" ) ),
                         List.of( BASE_PATH ) )
                 ,
                 new CompilationRequest(
                         "BiPair",
-                        List.of( subFolder(MUSTPASS_FOLDER, "BiPair" ) ),
+                        List.of( subFolder( MUSTPASS, "BiPair" ) ),
                         List.of( BASE_PATH ) )
                 ,
                 new CompilationRequest(
                         "ConsumeItems",
-                        List.of( subFolder(MUSTPASS_FOLDER, "ConsumeItems" ) ),
+                        List.of( subFolder( MUSTPASS, "ConsumeItems" ) ),
                         List.of( BASE_PATH, RUNTIME_PATH ) )
                 ,
                 new CompilationRequest(
                         "MyExtClass",
-                        List.of( subFolder(MUSTPASS_FOLDER, "ExtendsTest") ),
+                        List.of( subFolder( MUSTPASS, "ExtendsTest") ),
                         List.of( BASE_PATH ) )
                 ,
                 new CompilationRequest(
                         "RemoteFunction",
-                        List.of( subFolder(MUSTPASS_FOLDER, "RemoteFunction" ) ),
+                        List.of( subFolder( MUSTPASS, "RemoteFunction" ) ),
                         List.of( BASE_PATH, RUNTIME_PATH ) )
                 ,
                 new CompilationRequest(
                         "AuthResult",
-                        List.of( subFolder(MUSTPASS_FOLDER, "AuthResult" ),
-                                subFolder(MUSTPASS_FOLDER, "DistAuthUtils") ),
-                        List.of( BASE_PATH, EXPECTEDOUTPUT_PATH, RUNTIME_PATH ) )
+                        List.of( subFolder( MUSTPASS, "AuthResult" ),
+                                subFolder( MUSTPASS, "DistAuthUtils") ),
+                        List.of( BASE_PATH, EXPECTED, RUNTIME_PATH ) )
                 ,
                 new CompilationRequest(
                         "DistAuth",
-                        List.of( subFolder(MUSTPASS_FOLDER, "DistAuth" ),
-                                subFolder(MUSTPASS_FOLDER, "DistAuthUtils")
+                        List.of( subFolder( MUSTPASS, "DistAuth" ),
+                                subFolder( MUSTPASS, "DistAuthUtils")
                         ),
-                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTEDOUTPUT_PATH ) )
+                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTED ) )
                 ,
                 new CompilationRequest(
                         "BuyerSellerShipper",
-                        List.of( subFolder(MUSTPASS_FOLDER, "BuyerSellerShipper" ) ),
-                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTEDOUTPUT_PATH ) )
+                        List.of( subFolder( MUSTPASS, "BuyerSellerShipper" ) ),
+                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTED ) )
                 ,
                 new CompilationRequest(
                         "DiffieHellman",
-                        List.of( subFolder(MUSTPASS_FOLDER, "DiffieHellman" ),
-                                subFolder(MUSTPASS_FOLDER, "BiPair" ) ),
-                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTEDOUTPUT_PATH ) )
+                        List.of( subFolder( MUSTPASS, "DiffieHellman" ),
+                                subFolder( MUSTPASS, "BiPair" ) ),
+                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTED ) )
                 ,
                 new CompilationRequest(
                         "TestSwitch",
-                        List.of( subFolder(MUSTPASS_FOLDER, "TestSwitch" ) ),
+                        List.of( subFolder( MUSTPASS, "TestSwitch" ) ),
                         List.of( BASE_PATH, RUNTIME_PATH ) )
                 ,
 //				// https://github.com/choral-lang/choral/issues/29
@@ -238,17 +237,17 @@ public class TestChoral {
 //                ,
                 new CompilationRequest(
                         "LoggerExample",
-                        List.of( subFolder(MUSTPASS_FOLDER, "LoggerExample" ) ),
+                        List.of( subFolder( MUSTPASS, "LoggerExample" ) ),
                         List.of( BASE_PATH ) )
                 ,
                 new CompilationRequest(
                         "IfDesugarTest",
-                        List.of( subFolder(MUSTPASS_FOLDER, "IfDesugar") ),
+                        List.of( subFolder( MUSTPASS, "IfDesugar") ),
                         List.of( BASE_PATH ) )
                 ,
                 new CompilationRequest(
                         "ChainingExample",
-                        List.of( subFolder(MUSTPASS_FOLDER, "ChainingOperator") ),
+                        List.of( subFolder( MUSTPASS, "ChainingOperator") ),
                         List.of( BASE_PATH, RUNTIME_PATH ) )
                 ,
 //				// https://github.com/choral-lang/choral/issues/28
@@ -260,7 +259,7 @@ public class TestChoral {
 //                ,
                 new CompilationRequest(
                         "BuyBook2",
-                        List.of( subFolder(MUSTPASS_FOLDER, "BookSellingSoloist") ),
+                        List.of( subFolder( MUSTPASS, "BookSellingSoloist") ),
                         List.of( BASE_PATH ) )
         );
 
@@ -270,43 +269,43 @@ public class TestChoral {
 		Stream< CompilationRequest > mustFailRequests = Stream.of(
 				new CompilationRequest(
 						"WrongType",
-						List.of( subFolder(MUSTFAIL_FOLDER, "WrongType" ) ),
+						List.of( subFolder( MUSTFAIL, "WrongType" ) ),
 						List.of( BASE_PATH ) )
 				,
 				new CompilationRequest(
 						"MultiFoo",
-						List.of( subFolder(MUSTFAIL_FOLDER, "MultiFoo" ) ),
+						List.of( subFolder( MUSTFAIL, "MultiFoo" ) ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						"CyclicInheritance_A",
-						List.of( subFolder(MUSTFAIL_FOLDER, "CyclicInheritance") ),
+						List.of( subFolder( MUSTFAIL, "CyclicInheritance") ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						"LotsOfErrors",
-						List.of( subFolder(MUSTFAIL_FOLDER, "LotsOfErrors" ) ),
+						List.of( subFolder( MUSTFAIL, "LotsOfErrors" ) ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						"VariableDeclarations",
-						List.of( subFolder(MUSTFAIL_FOLDER, "VariableDeclarations" ) ),
+						List.of( subFolder( MUSTFAIL, "VariableDeclarations" ) ),
 						List.of( BASE_PATH ) )
 				,
 				new CompilationRequest(
 						"TwoWorldList",
-						List.of( subFolder(MUSTFAIL_FOLDER, "IllegalInheritance") ),
+						List.of( subFolder( MUSTFAIL, "IllegalInheritance") ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						"NonMatchingReturnType",
-						List.of( subFolder(MUSTFAIL_FOLDER, "NonMatchingReturnType" ) ),
+						List.of( subFolder( MUSTFAIL, "NonMatchingReturnType" ) ),
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						"MultiFileError",
-						List.of(subFolder(MUSTFAIL_FOLDER, "MultiFileError" ),
-								subFolder(MUSTFAIL_FOLDER, "MultiFileErrorUtil" )),
+						List.of(subFolder( MUSTFAIL, "MultiFileError" ),
+								subFolder( MUSTFAIL, "MultiFileErrorUtil" )),
 						List.of(BASE_PATH) )
 		);
 
@@ -356,12 +355,12 @@ public class TestChoral {
 				String[] packageList = packageName.split( "\\." );
 
 				// Get all the projected and expected Java files
-				Path projectFolder = Path.of( TARGET_FOLDER, packageList );
+				Path projectFolder = Path.of( PROJECTED, packageList );
 				List< Path > projectedJavaFiles = Files.walk( projectFolder ).filter(
 						javaFile -> javaFile.toString().endsWith( ".java" )
 				).sorted().toList();
 
-				Path expectedFolderPath = Path.of( EXPECTED_FOLDER, packageList );
+				Path expectedFolderPath = Path.of( EXPECTED, packageList );
 				List< Path > expectedFiles = Files.walk( expectedFolderPath ).filter(
 						expectedFile -> expectedFile.toString().endsWith( ".java" )
 				).sorted().toList();
@@ -404,13 +403,13 @@ public class TestChoral {
 						expectedFiles.toArray( new Path[ 0 ] ) );
 
 				List< String > options = new ArrayList<>();
-				if( !compilationRequest.sourcePaths.isEmpty() ) {
+				if( !compilationRequest.javaSources.isEmpty() ) {
 					options.add( "-sourcepath" );
-					options.add( String.join( FILESEPARATOR, compilationRequest.sourcePaths ) );
+					options.add( String.join( File.pathSeparator, compilationRequest.javaSources ) );
 				}
 				if( !compilationRequest.classPaths.isEmpty() ) {
 					options.add( "-classpath" );
-					options.add( String.join( FILESEPARATOR, compilationRequest.classPaths ) );
+					options.add( String.join( File.pathSeparator, compilationRequest.classPaths ) );
 				}
 				options.addAll( Arrays.asList( "-d", "bin" ) );
 
