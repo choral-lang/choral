@@ -1,4 +1,4 @@
-package choral.amend.bipair;
+package choral.MustPass.MoveMeant.BiPair;
 
 public class BiPair@( A, B )< L@X, R@Y > {
 	private L@A left;

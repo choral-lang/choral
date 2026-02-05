@@ -1,13 +1,13 @@
-package choral.amend.vitalsstreaming;
+package choral.MustPass.MoveMeant.VitalsStreaming;
 
 import choral.channels.SymChannel;
 import java.util.function.Consumer;
-import choral.amend.vitalsstreaming.utils.PatientsRegistry;
-import choral.amend.vitalsstreaming.utils.Sensor;
-import choral.amend.vitalsstreaming.utils.Signature;
-import choral.amend.vitalsstreaming.utils.SignatureRegistry;
-import choral.amend.vitalsstreaming.utils.Vitals;
-import choral.amend.vitalsstreaming.utils.VitalsMsg;
+import choral.MustPass.MoveMeant.VitalsStreaming.utils.PatientsRegistry;
+import choral.MustPass.MoveMeant.VitalsStreaming.utils.Sensor;
+import choral.MustPass.MoveMeant.VitalsStreaming.utils.Signature;
+import choral.MustPass.MoveMeant.VitalsStreaming.utils.SignatureRegistry;
+import choral.MustPass.MoveMeant.VitalsStreaming.utils.Vitals;
+import choral.MustPass.MoveMeant.VitalsStreaming.utils.VitalsMsg;
 
 enum StreamState@E { ON, OFF }
 

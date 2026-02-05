@@ -1,15 +1,15 @@
-package choral.amend.distributedauthentication;
+package choral.MustPass.MoveMeant.DistributedAuthentication;
 
-import choral.amend.distributedauthentication.AuthResult;
-import choral.amend.distributedauthentication.utils.AuthToken;
-import choral.amend.distributedauthentication.utils.Base64_Encoder;
-import choral.amend.distributedauthentication.utils.ClientRegistry;
-import choral.amend.distributedauthentication.utils.Credentials;
+import choral.MustPass.MoveMeant.distributedauthentication.AuthResult;
+import choral.MustPass.MoveMeant.distributedauthentication.utils.AuthToken;
+import choral.MustPass.MoveMeant.distributedauthentication.utils.Base64_Encoder;
+import choral.MustPass.MoveMeant.distributedauthentication.utils.ClientRegistry;
+import choral.MustPass.MoveMeant.distributedauthentication.utils.Credentials;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import choral.channels.SymChannel;
-import choral.amend.distributedauthentication.EnumBoolean;
+import choral.MustPass.MoveMeant.distributedauthentication.EnumBoolean;
 
 public class DistAuth10@( Client, Service, S1, S2, S3, S4, S5, S6, S7, IP ){
 	private SymChannel@( Client, IP )< Object > ch_Client_IP;

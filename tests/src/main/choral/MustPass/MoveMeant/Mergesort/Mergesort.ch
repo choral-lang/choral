@@ -1,4 +1,4 @@
-package choral.amend.Mergesort;
+package choral.MustPass.MoveMeant.Mergesort;
 
 import choral.channels.SymChannel;
 import java.util.ArrayList;

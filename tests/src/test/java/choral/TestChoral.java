@@ -127,7 +127,6 @@ public class TestChoral {
 	@TestFactory
 	public Stream< DynamicTest > mustPassCommInfer() {
 		CompilationRequestBuilder builder = new CompilationRequestBuilder("--infer-comms");
-		builder.addSources( "SimpleInfer", subFolder( MOVEMEANT, "SimpleInfer" ) );
 		builder.addSources( "BiPair", subFolder( MOVEMEANT, "BiPair" ) );
 		builder.addSources( "BuyerSellerShipper", subFolder( MOVEMEANT, "BuyerSellerShipper" ) );
 		builder.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT, "ChannelsAsArgs" ) );

@@ -1,8 +1,8 @@
-package choral.amend.sendpackets;
+package choral.MustPass.MoveMeant.Sendpackets;
 
 import choral.channels.SymChannel;
-import choral.amend.sendpackets.utils.Server;
-import choral.amend.sendpackets.utils.Client;
+import choral.MustPass.MoveMeant.SendPackets.utils.Server;
+import choral.MustPass.MoveMeant.SendPackets.utils.Client;
 
 import choral.runtime.Serializers.KryoSerializable;
 

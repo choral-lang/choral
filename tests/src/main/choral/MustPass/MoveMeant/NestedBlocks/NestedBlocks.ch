@@ -1,6 +1,6 @@
-package choral.amend.nestedblocks;
+package choral.MustPass.MoveMeant.NestedBlocks;
 
-import choral.amend.nestedblocks.utils.Client; 
+import choral.MustPass.MoveMeant.NestedBlocks.utils.Client;
 import choral.channels.SymChannel;
 
 class NestedBlocks@( A, B ) {

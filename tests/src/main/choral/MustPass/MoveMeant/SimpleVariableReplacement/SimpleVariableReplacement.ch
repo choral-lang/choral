@@ -1,4 +1,4 @@
-package choral.amend.simplevariablereplacement;
+package choral.MustPass.MoveMeant.SimpleVariableReplacement;
 
 import choral.channels.SymChannel;
 

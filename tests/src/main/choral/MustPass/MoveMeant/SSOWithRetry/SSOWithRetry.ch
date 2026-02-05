@@ -1,7 +1,7 @@
-package choral.amend.ssowithretry;
+package choral.MustPass.MoveMeant.SSOWithRetry;
 
 import choral.channels.SymChannel;
-import choral.amend.ssowithretry.utils.*;
+import choral.MustPass.MoveMeant.SSOWithRetry.utils.*;
 
 import choral.runtime.Serializers.KryoSerializable;
 

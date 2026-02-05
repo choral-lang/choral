@@ -22,11 +22,6 @@ public class MoveMeant {
 
         List<CompilationUnit> fullComCus = new ArrayList<>();
         switch( inferenceModel ){
-            case 1: { // Direct replacement
-                System.out.println( "Direct replacement" );
-                
-                break;
-            }
             case 2:{ // Variable replacement
                 System.out.println( "Variable replacement" );
                 Collection<CompilationUnit> dataComCus = cus.stream().map( cu -> new VariableReplacement( new Selections() ).inferComms(cu) ).toList();

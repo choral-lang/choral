@@ -1,4 +1,4 @@
-package choral.amend.SimpleArithmetic;
+package choral.MustPass.MoveMeant.SimpleArithmetic;
 
 import choral.channels.SymChannel;
 

@@ -1,4 +1,4 @@
-package choral.amend.splitandcombine.utils;
+package choral.MustPass.MoveMeant.SplitAndCombine.utils;
 
 public class Tasks@A{
     public Task@A first(){}

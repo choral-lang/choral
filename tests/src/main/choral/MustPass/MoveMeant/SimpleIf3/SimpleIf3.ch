@@ -1,6 +1,6 @@
-package choral.amend.simpleif3;
+package choral.MustPass.MoveMeant.SimpleIf3;
 
-import choral.amend.simpleif3.utils.Client; 
+import choral.MustPass.MoveMeant.SimpleIf3.utils.Client;
 import choral.channels.SymChannel;
 
 class SimpleIf3@( A, B, C ) {

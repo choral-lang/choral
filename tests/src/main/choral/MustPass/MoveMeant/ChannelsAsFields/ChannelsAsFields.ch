@@ -1,6 +1,6 @@
-package choral.amend.channelsasfields;
+package choral.MustPass.MoveMeant.ChannelsAsFields;
 
-import choral.amend.channelsasfields.utils.Client; 
+import choral.MustPass.MoveMeant.ChannelsAsFields.utils.Client;
 import choral.channels.SymChannel;
 import choral.channels.DiDataChannel;
 import choral.channels.DiSelectChannel;

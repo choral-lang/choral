@@ -1,7 +1,7 @@
-package choral.amend.simplemethodcalls.utils;
+package choral.MustPass.MoveMeant.SimpleMethodCalls.utils;
 
 import java.lang.Object;
-import choral.amend.simplemethodcalls.utils.Price;
+import choral.MustPass.MoveMeant.simplemethodcalls.utils.Price;
 
 public class Client@A {
 

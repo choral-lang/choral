@@ -1,8 +1,8 @@
-package choral.amend.channelsasargs.utils;
+package choral.MustPass.MoveMeant.ChannelsAsArgs.utils;
 
 import java.lang.Object;
 import java.lang.Integer;
-import choral.amend.channelsasargs.utils.Price;
+import choral.MustPass.MoveMeant.ChannelsAsArgs.utils.Price;
 
 public class Client@A {
 

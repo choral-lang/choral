@@ -1,7 +1,7 @@
-package choral.amend.overloadonroles;
+package choral.MustPass.MoveMeant.OverloadOnRoles;
 
 import choral.channels.SymChannel;
-import choral.amend.overloadonroles.utils.Client;
+import choral.MustPass.MoveMeant.OverloadOnRoles.utils.Client;
 
 
 public class OverloadOnRoles@(A,B,C){

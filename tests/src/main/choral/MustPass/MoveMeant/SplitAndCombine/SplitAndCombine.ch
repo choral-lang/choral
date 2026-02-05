@@ -1,8 +1,8 @@
-package choral.amend.splitandcombine;
+package choral.MustPass.MoveMeant.SplitAndCombine;
 
 import choral.channels.SymChannel;
 
-import choral.amend.splitandcombine.utils.*;
+import choral.MustPass.MoveMeant.SplitAndCombine.utils.*;
 
 public class SplitAndCombine@( Main, Worker1, Worker2 ){
     public static Result@Main splitAndCombine( 
