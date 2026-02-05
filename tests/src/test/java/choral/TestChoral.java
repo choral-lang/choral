@@ -58,12 +58,19 @@ public class TestChoral {
 
 
 	private record CompilationRequest(List< String > sourceFolder,
-									  String targetFolder,
 									  List< String > headersFolders,
 									  String symbol,
 									  List< String > worlds,
 									  List< String > sourcePaths,
-									  List< String > classPaths) {}
+									  List< String > classPaths) {
+		// Compact constructor with worlds and classPaths defaulting to empty lists
+		public CompilationRequest(List< String > sourceFolder,
+								  List< String > headersFolders,
+								  String symbol,
+								  List< String > sourcePaths) {
+			this(sourceFolder, headersFolders, symbol, Collections.emptyList(), sourcePaths, Collections.emptyList());
+		}
+	}
 
 	private record CompilationResults(int exitCode, String stdout, String stderr) {}
 
@@ -124,7 +131,7 @@ public class TestChoral {
 			parameters.add(
 					"--headers=" + String.join( FILESEPARATOR, compilationRequest.headersFolders() ) );
 		parameters.add( "-t" );
-		parameters.add( compilationRequest.targetFolder() );
+		parameters.add( TARGET_FOLDER );
 		parameters.add( "-s" );
 		parameters.add( String.join( FILESEPARATOR, compilationRequest.sourceFolder() ) );
 		parameters.add( compilationRequest.symbol() );
@@ -166,159 +173,128 @@ public class TestChoral {
         Stream< CompilationRequest > mustPassRequests = Stream.of(
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "HelloRoles" ) ),
-                        TARGET_FOLDER,
-                        Collections.emptyList(),
-                        "HelloRoles", ALL_WORLDS,
-                        List.of( BASE_PATH ),
-                        Collections.emptyList() )
+						Collections.emptyList(),
+                        "HelloRoles",
+                        List.of( BASE_PATH ) )
                 ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "BiPair" ) ),
-                        TARGET_FOLDER,
-                        Collections.emptyList(),
-                        "BiPair", ALL_WORLDS,
-                        List.of( BASE_PATH ),
-                        Collections.emptyList() )
+						Collections.emptyList(),
+                        "BiPair",
+                        List.of( BASE_PATH ) )
                 ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "ConsumeItems" ) ),
-                        TARGET_FOLDER,
-                        Collections.emptyList(),
-                        "ConsumeItems", ALL_WORLDS,
-                        List.of( BASE_PATH, RUNTIME_PATH ),
-                        Collections.emptyList() )
+						Collections.emptyList(),
+                        "ConsumeItems",
+                        List.of( BASE_PATH, RUNTIME_PATH ) )
                 ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "ExtendsTest") ),
-                        TARGET_FOLDER,
-                        Collections.emptyList(),
-                        "MyExtClass", ALL_WORLDS,
-                        List.of( BASE_PATH ),
-                        Collections.emptyList() )
+						Collections.emptyList(),
+                        "MyExtClass",
+                        List.of( BASE_PATH ) )
                 ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "RemoteFunction" ) ),
-                        TARGET_FOLDER,
-                        Collections.emptyList(),
-                        "RemoteFunction", ALL_WORLDS,
-                        List.of( BASE_PATH, RUNTIME_PATH ),
-                        Collections.emptyList() )
+						Collections.emptyList(),
+                        "RemoteFunction",
+                        List.of( BASE_PATH, RUNTIME_PATH ) )
                 ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "AuthResult" ),
                                 subFolder(MUSTPASS_FOLDER, "DistAuthUtils") ),
-                        TARGET_FOLDER,
-                        List.of( subFolder(MUSTPASS_FOLDER, "BiPair" ) ),
-                        "AuthResult", ALL_WORLDS,
-                        List.of( BASE_PATH, EXPECTEDOUTPUT_PATH, RUNTIME_PATH ),
-                        Collections.emptyList() )
+						List.of( subFolder(MUSTPASS_FOLDER, "BiPair" ) ),
+                        "AuthResult",
+                        List.of( BASE_PATH, EXPECTEDOUTPUT_PATH, RUNTIME_PATH ) )
                 ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "DistAuth" ),
                                 subFolder(MUSTPASS_FOLDER, "DistAuthUtils")
                         ),
-                        TARGET_FOLDER,
-                        List.of(
+						List.of(
                                 subFolder(MUSTPASS_FOLDER, "DistAuth" ),
                                 subFolder(MUSTPASS_FOLDER, "AuthResult" ),
                                 subFolder(MUSTPASS_FOLDER, "BiPair" ),
                                 RUNTIME_MAIN_FOLDER,
                                 CHORALUNIT_MAIN_FOLDER
                         ),
-                        "DistAuth", ALL_WORLDS,
-                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTEDOUTPUT_PATH ),
-                        Collections.emptyList() )
+                        "DistAuth",
+                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTEDOUTPUT_PATH ) )
                 ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "BuyerSellerShipper" ) ),
-                        TARGET_FOLDER,
-                        List.of(
+						List.of(
                                 subFolder(MUSTPASS_FOLDER, "BuyerSellerShipper" ),
                                 RUNTIME_MAIN_FOLDER,
                                 CHORALUNIT_MAIN_FOLDER
                         ),
-                        "BuyerSellerShipper", ALL_WORLDS,
-                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTEDOUTPUT_PATH ),
-                        Collections.emptyList() )
+                        "BuyerSellerShipper",
+                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTEDOUTPUT_PATH ) )
                 ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "DiffieHellman" ),
                                 subFolder(MUSTPASS_FOLDER, "BiPair" ) ),
-                        TARGET_FOLDER,
-                        Collections.emptyList(),
-                        "DiffieHellman", ALL_WORLDS,
-                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTEDOUTPUT_PATH ),
-                        Collections.emptyList() )
+						Collections.emptyList(),
+                        "DiffieHellman",
+                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTEDOUTPUT_PATH ) )
                 ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "TestSwitch" ) ),
-                        TARGET_FOLDER,
-                        Collections.emptyList(),
-                        "TestSwitch", ALL_WORLDS,
-                        List.of( BASE_PATH, RUNTIME_PATH ),
-                        Collections.emptyList() )
+						Collections.emptyList(),
+                        "TestSwitch",
+                        List.of( BASE_PATH, RUNTIME_PATH ) )
                 ,
 //				// https://github.com/choral-lang/choral/issues/29
 //                new CompilationRequest(
 //                        List.of( subFolder(MUSTPASS_FOLDER, "SwitchTest" ) ),
 //                        TARGET_FOLDER,
 //                        Collections.emptyList(),
-//                        "SwitchTest", ALL_WORLDS,
-//                        List.of( BASE_PATH ),
-//                        Collections.emptyList() )
+//                        "SwitchTest",
+//                        List.of( BASE_PATH ) )
 //                ,
 //				// https://github.com/choral-lang/choral/issues/27
 //                new CompilationRequest(
 //                        List.of( subFolder(MUSTPASS_FOLDER, "MirrorChannel" ) ),
 //                        TARGET_FOLDER,
 //                        Collections.emptyList(),
-//                        "MirrorChannel", ALL_WORLDS,
-//                        List.of( BASE_PATH ),
-//                        Collections.emptyList() )
+//                        "MirrorChannel",
+//                        List.of( BASE_PATH ) )
 //                ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "LoggerExample" ) ),
-                        TARGET_FOLDER,
-                        Collections.emptyList(),
-                        "LoggerExample", ALL_WORLDS,
-                        List.of( BASE_PATH ),
-                        Collections.emptyList() )
+						Collections.emptyList(),
+                        "LoggerExample",
+                        List.of( BASE_PATH ) )
                 ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "IfDesugar") ),
-                        TARGET_FOLDER,
-                        List.of( subFolder(MUSTPASS_FOLDER, "IfDesugar") ),
-                        "IfDesugarTest", ALL_WORLDS,
-                        List.of( BASE_PATH ),
-                        Collections.emptyList() )
+						List.of( subFolder(MUSTPASS_FOLDER, "IfDesugar") ),
+                        "IfDesugarTest",
+                        List.of( BASE_PATH ) )
                 ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "ChainingOperator") ),
-                        TARGET_FOLDER,
-                        Collections.emptyList(),
-                        "ChainingExample", ALL_WORLDS,
-                        List.of( BASE_PATH, RUNTIME_PATH ),
-                        Collections.emptyList() )
+						Collections.emptyList(),
+                        "ChainingExample",
+                        List.of( BASE_PATH, RUNTIME_PATH ) )
                 ,
 //				// https://github.com/choral-lang/choral/issues/28
 //                new CompilationRequest(
 //                        List.of( subFolder(MUSTPASS_FOLDER, "Autoboxing" ) ),
 //                        TARGET_FOLDER,
 //                        Collections.emptyList(),
-//                        "Autoboxing", ALL_WORLDS,
-//                        List.of( BASE_PATH ),
-//                        Collections.emptyList() )
+//                        "Autoboxing",
+//                        List.of( BASE_PATH ) )
 //                ,
                 new CompilationRequest(
                         List.of( subFolder(MUSTPASS_FOLDER, "BookSellingSoloist") ),
-                        TARGET_FOLDER,
-                        List.of(
+						List.of(
                                 RUNTIME_MAIN_FOLDER,
                                 CHORALUNIT_MAIN_FOLDER
                         ),
-                        "BuyBook2", ALL_WORLDS,
-                        List.of( BASE_PATH ),
-                        Collections.emptyList() )
+                        "BuyBook2",
+                        List.of( BASE_PATH ) )
         );
 
 
@@ -327,65 +303,52 @@ public class TestChoral {
 		Stream< CompilationRequest > mustFailRequests = Stream.of(
 				new CompilationRequest(
 						List.of( subFolder(MUSTFAIL_FOLDER, "WrongType" ) ),
-						TARGET_FOLDER,
 						Collections.emptyList(),
-						"WrongType", ALL_WORLDS,
-						List.of( BASE_PATH ),
-						Collections.emptyList() )
+						"WrongType",
+						List.of( BASE_PATH ) )
 				,
 				new CompilationRequest(
 						List.of( subFolder(MUSTFAIL_FOLDER, "MultiFoo" ) ),
-						TARGET_FOLDER,
 						Collections.emptyList(),
-						"MultiFoo", ALL_WORLDS,
-						Collections.emptyList(),
+						"MultiFoo",
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder(MUSTFAIL_FOLDER, "CyclicInheritance") ),
-						TARGET_FOLDER,
 						Collections.emptyList(),
-						"CyclicInheritance_A", ALL_WORLDS, Collections.emptyList(),
+						"CyclicInheritance_A",
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder(MUSTFAIL_FOLDER, "LotsOfErrors" ) ),
-						TARGET_FOLDER,
 						Collections.emptyList(),
-						"LotsOfErrors", ALL_WORLDS, Collections.emptyList(), Collections.emptyList() )
-				,
-				new CompilationRequest(
-						List.of( subFolder(MUSTFAIL_FOLDER, "VariableDeclarations" ) ),
-						TARGET_FOLDER,
-						Collections.emptyList(),
-						"VariableDeclarations", ALL_WORLDS,
-						List.of( BASE_PATH ),
+						"LotsOfErrors",
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
+						List.of( subFolder(MUSTFAIL_FOLDER, "VariableDeclarations" ) ),
+						Collections.emptyList(),
+						"VariableDeclarations",
+						List.of( BASE_PATH ) )
+				,
+				new CompilationRequest(
 						List.of( subFolder(MUSTFAIL_FOLDER, "IllegalInheritance") ),
-						TARGET_FOLDER,
 						Collections.emptyList(),
-						"TwoWorldList", ALL_WORLDS,
-						Collections.emptyList(),
+						"TwoWorldList",
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of( subFolder(MUSTFAIL_FOLDER, "NonMatchingReturnType" ) ),
-						TARGET_FOLDER,
 						Collections.emptyList(),
-						"NonMatchingReturnType", ALL_WORLDS,
-						Collections.emptyList(),
+						"NonMatchingReturnType",
 						Collections.emptyList() )
 				,
 				new CompilationRequest(
 						List.of(subFolder(MUSTFAIL_FOLDER, "MultiFileError" ),
 								subFolder(MUSTFAIL_FOLDER, "MultiFileErrorUtil" )),
-						TARGET_FOLDER,
 						Collections.emptyList(),
-						"MultiFileError", ALL_WORLDS,
-						List.of(BASE_PATH),
-						Collections.emptyList())
+						"MultiFileError",
+						List.of(BASE_PATH) )
 		);
 
         Stream<DynamicTest> mustPassTests = mustPassRequests
