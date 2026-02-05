@@ -1,0 +1,12 @@
+package choral.amend.distributedauthentication.utils;
+
+import java.util.Optional;
+
+public class ClientRegistry@A {
+
+	public static String@A getSalt ( String@A username ) {}
+
+	public static Optional@A< Profile > getProfile ( String@A hash ) {}
+
+    public static Boolean@A check ( String@A hash ) {}
+}

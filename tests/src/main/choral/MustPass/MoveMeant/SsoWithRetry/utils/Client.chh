@@ -1,0 +1,9 @@
+package choral.amend.ssowithretry.utils;
+
+public class Client@A {
+    public Creds@A creds(){
+    }
+    
+    public boolean@A again(){
+    }
+}

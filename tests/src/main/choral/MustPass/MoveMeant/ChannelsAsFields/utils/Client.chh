@@ -1,0 +1,30 @@
+package choral.amend.channelsasfields.utils;
+
+import java.lang.Object;
+import java.lang.Integer;
+import choral.amend.channelsasfields.utils.Price;
+
+public class Client@A {
+
+	public static Price@A price;
+	Object@A obj;
+
+	public void fun0(  ){
+	}
+
+	public void fun_in( Integer@A in ){
+	}
+
+	public void fun_in( Integer@A in1, Integer@A in2 ){
+	}
+
+	public void fun_in( String@A in ){
+	}
+
+    public Integer@A fun_out(  ){
+	}
+
+    public Integer@A fun_in_out( Integer@A in ){
+	}
+
+}

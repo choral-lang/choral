@@ -1,0 +1,10 @@
+package choral.amend.distributedauthentication.utils;
+
+public class Profile@A {
+
+	public Profile ( String@A id ) {
+	}
+
+	public String@A id () {
+	}
+}

@@ -1,0 +1,7 @@
+package choral.amend.splitandcombine.utils;
+
+public class Tasks@A{
+    public Task@A first(){}
+
+    public Task@A second(){}
+}

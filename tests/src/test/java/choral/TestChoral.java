@@ -128,6 +128,35 @@ public class TestChoral {
 	public Stream< DynamicTest > mustPassCommInfer() {
 		CompilationRequestBuilder builder = new CompilationRequestBuilder("--infer-comms");
 		builder.addSources( "SimpleInfer", subFolder( MOVEMEANT, "SimpleInfer" ) );
+		builder.addSources( "BiPair", subFolder( MOVEMEANT, "BiPair" ) );
+		builder.addSources( "BuyerSellerShipper", subFolder( MOVEMEANT, "BuyerSellerShipper" ) );
+		builder.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT, "ChannelsAsArgs" ) );
+		builder.addSources( "ChannelsAsFields", subFolder( MOVEMEANT, "ChannelsAsFields" ) );
+		builder.addSources( "ChannelTypesExample", subFolder( MOVEMEANT, "ChannelTypesExample" ) );
+		builder.addSources( "ConsumeItems", subFolder( MOVEMEANT, "ConsumeItems" ) );
+		builder.addSources( "DiffieHellman", subFolder( MOVEMEANT, "DiffieHellman" ) );
+		builder.addSources( "DistributedAuthentication", subFolder( MOVEMEANT, "DistributedAuthentication" ) );
+		builder.addSources( "DownloadFile", subFolder( MOVEMEANT, "DownloadFile" ) );
+		builder.addSources( "HelloRoles", subFolder( MOVEMEANT, "HelloRoles" ) );
+		builder.addSources( "Increments", subFolder( MOVEMEANT, "Increments" ) );
+		builder.addSources( "Karatsuba", subFolder( MOVEMEANT, "Karatsuba" ) );
+		builder.addSources( "Mergesort", subFolder( MOVEMEANT, "Mergesort" ) );
+		builder.addSources( "NestedBlocks", subFolder( MOVEMEANT, "NestedBlocks" ) );
+		builder.addSources( "OverloadOnRoles", subFolder( MOVEMEANT, "OverloadOnRoles" ) );
+		builder.addSources( "PingPong", subFolder( MOVEMEANT, "PingPong" ) );
+		builder.addSources( "Quicksort", subFolder( MOVEMEANT, "Quicksort" ) );
+		builder.addSources( "RemoteFunction", subFolder( MOVEMEANT, "RemoteFunction" ) );
+		builder.addSources( "Sendpackets", subFolder( MOVEMEANT, "Sendpackets" ) );
+		builder.addSources( "SimpleArithmetic", subFolder( MOVEMEANT, "SimpleArithmetic" ) );
+		builder.addSources( "SimpleIf3", subFolder( MOVEMEANT, "SimpleIf3" ) );
+		builder.addSources( "SimpleIfStatements", subFolder( MOVEMEANT, "SimpleIfStatements" ) );
+		builder.addSources( "SimpleKOC", subFolder( MOVEMEANT, "SimpleKOC" ) );
+		builder.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT, "SimpleMethodCalls" ) );
+		builder.addSources( "SimpleReturns", subFolder( MOVEMEANT, "SimpleReturns" ) );
+		builder.addSources( "SimpleVariableReplacement", subFolder( MOVEMEANT, "SimpleVariableReplacement" ) );
+		builder.addSources( "SplitAndCombine", subFolder( MOVEMEANT, "SplitAndCombine" ) );
+		builder.addSources( "SsoWithRetry", subFolder( MOVEMEANT, "SsoWithRetry" ) );
+		builder.addSources( "VitalsStreaming", subFolder( MOVEMEANT, "VitalsStreaming" ) );
 
 		return builder.build().map(request ->
 				dynamicTest(request.symbol, new MustPassTest( request )));

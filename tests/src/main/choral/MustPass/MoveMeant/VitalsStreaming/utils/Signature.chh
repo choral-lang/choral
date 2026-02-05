@@ -1,0 +1,7 @@
+package choral.amend.vitalsstreaming.utils;
+
+public class Signature@A {
+
+	public Signature( String@A signature ){}
+
+}
