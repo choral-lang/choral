@@ -53,9 +53,75 @@ import org.junit.jupiter.api.function.Executable;
 
 public class TestChoral {
 
+	private static final String PROJECTED = "projectedOutput";
+	private static final String EXPECTED = "expectedOutput";
+	private static final String RUNTIME = Paths.get("..", "runtime", "src", "main", "choral").toString();
+	private static final String CHORALUNIT = Paths.get("..", "choral-unit", "src", "main", "choral").toString();
+	private static final String MUSTFAIL = Paths.get("src", "main", "choral", "MustFail").toString();
+	private static final String MUSTPASS = Paths.get("src", "main", "choral", "MustPass").toString();
+	private static final String BASE_PATH = Paths.get("base", "src", "main", "java").toString();
+	private static final String RUNTIME_PATH = Paths.get("runtime", "src", "main", "java").toString();
+	private static final List<String> JAVA_SOURCES = List.of( BASE_PATH, RUNTIME_PATH, EXPECTED );
+
+	// formatting for terminal output
+	private static final String GREEN = "\u001B[32m";
+	private static final String RED = "\u001B[31m";
+	private static final String RESET = "\u001B[0m";
+	private static final int COLUMN_WIDTH = 30;
+
+
+	///////////////////////////////// ADD TESTS HERE /////////////////////////////////////
+
+	@TestFactory
+	public Stream< DynamicTest > mustPass() {
+		CompilationRequestBuilder builder = new CompilationRequestBuilder();
+		builder.addSources( "HelloRoles", subFolder( MUSTPASS, "HelloRoles" ) );
+		builder.addSources( "BiPair", subFolder( MUSTPASS, "BiPair" ) );
+		builder.addSources( "ConsumeItems", subFolder( MUSTPASS, "ConsumeItems" ) );
+		builder.addSources( "MyExtClass", subFolder( MUSTPASS, "ExtendsTest" ) );
+		builder.addSources( "RemoteFunction", subFolder( MUSTPASS, "RemoteFunction" ) );
+		builder.addSources( "AuthResult", subFolder( MUSTPASS, "AuthResult" ) );
+		builder.addSources( "AuthResult", subFolder( MUSTPASS, "DistAuthUtils" ) );
+		builder.addSources( "DistAuth", subFolder( MUSTPASS, "DistAuth" ) );
+		builder.addSources( "DistAuth", subFolder( MUSTPASS, "DistAuthUtils" ) );
+		builder.addSources( "BuyerSellerShipper", subFolder( MUSTPASS, "BuyerSellerShipper" ) );
+		builder.addSources( "DiffieHellman", subFolder( MUSTPASS, "DiffieHellman" ) );
+		builder.addSources( "DiffieHellman", subFolder( MUSTPASS, "BiPair" ) );
+		builder.addSources( "TestSwitch", subFolder( MUSTPASS, "TestSwitch" ) );
+		builder.addSources( "LoggerExample", subFolder( MUSTPASS, "LoggerExample" ) );
+		builder.addSources( "IfDesugarTest", subFolder( MUSTPASS, "IfDesugar" ) );
+		builder.addSources( "ChainingExample", subFolder( MUSTPASS, "ChainingOperator" ) );
+		builder.addSources( "BuyBook2", subFolder( MUSTPASS, "BookSellingSoloist" ) );
+		//// https://github.com/choral-lang/choral/issues/29
+		// builder.addSources( "SwitchTest", subFolder( MUSTPASS, "SwitchTest" ) );
+		//// https://github.com/choral-lang/choral/issues/27
+		// builder.addSources( "MirrorChannel", subFolder( MUSTPASS, "MirrorChannel" ) );
+		//// https://github.com/choral-lang/choral/issues/28
+		// builder.addSources( "Autoboxing", subFolder( MUSTPASS, "Autoboxing" ) );
+
+		return builder.build().map(request ->
+				dynamicTest(request.symbol, new MustPassTest( request )));
+	}
+
+	@TestFactory
+	public Stream< DynamicTest > mustFail() {
+		CompilationRequestBuilder builder = new CompilationRequestBuilder();
+		builder.addSources( "WrongType", subFolder( MUSTFAIL, "WrongType" ) );
+		builder.addSources( "MultiFoo", subFolder( MUSTFAIL, "MultiFoo" ) );
+		builder.addSources( "CyclicInheritance_A", subFolder( MUSTFAIL, "CyclicInheritance" ) );
+		builder.addSources( "LotsOfErrors", subFolder( MUSTFAIL, "LotsOfErrors" ) );
+		builder.addSources( "VariableDeclarations", subFolder( MUSTFAIL, "VariableDeclarations" ) );
+		builder.addSources( "TwoWorldList", subFolder( MUSTFAIL, "IllegalInheritance" ) );
+		builder.addSources( "NonMatchingReturnType", subFolder( MUSTFAIL, "NonMatchingReturnType" ) );
+		builder.addSources( "MultiFileError", subFolder( MUSTFAIL, "MultiFileError" ) );
+		builder.addSources( "MultiFileError", subFolder( MUSTFAIL, "MultiFileErrorUtil" ) );
+
+		return builder.build().map(request ->
+				dynamicTest(request.symbol, new MustFailTest( request )));
+	}
+
 
 	///////////////////////////////// DATATYPES /////////////////////////////////////
-
 
 	/**
 	 * @param symbol Name of the Choral class we're trying to compile
@@ -128,8 +194,8 @@ public class TestChoral {
 		/** Errors match if they occur on the same line and one message is a substring of the other. */
 		boolean matches( TestError that ) {
 			return this.path.equals(that.path) &&
-				this.line == that.line &&
-				( this.message.contains( that.message ) || that.message.contains( this.message ) );
+					this.line == that.line &&
+					( this.message.contains( that.message ) || that.message.contains( this.message ) );
 		}
 	}
 
@@ -147,25 +213,8 @@ public class TestChoral {
 		}
 	}
 
-	private static final String PROJECTED = "projectedOutput";
-	private static final String EXPECTED = "expectedOutput";
-	private static final String RUNTIME = Paths.get("..", "runtime", "src", "main", "choral").toString();
-	private static final String CHORALUNIT = Paths.get("..", "choral-unit", "src", "main", "choral").toString();
-	private static final String MUSTFAIL = Paths.get("src", "main", "choral", "MustFail").toString();
-	private static final String MUSTPASS = Paths.get("src", "main", "choral", "MustPass").toString();
-	private static final String BASE_PATH = Paths.get("base", "src", "main", "java").toString();
-	private static final String RUNTIME_PATH = Paths.get("runtime", "src", "main", "java").toString();
-	private static final List<String> JAVA_SOURCES = List.of( BASE_PATH, RUNTIME_PATH, EXPECTED );
-
-	// formatting for terminal output
-	private static final String GREEN = "\u001B[32m";
-	private static final String RED = "\u001B[31m";
-	private static final String RESET = "\u001B[0m";
-	private static final int COLUMN_WIDTH = 30;
-
 
 	///////////////////////////////// HELPERS /////////////////////////////////////
-
 
 	/** Tries to compile the test and returns the results produced by the Choral compiler. */
 	private static CompilationResults compile(CompilationRequest compilationRequest){
@@ -206,68 +255,7 @@ public class TestChoral {
 		return sourceFolder + File.separator + subFolder;
 	}
 
-
-	///////////////////////////////// ADD TESTS HERE /////////////////////////////////////
-
-
-	@TestFactory
-	public Stream<DynamicTest> mainTests(  ) {
-
-        //////// MustPass Tests ////////
-
-		CompilationRequestBuilder mustPassBuilder = new CompilationRequestBuilder();
-		mustPassBuilder.addSources( "HelloRoles", subFolder( MUSTPASS, "HelloRoles" ) );
-		mustPassBuilder.addSources( "BiPair", subFolder( MUSTPASS, "BiPair" ) );
-		mustPassBuilder.addSources( "ConsumeItems", subFolder( MUSTPASS, "ConsumeItems" ) );
-		mustPassBuilder.addSources( "MyExtClass", subFolder( MUSTPASS, "ExtendsTest" ) );
-		mustPassBuilder.addSources( "RemoteFunction", subFolder( MUSTPASS, "RemoteFunction" ) );
-		mustPassBuilder.addSources( "AuthResult", subFolder( MUSTPASS, "AuthResult" ) );
-		mustPassBuilder.addSources( "AuthResult", subFolder( MUSTPASS, "DistAuthUtils" ) );
-		mustPassBuilder.addSources( "DistAuth", subFolder( MUSTPASS, "DistAuth" ) );
-		mustPassBuilder.addSources( "DistAuth", subFolder( MUSTPASS, "DistAuthUtils" ) );
-		mustPassBuilder.addSources( "BuyerSellerShipper", subFolder( MUSTPASS, "BuyerSellerShipper" ) );
-		mustPassBuilder.addSources( "DiffieHellman", subFolder( MUSTPASS, "DiffieHellman" ) );
-		mustPassBuilder.addSources( "DiffieHellman", subFolder( MUSTPASS, "BiPair" ) );
-		mustPassBuilder.addSources( "TestSwitch", subFolder( MUSTPASS, "TestSwitch" ) );
-		mustPassBuilder.addSources( "LoggerExample", subFolder( MUSTPASS, "LoggerExample" ) );
-		mustPassBuilder.addSources( "IfDesugarTest", subFolder( MUSTPASS, "IfDesugar" ) );
-		mustPassBuilder.addSources( "ChainingExample", subFolder( MUSTPASS, "ChainingOperator" ) );
-		mustPassBuilder.addSources( "BuyBook2", subFolder( MUSTPASS, "BookSellingSoloist" ) );
-		//// https://github.com/choral-lang/choral/issues/29
-		// mustPassBuilder.addSources( "SwitchTest", subFolder( MUSTPASS, "SwitchTest" ) );
-		//// https://github.com/choral-lang/choral/issues/27
-		// mustPassBuilder.addSources( "MirrorChannel", subFolder( MUSTPASS, "MirrorChannel" ) );
-		//// https://github.com/choral-lang/choral/issues/28
-		// mustPassBuilder.addSources( "Autoboxing", subFolder( MUSTPASS, "Autoboxing" ) );
-
-		Stream< CompilationRequest > mustPassRequests = mustPassBuilder.build();
-
-
-        //////// MustFail Tests ////////
-
-		CompilationRequestBuilder mustFailBuilder = new CompilationRequestBuilder();
-		mustFailBuilder.addSources( "WrongType", subFolder( MUSTFAIL, "WrongType" ) );
-		mustFailBuilder.addSources( "MultiFoo", subFolder( MUSTFAIL, "MultiFoo" ) );
-		mustFailBuilder.addSources( "CyclicInheritance_A", subFolder( MUSTFAIL, "CyclicInheritance" ) );
-		mustFailBuilder.addSources( "LotsOfErrors", subFolder( MUSTFAIL, "LotsOfErrors" ) );
-		mustFailBuilder.addSources( "VariableDeclarations", subFolder( MUSTFAIL, "VariableDeclarations" ) );
-		mustFailBuilder.addSources( "TwoWorldList", subFolder( MUSTFAIL, "IllegalInheritance" ) );
-		mustFailBuilder.addSources( "NonMatchingReturnType", subFolder( MUSTFAIL, "NonMatchingReturnType" ) );
-		mustFailBuilder.addSources( "MultiFileError", subFolder( MUSTFAIL, "MultiFileError" ) );
-		mustFailBuilder.addSources( "MultiFileError", subFolder( MUSTFAIL, "MultiFileErrorUtil" ) );
-
-		Stream< CompilationRequest > mustFailRequests = mustFailBuilder.build();
-
-        Stream<DynamicTest> mustPassTests = mustPassRequests
-            .map(request -> dynamicTest(request.symbol, new MustPassTest( request )));
-
-        Stream<DynamicTest> mustFailTests = mustFailRequests
-            .map(request -> dynamicTest(request.symbol, new MustFailTest( request )));
-
-		return Stream.concat(mustPassTests, mustFailTests);
-	}
-
-    /** Compiles the test, expecting it to succeed. */
+	/** Compiles the test, expecting it to succeed. */
 	private static void project( CompilationRequest compilationRequest ) {
 		ArrayList< String > errors = new ArrayList<>();
 
