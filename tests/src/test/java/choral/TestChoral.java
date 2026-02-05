@@ -57,20 +57,32 @@ public class TestChoral {
 	///////////////////////////////// DATATYPES /////////////////////////////////////
 
 
+	/**
+	 * @param symbol Name of the Choral class we're trying to compile
+	 * @param sourceFolder Location of the Choral class and its dependencies
+	 * @param javaSources Location of the Java sources needed to compile the expected output (e.g., runtime library)
+	 * @param worlds (Optional) Which worlds to project. Defaults to all worlds.
+	 * @param classPaths (Optional) Classpaths needed to compile the expected output (e.g., external libraries).
+	 */
 	private record CompilationRequest(String symbol,
 									  List< String > sourceFolder,
 									  List< String > javaSources,
 									  List< String > worlds,
 									  List< String > classPaths) {
 		/**
-		 * @param symbol Name of the Choral class we're trying to compile
-		 * @param sourceFolder Location of the Choral class and its dependencies
-		 * @param sourcePaths Location of the Java sources needed to compile the expected output (e.g., runtime library)
+		 * @see #CompilationRequest(String, List, List, List, List)
 		 */
 		public CompilationRequest(String symbol,
 								  List< String > sourceFolder,
-								  List< String > sourcePaths) {
-			this(symbol, sourceFolder, sourcePaths, Collections.emptyList(), Collections.emptyList());
+								  List< String > javaSources) {
+			this(symbol, sourceFolder, javaSources, Collections.emptyList(), Collections.emptyList());
+		}
+		/**
+		 * @see #CompilationRequest(String, List, List, List, List)
+		 */
+		public CompilationRequest(String symbol,
+								  List< String > sourceFolder) {
+			this(symbol, sourceFolder, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 		}
 	}
 
@@ -169,28 +181,23 @@ public class TestChoral {
         Stream< CompilationRequest > mustPassRequests = Stream.of(
                 new CompilationRequest(
                         "HelloRoles",
-                        List.of( subFolder( MUSTPASS, "HelloRoles" ) ),
-                        List.of( BASE_PATH ) )
+                        List.of( subFolder( MUSTPASS, "HelloRoles" ) ) )
                 ,
                 new CompilationRequest(
                         "BiPair",
-                        List.of( subFolder( MUSTPASS, "BiPair" ) ),
-                        List.of( BASE_PATH ) )
+                        List.of( subFolder( MUSTPASS, "BiPair" ) ) )
                 ,
                 new CompilationRequest(
                         "ConsumeItems",
-                        List.of( subFolder( MUSTPASS, "ConsumeItems" ) ),
-                        List.of( BASE_PATH, RUNTIME_PATH ) )
+                        List.of( subFolder( MUSTPASS, "ConsumeItems" ) ) )
                 ,
                 new CompilationRequest(
                         "MyExtClass",
-                        List.of( subFolder( MUSTPASS, "ExtendsTest") ),
-                        List.of( BASE_PATH ) )
+                        List.of( subFolder( MUSTPASS, "ExtendsTest") ) )
                 ,
                 new CompilationRequest(
                         "RemoteFunction",
-                        List.of( subFolder( MUSTPASS, "RemoteFunction" ) ),
-                        List.of( BASE_PATH, RUNTIME_PATH ) )
+                        List.of( subFolder( MUSTPASS, "RemoteFunction" ) ) )
                 ,
                 new CompilationRequest(
                         "AuthResult",
@@ -203,64 +210,56 @@ public class TestChoral {
                         List.of( subFolder( MUSTPASS, "DistAuth" ),
                                 subFolder( MUSTPASS, "DistAuthUtils")
                         ),
-                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTED ) )
+                        List.of( EXPECTED ) )
                 ,
                 new CompilationRequest(
                         "BuyerSellerShipper",
                         List.of( subFolder( MUSTPASS, "BuyerSellerShipper" ) ),
-                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTED ) )
+                        List.of( EXPECTED ) )
                 ,
                 new CompilationRequest(
                         "DiffieHellman",
                         List.of( subFolder( MUSTPASS, "DiffieHellman" ),
                                 subFolder( MUSTPASS, "BiPair" ) ),
-                        List.of( BASE_PATH, RUNTIME_PATH, EXPECTED ) )
+                        List.of( EXPECTED ) )
                 ,
                 new CompilationRequest(
                         "TestSwitch",
-                        List.of( subFolder( MUSTPASS, "TestSwitch" ) ),
-                        List.of( BASE_PATH, RUNTIME_PATH ) )
+                        List.of( subFolder( MUSTPASS, "TestSwitch" ) ) )
                 ,
 //				// https://github.com/choral-lang/choral/issues/29
 //                new CompilationRequest(
 //                        List.of( subFolder(MUSTPASS_FOLDER, "SwitchTest" ) ),
 //                        TARGET_FOLDER,
-//                        "SwitchTest",
-//                        List.of( BASE_PATH ) )
+//                        "SwitchTest" )
 //                ,
 //				// https://github.com/choral-lang/choral/issues/27
 //                new CompilationRequest(
 //                        List.of( subFolder(MUSTPASS_FOLDER, "MirrorChannel" ) ),
 //                        TARGET_FOLDER,
-//                        "MirrorChannel",
-//                        List.of( BASE_PATH ) )
+//                        "MirrorChannel" )
 //                ,
                 new CompilationRequest(
                         "LoggerExample",
-                        List.of( subFolder( MUSTPASS, "LoggerExample" ) ),
-                        List.of( BASE_PATH ) )
+                        List.of( subFolder( MUSTPASS, "LoggerExample" ) ) )
                 ,
                 new CompilationRequest(
                         "IfDesugarTest",
-                        List.of( subFolder( MUSTPASS, "IfDesugar") ),
-                        List.of( BASE_PATH ) )
+                        List.of( subFolder( MUSTPASS, "IfDesugar") ) )
                 ,
                 new CompilationRequest(
                         "ChainingExample",
-                        List.of( subFolder( MUSTPASS, "ChainingOperator") ),
-                        List.of( BASE_PATH, RUNTIME_PATH ) )
+                        List.of( subFolder( MUSTPASS, "ChainingOperator") ) )
                 ,
 //				// https://github.com/choral-lang/choral/issues/28
 //                new CompilationRequest(
 //                        List.of( subFolder(MUSTPASS_FOLDER, "Autoboxing" ) ),
 //                        TARGET_FOLDER,
-//                        "Autoboxing",
-//                        List.of( BASE_PATH ) )
+//                        "Autoboxing" )
 //                ,
                 new CompilationRequest(
                         "BuyBook2",
-                        List.of( subFolder( MUSTPASS, "BookSellingSoloist") ),
-                        List.of( BASE_PATH ) )
+                        List.of( subFolder( MUSTPASS, "BookSellingSoloist") ) )
         );
 
 
@@ -269,44 +268,36 @@ public class TestChoral {
 		Stream< CompilationRequest > mustFailRequests = Stream.of(
 				new CompilationRequest(
 						"WrongType",
-						List.of( subFolder( MUSTFAIL, "WrongType" ) ),
-						List.of( BASE_PATH ) )
+						List.of( subFolder( MUSTFAIL, "WrongType" ) ) )
 				,
 				new CompilationRequest(
 						"MultiFoo",
-						List.of( subFolder( MUSTFAIL, "MultiFoo" ) ),
-						Collections.emptyList() )
+						List.of( subFolder( MUSTFAIL, "MultiFoo" ) ) )
 				,
 				new CompilationRequest(
 						"CyclicInheritance_A",
-						List.of( subFolder( MUSTFAIL, "CyclicInheritance") ),
-						Collections.emptyList() )
+						List.of( subFolder( MUSTFAIL, "CyclicInheritance") ) )
 				,
 				new CompilationRequest(
 						"LotsOfErrors",
-						List.of( subFolder( MUSTFAIL, "LotsOfErrors" ) ),
-						Collections.emptyList() )
+						List.of( subFolder( MUSTFAIL, "LotsOfErrors" ) ) )
 				,
 				new CompilationRequest(
 						"VariableDeclarations",
-						List.of( subFolder( MUSTFAIL, "VariableDeclarations" ) ),
-						List.of( BASE_PATH ) )
+						List.of( subFolder( MUSTFAIL, "VariableDeclarations" ) ) )
 				,
 				new CompilationRequest(
 						"TwoWorldList",
-						List.of( subFolder( MUSTFAIL, "IllegalInheritance") ),
-						Collections.emptyList() )
+						List.of( subFolder( MUSTFAIL, "IllegalInheritance") ) )
 				,
 				new CompilationRequest(
 						"NonMatchingReturnType",
-						List.of( subFolder( MUSTFAIL, "NonMatchingReturnType" ) ),
-						Collections.emptyList() )
+						List.of( subFolder( MUSTFAIL, "NonMatchingReturnType" ) ) )
 				,
 				new CompilationRequest(
 						"MultiFileError",
 						List.of(subFolder( MUSTFAIL, "MultiFileError" ),
-								subFolder( MUSTFAIL, "MultiFileErrorUtil" )),
-						List.of(BASE_PATH) )
+								subFolder( MUSTFAIL, "MultiFileErrorUtil" )) )
 		);
 
         Stream<DynamicTest> mustPassTests = mustPassRequests
@@ -403,10 +394,10 @@ public class TestChoral {
 						expectedFiles.toArray( new Path[ 0 ] ) );
 
 				List< String > options = new ArrayList<>();
-				if( !compilationRequest.javaSources.isEmpty() ) {
-					options.add( "-sourcepath" );
-					options.add( String.join( File.pathSeparator, compilationRequest.javaSources ) );
-				}
+				options.add( "-sourcepath" );
+
+				options.add( String.join( File.pathSeparator, compilationRequest.javaSources ) +
+						File.pathSeparator + BASE_PATH + File.pathSeparator + RUNTIME_PATH );
 				if( !compilationRequest.classPaths.isEmpty() ) {
 					options.add( "-classpath" );
 					options.add( String.join( File.pathSeparator, compilationRequest.classPaths ) );
