@@ -278,10 +278,10 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						}
 				);
 
-				// TODO Test this edge case
+				// TODO(Dan) Test this edge case
 				if( emissionOptions.canOverwriteSourceCode() ){
 					// User wants us to overwrite their old files with the amended sources.
-					// TODO we should probably only overwrite `symbol`
+					// TODO(Dan) we should probably only overwrite `symbol`
 					ChoralCompiler.generateChoralFiles( annotatedUnits.get(), headerUnits, emissionOptions.targetpath() );
 				}
 
