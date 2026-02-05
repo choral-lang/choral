@@ -11,9 +11,7 @@ import choral.utils.Pair;
 
 public class InferCommunications {
 
-    public InferCommunications(){}
-
-    public List< CompilationUnit > inferCommunications( 
+    public static List< CompilationUnit > inferCommunications(
         Collection< CompilationUnit > cus, 
         Collection< CompilationUnit > headers,
         boolean ignoreOverloads ){

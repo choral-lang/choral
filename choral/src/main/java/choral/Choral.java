@@ -34,7 +34,6 @@ import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.ChoralException;
 import picocli.AutoComplete;
 import picocli.CommandLine;
-import picocli.CommandLine.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,19 +55,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import choral.ast.CompilationUnit;
-import choral.ast.Position;
-import choral.compiler.Compiler;
 import choral.compiler.HeaderCompiler;
 import choral.compiler.HeaderLoader;
 import choral.compiler.Parser;
 import choral.compiler.SourceObject;
 import choral.compiler.SourceWriter;
 import choral.compiler.Typer;
-import choral.exceptions.AstPositionedException;
-import choral.exceptions.ChoralCompoundException;
-import choral.exceptions.ChoralException;
-import choral.utils.Streams.WrappedException;
+
 import static choral.utils.Streams.wrapFunction;
 import static choral.utils.Streams.wrapConsumer;
 import static choral.utils.Streams.skip;
@@ -77,8 +70,6 @@ import lsp.ChoralLanguageServer;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
-import picocli.AutoComplete;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IVersionProvider;
 import picocli.CommandLine.Mixin;
@@ -93,7 +84,6 @@ import picocli.CommandLine.Parameters;
 				Choral.Projector.class,
 				Choral.HeaderGenerator.class,
 				AutoComplete.GenerateCompletion.class,
-				Choral.Amend.class,
 				Choral.LSPCommand.class
 		}
 )
@@ -219,6 +209,14 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						.collect( Collectors.toList() );
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
+
+				// TODO(Dan) This feature seems useful, but it breaks a bunch of tests.
+				// // Instead of typechecking *all* choral files in the directories, we filter away
+				// // the files that aren't relevant. This allows us to compile some files even when
+				// // others have errors.
+				// Collection< CompilationUnit > sourceUnits =
+				// 		FilterSourceUnits.filterSourceUnits(allSourceUnits, symbol);
+
 				Collection< CompilationUnit > headerUnits = Stream.concat(
 								HeaderLoader.loadStandardProfile(),
 								HeaderLoader.loadFromPath(
@@ -227,14 +225,35 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 										true, true ) // TODO: keep this or introduce parameter also in EPP?
 						)
 						.collect( Collectors.toList() );
-				AtomicReference< Collection< CompilationUnit > > annotatedUnits = new AtomicReference<>();
-				profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( sourceUnits,
-						headerUnits ) ) );
 
-				profilerLog( "projectability check",
-						() -> Compiler.checkProjectiability( annotatedUnits.get() ) );
+				AtomicReference< Collection< CompilationUnit > > annotatedUnits =
+						new AtomicReference<>( sourceUnits );
 
-				// TODO: ... UNTIL HERE (annotatedUnits)
+				// If the user asks, we can insert missing communications by analyzing the
+				// source unit dataflow graphs.
+				if ( emissionOptions.inferComms() ) {
+					// TODO(Dan): Test this
+					final boolean ignoreOverloads = emissionOptions.ignoreOverloads();
+
+					profilerLog( "relaxed typechecking", () -> {
+						var units = RelaxedTyper.annotate(
+								annotatedUnits.get(), headerUnits, ignoreOverloads );
+						annotatedUnits.set( units );
+					});
+
+					profilerLog( "communication inference", () -> {
+						var units = InferCommunications.inferCommunications(
+								annotatedUnits.get(), headerUnits, ignoreOverloads );
+						annotatedUnits.set( units );
+					});
+				}
+
+				profilerLog( "typechecking", () ->
+						annotatedUnits.set( Typer.annotate( sourceUnits, headerUnits ) ) );
+
+				profilerLog( "projectability check", () ->
+						Compiler.checkProjectiability( annotatedUnits.get() ) );
+
 				if( worlds == null ) {
 					worlds = Collections.emptyList();
 				}
@@ -258,6 +277,14 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 							}
 						}
 				);
+
+				// TODO Test this edge case
+				if( emissionOptions.canOverwriteSourceCode() ){
+					// User wants us to overwrite their old files with the amended sources.
+					// TODO we should probably only overwrite `symbol`
+					ChoralCompiler.generateChoralFiles( annotatedUnits.get(), headerUnits, emissionOptions.targetpath() );
+				}
+
 			} catch( Exception e ) {
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
 				System.out.println( "compilation failed." );
@@ -273,7 +300,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 	static class HeaderGenerator extends ChoralCommand implements Callable< Integer > {
 
 		@Mixin
-		EmissionOptions emissionOptions;
+		HeaderCompilerOptions emissionOptions;
 
 		@Mixin
 		PathOption.HeadersPathOption headersPathOption;
@@ -307,117 +334,6 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 										emissionOptions.useCanonicalPaths(),
 										emissionOptions.isOverwritingAllowed() ) ) );
 			} catch( Exception e ) {
-				printNiceErrorMessage( e, verbosityOptions.verbosity() );
-				System.out.println( "compilation failed." );
-				return 1;
-			}
-			return 0;
-		}
-	}
-
-	@Command( name = "amend",
-			description = "WIP - infer communications"
-	)
-	static class Amend extends ChoralCommand implements Callable< Integer >{
-
-		@Mixin
-		EmissionOptions emissionOptions;
-
-		@Mixin
-		PathOption.HeadersPathOption headersPathOption;
-
-		@Mixin
-		PathOption.SourcePathOption sourcesPathOption;
-
-		@Mixin
-		AmendOptions amendOptions;
-
-		@Parameters( index = "0", arity = "1" )
-		String symbol;
-
-		public Integer call(){
-			System.out.println( "amend called" );
-			try{
-				System.out.println( "-=Collecting sourcefiles=-" );
-				Collection< File > sourceFiles = sourcesPathOption.getPaths( true ).stream()
-						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
-							if( Files.isDirectory( q ) ) return false;
-							String x = q.toString();
-							x = x.substring(
-									x.length() - SourceObject.ChoralSourceObject.FILE_EXTENSION.length() ).toLowerCase();
-							return x.equals( SourceObject.ChoralSourceObject.FILE_EXTENSION );
-						}, FileVisitOption.FOLLOW_LINKS ) ) )
-						.map( Path::toFile )
-						.collect( Collectors.toList() );
-
-				System.out.println( "-=Creating sourceunits=-" );
-				Collection< CompilationUnit > allSourceUnits = sourceFiles.stream().map(
-						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
-
-				System.out.println( "Un-filtered sources: " + allSourceUnits.stream().map( cu -> cu.primaryType() ).toList() );
-
-				Collection< CompilationUnit > sourceUnits = FilterSourceUnits.filterSourceUnits(allSourceUnits, symbol);
-
-				System.out.println( "Filtered sources: " + sourceUnits.stream().map( cu -> cu.primaryType() ).toList() );
-
-
-				System.out.println( "-=Creating headerunits=-" );
-				Collection< CompilationUnit > headerUnits = Stream.concat(
-							HeaderLoader.loadStandardProfile(),
-							HeaderLoader.loadFromPath(
-									headersPathOption.getPaths(),
-									sourceFiles,
-									true, true )
-					)
-					.collect( Collectors.toList() );
-				AtomicReference< Collection< CompilationUnit > > annotatedUnits = new AtomicReference<>();
-
-				System.out.println( "-=Typechecking=-" );
-				profilerLog( "typechecking", () -> annotatedUnits.set( RelaxedTyper.annotate( sourceUnits,
-							headerUnits, amendOptions.ignoreOverloads()) ) );
-
-
-				System.out.println( "-=Infering communications=-" );
-
-				// TODO maybe use an option to choose inference alghorithm
-				InferCommunications inference = new InferCommunications();
-
-				List<CompilationUnit> amendedSourceUnits = inference.inferCommunications( annotatedUnits.get(), headerUnits, amendOptions.ignoreOverloads() );
-
-
-				System.out.println( "-=Typechecking (un-relaxed)=-" );
-					profilerLog( "typechecking", () -> annotatedUnits.set( Typer.annotate( amendedSourceUnits,
-								headerUnits) ) );
-
-				System.out.println( "-=Checks projectability=-" );
-				Compiler.checkProjectiability( annotatedUnits.get() );
-
-				if( amendOptions.project() ){
-
-					System.out.println( "-=Projecting amended compilationunits=-" );
-					try {
-						Compiler.project(
-								emissionOptions.isDryRun(),
-								emissionOptions.isAnnotated(),
-								//						emissionOptions.useCanonicalPaths() TODO: implement this
-								//						emissionOptions.isOverwritingAllowed() TODO: implement this
-								annotatedUnits.get(),
-								symbol,
-								Collections.emptyList(),
-								emissionOptions.targetpath()
-						);
-					} catch( IOException e ) {
-						throw new RuntimeException( e );
-					}
-
-				} else{
-					if( !emissionOptions.isDryRun() ){
-						System.out.println( "-=Converting compulationunits to choral=-" );
-						ChoralCompiler.generateChoralFiles( annotatedUnits.get(), headerUnits, emissionOptions.targetpath() );
-					}
-				}
-
-			} catch( Exception e ){
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
 				System.out.println( "compilation failed." );
 				return 1;
@@ -683,10 +599,6 @@ abstract class PathOption {
 @Command()
 class EmissionOptions {
 
-	@Option( names = { "--no-overwrite" },
-			description = "Never overwrites existing files." )
-	private boolean overwrite = true;
-
 	@Option( names = { "--dry-run" },
 			description = "Disable any write on disk." )
 	private boolean dryRun = false;
@@ -695,9 +607,18 @@ class EmissionOptions {
 			description = "Annotate the projected artefacts with the @Choreography annotation." )
 	private boolean isAnnotated = false;
 
-	@Option( names = { "-p", "--canonical-paths" },
-			description = "Use folders for packages." )
-	boolean useCanonicalPaths;
+	@Option( names = { "--infer-comms" },
+			description = "Infer missing communications and selections." )
+	private boolean inferComms = false;
+
+	@Option( names = { "--overwrite-source" },
+			description = "After static analysis, overwrite source files with the compiler's elaborated AST." )
+	private boolean canOverwrite = false;
+
+	// TODO Improve the docs for this command
+	@Option( names = { "--role-overloading" },
+			description = "If a method is overloaded only on the roles of its parameters, use the arguments' roles to determine the most specific method." )
+	private boolean ignoreOverloads = false;
 
 	@Option( names = { "-t", "--target" },
 			paramLabel = "<PATHS>",
@@ -710,6 +631,47 @@ class EmissionOptions {
 
 	public boolean isAnnotated() {
 		return isAnnotated;
+	}
+
+	public boolean inferComms() {
+		return inferComms;
+	}
+
+	public boolean canOverwriteSourceCode() {
+		return canOverwrite;
+	}
+
+	public boolean ignoreOverloads(){
+		return ignoreOverloads;
+	}
+
+	public Optional< Path > targetpath() {
+		return Optional.ofNullable( targetpath );
+	}
+}
+
+@Command()
+class HeaderCompilerOptions {
+
+	@Option( names = { "--no-overwrite" },
+			description = "Never overwrites existing files." )
+	private boolean overwrite = true;
+
+	@Option( names = { "--dry-run" },
+			description = "Disable any write on disk." )
+	private boolean dryRun = false;
+
+	@Option( names = { "-p", "--canonical-paths" },
+			description = "Use folders for packages." )
+	boolean useCanonicalPaths;
+
+	@Option( names = { "-t", "--target" },
+			paramLabel = "<PATHS>",
+			description = "Specify where to save compiled files." )
+	private Path targetpath;
+
+	public boolean isDryRun() {
+		return dryRun;
 	}
 
 	public boolean isOverwritingAllowed() {
@@ -725,25 +687,6 @@ class EmissionOptions {
 	}
 }
 
-@Command()
-class AmendOptions{
-
-	@Option( names = { "--epp" },
-			description = "Do end point projection on the amended file." )
-	private boolean epp = false;
-
-	@Option( names = { "--role-overloading" },
-			description = "If a method is found that is overloaded only on the roles of its parameters, use the arguments' roles to determine the most specific method." )
-	private boolean ignoreMethodsOverloadedOnRoles = false;
-
-	public boolean ignoreOverloads(){
-		return ignoreMethodsOverloadedOnRoles;
-	}
-
-	public boolean project(){
-		return epp;
-	}
-}
 
 class ChoralVersionProvider implements IVersionProvider {
 	public String[] getVersion() throws Exception {
