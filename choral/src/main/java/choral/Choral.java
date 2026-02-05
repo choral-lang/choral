@@ -26,7 +26,7 @@ import choral.ast.Position;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.Compiler;
 import choral.compiler.amend.RelaxedTyper;
-import choral.compiler.amend.InferCommunications;
+import choral.compiler.amend.MoveMeant;
 import choral.utils.Streams.WrappedException;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralCompoundException;
@@ -238,14 +238,14 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 					});
 
 					profilerLog( "communication inference", () -> {
-						var units = InferCommunications.inferCommunications(
+						var units = MoveMeant.infer(
 								annotatedUnits.get(), headerUnits, ignoreOverloads );
 						annotatedUnits.set( units );
 					});
 				}
 
 				profilerLog( "typechecking", () ->
-						annotatedUnits.set( Typer.annotate( sourceUnits, headerUnits ) ) );
+						annotatedUnits.set( Typer.annotate( annotatedUnits.get(), headerUnits ) ) );
 
 				profilerLog( "projectability check", () ->
 						Compiler.checkProjectiability( annotatedUnits.get() ) );

@@ -6,17 +6,18 @@ import java.util.List;
 
 import choral.ast.CompilationUnit;
 import choral.compiler.amend.MiniZincInference.*;
-import choral.types.Member.HigherCallable;
-import choral.utils.Pair;
 
-public class InferCommunications {
+/**
+ * The main entry point for communication inference.
+ */
+public class MoveMeant {
 
-    public static List< CompilationUnit > inferCommunications(
+    public static List< CompilationUnit > infer(
         Collection< CompilationUnit > cus, 
         Collection< CompilationUnit > headers,
         boolean ignoreOverloads ){
 
-        int inferenceModel = 3;
+        int inferenceModel = 2;
 
 
         List<CompilationUnit> fullComCus = new ArrayList<>();
