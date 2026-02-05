@@ -1,8 +1,8 @@
-package choral.MustPass.MoveMeant.ChannelsAsArgs.utils;
+package choral.MustPass.MoveMeant.ChannelsAsFields.utils;
 
 import java.lang.Object;
 import java.lang.Integer;
-import choral.MustPass.MoveMeant.ChannelsAsArgs.utils.Price;
+import choral.MustPass.MoveMeant.ChannelsAsFields.utils.Price;
 
 public class Client@A {
 
@@ -22,9 +22,11 @@ public class Client@A {
 	}
 
     public Integer@A fun_out(  ){
+    	return 0@A;
 	}
 
     public Integer@A fun_in_out( Integer@A in ){
+    	return 0@A;
 	}
 
 }

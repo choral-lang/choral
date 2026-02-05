@@ -31,14 +31,14 @@ class BuyerSellerShipper_Buyer {
 				Price price = msg1;
 				String choice = Panel.prompt( "Buyer", book + " costs " + price.amount + price.currency + ". Enter 'Y' to order" );
 				if( choice.equals( "Y" ) ){
-					cb.< KOCEnum >select( KOCEnum.CASE0 );
 					c.< KOCEnum >select( KOCEnum.CASE0 );
+					cb.< KOCEnum >select( KOCEnum.CASE0 );
 					cb.< Integer >com( price.amount );
 					cb.< String >com( price.currency );
 					c.< String >com( customer.address );
 				} else { 
-					cb.< KOCEnum >select( KOCEnum.CASE1 );
 					c.< KOCEnum >select( KOCEnum.CASE1 );
+					cb.< KOCEnum >select( KOCEnum.CASE1 );
 				}
 			}
 			case CASE1 -> {

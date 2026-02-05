@@ -12,12 +12,15 @@ public class Server@A {
 	}
 
 	public int@A packets( List@A<Integer> file ){
+		return 0@A;
 	}
 
 	public Integer@A mkPacket( List@A<Integer> file, int@A n ){
+		return 0@A;
 	}
 
 	public List@A<Integer> readFile( String@A filename ){
+		return null@A;
 	}
 
 }

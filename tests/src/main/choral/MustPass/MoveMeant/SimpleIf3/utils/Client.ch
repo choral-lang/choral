@@ -1,14 +1,21 @@
-package choral.MustPass.MoveMeant.SimpleMethodCalls.utils;
+package choral.MustPass.MoveMeant.SimpleIf3.utils;
 
 import java.lang.Object;
-import choral.MustPass.MoveMeant.simplemethodcalls.utils.Price;
 
 public class Client@A {
 
-	public static Price@A price;
 	Object@A obj;
 
+	public void fun(  ){
+	}
+	public void fun( int@A i ){
+	}
+
 	public void fun0(  ){
+	}
+
+	public void midpoint(){
+
 	}
 
 	public void fun_in( Integer@A in ){
@@ -21,9 +28,11 @@ public class Client@A {
 	}
 
     public Integer@A fun_out(  ){
+    	return 0@A;
 	}
 
     public Integer@A fun_in_out( Integer@A in ){
+    	return 0@A;
 	}
 
 }

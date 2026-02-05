@@ -13,12 +13,12 @@ public class Karatsuba_A {
 	
 	public static Long multiply( Long n1, Long n2, SymChannel_A < Object > ch_AB, SymChannel_B < Object > ch_CA ) {
 		if( n1 < 10 || n2 < 10 ){
-			ch_AB.< KOCEnum >select( KOCEnum.CASE0 );
 			ch_CA.< KOCEnum >select( KOCEnum.CASE0 );
+			ch_AB.< KOCEnum >select( KOCEnum.CASE0 );
 			return n1 * n2;
 		} else { 
-			ch_AB.< KOCEnum >select( KOCEnum.CASE1 );
 			ch_CA.< KOCEnum >select( KOCEnum.CASE1 );
+			ch_AB.< KOCEnum >select( KOCEnum.CASE1 );
 			Double m = Math.max( Math.log10( n1 ), Math.log10( n2 ) ) + 1;
 			Integer m2 = Double.valueOf( m / 2 ).intValue();
 			Integer splitter = Double.valueOf( Math.pow( 10, m2 ) ).intValue();
