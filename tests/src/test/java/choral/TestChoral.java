@@ -134,6 +134,7 @@ public class TestChoral {
 		builder.addSources( "ChannelTypesExample", subFolder( MOVEMEANT, "ChannelTypesExample" ) );
 		builder.addSources( "ConsumeItems", subFolder( MOVEMEANT, "ConsumeItems" ) );
 		builder.addSources( "DiffieHellman", subFolder( MOVEMEANT, "DiffieHellman" ) );
+		builder.addSources( "DiffieHellman", subFolder( MUSTPASS, "BiPair" ) );
 		builder.addSources( "DistributedAuthentication", subFolder( MOVEMEANT, "DistributedAuthentication" ) );
 		builder.addSources( "DownloadFile", subFolder( MOVEMEANT, "DownloadFile" ) );
 		builder.addSources( "HelloRoles", subFolder( MOVEMEANT, "HelloRoles" ) );
