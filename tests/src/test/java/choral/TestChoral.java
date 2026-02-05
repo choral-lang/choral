@@ -126,9 +126,9 @@ public class TestChoral {
 		ArrayList< String > parameters = new ArrayList<>();
 		parameters.add( "epp" );
 		parameters.add( "--verbosity=DEBUG" );
-		if( !compilationRequest.headersFolders().isEmpty() )
-			parameters.add(
-					"--headers=" + String.join( FILESEPARATOR, compilationRequest.headersFolders() ) );
+		parameters.add( "--headers=" +
+				String.join( FILESEPARATOR, compilationRequest.sourceFolder() ) +
+				FILESEPARATOR + RUNTIME_MAIN_FOLDER + FILESEPARATOR + CHORALUNIT_MAIN_FOLDER );
 		parameters.add( "-t" );
 		parameters.add( TARGET_FOLDER );
 		parameters.add( "-s" );
