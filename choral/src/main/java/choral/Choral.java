@@ -23,11 +23,10 @@ package choral;
 
 import choral.ast.CompilationUnit;
 import choral.ast.Position;
+import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.Compiler;
-import choral.compiler.*;
 import choral.compiler.amend.RelaxedTyper;
 import choral.compiler.amend.InferCommunications;
-import choral.utils.FilterSourceUnits;
 import choral.utils.Streams.WrappedException;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralCompoundException;
@@ -38,10 +37,7 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -278,11 +274,22 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						}
 				);
 
-				// TODO(Dan) Test this edge case
 				if( emissionOptions.canOverwriteSourceCode() ){
-					// User wants us to overwrite their old files with the amended sources.
-					// TODO(Dan) we should probably only overwrite `symbol`
-					ChoralCompiler.generateChoralFiles( annotatedUnits.get(), headerUnits, emissionOptions.targetpath() );
+					// User wants us to overwrite their old file with the amended sources.
+					var printer = new PrettyPrinterVisitor();
+					for ( CompilationUnit cu : annotatedUnits.get() ) {
+						var defs = Stream.concat( Stream.concat(
+								cu.enums().stream(),
+									cu.classes().stream() ),
+										cu.interfaces().stream() );
+						if( defs.noneMatch( x -> x.name().identifier().equals( symbol ) ) )
+							continue;
+
+						var sourceCode = printer.visit( cu );
+						Path pathToFile = Paths.get( cu.position().sourceFile() );
+						Files.write( pathToFile, sourceCode.getBytes(), StandardOpenOption.CREATE,
+								StandardOpenOption.TRUNCATE_EXISTING );
+					}
 				}
 
 			} catch( Exception e ) {
