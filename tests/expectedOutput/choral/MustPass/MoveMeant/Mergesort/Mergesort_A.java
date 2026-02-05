@@ -48,14 +48,14 @@ public class Mergesort_A {
 						ArrayList < Integer > result = new ArrayList < Integer >();
 						switch( ch_AB.< KOCEnum >select( Unit.id ) ){
 							case CASE0 -> {
-								Integer dependencyAtA_1849820590 = ch_AB.< Integer >com( Unit.id );
-								result.add( dependencyAtA_1849820590 );
+								Integer msg3 = ch_AB.< Integer >com( Unit.id );
+								result.add( msg3 );
 								result.addAll( merge( Unit.id, Unit.id ) );
 								return result;
 							}
 							case CASE1 -> {
-								Integer dependencyAtA_983251784 = ch_CA.< Integer >com( Unit.id );
-								result.add( dependencyAtA_983251784 );
+								Integer msg4 = ch_CA.< Integer >com( Unit.id );
+								result.add( msg4 );
 								result.addAll( merge( Unit.id, Unit.id ) );
 								return result;
 							}
@@ -65,8 +65,8 @@ public class Mergesort_A {
 						}
 					}
 					case CASE1 -> {
-						List < Integer > dependencyAtA_1591563833 = ch_AB.< List < Integer > >com( Unit.id );
-						return dependencyAtA_1591563833;
+						List < Integer > msg5 = ch_AB.< List < Integer > >com( Unit.id );
+						return msg5;
 					}
 					default -> {
 						throw new RuntimeException( "Received unexpected label from select operation" );
@@ -74,8 +74,8 @@ public class Mergesort_A {
 				}
 			}
 			case CASE1 -> {
-				List < Integer > dependencyAtA_1445102001 = ch_CA.< List < Integer > >com( Unit.id );
-				return dependencyAtA_1445102001;
+				List < Integer > msg6 = ch_CA.< List < Integer > >com( Unit.id );
+				return msg6;
 			}
 			default -> {
 				throw new RuntimeException( "Received unexpected label from select operation" );

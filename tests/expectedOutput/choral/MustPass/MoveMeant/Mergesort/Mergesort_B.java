@@ -30,8 +30,8 @@ public class Mergesort_B {
 			ch_BC.< KOCEnum >select( KOCEnum.CASE0 );
 			switch( ch_BC.< KOCEnum >select( Unit.id ) ){
 				case CASE0 -> {
-					Integer dependencyAtB_519561892 = ch_BC.< Integer >com( Unit.id );
-					if( lhs.get( 0 ) <= dependencyAtB_519561892 ){
+					Integer msg2 = ch_BC.< Integer >com( Unit.id );
+					if( lhs.get( 0 ) <= msg2 ){
 						ch_AB.< KOCEnum >select( KOCEnum.CASE0 );
 						ch_BC.< KOCEnum >select( KOCEnum.CASE0 );
 						ch_AB.< Integer >com( lhs.get( 0 ) );
@@ -64,8 +64,8 @@ public class Mergesort_B {
 			case CASE0 -> {
 				Mergesort_A mb = new Mergesort_A( ch_BC, Unit.id, ch_AB );
 				Mergesort_C mc = new Mergesort_C( Unit.id, ch_AB, ch_BC );
-				List < Integer > dependencyAtB_683458112 = ch_AB.< List < Integer > >com( Unit.id );
-				List < Integer > lhs = mb.sort( dependencyAtB_683458112 );
+				List < Integer > msg0 = ch_AB.< List < Integer > >com( Unit.id );
+				List < Integer > lhs = mb.sort( msg0 );
 				mc.sort( Unit.id );
 				return merge( lhs, Unit.id );
 			}

@@ -30,11 +30,11 @@ public class Quicksort_A {
 			partition( a, pivot, Unit.id, Unit.id );
 			Quicksort_B qc = new Quicksort_B( ch_CA, ch_AB, Unit.id );
 			Quicksort_C qb = new Quicksort_C( Unit.id, ch_CA, ch_AB );
-			List < Integer > dependencyAtA_15232295 = ch_CA.< List < Integer > >com( qc.sort( Unit.id ) );
-			List < Integer > orderedList = new ArrayList < Integer >( dependencyAtA_15232295 );
+			List < Integer > msg0 = ch_CA.< List < Integer > >com( qc.sort( Unit.id ) );
+			List < Integer > orderedList = new ArrayList < Integer >( msg0 );
 			orderedList.add( pivot );
-			List < Integer > dependencyAtA_36725935 = ch_AB.< List < Integer > >com( qb.sort( Unit.id ) );
-			orderedList.addAll( dependencyAtA_36725935 );
+			List < Integer > msg1 = ch_AB.< List < Integer > >com( qb.sort( Unit.id ) );
+			orderedList.addAll( msg1 );
 			return orderedList;
 		} else { 
 			ch_CA.< KOCEnum >select( KOCEnum.CASE1 );

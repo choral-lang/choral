@@ -23,15 +23,15 @@ class BuyerSellerShipper_Seller {
 	}
 	
 	void run( Catalogue catalogue ) {
-		String dependencyAtSeller_1557476508 = c.< String >com( Unit.id );
-		String title = dependencyAtSeller_1557476508;
+		String msg0 = c.< String >com( Unit.id );
+		String title = msg0;
 		if( catalogue.includes( title ) ){
 			c.< KOCEnum >select( KOCEnum.CASE0 );
 			c.< Price >com( catalogue.quote( title ) );
 			switch( c.< KOCEnum >select( Unit.id ) ){
 				case CASE0 -> {
-					String dependencyAtSeller_1772927750 = c.< String >com( Unit.id );
-					catalogue.ship( title ).to( dependencyAtSeller_1772927750 );
+					String msg4 = c.< String >com( Unit.id );
+					catalogue.ship( title ).to( msg4 );
 				}
 				case CASE1 -> {
 					

@@ -12,12 +12,12 @@ class SimpleReturns_B {
 		out_A( Unit.id );
 		ch_AB.< Integer >com( i_B );
 		out_A( Unit.id );
-		Integer dependencyAtB_1929148680 = ch_AB.< Integer >com( out_A( Unit.id ) );
-		Integer i2_B = dependencyAtB_1929148680;
-		Integer dependencyAtB_280608000 = ch_AB.< Integer >com( out_A( Unit.id ) );
-		i2_B = dependencyAtB_280608000;
-		Integer dependencyAtB_778422692 = ch_AB.< Integer >com( out_A( Unit.id ) );
-		i2_B = dependencyAtB_778422692;
+		Integer msg1 = ch_AB.< Integer >com( out_A( Unit.id ) );
+		Integer i2_B = msg1;
+		Integer msg2 = ch_AB.< Integer >com( out_A( Unit.id ) );
+		i2_B = msg2;
+		Integer msg3 = ch_AB.< Integer >com( out_A( Unit.id ) );
+		i2_B = msg3;
 	}
 	
 	private Unit out_A( Unit in_A ) {

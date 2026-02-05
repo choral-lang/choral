@@ -8,8 +8,8 @@ import choral.lang.Unit;
 class SimpleArithmetic_A {
 	public void calc( SymChannel_A < Object > ch_AB ) {
 		Integer a1 = 1;
-		Integer dependencyAtA_1641458288 = ch_AB.< Integer >com( Unit.id );
-		Integer a2 = 4 + dependencyAtA_1641458288;
+		Integer msg0 = ch_AB.< Integer >com( Unit.id );
+		Integer a2 = 4 + msg0;
 		ch_AB.< Integer >com( a1 );
 		ch_AB.< Integer >com( a2 );
 	}

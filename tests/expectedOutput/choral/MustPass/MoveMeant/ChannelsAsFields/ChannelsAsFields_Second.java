@@ -31,8 +31,8 @@ public class ChannelsAsFields_Second {
 	}
 	
 	public static void fun( Client c_B ) {
-		String dependencyAtSecond_1949594459 = ch_AB.< String >com( Unit.id );
-		String s_B = dependencyAtSecond_1949594459;
+		String msg0 = ch_AB.< String >com( Unit.id );
+		String s_B = msg0;
 		Integer i_B = 0;
 		ch_AB.< Integer >com( i_B );
 		ch_AB.< Integer >com( c_B.fun_out() );

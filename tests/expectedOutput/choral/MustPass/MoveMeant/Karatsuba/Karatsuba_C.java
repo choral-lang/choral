@@ -18,9 +18,9 @@ public class Karatsuba_C {
 			}
 			case CASE1 -> {
 				Karatsuba_B.multiply( Unit.id, Unit.id, ch_BC, ch_CA, Unit.id );
-				Long dependencyAtC_1783206154 = ch_CA.< Long >com( Unit.id );
-				Long dependencyAtC_1674685536 = ch_CA.< Long >com( Unit.id );
-				Long z2 = Karatsuba_A.multiply( dependencyAtC_1783206154, dependencyAtC_1674685536, ch_CA, Unit.id, ch_BC );
+				Long msg2 = ch_CA.< Long >com( Unit.id );
+				Long msg3 = ch_CA.< Long >com( Unit.id );
+				Long z2 = Karatsuba_A.multiply( msg2, msg3, ch_CA, Unit.id, ch_BC );
 				ch_CA.< Long >com( z2 );
 				Karatsuba_C.multiply( Unit.id, Unit.id, Unit.id, ch_BC, ch_CA );
 				return Unit.id;

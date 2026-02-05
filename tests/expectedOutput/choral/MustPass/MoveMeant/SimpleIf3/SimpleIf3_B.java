@@ -16,8 +16,8 @@ class SimpleIf3_B {
 		Integer y2 = 1;
 		if( y1 < 1 ){
 			ch_AB.< KOCEnum >select( KOCEnum.CASE0 );
-			Integer dependencyAtB_1291073342 = ch_AB.< Integer >com( Unit.id );
-			c_B.fun( dependencyAtB_1291073342 );
+			Integer msg0 = ch_AB.< Integer >com( Unit.id );
+			c_B.fun( msg0 );
 		} else { 
 			ch_AB.< KOCEnum >select( KOCEnum.CASE1 );
 			c_B.fun( y1 );

@@ -10,8 +10,8 @@ class SimpleIfStatements_B {
 		Integer c_B = 0;
 		channel.< Integer >com( c_B );
 		( Unit.id );
-		Integer dependencyAtB_1384636856 = channel.< Integer >com( Unit.id );
-		if( c_B == dependencyAtB_1384636856 + c_B ){
+		Integer msg1 = channel.< Integer >com( Unit.id );
+		if( c_B == msg1 + c_B ){
 			
 		}
 	}

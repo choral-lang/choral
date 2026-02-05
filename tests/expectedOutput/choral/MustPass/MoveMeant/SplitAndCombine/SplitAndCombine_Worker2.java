@@ -12,8 +12,8 @@ public class SplitAndCombine_Worker2 {
 	}
 	
 	public static Unit splitAndCombine( SymChannel_B < Object > ch_MW2 ) {
-		Task dependencyAtWorker2_97725989 = ch_MW2.< Task >com( Unit.id );
-		Task sub2 = dependencyAtWorker2_97725989;
+		Task msg1 = ch_MW2.< Task >com( Unit.id );
+		Task sub2 = msg1;
 		Result res2 = Worker.run( sub2 );
 		ch_MW2.< Result >com( res2 );
 		return Unit.id;

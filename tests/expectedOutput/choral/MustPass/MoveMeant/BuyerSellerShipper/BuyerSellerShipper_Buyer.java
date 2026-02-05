@@ -27,18 +27,18 @@ class BuyerSellerShipper_Buyer {
 		switch( c.< KOCEnum >select( Unit.id ) ){
 			case CASE0 -> {
 				cb.< KOCEnum >select( KOCEnum.CASE0 );
-				Price dependencyAtBuyer_547709408 = c.< Price >com( Unit.id );
-				Price price = dependencyAtBuyer_547709408;
+				Price msg1 = c.< Price >com( Unit.id );
+				Price price = msg1;
 				String choice = Panel.prompt( "Buyer", book + " costs " + price.amount + price.currency + ". Enter 'Y' to order" );
 				if( choice.equals( "Y" ) ){
-					c.< KOCEnum >select( KOCEnum.CASE0 );
 					cb.< KOCEnum >select( KOCEnum.CASE0 );
+					c.< KOCEnum >select( KOCEnum.CASE0 );
 					cb.< Integer >com( price.amount );
 					cb.< String >com( price.currency );
 					c.< String >com( customer.address );
 				} else { 
-					c.< KOCEnum >select( KOCEnum.CASE1 );
 					cb.< KOCEnum >select( KOCEnum.CASE1 );
+					c.< KOCEnum >select( KOCEnum.CASE1 );
 				}
 			}
 			case CASE1 -> {

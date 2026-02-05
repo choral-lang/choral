@@ -21,12 +21,12 @@ public class ChannelTypesExample_B {
 	}
 
 	public static void fun() {
-		String dependencyAtB_226306607 = ch_AB_S.< String >com( Unit.id );
-		String s_B = dependencyAtB_226306607;
-		Integer dependencyAtB_1763930981 = ch_AB_N.< Integer >com( Unit.id );
-		Integer i_B = dependencyAtB_1763930981;
-		Object dependencyAtB_1908651707 = ch_AB_O.< Object >com( Unit.id );
-		Object o_B = dependencyAtB_1908651707;
+		String msg0 = ch_AB_S.< String >com( Unit.id );
+		String s_B = msg0;
+		Integer msg1 = ch_AB_N.< Integer >com( Unit.id );
+		Integer i_B = msg1;
+		Object msg2 = ch_AB_O.< Object >com( Unit.id );
+		Object o_B = msg2;
 	}
 
 }

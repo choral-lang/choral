@@ -26,9 +26,9 @@ class BuyerSellerShipper_Shipper {
 			case CASE0 -> {
 				switch( cb.< KOCEnum >select( Unit.id ) ){
 					case CASE0 -> {
-						Integer dependencyAtShipper_1735668508 = cb.< Integer >com( Unit.id );
-						String dependencyAtShipper_6124782 = cb.< String >com( Unit.id );
-						String operation = dependencyAtShipper_1735668508 + dependencyAtShipper_6124782;
+						Integer msg2 = cb.< Integer >com( Unit.id );
+						String msg3 = cb.< String >com( Unit.id );
+						String operation = msg2 + msg3;
 						Panel.show( "Shipper", "Buyer shipped " + operation );
 					}
 					case CASE1 -> {

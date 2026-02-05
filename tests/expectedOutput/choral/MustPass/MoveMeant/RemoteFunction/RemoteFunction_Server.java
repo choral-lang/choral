@@ -20,8 +20,8 @@ class RemoteFunction_Server< T, R > {
 	}
 	
 	public Unit call() {
-		T dependencyAtServer_1664319538 = ch.< T >com( Unit.id );
-		ch.< R >com( f.apply( dependencyAtServer_1664319538 ) );
+		T msg0 = ch.< T >com( Unit.id );
+		ch.< R >com( f.apply( msg0 ) );
 		return Unit.id;
 	}
 

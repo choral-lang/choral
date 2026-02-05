@@ -64,10 +64,14 @@ public class VariableReplacement{
 	Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
     /** A map mapping from a dependency to the variable containing the communicated dependency */
     Map<Dependency, Name> dependencyVariables = new HashMap<>();
+	/** Sequence number for naming variables */
+	private int seqnum;
 
     public VariableReplacement( Selections selections ){
 		this.selections = selections;
 	}
+
+	private int seqnum() { return seqnum++; }
 
     public CompilationUnit inferComms( CompilationUnit cu ){
 		
@@ -445,7 +449,7 @@ public class VariableReplacement{
 			}
 			
 			// the name of the new variable
-			Name variableName = new Name( "dependencyAt" + dependency.recipient() + "_" + Math.abs(dependency.originalExpression().hashCode()) );
+			Name variableName = new Name( "msg" + seqnum() );
 			
 			// visit the dependency to solve nested dependencies
 			Expression visitedDependencyExpression = new VisitExpression().visit(dependency.originalExpression());

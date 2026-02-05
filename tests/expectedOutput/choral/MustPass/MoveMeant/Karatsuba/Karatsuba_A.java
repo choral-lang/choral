@@ -32,10 +32,10 @@ public class Karatsuba_A {
 			ch_CA.< Long >com( h1 );
 			ch_CA.< Long >com( h2 );
 			Karatsuba_B.multiply( Unit.id, Unit.id, ch_CA, ch_AB, Unit.id );
-			Long dependencyAtA_1582386505 = ch_CA.< Long >com( Unit.id );
-			Long dependencyAtA_1093720172 = ch_AB.< Long >com( Unit.id );
-			Long z1 = Karatsuba_A.multiply( l1 + h1, l2 + h2, ch_AB, Unit.id, ch_CA ) - dependencyAtA_1582386505 - dependencyAtA_1093720172;
-			return dependencyAtA_1582386505 * splitter * splitter + z1 * splitter + dependencyAtA_1093720172;
+			Long msg4 = ch_CA.< Long >com( Unit.id );
+			Long msg5 = ch_AB.< Long >com( Unit.id );
+			Long z1 = Karatsuba_A.multiply( l1 + h1, l2 + h2, ch_AB, Unit.id, ch_CA ) - msg4 - msg5;
+			return msg4 * splitter * splitter + z1 * splitter + msg5;
 		}
 	}
 

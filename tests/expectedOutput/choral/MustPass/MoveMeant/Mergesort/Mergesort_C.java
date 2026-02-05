@@ -67,8 +67,8 @@ public class Mergesort_C {
 				Mergesort_B mb = new Mergesort_B( ch_BC, ch_CA, Unit.id );
 				Mergesort_A mc = new Mergesort_A( ch_CA, Unit.id, ch_BC );
 				mb.sort( Unit.id );
-				List < Integer > dependencyAtC_1872174164 = ch_CA.< List < Integer > >com( Unit.id );
-				List < Integer > rhs = mc.sort( dependencyAtC_1872174164 );
+				List < Integer > msg1 = ch_CA.< List < Integer > >com( Unit.id );
+				List < Integer > rhs = mc.sort( msg1 );
 				return merge( Unit.id, rhs );
 			}
 			case CASE1 -> {

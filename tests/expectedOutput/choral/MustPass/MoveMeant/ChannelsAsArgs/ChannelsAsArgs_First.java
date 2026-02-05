@@ -26,16 +26,16 @@ public class ChannelsAsArgs_First {
 		Integer i_First = 0;
 		c_First.fun0();
 		c_First.fun_in( i_First );
-		Integer dependencyAtFirst_1781800167 = ch_SecondFirst.< Integer >com( Unit.id );
-		c_First.fun_in( dependencyAtFirst_1781800167 );
+		Integer msg2 = ch_SecondFirst.< Integer >com( Unit.id );
+		c_First.fun_in( msg2 );
 		c_First.fun_in( c_First.fun_out() );
 		ch_SecondFirst.< Integer >com( c_First.fun_out() );
-		Integer dependencyAtFirst_1091831550 = ch_SecondFirst.< Integer >com( Unit.id );
-		ch_SecondFirst.< Integer >com( c_First.fun_in_out( dependencyAtFirst_1091831550 ) );
-		Integer dependencyAtFirst_1363977391 = ch_SecondFirst.< Integer >com( Unit.id );
-		c_First.fun_in( dependencyAtFirst_1363977391 );
-		String dependencyAtFirst_832443146 = ch_SecondFirst.< String >com( Unit.id );
-		c_First.fun_in( dependencyAtFirst_832443146 );
+		Integer msg4 = ch_SecondFirst.< Integer >com( Unit.id );
+		ch_SecondFirst.< Integer >com( c_First.fun_in_out( msg4 ) );
+		Integer msg6 = ch_SecondFirst.< Integer >com( Unit.id );
+		c_First.fun_in( msg6 );
+		String msg7 = ch_SecondFirst.< String >com( Unit.id );
+		c_First.fun_in( msg7 );
 		helper( i_First, Unit.id );
 		helper( 0, Unit.id );
 	}

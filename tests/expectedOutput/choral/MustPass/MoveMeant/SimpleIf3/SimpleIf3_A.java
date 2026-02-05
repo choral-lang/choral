@@ -19,8 +19,8 @@ class SimpleIf3_A {
 				c_A.fun( x );
 			}
 			case CASE1 -> {
-				Integer dependencyAtA_4115711 = ch_AB.< Integer >com( Unit.id );
-				c_A.fun( dependencyAtA_4115711 );
+				Integer msg1 = ch_AB.< Integer >com( Unit.id );
+				c_A.fun( msg1 );
 			}
 			default -> {
 				throw new RuntimeException( "Received unexpected label from select operation" );

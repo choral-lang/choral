@@ -34,13 +34,13 @@ public class ChannelsAsFields_First {
 		Integer i_A = 0;
 		c_A.fun0();
 		c_A.fun_in( i_A );
-		Integer dependencyAtFirst_1748674892 = ch_AB.< Integer >com( Unit.id );
-		c_A.fun_in( dependencyAtFirst_1748674892 );
+		Integer msg1 = ch_AB.< Integer >com( Unit.id );
+		c_A.fun_in( msg1 );
 		c_A.fun_in( c_A.fun_out() );
-		Integer dependencyAtFirst_291864914 = ch_AB.< Integer >com( Unit.id );
-		c_A.fun_in( dependencyAtFirst_291864914 );
-		String dependencyAtFirst_1450700441 = ch_AB.< String >com( Unit.id );
-		c_A.fun_in( dependencyAtFirst_1450700441 );
+		Integer msg2 = ch_AB.< Integer >com( Unit.id );
+		c_A.fun_in( msg2 );
+		String msg3 = ch_AB.< String >com( Unit.id );
+		c_A.fun_in( msg3 );
 		helper( i_A, Unit.id );
 		helper( 0, Unit.id );
 	}

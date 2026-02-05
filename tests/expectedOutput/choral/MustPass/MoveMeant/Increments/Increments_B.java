@@ -9,13 +9,13 @@ class Increments_B {
 	public void fun( SymChannel_B < Object > ch_AB ) {
 		Integer b1 = 2 + 3;
 		ch_AB.< Integer >com( b1 );
-		Integer dependencyAtB_147453135 = ch_AB.< Integer >com( Unit.id );
-		Integer b2 = dependencyAtB_147453135 + 5 * b1;
-		b2 -= dependencyAtB_147453135;
+		Integer msg1 = ch_AB.< Integer >com( Unit.id );
+		Integer b2 = msg1 + 5 * b1;
+		b2 -= msg1;
 		Boolean b3 = true;
 		ch_AB.< Boolean >com( b3 );
-		Boolean dependencyAtB_34960420 = ch_AB.< Boolean >com( Unit.id );
-		b3 &= dependencyAtB_34960420 || true;
+		Boolean msg3 = ch_AB.< Boolean >com( Unit.id );
+		b3 &= msg3 || true;
 	}
 
 }

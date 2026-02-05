@@ -33,8 +33,8 @@ public class Quicksort_C {
 						
 					}
 					case CASE1 -> {
-						Integer dependencyAtC_82567285 = ch_CA.< Integer >com( Unit.id );
-						lower.add( dependencyAtC_82567285 );
+						Integer msg3 = ch_CA.< Integer >com( Unit.id );
+						lower.add( msg3 );
 					}
 					default -> {
 						throw new RuntimeException( "Received unexpected label from select operation" );

@@ -14,17 +14,17 @@ class SimpleIfStatements_A {
 		if( 1 > c_A ){
 			
 		}
-		Integer dependencyAtA_491565715 = channel.< Integer >com( Unit.id );
-		if( 0 > dependencyAtA_491565715 ){
+		Integer msg0 = channel.< Integer >com( Unit.id );
+		if( 0 > msg0 ){
 			
 		}
-		if( dependencyAtA_491565715 > 0 ){
+		if( msg0 > 0 ){
 			
 		}
-		if( dependencyAtA_491565715 == 0 ){
+		if( msg0 == 0 ){
 			
 		}
-		if( dependencyAtA_491565715 + 0 < dependencyAtA_491565715 * 2 ){
+		if( msg0 + 0 < msg0 * 2 ){
 			
 		}
 		if( !( 1 == 0 ) ){

@@ -30,8 +30,8 @@ public class Quicksort_B {
 			case CASE0 -> {
 				switch( ch_AB.< KOCEnum >select( Unit.id ) ){
 					case CASE0 -> {
-						Integer dependencyAtB_50863256 = ch_AB.< Integer >com( Unit.id );
-						greater.add( dependencyAtB_50863256 );
+						Integer msg2 = ch_AB.< Integer >com( Unit.id );
+						greater.add( msg2 );
 					}
 					case CASE1 -> {
 						

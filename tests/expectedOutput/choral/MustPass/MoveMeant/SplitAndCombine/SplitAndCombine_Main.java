@@ -11,10 +11,10 @@ public class SplitAndCombine_Main {
 		Tasks tasks = Main.split( task );
 		ch_MW1.< Task >com( tasks.first() );
 		ch_MW2.< Task >com( tasks.second() );
-		Result dependencyAtMain_834754473 = ch_MW1.< Result >com( Unit.id );
-		Result res1_M = dependencyAtMain_834754473;
-		Result dependencyAtMain_507854446 = ch_MW2.< Result >com( Unit.id );
-		Result res2_M = dependencyAtMain_507854446;
+		Result msg2 = ch_MW1.< Result >com( Unit.id );
+		Result res1_M = msg2;
+		Result msg3 = ch_MW2.< Result >com( Unit.id );
+		Result res2_M = msg3;
 		return Main.combine( res1_M, res2_M );
 	}
 

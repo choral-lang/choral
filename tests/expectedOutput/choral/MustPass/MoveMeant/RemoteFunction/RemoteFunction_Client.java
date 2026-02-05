@@ -18,8 +18,8 @@ class RemoteFunction_Client< T, R > {
 
 	public R call( T t ) {
 		ch.< T >com( t );
-		R dependencyAtClient_2066044953 = ch.< R >com( Unit.id );
-		return dependencyAtClient_2066044953;
+		R msg1 = ch.< R >com( Unit.id );
+		return msg1;
 	}
 
 }

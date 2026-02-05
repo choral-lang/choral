@@ -22,8 +22,8 @@ public class VitalsStreaming_Gatherer {
 	public void gather( Consumer < Vitals > consumer ) {
 		switch( ch.< KOCEnum >select( Unit.id ) ){
 			case CASE0 -> {
-				VitalsMsg dependencyAtGatherer_1591562332 = ch.< VitalsMsg >com( Unit.id );
-				VitalsMsg msg = dependencyAtGatherer_1591562332;
+				VitalsMsg msg0 = ch.< VitalsMsg >com( Unit.id );
+				VitalsMsg msg = msg0;
 				Boolean checkSignature = VitalsStreamingHelper.checkSignature( msg.signature() );
 				if( checkSignature ){
 					consumer.accept( VitalsStreamingHelper.pseudonymise( msg.content() ) );
