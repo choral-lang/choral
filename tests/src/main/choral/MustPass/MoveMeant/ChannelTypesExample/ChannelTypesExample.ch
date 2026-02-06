@@ -7,7 +7,7 @@ import choral.channels.DiSelectChannel;
 
 public class ChannelTypesExample@( A, B ){
 
-	// BiDataChannel@( A, B )< String, Number > biData_SN; // illeagal channel
+	// BiDataChannel@( A, B )< String, Number > biData_SN; // illegal channel
 	SymChannel@( A, B )< String > ch_AB_S;
 	SymChannel@( A, B )< Number > ch_AB_N;
 	DiDataChannel@( A, B )< String > diData_S;
@@ -22,7 +22,7 @@ public class ChannelTypesExample@( A, B ){
 		this.ch_AB_S = ch_AB_S;
 		this.ch_AB_N = ch_AB_N;
 	}
-    public static void fun(  ) {
+    public void fun(  ) {
 
         String@A s_A = "A"@A;
 		String@B s_B = s_A;

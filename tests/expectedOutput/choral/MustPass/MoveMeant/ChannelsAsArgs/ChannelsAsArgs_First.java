@@ -1,6 +1,6 @@
 package choral.MustPass.MoveMeant.ChannelsAsArgs;
 
-import choral.MustPass.MoveMeant.ChannelsAsArgs.utils.Client;
+import choral.MustPass.MoveMeant.utils.Client;
 import choral.annotations.Choreography;
 import choral.channels.DiDataChannel_A;
 import choral.channels.DiSelectChannel_A;
@@ -14,7 +14,7 @@ public class ChannelsAsArgs_First {
 		fun( ch_FirstSecond, ch_SecondFirst, diData, diSelect, c_First );
 	}
 	
-	private void helper( Integer in_First, Unit in_Second ) {
+	private static void helper( Integer in_First, Unit in_Second ) {
 		
 	}
 	

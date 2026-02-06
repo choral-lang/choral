@@ -19,7 +19,7 @@ public class ChannelTypesExample_A {
 		this.ch_AB_N = ch_AB_N;
 	}
 
-	public static void fun() {
+	public void fun() {
 		String s_A = "A";
 		ch_AB_S.< String >com( s_A );
 		Integer i_A = 0;

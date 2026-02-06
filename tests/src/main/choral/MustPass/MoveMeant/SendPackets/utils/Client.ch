@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.Sendpackets.utils;
+package choral.MustPass.MoveMeant.SendPackets.utils;
 
 import java.util.List;
 

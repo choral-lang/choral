@@ -1,8 +1,8 @@
-package choral.MustPass.MoveMeant.ChannelsAsFields.utils;
+package choral.MustPass.MoveMeant.utils;
 
 import java.lang.Object;
 import java.lang.Integer;
-import choral.MustPass.MoveMeant.ChannelsAsFields.utils.Price;
+import choral.MustPass.MoveMeant.utils.Price;
 
 public class Client@A {
 

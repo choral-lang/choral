@@ -1,6 +1,6 @@
-package choral.MustPass.MoveMeant.ChannelsAsArgs.utils;
+package choral.MustPass.MoveMeant.utils;
 
-import choral.MustPass.MoveMeant.ChannelsAsArgs.utils.Price;
+import choral.MustPass.MoveMeant.utils.Price;
 import choral.annotations.Choreography;
 import java.lang.Integer;
 import java.lang.Object;

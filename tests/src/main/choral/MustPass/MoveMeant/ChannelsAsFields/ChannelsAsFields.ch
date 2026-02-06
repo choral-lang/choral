@@ -1,6 +1,7 @@
 package choral.MustPass.MoveMeant.ChannelsAsFields;
 
-import choral.MustPass.MoveMeant.ChannelsAsFields.utils.Client;
+import choral.MustPass.MoveMeant.utils.Client;
+import choral.MustPass.MoveMeant.utils.Price;
 import choral.channels.SymChannel;
 import choral.channels.DiDataChannel;
 import choral.channels.DiSelectChannel;
@@ -21,7 +22,7 @@ public class ChannelsAsFields@( First, Second, C ){
 		this.ch_AB = ch_AB;
 		this.ch_AC = ch_AC;
 	}
-    public static void fun( Client@First c_A, Client@Second c_B ) {
+    public void fun( Client@First c_A, Client@Second c_B ) {
 
         String@First s_A = "A"@First;
 		String@Second s_B = s_A;

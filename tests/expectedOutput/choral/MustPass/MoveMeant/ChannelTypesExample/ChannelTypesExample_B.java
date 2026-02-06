@@ -20,7 +20,7 @@ public class ChannelTypesExample_B {
 		this.ch_AB_N = ch_AB_N;
 	}
 
-	public static void fun() {
+	public void fun() {
 		String msg0 = ch_AB_S.< String >com( Unit.id );
 		String s_B = msg0;
 		Integer msg1 = ch_AB_N.< Integer >com( Unit.id );

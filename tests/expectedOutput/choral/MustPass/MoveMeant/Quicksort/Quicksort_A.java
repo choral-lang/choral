@@ -23,8 +23,8 @@ public class Quicksort_A {
 
 	public List < Integer > sort( List < Integer > a ) {
 		if( a.size() > 1 ){
-			ch_AB.< KOCEnum >select( KOCEnum.CASE0 );
 			ch_CA.< KOCEnum >select( KOCEnum.CASE0 );
+			ch_AB.< KOCEnum >select( KOCEnum.CASE0 );
 			Double index = Double.valueOf( Math.floor( a.size() / 2 ) );
 			Integer pivot = a.remove( index.intValue() );
 			partition( a, pivot, Unit.id, Unit.id );
@@ -37,30 +37,30 @@ public class Quicksort_A {
 			orderedList.addAll( msg1 );
 			return orderedList;
 		} else { 
-			ch_AB.< KOCEnum >select( KOCEnum.CASE1 );
 			ch_CA.< KOCEnum >select( KOCEnum.CASE1 );
+			ch_AB.< KOCEnum >select( KOCEnum.CASE1 );
 			return a;
 		}
 	}
 	
 	private void partition( List < Integer > a, Integer pivot, Unit greater, Unit lower ) {
 		if( a.size() > 0 ){
-			ch_AB.< KOCEnum >select( KOCEnum.CASE0 );
 			ch_CA.< KOCEnum >select( KOCEnum.CASE0 );
+			ch_AB.< KOCEnum >select( KOCEnum.CASE0 );
 			Integer i = a.remove( 0 );
 			if( i > pivot ){
-				ch_AB.< KOCEnum >select( KOCEnum.CASE0 );
 				ch_CA.< KOCEnum >select( KOCEnum.CASE0 );
+				ch_AB.< KOCEnum >select( KOCEnum.CASE0 );
 				ch_AB.< Integer >com( i );
 			} else { 
-				ch_AB.< KOCEnum >select( KOCEnum.CASE1 );
 				ch_CA.< KOCEnum >select( KOCEnum.CASE1 );
+				ch_AB.< KOCEnum >select( KOCEnum.CASE1 );
 				ch_CA.< Integer >com( i );
 			}
 			partition( a, pivot, Unit.id, Unit.id );
 		} else { 
-			ch_AB.< KOCEnum >select( KOCEnum.CASE1 );
 			ch_CA.< KOCEnum >select( KOCEnum.CASE1 );
+			ch_AB.< KOCEnum >select( KOCEnum.CASE1 );
 		}
 	}
 

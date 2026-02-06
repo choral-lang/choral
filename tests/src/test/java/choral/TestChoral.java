@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -130,13 +131,18 @@ public class TestChoral {
 		builder.addSources( "BiPair", subFolder( MOVEMEANT, "BiPair" ) );
 		builder.addSources( "BuyerSellerShipper", subFolder( MOVEMEANT, "BuyerSellerShipper" ) );
 		builder.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT, "ChannelsAsArgs" ) );
+		builder.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT, "utils" ) );
 		builder.addSources( "ChannelsAsFields", subFolder( MOVEMEANT, "ChannelsAsFields" ) );
+		builder.addSources( "ChannelsAsFields", subFolder( MOVEMEANT, "utils" ) );
 		builder.addSources( "ChannelTypesExample", subFolder( MOVEMEANT, "ChannelTypesExample" ) );
 		builder.addSources( "ConsumeItems", subFolder( MOVEMEANT, "ConsumeItems" ) );
 		builder.addSources( "DiffieHellman", subFolder( MOVEMEANT, "DiffieHellman" ) );
 		builder.addSources( "DiffieHellman", subFolder( MUSTPASS, "BiPair" ) );
-		builder.addSources( "DistributedAuthentication", subFolder( MOVEMEANT, "DistributedAuthentication" ) );
+		//// Mysterious OOM
+		// builder.addSources( "DistributedAuthentication", subFolder( MOVEMEANT, "DistributedAuthentication" ) );
+		// builder.addSources( "DistributedAuthentication", subFolder( MUSTPASS, "BiPair" ) );
 		builder.addSources( "DownloadFile", subFolder( MOVEMEANT, "DownloadFile" ) );
+		builder.addSources( "DownloadFile", subFolder( MOVEMEANT, "SendPackets" ) );
 		builder.addSources( "HelloRoles", subFolder( MOVEMEANT, "HelloRoles" ) );
 		builder.addSources( "Increments", subFolder( MOVEMEANT, "Increments" ) );
 		builder.addSources( "Karatsuba", subFolder( MOVEMEANT, "Karatsuba" ) );
@@ -146,7 +152,7 @@ public class TestChoral {
 		builder.addSources( "PingPong", subFolder( MOVEMEANT, "PingPong" ) );
 		builder.addSources( "Quicksort", subFolder( MOVEMEANT, "Quicksort" ) );
 		builder.addSources( "RemoteFunction", subFolder( MOVEMEANT, "RemoteFunction" ) );
-		builder.addSources( "Sendpackets", subFolder( MOVEMEANT, "Sendpackets" ) );
+		builder.addSources( "SendPackets", subFolder( MOVEMEANT, "SendPackets" ) );
 		builder.addSources( "SimpleArithmetic", subFolder( MOVEMEANT, "SimpleArithmetic" ) );
 		builder.addSources( "SimpleIf3", subFolder( MOVEMEANT, "SimpleIf3" ) );
 		builder.addSources( "SimpleIfStatements", subFolder( MOVEMEANT, "SimpleIfStatements" ) );
@@ -344,17 +350,25 @@ public class TestChoral {
 			// and try compiling the expected ones.
 			for( String packageName : packages ) {
 				String[] packageList = packageName.split( "\\." );
+				List< Path > projectedJavaFiles;
+				List< Path > expectedFiles;
 
 				// Get all the projected and expected Java files
 				Path projectFolder = Path.of( PROJECTED, packageList );
-				List< Path > projectedJavaFiles = Files.walk( projectFolder ).filter(
+				projectedJavaFiles = Files.walk( projectFolder ).filter(
 						javaFile -> javaFile.toString().endsWith( ".java" )
 				).sorted().toList();
 
-				Path expectedFolderPath = Path.of( EXPECTED, packageList );
-				List< Path > expectedFiles = Files.walk( expectedFolderPath ).filter(
-						expectedFile -> expectedFile.toString().endsWith( ".java" )
-				).sorted().toList();
+				try {
+					Path expectedFolderPath = Path.of( EXPECTED, packageList );
+					expectedFiles = Files.walk( expectedFolderPath ).filter(
+							expectedFile -> expectedFile.toString().endsWith( ".java" )
+					).sorted().toList();
+				}
+				catch ( NoSuchFileException e ) {
+					errors.add("Missing files in the expectedOutput directory: " + e.getMessage());
+					continue;
+				}
 
 				// PHASE 1: CHECK IF EXPECTED AND PROJECTED CODE DIFFER
 

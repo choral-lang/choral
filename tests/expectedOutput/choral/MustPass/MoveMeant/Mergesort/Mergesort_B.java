@@ -26,20 +26,20 @@ public class Mergesort_B {
 	
 	private Unit merge( List < Integer > lhs, Unit rhs ) {
 		if( lhs.size() > 0 ){
-			ch_BC.< KOCEnum >select( KOCEnum.CASE0 );
 			ch_AB.< KOCEnum >select( KOCEnum.CASE0 );
+			ch_BC.< KOCEnum >select( KOCEnum.CASE0 );
 			switch( ch_BC.< KOCEnum >select( Unit.id ) ){
 				case CASE0 -> {
 					Integer msg2 = ch_BC.< Integer >com( Unit.id );
 					if( lhs.get( 0 ) <= msg2 ){
-						ch_BC.< KOCEnum >select( KOCEnum.CASE0 );
 						ch_AB.< KOCEnum >select( KOCEnum.CASE0 );
+						ch_BC.< KOCEnum >select( KOCEnum.CASE0 );
 						ch_AB.< Integer >com( lhs.get( 0 ) );
 						merge( lhs.subList( 1, lhs.size() ), Unit.id );
 						return Unit.id;
 					} else { 
-						ch_BC.< KOCEnum >select( KOCEnum.CASE1 );
 						ch_AB.< KOCEnum >select( KOCEnum.CASE1 );
+						ch_BC.< KOCEnum >select( KOCEnum.CASE1 );
 						merge( lhs, Unit.id );
 						return Unit.id;
 					}
@@ -53,8 +53,8 @@ public class Mergesort_B {
 				}
 			}
 		} else { 
-			ch_BC.< KOCEnum >select( KOCEnum.CASE1 );
 			ch_AB.< KOCEnum >select( KOCEnum.CASE1 );
+			ch_BC.< KOCEnum >select( KOCEnum.CASE1 );
 			return Unit.id;
 		}
 	}

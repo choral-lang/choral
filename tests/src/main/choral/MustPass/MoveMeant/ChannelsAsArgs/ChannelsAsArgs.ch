@@ -1,6 +1,7 @@
 package choral.MustPass.MoveMeant.ChannelsAsArgs;
 
-import choral.MustPass.MoveMeant.ChannelsAsArgs.utils.Client;
+import choral.MustPass.MoveMeant.utils.Client;
+import choral.MustPass.MoveMeant.utils.Price;
 import choral.channels.SymChannel;
 import choral.channels.DiDataChannel;
 import choral.channels.DiSelectChannel;
@@ -44,5 +45,5 @@ public class ChannelsAsArgs@( First, Second ){
 		helper( 0@First, 0@Second );
     }
 
-	private void helper(Integer@First in_First, Integer@Second in_Second){}
+	private static void helper(Integer@First in_First, Integer@Second in_Second){}
 }

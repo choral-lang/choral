@@ -17,7 +17,7 @@ public class ChannelsAsFields_C {
 		this.ch_AC = ch_AC;
 	}
 
-	public static void fun( Unit c_A, Unit c_B ) {
+	public void fun( Unit c_A, Unit c_B ) {
 		fun();
 	}
 	
@@ -25,7 +25,7 @@ public class ChannelsAsFields_C {
 		
 	}
 	
-	public static void fun() {
+	public void fun() {
 		helper( Unit.id, Unit.id );
 		helper( Unit.id, Unit.id );
 	}

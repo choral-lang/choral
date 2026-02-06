@@ -1969,7 +1969,7 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataType visit( NullExpression n ) {
-				throw new UnsupportedOperationException("Null expression not allowed\n\tExpression at " + n.position().toString());
+				return annotate( n, universe().nullType( visitWorlds( n.worlds() ) ) );
 			}
 
 			public GroundDataType visit( LiteralExpression.BooleanLiteralExpression n ) {

@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.Sendpackets;
+package choral.MustPass.MoveMeant.SendPackets;
 
 import choral.channels.SymChannel;
 import choral.MustPass.MoveMeant.SendPackets.utils.Server;
