@@ -58,7 +58,8 @@ public class TestChoral {
 	private static final String CHORALUNIT = Paths.get("..", "choral-unit", "src", "main", "choral").toString();
 	private static final String MUSTFAIL = Paths.get("src", "main", "choral", "MustFail").toString();
 	private static final String MUSTPASS = Paths.get("src", "main", "choral", "MustPass").toString();
-	private static final String MOVEMEANT = subFolder( MUSTPASS, "MoveMeant" );
+	private static final String MOVEMEANT_PASS = subFolder( MUSTPASS, "MoveMeant" );
+	private static final String MOVEMEANT_FAIL = subFolder( MUSTFAIL, "MoveMeant" );
 	private static final String BASE_PATH = Paths.get("base", "src", "main", "java").toString();
 	private static final String RUNTIME_PATH = Paths.get("runtime", "src", "main", "java").toString();
 	/** Location of Java code produced by the Choral compiler. */
@@ -126,51 +127,60 @@ public class TestChoral {
 	}
 
 	@TestFactory
-	public Stream< DynamicTest > mustPassCommInfer() {
+	public Stream< DynamicTest > mustPassMoveMeant() {
 		CompilationRequestBuilder builder = new CompilationRequestBuilder("--infer-comms");
-		builder.addSources( "BiPair", subFolder( MOVEMEANT, "BiPair" ) );
-		builder.addSources( "BuyerSellerShipper", subFolder( MOVEMEANT, "BuyerSellerShipper" ) );
-		builder.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT, "ChannelsAsArgs" ) );
-		builder.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT, "utils" ) );
-		builder.addSources( "ChannelsAsFields", subFolder( MOVEMEANT, "ChannelsAsFields" ) );
-		builder.addSources( "ChannelsAsFields", subFolder( MOVEMEANT, "utils" ) );
-		builder.addSources( "ChannelTypesExample", subFolder( MOVEMEANT, "ChannelTypesExample" ) );
-		builder.addSources( "ConsumeItems", subFolder( MOVEMEANT, "ConsumeItems" ) );
-		builder.addSources( "DiffieHellman", subFolder( MOVEMEANT, "DiffieHellman" ) );
-		builder.addSources( "DiffieHellman", subFolder( MUSTPASS, "BiPair" ) );
-		//// Mysterious OOM
+		//// Bug: Mysterious OOM
 		// builder.addSources( "DistributedAuthentication", subFolder( MOVEMEANT, "DistributedAuthentication" ) );
 		// builder.addSources( "DistributedAuthentication", subFolder( MUSTPASS, "BiPair" ) );
-		builder.addSources( "DownloadFile", subFolder( MOVEMEANT, "DownloadFile" ) );
-		builder.addSources( "DownloadFile", subFolder( MOVEMEANT, "SendPackets" ) );
-		builder.addSources( "HelloRoles", subFolder( MOVEMEANT, "HelloRoles" ) );
-		builder.addSources( "Increments", subFolder( MOVEMEANT, "Increments" ) );
-		builder.addSources( "Karatsuba", subFolder( MOVEMEANT, "Karatsuba" ) );
-		builder.addSources( "Mergesort", subFolder( MOVEMEANT, "Mergesort" ) );
-		//// Bug: dependency not found
+		//// Bug in the "simple" inference model: dependency not found
 		// builder.addSources( "NestedBlocks", subFolder( MOVEMEANT, "NestedBlocks" ) );
 		// builder.addSources( "NestedBlocks", subFolder( MOVEMEANT, "utils" ) );
-		/// Seems to require --role-overloading
-		// builder.addSources( "OverloadOnRoles", subFolder( MOVEMEANT, "OverloadOnRoles" ) );
-		builder.addSources( "PingPong", subFolder( MOVEMEANT, "PingPong" ) );
-		builder.addSources( "Quicksort", subFolder( MOVEMEANT, "Quicksort" ) );
-		builder.addSources( "RemoteFunction", subFolder( MOVEMEANT, "RemoteFunction" ) );
-		builder.addSources( "SendPackets", subFolder( MOVEMEANT, "SendPackets" ) );
-		builder.addSources( "SimpleArithmetic", subFolder( MOVEMEANT, "SimpleArithmetic" ) );
-		builder.addSources( "SimpleIf3", subFolder( MOVEMEANT, "SimpleIf3" ) );
-		/// Bug: Compiler generates bad code
+		/// Bug: Choral backend generates bad code
 		// builder.addSources( "SimpleIfStatements", subFolder( MOVEMEANT, "SimpleIfStatements" ) );
-		builder.addSources( "SimpleKOC", subFolder( MOVEMEANT, "SimpleKOC" ) );
-		builder.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT, "SimpleMethodCalls" ) );
-		builder.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT, "utils" ) );
-		builder.addSources( "SimpleReturns", subFolder( MOVEMEANT, "SimpleReturns" ) );
-		builder.addSources( "SimpleVariableReplacement", subFolder( MOVEMEANT, "SimpleVariableReplacement" ) );
-		builder.addSources( "SplitAndCombine", subFolder( MOVEMEANT, "SplitAndCombine" ) );
-		builder.addSources( "SSOWithRetry", subFolder( MOVEMEANT, "SSOWithRetry" ) );
-		builder.addSources( "VitalsStreaming", subFolder( MOVEMEANT, "VitalsStreaming" ) );
+		builder.addSources( "BiPair", subFolder( MOVEMEANT_PASS, "BiPair" ) );
+		builder.addSources( "BuyerSellerShipper", subFolder( MOVEMEANT_PASS, "BuyerSellerShipper" ) );
+		builder.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT_PASS, "ChannelsAsArgs" ) );
+		builder.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT_PASS, "utils" ) );
+		builder.addSources( "ChannelsAsFields", subFolder( MOVEMEANT_PASS, "ChannelsAsFields" ) );
+		builder.addSources( "ChannelsAsFields", subFolder( MOVEMEANT_PASS, "utils" ) );
+		builder.addSources( "ChannelTypesExample", subFolder( MOVEMEANT_PASS, "ChannelTypesExample" ) );
+		builder.addSources( "ConsumeItems", subFolder( MOVEMEANT_PASS, "ConsumeItems" ) );
+		builder.addSources( "DiffieHellman", subFolder( MOVEMEANT_PASS, "DiffieHellman" ) );
+		builder.addSources( "DiffieHellman", subFolder( MUSTPASS, "BiPair" ) );
+		builder.addSources( "DownloadFile", subFolder( MOVEMEANT_PASS, "DownloadFile" ) );
+		builder.addSources( "DownloadFile", subFolder( MOVEMEANT_PASS, "SendPackets" ) );
+		builder.addSources( "HelloRoles", subFolder( MOVEMEANT_PASS, "HelloRoles" ) );
+		builder.addSources( "Increments", subFolder( MOVEMEANT_PASS, "Increments" ) );
+		builder.addSources( "Karatsuba", subFolder( MOVEMEANT_PASS, "Karatsuba" ) );
+		builder.addSources( "Mergesort", subFolder( MOVEMEANT_PASS, "Mergesort" ) );
+		builder.addSources( "OverloadOnRoles", subFolder( MOVEMEANT_PASS, "OverloadOnRoles" ) );
+		builder.addSources( "PingPong", subFolder( MOVEMEANT_PASS, "PingPong" ) );
+		builder.addSources( "Quicksort", subFolder( MOVEMEANT_PASS, "Quicksort" ) );
+		builder.addSources( "RemoteFunction", subFolder( MOVEMEANT_PASS, "RemoteFunction" ) );
+		builder.addSources( "SendPackets", subFolder( MOVEMEANT_PASS, "SendPackets" ) );
+		builder.addSources( "SimpleArithmetic", subFolder( MOVEMEANT_PASS, "SimpleArithmetic" ) );
+		builder.addSources( "SimpleIf3", subFolder( MOVEMEANT_PASS, "SimpleIf3" ) );
+		builder.addSources( "SimpleKOC", subFolder( MOVEMEANT_PASS, "SimpleKOC" ) );
+		builder.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT_PASS, "SimpleMethodCalls" ) );
+		builder.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT_PASS, "utils" ) );
+		builder.addSources( "SimpleReturns", subFolder( MOVEMEANT_PASS, "SimpleReturns" ) );
+		builder.addSources( "SimpleVariableReplacement", subFolder( MOVEMEANT_PASS, "SimpleVariableReplacement" ) );
+		builder.addSources( "SplitAndCombine", subFolder( MOVEMEANT_PASS, "SplitAndCombine" ) );
+		builder.addSources( "SSOWithRetry", subFolder( MOVEMEANT_PASS, "SSOWithRetry" ) );
+		builder.addSources( "VitalsStreaming", subFolder( MOVEMEANT_PASS, "VitalsStreaming" ) );
 
 		return builder.build().map(request ->
 				dynamicTest(request.symbol, new MustPassTest( request )));
+	}
+
+	@TestFactory
+	public Stream< DynamicTest > mustFailMoveMeant() {
+		CompilationRequestBuilder builder = new CompilationRequestBuilder("--infer-comms");
+		builder.addSources( "AmbiguousRecipient1", subFolder( MOVEMEANT_FAIL, "AmbiguousRecipient1" ) );
+		builder.addSources( "AmbiguousRecipient2", subFolder( MOVEMEANT_FAIL, "AmbiguousRecipient2" ) );
+
+		return builder.build().map(request ->
+				dynamicTest(request.symbol, new MustFailTest( request )));
 	}
 
 	///////////////////////////////// DATATYPES /////////////////////////////////////
@@ -190,17 +200,17 @@ public class TestChoral {
 									  List< String > javaSources,
 									  List< String > worlds,
 									  List< String > classPaths,
-									  String flags) {}
+									  List< String > flags) {}
 
 	/**
 	 * Helper class for building CompilationRequest objects.
 	 */
 	private static class CompilationRequestBuilder {
 		private final Map<String, CompilationRequestData> requests = new LinkedHashMap<>();
-		private final String flags;
+		private final List<String> flags;
 
-		public CompilationRequestBuilder(String flags) {
-			this.flags = flags;
+		public CompilationRequestBuilder(String... flags) {
+			this.flags = List.of(flags);
 		}
 
 		public CompilationRequestBuilder() {
@@ -295,7 +305,9 @@ public class TestChoral {
 		parameters.add( compilationRequest.symbol() );
 		parameters.addAll( compilationRequest.worlds() );
 		parameters.add( "--annotate" );
-		parameters.add( compilationRequest.flags() );
+		for ( String flag : compilationRequest.flags() ) {
+			parameters.add( flag );
+		}
 
 		int exitCode;
 		ByteArrayOutputStream testOutput = new ByteArrayOutputStream();

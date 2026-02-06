@@ -228,18 +228,13 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				// If the user asks, we can insert missing communications by analyzing the
 				// source unit dataflow graphs.
 				if ( emissionOptions.inferComms() ) {
-					// TODO(Dan): Test this
-					final boolean ignoreOverloads = emissionOptions.ignoreOverloads();
-
 					profilerLog( "relaxed typechecking", () -> {
-						var units = RelaxedTyper.annotate(
-								annotatedUnits.get(), headerUnits, ignoreOverloads );
+						var units = RelaxedTyper.annotate( annotatedUnits.get(), headerUnits );
 						annotatedUnits.set( units );
 					});
 
 					profilerLog( "communication inference", () -> {
-						var units = MoveMeant.infer(
-								annotatedUnits.get(), headerUnits, ignoreOverloads );
+						var units = MoveMeant.infer( annotatedUnits.get(), headerUnits );
 						annotatedUnits.set( units );
 					});
 				}
@@ -622,11 +617,6 @@ class EmissionOptions {
 			description = "After static analysis, overwrite source files with the compiler's elaborated AST." )
 	private boolean canOverwrite = false;
 
-	// TODO Improve the docs for this command
-	@Option( names = { "--role-overloading" },
-			description = "If a method is overloaded only on the roles of its parameters, use the arguments' roles to determine the most specific method." )
-	private boolean ignoreOverloads = false;
-
 	@Option( names = { "-t", "--target" },
 			paramLabel = "<PATHS>",
 			description = "Specify where to save compiled files." )
@@ -646,10 +636,6 @@ class EmissionOptions {
 
 	public boolean canOverwriteSourceCode() {
 		return canOverwrite;
-	}
-
-	public boolean ignoreOverloads(){
-		return ignoreOverloads;
 	}
 
 	public Optional< Path > targetpath() {

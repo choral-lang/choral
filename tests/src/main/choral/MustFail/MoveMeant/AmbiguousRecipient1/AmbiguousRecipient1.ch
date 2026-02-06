@@ -1,10 +1,10 @@
-package choral.MustPass.MoveMeant.OverloadOnRoles;
+package choral.MustPass.MoveMeant.AmbiguousRecipient1;
 
 import choral.channels.SymChannel;
-import choral.MustPass.MoveMeant.OverloadOnRoles.utils.Client;
+import choral.MustPass.MoveMeant.AmbiguousRecipient1.utils.Client;
 
 
-public class OverloadOnRoles@(A,B,C){
+public class AmbiguousRecipient1@(A,B,C){
     
     SymChannel@( A, B )< Object > ch_AB;
     SymChannel@( A, C )< Object > ch_AC;
@@ -17,11 +17,7 @@ public class OverloadOnRoles@(A,B,C){
 
         client.fun( I_A );
         client.fun( I_B );
-
-        client.fun2( I_A, I_A ); // no comms
-        client.fun2( I_A, I_B ); // no comms
-        client.fun2( I_B, I_A ); // I_B sent to A
-        client.fun2( I_C, I_B ); // I_C sent to A
+        client.fun( I_C ); //! Ambiguous method invocation, fun(java.lang.Integer@(A)) and fun(java.lang.Integer@(B))
     }
 }
 

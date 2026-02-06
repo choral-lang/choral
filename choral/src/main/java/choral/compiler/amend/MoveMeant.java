@@ -21,8 +21,7 @@ public class MoveMeant {
      */
     public static List< CompilationUnit > infer(
         Collection< CompilationUnit > sources,
-        Collection< CompilationUnit > headers,
-        boolean ignoreOverloads
+        Collection< CompilationUnit > headers
     ) {
         List<CompilationUnit> fullComCus = new ArrayList<>();
 
@@ -31,7 +30,7 @@ public class MoveMeant {
                     new VariableReplacement( new Selections() ).inferComms(cu)
             ).toList();
             // Since dataComCu is now without type annotations, we need to re-annotate them again
-            RelaxedTyper.annotate( dataComCus, headers, ignoreOverloads );
+            RelaxedTyper.annotate( dataComCus, headers );
 
             for( CompilationUnit dataComCu : dataComCus ){
                 Selections selections = new BasicKOCInference().inferKOC( dataComCu );
