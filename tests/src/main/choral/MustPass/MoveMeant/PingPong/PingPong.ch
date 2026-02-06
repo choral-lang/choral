@@ -3,6 +3,7 @@ package choral.MustPass.MoveMeant.PingPong;
 import choral.channels.DiSelectChannel;
 
 import choral.runtime.Serializers.KryoSerializable;
+import java.lang.Thread;
 
 enum Signal@R{ SIG }
 

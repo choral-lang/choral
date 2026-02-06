@@ -1,6 +1,6 @@
 package choral.MustPass.MoveMeant.NestedBlocks;
 
-import choral.MustPass.MoveMeant.NestedBlocks.utils.Client;
+import choral.MustPass.MoveMeant.utils.Client;
 import choral.channels.SymChannel;
 
 class NestedBlocks@( A, B ) {
@@ -9,7 +9,7 @@ class NestedBlocks@( A, B ) {
         Integer@B y1 = 1@B;
         Integer@B y2 = 1@B;
         if( x < 1@A ){
-            state_B.fun();
+            state_B.fun0();
             {
             }
             state_B.fun_in(state_A.fun_in_out(state_B.fun_out()));
@@ -19,7 +19,7 @@ class NestedBlocks@( A, B ) {
                 state_A.fun_in(y1);
             }
             state_B.fun_in(state_A.fun_in_out(y1));
-            state_A.fun();
+            state_A.fun0();
         }
 	}
 

@@ -1,7 +1,7 @@
 package choral.MustPass.MoveMeant.VitalsStreaming.utils;
 
-import choral.examples.VitalsStreaming.utils.Signature;
-import choral.examples.VitalsStreaming.utils.Vitals;
+import choral.MustPass.MoveMeant.VitalsStreaming.utils.Signature;
+import choral.MustPass.MoveMeant.VitalsStreaming.utils.Vitals;
 
 public class VitalsMsg@A {
 

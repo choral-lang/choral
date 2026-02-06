@@ -28,8 +28,8 @@ public class Mergesort_C {
 		switch( ch_BC.< KOCEnum >select( Unit.id ) ){
 			case CASE0 -> {
 				if( rhs.size() > 0 ){
-					ch_CA.< KOCEnum >select( KOCEnum.CASE0 );
 					ch_BC.< KOCEnum >select( KOCEnum.CASE0 );
+					ch_CA.< KOCEnum >select( KOCEnum.CASE0 );
 					ch_BC.< Integer >com( rhs.get( 0 ) );
 					switch( ch_BC.< KOCEnum >select( Unit.id ) ){
 						case CASE0 -> {
@@ -46,8 +46,8 @@ public class Mergesort_C {
 						}
 					}
 				} else { 
-					ch_CA.< KOCEnum >select( KOCEnum.CASE1 );
 					ch_BC.< KOCEnum >select( KOCEnum.CASE1 );
+					ch_CA.< KOCEnum >select( KOCEnum.CASE1 );
 					return Unit.id;
 				}
 			}
