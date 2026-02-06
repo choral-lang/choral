@@ -13,13 +13,9 @@ import java.util.Set;
 import choral.ast.CompilationUnit;
 import choral.ast.Name;
 import choral.ast.Position;
+import choral.ast.body.*;
 import choral.ast.body.Class;
 import choral.ast.body.Enum;
-import choral.ast.body.EnumConstant;
-import choral.ast.body.VariableDeclaration;
-import choral.ast.body.ClassMethodDefinition;
-import choral.ast.body.ClassModifier;
-import choral.ast.body.ConstructorDefinition;
 import choral.ast.expression.*;
 import choral.ast.statement.*;
 import choral.ast.type.FormalWorldParameter;
@@ -27,11 +23,9 @@ import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.ast.visitors.PrettyPrinterVisitor;
-import choral.compiler.merge.MergeException;
 import choral.compiler.merge.StatementsMerger;
 import choral.compiler.soloist.StatementsProjector;
 import choral.exceptions.ChoralCompoundException;
-import choral.exceptions.ChoralException;
 import choral.exceptions.CommunicationInferenceException;
 import choral.types.GroundDataType;
 import choral.types.GroundInterface;
@@ -43,9 +37,7 @@ import choral.utils.Pair;
  * Knowledge of choice inference.
  * Iterates through a program and at every IfStatement and SwitchStatement sends a selection to every 
  * role but itself, that takes part in at least one branch in that Statement.
- * <p>
- * Returns a Selections object with all the selections to insert. These selections will need to be 
- * inserted seperately (presumably by the data inference module).
+ * Returns a Selections object with all the selections to insert.
  */
 public class BasicKOCInference {
 
@@ -57,18 +49,15 @@ public class BasicKOCInference {
     
     public Selections inferKOC( CompilationUnit cu ){
         position = cu.position();
-        for( Class cls : cu.classes() ){
-            List< World > classWorlds = cls.worldParameters().stream().map( world -> (World)world.typeAnnotation().get() ).toList();
 
+		// Build the selection map by visiting all constructors and methods in all classes
+        for( Class cls : cu.classes() ){
 			for( ConstructorDefinition constructor : cls.constructors() ){
-                // Visits all constructors and builds the selections map for them
-				new VisitStatement( classWorlds, constructor.signature().typeAnnotation().get().channels() ).visit(constructor.body());
+				new VisitStatement( constructor ).visit(constructor.body());
 			}
-			
 			for( ClassMethodDefinition method : cls.methods() ){
-                // Visits all other methods and builds the selections map for them
 				if( method.body().isPresent() ){
-					new VisitStatement( classWorlds, method.signature().typeAnnotation().get().channels() ).visit(method.body().get());
+					new VisitStatement( method ).visit(method.body().get());
 				}
 			}
 		}
@@ -90,13 +79,15 @@ public class BasicKOCInference {
      */
 	private class VisitStatement extends AbstractChoralVisitor< Void >{
 		
-        List< World > allWorlds;
-        List< Pair< String, GroundInterface > > methodChannels;
+        List< Pair< String, GroundInterface > > channels;
 
-		public VisitStatement( List< World > allWorlds, List< Pair< String, GroundInterface > > channels ){
-            this.allWorlds = allWorlds;
-            this.methodChannels = channels;
+		public VisitStatement( ConstructorDefinition ctor ){
+			channels = ctor.signature().typeAnnotation().get().channels();
         }
+
+		public VisitStatement( MethodDefinition method ){
+			channels = method.signature().typeAnnotation().get().channels();
+		}
 
 		@Override
 		public Void visit( Statement n ) {
@@ -126,17 +117,17 @@ public class BasicKOCInference {
 
 		@Override
 		public Void visit( IfStatement n ) {
-			List< ? extends World > senders = ((GroundDataType)n.condition().typeAnnotation().get()).worldArguments();
+			var senders = ((GroundDataType)n.condition().typeAnnotation().get()).worldArguments();
             if( senders.size() != 1 ){
                 throw new CommunicationInferenceException("Found " + senders.size() + " roles, expected 1");
             }
-            World sender = (World)senders.get(0);
+            World sender = senders.get(0);
 
             List<World> recipients = getParticipants(sender, List.of(n.ifBranch(), n.elseBranch()));
-            if( recipients.size() > 0 ){
-                Pair<List <Expression>, List<Expression>> selectionsPair = inferIfSelection( sender, recipients );
-                List<Expression> ifSelections = selectionsPair.left();
-                List<Expression> elseSelections = selectionsPair.right();
+            if( !recipients.isEmpty() ){
+                var selectionsPair = inferIfSelection( sender, recipients );
+                var ifSelections = selectionsPair.left();
+                var elseSelections = selectionsPair.right();
                 selections.put( n, List.of( ifSelections, elseSelections ) );
             } 
             
@@ -145,15 +136,18 @@ public class BasicKOCInference {
             return visitContinutation( n.continuation() );
 		}
 
-		@Override // not supported
+		@Override
 		public Void visit( SwitchStatement n ) {
-			throw new UnsupportedOperationException("SwitchStatement not supported\n\tStatement at " + n.position().toString());
+			throw new UnsupportedOperationException("SwitchStatement not supported\n\t" +
+					"Statement at " + n.position().toString());
 		}
 
 		@Override
 		public Void visit( TryCatchStatement n ) {
-			visit( n.body() ); 
-            n.catches(); // TODO this should be visited as well
+			visit( n.body() );
+			for ( Pair< VariableDeclaration, Statement > catchBlock : n.catches() ) {
+				visit( catchBlock.right() );
+			}
             return visitContinutation( n.continuation() );
 		}
 
@@ -162,16 +156,61 @@ public class BasicKOCInference {
 			return visitContinutation( n.continuation() );
 		}
 
-		/** 
-		 * Visits the continuation if there is one 
-		 */
+		/** Visits the continuation if there is one */
 		private Void visitContinutation( Statement continutation ){
 			return continutation == null ? null : visit(continutation);
 		}
 
-        /**
-         * Creates selections for an if-statement
-         */
+		/**
+		 * Retrieves a list of all the worlds that partake in at least one Statement, excluding the
+		 * sender.
+		 */
+		private List<World> getParticipants( World sender, List<Statement> statements ){
+			Set<World> participants = new HashSet<>();
+			for( Statement statement : statements ){
+				participants.addAll( new GetStatementParticipants().getParticipants(statement) );
+			}
+			participants.remove(sender);
+
+			return getNeedsKOC(participants.stream().sorted().toList(), statements);
+		}
+
+		/**
+		 * takes a list of worlds and statements and returns the worlds that need knowledge
+		 * of choice based on the projection of the statements on the participants
+		 */
+		private List<World> getNeedsKOC( List<World> participants, List<Statement> statements ){
+			List<World> needsKOC = new ArrayList<>();
+
+			for( World participant : participants ){
+				System.out.println( "Looking at world: " + participant );
+
+				// If either the projector or the merger throws an error, then the current participant
+				// needs KOC. Otherwise, the participant does not need KOC
+				try {
+					// create projections of the statements on the current participant
+					List< Statement > projectedStatements = new ArrayList<>(statements).stream().map(
+							statement ->
+									StatementsProjector.visit( new WorldArgument( new Name(participant.identifier() )), statement ) ).toList();
+
+					// merge the projected statements
+					StatementsMerger.merge(projectedStatements);
+
+					System.out.println( "World " + participant + " does not need KOC" );
+					for( Statement statement : projectedStatements ){
+						System.out.println( new PrettyPrinterVisitor().visit(statement) );
+					}
+
+				} catch ( Exception e ){ // since not all implementations of merge() throws MergeException, we match on all exceptions
+					System.out.println( "World " + participant + " needs KOC" );
+					needsKOC.add(participant);
+				}
+			}
+
+			return needsKOC;
+		}
+
+        /** Creates selections for an if-statement */
         private Pair<List<Expression>, List<Expression>> inferIfSelection( World sender, List<World> recipients ){
             
             List<SelectionMethod> selectionList = findSelectionMethods( sender, recipients );
@@ -235,7 +274,7 @@ public class BasicKOCInference {
          * recipient. Returns null if no viable selection method was found.
          */
         private SelectionMethod findSelectionMethod( World sender, World recipient ){
-            for( Pair<String, GroundInterface> channelPair : methodChannels ){
+            for( Pair<String, GroundInterface> channelPair : channels ){
             
                 Optional<? extends HigherMethod> selectMethodOptional = 
                     channelPair.right().methods()
@@ -278,54 +317,6 @@ public class BasicKOCInference {
             return enumerator;
         }
 
-        /**
-         * Retreives a list of all the worlds that partake in at least one Statement, excluding the 
-         * sender.
-         */
-        private List<World> getParticipants( World sender, List<Statement> statements ){
-            Set<World> participants = new HashSet<>();
-            for( Statement statement : statements ){
-                participants.addAll( new GetStatementParticipants().getParticipants(statement) );
-            }
-            participants.remove(sender);
-
-            return getNeedsKOC(participants, statements);
-        }
-
-        /**
-         * takes a list of worlds and statements and returns the worlds that need knowledge
-         * of choice based on the projection of the statements on the participants
-         */
-        private List<World> getNeedsKOC( Set<World> participants, List<Statement> statements ){
-            List<World> needsKOC = new ArrayList<>();
-
-            for( World participant : participants ){
-                System.out.println( "Looking at world: " + participant );
-    
-                // If either the projector or the merger throws an error, then the current participant 
-                // needs KOC. Otherwise, the participant does not need KOC
-                try {
-                    // create projections of the statements on the current participant
-                    List< Statement > projectedStatements = new ArrayList<>(statements).stream().map( 
-                    statement -> 
-                        StatementsProjector.visit( new WorldArgument( new Name(participant.identifier() )), statement ) ).toList();
-                    
-                    // merge the projected statements
-                    StatementsMerger.merge(projectedStatements);
-                    
-                    System.out.println( "World " + participant + " does not need KOC" );
-                    for( Statement statement : projectedStatements ){
-                        System.out.println( new PrettyPrinterVisitor().visit(statement) );
-                    }
-
-                } catch ( Exception e ){ // since not all implementations of merge() throws MergeException, we match on all exceptions
-                    System.out.println( "World " + participant + " needs KOC" );
-                    needsKOC.add(participant);
-                }
-            }
-            
-            return needsKOC;
-        }
 
 	}
 

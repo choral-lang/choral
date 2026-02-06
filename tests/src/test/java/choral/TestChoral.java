@@ -158,7 +158,7 @@ public class TestChoral {
 		builder.addSources( "SendPackets", subFolder( MOVEMEANT, "SendPackets" ) );
 		builder.addSources( "SimpleArithmetic", subFolder( MOVEMEANT, "SimpleArithmetic" ) );
 		builder.addSources( "SimpleIf3", subFolder( MOVEMEANT, "SimpleIf3" ) );
-		/// Compiler generates bad code
+		/// Bug: Compiler generates bad code
 		// builder.addSources( "SimpleIfStatements", subFolder( MOVEMEANT, "SimpleIfStatements" ) );
 		builder.addSources( "SimpleKOC", subFolder( MOVEMEANT, "SimpleKOC" ) );
 		builder.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT, "SimpleMethodCalls" ) );

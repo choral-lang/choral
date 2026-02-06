@@ -27,7 +27,7 @@ import choral.types.kinds.Kind;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class World extends TypeBase {
+public final class World extends TypeBase implements Comparable< World > {
 
 	static final String DEFAULT_NAME = "A";
 
@@ -107,4 +107,8 @@ public final class World extends TypeBase {
 		return ws;
 	}
 
+	@Override
+	public int compareTo( World other ) {
+		return this.identifier.compareTo( other.identifier );
+	}
 }
