@@ -30,10 +30,15 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
+import choral.compiler.SourceObject;
 import choral.exceptions.AstPositionedException;
+import choral.exceptions.ChoralException;
 import choral.exceptions.StaticVerificationException;
 import choral.types.Package;
 import choral.types.*;
+import choral.types.Member.HigherCallable;
+import choral.types.Member.HigherMethod;
+import choral.types.Package;
 import choral.types.Universe.PrimitiveTypeTag;
 import choral.types.Universe.SpecialTypeTag;
 import choral.utils.Formatting;
@@ -41,6 +46,7 @@ import choral.utils.Pair;
 import com.google.common.base.Strings;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -955,7 +961,7 @@ public class Typer {
 							"non-abstract methods must have bodies" );
 				} else {
 					boolean returnChecked = new Check( bodyScope,
-							callable.innerCallable().returnType() )
+							callable.innerCallable().returnType(), callable )
 							.visit( body );
 					if( !callable.innerCallable().returnType().isVoid() && !returnChecked ) {
 						throw new AstPositionedException( body.position(),
@@ -1029,7 +1035,7 @@ public class Typer {
 				dependencies.put( callable, selected.higherCallable() );
 				positions.put( callable, n.position() );
 			}
-			new Check( scope, universe().voidType() ).visit( d.blockStatements() );
+			new Check( scope, universe().voidType(), callable ).visit( d.blockStatements() );
 		}
 
 		private List< ? extends Member.GroundCallable > findMostSpecificCallable(
@@ -1128,14 +1134,46 @@ public class Typer {
 			return ms;
 		}
 
-		GroundDataTypeOrVoid synth( VariableDeclarationScope scope, Expression n ) {
-			return new Synth( scope ).visit( n );
+		GroundDataTypeOrVoid synth( VariableDeclarationScope scope, Expression n,
+			HigherCallable method, Statement statement ) {
+			return new Synth( scope, method, statement ).visit( n );
 		}
 
 		GroundDataTypeOrVoid synth(
 				VariableDeclarationScope scope, Expression n, boolean explicitConstructorArg
 		) {
-			return new Synth( scope, explicitConstructorArg ).visit( n );
+			return new Synth( scope, explicitConstructorArg, null, null ).visit( n );
+		}
+
+		GroundDataTypeOrVoid synth(
+				VariableDeclarationScope scope,
+				Expression n,
+				boolean explicitConstructorArg,
+				HigherCallable method,
+				Statement statement
+		) {
+			return new Synth( scope, explicitConstructorArg, method, statement ).visit( n );
+		}
+
+		GroundDataTypeOrVoid synth(
+			VariableDeclarationScope scope,
+			Expression n,
+			List< ? extends World > homeWorlds,
+			HigherCallable method,
+			Statement statement
+		) {
+			return new Synth( scope, homeWorlds, method, statement ).visit( n );
+		}
+
+		GroundDataTypeOrVoid synth(
+				VariableDeclarationScope scope,
+				Expression n,
+				boolean explicitConstructorArg,
+				List< ? extends World > homeWorlds,
+				HigherCallable method,
+				Statement statement
+		) {
+			return new Synth( scope, explicitConstructorArg, homeWorlds, method, statement ).visit( n );
 		}
 
 		GroundDataType assertNotVoid( GroundDataTypeOrVoid t, Position position ) {
@@ -1153,9 +1191,16 @@ public class Typer {
 
 			private final GroundDataTypeOrVoid expected;
 
-			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected ) {
+			private HigherCallable enclosingMethod = null;
+
+			public Check(
+					VariableDeclarationScope scope,
+					GroundDataTypeOrVoid expected,
+					HigherCallable method
+			) {
 				this.scope = scope;
 				this.expected = expected;
+				this.enclosingMethod = method;
 			}
 
 			private boolean visitAsInBlock( Statement n ) {
@@ -1187,13 +1232,13 @@ public class Typer {
 
 			@Override
 			public Boolean visit( ExpressionStatement n ) {
-				synth( scope, n.expression() );
+				synth( scope, n.expression(), enclosingMethod, n );
 				return assertReachableContinuation( n, false );
 			}
 
 			@Override
 			public Boolean visit( IfStatement n ) {
-				GroundDataTypeOrVoid type = synth( scope, n.condition() );
+				GroundDataTypeOrVoid type = synth( scope, n.condition(), enclosingMethod, n );
 				if( type.primitiveTypeTag() != PrimitiveTypeTag.BOOLEAN &&
 						type.specialTypeTag() != SpecialTypeTag.BOOLEAN ) {
 					throw new AstPositionedException( n.condition().position(),
@@ -1216,7 +1261,7 @@ public class Typer {
 
 			@Override
 			public Boolean visit( SwitchStatement n ) {
-				GroundDataTypeOrVoid g = synth( scope, n.guard() );
+				GroundDataTypeOrVoid g = synth( scope, n.guard(), enclosingMethod, n );
 				if( !legalSwitchPrimitiveTypes.contains( g.primitiveTypeTag() )
 						&& !legalSwitchSpecialTypes.contains( g.specialTypeTag() )
 						&& !g.isEnum() ) {
@@ -1260,7 +1305,7 @@ public class Typer {
 						}
 					} else if( e.getKey() instanceof SwitchArgument.SwitchArgumentLiteral ) {
 						SwitchArgument.SwitchArgumentLiteral l = (SwitchArgument.SwitchArgumentLiteral) e.getKey();
-						GroundDataTypeOrVoid a = synth( scope, l.argument() );
+						GroundDataTypeOrVoid a = synth( scope, l.argument(), enclosingMethod, n );
 						String s = l.argument().content().toString();
 						if( !a.isAssignableTo( g ) ) {
 							throw new AstPositionedException( l.position(),
@@ -1331,7 +1376,14 @@ public class Typer {
 								new StaticVerificationException(
 										"cannot return a value from a method with 'void' result type" ) );
 					} else {
-						GroundDataTypeOrVoid found = synth( scope, n.returnExpression() );
+						// Since we are now looking at a return statement we know exactly what type
+						// we expect (including its role). Because of this, we can set the homeworld
+						// of the expression before looking at the expression itself.
+						//
+						// For the method "public int@A fun()" we know, before looking at any return
+						// statements which type we need. Therefore we can set the homeworld of the
+						// expression directly from the checker.
+						GroundDataTypeOrVoid found = synth( scope, n.returnExpression(), ((GroundDataType) expected).worldArguments(), enclosingMethod, n );
 						if( !found.isAssignableTo( expected ) ) {
 							throw new AstPositionedException( n.position(),
 									new StaticVerificationException(
@@ -1347,7 +1399,7 @@ public class Typer {
 				for( VariableDeclaration x : n.variables() ) {
 					GroundDataType type = visitGroundDataTypeExpression( scope, x.type(), false );
 					scope.declareVariable( x.name().identifier(), type );
-					x.initializer().ifPresent( e -> synth( scope, e ) );
+					x.initializer().ifPresent( e -> synth( scope, e, enclosingMethod, n ) );
 				}
 				return assertReachableContinuation( n, false );
 			}
@@ -1366,19 +1418,58 @@ public class Typer {
 
 		private final class Synth extends AbstractChoralVisitor< GroundDataTypeOrVoid > {
 
-			public Synth( VariableDeclarationScope scope ) {
-				this( scope, false );
+			public Synth( 
+				VariableDeclarationScope scope, 
+				HigherCallable method,
+				Statement statement 
+			) {
+				this( scope, false, method, statement );
 			}
 
-			public Synth( VariableDeclarationScope scope, boolean explicitConstructorArg ) {
+			public Synth( 
+				VariableDeclarationScope scope, 
+				boolean explicitConstructorArg, 
+				HigherCallable method,
+				Statement statement 
+			) {
 				this.scope = scope;
 				this.explicitConstructorArg = explicitConstructorArg;
+				this.enclosingMethod = method;
+				this.enclosingStatement = statement;
 			}
 
+			public Synth( 
+				VariableDeclarationScope scope, 
+				List< ? extends World > homeWorlds, 
+				HigherCallable method,
+				Statement statement   
+			) {
+				this( scope, false, homeWorlds, method, statement );
+			}
+
+			public Synth( 
+				VariableDeclarationScope scope, boolean explicitConstructorArg, 
+				List< ? extends World > homeWorlds,
+				HigherCallable method,
+				Statement statement 
+			) {
+				this.scope = scope;
+				this.explicitConstructorArg = explicitConstructorArg;
+				this.homeWorlds = homeWorlds;
+				this.enclosingMethod = method;
+				this.enclosingStatement = statement;
+			}
+			
 			private final VariableDeclarationScope scope;
 			private GroundDataTypeOrVoid left = null;
 			private boolean leftStatic = false;
 			private final boolean explicitConstructorArg;
+			/** The worlds at which the expression takes place. */
+			List< ? extends World > homeWorlds = Collections.emptyList();
+			/** A reference to the enclosing method. */
+			HigherCallable enclosingMethod;
+			/** A reference to the enclosing statement. */
+			Statement enclosingStatement;
 
 			@Override
 			public GroundDataTypeOrVoid visit( Expression n ) {
@@ -1545,6 +1636,7 @@ public class Typer {
 									"required type '" + tl + "', found '" + tvr + "'" ) );
 				}
 				GroundDataType tr = (GroundDataType) tvr;
+
 				if( n.operator().hasOperation() ) {
 					// tr might be promoted beyond tl
 					tr = visitBinaryOp( n.operator().operation(), tl, tr, n.position() );
@@ -1666,7 +1758,7 @@ public class Typer {
 
 			@Override
 			public GroundDataTypeOrVoid visit( MethodCallExpression n ) {
-				if( left == null ) {
+				if( left == null ) { // only happens for simple method calls (local)
 					left = scope.lookupThis();
 					leftStatic = explicitConstructorArg;
 				}
@@ -1793,7 +1885,6 @@ public class Typer {
 			}
 
 		}
-
 	}
 
 	private interface Scope {

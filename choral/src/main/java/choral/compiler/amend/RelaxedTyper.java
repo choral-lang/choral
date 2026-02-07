@@ -30,13 +30,15 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
+import choral.compiler.SourceObject;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralException;
 import choral.exceptions.StaticVerificationException;
+import choral.types.Package;
 import choral.types.*;
 import choral.types.Member.HigherCallable;
 import choral.types.Member.HigherMethod;
-import choral.types.Package; // to avoid ambigous reference to "Package"
+import choral.types.Package;
 import choral.types.Universe.PrimitiveTypeTag;
 import choral.types.Universe.SpecialTypeTag;
 import choral.utils.Formatting;
@@ -65,8 +67,7 @@ public class RelaxedTyper {
 	}
 
 	public static Collection< CompilationUnit > annotate(
-			Collection< CompilationUnit > sourceUnits, 
-			Collection< CompilationUnit > headerUnits
+			Collection< CompilationUnit > sourceUnits, Collection< CompilationUnit > headerUnits
 	) {
 		TaskQueue taskQueue = new TaskQueue();
 		Universe universe = new Universe();
@@ -663,6 +664,7 @@ public class RelaxedTyper {
 					return annotate( n, g );
 				}
 			} catch( StaticVerificationException e ) {
+				System.err.println(n.name());
 				throw new AstPositionedException( n.position(), e );
 			}
 		}
@@ -912,13 +914,14 @@ public class RelaxedTyper {
 		protected void checkPrimaryTemplate(
 				TemplateDeclaration n, String primaryType, String family
 		) {
+			if (primaryType == null) return;
 			if( n.isPublic() && !n.name().identifier().equals( primaryType ) ) {
 				throw new AstPositionedException( n.position(),
 						new StaticVerificationException( family
 								+ " '" + n.name().identifier()
 								+ "' is public, should be declared in a file named '"
 								+ n.name().identifier()
-								+ choral.compiler.SourceObject.ChoralSourceObject.FILE_EXTENSION + "'" ) );
+								+ SourceObject.ChoralSourceObject.FILE_EXTENSION + "'" ) );
 			}
 
 		}
@@ -948,7 +951,7 @@ public class RelaxedTyper {
 
 		@Override
 		protected void visitMethodBody(
-				CallableBodyScope bodyScope, HigherMethod callable, Statement body
+				CallableBodyScope bodyScope, Member.HigherMethod callable, Statement body
 		) {
 			if( callable.isAbstract() ) {
 				if( body != null ) {
@@ -962,17 +965,14 @@ public class RelaxedTyper {
 					throw new StaticVerificationException(
 							"non-abstract methods must have bodies" );
 				} else {
-					boolean returnChecked;
-					
 					callable.addChannel(bodyScope.getChannels()); // find all available channels
-
-					returnChecked = new Check( bodyScope,
-						callable.innerCallable().returnType(), callable )
-						.visit( body );
+					boolean returnChecked = new Check( bodyScope,
+							callable.innerCallable().returnType(), callable )
+							.visit( body );
 					if( !callable.innerCallable().returnType().isVoid() && !returnChecked ) {
 						throw new AstPositionedException( body.position(),
 								new StaticVerificationException( "missing return statement" ) );
-					}	
+					}
 				}
 			}
 		}
@@ -1141,20 +1141,13 @@ public class RelaxedTyper {
 			return ms;
 		}
 
-		GroundDataTypeOrVoid synth( 
-			VariableDeclarationScope scope, 
-			Expression n, 
-			HigherCallable method,
-			Statement statement
-		) {
+		GroundDataTypeOrVoid synth( VariableDeclarationScope scope, Expression n,
+			HigherCallable method, Statement statement ) {
 			return new Synth( scope, method, statement ).visit( n );
 		}
 
-		// only kept because used in visitConstructorBody
 		GroundDataTypeOrVoid synth(
-				VariableDeclarationScope scope, 
-				Expression n, 
-				boolean explicitConstructorArg
+				VariableDeclarationScope scope, Expression n, boolean explicitConstructorArg
 		) {
 			return new Synth( scope, explicitConstructorArg, null, null ).visit( n );
 		}
@@ -1203,18 +1196,18 @@ public class RelaxedTyper {
 		 * A relaxed version of Check. Doesn't throw exceptions on data location mismatch.
 		 */
 		private final class Check extends AbstractChoralVisitor< Boolean > {
-			
+
 			private VariableDeclarationScope scope;
+
 			private final GroundDataTypeOrVoid expected;
-			/** The enclosing method. */
+
 			private HigherCallable enclosingMethod = null;
 
-			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected ) {
-				this.scope = scope;
-				this.expected = expected;
-			}
-
-			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected, HigherCallable method ) {
+			public Check(
+					VariableDeclarationScope scope,
+					GroundDataTypeOrVoid expected,
+					HigherCallable method
+			) {
 				this.scope = scope;
 				this.expected = expected;
 				this.enclosingMethod = method;
@@ -1329,7 +1322,7 @@ public class RelaxedTyper {
 								new StaticVerificationException(
 										"cannot return a value from a method with 'void' result type" ) );
 					} else {
-						// Since we are now looking at a retrun statement we know exactly what type 
+						// Since we are now looking at a return statement we know exactly what type
 						// we expect (including its role). Because of this, we can set the homeworld 
 						// of the expression before looking at the expression itself.
 						// 
@@ -1609,7 +1602,6 @@ public class RelaxedTyper {
 								}
 							}
 					}
-					
 				}
 				throw new AstPositionedException( position,
 						new StaticVerificationException( "cannot apply '"
@@ -1673,9 +1665,7 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataType visit( FieldAccessExpression n ) {
-				// System.out.println( "FieldAccessExpression: " + n );
 				String identifier = n.name().identifier();
-
 				Optional< ? extends GroundDataType > result = Optional.empty();
 				if( left == null ) {
 					result = scope.lookupVariable( identifier );
@@ -1789,7 +1779,6 @@ public class RelaxedTyper {
 					left = scope.lookupThis();
 					leftStatic = explicitConstructorArg;
 				}
-
 				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
 						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
 						.collect( Collectors.toList() );
@@ -1802,7 +1791,6 @@ public class RelaxedTyper {
 						.collect( Collectors.toList() );
 				if( left instanceof GroundReferenceType ) {
 					GroundReferenceType t = (GroundReferenceType) left;
-
 					List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
 							typeArgs,
 							args,
