@@ -2642,55 +2642,7 @@ public class RelaxedTyper {
 		private final Map< String, GroundDataType > variables = new HashMap<>();
 
 		@Override
-		public List<Pair<String, GroundInterface>> getChannels(){
-			List<Pair<String, GroundInterface>> channels = new ArrayList<>();
-			HigherClassOrInterface diDataChannel = assertLookupClassOrInterface("choral.channels.DiDataChannel");
-			HigherClassOrInterface diSelectChannel = assertLookupClassOrInterface("choral.channels.DiSelectChannel");
-			
-
-			// Look for channels in `this`
-			lookupThis().fields().forEach( field -> {
-				if( field.type() instanceof GroundInterface ){
-					GroundInterface type = (GroundInterface)field.type();
-					
-					boolean isChannel = 
-						type.typeConstructor().innerType().isSubtypeOf(diDataChannel.innerType()) || // check if subtype of DiDataChannel
-						type.typeConstructor().innerType().isSubtypeOf(diSelectChannel.innerType()) || // check if subtype of DiSelectChannel
-						type.allExtendedInterfaces() // iterate through all extended interfaces
-							.filter( extendedInterface -> 
-								diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) || // check if the extended interface is a subtype of DiDataChannel
-								diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ) // or a subtype of DiSelectChannel
-							.findAny() // we only need one
-							.isPresent(); // check if any was found
-					
-					if( isChannel ){
-						channels.add(new Pair<>(field.identifier(), type));
-					}
-				}
-			} );
-			
-			// Look for channels in this method's list of parameters
-			variables.forEach( (key, val) -> {
-				if( val instanceof GroundInterface ){
-					GroundInterface type = (GroundInterface)val;
-					
-					boolean isChannel = 
-						type.typeConstructor().innerType().isSubtypeOf(diDataChannel.innerType()) || // check if subtype of DiDataChannel
-						type.typeConstructor().innerType().isSubtypeOf(diSelectChannel.innerType()) || // check if subtype of DiSelectChannel
-						type.allExtendedInterfaces() // iterate through all extended interfaces
-							.filter( extendedInterface -> 
-								diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) || // check if the extended interface is a subtype of DiDataChannel
-								diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ) // or a subtype of DiSelectChannel
-							.findAny() // we only need one
-							.isPresent(); // check if any was found
-
-					if( isChannel ){
-						channels.add(new Pair<>(key, type));
-					}
-				}
-			} );
-			return channels;
-		}
+		public Map< String, GroundDataType > variables() { return variables; }
 
 		@Override
 		public void declareVariable( String identifier, GroundDataType type ) {
@@ -2752,60 +2704,7 @@ public class RelaxedTyper {
 		private final Map< String, GroundDataType > variables = new HashMap<>();
 
 		@Override
-		public List<Pair<String, GroundInterface>> getChannels(){
-			List<Pair<String, GroundInterface>> channels = new ArrayList<>();
-			HigherClassOrInterface diDataChannel = assertLookupClassOrInterface("choral.channels.DiDataChannel");
-			HigherClassOrInterface diSelectChannel = assertLookupClassOrInterface("choral.channels.DiSelectChannel");
-
-			// Look for channels in `this`
-			lookupThis().fields().forEach( field -> {
-				if( field.type() instanceof GroundInterface ){
-					GroundInterface type = (GroundInterface)field.type();
-					
-					boolean isChannel = 
-						type.typeConstructor().innerType().isSubtypeOf(diDataChannel.innerType()) || // check if subtype of DiDataChannel
-						type.typeConstructor().innerType().isSubtypeOf(diSelectChannel.innerType()) || // check if subtype of DiSelectChannel
-						type.allExtendedInterfaces() // iterate through all extended interfaces
-							.filter( extendedInterface -> 
-								diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) || // check if the extended interface is a subtype of DiDataChannel
-								diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ) // or a subtype of DiSelectChannel
-							.findAny() // we only need one
-							.isPresent(); // check if any was found
-					
-					if( isChannel ){
-						channels.add(new Pair<>(field.identifier(), type));
-					}
-				}
-			} );
-			
-			// Look for channels in this method's list of parameters
-			variables.forEach( (key, val) -> {
-				if( val instanceof GroundInterface ){
-					GroundInterface type = (GroundInterface)val;
-					
-					boolean isChannel = 
-						type.typeConstructor().innerType().isSubtypeOf(diDataChannel.innerType()) || // check if subtype of DiDataChannel
-						type.typeConstructor().innerType().isSubtypeOf(diSelectChannel.innerType()) || // check if subtype of DiSelectChannel
-						type.allExtendedInterfaces() // iterate through all extended interfaces
-							.filter( extendedInterface -> 
-								diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) || // check if the extended interface is a subtype of DiDataChannel
-								diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ) // or a subtype of DiSelectChannel
-							.findAny() // we only need one
-							.isPresent(); // check if any was found
-					
-					if( isChannel ){
-						channels.add(new Pair<>(key, type));
-					}
-				}
-			} );
-			if( parent() instanceof VariableDeclarationScope ){
-				parent.getChannels().forEach( ch -> {
-					if(!channels.contains(ch))
-						channels.add(ch);
-				} );;
-			}
-			return channels;
-		}
+		public Map< String, GroundDataType > variables() { return variables; }
 
 		@Override
 		public void declareVariable( String identifier, GroundDataType type ) {
@@ -2889,13 +2788,51 @@ public class RelaxedTyper {
 
 		Scope parent();
 
+		Map< String, GroundDataType > variables();
+
 		BlockScope newBlockScope();
 
 		/**
-		 * Collects channels available in the scope by looking at the fields of "this" 
+		 * Collects channels available in the scope by looking at the fields of "this"
 		 * and the enclosing method's arguments
 		 */
-		List<Pair<String, GroundInterface>> getChannels();
+		default List<Pair<String, GroundInterface>> getChannels(){
+			List<Pair<String, GroundInterface>> channels = new ArrayList<>();
+			HigherClassOrInterface diDataChannel = assertLookupClassOrInterface("choral.channels.DiDataChannel");
+			HigherClassOrInterface diSelectChannel = assertLookupClassOrInterface("choral.channels.DiSelectChannel");
+
+			lookupThis().fields().forEach( field -> {
+				if( field.type() instanceof GroundInterface type ){
+					boolean isChannel =
+						type.allExtendedInterfaces()
+							.anyMatch( extendedInterface ->
+									diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ||
+									diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) );
+					if( isChannel ){
+						channels.add(new Pair<>(field.identifier(), type));
+					}
+				}
+			} );
+			variables().forEach( (key, val) -> {
+				if( val instanceof GroundInterface type ){
+					boolean isChannel =
+						type.allExtendedInterfaces()
+							.anyMatch( extendedInterface ->
+								diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ||
+								diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) );
+					if( isChannel ){
+						channels.add(new Pair<>(key, type));
+					}
+				}
+			} );
+			if( parent() instanceof VariableDeclarationScope parent ){
+				parent.getChannels().forEach( ch -> {
+					if(!channels.contains(ch))
+						channels.add(ch);
+				} );;
+			}
+			return channels;
+		}
 
 	}
 
