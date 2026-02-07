@@ -38,11 +38,10 @@ public class ChoralWorkspaceService implements WorkspaceService {
         if (params.getCommand().equals("choral.insertComms")) {
             try {
                 // Get the file
-                var fileURI = (JsonPrimitive) params.getArguments().get( 0 );
-                Path path = Paths.get( new URI( fileURI.getAsString() ) );
+                var source = ((JsonPrimitive) params.getArguments().get( 0 )).getAsString();
 
                 // Parse it
-                CompilationUnit parsedUnit = Parser.parseSourceFile( path.toFile() );
+                CompilationUnit parsedUnit = Parser.parseString( source );
                 List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
 
                 // Collect data dependencies nd infer communications
@@ -51,8 +50,7 @@ public class ChoralWorkspaceService implements WorkspaceService {
 
                 // Convert to string and overwrite the file
                 var fixedSource = new PrettyPrinterVisitor().visit( fixedUnit.get( 0 ) );
-                Files.write( path, fixedSource.getBytes(), StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING );
+                return CompletableFuture.completedFuture(fixedSource);
             }
             catch (Exception e) {
                 System.err.println("Error processing file: " + e.getMessage());
