@@ -339,7 +339,7 @@ public class TestChoral {
 		CompilationResults results = compile(compilationRequest);
 		if( results.exitCode != 0 )
 			errors.add( "Compiling Choral files failed unexpectedly with exit code " + results.exitCode +
-					"\n" + results.stdout );
+					"\n" + results.stderr );
 
 		try {
 			// Get the package names declared in the source folders of the compilation request
@@ -532,7 +532,7 @@ public class TestChoral {
 			errors.add("Program compiled with exit code 0, which means no errors were found." +
 				"This test is expected to have errors" );
 
-		String[] outputLines = results.stdout.split( "\n" );
+		String[] outputLines = results.stderr.split( "\n" );
 		List<TestError> actualErrors = findActualErrors(outputLines);
 
 		// Concatenate all the expected errors in all the files in the source folders
