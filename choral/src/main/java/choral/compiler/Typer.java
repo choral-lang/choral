@@ -1522,6 +1522,7 @@ public class Typer {
 					GroundDataType tr = (GroundDataType) tvr;
 					if( tl.worldArguments().size() == 1 && tr.worldArguments().size() == 1
 							&& tl.worldArguments().equals( tr.worldArguments() ) ) {
+						List< ? extends World > worlds = tl.worldArguments();
 						GroundPrimitiveDataType pl = null;
 						GroundPrimitiveDataType pr = null;
 						switch( operator ) {
@@ -1534,7 +1535,7 @@ public class Typer {
 												tr.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) )
 								) {
 									return universe().specialType( SpecialTypeTag.STRING ).applyTo(
-											tl.worldArguments() );
+											worlds );
 								}
 							}
 							case MINUS:
@@ -1553,7 +1554,7 @@ public class Typer {
 										// promote byte, char, short to int
 										p = universe().primitiveDataType(
 												PrimitiveTypeTag.INT ).applyTo(
-												tl.worldArguments() );
+												worlds );
 									}
 									return p;
 								}
@@ -1567,7 +1568,7 @@ public class Typer {
 								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
 									return universe().primitiveDataType(
 											PrimitiveTypeTag.BOOLEAN ).applyTo(
-											tl.worldArguments() );
+											worlds );
 								}
 								break;
 							case OR:
@@ -1599,7 +1600,7 @@ public class Typer {
 								) {
 									return universe().primitiveDataType(
 											PrimitiveTypeTag.BOOLEAN ).applyTo(
-											tl.worldArguments() );
+											worlds );
 								} else {
 									pl = assertUnbox( tl, position );
 									pr = assertUnbox( tr, position );
@@ -1608,10 +1609,10 @@ public class Typer {
 									) {
 										return universe().primitiveDataType(
 												PrimitiveTypeTag.BOOLEAN ).applyTo(
-												tl.worldArguments() );
+												worlds );
 									}
 								}
-						}
+							}
 					}
 				}
 				throw new AstPositionedException( position,

@@ -1153,18 +1153,18 @@ public class RelaxedTyper {
 		}
 
 		GroundDataTypeOrVoid synth(
-				VariableDeclarationScope scope, 
-				Expression n, 
-				boolean explicitConstructorArg, 
+				VariableDeclarationScope scope,
+				Expression n,
+				boolean explicitConstructorArg,
 				HigherCallable method,
 				Statement statement
 		) {
 			return new Synth( scope, explicitConstructorArg, method, statement ).visit( n );
 		}
 
-		GroundDataTypeOrVoid synth( 
-			VariableDeclarationScope scope, 
-			Expression n, 
+		GroundDataTypeOrVoid synth(
+			VariableDeclarationScope scope,
+			Expression n,
 			List< ? extends World > homeWorlds,
 			HigherCallable method,
 			Statement statement
@@ -1173,12 +1173,12 @@ public class RelaxedTyper {
 		}
 
 		GroundDataTypeOrVoid synth(
-				VariableDeclarationScope scope, 
-				Expression n, 
-				boolean explicitConstructorArg, 
+				VariableDeclarationScope scope,
+				Expression n,
+				boolean explicitConstructorArg,
 				List< ? extends World > homeWorlds,
 				HigherCallable method,
-				Statement statement 
+				Statement statement
 		) {
 			return new Synth( scope, explicitConstructorArg, homeWorlds, method, statement ).visit( n );
 		}
@@ -1323,10 +1323,10 @@ public class RelaxedTyper {
 										"cannot return a value from a method with 'void' result type" ) );
 					} else {
 						// Since we are now looking at a return statement we know exactly what type
-						// we expect (including its role). Because of this, we can set the homeworld 
+						// we expect (including its role). Because of this, we can set the homeworld
 						// of the expression before looking at the expression itself.
-						// 
-						// For the method "public int@A fun()" we know, before looking at any return 
+						//
+						// For the method "public int@A fun()" we know, before looking at any return
 						// statements which type we need. Therefore we can set the homeworld of the
 						// expression directly from the checker.
 						GroundDataTypeOrVoid found = synth( scope, n.returnExpression(), ((GroundDataType) expected).worldArguments(), enclosingMethod, n );
@@ -1503,105 +1503,105 @@ public class RelaxedTyper {
 					Position position
 			) {
 				if( !tvl.isVoid() && !tvr.isVoid() ) {
-					GroundDataType tl = (GroundDataType) tvl;
-					GroundDataType tr = (GroundDataType) tvr;
+						GroundDataType tl = (GroundDataType) tvl;
+						GroundDataType tr = (GroundDataType) tvr;
 
-					List< ? extends World > worlds; 	// the worlds of this expression
-					if( !homeWorlds.isEmpty() )
-						worlds = homeWorlds;			// if homeworlds is set, use that
-					else
-						worlds = tl.worldArguments(); 	// if no homeworld is set, use the left side's worlds
-					
-					GroundPrimitiveDataType pl = null;
-					GroundPrimitiveDataType pr = null;
-					switch( operator ) {
-						case PLUS: {
-							if( tl.specialTypeTag() == SpecialTypeTag.STRING
-									|| tr.specialTypeTag() == SpecialTypeTag.STRING
-									|| ( ( tl.specialTypeTag() == SpecialTypeTag.CHARACTER ||
-									tl.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) &&
-									( tr.specialTypeTag() == SpecialTypeTag.CHARACTER ||
-											tr.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) )
-							) {
-								return universe().specialType( SpecialTypeTag.STRING ).applyTo(
-										worlds );
-							}
-						}
-						case MINUS:
-						case MULTIPLY:
-						case DIVIDE:
-						case REMAINDER:
-							pl = assertUnbox( tl, position );
-							pr = assertUnbox( tr, position );
-							if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
-								GroundPrimitiveDataType p = ( pl.primitiveTypeTag().compareTo(
-										pr.primitiveTypeTag() ) > 0 )
-										? pl
-										: pr;
-								if( p.primitiveTypeTag().compareTo(
-										PrimitiveTypeTag.INT ) < 0 ) {
-									// promote byte, char, short to int
-									p = universe().primitiveDataType(
-											PrimitiveTypeTag.INT ).applyTo(
-												worlds );
-								}
-								return p;
-							}
-							break;
-						case LESS:
-						case LESS_EQUALS:
-						case GREATER:
-						case GREATER_EQUALS:
-							pl = assertUnbox( tl, position );
-							pr = assertUnbox( tr, position );
-							if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
-								return universe().primitiveDataType(
-										PrimitiveTypeTag.BOOLEAN ).applyTo(
+						List< ? extends World > worlds; 	// the worlds of this expression
+						if( !homeWorlds.isEmpty() )
+							worlds = homeWorlds;			// if homeworlds is set, use that
+						else
+							worlds = tl.worldArguments(); 	// if no homeworld is set, use the left side's worlds
+
+						GroundPrimitiveDataType pl = null;
+						GroundPrimitiveDataType pr = null;
+						switch( operator ) {
+							case PLUS: {
+								if( tl.specialTypeTag() == SpecialTypeTag.STRING
+										|| tr.specialTypeTag() == SpecialTypeTag.STRING
+										|| ( ( tl.specialTypeTag() == SpecialTypeTag.CHARACTER ||
+										tl.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) &&
+										( tr.specialTypeTag() == SpecialTypeTag.CHARACTER ||
+												tr.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) )
+								) {
+									return universe().specialType( SpecialTypeTag.STRING ).applyTo(
 											worlds );
-							}
-							break;
-						case OR:
-						case AND:
-							pl = assertUnbox( tl, position );
-							pr = assertUnbox( tr, position );
-							if( pl.primitiveTypeTag().isIntegral() && pr.primitiveTypeTag().isIntegral() ) {
-								if( pl.primitiveTypeTag().compareTo(
-										pr.primitiveTypeTag() ) > 0 ) {
-									return pl;
-								} else {
-									return pr;
 								}
 							}
-						case SHORT_CIRCUITED_OR:
-						case SHORT_CIRCUITED_AND:
-							pl = ( pl == null ) ? assertUnbox( tl, position ) : pl;
-							pr = ( pr == null ) ? assertUnbox( tr, position ) : pr;
-							if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN
-									&& pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
-								return tl;
-							}
-							break;
-						case EQUALS:
-						case NOT_EQUALS:
-							if( ( tl instanceof GroundReferenceType && tr.isSubtypeOf_relaxed( tl ) ) ||
-									( tr instanceof GroundReferenceType && tl.isSubtypeOf_relaxed(
-											tr ) )
-							) {
-								return universe().primitiveDataType(
-										PrimitiveTypeTag.BOOLEAN ).applyTo(
-											worlds );
-							} else {
+							case MINUS:
+							case MULTIPLY:
+							case DIVIDE:
+							case REMAINDER:
 								pl = assertUnbox( tl, position );
 								pr = assertUnbox( tr, position );
-								if( pl.primitiveTypeTag() == pr.primitiveTypeTag() ||
-										( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() )
+								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
+									GroundPrimitiveDataType p = ( pl.primitiveTypeTag().compareTo(
+											pr.primitiveTypeTag() ) > 0 )
+											? pl
+											: pr;
+									if( p.primitiveTypeTag().compareTo(
+											PrimitiveTypeTag.INT ) < 0 ) {
+										// promote byte, char, short to int
+										p = universe().primitiveDataType(
+												PrimitiveTypeTag.INT ).applyTo(
+												worlds );
+									}
+									return p;
+								}
+								break;
+							case LESS:
+							case LESS_EQUALS:
+							case GREATER:
+							case GREATER_EQUALS:
+								pl = assertUnbox( tl, position );
+								pr = assertUnbox( tr, position );
+								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
+									return universe().primitiveDataType(
+											PrimitiveTypeTag.BOOLEAN ).applyTo(
+											worlds );
+								}
+								break;
+							case OR:
+							case AND:
+								pl = assertUnbox( tl, position );
+								pr = assertUnbox( tr, position );
+								if( pl.primitiveTypeTag().isIntegral() && pr.primitiveTypeTag().isIntegral() ) {
+									if( pl.primitiveTypeTag().compareTo(
+											pr.primitiveTypeTag() ) > 0 ) {
+										return pl;
+									} else {
+										return pr;
+									}
+								}
+							case SHORT_CIRCUITED_OR:
+							case SHORT_CIRCUITED_AND:
+								pl = ( pl == null ) ? assertUnbox( tl, position ) : pl;
+								pr = ( pr == null ) ? assertUnbox( tr, position ) : pr;
+								if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN
+										&& pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
+									return tl;
+								}
+								break;
+							case EQUALS:
+							case NOT_EQUALS:
+								if( ( tl instanceof GroundReferenceType && tr.isSubtypeOf_relaxed( tl ) ) ||
+										( tr instanceof GroundReferenceType && tl.isSubtypeOf_relaxed(
+												tr ) )
 								) {
 									return universe().primitiveDataType(
 											PrimitiveTypeTag.BOOLEAN ).applyTo(
+											worlds );
+								} else {
+									pl = assertUnbox( tl, position );
+									pr = assertUnbox( tr, position );
+									if( pl.primitiveTypeTag() == pr.primitiveTypeTag() ||
+											( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() )
+									) {
+										return universe().primitiveDataType(
+												PrimitiveTypeTag.BOOLEAN ).applyTo(
 												worlds );
+									}
 								}
 							}
-					}
 				}
 				throw new AstPositionedException( position,
 						new StaticVerificationException( "cannot apply '"
