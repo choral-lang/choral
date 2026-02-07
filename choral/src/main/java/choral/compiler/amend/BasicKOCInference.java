@@ -183,7 +183,7 @@ public class BasicKOCInference {
 			List<World> needsKOC = new ArrayList<>();
 
 			for( World participant : participants ){
-				System.out.println( "Looking at world: " + participant );
+				// System.out.println( "Looking at world: " + participant );
 
 				// If either the projector or the merger throws an error, then the current participant
 				// needs KOC. Otherwise, the participant does not need KOC
@@ -196,13 +196,13 @@ public class BasicKOCInference {
 					// merge the projected statements
 					StatementsMerger.merge(projectedStatements);
 
-					System.out.println( "World " + participant + " does not need KOC" );
-					for( Statement statement : projectedStatements ){
-						System.out.println( new PrettyPrinterVisitor().visit(statement) );
-					}
+					// System.out.println( "World " + participant + " does not need KOC" );
+					// for( Statement statement : projectedStatements ){
+					// 	System.out.println( new PrettyPrinterVisitor().visit(statement) );
+					// }
 
 				} catch ( Exception e ){ // since not all implementations of merge() throws MergeException, we match on all exceptions
-					System.out.println( "World " + participant + " needs KOC" );
+					// System.out.println( "World " + participant + " needs KOC" );
 					needsKOC.add(participant);
 				}
 			}

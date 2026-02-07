@@ -375,7 +375,7 @@ public class GenerateMiniZincInputs {
 				GroundDataType typeAnnotation = (GroundDataType)e.typeAnnotation().get();
 				w = typeAnnotation.worldArguments().get(0);
 			}
-			System.out.println( "World for expression " + e  + " : " + w );
+			// System.out.println( "World for expression " + e  + " : " + w );
 			return w;
 		}
 	}

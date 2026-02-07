@@ -401,8 +401,8 @@ public class InsertMiniZincCommunications {
 				initializer, 
 				position));
 			
-			System.out.println( "Dependency: Role " + dependency.recipient() + " needs " + dependency.originalExpression() );
-			System.out.println( "Saved in variable: " + variableName );
+			// System.out.println( "Dependency: Role " + dependency.recipient() + " needs " + dependency.originalExpression() );
+			// System.out.println( "Saved in variable: " + variableName );
 		}
 
         /**

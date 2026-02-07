@@ -104,8 +104,8 @@ public class VariableReplacement{
 					// Extract sender from dependency (what world needs to send data)
 					World sender = getSender(dependencyExpression);
 					
-					System.out.println( "Role " + receiver + " needs " + dependencyExpression + " from role " + sender );
-					
+					// System.out.println( "Role " + receiver + " needs " + dependencyExpression + " from role " + sender );
+
 					// Find a viable communication method
 					Pair<Pair<String, GroundInterface>, HigherMethod> comPair = Utils.findComMethod(
 						receiver, 
@@ -468,8 +468,8 @@ public class VariableReplacement{
 				initializer, 
 				position));
 			
-			System.out.println( "Dependency: Role " + dependency.recipient() + " needs " + dependency.originalExpression() );
-			System.out.println( "Saved in variable: " + variableName );
+			// System.out.println( "Dependency: Role " + dependency.recipient() + " needs " + dependency.originalExpression() );
+			// System.out.println( "Saved in variable: " + variableName );
 
 			// add the variable's name to the map of dependency variables
 			dependencyVariables.put(dependency, variableName);

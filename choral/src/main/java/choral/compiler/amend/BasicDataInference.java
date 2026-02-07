@@ -93,7 +93,7 @@ public class BasicDataInference {
 					// Extract sender from dependency (what world needs to send data)
 					World sender = getSender(dependencyExpression);
 					
-					System.out.println( "Role " + receiver + " needs " + dependencyExpression + " from role " + sender );
+					//System.out.println( "Role " + receiver + " needs " + dependencyExpression + " from role " + sender );
 					
 					// Find a viable communication method
 					Pair<Pair<String, GroundInterface>, HigherMethod> comPair = Utils.findComMethod(
@@ -382,9 +382,9 @@ public class BasicDataInference {
 			Expression newExpression = new VisitExpression(dependencyList).visit(first);
 
 			if( !dependencyList.isEmpty() ){ 
-				System.out.println( "ERROR! Could not resole the following dependencies" );
+				System.err.println( "ERROR! Could not resolve the following dependencies" );
 				for( Dependency dependency  : dependencyList ){
-					System.out.println( "\t" + dependency.originalExpression() );
+					System.err.println( "\t" + dependency.originalExpression() );
 				}
 			}
 
