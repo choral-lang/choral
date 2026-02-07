@@ -2027,7 +2027,7 @@ public class RelaxedTyper {
 
 
 			/**
-			 * Checks the worldcorrespondence between the given literalexpression and homeworlds.
+			 * Checks the world correspondence between the given literal expression and homeworlds.
 			 * If they don't match, an exception is thrown.
 			 */
 			private <T extends LiteralExpression<?>> void checkWorlds( T n ){
@@ -2039,7 +2039,7 @@ public class RelaxedTyper {
 			}
 
 			/**
-			 * Checks if a given expression is locked to some world by looking at existance of literals
+			 * Checks if a given expression is locked to some world by looking at existence of literals
 			 */
 			private <E extends Expression > List<? extends World> setExpressionHome( E expression ){
 				

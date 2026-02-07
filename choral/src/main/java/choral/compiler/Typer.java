@@ -1623,14 +1623,15 @@ public class Typer {
 
 			@Override
 			public GroundDataType visit( AssignExpression n ) {
-				GroundDataTypeOrVoid tvl = synth( scope, n.target(), explicitConstructorArg );
+				GroundDataTypeOrVoid tvl = synth( scope, n.target(), explicitConstructorArg, enclosingMethod, enclosingStatement );
 				if( tvl.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
 									"expected assignable variable" ) );
 				}
 				GroundDataType tl = (GroundDataType) tvl;
-				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg );
+				homeWorlds = tl.worldArguments(); // the lefthand side of an assignment determines the worlds of the expression
+				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg, homeWorlds, enclosingMethod, enclosingStatement );
 				if( tvr.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
@@ -1725,7 +1726,7 @@ public class Typer {
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
 						.map( x -> assertNotVoid(
-								synth( scope, x, explicitConstructorArg ),
+								synth( scope, x, explicitConstructorArg, enclosingMethod, enclosingStatement ),
 								x.position() ) )
 						.collect( Collectors.toList() );
 				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
@@ -1767,9 +1768,11 @@ public class Typer {
 						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
-						.map( x -> assertNotVoid(
-								synth( scope, x, explicitConstructorArg ),
-								x.position() ) )
+						.map( x -> {
+							return assertNotVoid(
+								synth( scope, x, explicitConstructorArg, enclosingMethod, enclosingStatement ),
+								x.position() );
+						} )
 						.collect( Collectors.toList() );
 				if( left instanceof GroundReferenceType ) {
 					GroundReferenceType t = (GroundReferenceType) left;
