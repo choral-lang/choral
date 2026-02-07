@@ -141,7 +141,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				}
 			} catch( Exception e ) {
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
-				System.out.println( "compilation failed." );
+				System.err.println( "compilation failed." );
 				return 1;
 			}
 			return 0;
@@ -289,7 +289,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 
 			} catch( Exception e ) {
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
-				System.out.println( "compilation failed." );
+				System.err.println( "compilation failed." );
 				return 1;
 			}
 			return 0;
@@ -337,7 +337,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 										emissionOptions.isOverwritingAllowed() ) ) );
 			} catch( Exception e ) {
 				printNiceErrorMessage( e, verbosityOptions.verbosity() );
-				System.out.println( "compilation failed." );
+				System.err.println( "compilation failed." );
 				return 1;
 			}
 			return 0;
@@ -351,7 +351,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 			AstPositionedException pe = (AstPositionedException) e;
 			if (pe.position() == null) {
 				// TODO: position should be defined!
-				System.out.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
+				System.err.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
 				if( verbosity == VerbosityOptions.VerbosityLevel.DEBUG ) {
 					e.printStackTrace();
 				}
@@ -365,12 +365,12 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		} else if( e instanceof WrappedException ) {
 			printNiceErrorMessage( e.getCause(), verbosity );
 		} else if( e instanceof IOException ) {
-			System.out.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
+			System.err.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
 			if( verbosity == VerbosityOptions.VerbosityLevel.DEBUG ) {
 				e.printStackTrace();
 			}
 		} else {
-			System.out.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
+			System.err.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
 			if( verbosity == VerbosityOptions.VerbosityLevel.DEBUG ) {
 				e.printStackTrace();
 			}
@@ -415,7 +415,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		} catch( IOException ex ) {
 			// give up printing the code snippet
 		}
-		System.out.printf(
+		System.err.printf(
 				"%1$s:%2$d:%3$d: error: %4$s.\n\n%5$s\n",
 				relativizePath( p.sourceFile() ),
 				p.line(),

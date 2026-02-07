@@ -246,7 +246,7 @@ public class Compiler {
 						targetFolder = targetFolder.getParent();
 					}
 				} else {
-					System.out.println( "Error: target path " + targetFolder + " does not exist." );
+					System.err.println( "Error: target path " + targetFolder + " does not exist." );
 					System.exit( 1 );
 				}
 			}
@@ -262,7 +262,7 @@ public class Compiler {
 			}
 
 		} catch( ParseException e ) {
-			System.out.println( e.getMessage() );
+			System.err.println( e.getMessage() );
 			helpFormatter.printHelp( USAGE, options );
 			System.exit( 1 );
 		}
@@ -524,8 +524,8 @@ public class Compiler {
 
 	private void die() {
 		System.err.println( "Compilation failed, see above for details." );
-		System.out.println( NAME + " found errors it was not able to fix and had to give up." );
-		System.out.println( "\t (\\  /)\n\t ( .  .)\n\tC(\") (\")" );
+		System.err.println( NAME + " found errors it was not able to fix and had to give up." );
+		System.err.println( "\t (\\  /)\n\t ( .  .)\n\tC(\") (\")" );
 		System.exit( 1 );
 	}
 

@@ -653,7 +653,7 @@ public class Typer {
 					return annotate( n, g );
 				}
 			} catch( StaticVerificationException e ) {
-				System.out.println(n.name());
+				System.err.println(n.name());
 				throw new AstPositionedException( n.position(), e );
 			}
 		}
