@@ -449,9 +449,15 @@ public class ClassLifter {
      */
     private static <E extends Enum<E>> EnumSet<E> parseModifiers(java.lang.Class<E> enumClass, String modifiersStr) {
         EnumSet<E> modifiers = EnumSet.noneOf(enumClass);
+        if (modifiersStr.isEmpty()) return modifiers;
+
         String[] modifierStrings = modifiersStr.split(" ");
         for (String modifierString : modifierStrings) {
-            modifiers.add(Enum.valueOf(enumClass, modifierString.toUpperCase()));
+            try {
+                modifiers.add(Enum.valueOf(enumClass, modifierString.toUpperCase()));
+            } catch (IllegalArgumentException e){
+                continue;
+            }
         }
         return modifiers;
     }
