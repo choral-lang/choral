@@ -184,7 +184,9 @@ public class ClassLifter {
         MethodInfoList methodInfoList = classInfo.getMethodInfo();
         List<ClassMethodDefinition> methods = new ArrayList<>();
         for (MethodInfo methodInfo : methodInfoList){
+
             EnumSet<ClassMethodModifier> methodModifiers = parseModifiers(ClassMethodModifier.class, methodInfo.getModifiersStr());
+            
             MethodSignature methodSignature; 
             try {
                 methodSignature = getMethodSignature(methodInfo);
@@ -206,31 +208,20 @@ public class ClassLifter {
         MethodInfoList constructors = classInfo.getConstructorInfo();
         List<ConstructorDefinition> choralConstructors = new ArrayList<>();
         for (MethodInfo constructor : constructors){
-
             EnumSet<ConstructorModifier> modifiersConstructor = parseModifiers(ConstructorModifier.class, constructor.getModifiersStr());
             
-            MethodParameterInfo[] methodParams = constructor.getParameterInfo();
-            List<FormalMethodParameter> choralParameters; 
+            LiftedSignatureData liftedSignatureData;
             try {
-                choralParameters = getMethodParameters(methodParams);
-            } catch (LiftException e){
+                liftedSignatureData = liftSignatureData(constructor);
+            } catch (LiftException e) {
                 warn(constructor.getName(), e);
                 continue;
             }
-            
-            MethodTypeSignature methodTypeSignature = constructor.getTypeSignatureOrTypeDescriptor();
-            List<FormalTypeParameter> choralTypeParameters; 
-            try {
-                choralTypeParameters = liftTypeParameters(methodTypeSignature.getTypeParameters());
-            } catch (LiftException e){
-                warn(methodTypeSignature.toString(), e);
-                continue;
-            } 
 
             ConstructorSignature constructorSignature = new ConstructorSignature(
                 new Name(classInfo.getName(), NO_POSITION),  
-                choralTypeParameters, 
-                choralParameters, 
+                liftedSignatureData.typeParameters(), 
+                liftedSignatureData.parameters(), 
                 NO_POSITION);
 
             ConstructorDefinition constructorChoral = new ConstructorDefinition(
@@ -330,7 +321,6 @@ public class ClassLifter {
         for (MethodInfo interfaceMethod : interfaceMethods){
 
             EnumSet<InterfaceMethodModifier> interfaceMethodModifiers = parseModifiers(InterfaceMethodModifier.class, interfaceMethod.getModifiersStr());
-
             MethodSignature interfaceMethodSignature; 
             try {
                 interfaceMethodSignature = getMethodSignature(interfaceMethod);
@@ -615,16 +605,14 @@ public class ClassLifter {
 
     private static MethodSignature getMethodSignature(MethodInfo methodInfo) throws LiftException{
         MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
-        MethodParameterInfo[] methodParameters = methodInfo.getParameterInfo();
-
         TypeExpression returnType = getTypeExpressions(methodTypeSignature.getResultType());
-        List<FormalMethodParameter> choralMethodParameters = getMethodParameters(methodParameters);
-        List<FormalTypeParameter> choralTypeParameters = liftTypeParameters(methodTypeSignature.getTypeParameters());
+
+        LiftedSignatureData liftedSignatureData = liftSignatureData(methodInfo);
 
         return new MethodSignature(
             new Name(methodInfo.getName(), NO_POSITION), 
-            choralTypeParameters, // ignore type parameters for now 
-            choralMethodParameters, 
+            liftedSignatureData.typeParameters(), 
+            liftedSignatureData.parameters(), 
             returnType, 
             NO_POSITION);
     }
@@ -647,6 +635,20 @@ public class ClassLifter {
                 NO_POSITION));
         }
         return parameters;
+    }
+
+    // A record to hold data shared by MethodSignature and ConstructorSignature
+    private record LiftedSignatureData(
+        List<FormalTypeParameter> typeParameters,
+        List<FormalMethodParameter> parameters
+    ) {}
+
+    private static LiftedSignatureData liftSignatureData(MethodInfo methodInfo) throws LiftException {
+        MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
+        return new LiftedSignatureData(
+            liftTypeParameters(methodTypeSignature.getTypeParameters()),
+            getMethodParameters(methodInfo.getParameterInfo())
+        );
     }
 
     private static void warn(String id, LiftException e) {
