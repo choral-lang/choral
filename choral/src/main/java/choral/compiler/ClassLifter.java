@@ -181,28 +181,16 @@ public class ClassLifter {
         }
 
         // TRANSLATE METHODS
-        MethodInfoList methodInfoList = classInfo.getMethodInfo();
-        List<ClassMethodDefinition> methods = new ArrayList<>();
-        for (MethodInfo methodInfo : methodInfoList){
-
-            EnumSet<ClassMethodModifier> methodModifiers = parseModifiers(ClassMethodModifier.class, methodInfo.getModifiersStr());
-            
-            MethodSignature methodSignature; 
-            try {
-                methodSignature = getMethodSignature(methodInfo);
-            } catch (LiftException e){
-                warn(methodInfo.getName(), e);
-                continue;
-            }
-
-            ClassMethodDefinition method = new ClassMethodDefinition(
-                methodSignature, 
-                new NilStatement(NO_POSITION), // Ignore method body
-                Collections.emptyList(), // ignore annotations for now
-                methodModifiers, 
-                NO_POSITION);
-            methods.add(method);
-        }
+        List<ClassMethodDefinition> methods = liftMethods(
+            classInfo.getMethodInfo(),
+            ClassMethodModifier.class,
+            (signature, modifiers) -> new ClassMethodDefinition(
+                signature,
+                new NilStatement(NO_POSITION),
+                Collections.emptyList(),
+                modifiers,
+                NO_POSITION)
+        );
 
         // TRANSLATE CONSTRUCTORS
         MethodInfoList constructors = classInfo.getConstructorInfo();
@@ -316,26 +304,15 @@ public class ClassLifter {
 
     private static void liftInterface(ClassInfo interfaceInfo, List<CompilationUnit> compilationUnitAccumulator){
         // TRANSLATE METHODS
-        MethodInfoList interfaceMethods = interfaceInfo.getMethodInfo();
-        List<InterfaceMethodDefinition> choralInterfaceMethods = new ArrayList<>();
-        for (MethodInfo interfaceMethod : interfaceMethods){
-
-            EnumSet<InterfaceMethodModifier> interfaceMethodModifiers = parseModifiers(InterfaceMethodModifier.class, interfaceMethod.getModifiersStr());
-            MethodSignature interfaceMethodSignature; 
-            try {
-                interfaceMethodSignature = getMethodSignature(interfaceMethod);
-            } catch (LiftException e) {
-                warn(interfaceMethod.getName(), e);
-                continue;
-            } 
-
-            InterfaceMethodDefinition choralInterfaceMethod = new InterfaceMethodDefinition(
-                interfaceMethodSignature, 
-                Collections.emptyList(), // ignore annotations for now 
-                interfaceMethodModifiers, 
-                NO_POSITION);
-            choralInterfaceMethods.add(choralInterfaceMethod);
-        }
+        List<InterfaceMethodDefinition> choralInterfaceMethods = liftMethods(
+            interfaceInfo.getMethodInfo(),
+            InterfaceMethodModifier.class,
+            (signature, modifiers) -> new InterfaceMethodDefinition(
+                signature,
+                Collections.emptyList(),
+                modifiers,
+                NO_POSITION)
+        );
 
         // find super interfaces
         ClassTypeSignature interfaceTypeSignature = interfaceInfo.getTypeSignatureOrTypeDescriptor();
@@ -438,6 +415,28 @@ public class ClassLifter {
             null);
 
         compilationUnitAccumulator.add(compilationUnit);
+    }
+
+    private static <M extends Enum<M>, D> List<D> liftMethods(
+        MethodInfoList methodInfoList,
+        java.lang.Class<M> modifierClass,
+        MethodDefinitionFactory<M, D> factory
+    ) {
+        List<D> methodDefinitions = new ArrayList<>();
+        for (MethodInfo methodInfo : methodInfoList) {
+            EnumSet<M> modifiers = parseModifiers(modifierClass, methodInfo.getModifiersStr());
+
+            MethodSignature methodSignature;
+            try {
+                methodSignature = getMethodSignature(methodInfo);
+            } catch (LiftException e) {
+                warn(methodInfo.getName(), e);
+                continue;
+            }
+
+            methodDefinitions.add(factory.create(methodSignature, modifiers));
+        }
+        return methodDefinitions;
     }
 
     /**
@@ -655,6 +654,11 @@ public class ClassLifter {
             liftTypeParameters(methodTypeSignature.getTypeParameters()),
             getMethodParameters(methodInfo.getParameterInfo())
         );
+    }
+
+    @FunctionalInterface
+    interface MethodDefinitionFactory<M extends Enum<M>, D> {
+        D create(MethodSignature signature, EnumSet<M> modifiers);
     }
 
     private static void warn(String id, LiftException e) {
