@@ -286,12 +286,7 @@ public class ClassLifter {
         compilationUnitAccumulator.add(compilationUnit);  
         
         // recursively visit referenced classfiles
-        ClassInfoList dependencies = classInfo.getClassDependencies();
-        for (ClassInfo dependency : dependencies){
-            if (trackedCompilationUnits.add(dependency.getName())){
-                liftPackageHelper(dependency.getName(), compilationUnitAccumulator);
-            }
-        }
+        visitDependencies(classInfo, compilationUnitAccumulator);
 
         // recursively visit super class
         if (extendedClassTypeSignature != null){
@@ -365,17 +360,21 @@ public class ClassLifter {
         compilationUnitAccumulator.add(compilationUnit);
 
         // recursively visit referenced classfiles
-        ClassInfoList dependencies = interfaceInfo.getClassDependencies();
-        for (ClassInfo dependency : dependencies){
-            if (trackedCompilationUnits.add(dependency.getName())){
-                liftPackageHelper(dependency.getName(), compilationUnitAccumulator);
-            }
-        }
+        visitDependencies(interfaceInfo, compilationUnitAccumulator);
 
         // recursively visit super interfaces
         for (String name : extendedInterfaceNames){
             if (trackedCompilationUnits.add(name)){
                 liftPackageHelper(name, compilationUnitAccumulator);
+            }
+        }
+    }
+
+    private static void visitDependencies(ClassInfo classInfo, List<CompilationUnit> compilationUnitAccumulator){
+        ClassInfoList dependencies = classInfo.getClassDependencies();
+        for (ClassInfo dependency : dependencies){
+            if (trackedCompilationUnits.add(dependency.getName())){
+                liftPackageHelper(dependency.getName(), compilationUnitAccumulator);
             }
         }
     }
