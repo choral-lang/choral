@@ -236,18 +236,7 @@ public class ClassLifter {
 
         // TRANSLATE SUPERINTERFACES
         ClassRefTypeSignature extendedClassTypeSignature = classTypeSignature.getSuperclassSignature();
-        List<ClassRefTypeSignature> implementedInterfaceTypeSignatures = classTypeSignature.getSuperinterfaceSignatures();
-        List<TypeExpression> parentInterfaces = new ArrayList<>();
-        for (ClassRefTypeSignature implementedTypeSignature : implementedInterfaceTypeSignatures){
-            TypeExpression interfaceExpression;
-            try {
-                interfaceExpression = getTypeExpressions(implementedTypeSignature);
-            } catch (LiftException e) {
-                warn(implementedTypeSignature.getBaseClassName(), e);
-                continue;
-            } 
-            parentInterfaces.add(interfaceExpression);
-        }
+        List<TypeExpression> parentInterfaces = liftSuperInterfaces(classTypeSignature.getSuperinterfaceSignatures());
 
         // TRANSLATE SUPERCLASS
         TypeExpression extendedExpression = null;
@@ -311,21 +300,7 @@ public class ClassLifter {
 
         // find super interfaces
         ClassTypeSignature interfaceTypeSignature = interfaceInfo.getTypeSignatureOrTypeDescriptor();
-        List<ClassRefTypeSignature> extendedInterfaceSignatures = interfaceTypeSignature.getSuperinterfaceSignatures();
-        
-        List<TypeExpression> choralExtendedInterfaces = new ArrayList<>();
-        List<String> extendedInterfaceNames = new ArrayList<>();
-        for (ClassRefTypeSignature extendedInterfaceSignature : extendedInterfaceSignatures){
-            extendedInterfaceNames.add(extendedInterfaceSignature.getBaseClassName());
-            TypeExpression interfaceExpression; 
-            try {
-                interfaceExpression = getTypeExpressions(extendedInterfaceSignature);
-            } catch (LiftException e) {
-                warn(extendedInterfaceSignature.getBaseClassName(), e);
-                continue;
-            } 
-            choralExtendedInterfaces.add(interfaceExpression);
-        }
+        List<TypeExpression> choralExtendedInterfaces = liftSuperInterfaces(interfaceTypeSignature.getSuperinterfaceSignatures());
         
         // TRANSLATE TYPE PARAMETERS
         List<FormalTypeParameter> choralTypeParameters; 
@@ -361,13 +336,22 @@ public class ClassLifter {
 
         // recursively visit referenced classfiles
         visitDependencies(interfaceInfo, compilationUnitAccumulator);
+    }
 
-        // recursively visit super interfaces
-        for (String name : extendedInterfaceNames){
-            if (trackedCompilationUnits.add(name)){
-                liftPackageHelper(name, compilationUnitAccumulator);
-            }
+    private static List<TypeExpression> liftSuperInterfaces(List<ClassRefTypeSignature> interfaceSignatures){
+        List<TypeExpression> translatedSuperInterfaces = new ArrayList<>();
+        for (ClassRefTypeSignature implementedTypeSignature : interfaceSignatures){
+            TypeExpression interfaceExpression;
+            try {
+                interfaceExpression = getTypeExpressions(implementedTypeSignature);
+            } catch (LiftException e) {
+                warn(implementedTypeSignature.getBaseClassName(), e);
+                continue;
+            } 
+            translatedSuperInterfaces.add(interfaceExpression);
         }
+
+        return translatedSuperInterfaces;
     }
 
     private static void visitDependencies(ClassInfo classInfo, List<CompilationUnit> compilationUnitAccumulator){
