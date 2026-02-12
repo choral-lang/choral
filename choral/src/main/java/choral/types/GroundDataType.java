@@ -23,6 +23,11 @@ package choral.types;
 
 import java.util.List;
 
+/**
+ * A ground type is a datatype where the world parameters have been instantiated. If I have a class
+ * {@code HelloWorlds@(X,Y) { ... }} and in its definition I have {@code Future@X<Integer>}, then
+ * the latter is a ground type.
+ */
 public interface GroundDataType extends DataType, GroundDataTypeOrVoid {
 
 	@Override

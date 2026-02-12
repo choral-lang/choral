@@ -24,6 +24,7 @@ package choral.types;
 import java.util.List;
 import java.util.stream.Stream;
 
+/** @see choral.types.GroundDataType */
 public interface GroundClassOrInterface extends ClassOrInterface, GroundReferenceType {
 
 	HigherClassOrInterface typeConstructor();

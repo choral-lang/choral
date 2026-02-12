@@ -26,6 +26,7 @@ import com.google.common.collect.Streams;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+/** @see choral.types.GroundDataType */
 public interface GroundClass extends GroundClassOrInterface, Class {
 
 	@Override

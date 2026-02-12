@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/** @see HigherDataType */
 public final class HigherTypeParameter extends HigherReferenceType implements TypeParameter {
 
 	public HigherTypeParameter(
@@ -333,6 +334,7 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 
 	}
 
+	/** @see HigherDataType.Proxy */
 	private final class Proxy extends HigherReferenceType.Proxy implements GroundTypeParameter {
 
 		private Proxy( Substitution substitution ) {

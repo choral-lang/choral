@@ -21,6 +21,7 @@
 
 package choral.types;
 
+/** @see choral.types.GroundDataType */
 public interface GroundInterface extends GroundClassOrInterface, Interface {
 
 	@Override
