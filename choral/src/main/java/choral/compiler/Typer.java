@@ -40,6 +40,7 @@ import choral.utils.Formatting;
 import choral.utils.Pair;
 import com.google.common.base.Strings;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -123,15 +124,15 @@ public class Typer {
 			}
 			CompilationUnitScope scope = new CompilationUnitScope( pkg, n.imports() );
 			for( choral.ast.body.Class x : n.classes() ) {
-				checkPrimaryTemplate( x, n.primaryType(), "class" );
+				checkPrimaryTemplate( x, n, "class" );
 				visitClass( scope, pkg, x );
 			}
 			for( choral.ast.body.Enum x : n.enums() ) {
-				checkPrimaryTemplate( x, n.primaryType(), "enum" );
+				checkPrimaryTemplate( x, n, "enum" );
 				visitEnum( scope, pkg, x );
 			}
 			for( choral.ast.body.Interface x : n.interfaces() ) {
-				checkPrimaryTemplate( x, n.primaryType(), "interface" );
+				checkPrimaryTemplate( x, n, "interface" );
 				visitInterface( scope, pkg, x );
 			}
 			visitImportDeclarations( scope, n.imports() );
@@ -141,7 +142,7 @@ public class Typer {
 		}
 
 		protected abstract void checkPrimaryTemplate(
-				TemplateDeclaration n, String primaryType, String family
+				TemplateDeclaration n, CompilationUnit cu, String family
 		);
 
 		private void checkExtendsForCycles(
@@ -674,7 +675,6 @@ public class Typer {
 					return annotate( n, g );
 				}
 			} catch( StaticVerificationException e ) {
-				System.out.println(n.name());
 				throw new AstPositionedException( n.position(), e );
 			}
 		}
@@ -871,7 +871,7 @@ public class Typer {
 
 		@Override
 		protected void checkPrimaryTemplate(
-				TemplateDeclaration n, String primaryType, String family
+				TemplateDeclaration n, CompilationUnit cu, String family
 		) {
 			/* we are more permissive with header files, this may change in the future */
 		}
@@ -922,9 +922,15 @@ public class Typer {
 
 		@Override
 		protected void checkPrimaryTemplate(
-				TemplateDeclaration n, String primaryType, String family
+				TemplateDeclaration n, CompilationUnit cu, String family
 		) {
-			if (primaryType == null) return;
+			String sourceFile = cu.position().sourceFile();
+			if (sourceFile == null) return;
+
+			int k = Math.max( 0, sourceFile.lastIndexOf( '.' ) );
+			int j = Math.min( k, sourceFile.lastIndexOf( File.separatorChar ) + 1 );
+			String primaryType = sourceFile.substring( j, k );
+
 			if( n.isPublic() && !n.name().identifier().equals( primaryType ) ) {
 				throw new AstPositionedException( n.position(),
 						new StaticVerificationException( family

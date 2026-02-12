@@ -413,7 +413,7 @@ public class TestChoral {
 		CompilationResults results = compile(compilationRequest);
 		if( results.exitCode != 0 )
 			errors.add( "Compilation failed unexpectedly with exit code " + results.exitCode +
-					"\n" + results.stdout );
+					"\n" + results.stdout + "\n" + results.stderr );
 
 		try {
 			// Get the package names declared in the source folders of the compilation request

@@ -28,14 +28,7 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -372,7 +365,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		}
 		System.out.printf(
 				"%1$s:%2$d:%3$d: error: %4$s.\n\n%5$s\n",
-				relativizePath( p.sourceFile() ),
+				p.prettyPath(),
 				p.line(),
 				p.column(),
 				capitalizeFirst( e.getInnerMessage() ),
@@ -381,11 +374,6 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		if( verbosity == VerbosityOptions.VerbosityLevel.DEBUG ) {
 			e.printStackTrace();
 		}
-	}
-
-	public static String relativizePath( String path ) {
-		return Paths.get( "." ).toAbsolutePath().relativize(
-				Paths.get( path ).toAbsolutePath() ).toString();
 	}
 
 	static String capitalizeFirst( String str ) {
