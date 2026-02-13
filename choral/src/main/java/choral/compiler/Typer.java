@@ -1037,6 +1037,7 @@ public class Typer {
 				dependencies.put( callable, selected.higherCallable() );
 				positions.put( callable, n.position() );
 			}
+			callable.addChannel(scope.getChannels()); // find all available channels
 			new Check( scope, universe().voidType(), callable ).visit( d.blockStatements() );
 		}
 

@@ -1142,15 +1142,21 @@ public class RelaxedTyper {
 			return ms;
 		}
 
-		GroundDataTypeOrVoid synth( VariableDeclarationScope scope, Expression n,
-			HigherCallable method, Statement statement ) {
-			return new Synth( scope, method, statement ).visit( n );
+		GroundDataTypeOrVoid synth(
+				VariableDeclarationScope scope,
+				Expression n,
+				HigherCallable method,
+				Statement statement
+		) {
+			return new Synth( scope, false, Collections.emptyList(), method, statement ).visit( n );
 		}
 
 		GroundDataTypeOrVoid synth(
-				VariableDeclarationScope scope, Expression n, boolean explicitConstructorArg
+				VariableDeclarationScope scope,
+				Expression n,
+				boolean explicitConstructorArg
 		) {
-			return new Synth( scope, explicitConstructorArg, null, null ).visit( n );
+			return new Synth( scope, explicitConstructorArg, Collections.emptyList(), null, null ).visit( n );
 		}
 
 		GroundDataTypeOrVoid synth(
@@ -1160,17 +1166,17 @@ public class RelaxedTyper {
 				HigherCallable method,
 				Statement statement
 		) {
-			return new Synth( scope, explicitConstructorArg, method, statement ).visit( n );
+			return new Synth( scope, explicitConstructorArg, Collections.emptyList(), method, statement ).visit( n );
 		}
 
 		GroundDataTypeOrVoid synth(
-			VariableDeclarationScope scope,
-			Expression n,
-			List< ? extends World > homeWorlds,
-			HigherCallable method,
-			Statement statement
+				VariableDeclarationScope scope,
+				Expression n,
+				List< ? extends World > homeWorlds,
+				HigherCallable method,
+				Statement statement
 		) {
-			return new Synth( scope, homeWorlds, method, statement ).visit( n );
+			return new Synth( scope, false, homeWorlds, method, statement ).visit( n );
 		}
 
 		GroundDataTypeOrVoid synth(
@@ -1368,37 +1374,9 @@ public class RelaxedTyper {
 		 */
 		private final class Synth extends AbstractChoralVisitor< GroundDataTypeOrVoid > {
 
-			public Synth( 
-				VariableDeclarationScope scope, 
-				HigherCallable method,
-				Statement statement 
-			) {
-				this( scope, false, method, statement );
-			}
-
-			public Synth( 
-				VariableDeclarationScope scope, 
-				boolean explicitConstructorArg, 
-				HigherCallable method,
-				Statement statement 
-			) {
-				this.scope = scope;
-				this.explicitConstructorArg = explicitConstructorArg;
-				this.enclosingMethod = method;
-				this.enclosingStatement = statement;
-			}
-
-			public Synth( 
-				VariableDeclarationScope scope, 
-				List< ? extends World > homeWorlds, 
-				HigherCallable method,
-				Statement statement   
-			) {
-				this( scope, false, homeWorlds, method, statement );
-			}
-
-			public Synth( 
-				VariableDeclarationScope scope, boolean explicitConstructorArg, 
+			public Synth(
+				VariableDeclarationScope scope,
+				boolean explicitConstructorArg,
 				List< ? extends World > homeWorlds,
 				HigherCallable method,
 				Statement statement 
@@ -1414,12 +1392,18 @@ public class RelaxedTyper {
 			private GroundDataTypeOrVoid left = null;
 			private boolean leftStatic = false;
 			private final boolean explicitConstructorArg;
-			/** The worlds at which the expression takes place. */
-			List< ? extends World > homeWorlds = Collections.emptyList();
-			/** A reference to the enclosing method. */
-			HigherCallable enclosingMethod;
-			/** A reference to the enclosing statement. */
-			Statement enclosingStatement;
+
+			/**
+			 * The set of worlds where we think the expression will be evaluated. For example, in
+			 * the statement {@code int@B z = x + y;}, we set B as the home world. We use this
+			 * information for communication inference: if x was located at another world A, we'd
+			 * infer that B needs a copy of x from A.
+			 */
+			private List< ? extends World > homeWorlds;
+			/** The method that contains the current expression. */
+			private final HigherCallable enclosingMethod;
+			/** The statement that contains the current expression. */
+			private final Statement enclosingStatement;
 
 			@Override
 			public GroundDataTypeOrVoid visit( Expression n ) {
@@ -1444,15 +1428,12 @@ public class RelaxedTyper {
 				// `scopedExpression=second`. `second` would then be a `FieldAccessExpression`.
 
 
-				/* In a ScopedExpression like a.b.c the second layer would have `scope=a.b` and 
-				 * `scopedExpression=c`. we would detect that this is the end of our ScopedExpression.
-				 * However when `scope` is visited, it would also be a ScopedExpression which would be 
-				 * detected as the innermost ScopedExpression (since this would have scope=a and 
-				 * scopedExpression=b). 
+				/* In a ScopedExpression like a.b.c the shallowest layer would have `scope=a` and
+				 * `scopedExpression=b.c`. We would detect that this is the end of our ScopedExpression.
+				 * However when `scopedExpression` is visited, it would also be a ScopedExpression which would be
+				 * detected as the innermost ScopedExpression (since this would have scope=b and
+				 * scopedExpression=c).
 				 * To get around this, we "turn off" homeWorlds, ensuring that no dependencies are detected
-				 * 
-				 * TODO
-				 * 		The explanation above is not fully correct
 				 */
 				List< ? extends World > savedHomeWorlds = homeWorlds;
 				homeWorlds = Collections.emptyList();
@@ -1997,42 +1978,28 @@ public class RelaxedTyper {
 			private void inferCommunications( 
 				List< ? extends World > fromWorlds, 
 				Expression expression 
-				){
-				if( !homeWorlds.isEmpty() && !atHome(fromWorlds) ){
-					enclosingMethod.addDependency(homeWorlds.stream().map( world -> (World)world ).toList(), expression, enclosingStatement);
+			){
+				if( !homeWorlds.containsAll( fromWorlds ) ){
+					enclosingMethod.addDependency(homeWorlds, expression, enclosingStatement);
 				}
-					
 			}
 
 			private void inferCommunications(
 				List< ? extends World > fromWorlds,
 				List< ? extends World > toWorlds, 
 				Expression expression 
-				){
-				if( !toWorlds.isEmpty() && !atHome(toWorlds, fromWorlds) ){
-					enclosingMethod.addDependency(toWorlds.stream().map( world -> (World)world ).toList(), expression, enclosingStatement);
+			){
+				if( !toWorlds.containsAll( fromWorlds ) ){
+					enclosingMethod.addDependency(toWorlds, expression, enclosingStatement);
 				}
-					
 			}
-
-			/**
-			 * Returns true if all worlds in otherWorlds are equal to at least one world in homeWorlds
-			 */
-			private boolean atHome(List< ? extends World > otherWorlds ){
-				return otherWorlds.stream().allMatch( other -> homeWorlds.stream().anyMatch( homeWorld -> other.equals( homeWorld )) );
-			}
-
-			private boolean atHome( List< ? extends World > home, List< ? extends World > otherWorlds ){
-				return otherWorlds.stream().allMatch( other -> home.stream().anyMatch( homeWorld -> other.equals( homeWorld )) );
-			}
-
 
 			/**
 			 * Checks the world correspondence between the given literal expression and homeworlds.
 			 * If they don't match, an exception is thrown.
 			 */
 			private <T extends LiteralExpression<?>> void checkWorlds( T n ){
-				if( !homeWorlds.isEmpty() && !atHome( List.of( visitWorld(n.world()) ) )){
+				if( !homeWorlds.isEmpty() && !homeWorlds.contains( visitWorld( n.world() ) ) ){
 					throw new AstPositionedException( n.position(),
 							 new StaticVerificationException(
 									 "Literal '" + n + "', cannot be used in an expression at world '" + homeWorlds + "'" ) );
@@ -2061,7 +2028,7 @@ public class RelaxedTyper {
 			}
 
 			public List< ? extends World > visitWorlds( List< WorldArgument > n ) {
-				return n.stream().map( this::visitWorld ).collect( Collectors.toList() );
+				return n.stream().map( this::visitWorld ).toList();
 			}
 
 			public World visitWorld( WorldArgument n ) {

@@ -457,13 +457,13 @@ public abstract class Member implements HasSource {
 		 * <pre>
 		 * {@code
 		 * int@A i_A = 0@A;
-		 *int@B i_B = i_A;}
+		 * int@B i_B = i_A;}
 		 * </pre>
-		 * World {@code B} would depend on {@code i_A}. 
+		 * World {@code B} would depend on {@code i_A}.
 		 */
 		private Map<World, List<Pair<Expression, Statement>>> worldDependencies =  new HashMap<>();
 		
-		public void addDependency( List<World> worlds, Expression expression, Statement statement ){
+		public void addDependency( List<? extends World> worlds, Expression expression, Statement statement ){
 			for( World world : worlds ){
 				addDependency(world, expression, statement);
 			}
@@ -472,7 +472,6 @@ public abstract class Member implements HasSource {
 		public void addDependency( World world, Expression expression, Statement statement ){
 			worldDependencies.putIfAbsent(world, new ArrayList<>());
 			worldDependencies.get(world).add(new Pair<>(expression, statement));
-			
 		}
 
 		public Map<World, List<Pair<Expression, Statement>>> worldDependencies(){
