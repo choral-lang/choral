@@ -47,6 +47,7 @@ import com.google.common.base.Strings;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -960,6 +961,7 @@ public class Typer {
 					throw new StaticVerificationException(
 							"non-abstract methods must have bodies" );
 				} else {
+					callable.addChannel(bodyScope.getChannels()); // find all available channels
 					boolean returnChecked = new Check( bodyScope,
 							callable.innerCallable().returnType(), callable )
 							.visit( body );
@@ -2463,6 +2465,9 @@ public class Typer {
 		private final Map< String, GroundDataType > variables = new HashMap<>();
 
 		@Override
+		public Map< String, GroundDataType > variables() { return variables; }
+
+		@Override
 		public void declareVariable( String identifier, GroundDataType type ) {
 			if( lookupVariable( identifier ).isEmpty() ) {
 				variables.put( identifier, type );
@@ -2520,6 +2525,9 @@ public class Typer {
 		}
 
 		private final Map< String, GroundDataType > variables = new HashMap<>();
+
+		@Override
+		public Map< String, GroundDataType > variables() { return variables; }
 
 		@Override
 		public void declareVariable( String identifier, GroundDataType type ) {
@@ -2603,7 +2611,55 @@ public class Typer {
 
 		Scope parent();
 
+		Map< String, GroundDataType > variables();
+
 		BlockScope newBlockScope();
+
+		/**
+		 * Collects channels available in the scope by looking at the fields of "this"
+		 * and the enclosing method's arguments
+		 */
+		default List<Pair<String, GroundInterface>> getChannels(){
+			Map<String, GroundInterface> channels = new HashMap<>();
+			HigherClassOrInterface diDataChannel = assertLookupClassOrInterface("choral.channels.DiDataChannel");
+			HigherClassOrInterface diSelectChannel = assertLookupClassOrInterface("choral.channels.DiSelectChannel");
+
+			Predicate<GroundInterface> isChannel = ( type) ->
+				type.allExtendedInterfaces()
+					.anyMatch( extendedInterface ->
+							diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ||
+							diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) );
+
+			VariableDeclarationScope currentScope = this;
+			while ( true ) {
+				currentScope.variables().forEach( (key, val) -> {
+					if( val instanceof GroundInterface type ){
+						if( isChannel.test( type ) ){
+							channels.putIfAbsent( key, type );
+						}
+					}
+				} );
+
+				if( parent() instanceof VariableDeclarationScope parent ){
+					currentScope = parent;
+				}
+				else {
+					break;
+				}
+			}
+
+			lookupThis().fields().forEach( field -> {
+				if( field.type() instanceof GroundInterface type ){
+					if( isChannel.test( type ) ){
+						channels.putIfAbsent( field.identifier(), type );
+					}
+				}
+			} );
+
+			return channels.entrySet().stream()
+				.map( entry -> new Pair<>( entry.getKey(), entry.getValue() ) )
+				.toList();
+		}
 
 	}
 
