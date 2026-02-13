@@ -21,7 +21,7 @@ public class ChannelTypesExample_B {
 	}
 
 	public void fun() {
-		String msg0 = ch_AB_S.< String >com( Unit.id );
+		String msg0 = ch_AB_O.< String >com( Unit.id );
 		String s_B = msg0;
 		Integer msg1 = ch_AB_N.< Integer >com( Unit.id );
 		Integer i_B = msg1;

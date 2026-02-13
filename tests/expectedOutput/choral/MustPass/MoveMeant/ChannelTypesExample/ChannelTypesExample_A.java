@@ -21,7 +21,7 @@ public class ChannelTypesExample_A {
 
 	public void fun() {
 		String s_A = "A";
-		ch_AB_S.< String >com( s_A );
+		ch_AB_O.< String >com( s_A );
 		Integer i_A = 0;
 		ch_AB_N.< Integer >com( i_A );
 		Object o_A = new Object();

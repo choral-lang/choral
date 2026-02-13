@@ -47,6 +47,7 @@ import com.google.common.base.Strings;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -2797,41 +2798,45 @@ public class RelaxedTyper {
 		 * and the enclosing method's arguments
 		 */
 		default List<Pair<String, GroundInterface>> getChannels(){
-			List<Pair<String, GroundInterface>> channels = new ArrayList<>();
+			Map<String, GroundInterface> channels = new HashMap<>();
 			HigherClassOrInterface diDataChannel = assertLookupClassOrInterface("choral.channels.DiDataChannel");
 			HigherClassOrInterface diSelectChannel = assertLookupClassOrInterface("choral.channels.DiSelectChannel");
 
+			Predicate<GroundInterface> isChannel = (type) ->
+				type.allExtendedInterfaces()
+					.anyMatch( extendedInterface ->
+							diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ||
+							diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) );
+
+			VariableDeclarationScope currentScope = this;
+			while ( true ) {
+				currentScope.variables().forEach( (key, val) -> {
+					if( val instanceof GroundInterface type ){
+						if( isChannel.test( type ) ){
+							channels.putIfAbsent( key, type );
+						}
+					}
+				} );
+
+				if( parent() instanceof VariableDeclarationScope parent ){
+					currentScope = parent;
+				}
+				else {
+					break;
+				}
+			}
+
 			lookupThis().fields().forEach( field -> {
 				if( field.type() instanceof GroundInterface type ){
-					boolean isChannel =
-						type.allExtendedInterfaces()
-							.anyMatch( extendedInterface ->
-									diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ||
-									diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) );
-					if( isChannel ){
-						channels.add(new Pair<>(field.identifier(), type));
+					if( isChannel.test( type ) ){
+						channels.putIfAbsent( field.identifier(), type );
 					}
 				}
 			} );
-			variables().forEach( (key, val) -> {
-				if( val instanceof GroundInterface type ){
-					boolean isChannel =
-						type.allExtendedInterfaces()
-							.anyMatch( extendedInterface ->
-								diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ||
-								diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) );
-					if( isChannel ){
-						channels.add(new Pair<>(key, type));
-					}
-				}
-			} );
-			if( parent() instanceof VariableDeclarationScope parent ){
-				parent.getChannels().forEach( ch -> {
-					if(!channels.contains(ch))
-						channels.add(ch);
-				} );;
-			}
-			return channels;
+
+			return channels.entrySet().stream()
+				.map( entry -> new Pair<>( entry.getKey(), entry.getValue() ) )
+				.toList();
 		}
 
 	}
