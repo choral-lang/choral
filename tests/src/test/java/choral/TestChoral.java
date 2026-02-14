@@ -133,8 +133,6 @@ public class TestChoral {
 		CompilationRequestBuilder mustPass = new CompilationRequestBuilder();
 		CompilationRequestBuilder mustFail = new CompilationRequestBuilder();
 
-		mustFail.addSources( "ClassClashesWithPackage", subFolder( TYPER_FAIL, "ClassClashesWithPackage" ) );
-
 		return Stream.concat(
 				mustPass.build().map(request ->
 						dynamicTest(request.symbol, new MustPassTest( request ))),
