@@ -54,6 +54,22 @@ import java.util.stream.Stream;
 
 public class Typer {
 
+	/**
+	 * Choral and Java allow you to use a type or a method before it's been declared; it's perfectly
+	 * valid to implement a method foo on line 10 that uses a method bar on line 20. For
+	 * this to work, we have to split up typechecking into multiple phases:
+	 * <ol>
+	 * <li> Type symbol declarations: Declare all the packages, classes, interfaces, and enums
+	 * without inspecting their contents.
+	 * <li> Hierarchy: Check if the inheritance hierarchy is ok. This phase detects inheritance
+	 * cycles, like when Foo extends Bar and Bar extends Foo.
+	 * <li> Bounds checks: Check type bounds.
+	 * <li> Member declarations: Declare fields, methods, and constructors without inspecting their
+	 * implementations.
+	 * <li> Member definitions: Typecheck the body of a method or constructor.
+	 * <li> Member global checks: Check for mutual recursion between constructors.
+	 * </ol>
+	 */
 	private enum Phase {
 		TYPE_SYMBOL_DECLARATIONS,
 		HIERARCHY,
@@ -63,6 +79,12 @@ public class Typer {
 		MEMBER_GLOBAL_CHECKS,
 	}
 
+	/**
+	 * The main entry point for type checking.
+	 * @param sourceUnits Compilation units representing source code
+	 * @param headerUnits Compilation units representing header files
+	 * @return A reference to the sourceUnits, now annotated with type information
+	 */
 	public static Collection< CompilationUnit > annotate(
 			Collection< CompilationUnit > sourceUnits,
 			Collection< CompilationUnit > headerUnits,
@@ -165,8 +187,7 @@ public class Typer {
 					n
 			);
 			n.setTypeAnnotation( t ); // annotate AST
-			ClassOrInterfaceStaticScope classOrInterfaceStaticScope = declarationScope.getScope(
-					t );
+			ClassOrInterfaceStaticScope classOrInterfaceStaticScope = declarationScope.getScope( t );
 			TaskQueue.Task ht = new TaskQueue.Task( Phase.HIERARCHY, () -> {
 				if( n.superClass().isEmpty() ) {
 					t.innerType().setExtendedClass(); // default
@@ -2848,6 +2869,12 @@ public class Typer {
 
 	}
 
+	/**
+	 * A priority queue of typechecking tasks, sorted by @Typer.Phase. We use the queue to ensure
+	 * that tasks in phase N are all completed before those in phase N+1.
+	 * <p>
+	 * TODO What are "rounds"? When do we use the "status" of a task?
+	 */
 	private static class TaskQueue {
 
 		final Map< HigherClassOrInterface, TaskQueue.Task > hierarchyConstructionTasks = new HashMap<>();

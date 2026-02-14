@@ -34,6 +34,7 @@ import static choral.types.Modifier.*;
 import static choral.types.ModifierUtils.assertAccessModifiers;
 import static choral.types.ModifierUtils.assertLegalModifiers;
 
+/** @see HigherDataType */
 public abstract class HigherClassOrInterface extends HigherReferenceType
 		implements ClassOrInterface, TypeParameterDeclarationContext {
 
@@ -592,6 +593,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 	}
 
+	/** @see HigherDataType.Proxy */
 	protected abstract class Proxy extends HigherReferenceType.Proxy
 			implements GroundClassOrInterface {
 

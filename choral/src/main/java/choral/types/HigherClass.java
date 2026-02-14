@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 import static choral.types.Modifier.PUBLIC;
 
+/** @see HigherDataType */
 public class HigherClass extends HigherClassOrInterface implements Class {
 
 	public HigherClass(
@@ -242,6 +243,7 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 
 	}
 
+	/** @see HigherDataType.Proxy */
 	protected class Proxy extends HigherClassOrInterface.Proxy implements GroundClass {
 
 		Proxy( Substitution substitution ) {

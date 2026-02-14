@@ -27,6 +27,9 @@ import choral.types.kinds.Kind;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A role parameter. In a definition like {@code class Foo@(A,B) {...}}, A and B are worlds.
+ */
 public final class World extends TypeBase implements Comparable< World > {
 
 	static final String DEFAULT_NAME = "A";

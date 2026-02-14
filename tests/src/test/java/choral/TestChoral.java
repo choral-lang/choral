@@ -60,6 +60,8 @@ public class TestChoral {
 	private static final String MUSTPASS = Paths.get("src", "main", "choral", "MustPass").toString();
 	private static final String MOVEMEANT_PASS = subFolder( MUSTPASS, "MoveMeant" );
 	private static final String MOVEMEANT_FAIL = subFolder( MUSTFAIL, "MoveMeant" );
+	private static final String TYPER_PASS = subFolder( MUSTPASS, "Typer" );
+	private static final String TYPER_FAIL = subFolder( MUSTFAIL, "Typer" );
 	private static final String BASE_PATH = Paths.get("base", "src", "main", "java").toString();
 	private static final String RUNTIME_PATH = Paths.get("runtime", "src", "main", "java").toString();
 	/** Location of Java code produced by the Choral compiler. */
@@ -124,6 +126,21 @@ public class TestChoral {
 
 		return builder.build().map(request ->
 				dynamicTest(request.symbol, new MustFailTest( request )));
+	}
+
+	@TestFactory
+	public Stream< DynamicTest > typer() {
+		CompilationRequestBuilder mustPass = new CompilationRequestBuilder();
+		CompilationRequestBuilder mustFail = new CompilationRequestBuilder();
+
+		mustFail.addSources( "ClassClashesWithPackage", subFolder( TYPER_FAIL, "ClassClashesWithPackage" ) );
+
+		return Stream.concat(
+				mustPass.build().map(request ->
+						dynamicTest(request.symbol, new MustPassTest( request ))),
+				mustFail.build().map(request ->
+						dynamicTest(request.symbol, new MustFailTest( request )))
+		);
 	}
 
 	@TestFactory

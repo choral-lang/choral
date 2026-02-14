@@ -536,6 +536,7 @@ public abstract class Member implements HasSource {
 			}
 		}
 
+		/** @see HigherDataType.Proxy */
 		protected abstract class Proxy implements GroundCallable {
 
 			Proxy( Substitution substitution ) {

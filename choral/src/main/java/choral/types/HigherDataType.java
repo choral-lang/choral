@@ -28,6 +28,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * A "higher" datatype is a type with {@link World}s as parameters. For example, in the definition
+ * {@code class Foo@(A,B) { ... }}, the class {@code Foo} is a higher class.
+ */
 public abstract class HigherDataType extends TypeBase
 		implements DataType, WorldParameterDeclarationContext {
 
@@ -252,6 +256,37 @@ public abstract class HigherDataType extends TypeBase
 
 	}
 
+	/**
+	 * Proxies are a way to deal with partially-constructed types and type abstraction/application.
+	 * <p>
+	 * Say we encounter class {@code Foo@A { int@A x }} and create an entry in our type definition
+	 * table. The entry says that {@code Foo} takes a world parameter {@code A}, that it has a field
+	 * {@code x}, etc. Imagine that later on we encounter a field like {@code Foo@B y}. To
+	 * construct this type, we'd need to fetch the definition of {@code Foo} from the type table and
+	 * instantiate it by replacing the formal parameter {@code A} with the actual parameter
+	 * {@code B}. Proxies are a way to do this instantiation lazily.
+	 * <p>
+	 * Why do we need lazy instantiation in the first place? Say we have the definition
+	 * {@code class Bar@A { Bar@A x }}. To enter the definition of {@code Bar} in the type table, we
+	 * need to say it has a field {@code x} whose type is the result of applying {@code Bar} to
+	 * {@code A}... But we haven't defined {@code Bar} yet! So, we enter a Proxy into the
+	 * type table instead.
+	 * <p>
+	 * A class <code>class Foo@(A,B) { ... }</code> is modeled as a HigherClass with world parameters
+	 * A and B. Internally, the HigherClass maintains a GroundClass as an "archetype".
+	 * Every time Foo is applied to a pair of worlds, say C and D, the
+	 * instance of HigherClass returns a Proxy. The Proxy redirects all queries (e.g., for methods,
+	 * fields, etc) to the archetype and then applies the substitution [C/A, D/B] to the result on
+	 * the fly. This trick allows the type checker to incrementally enrich the definition of Foo
+	 * without having to run around backpatching all its instances.
+	 * <p>
+	 * Consider for instance the definition of Enum from the standard library. Its lifting to Choral
+	 * would be class <code>Enum@A< T@B extends Enum@B<T> > {...}</code>. To build the definition of
+	 * Enum, we need to specify that it takes a type parameter, and that the type parameter has Enum as an
+	 * upper bound. Having Enum is as an upper bound is a problem, because Enum hasn't been defined
+	 * yet! But with the Archetype-Proxy trick, we can use a proxy for Enum@B and continue building
+	 * the definition of Enum.
+	 */
 	protected abstract class Proxy extends TypeBase implements GroundDataType {
 
 		private final Substitution substitution;
