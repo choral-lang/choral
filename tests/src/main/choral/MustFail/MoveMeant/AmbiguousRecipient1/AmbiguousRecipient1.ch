@@ -17,7 +17,7 @@ public class AmbiguousRecipient1@(A,B,C){
 
         client.fun( I_A );
         client.fun( I_B );
-        client.fun( I_C ); //! Ambiguous method invocation, fun(java.lang.Integer@(A)) and fun(java.lang.Integer@(B))
+        client.fun( I_C ); //! Cannot resolve method 'fun(java.lang.Integer@(C))'
     }
 }
 

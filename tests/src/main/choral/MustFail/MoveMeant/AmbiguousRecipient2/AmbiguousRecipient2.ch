@@ -19,7 +19,7 @@ public class AmbiguousRecipient2@(A,B,C){
         client.fun( I_A, I_B ); // no comms
         client.fun( I_B, I_A ); // I_B sent to A
         client.fun( I_C, I_B ); // I_C sent to A
-        client.fun( I_C, I_C ); //! Ambiguous method invocation, fun(java.lang.Integer@(A),java.lang.Integer@(A)) and fun(java.lang.Integer@(A),java.lang.Integer@(B))
+        client.fun( I_C, I_C ); //! Cannot resolve method 'fun(java.lang.Integer@(C),java.lang.Integer@(C))'
     }
 }
 

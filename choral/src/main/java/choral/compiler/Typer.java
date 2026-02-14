@@ -1134,7 +1134,69 @@ public class Typer {
 				phase++;
 			} while( ms.isEmpty() && phase < 3 );
 //			System.out.println( "=================================================" );
+
+			ms = checkArgWorlds( ms, args );
+
 			return ms;
+		}
+
+		/**
+		 * In the "relaxed" typer mode, there might be multiple methods that have exactly
+		 * the same datatypes as parameters and differ only in worlds: for example,
+		 * {@code myMethod(int@A, bool@B)} and {@code myMethod(int@B, bool@A)}. If that
+		 * happens, we use the DWIM ("Do What I Mean") resolution strategy explained below.
+		 * <p>
+		 * If there's a method whose parameter worlds match the argument worlds exactly,
+		 * e.g. {@code myMethod(int@A, bool@B)} with invocation {@code myMethod(1@A, true@B},
+		 * we assume that's the method they wanted to invoke---even though they could
+		 * conceivably have wanted us to infer this:
+		 * {@code myMethod(chAB.com(1@A), chBA.com(true@B)}.
+		 * <p>
+		 * We also go a step further. Maybe there's a method that matches all argument worlds
+		 * exactly, except for the i-th argument. So the i-th argument will have to be sent
+		 * to some other world---but which one? Well, if all method overloads have the i-th
+		 * parameter at the same world, then our choice is deterministic. So if we invoke
+		 * {@code myMethod(1@A, true@A)} and our overloads are {@code myMethod(int@A, bool@B)}
+		 * and {@code myMethod(int@B, bool@B)}, then we'll assume they wanted us to infer
+		 * {@code myMethod(1@A, chAB.com(true@A))}---even though they could conceivably
+		 * have wanted us to infer {@code myMethod(chAB.com(1@A), chAB.com(true@A))}.
+		 */
+		private static List<Member.GroundCallable> checkArgWorlds(
+				List< Member.GroundCallable > methods,
+				List< ? extends GroundDataType > args
+		){
+			for( int i = 0; i < args.size(); i++ ){
+				final int index = i;
+				var argWorlds = args.get(index).worldArguments();
+
+				// Find the methods whose i-th parameter world matches our i-th argument world.
+				// If there are no such methods, check if they all have their i-th parameter
+				// at the same world---if so, we can proceed because any of them would require
+				// the same communications.
+				var eligibleMethods = methods.stream()
+						.filter( method -> getParamWorlds(method, index).equals(argWorlds) )
+						.toList();
+				if( eligibleMethods.isEmpty() ){
+					var firstWorlds = getParamWorlds(methods.get(0), index);
+					boolean allAtSameWorld = methods.stream().allMatch( method ->
+							getParamWorlds(method, index).equals(firstWorlds) );
+					if( !allAtSameWorld ){
+						return Collections.emptyList();
+					}
+				} else {
+					methods = eligibleMethods;
+				}
+			}
+
+			return methods;
+		}
+
+		/**
+		 * Returns the list of worlds associated with the i-th parameter of the given method.
+		 * For example, the 1-th world of {@code myMethod(int@A, bool@B)} is B.
+		 */
+		private static List< ? extends World > getParamWorlds( Member.GroundCallable method, int i ){
+			return method.signature().parameters().get(i).type().worldArguments();
 		}
 
 		GroundDataTypeOrVoid synth(
@@ -1770,7 +1832,8 @@ public class Typer {
 										+ args.stream().map( Object::toString ).collect( Formatting
 										.joining( ",", "(", ")", "" ) )
 										+ "' in '" + t + "'" ) );
-					} else if( ms.size() > 1 ) {
+					}
+					else if( ms.size() > 1 ) {
 						throw new AstPositionedException( n.position(),
 								new StaticVerificationException(
 										"ambiguous method invocation, " +
