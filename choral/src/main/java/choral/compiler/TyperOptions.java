@@ -1,4 +1,6 @@
-package choral.options;
+package choral.compiler;
+
+import choral.utils.VerbosityLevel;
 
 /**
  * Options for configuring {@link choral.compiler.Typer}.
@@ -9,7 +11,7 @@ package choral.options;
  *                inference.
  */
 public record TyperOptions (
-		VerbosityOptions.VerbosityLevel verbosity,
+		VerbosityLevel verbosity,
 		boolean relaxed
 ) {
 
@@ -17,7 +19,7 @@ public record TyperOptions (
 	 * Construct a TyperOptions object in the default ("non-relaxed") mode.
 	 */
 	public TyperOptions(
-		VerbosityOptions.VerbosityLevel verbosity
+		VerbosityLevel verbosity
 	) {
 		this( verbosity, false );
 	}

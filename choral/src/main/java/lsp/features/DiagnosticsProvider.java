@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import choral.options.TyperOptions;
-import choral.options.VerbosityOptions;
+import choral.compiler.TyperOptions;
+import choral.utils.VerbosityLevel;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
@@ -31,7 +31,7 @@ public class DiagnosticsProvider {
             
             List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
 
-            TyperOptions typerOptions = new TyperOptions( VerbosityOptions.VerbosityLevel.WARNINGS );
+            TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS );
             Collection<CompilationUnit> typedUnits =
                     Typer.annotate( Arrays.asList(compUnit), headerUnits, typerOptions );
 

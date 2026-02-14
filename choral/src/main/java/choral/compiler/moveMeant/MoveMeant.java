@@ -7,7 +7,7 @@ import java.util.List;
 import choral.ast.CompilationUnit;
 import choral.compiler.Typer;
 import choral.compiler.moveMeant.MiniZincInference.*;
-import choral.options.TyperOptions;
+import choral.compiler.TyperOptions;
 
 /**
  * The main entry point for communication inference.

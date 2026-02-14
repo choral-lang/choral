@@ -6,8 +6,8 @@ import choral.compiler.HeaderLoader;
 import choral.compiler.Parser;
 import choral.compiler.Typer;
 import choral.compiler.moveMeant.MoveMeant;
-import choral.options.TyperOptions;
-import choral.options.VerbosityOptions;
+import choral.compiler.TyperOptions;
+import choral.utils.VerbosityLevel;
 import com.google.gson.JsonPrimitive;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
@@ -42,7 +42,7 @@ public class ChoralWorkspaceService implements WorkspaceService {
                 List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
 
                 // Collect data dependencies nd infer communications
-                var opts = new TyperOptions( VerbosityOptions.VerbosityLevel.WARNINGS );
+                var opts = new TyperOptions( VerbosityLevel.WARNINGS );
                 var checkedUnit = Typer.annotate( List.of(parsedUnit), headerUnits, opts );
                 var fixedUnit = MoveMeant.infer( checkedUnit, headerUnits, opts );
 

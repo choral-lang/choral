@@ -41,8 +41,7 @@ import choral.compiler.unitNormaliser.UnitRepresentation;
 import choral.exceptions.ChoralException;
 import choral.grammar.ChoralLexer;
 import choral.grammar.ChoralParser;
-import choral.options.TyperOptions;
-import choral.options.VerbosityOptions;
+import choral.utils.VerbosityLevel;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.*;
 import org.apache.commons.cli.*;
@@ -332,7 +331,7 @@ public class Compiler {
 	}
 
 	private void type() {
-		TyperOptions typerOptions = new TyperOptions( VerbosityOptions.VerbosityLevel.WARNINGS );
+		TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS );
 		Typer.annotate( targetCompilationUnits, Collections.emptyList(), typerOptions );
 	}
 

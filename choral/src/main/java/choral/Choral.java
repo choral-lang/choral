@@ -24,13 +24,14 @@ package choral;
 import choral.ast.CompilationUnit;
 import choral.ast.Position;
 import choral.ast.visitors.PrettyPrinterVisitor;
+import choral.compiler.*;
 import choral.compiler.Compiler;
 import choral.compiler.moveMeant.MoveMeant;
-import choral.options.*;
 import choral.utils.Streams.WrappedException;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.ChoralException;
+import choral.utils.VerbosityLevel;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 
@@ -38,23 +39,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import choral.compiler.HeaderCompiler;
-import choral.compiler.HeaderLoader;
-import choral.compiler.Parser;
-import choral.compiler.SourceObject;
-import choral.compiler.SourceWriter;
-import choral.compiler.Typer;
 
 import static choral.utils.Streams.wrapFunction;
 import static choral.utils.Streams.wrapConsumer;
@@ -205,7 +194,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 
-				// TODO(Dan) This feature seems useful, but it breaks a bunch of tests.
+				// TODO The following feature seems useful, but it breaks a bunch of tests.
 				// // Instead of typechecking *all* choral files in the directories, we filter away
 				// // the files that aren't relevant. This allows us to compile some files even when
 				// // others have errors.
@@ -350,14 +339,14 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 	}
 
 	private static void printNiceErrorMessage(
-			Throwable e, VerbosityOptions.VerbosityLevel verbosity
+			Throwable e, VerbosityLevel verbosity
 	) {
 		if( e instanceof AstPositionedException ) {
 			AstPositionedException pe = (AstPositionedException) e;
 			if (pe.position() == null) {
 				// TODO: position should be defined!
 				System.err.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
-				if( verbosity == VerbosityOptions.VerbosityLevel.DEBUG ) {
+				if( verbosity == VerbosityLevel.DEBUG ) {
 					e.printStackTrace();
 				}
 			} else {
@@ -371,19 +360,19 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 			printNiceErrorMessage( e.getCause(), verbosity );
 		} else if( e instanceof IOException ) {
 			System.err.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
-			if( verbosity == VerbosityOptions.VerbosityLevel.DEBUG ) {
+			if( verbosity == VerbosityLevel.DEBUG ) {
 				e.printStackTrace();
 			}
 		} else {
 			System.err.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
-			if( verbosity == VerbosityOptions.VerbosityLevel.DEBUG ) {
+			if( verbosity == VerbosityLevel.DEBUG ) {
 				e.printStackTrace();
 			}
 		}
 	}
 
 	private static void printNiceErrorMessage(
-			AstPositionedException e, VerbosityOptions.VerbosityLevel verbosity
+			AstPositionedException e, VerbosityLevel verbosity
 	) {
 		// -- parameters ---------------
 		int tabSize = 2;       // size of soft tabs
@@ -428,7 +417,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				capitalizeFirst( e.getInnerMessage() ),
 				formattedSnippet
 		);
-		if( verbosity == VerbosityOptions.VerbosityLevel.DEBUG ) {
+		if( verbosity == VerbosityLevel.DEBUG ) {
 			e.printStackTrace();
 		}
 	}
@@ -477,6 +466,185 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		}
 	}
 
+}
+
+@Command()
+class VerbosityOptions {
+
+	private VerbosityLevel verbosity;
+
+	public VerbosityLevel verbosity() {
+		return this.verbosity;
+	}
+
+	@Option( names = { "--verbosity" },
+			description = "Verbosity level: ${COMPLETION-CANDIDATES}.",
+			defaultValue = "WARNINGS",
+			paramLabel = "<LEVEL>"
+	)
+	private void setVerbosity( VerbosityLevel value ) {
+		this.verbosity = value;
+	}
+
+	@Option( names = { "-v", "--verbose" },
+			description = "Enable information messages." )
+	private void setVerboseLevel( boolean value ) {
+		if( value ) {
+			this.setVerbosity( VerbosityLevel.INFO );
+		}
+	}
+
+	@Option( names = { "-q", "--quiet" },
+			description = "Disable all messages except errors." )
+	private void setQuietLevel( boolean value ) {
+		if( value ) {
+			this.setVerbosity( VerbosityLevel.ERRORS );
+		}
+	}
+
+	@Option( names = { "--debug" },
+			description = "Enable debug messages." )
+	private void setDebugLevel( boolean value ) {
+		if( value ) {
+			this.setVerbosity( VerbosityLevel.DEBUG );
+		}
+	}
+}
+
+@Command()
+abstract class PathOption {
+	private String value;
+
+	private List< Path > paths;
+
+	protected void setValue( String value ) {
+		this.value = value;
+	}
+
+	public final String value() {
+		return value;
+	}
+
+	public final List< Path > getPaths() {
+		return getPaths( false );
+	}
+
+	public final List< Path > getPaths( boolean cwdIfEmpty ) {
+		if( paths == null ) {
+			paths = new LinkedList<>();
+			if( value != null ) {
+				for( String p : value().split( File.pathSeparator ) ) {
+					paths.add( Paths.get( p ) );
+				}
+			}
+		}
+		if( cwdIfEmpty && paths.isEmpty() ) {
+			paths.add( Paths.get( "" ) );
+		}
+		return paths;
+	}
+
+	public final static class SourcePathOption extends PathOption {
+		@Option( names = { "-s", "--sources" },
+				paramLabel = "<PATH>",
+				description = "Specify where to find choral source files (" + choral.compiler.Compiler.SOURCE_FILE_EXTENSION + ")." )
+		@Override
+		protected void setValue( String value ) {
+			super.setValue( value );
+		}
+	}
+
+	public final static class HeadersPathOption extends PathOption {
+		@Option( names = { "-l", "--headers" },
+				paramLabel = "<PATH>",
+				description = "Specify where to find choral header files (" + Compiler.HEADER_FILE_EXTENSION + ")." )
+		@Override
+		protected void setValue( String value ) {
+			super.setValue( value );
+		}
+	}
+}
+
+@Command()
+class EmissionOptions {
+
+	@Option( names = { "--dry-run" },
+			description = "Disable any write on disk." )
+	private boolean dryRun = false;
+
+	@Option( names = { "--annotate" },
+			description = "Annotate the projected artefacts with the @Choreography annotation." )
+	private boolean isAnnotated = false;
+
+	@Option( names = { "--infer-comms" },
+			description = "Infer missing communications and selections." )
+	private boolean inferComms = false;
+
+	@Option( names = { "--overwrite-source" },
+			description = "After static analysis, overwrite source files with the compiler's elaborated AST." )
+	private boolean canOverwrite = false;
+
+	@Option( names = { "-t", "--target" },
+			paramLabel = "<PATHS>",
+			description = "Specify where to save compiled files." )
+	private Path targetpath;
+
+	public boolean isDryRun() {
+		return dryRun;
+	}
+
+	public boolean isAnnotated() {
+		return isAnnotated;
+	}
+
+	public boolean inferComms() {
+		return inferComms;
+	}
+
+	public boolean canOverwriteSourceCode() {
+		return canOverwrite;
+	}
+
+	public Optional< Path > targetpath() {
+		return Optional.ofNullable( targetpath );
+	}
+}
+
+@Command()
+class HeaderCompilerOptions {
+
+	@Option( names = { "--no-overwrite" },
+			description = "Never overwrites existing files." )
+	private boolean overwrite = true;
+
+	@Option( names = { "--dry-run" },
+			description = "Disable any write on disk." )
+	private boolean dryRun = false;
+
+	@Option( names = { "-p", "--canonical-paths" },
+			description = "Use folders for packages." )
+	boolean useCanonicalPaths;
+
+	@Option( names = { "-t", "--target" },
+			paramLabel = "<PATHS>",
+			description = "Specify where to save compiled files." )
+	private Path targetpath;
+
+	public boolean isDryRun() {
+		return dryRun;
+	}
+
+	public boolean isOverwritingAllowed() {
+		return overwrite;
+	}
+
+	public boolean useCanonicalPaths() {
+		return useCanonicalPaths;
+	}
+
+	public Optional< Path > targetpath() {
+		return Optional.ofNullable( targetpath );
+	}
 }
 
 @Command(
