@@ -37,16 +37,12 @@ import choral.exceptions.StaticVerificationException;
 import choral.types.Package;
 import choral.types.*;
 import choral.types.Member.HigherCallable;
-import choral.types.Member.HigherMethod;
-import choral.types.Package;
 import choral.types.Universe.PrimitiveTypeTag;
 import choral.types.Universe.SpecialTypeTag;
 import choral.utils.Formatting;
 import choral.utils.Pair;
-import com.google.common.base.Strings;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1485,7 +1481,7 @@ public class RelaxedTyper {
 				// if n.scopedExpression() is not a ScopedExpression then n.scopedExpression() is the 
 				// innermost expression (usually a FieldAccessExpression or a MethodCallExpression)
 				if( !(n.scopedExpression() instanceof ScopedExpression) && !right.isVoid() ){
-					inferCommunications(((GroundDataType)right).worldArguments(), n);
+					recordDependencies(n, right, homeWorlds);
 				}
 				
 				left = null;
@@ -1713,10 +1709,7 @@ public class RelaxedTyper {
 					throw new AstPositionedException( n.position(),
 							new UnresolvedSymbolException( identifier ) );
 				} else {
-					List< ? extends World > rightWorlds = result.get().worldArguments();
-					// We should check world correspondence 
-					inferCommunications(rightWorlds, n);
-
+					recordDependencies(n, result.get(), homeWorlds);
 					return annotate( n, result.get() );
 				}
 			}
@@ -1789,11 +1782,9 @@ public class RelaxedTyper {
 				for( int i = 0; i < args.size(); i++ ){
 					Expression argument = n.arguments().get(i);
 					if( argument.typeAnnotation().isPresent() ){ // Some arguments might not have a type annotation
-						List<? extends World> expectedArgWorlds = selected.signature().parameters().get(i).type().worldArguments();
-						List<? extends World> argWorlds = ((GroundDataType)argument.typeAnnotation().get()).worldArguments();
-						// We call a variation of the inferCommunications, that checks 
-						// location on a given list of worlds instead of using homeworlds
-						inferCommunications(argWorlds, expectedArgWorlds, argument);
+						var toWorlds = selected.signature().parameters().get(i).type().worldArguments();
+						var argType = argument.typeAnnotation().get();
+						recordDependencies(argument, argType, toWorlds);
 					} 
 				}
 
@@ -1850,28 +1841,25 @@ public class RelaxedTyper {
 					// between the arguments and the selected method's parameters.
 					for( int i = 0; i < args.size(); i++ ){
 						Expression argument = n.arguments().get(i);
-						List<? extends World> argWorlds;
+						GroundDataTypeOrVoid argType;
 						if( argument.typeAnnotation().isPresent() ){
-							argWorlds = ((GroundDataType)argument.typeAnnotation().get()).worldArguments();
-						} else if( argument instanceof MethodCallExpression ){ // Method calls don't have typeAnnotations, but rather use methodAnnotations
-							GroundDataTypeOrVoid returntype = ((MethodCallExpression)argument).methodAnnotation().get().returnType();
-							argWorlds = ((GroundDataType)returntype).worldArguments();
-						} else {
+							argType = argument.typeAnnotation().get();
+						}
+						else if( argument instanceof MethodCallExpression ){ // Method calls don't have typeAnnotations, but rather use methodAnnotations
+							argType = ((MethodCallExpression)argument).methodAnnotation().get().returnType();
+						}
+						else {
 							// don't know if any expression besides MethodCallExpression does not use typeAnnotation
 							throw new ChoralException( "Cannot determine the type of argument " + argument + " passed to method " + n.name() );
 						}
 						
-						List<? extends World> expectedArgWorlds = selected.signature().parameters().get(i).type().worldArguments();
+						var toWorlds = selected.signature().parameters().get(i).type().worldArguments();
 						// We call a variation of the inferCommunications, that checks 
 						// location on a given list of worlds instead of using homeworlds
-						inferCommunications(argWorlds, expectedArgWorlds, argument);
+						recordDependencies(argument, argType, toWorlds);
 					}
 
-					// If the selected method doesn't return Void
-					if( !selected.returnType().isVoid() ){
-						// Check if it needs to be communicated
-						inferCommunications(((GroundDataType)selected.returnType()).worldArguments(), n);
-					}
+					recordDependencies(n, selected.returnType(), homeWorlds);
 
 					return selected.returnType();
 				} else {
@@ -1956,24 +1944,19 @@ public class RelaxedTyper {
 			}
 
 			/**
-			 * If the given expression's worlds don't correspond to homeworlds, a dependency is 
-			 * added to the enclosing method.
+			 * In the "relaxed" typing mode, check if an expression's location matches its
+			 * expected location. If it doesn't, record the expression as a dependency.
+			 * @param type The expression's type
+			 * @param toWorlds The place where the expression's result should be located
 			 */
-			private void inferCommunications( 
-				List< ? extends World > fromWorlds, 
-				Expression expression 
+			private void recordDependencies(
+				Expression expression,
+				GroundDataTypeOrVoid type,
+				List< ? extends World > toWorlds
 			){
-				if( !homeWorlds.containsAll( fromWorlds ) ){
-					enclosingMethod.addDependency(homeWorlds, expression, enclosingStatement);
-				}
-			}
-
-			private void inferCommunications(
-				List< ? extends World > fromWorlds,
-				List< ? extends World > toWorlds, 
-				Expression expression 
-			){
-				if( !toWorlds.containsAll( fromWorlds ) ){
+				if (type.isVoid()) return;
+				var foreignWorlds = ((GroundDataType) type).worldArguments();
+				if( !toWorlds.containsAll( foreignWorlds ) ){
 					enclosingMethod.addDependency(toWorlds, expression, enclosingStatement);
 				}
 			}

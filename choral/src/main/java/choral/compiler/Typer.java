@@ -1926,7 +1926,7 @@ public class Typer {
 			}
 
 			public List< ? extends World > visitWorlds( List< WorldArgument > n ) {
-				return n.stream().map( this::visitWorld ).collect( Collectors.toList() );
+				return n.stream().map( this::visitWorld ).toList();
 			}
 
 			public World visitWorld( WorldArgument n ) {
