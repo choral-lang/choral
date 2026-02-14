@@ -1489,108 +1489,118 @@ public class Typer {
 					GroundDataTypeOrVoid tvr,
 					Position position
 			) {
-				if( !tvl.isVoid() && !tvr.isVoid() ) {
-					GroundDataType tl = (GroundDataType) tvl;
-					GroundDataType tr = (GroundDataType) tvr;
-					if( tl.worldArguments().size() == 1 && tr.worldArguments().size() == 1
-							&& tl.worldArguments().equals( tr.worldArguments() ) ) {
-						List< ? extends World > worlds = tl.worldArguments();
-						GroundPrimitiveDataType pl = null;
-						GroundPrimitiveDataType pr = null;
-						switch( operator ) {
-							case PLUS: {
-								if( tl.specialTypeTag() == SpecialTypeTag.STRING
-										|| tr.specialTypeTag() == SpecialTypeTag.STRING
-										|| ( ( tl.specialTypeTag() == SpecialTypeTag.CHARACTER ||
-										tl.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) &&
-										( tr.specialTypeTag() == SpecialTypeTag.CHARACTER ||
-												tr.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) )
-								) {
-									return universe().specialType( SpecialTypeTag.STRING ).applyTo(
-											worlds );
-								}
-							}
-							case MINUS:
-							case MULTIPLY:
-							case DIVIDE:
-							case REMAINDER:
-								pl = assertUnbox( tl, position );
-								pr = assertUnbox( tr, position );
-								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
-									GroundPrimitiveDataType p = ( pl.primitiveTypeTag().compareTo(
-											pr.primitiveTypeTag() ) > 0 )
-											? pl
-											: pr;
-									if( p.primitiveTypeTag().compareTo(
-											PrimitiveTypeTag.INT ) < 0 ) {
-										// promote byte, char, short to int
-										p = universe().primitiveDataType(
-												PrimitiveTypeTag.INT ).applyTo(
-												worlds );
-									}
-									return p;
-								}
-								break;
-							case LESS:
-							case LESS_EQUALS:
-							case GREATER:
-							case GREATER_EQUALS:
-								pl = assertUnbox( tl, position );
-								pr = assertUnbox( tr, position );
-								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
-									return universe().primitiveDataType(
-											PrimitiveTypeTag.BOOLEAN ).applyTo(
-											worlds );
-								}
-								break;
-							case OR:
-							case AND:
-								pl = assertUnbox( tl, position );
-								pr = assertUnbox( tr, position );
-								if( pl.primitiveTypeTag().isIntegral() && pr.primitiveTypeTag().isIntegral() ) {
-									if( pl.primitiveTypeTag().compareTo(
-											pr.primitiveTypeTag() ) > 0 ) {
-										return pl;
-									} else {
-										return pr;
-									}
-								}
-							case SHORT_CIRCUITED_OR:
-							case SHORT_CIRCUITED_AND:
-								pl = ( pl == null ) ? assertUnbox( tl, position ) : pl;
-								pr = ( pr == null ) ? assertUnbox( tr, position ) : pr;
-								if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN
-										&& pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
-									return tl;
-								}
-								break;
-							case EQUALS:
-							case NOT_EQUALS:
-								if( ( tl instanceof GroundReferenceType && tr.isSubtypeOf( tl ) ) ||
-										( tr instanceof GroundReferenceType && tl.isSubtypeOf(
-												tr ) )
-								) {
-									return universe().primitiveDataType(
-											PrimitiveTypeTag.BOOLEAN ).applyTo(
-											worlds );
-								} else {
-									pl = assertUnbox( tl, position );
-									pr = assertUnbox( tr, position );
-									if( pl.primitiveTypeTag() == pr.primitiveTypeTag() ||
-											( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() )
-									) {
-										return universe().primitiveDataType(
-												PrimitiveTypeTag.BOOLEAN ).applyTo(
-												worlds );
-									}
-								}
-							}
+				if( tvl.isVoid() || tvr.isVoid() ) {
+					throw new AstPositionedException( position,
+							new StaticVerificationException( "cannot apply '"
+									+ operator + "' to '" + tvl
+									+ "' and '" + tvr + "'" ) );
+				}
+
+				GroundDataType tl = (GroundDataType) tvl;
+				GroundDataType tr = (GroundDataType) tvr;
+				if( tl.worldArguments().size() != 1 || tr.worldArguments().size() != 1 ||
+						!tl.worldArguments().equals( tr.worldArguments() ) ) {
+					throw new AstPositionedException( position,
+							new StaticVerificationException( "cannot apply '"
+									+ operator + "' to '" + tvl
+									+ "' and '" + tvr + "'" ) );
+				}
+
+				List< ? extends World > worlds = tl.worldArguments();
+				GroundPrimitiveDataType pl = null;
+				GroundPrimitiveDataType pr = null;
+				switch( operator ) {
+					case PLUS: {
+						if( tl.specialTypeTag() == SpecialTypeTag.STRING
+								|| tr.specialTypeTag() == SpecialTypeTag.STRING
+								|| ( ( tl.specialTypeTag() == SpecialTypeTag.CHARACTER ||
+								tl.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) &&
+								( tr.specialTypeTag() == SpecialTypeTag.CHARACTER ||
+										tr.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) )
+						) {
+							return universe().specialType( SpecialTypeTag.STRING ).applyTo(
+									worlds );
+						}
 					}
+					case MINUS:
+					case MULTIPLY:
+					case DIVIDE:
+					case REMAINDER:
+						pl = assertUnbox( tl, position );
+						pr = assertUnbox( tr, position );
+						if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
+							GroundPrimitiveDataType p = ( pl.primitiveTypeTag().compareTo(
+									pr.primitiveTypeTag() ) > 0 )
+									? pl
+									: pr;
+							if( p.primitiveTypeTag().compareTo(
+									PrimitiveTypeTag.INT ) < 0 ) {
+								// promote byte, char, short to int
+								p = universe().primitiveDataType(
+										PrimitiveTypeTag.INT ).applyTo(
+										worlds );
+							}
+							return p;
+						}
+						break;
+					case LESS:
+					case LESS_EQUALS:
+					case GREATER:
+					case GREATER_EQUALS:
+						pl = assertUnbox( tl, position );
+						pr = assertUnbox( tr, position );
+						if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
+							return universe().primitiveDataType(
+									PrimitiveTypeTag.BOOLEAN ).applyTo(
+									worlds );
+						}
+						break;
+					case OR:
+					case AND:
+						pl = assertUnbox( tl, position );
+						pr = assertUnbox( tr, position );
+						if( pl.primitiveTypeTag().isIntegral() && pr.primitiveTypeTag().isIntegral() ) {
+							if( pl.primitiveTypeTag().compareTo(
+									pr.primitiveTypeTag() ) > 0 ) {
+								return pl;
+							} else {
+								return pr;
+							}
+						}
+					case SHORT_CIRCUITED_OR:
+					case SHORT_CIRCUITED_AND:
+						pl = ( pl == null ) ? assertUnbox( tl, position ) : pl;
+						pr = ( pr == null ) ? assertUnbox( tr, position ) : pr;
+						if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN
+								&& pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
+							return tl;
+						}
+						break;
+					case EQUALS:
+					case NOT_EQUALS:
+						if( ( tl instanceof GroundReferenceType && tr.isSubtypeOf( tl ) ) ||
+								( tr instanceof GroundReferenceType && tl.isSubtypeOf(
+										tr ) )
+						) {
+							return universe().primitiveDataType(
+									PrimitiveTypeTag.BOOLEAN ).applyTo(
+									worlds );
+						} else {
+							pl = assertUnbox( tl, position );
+							pr = assertUnbox( tr, position );
+							if( pl.primitiveTypeTag() == pr.primitiveTypeTag() ||
+									( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() )
+							) {
+								return universe().primitiveDataType(
+										PrimitiveTypeTag.BOOLEAN ).applyTo(
+										worlds );
+							}
+						}
 				}
 				throw new AstPositionedException( position,
 						new StaticVerificationException( "cannot apply '"
-								+ operator + "' to '" + tvl
-								+ "' and '" + tvr + "'" ) );
+								+ operator + "' to '" + tl
+								+ "' and '" + tr + "'" ) );
 			}
 
 			@Override

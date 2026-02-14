@@ -1,9 +1,10 @@
 package choral.MustPass.MoveMeant.OverloadOnRoles;
 
-import choral.MustPass.MoveMeant.OverloadOnRoles.utils.Client_B;
 import choral.annotations.Choreography;
 import choral.channels.SymChannel_B;
 import choral.lang.Unit;
+import java.lang.Integer;
+import java.lang.Object;
 
 @Choreography( role = "B", name = "OverloadOnRoles" )
 public class OverloadOnRoles_B {

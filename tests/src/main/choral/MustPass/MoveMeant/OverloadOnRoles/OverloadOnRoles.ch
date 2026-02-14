@@ -1,8 +1,22 @@
 package choral.MustPass.MoveMeant.OverloadOnRoles;
 
 import choral.channels.SymChannel;
-import choral.MustPass.MoveMeant.OverloadOnRoles.utils.Client;
+import java.lang.Object;
+import java.lang.Integer;
 
+class Client@(A,B) {
+
+	Object@A obj;
+
+	public void fun( Integer@A in ){}
+
+    public void fun( Integer@B in ){}
+
+    public void fun2( Integer@A in1, Integer@A in2 ){}
+
+    public void fun2( Integer@A in1, Integer@B in2 ){}
+
+}
 
 public class OverloadOnRoles@(A,B,C){
     

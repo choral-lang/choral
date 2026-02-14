@@ -1463,111 +1463,116 @@ public class RelaxedTyper {
 					GroundDataTypeOrVoid tvr,
 					Position position
 			) {
-				if( !tvl.isVoid() && !tvr.isVoid() ) {
-						GroundDataType tl = (GroundDataType) tvl;
-						GroundDataType tr = (GroundDataType) tvr;
+				if( tvl.isVoid() || tvr.isVoid() ) {
+					throw new AstPositionedException( position,
+							new StaticVerificationException( "cannot apply '"
+									+ operator + "' to '" + tvl
+									+ "' and '" + tvr + "'" ) );
+				}
 
-						List< ? extends World > worlds; 	// the worlds of this expression
-						if( !homeWorlds.isEmpty() )
-							worlds = homeWorlds;			// if homeworlds is set, use that
-						else
-							worlds = tl.worldArguments(); 	// if no homeworld is set, use the left side's worlds
+				GroundDataType tl = (GroundDataType) tvl;
+				GroundDataType tr = (GroundDataType) tvr;
+				List< ? extends World > worlds;
 
-						GroundPrimitiveDataType pl = null;
-						GroundPrimitiveDataType pr = null;
-						switch( operator ) {
-							case PLUS: {
-								if( tl.specialTypeTag() == SpecialTypeTag.STRING
-										|| tr.specialTypeTag() == SpecialTypeTag.STRING
-										|| ( ( tl.specialTypeTag() == SpecialTypeTag.CHARACTER ||
-										tl.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) &&
-										( tr.specialTypeTag() == SpecialTypeTag.CHARACTER ||
-												tr.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) )
-								) {
-									return universe().specialType( SpecialTypeTag.STRING ).applyTo(
-											worlds );
-								}
+				if( !homeWorlds.isEmpty() )
+					worlds = homeWorlds;			// if homeworlds is set, use that
+				else
+					worlds = tl.worldArguments(); 	// if no homeworld is set, use the left side's worlds
+
+				GroundPrimitiveDataType pl = null;
+				GroundPrimitiveDataType pr = null;
+				switch( operator ) {
+					case PLUS: {
+						if( tl.specialTypeTag() == SpecialTypeTag.STRING
+								|| tr.specialTypeTag() == SpecialTypeTag.STRING
+								|| ( ( tl.specialTypeTag() == SpecialTypeTag.CHARACTER ||
+								tl.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) &&
+								( tr.specialTypeTag() == SpecialTypeTag.CHARACTER ||
+										tr.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) )
+						) {
+							return universe().specialType( SpecialTypeTag.STRING ).applyTo(
+									worlds );
+						}
+					}
+					case MINUS:
+					case MULTIPLY:
+					case DIVIDE:
+					case REMAINDER:
+						pl = assertUnbox( tl, position );
+						pr = assertUnbox( tr, position );
+						if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
+							GroundPrimitiveDataType p = ( pl.primitiveTypeTag().compareTo(
+									pr.primitiveTypeTag() ) > 0 )
+									? pl
+									: pr;
+							if( p.primitiveTypeTag().compareTo(
+									PrimitiveTypeTag.INT ) < 0 ) {
+								// promote byte, char, short to int
+								p = universe().primitiveDataType(
+										PrimitiveTypeTag.INT ).applyTo(
+										worlds );
 							}
-							case MINUS:
-							case MULTIPLY:
-							case DIVIDE:
-							case REMAINDER:
-								pl = assertUnbox( tl, position );
-								pr = assertUnbox( tr, position );
-								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
-									GroundPrimitiveDataType p = ( pl.primitiveTypeTag().compareTo(
-											pr.primitiveTypeTag() ) > 0 )
-											? pl
-											: pr;
-									if( p.primitiveTypeTag().compareTo(
-											PrimitiveTypeTag.INT ) < 0 ) {
-										// promote byte, char, short to int
-										p = universe().primitiveDataType(
-												PrimitiveTypeTag.INT ).applyTo(
-												worlds );
-									}
-									return p;
-								}
-								break;
-							case LESS:
-							case LESS_EQUALS:
-							case GREATER:
-							case GREATER_EQUALS:
-								pl = assertUnbox( tl, position );
-								pr = assertUnbox( tr, position );
-								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
-									return universe().primitiveDataType(
-											PrimitiveTypeTag.BOOLEAN ).applyTo(
-											worlds );
-								}
-								break;
-							case OR:
-							case AND:
-								pl = assertUnbox( tl, position );
-								pr = assertUnbox( tr, position );
-								if( pl.primitiveTypeTag().isIntegral() && pr.primitiveTypeTag().isIntegral() ) {
-									if( pl.primitiveTypeTag().compareTo(
-											pr.primitiveTypeTag() ) > 0 ) {
-										return pl;
-									} else {
-										return pr;
-									}
-								}
-							case SHORT_CIRCUITED_OR:
-							case SHORT_CIRCUITED_AND:
-								pl = ( pl == null ) ? assertUnbox( tl, position ) : pl;
-								pr = ( pr == null ) ? assertUnbox( tr, position ) : pr;
-								if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN
-										&& pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
-									return tl;
-								}
-								break;
-							case EQUALS:
-							case NOT_EQUALS:
-								if( ( tl instanceof GroundReferenceType && tr.isSubtypeOf_relaxed( tl ) ) ||
-										( tr instanceof GroundReferenceType && tl.isSubtypeOf_relaxed(
-												tr ) )
-								) {
-									return universe().primitiveDataType(
-											PrimitiveTypeTag.BOOLEAN ).applyTo(
-											worlds );
-								} else {
-									pl = assertUnbox( tl, position );
-									pr = assertUnbox( tr, position );
-									if( pl.primitiveTypeTag() == pr.primitiveTypeTag() ||
-											( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() )
-									) {
-										return universe().primitiveDataType(
-												PrimitiveTypeTag.BOOLEAN ).applyTo(
-												worlds );
-									}
-								}
+							return p;
+						}
+						break;
+					case LESS:
+					case LESS_EQUALS:
+					case GREATER:
+					case GREATER_EQUALS:
+						pl = assertUnbox( tl, position );
+						pr = assertUnbox( tr, position );
+						if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
+							return universe().primitiveDataType(
+									PrimitiveTypeTag.BOOLEAN ).applyTo(
+									worlds );
+						}
+						break;
+					case OR:
+					case AND:
+						pl = assertUnbox( tl, position );
+						pr = assertUnbox( tr, position );
+						if( pl.primitiveTypeTag().isIntegral() && pr.primitiveTypeTag().isIntegral() ) {
+							if( pl.primitiveTypeTag().compareTo(
+									pr.primitiveTypeTag() ) > 0 ) {
+								return pl;
+							} else {
+								return pr;
 							}
+						}
+					case SHORT_CIRCUITED_OR:
+					case SHORT_CIRCUITED_AND:
+						pl = ( pl == null ) ? assertUnbox( tl, position ) : pl;
+						pr = ( pr == null ) ? assertUnbox( tr, position ) : pr;
+						if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN
+								&& pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
+							return tl;
+						}
+						break;
+					case EQUALS:
+					case NOT_EQUALS:
+						if( ( tl instanceof GroundReferenceType && tr.isSubtypeOf_relaxed( tl ) ) ||
+								( tr instanceof GroundReferenceType && tl.isSubtypeOf_relaxed(
+										tr ) )
+						) {
+							return universe().primitiveDataType(
+									PrimitiveTypeTag.BOOLEAN ).applyTo(
+									worlds );
+						} else {
+							pl = assertUnbox( tl, position );
+							pr = assertUnbox( tr, position );
+							if( pl.primitiveTypeTag() == pr.primitiveTypeTag() ||
+									( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() )
+							) {
+								return universe().primitiveDataType(
+										PrimitiveTypeTag.BOOLEAN ).applyTo(
+										worlds );
+							}
+						}
 				}
 				throw new AstPositionedException( position,
 						new StaticVerificationException( "cannot apply '"
-								+ operator + "' to '" + tvl
-								+ "' and '" + tvr + "'" ) );
+								+ operator + "' to '" + tl
+								+ "' and '" + tr + "'" ) );
 			}
 
 			@Override
@@ -1608,7 +1613,7 @@ public class RelaxedTyper {
 
 				GroundDataTypeOrVoid tl = synth( n.left() );
 				// if homeWorlds was not initially set and the expression did not contain 
-				// lliterals, the leftmost expression desides worlds
+				// literals, the leftmost expression decides worlds
 				if( homeWorlds.isEmpty() && !tl.isVoid() ) 	
 					homeWorlds = ((GroundDataType)tl).worldArguments();
 				GroundDataTypeOrVoid tr = synth( n.right() );
@@ -1722,7 +1727,7 @@ public class RelaxedTyper {
 				for( int i = 0; i < args.size(); i++ ){
 					Expression argument = n.arguments().get(i);
 					if( argument.typeAnnotation().isPresent() ){ // Some arguments might not have a type annotation
-						List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
+						List<? extends World> expectedArgWorlds = selected.signature().parameters().get(i).type().worldArguments();
 						List<? extends World> argWorlds = ((GroundDataType)argument.typeAnnotation().get()).worldArguments();
 						// We call a variation of the inferCommunications, that checks 
 						// location on a given list of worlds instead of using homeworlds
@@ -1771,9 +1776,9 @@ public class RelaxedTyper {
 						// its parameters, then every overload of that method will be returned 
 						// by findMostSpecificCallable. We prioritize not sending arguments 
 						// for now.
-						selected = checkArgWorlds(ms, args);
+						var mSelected = checkArgWorlds(ms, args);
 
-						if( selected == null ){
+						if( mSelected.isEmpty() ){
 							throw new AstPositionedException( n.position(),
 								new StaticVerificationException(
 										"ambiguous method invocation, " +
@@ -1781,6 +1786,9 @@ public class RelaxedTyper {
 														.collect( Collectors.collectingAndThen(
 																Collectors.toList(),
 																Formatting.joiningOxfordComma() ) ) ) );
+						}
+						else {
+							selected = mSelected.get();
 						}
 						
 					} else{
@@ -1805,7 +1813,7 @@ public class RelaxedTyper {
 							throw new ChoralException( "Cannot determine the type of argument " + argument + " passed to method " + n.name() );
 						}
 						
-						List<? extends World> expectedArgWorlds = selected.higherCallable().innerCallable().signature().parameters().get(i).type().worldArguments();
+						List<? extends World> expectedArgWorlds = selected.signature().parameters().get(i).type().worldArguments();
 						// We call a variation of the inferCommunications, that checks 
 						// location on a given list of worlds instead of using homeworlds
 						inferCommunications(argWorlds, expectedArgWorlds, argument);
@@ -1829,54 +1837,65 @@ public class RelaxedTyper {
 			}
 
 			/**
-			 * take a list of methods and a list of arguments and check if the args match any 
-			 * method. 
+			 * In the "relaxed" typer mode, there might be multiple methods that have exactly
+			 * the same datatypes as parameters and differ only in worlds: for example,
+			 * {@code myMethod(int@A, bool@B)} and {@code myMethod(int@B, bool@A)}. If that
+			 * happens, we use the DWIM ("Do What I Mean") resolution strategy explained below.
 			 * <p>
-			 * We iterate over the arguments, and if the argument's worlds are equal to at 
-			 * least one method's corersponding parameter's worlds, then we filter out all 
-			 * methods whose corresponding parameter's worlds don't match the argument's 
-			 * worlds. 
+			 * If there's a method whose parameter worlds match the argument worlds exactly,
+			 * e.g. {@code myMethod(int@A, bool@B)} with invocation {@code myMethod(1@A, true@B},
+			 * we assume that's the method they wanted to invoke---even though they could
+			 * conceivably have wanted us to infer this:
+			 * {@code myMethod(chAB.com(1@A), chBA.com(true@B)}.
 			 * <p>
-			 * if the argument's worlds are not equal to at least one method's corersponding 
-			 * parameter's worlds, then we check if all methods corresponding parameters are 
-			 * at the same worlds. If so, we continue (the argument will be a dependency of 
-			 * that world). If not we return null (since we don't know which world to make 
-			 * the argument a dependnecy of). We also return null if after iterating through 
-			 * all arguments there is more than one method left (the methodcall is ambiguous).
+			 * We also go a step further. Maybe there's a method that matches all argument worlds
+			 * exactly, except for the i-th argument. So the i-th argument will have to be sent
+			 * to some other world---but which one? Well, if all method overloads have the i-th
+			 * parameter at the same world, then our choice is deterministic. So if we invoke
+			 * {@code myMethod(1@A, true@A)} and our overloads are {@code myMethod(int@A, bool@B)}
+			 * and {@code myMethod(int@B, bool@B)}, then we'll assume they wanted us to infer
+			 * {@code myMethod(1@A, chAB.com(true@A))}---even though they could conceivably
+			 * have wanted us to infer {@code myMethod(chAB.com(1@A), chAB.com(true@A))}.
 			 */
-			private static Member.GroundMethod checkArgWorlds( List< ? extends Member.GroundCallable > methods, List< ? extends GroundDataType > args){
-				
-				for( AtomicInteger i = new AtomicInteger(); i.get() < args.size(); i.incrementAndGet() ){
-					// We use an Atomic integer to be able to reference it inside a lambda
-					List< ? extends World > argWorlds = args.get(i.get()).worldArguments();
-					List< ? extends Member.GroundCallable > matchesWorlds = methods.stream()
-						.filter( method ->  // filter methods whose corresponding parameter's world matches the arg's worlds
-							getParamWorlds(method, i.get()).equals(argWorlds) )
+			private static Optional<Member.GroundMethod> checkArgWorlds(
+					List< ? extends Member.GroundCallable > methods,
+					List< ? extends GroundDataType > args
+			){
+				for( int i = 0; i < args.size(); i++ ){
+					final int index = i;
+					var argWorlds = args.get(index).worldArguments();
+
+					// Find the methods whose i-th parameter world matches our i-th argument world.
+					// If there are no such methods, check if they all have their i-th parameter
+					// at the same world---if so, we can proceed because any of them would require
+					// the same communications.
+					var eligibleMethods = methods.stream()
+						.filter( method -> getParamWorlds(method, index).equals(argWorlds) )
 						.toList();
-					if( matchesWorlds.isEmpty() ){ // no method matches the worlds of the argument
-						List< ? extends World > firstWorlds = getParamWorlds(methods.get(0), i.get());
-						boolean allAtSameWorld = methods.stream().allMatch( method -> getParamWorlds(method, i.get()).equals(firstWorlds) );
+					if( eligibleMethods.isEmpty() ){
+						var firstWorlds = getParamWorlds(methods.get(0), index);
+						boolean allAtSameWorld = methods.stream().allMatch( method ->
+								getParamWorlds(method, index).equals(firstWorlds) );
 						if( !allAtSameWorld ){
-							// we don't know which world to make the argument a dependency of
-							return null;
+							return Optional.empty();
 						}
-					} else{
-						// we remove all methods whose parameter's worlds don't match the argument's worlds
-						methods = matchesWorlds;
+					} else {
+						methods = eligibleMethods;
 					}
 				}
 
 				if( methods.size() != 1 )
-					return null; 
+					return Optional.empty();
 				else
-					return (Member.GroundMethod)methods.get(0);
+					return Optional.of( (Member.GroundMethod) methods.get(0) );
 			}
 
 			/**
-			 * Helper for checkArgWorlds
+			 * Returns the list of worlds associated with the i-th parameter of the given method.
+			 * For example, the 1-th world of {@code myMethod(int@A, bool@B)} is B.
 			 */
-			private static List< ? extends World > getParamWorlds( Member.GroundCallable method, int paramIndex ){
-				return method.higherCallable().innerCallable().signature().parameters().get(paramIndex).type().worldArguments();
+			private static List< ? extends World > getParamWorlds( Member.GroundCallable method, int i ){
+				return method.signature().parameters().get(i).type().worldArguments();
 			}
 
 			@Override
