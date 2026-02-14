@@ -42,7 +42,7 @@ public class ChoralWorkspaceService implements WorkspaceService {
                 List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
 
                 // Collect data dependencies nd infer communications
-                var opts = new TyperOptions( VerbosityLevel.WARNINGS );
+                var opts = new TyperOptions( VerbosityLevel.WARNINGS, true );
                 var checkedUnit = Typer.annotate( List.of(parsedUnit), headerUnits, opts );
                 var fixedUnit = MoveMeant.infer( checkedUnit, headerUnits, opts );
 

@@ -506,9 +506,9 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 	@Override
 	public String visit( TypeExpression n ) {
 		return n.name() +
-				( n.worldArguments().isEmpty() ? "" : " @ ( " + visitAndCollect( n.worldArguments(),
+				( n.worldArguments().isEmpty() ? "" : "@( " + visitAndCollect( n.worldArguments(),
 						SPACED_COMMA ) + " )" ) +
-				( n.typeArguments().isEmpty() ? "" : " < " + visitAndCollect( n.typeArguments(),
+				( n.typeArguments().isEmpty() ? "" : "< " + visitAndCollect( n.typeArguments(),
 						SPACED_COMMA ) + " >" );
 	}
 
