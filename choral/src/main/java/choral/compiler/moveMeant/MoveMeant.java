@@ -1,4 +1,4 @@
-package choral.compiler.amend;
+package choral.compiler.moveMeant;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,7 +6,7 @@ import java.util.List;
 
 import choral.ast.CompilationUnit;
 import choral.compiler.Typer;
-import choral.compiler.amend.MiniZincInference.*;
+import choral.compiler.moveMeant.MiniZincInference.*;
 import choral.options.TyperOptions;
 
 /**

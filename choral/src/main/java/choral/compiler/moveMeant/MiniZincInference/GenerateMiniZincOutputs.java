@@ -1,4 +1,4 @@
-package choral.compiler.amend.MiniZincInference;
+package choral.compiler.moveMeant.MiniZincInference;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,7 +13,7 @@ import java.util.Map;
 import choral.Choral;
 import choral.ast.CompilationUnit;
 import choral.ast.statement.Statement;
-import choral.compiler.amend.Utils;
+import choral.compiler.moveMeant.Utils;
 import choral.exceptions.CommunicationInferenceException;
 import choral.types.GroundInterface;
 import choral.types.Member.HigherCallable;

@@ -25,7 +25,7 @@ import choral.ast.CompilationUnit;
 import choral.ast.Position;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.Compiler;
-import choral.compiler.amend.MoveMeant;
+import choral.compiler.moveMeant.MoveMeant;
 import choral.options.*;
 import choral.utils.Streams.WrappedException;
 import choral.exceptions.AstPositionedException;

@@ -1,4 +1,4 @@
-package choral.compiler.amend.MiniZincInference;
+package choral.compiler.moveMeant.MiniZincInference;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,10 +22,10 @@ import choral.ast.statement.*;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.visitors.AbstractChoralVisitor;
-import choral.compiler.amend.Selections;
-import choral.compiler.amend.Utils;
-import choral.compiler.amend.MiniZincInference.MiniZincInput.Dep_use;
-import choral.compiler.amend.MiniZincInference.MiniZincInput.Dependency;
+import choral.compiler.moveMeant.Selections;
+import choral.compiler.moveMeant.Utils;
+import choral.compiler.moveMeant.MiniZincInference.MiniZincInput.Dep_use;
+import choral.compiler.moveMeant.MiniZincInference.MiniZincInput.Dependency;
 import choral.types.Member.HigherCallable;
 import choral.utils.Continuation;
 

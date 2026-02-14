@@ -1,4 +1,4 @@
-package choral.compiler.amend;
+package choral.compiler.moveMeant;
 
 import choral.ast.CompilationUnit;
 import choral.ast.body.Class;
@@ -25,10 +25,8 @@ import choral.ast.statement.*;
 import choral.ast.expression.*;
 import choral.ast.expression.AssignExpression.Operator;
 
-import java.lang.Math;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Stream;
 
 /**
  * Variable replacement for data communications. replace a dependency with a new variable containing 

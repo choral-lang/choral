@@ -1,4 +1,4 @@
-package choral.compiler.amend.MiniZincInference;
+package choral.compiler.moveMeant.MiniZincInference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import choral.ast.expression.*;
 import choral.ast.statement.*;
 import choral.ast.type.TypeExpression;
 import choral.ast.visitors.AbstractChoralVisitor;
-import choral.compiler.amend.Utils;
+import choral.compiler.moveMeant.Utils;
 import choral.compiler.merge.ExpressionsMerger;
 import choral.exceptions.CommunicationInferenceException;
 import choral.types.GroundDataType;

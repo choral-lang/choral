@@ -1,4 +1,4 @@
-package choral.compiler.amend;
+package choral.compiler.moveMeant;
 
 import java.util.List;
 import java.util.Optional;

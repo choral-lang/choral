@@ -1,4 +1,4 @@
-package choral.compiler.amend.MiniZincInference;
+package choral.compiler.moveMeant.MiniZincInference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import choral.ast.Name;
-import choral.compiler.amend.Utils;
-import choral.compiler.amend.MiniZincInference.MiniZincInput.Dependency;
+import choral.compiler.moveMeant.Utils;
+import choral.compiler.moveMeant.MiniZincInference.MiniZincInput.Dependency;
 import choral.exceptions.CommunicationInferenceException;
 import choral.types.GroundInterface;
 import choral.types.Member.HigherMethod;

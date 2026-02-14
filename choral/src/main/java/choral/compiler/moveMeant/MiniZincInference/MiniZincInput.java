@@ -1,4 +1,4 @@
-package choral.compiler.amend.MiniZincInference;
+package choral.compiler.moveMeant.MiniZincInference;
 
 import java.util.ArrayList;
 import java.util.Collections;

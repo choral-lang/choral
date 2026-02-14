@@ -1,4 +1,4 @@
-package choral.compiler.amend;
+package choral.compiler.moveMeant;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,7 +22,6 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
-import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.merge.StatementsMerger;
 import choral.compiler.soloist.StatementsProjector;
 import choral.exceptions.ChoralCompoundException;

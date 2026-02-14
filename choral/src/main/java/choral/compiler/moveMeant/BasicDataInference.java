@@ -1,4 +1,4 @@
-package choral.compiler.amend;
+package choral.compiler.moveMeant;
 
 
 import choral.ast.CompilationUnit;
@@ -26,7 +26,6 @@ import choral.ast.expression.*;
 
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Stream;
 
 /**
  * A basic communication inference. Replace a dependency with a communication of that dependency.

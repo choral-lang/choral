@@ -5,7 +5,7 @@ import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.HeaderLoader;
 import choral.compiler.Parser;
 import choral.compiler.Typer;
-import choral.compiler.amend.MoveMeant;
+import choral.compiler.moveMeant.MoveMeant;
 import choral.options.TyperOptions;
 import choral.options.VerbosityOptions;
 import com.google.gson.JsonPrimitive;
