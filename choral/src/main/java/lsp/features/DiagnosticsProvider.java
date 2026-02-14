@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import choral.options.TyperOptions;
+import choral.options.VerbosityOptions;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
@@ -29,7 +31,9 @@ public class DiagnosticsProvider {
             
             List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
 
-            Collection<CompilationUnit> typedUnits = Typer.annotate(Arrays.asList(compUnit), headerUnits);
+            TyperOptions typerOptions = new TyperOptions( VerbosityOptions.VerbosityLevel.WARNINGS );
+            Collection<CompilationUnit> typedUnits =
+                    Typer.annotate( Arrays.asList(compUnit), headerUnits, typerOptions );
 
         } catch (ChoralCompoundException e) {
             for (ChoralException cause : e.getCauses()) {

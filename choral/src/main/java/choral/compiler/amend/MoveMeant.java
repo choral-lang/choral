@@ -5,7 +5,9 @@ import java.util.Collection;
 import java.util.List;
 
 import choral.ast.CompilationUnit;
+import choral.compiler.Typer;
 import choral.compiler.amend.MiniZincInference.*;
+import choral.options.TyperOptions;
 
 /**
  * The main entry point for communication inference.
@@ -21,7 +23,8 @@ public class MoveMeant {
      */
     public static List< CompilationUnit > infer(
         Collection< CompilationUnit > sources,
-        Collection< CompilationUnit > headers
+        Collection< CompilationUnit > headers,
+        TyperOptions opts
     ) {
         List<CompilationUnit> fullComCus = new ArrayList<>();
 
@@ -30,7 +33,7 @@ public class MoveMeant {
                     new VariableReplacement( new Selections() ).inferComms(cu)
             ).toList();
             // Since dataComCu is now without type annotations, we need to re-annotate them again
-            RelaxedTyper.annotate( dataComCus, headers );
+            Typer.annotate( dataComCus, headers, opts.normalMode() );
 
             for( CompilationUnit dataComCu : dataComCus ){
                 Selections selections = new BasicKOCInference().inferKOC( dataComCu );

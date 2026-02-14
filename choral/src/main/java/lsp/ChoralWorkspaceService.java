@@ -4,19 +4,16 @@ import choral.ast.CompilationUnit;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.HeaderLoader;
 import choral.compiler.Parser;
+import choral.compiler.Typer;
 import choral.compiler.amend.MoveMeant;
-import choral.compiler.amend.RelaxedTyper;
+import choral.options.TyperOptions;
+import choral.options.VerbosityOptions;
 import com.google.gson.JsonPrimitive;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
 import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -45,8 +42,9 @@ public class ChoralWorkspaceService implements WorkspaceService {
                 List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
 
                 // Collect data dependencies nd infer communications
-                var checkedUnit = RelaxedTyper.annotate( List.of(parsedUnit), headerUnits );
-                var fixedUnit = MoveMeant.infer( checkedUnit, headerUnits );
+                var opts = new TyperOptions( VerbosityOptions.VerbosityLevel.WARNINGS );
+                var checkedUnit = Typer.annotate( List.of(parsedUnit), headerUnits, opts );
+                var fixedUnit = MoveMeant.infer( checkedUnit, headerUnits, opts );
 
                 // Convert to string and overwrite the file
                 var fixedSource = new PrettyPrinterVisitor().visit( fixedUnit.get( 0 ) );
