@@ -1007,7 +1007,7 @@ public class Typer {
 						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
-						.map( x -> assertNotVoid( synth( scope, x, true ), x.position() ) )
+						.map( x -> assertNotVoid( synth( scope, x, true, callable ), x.position() ) )
 						.collect( Collectors.toList() );
 				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
 						typeArgs,
@@ -1202,9 +1202,10 @@ public class Typer {
 		GroundDataTypeOrVoid synth(
 				VariableDeclarationScope scope,
 				Expression n,
-				boolean explicitConstructorArg
+				boolean explicitConstructorArg,
+				Member.HigherCallable enclosingMethod
 		) {
-			return new Synth( scope, explicitConstructorArg, Collections.emptyList(), null, null ).visit( n );
+			return new Synth( scope, explicitConstructorArg, Collections.emptyList(), enclosingMethod, null ).visit( n );
 		}
 
 		GroundDataType assertNotVoid( GroundDataTypeOrVoid t, Position position ) {
@@ -1512,8 +1513,35 @@ public class Typer {
 
 			@Override
 			public GroundDataTypeOrVoid visit( ScopedExpression n ) {
+				// This is a tricky case for the "relaxed" typing mode. Consider a program like:
+				// ```
+				// MyObj@B obj = ...;
+				// int@A x = obj.first.second + 1@A;
+				// ```
+				// If we typecheck naively, we'll see that `obj` is a value at B being used in an
+				// expression at A, and we'll naively infer that A depends on `obj`. Instead, we
+				// want to infer that B needs to send `obj.first.second` to A.
+				//
+				// This means:
+				// 1. When we get to the outermost part of the scoped expression, we record its full
+				//    name.
+				// 2. We disable world inference for all sub-expressions of the scoped
+				//    expression, except the innermost one.
+
+				// Temporarily turn off bookkeeping for the relaxed typer...
+				List< ? extends World > savedHomeWorlds = homeWorlds;
+				homeWorlds = Collections.emptyList();
+
 				left = visit( n.scope() );
 				GroundDataTypeOrVoid right = visit( n.scopedExpression() );
+
+				// ...turn bookkeeping back on for the relaxed typer and record any dependencies
+				// if `n` is the innermost part of the scoped expression.
+				homeWorlds = savedHomeWorlds;
+				if( !(n.scopedExpression() instanceof ScopedExpression) ){
+					recordDependencies(n, right, homeWorlds);
+				}
+
 				left = null;
 				return annotate( n, right );
 			}
@@ -1698,6 +1726,10 @@ public class Typer {
 			@Override
 			public GroundDataType visit( BinaryExpression n ) {
 				GroundDataTypeOrVoid tl = synth( n.left() );
+				// In "relaxed" typing mode, we let the left argument's determine where the
+				// expression should be evaluated.
+				if( homeWorlds.isEmpty() && !tl.isVoid() )
+					homeWorlds = ((GroundDataType)tl).worldArguments();
 				GroundDataTypeOrVoid tr = synth( n.right() );
 				return annotate( n, visitBinaryOp( n.operator(), tl, tr, n.position() ) );
 			}
@@ -1923,6 +1955,54 @@ public class Typer {
 			@Override
 			public GroundDataType visit( TypeExpression n ) {
 				return annotate( n, visitGroundDataTypeExpression( scope, n, false ) );
+			}
+
+			/**
+			 * In the "relaxed" typing mode, check if an expression's location matches its
+			 * expected location. If it doesn't, record the expression as a dependency.
+			 * @param type The expression's type
+			 * @param toWorlds The place where the expression's result should be located
+			 */
+			private void recordDependencies(
+				Expression expression,
+				GroundDataTypeOrVoid type,
+				List< ? extends World > toWorlds
+			){
+				if (type.isVoid()) return;
+				var foreignWorlds = ((GroundDataType) type).worldArguments();
+				if( !toWorlds.containsAll( foreignWorlds ) ){
+					enclosingMethod.addDependency(toWorlds, expression, enclosingStatement);
+				}
+			}
+
+			/**
+			 * In the "relaxed" typing mode, check the locations of the arguments match the
+			 * locations expected by the method. Any argument that doesn't match is recorded
+			 * as a dependency for communication inference.
+			 * @param method The method being invoked
+			 * @param args The arguments passed to the method; we assume the arguments already
+			 *             have type annotations
+			 */
+			private void recordDependencies(
+				Member.GroundCallable method,
+				List< Expression > args
+			) {
+				for( int i = 0; i < args.size(); i++ ){
+					var toWorlds = getParamWorlds( method, i );
+					var argument = args.get(i);
+					var argType = argument.typeAnnotation().get();
+					recordDependencies(argument, argType, toWorlds);
+				}
+			}
+
+			/** Throws an exception if the literal isn't in the world we expect it to be in. */
+			private <T extends LiteralExpression<?>> void checkWorlds( T n ){
+				if( !homeWorlds.isEmpty() && !homeWorlds.contains( visitWorld( n.world() ) ) ){
+					throw new AstPositionedException( n.position(),
+							 new StaticVerificationException(
+									 "Literal '" + n + "', can't be used in an expression at role '"
+									 + homeWorlds + "'" ) );
+				}
 			}
 
 			public List< ? extends World > visitWorlds( List< WorldArgument > n ) {

@@ -1513,38 +1513,32 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataTypeOrVoid visit( ScopedExpression n ) {
-				// Consider a program like:
+				// This is a tricky case for the "relaxed" typing mode. Consider a program like:
 				// ```
 				// MyObj@B obj = ...;
 				// int@A x = obj.first.second + 1@A;
 				// ```
-				// We want to infer that B needs to send `obj.first.second` to A. This means:
-				// 1. When we get to the root of the scoped expression, record its full name.
-				// 2. We disable communication inference for all sub-expressions of the scoped
-				//    expression, except the innermost one.
+				// If we typecheck naively, we'll see that `obj` is a value at B being used in an
+				// expression at A, and we'll naively infer that A depends on `obj`. Instead, we
+				// want to infer that B needs to send `obj.first.second` to A.
 				//
-				// Note that if `second` is a field in `obj.first`, then `obj.first.second` is
-				// a `ScopedExpression` with `scope=obj` and `scopedExpression=first.second`.
-				// `first.second` is then a `ScopedExpression` with `scope=first` and
-				// `scopedExpression=second`. `second` would then be a `FieldAccessExpression`.
+				// This means:
+				// 1. When we get to the outermost part of the scoped expression, we record its full
+				//    name.
+				// 2. We disable world inference for all sub-expressions of the scoped
+				//    expression, except the innermost one.
 
-
-				/* In a ScopedExpression like a.b.c the shallowest layer would have `scope=a` and
-				 * `scopedExpression=b.c`. We would detect that this is the end of our ScopedExpression.
-				 * However when `scopedExpression` is visited, it would also be a ScopedExpression which would be
-				 * detected as the innermost ScopedExpression (since this would have scope=b and
-				 * scopedExpression=c).
-				 * To get around this, we "turn off" homeWorlds, ensuring that no dependencies are detected
-				 */
+				// Temporarily turn off bookkeeping for the relaxed typer...
 				List< ? extends World > savedHomeWorlds = homeWorlds;
 				homeWorlds = Collections.emptyList();
+
 				left = visit( n.scope() );
 				GroundDataTypeOrVoid right = visit( n.scopedExpression() );
-				homeWorlds = savedHomeWorlds;
 
-				// if n.scopedExpression() is not a ScopedExpression then n.scopedExpression() is the
-				// innermost expression (usually a FieldAccessExpression or a MethodCallExpression)
-				if( !(n.scopedExpression() instanceof ScopedExpression) && !right.isVoid() ){
+				// ...turn bookkeeping back on for the relaxed typer and record any dependencies
+				// if `n` is the innermost part of the scoped expression.
+				homeWorlds = savedHomeWorlds;
+				if( !(n.scopedExpression() instanceof ScopedExpression) ){
 					recordDependencies(n, right, homeWorlds);
 				}
 
