@@ -127,60 +127,58 @@ public class TestChoral {
 	}
 
 	@TestFactory
-	public Stream< DynamicTest > mustPassMoveMeant() {
-		CompilationRequestBuilder builder = new CompilationRequestBuilder("--infer-comms");
+	public Stream< DynamicTest > moveMeant() {
+		CompilationRequestBuilder mustPass = new CompilationRequestBuilder("--infer-comms");
+		CompilationRequestBuilder mustFail = new CompilationRequestBuilder("--infer-comms");
 		//// Bug: Mysterious OOM
-		// builder.addSources( "DistributedAuthentication", subFolder( MOVEMEANT, "DistributedAuthentication" ) );
-		// builder.addSources( "DistributedAuthentication", subFolder( MUSTPASS, "BiPair" ) );
+		// mustPass.addSources( "DistributedAuthentication", subFolder( MOVEMEANT, "DistributedAuthentication" ) );
+		// mustPass.addSources( "DistributedAuthentication", subFolder( MUSTPASS, "BiPair" ) );
 		//// Bug in the "simple" inference model: dependency not found
-		// builder.addSources( "NestedBlocks", subFolder( MOVEMEANT, "NestedBlocks" ) );
-		// builder.addSources( "NestedBlocks", subFolder( MOVEMEANT, "utils" ) );
+		// mustPass.addSources( "NestedBlocks", subFolder( MOVEMEANT, "NestedBlocks" ) );
+		// mustPass.addSources( "NestedBlocks", subFolder( MOVEMEANT, "utils" ) );
 		/// Bug: Choral backend generates bad code
-		// builder.addSources( "SimpleIfStatements", subFolder( MOVEMEANT, "SimpleIfStatements" ) );
-		builder.addSources( "BiPair", subFolder( MOVEMEANT_PASS, "BiPair" ) );
-		builder.addSources( "BuyerSellerShipper", subFolder( MOVEMEANT_PASS, "BuyerSellerShipper" ) );
-		builder.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT_PASS, "ChannelsAsArgs" ) );
-		builder.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT_PASS, "utils" ) );
-		builder.addSources( "ChannelsAsFields", subFolder( MOVEMEANT_PASS, "ChannelsAsFields" ) );
-		builder.addSources( "ChannelsAsFields", subFolder( MOVEMEANT_PASS, "utils" ) );
-		builder.addSources( "ChannelTypesExample", subFolder( MOVEMEANT_PASS, "ChannelTypesExample" ) );
-		builder.addSources( "ConsumeItems", subFolder( MOVEMEANT_PASS, "ConsumeItems" ) );
-		builder.addSources( "DiffieHellman", subFolder( MOVEMEANT_PASS, "DiffieHellman" ) );
-		builder.addSources( "DiffieHellman", subFolder( MUSTPASS, "BiPair" ) );
-		builder.addSources( "DownloadFile", subFolder( MOVEMEANT_PASS, "DownloadFile" ) );
-		builder.addSources( "DownloadFile", subFolder( MOVEMEANT_PASS, "SendPackets" ) );
-		builder.addSources( "HelloRoles", subFolder( MOVEMEANT_PASS, "HelloRoles" ) );
-		builder.addSources( "Increments", subFolder( MOVEMEANT_PASS, "Increments" ) );
-		builder.addSources( "Karatsuba", subFolder( MOVEMEANT_PASS, "Karatsuba" ) );
-		builder.addSources( "Mergesort", subFolder( MOVEMEANT_PASS, "Mergesort" ) );
-		builder.addSources( "OverloadOnRoles", subFolder( MOVEMEANT_PASS, "OverloadOnRoles" ) );
-		builder.addSources( "PingPong", subFolder( MOVEMEANT_PASS, "PingPong" ) );
-		builder.addSources( "Quicksort", subFolder( MOVEMEANT_PASS, "Quicksort" ) );
-		builder.addSources( "RemoteFunction", subFolder( MOVEMEANT_PASS, "RemoteFunction" ) );
-		builder.addSources( "SendPackets", subFolder( MOVEMEANT_PASS, "SendPackets" ) );
-		builder.addSources( "SimpleArithmetic", subFolder( MOVEMEANT_PASS, "SimpleArithmetic" ) );
-		builder.addSources( "SimpleIf3", subFolder( MOVEMEANT_PASS, "SimpleIf3" ) );
-		builder.addSources( "SimpleKOC", subFolder( MOVEMEANT_PASS, "SimpleKOC" ) );
-		builder.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT_PASS, "SimpleMethodCalls" ) );
-		builder.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT_PASS, "utils" ) );
-		builder.addSources( "SimpleReturns", subFolder( MOVEMEANT_PASS, "SimpleReturns" ) );
-		builder.addSources( "SimpleVariableReplacement", subFolder( MOVEMEANT_PASS, "SimpleVariableReplacement" ) );
-		builder.addSources( "SplitAndCombine", subFolder( MOVEMEANT_PASS, "SplitAndCombine" ) );
-		builder.addSources( "SSOWithRetry", subFolder( MOVEMEANT_PASS, "SSOWithRetry" ) );
-		builder.addSources( "VitalsStreaming", subFolder( MOVEMEANT_PASS, "VitalsStreaming" ) );
+		// mustPass.addSources( "SimpleIfStatements", subFolder( MOVEMEANT, "SimpleIfStatements" ) );
+		mustPass.addSources( "BiPair", subFolder( MOVEMEANT_PASS, "BiPair" ) );
+		mustPass.addSources( "BuyerSellerShipper", subFolder( MOVEMEANT_PASS, "BuyerSellerShipper" ) );
+		mustPass.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT_PASS, "ChannelsAsArgs" ) );
+		mustPass.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT_PASS, "utils" ) );
+		mustPass.addSources( "ChannelsAsFields", subFolder( MOVEMEANT_PASS, "ChannelsAsFields" ) );
+		mustPass.addSources( "ChannelsAsFields", subFolder( MOVEMEANT_PASS, "utils" ) );
+		mustPass.addSources( "ChannelTypesExample", subFolder( MOVEMEANT_PASS, "ChannelTypesExample" ) );
+		mustPass.addSources( "ConsumeItems", subFolder( MOVEMEANT_PASS, "ConsumeItems" ) );
+		mustPass.addSources( "DiffieHellman", subFolder( MOVEMEANT_PASS, "DiffieHellman" ) );
+		mustPass.addSources( "DiffieHellman", subFolder( MUSTPASS, "BiPair" ) );
+		mustPass.addSources( "DownloadFile", subFolder( MOVEMEANT_PASS, "DownloadFile" ) );
+		mustPass.addSources( "DownloadFile", subFolder( MOVEMEANT_PASS, "SendPackets" ) );
+		mustPass.addSources( "HelloRoles", subFolder( MOVEMEANT_PASS, "HelloRoles" ) );
+		mustPass.addSources( "Increments", subFolder( MOVEMEANT_PASS, "Increments" ) );
+		mustPass.addSources( "Karatsuba", subFolder( MOVEMEANT_PASS, "Karatsuba" ) );
+		mustPass.addSources( "Mergesort", subFolder( MOVEMEANT_PASS, "Mergesort" ) );
+		mustPass.addSources( "OverloadOnRoles", subFolder( MOVEMEANT_PASS, "OverloadOnRoles" ) );
+		mustPass.addSources( "PingPong", subFolder( MOVEMEANT_PASS, "PingPong" ) );
+		mustPass.addSources( "Quicksort", subFolder( MOVEMEANT_PASS, "Quicksort" ) );
+		mustPass.addSources( "RemoteFunction", subFolder( MOVEMEANT_PASS, "RemoteFunction" ) );
+		mustPass.addSources( "SendPackets", subFolder( MOVEMEANT_PASS, "SendPackets" ) );
+		mustPass.addSources( "SimpleArithmetic", subFolder( MOVEMEANT_PASS, "SimpleArithmetic" ) );
+		mustPass.addSources( "SimpleIf3", subFolder( MOVEMEANT_PASS, "SimpleIf3" ) );
+		mustPass.addSources( "SimpleKOC", subFolder( MOVEMEANT_PASS, "SimpleKOC" ) );
+		mustPass.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT_PASS, "SimpleMethodCalls" ) );
+		mustPass.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT_PASS, "utils" ) );
+		mustPass.addSources( "SimpleReturns", subFolder( MOVEMEANT_PASS, "SimpleReturns" ) );
+		mustPass.addSources( "SimpleVariableReplacement", subFolder( MOVEMEANT_PASS, "SimpleVariableReplacement" ) );
+		mustPass.addSources( "SplitAndCombine", subFolder( MOVEMEANT_PASS, "SplitAndCombine" ) );
+		mustPass.addSources( "SSOWithRetry", subFolder( MOVEMEANT_PASS, "SSOWithRetry" ) );
+		mustPass.addSources( "VitalsStreaming", subFolder( MOVEMEANT_PASS, "VitalsStreaming" ) );
 
-		return builder.build().map(request ->
-				dynamicTest(request.symbol, new MustPassTest( request )));
-	}
+		mustFail.addSources( "AmbiguousRecipient1", subFolder( MOVEMEANT_FAIL, "AmbiguousRecipient1" ) );
+		mustFail.addSources( "AmbiguousRecipient2", subFolder( MOVEMEANT_FAIL, "AmbiguousRecipient2" ) );
 
-	@TestFactory
-	public Stream< DynamicTest > mustFailMoveMeant() {
-		CompilationRequestBuilder builder = new CompilationRequestBuilder("--infer-comms");
-		builder.addSources( "AmbiguousRecipient1", subFolder( MOVEMEANT_FAIL, "AmbiguousRecipient1" ) );
-		builder.addSources( "AmbiguousRecipient2", subFolder( MOVEMEANT_FAIL, "AmbiguousRecipient2" ) );
-
-		return builder.build().map(request ->
-				dynamicTest(request.symbol, new MustFailTest( request )));
+		return Stream.concat(
+				mustPass.build().map(request ->
+					dynamicTest(request.symbol, new MustPassTest( request ))),
+				mustFail.build().map(request ->
+					dynamicTest(request.symbol, new MustFailTest( request )))
+		);
 	}
 
 	///////////////////////////////// DATATYPES /////////////////////////////////////
