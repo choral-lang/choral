@@ -1293,7 +1293,71 @@ public class RelaxedTyper {
 
 			@Override
 			public Boolean visit( SwitchStatement n ) {
-				throw new UnsupportedOperationException("Switch statements not allowed\n\tStatement at " + n.position().toString());
+				GroundDataTypeOrVoid g = synth( n.guard(), n );
+				if( !legalSwitchPrimitiveTypes.contains( g.primitiveTypeTag() )
+						&& !legalSwitchSpecialTypes.contains( g.specialTypeTag() )
+						&& !g.isEnum() ) {
+					throw new AstPositionedException( n.guard().position(),
+							new StaticVerificationException( "incompatible types, found '" + g
+									+ "', required an instance of '" + PrimitiveTypeTag.CHAR
+									+ "', '" + PrimitiveTypeTag.BYTE
+									+ "', '" + PrimitiveTypeTag.SHORT
+									+ "', '" + PrimitiveTypeTag.INT
+									+ "', '" + SpecialTypeTag.BYTE
+									+ "', '" + SpecialTypeTag.SHORT
+									+ "', '" + SpecialTypeTag.INTEGER
+									+ "', '" + SpecialTypeTag.STRING
+									+ "', or an enum type" ) );
+				}
+				boolean returnChecked = true;
+				boolean hasDefault = false;
+				List< String > casesFound = new ArrayList<>( n.cases().size() );
+				for( Map.Entry< SwitchArgument< ? >, Statement > e : n.cases().entrySet() ) {
+					if( e.getKey() instanceof SwitchArgument.SwitchArgumentLabel ) {
+						SwitchArgument.SwitchArgumentLabel l = (SwitchArgument.SwitchArgumentLabel) e.getKey();
+						if( g.isEnum() ) {
+							GroundEnum ge = (GroundEnum) g;
+							String id = l.argument().identifier();
+							if( ge.field( id ).isEmpty() ) {
+								throw new AstPositionedException( l.argument().position(),
+										new UnresolvedSymbolException( id ) );
+							} else {
+								if( casesFound.contains( id ) ) {
+									throw new AstPositionedException( l.argument().position(),
+											new StaticVerificationException(
+													"duplicate case '" + id + "'" ) );
+								} else {
+									casesFound.add( id );
+								}
+							}
+						} else {
+							throw new AstPositionedException( l.argument().position(),
+									new StaticVerificationException(
+											"required a literal of type '" + g + "', found a label" ) );
+						}
+					} else if( e.getKey() instanceof SwitchArgument.SwitchArgumentLiteral ) {
+						SwitchArgument.SwitchArgumentLiteral l = (SwitchArgument.SwitchArgumentLiteral) e.getKey();
+						GroundDataTypeOrVoid a = synth( l.argument(), n );
+						String s = l.argument().content().toString();
+						if( !a.isAssignableTo( g ) ) {
+							throw new AstPositionedException( l.position(),
+									new StaticVerificationException( "required type '" + g
+											+ "', found '" + g + "'" ) );
+						}
+						if( casesFound.contains( s ) ) {
+							throw StaticVerificationException.of(
+									"duplicate case '" + s + "'",
+									l.argument().position() );
+						} else {
+							casesFound.add( s );
+						}
+					} else {
+						hasDefault = true;
+					}
+					returnChecked &= visitAsInBlock( e.getValue() );
+				}
+				returnChecked &= hasDefault;
+				return assertReachableContinuation( n, returnChecked );
 			}
 
 			@Override
@@ -1412,7 +1476,7 @@ public class RelaxedTyper {
 				this.enclosingMethod = method;
 				this.enclosingStatement = statement;
 			}
-			
+
 			private final VariableDeclarationScope scope;
 			private GroundDataTypeOrVoid left = null;
 			private boolean leftStatic = false;
@@ -1458,10 +1522,10 @@ public class RelaxedTyper {
 				// 1. When we get to the root of the scoped expression, record its full name.
 				// 2. We disable communication inference for all sub-expressions of the scoped
 				//    expression, except the innermost one.
-				// 
-				// Note that if `second` is a field in `obj.first`, then `obj.first.second` is 
-				// a `ScopedExpression` with `scope=obj` and `scopedExpression=first.second`. 
-				// `first.second` is then a `ScopedExpression` with `scope=first` and 
+				//
+				// Note that if `second` is a field in `obj.first`, then `obj.first.second` is
+				// a `ScopedExpression` with `scope=obj` and `scopedExpression=first.second`.
+				// `first.second` is then a `ScopedExpression` with `scope=first` and
 				// `scopedExpression=second`. `second` would then be a `FieldAccessExpression`.
 
 
@@ -1478,12 +1542,12 @@ public class RelaxedTyper {
 				GroundDataTypeOrVoid right = visit( n.scopedExpression() );
 				homeWorlds = savedHomeWorlds;
 
-				// if n.scopedExpression() is not a ScopedExpression then n.scopedExpression() is the 
+				// if n.scopedExpression() is not a ScopedExpression then n.scopedExpression() is the
 				// innermost expression (usually a FieldAccessExpression or a MethodCallExpression)
 				if( !(n.scopedExpression() instanceof ScopedExpression) && !right.isVoid() ){
 					recordDependencies(n, right, homeWorlds);
 				}
-				
+
 				left = null;
 				return annotate( n, right );
 			}
@@ -1665,14 +1729,10 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataType visit( BinaryExpression n ) {
-				if( homeWorlds.isEmpty() )
-					homeWorlds = setExpressionHome(n); 	// if homeworlds is not set, check if this 
-														// expression's worlds are limited by literals
-
 				GroundDataTypeOrVoid tl = synth( n.left() );
-				// if homeWorlds was not initially set and the expression did not contain 
-				// literals, the leftmost expression decides worlds
-				if( homeWorlds.isEmpty() && !tl.isVoid() ) 	
+				// In "relaxed" typing mode, we let the left argument's determine where the
+				// expression should be evaluated.
+				if( homeWorlds.isEmpty() && !tl.isVoid() )
 					homeWorlds = ((GroundDataType)tl).worldArguments();
 				GroundDataTypeOrVoid tr = synth( n.right() );
 				return annotate( n, visitBinaryOp( n.operator(), tl, tr, n.position() ) );
@@ -1776,17 +1836,7 @@ public class RelaxedTyper {
 				Member.GroundConstructor selected = (Member.GroundConstructor) ms.get( 0 );
 				n.setConstructorAnnotation( selected );
 
-				// Since findMostSpecificCallable has been relaxed to not check world 
-				// corresponcence, we need to manually check world correspondence 
-				// between the arguments and the selected method's parameters.
-				for( int i = 0; i < args.size(); i++ ){
-					Expression argument = n.arguments().get(i);
-					if( argument.typeAnnotation().isPresent() ){ // Some arguments might not have a type annotation
-						var toWorlds = selected.signature().parameters().get(i).type().worldArguments();
-						var argType = argument.typeAnnotation().get();
-						recordDependencies(argument, argType, toWorlds);
-					} 
-				}
+				recordDependencies(selected, n.arguments());
 
 				leftStatic = false;
 				return t;
@@ -1836,32 +1886,10 @@ public class RelaxedTyper {
 					n.setMethodAnnotation( selected );
 					leftStatic = false;
 
-					// Since findMostSpecificCallable has been relaxed to not check world 
-					// corresponcence, we need to manually check world correspondence 
-					// between the arguments and the selected method's parameters.
-					for( int i = 0; i < args.size(); i++ ){
-						Expression argument = n.arguments().get(i);
-						GroundDataTypeOrVoid argType;
-						if( argument.typeAnnotation().isPresent() ){
-							argType = argument.typeAnnotation().get();
-						}
-						else if( argument instanceof MethodCallExpression ){ // Method calls don't have typeAnnotations, but rather use methodAnnotations
-							argType = ((MethodCallExpression)argument).methodAnnotation().get().returnType();
-						}
-						else {
-							// don't know if any expression besides MethodCallExpression does not use typeAnnotation
-							throw new ChoralException( "Cannot determine the type of argument " + argument + " passed to method " + n.name() );
-						}
-						
-						var toWorlds = selected.signature().parameters().get(i).type().worldArguments();
-						// We call a variation of the inferCommunications, that checks 
-						// location on a given list of worlds instead of using homeworlds
-						recordDependencies(argument, argType, toWorlds);
-					}
-
+					recordDependencies(selected, n.arguments());
 					recordDependencies(n, selected.returnType(), homeWorlds);
 
-					return selected.returnType();
+					return annotate( n, selected.returnType());
 				} else {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException( "cannot resolve method '"
@@ -1898,7 +1926,13 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataType visit( SuperExpression n ) {
-				throw new UnsupportedOperationException("Super expression not allowed\n\tExpression at " + n.position().toString());
+				if( explicitConstructorArg ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException(
+									"cannot reference 'super' before supertype constructor has been called" ) );
+
+				}
+				return annotate( n, scope.lookupSuper() );
 			}
 
 			@Override
@@ -1940,7 +1974,7 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataType visit( TypeExpression n ) {
-				throw new UnsupportedOperationException("Type expression not allowed\n\tExpression at " + n.position().toString());
+				return annotate( n, visitGroundDataTypeExpression( scope, n, false ) );
 			}
 
 			/**
@@ -1962,36 +1996,33 @@ public class RelaxedTyper {
 			}
 
 			/**
-			 * Checks the world correspondence between the given literal expression and homeworlds.
-			 * If they don't match, an exception is thrown.
+			 * In the "relaxed" typing mode, check the locations of the arguments match the
+			 * locations expected by the method. Any argument that doesn't match is recorded
+			 * as a dependency for communication inference.
+			 * @param method The method being invoked
+			 * @param args The arguments passed to the method; we assume the arguments already
+			 *             have type annotations
 			 */
+			private void recordDependencies(
+				Member.GroundCallable method,
+				List< Expression > args
+			) {
+				for( int i = 0; i < args.size(); i++ ){
+					var toWorlds = getParamWorlds( method, i );
+					var argument = args.get(i);
+					var argType = argument.typeAnnotation().get();
+					recordDependencies(argument, argType, toWorlds);
+				}
+			}
+
+			/** Throws an exception if the literal isn't in the world we expect it to be in. */
 			private <T extends LiteralExpression<?>> void checkWorlds( T n ){
 				if( !homeWorlds.isEmpty() && !homeWorlds.contains( visitWorld( n.world() ) ) ){
 					throw new AstPositionedException( n.position(),
 							 new StaticVerificationException(
-									 "Literal '" + n + "', cannot be used in an expression at world '" + homeWorlds + "'" ) );
+									 "Literal '" + n + "', can't be used in an expression at role '"
+									 + homeWorlds + "'" ) );
 				}
-			}
-
-			/**
-			 * Checks if a given expression is locked to some world by looking at existence of literals
-			 */
-			private <E extends Expression > List<? extends World> setExpressionHome( E expression ){
-				
-				if( expression instanceof BinaryExpression ){
-					List<? extends World> left = setExpressionHome( ((BinaryExpression)expression).left() );
-					List<? extends World> right = setExpressionHome( ((BinaryExpression)expression).right() );
-					
-					if( !left.isEmpty() && !right.isEmpty() && !left.equals(right) ){
-						throw new AstPositionedException( expression.position(),
-							 new StaticVerificationException(
-									 "Binary expression has literals of different worlds" ) );
-					}
-					return !left.isEmpty()? left: right;
-				} else if( expression instanceof LiteralExpression ){
-					return List.of( visitWorld(((LiteralExpression<?>)expression).world()) );
-				}
-				return Collections.emptyList();
 			}
 
 			public List< ? extends World > visitWorlds( List< WorldArgument > n ) {
