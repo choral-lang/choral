@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * A role parameter. In a definition like {@code class Foo@(A,B) {...}}, A and B are worlds.
  */
-public final class World extends TypeBase {
+public final class World extends TypeBase implements Comparable< World > {
 
 	static final String DEFAULT_NAME = "A";
 
@@ -80,8 +80,18 @@ public final class World extends TypeBase {
 	}
 
 	@Override
+	public boolean isEquivalentTo_relaxed( Type type ) {
+		return true;
+	}
+
+	@Override
 	public boolean isSubtypeOf( Type type, boolean strict ) {
 		return ( !strict && this.isEquivalentTo( type ) );
+	}
+
+	@Override
+	public boolean isSubtypeOf_relaxed( Type type, boolean strict ) {
+		return ( !strict && this.isEquivalentTo_relaxed( type ) );
 	}
 
 	public static List< World > freshWorlds( Universe universe, int size ) {
@@ -100,4 +110,8 @@ public final class World extends TypeBase {
 		return ws;
 	}
 
+	@Override
+	public int compareTo( World other ) {
+		return this.identifier.compareTo( other.identifier );
+	}
 }

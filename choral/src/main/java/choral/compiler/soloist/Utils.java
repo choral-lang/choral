@@ -79,7 +79,7 @@ public class Utils {
 		}
 		if( !worlds.stream().map( FormalWorldParameter::toWorldArgument ).collect(
 				Collectors.toList() ).contains( world ) ) {
-			System.out.println(
+			System.err.println(
 					"WARNING: compilation launched on world: '" + world + "' "
 							+ "but missing in " + templateName
 

@@ -41,6 +41,7 @@ import choral.compiler.unitNormaliser.UnitRepresentation;
 import choral.exceptions.ChoralException;
 import choral.grammar.ChoralLexer;
 import choral.grammar.ChoralParser;
+import choral.utils.VerbosityLevel;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.*;
 import org.apache.commons.cli.*;
@@ -246,7 +247,7 @@ public class Compiler {
 						targetFolder = targetFolder.getParent();
 					}
 				} else {
-					System.out.println( "Error: target path " + targetFolder + " does not exist." );
+					System.err.println( "Error: target path " + targetFolder + " does not exist." );
 					System.exit( 1 );
 				}
 			}
@@ -262,7 +263,7 @@ public class Compiler {
 			}
 
 		} catch( ParseException e ) {
-			System.out.println( e.getMessage() );
+			System.err.println( e.getMessage() );
 			helpFormatter.printHelp( USAGE, options );
 			System.exit( 1 );
 		}
@@ -330,7 +331,8 @@ public class Compiler {
 	}
 
 	private void type() {
-		Typer.annotate( targetCompilationUnits, Collections.emptyList() );
+		TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS );
+		Typer.annotate( targetCompilationUnits, Collections.emptyList(), typerOptions );
 	}
 
 	private void project() {
@@ -524,8 +526,8 @@ public class Compiler {
 
 	private void die() {
 		System.err.println( "Compilation failed, see above for details." );
-		System.out.println( NAME + " found errors it was not able to fix and had to give up." );
-		System.out.println( "\t (\\  /)\n\t ( .  .)\n\tC(\") (\")" );
+		System.err.println( NAME + " found errors it was not able to fix and had to give up." );
+		System.err.println( "\t (\\  /)\n\t ( .  .)\n\tC(\") (\")" );
 		System.exit( 1 );
 	}
 

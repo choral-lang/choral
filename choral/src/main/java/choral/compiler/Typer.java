@@ -34,13 +34,14 @@ import choral.exceptions.AstPositionedException;
 import choral.exceptions.StaticVerificationException;
 import choral.types.Package;
 import choral.types.*;
+import choral.types.Member.HigherCallable;
 import choral.types.Universe.PrimitiveTypeTag;
 import choral.types.Universe.SpecialTypeTag;
 import choral.utils.Formatting;
 import choral.utils.Pair;
-import com.google.common.base.Strings;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -78,14 +79,16 @@ public class Typer {
 	 * @return A reference to the sourceUnits, now annotated with type information
 	 */
 	public static Collection< CompilationUnit > annotate(
-			Collection< CompilationUnit > sourceUnits, Collection< CompilationUnit > headerUnits
+			Collection< CompilationUnit > sourceUnits,
+			Collection< CompilationUnit > headerUnits,
+			TyperOptions opts
 	) {
 		TaskQueue taskQueue = new TaskQueue();
 		Universe universe = new Universe();
-		Visitor headerVisitor = new HeaderVisitor( taskQueue, universe );
+		Visitor headerVisitor = new HeaderVisitor( taskQueue, universe, opts );
 		headerUnits.forEach( cu -> taskQueue.enqueue( Phase.TYPE_SYMBOL_DECLARATIONS,
 				() -> headerVisitor.visit( cu ) ) );
-		Visitor sourceVisitor = new SourceVisitor( taskQueue, universe );
+		Visitor sourceVisitor = new SourceVisitor( taskQueue, universe, opts );
 		sourceUnits.forEach( cu -> taskQueue.enqueue( Phase.TYPE_SYMBOL_DECLARATIONS,
 				() -> sourceVisitor.visit( cu ) ) );
 		taskQueue.process();
@@ -99,10 +102,12 @@ public class Typer {
 
 		private final TaskQueue taskQueue;
 		private final Universe universe;
+		protected final TyperOptions opts;
 
-		public Visitor( TaskQueue taskQueue, Universe universe ) {
+		public Visitor( TaskQueue taskQueue, Universe universe, TyperOptions opts ) {
 			this.taskQueue = taskQueue;
 			this.universe = universe;
+			this.opts = opts;
 		}
 
 		protected TaskQueue taskQueue() {
@@ -674,7 +679,7 @@ public class Typer {
 					return annotate( n, g );
 				}
 			} catch( StaticVerificationException e ) {
-				System.out.println(n.name());
+				System.err.println(n.name());
 				throw new AstPositionedException( n.position(), e );
 			}
 		}
@@ -865,8 +870,8 @@ public class Typer {
 	}
 
 	private static class HeaderVisitor extends Visitor {
-		public HeaderVisitor( TaskQueue taskQueue, Universe universe ) {
-			super( taskQueue, universe );
+		public HeaderVisitor( TaskQueue taskQueue, Universe universe, TyperOptions opts ) {
+			super( taskQueue, universe, opts );
 		}
 
 		@Override
@@ -903,10 +908,10 @@ public class Typer {
 
 	}
 
-	private static class SourceVisitor
-			extends Visitor {
-		public SourceVisitor( TaskQueue taskQueue, Universe universe ) {
-			super( taskQueue, universe );
+	private static class SourceVisitor extends Visitor {
+
+		public SourceVisitor( TaskQueue taskQueue, Universe universe, TyperOptions opts ) {
+			super( taskQueue, universe, opts );
 		}
 
 		@Override
@@ -975,9 +980,10 @@ public class Typer {
 					throw new StaticVerificationException(
 							"non-abstract methods must have bodies" );
 				} else {
-					boolean returnChecked = new Check( bodyScope,
-							callable.innerCallable().returnType() )
-							.visit( body );
+					callable.addChannel(bodyScope.getChannels());
+					boolean returnChecked = check(
+							body, callable.innerCallable().returnType(), bodyScope, callable
+					);
 					if( !callable.innerCallable().returnType().isVoid() && !returnChecked ) {
 						throw new AstPositionedException( body.position(),
 								new StaticVerificationException( "missing return statement" ) );
@@ -1020,7 +1026,7 @@ public class Typer {
 						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
-						.map( x -> assertNotVoid( synth( scope, x, true ), x.position() ) )
+						.map( x -> assertNotVoid( synth( scope, x, true, callable ), x.position() ) )
 						.collect( Collectors.toList() );
 				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
 						typeArgs,
@@ -1050,7 +1056,8 @@ public class Typer {
 				dependencies.put( callable, selected.higherCallable() );
 				positions.put( callable, n.position() );
 			}
-			new Check( scope, universe().voidType() ).visit( d.blockStatements() );
+			callable.addChannel(scope.getChannels()); // find all available channels
+			check( d.blockStatements(), universe().voidType(), scope, callable );
 		}
 
 		private List< ? extends Member.GroundCallable > findMostSpecificCallable(
@@ -1091,7 +1098,9 @@ public class Typer {
 						GroundDataType p = cparams.get( i ).type();
 //						System.out.printf( "'%s' isSubtypeOf '%s': %s\n", a,p, a.isSubtypeOf( p ) );
 						if( phase == 1 ) {
-							incompatible = !a.isSubtypeOf( p );
+							incompatible = opts.relaxed() ?
+									!a.isSubtypeOf_relaxed( p ) :
+									!a.isSubtypeOf( p );
 						} else {
 							if( p.isPrimitive() ) {
 								if( a instanceof GroundClass && ( (GroundClass) a ).isBoxedType() ) {
@@ -1103,7 +1112,9 @@ public class Typer {
 								}
 							}
 //							System.out.printf( "'%s' isAssignableTo '%s': %s\n", a,p,a.isAssignableTo( p ) );
-							incompatible = !a.isAssignableTo( p );
+							incompatible = opts.relaxed() ?
+									!a.isAssignableTo_relaxed( p ) :
+									!a.isAssignableTo( p );
 						}
 						if( incompatible ) {
 							break;
@@ -1146,17 +1157,89 @@ public class Typer {
 				phase++;
 			} while( ms.isEmpty() && phase < 3 );
 //			System.out.println( "=================================================" );
+
+			ms = checkArgWorlds( ms, args );
+
 			return ms;
 		}
 
-		GroundDataTypeOrVoid synth( VariableDeclarationScope scope, Expression n ) {
-			return new Synth( scope ).visit( n );
+		/**
+		 * In the "relaxed" typer mode, there might be multiple methods that have exactly
+		 * the same datatypes as parameters and differ only in worlds: for example,
+		 * {@code myMethod(int@A, bool@B)} and {@code myMethod(int@B, bool@A)}. If that
+		 * happens, we use the DWIM ("Do What I Mean") resolution strategy explained below.
+		 * <p>
+		 * If there's a method whose parameter worlds match the argument worlds exactly,
+		 * e.g. {@code myMethod(int@A, bool@B)} with invocation {@code myMethod(1@A, true@B},
+		 * we assume that's the method they wanted to invoke---even though they could
+		 * conceivably have wanted us to infer this:
+		 * {@code myMethod(chAB.com(1@A), chBA.com(true@B)}.
+		 * <p>
+		 * We also go a step further. Maybe there's a method that matches all argument worlds
+		 * exactly, except for the i-th argument. So the i-th argument will have to be sent
+		 * to some other world---but which one? Well, if all method overloads have the i-th
+		 * parameter at the same world, then our choice is deterministic. So if we invoke
+		 * {@code myMethod(1@A, true@A)} and our overloads are {@code myMethod(int@A, bool@B)}
+		 * and {@code myMethod(int@B, bool@B)}, then we'll assume they wanted us to infer
+		 * {@code myMethod(1@A, chAB.com(true@A))}---even though they could conceivably
+		 * have wanted us to infer {@code myMethod(chAB.com(1@A), chAB.com(true@A))}.
+		 */
+		private static List<Member.GroundCallable> checkArgWorlds(
+				List< Member.GroundCallable > methods,
+				List< ? extends GroundDataType > args
+		){
+			for( int i = 0; i < args.size(); i++ ){
+				final int index = i;
+				var argWorlds = args.get(index).worldArguments();
+
+				// Find the methods whose i-th parameter world matches our i-th argument world.
+				// If there are no such methods, check if they all have their i-th parameter
+				// at the same world---if so, we can proceed because any of them would require
+				// the same communications.
+				var eligibleMethods = methods.stream()
+						.filter( method -> getParamWorlds(method, index).equals(argWorlds) )
+						.toList();
+				if( eligibleMethods.isEmpty() ){
+					var firstWorlds = getParamWorlds(methods.get(0), index);
+					boolean allAtSameWorld = methods.stream().allMatch( method ->
+							getParamWorlds(method, index).equals(firstWorlds) );
+					if( !allAtSameWorld ){
+						return Collections.emptyList();
+					}
+				} else {
+					methods = eligibleMethods;
+				}
+			}
+
+			return methods;
+		}
+
+		/**
+		 * Returns the list of worlds associated with the i-th parameter of the given method.
+		 * For example, the 1-th world of {@code myMethod(int@A, bool@B)} is B.
+		 */
+		private static List< ? extends World > getParamWorlds( Member.GroundCallable method, int i ){
+			return method.signature().parameters().get(i).type().worldArguments();
+		}
+
+		boolean check(
+				Statement statement,
+				GroundDataTypeOrVoid expectedType,
+				VariableDeclarationScope scope,
+				Member.HigherCallable enclosingMethod
+		) {
+			return new Check( scope, expectedType, enclosingMethod, opts ).visit( statement );
 		}
 
 		GroundDataTypeOrVoid synth(
-				VariableDeclarationScope scope, Expression n, boolean explicitConstructorArg
+				VariableDeclarationScope scope,
+				Expression n,
+				boolean explicitConstructorArg,
+				Member.HigherCallable enclosingMethod
 		) {
-			return new Synth( scope, explicitConstructorArg ).visit( n );
+			return new Synth(
+					scope, explicitConstructorArg, Collections.emptyList(), enclosingMethod, null, opts
+			).visit( n );
 		}
 
 		GroundDataType assertNotVoid( GroundDataTypeOrVoid t, Position position ) {
@@ -1174,9 +1257,20 @@ public class Typer {
 
 			private final GroundDataTypeOrVoid expected;
 
-			public Check( VariableDeclarationScope scope, GroundDataTypeOrVoid expected ) {
+			private final HigherCallable enclosingMethod;
+
+			private final TyperOptions opts;
+
+			public Check(
+					VariableDeclarationScope scope,
+					GroundDataTypeOrVoid expected,
+					HigherCallable method,
+					TyperOptions opts
+			) {
 				this.scope = scope;
 				this.expected = expected;
+				this.enclosingMethod = method;
+				this.opts = opts;
 			}
 
 			private boolean visitAsInBlock( Statement n ) {
@@ -1208,13 +1302,13 @@ public class Typer {
 
 			@Override
 			public Boolean visit( ExpressionStatement n ) {
-				synth( scope, n.expression() );
+				synth( n.expression(), n );
 				return assertReachableContinuation( n, false );
 			}
 
 			@Override
 			public Boolean visit( IfStatement n ) {
-				GroundDataTypeOrVoid type = synth( scope, n.condition() );
+				GroundDataTypeOrVoid type = synth( n.condition(), n );
 				if( type.primitiveTypeTag() != PrimitiveTypeTag.BOOLEAN &&
 						type.specialTypeTag() != SpecialTypeTag.BOOLEAN ) {
 					throw new AstPositionedException( n.condition().position(),
@@ -1237,7 +1331,7 @@ public class Typer {
 
 			@Override
 			public Boolean visit( SwitchStatement n ) {
-				GroundDataTypeOrVoid g = synth( scope, n.guard() );
+				GroundDataTypeOrVoid g = synth( n.guard(), n );
 				if( !legalSwitchPrimitiveTypes.contains( g.primitiveTypeTag() )
 						&& !legalSwitchSpecialTypes.contains( g.specialTypeTag() )
 						&& !g.isEnum() ) {
@@ -1281,7 +1375,7 @@ public class Typer {
 						}
 					} else if( e.getKey() instanceof SwitchArgument.SwitchArgumentLiteral ) {
 						SwitchArgument.SwitchArgumentLiteral l = (SwitchArgument.SwitchArgumentLiteral) e.getKey();
-						GroundDataTypeOrVoid a = synth( scope, l.argument() );
+						GroundDataTypeOrVoid a = synth( l.argument(), n );
 						String s = l.argument().content().toString();
 						if( !a.isAssignableTo( g ) ) {
 							throw new AstPositionedException( l.position(),
@@ -1308,12 +1402,15 @@ public class Typer {
 			public Boolean visit( TryCatchStatement n ) {
 				boolean returnChecked = visitAsInBlock( n.body() );
 				for( Pair< VariableDeclaration, Statement > c : n.catches() ) {
-					GroundDataType te = visitGroundDataTypeExpression( scope, c.left().type(),
-							false );
-					if( te.worldArguments().size() > 1 || !te.isSubtypeOf(
-							universe().specialType( SpecialTypeTag.EXCEPTION ).applyTo(
-									te.worldArguments() ) )
-					) {
+					GroundDataType te = visitGroundDataTypeExpression(
+							scope, c.left().type(), false );
+					GroundClassOrInterface expectedType = universe()
+							.specialType( SpecialTypeTag.EXCEPTION )
+							.applyTo( te.worldArguments() );
+					boolean isSubtype = opts.relaxed() ?
+							te.isSubtypeOf_relaxed( expectedType ) :
+							te.isSubtypeOf( expectedType );
+					if( te.worldArguments().size() > 1 || !isSubtype ) {
 						throw new AstPositionedException( c.left().type().position(),
 								new StaticVerificationException( "required an instance of type '"
 										+ SpecialTypeTag.EXCEPTION
@@ -1347,18 +1444,22 @@ public class Typer {
 										"missing return value" ) );
 					}
 				} else {
-					if( expected == universe().voidType() ) {
-						throw new AstPositionedException( n.returnExpression().position(),
-								new StaticVerificationException(
-										"cannot return a value from a method with 'void' result type" ) );
-					} else {
-						GroundDataTypeOrVoid found = synth( scope, n.returnExpression() );
-						if( !found.isAssignableTo( expected ) ) {
+					if( expected instanceof GroundDataType expected ) {
+						List< ? extends World > expectedLocation = expected.worldArguments();
+						GroundDataTypeOrVoid found = synth( n.returnExpression(), n, expectedLocation );
+						boolean isAssignable = opts.relaxed() ?
+								found.isAssignableTo_relaxed( expected ) :
+								found.isAssignableTo( expected );
+						if( !isAssignable ) {
 							throw new AstPositionedException( n.position(),
 									new StaticVerificationException(
 											"required type '" + expected + "', found '" + found + "'" ) );
 						}
 						return assertReachableContinuation( n, true );
+					} else {
+						throw new AstPositionedException( n.returnExpression().position(),
+								new StaticVerificationException(
+										"cannot return a value from a method with 'void' result type" ) );
 					}
 				}
 			}
@@ -1368,7 +1469,7 @@ public class Typer {
 				for( VariableDeclaration x : n.variables() ) {
 					GroundDataType type = visitGroundDataTypeExpression( scope, x.type(), false );
 					scope.declareVariable( x.name().identifier(), type );
-					x.initializer().ifPresent( e -> synth( scope, e ) );
+					x.initializer().ifPresent( e -> synth( e, n ) );
 				}
 				return assertReachableContinuation( n, false );
 			}
@@ -1383,23 +1484,72 @@ public class Typer {
 				n.setReturnAnnotation( returnChecked );
 				return returnChecked;
 			}
+
+			GroundDataTypeOrVoid synth(
+					Expression n, Statement statement
+			) {
+				return new Synth(
+						scope, false, Collections.emptyList(), enclosingMethod, statement, opts
+				).visit( n );
+			}
+
+			GroundDataTypeOrVoid synth(
+					Expression n, Statement statement, List< ? extends World > homeWorlds
+			) {
+				return new Synth(
+						scope, false, homeWorlds, enclosingMethod, statement, opts
+				).visit( n );
+			}
+
 		}
 
 		private final class Synth extends AbstractChoralVisitor< GroundDataTypeOrVoid > {
 
-			public Synth( VariableDeclarationScope scope ) {
-				this( scope, false );
-			}
-
-			public Synth( VariableDeclarationScope scope, boolean explicitConstructorArg ) {
+			public Synth(
+				VariableDeclarationScope scope,
+				boolean explicitConstructorArg,
+				List< ? extends World > homeWorlds,
+				HigherCallable method,
+				Statement statement,
+				TyperOptions opts
+			) {
 				this.scope = scope;
 				this.explicitConstructorArg = explicitConstructorArg;
+				this.homeWorlds = homeWorlds;
+				this.enclosingMethod = method;
+				this.enclosingStatement = statement;
+				this.opts = opts;
 			}
-
+			
 			private final VariableDeclarationScope scope;
 			private GroundDataTypeOrVoid left = null;
 			private boolean leftStatic = false;
 			private final boolean explicitConstructorArg;
+			private final TyperOptions opts;
+
+			/**
+			 * The set of worlds where we think the expression will be evaluated. For example, in
+			 * the statement {@code int@B z = x + y;}, we set B as the home world. We use this
+			 * information for communication inference: if x was located at another world A, we'd
+			 * infer that B needs a copy of x from A.
+			 */
+			private List< ? extends World > homeWorlds;
+			/** The method that contains the current expression. */
+			private final HigherCallable enclosingMethod;
+			/** The statement that contains the current expression. */
+			private final Statement enclosingStatement;
+
+			GroundDataTypeOrVoid synth( Expression n ) {
+				return new Synth(
+						scope, explicitConstructorArg, homeWorlds, enclosingMethod, enclosingStatement, opts
+				).visit( n );
+			}
+
+			GroundDataTypeOrVoid synth( Expression n, List< ? extends World > homeWorlds ) {
+				return new Synth(
+					scope, explicitConstructorArg, homeWorlds, enclosingMethod, enclosingStatement, opts
+				).visit( n );
+			}
 
 			@Override
 			public GroundDataTypeOrVoid visit( Expression n ) {
@@ -1408,8 +1558,35 @@ public class Typer {
 
 			@Override
 			public GroundDataTypeOrVoid visit( ScopedExpression n ) {
+				// This is a tricky case for the "relaxed" typing mode. Consider a program like:
+				// ```
+				// MyObj@B obj = ...;
+				// int@A x = obj.first.second + 1@A;
+				// ```
+				// If we typecheck naively, we'll see that `obj` is a value at B being used in an
+				// expression at A, and we'll naively infer that A depends on `obj`. Instead, we
+				// want to infer that B needs to send `obj.first.second` to A.
+				//
+				// This means:
+				// 1. When we get to the outermost part of the scoped expression, we record its full
+				//    name.
+				// 2. We disable world inference for all sub-expressions of the scoped
+				//    expression, except the innermost one.
+
+				// Temporarily turn off bookkeeping for the relaxed typer...
+				List< ? extends World > savedHomeWorlds = homeWorlds;
+				homeWorlds = Collections.emptyList();
+
 				left = visit( n.scope() );
 				GroundDataTypeOrVoid right = visit( n.scopedExpression() );
+
+				// ...turn bookkeeping back on for the relaxed typer and record any dependencies
+				// if `n` is the innermost part of the scoped expression.
+				homeWorlds = savedHomeWorlds;
+				if( !(n.scopedExpression() instanceof ScopedExpression) ){
+					recordDependencies(n, right, homeWorlds);
+				}
+
 				left = null;
 				return annotate( n, right );
 			}
@@ -1447,130 +1624,156 @@ public class Typer {
 					GroundDataTypeOrVoid tvr,
 					Position position
 			) {
-				if( !tvl.isVoid() && !tvr.isVoid() ) {
-					GroundDataType tl = (GroundDataType) tvl;
-					GroundDataType tr = (GroundDataType) tvr;
-					if( tl.worldArguments().size() == 1 && tr.worldArguments().size() == 1
-							&& tl.worldArguments().equals( tr.worldArguments() ) ) {
-						GroundPrimitiveDataType pl = null;
-						GroundPrimitiveDataType pr = null;
-						switch( operator ) {
-							case PLUS: {
-								if( tl.specialTypeTag() == SpecialTypeTag.STRING
-										|| tr.specialTypeTag() == SpecialTypeTag.STRING
-										|| ( ( tl.specialTypeTag() == SpecialTypeTag.CHARACTER ||
-										tl.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) &&
-										( tr.specialTypeTag() == SpecialTypeTag.CHARACTER ||
-												tr.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) )
-								) {
-									return universe().specialType( SpecialTypeTag.STRING ).applyTo(
-											tl.worldArguments() );
-								}
-							}
-							case MINUS:
-							case MULTIPLY:
-							case DIVIDE:
-							case REMAINDER:
-								pl = assertUnbox( tl, position );
-								pr = assertUnbox( tr, position );
-								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
-									GroundPrimitiveDataType p = ( pl.primitiveTypeTag().compareTo(
-											pr.primitiveTypeTag() ) > 0 )
-											? pl
-											: pr;
-									if( p.primitiveTypeTag().compareTo(
-											PrimitiveTypeTag.INT ) < 0 ) {
-										// promote byte, char, short to int
-										p = universe().primitiveDataType(
-												PrimitiveTypeTag.INT ).applyTo(
-												tl.worldArguments() );
-									}
-									return p;
-								}
-								break;
-							case LESS:
-							case LESS_EQUALS:
-							case GREATER:
-							case GREATER_EQUALS:
-								pl = assertUnbox( tl, position );
-								pr = assertUnbox( tr, position );
-								if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
-									return universe().primitiveDataType(
-											PrimitiveTypeTag.BOOLEAN ).applyTo(
-											tl.worldArguments() );
-								}
-								break;
-							case OR:
-							case AND:
-								pl = assertUnbox( tl, position );
-								pr = assertUnbox( tr, position );
-								if( pl.primitiveTypeTag().isIntegral() && pr.primitiveTypeTag().isIntegral() ) {
-									if( pl.primitiveTypeTag().compareTo(
-											pr.primitiveTypeTag() ) > 0 ) {
-										return pl;
-									} else {
-										return pr;
-									}
-								}
-							case SHORT_CIRCUITED_OR:
-							case SHORT_CIRCUITED_AND:
-								pl = ( pl == null ) ? assertUnbox( tl, position ) : pl;
-								pr = ( pr == null ) ? assertUnbox( tr, position ) : pr;
-								if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN
-										&& pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
-									return tl;
-								}
-								break;
-							case EQUALS:
-							case NOT_EQUALS:
-								if( ( tl instanceof GroundReferenceType && tr.isSubtypeOf( tl ) ) ||
-										( tr instanceof GroundReferenceType && tl.isSubtypeOf(
-												tr ) )
-								) {
-									return universe().primitiveDataType(
-											PrimitiveTypeTag.BOOLEAN ).applyTo(
-											tl.worldArguments() );
-								} else {
-									pl = assertUnbox( tl, position );
-									pr = assertUnbox( tr, position );
-									if( pl.primitiveTypeTag() == pr.primitiveTypeTag() ||
-											( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() )
-									) {
-										return universe().primitiveDataType(
-												PrimitiveTypeTag.BOOLEAN ).applyTo(
-												tl.worldArguments() );
-									}
-								}
+				if( tvl.isVoid() || tvr.isVoid() ) {
+					throw new AstPositionedException( position,
+							new StaticVerificationException( "cannot apply '"
+									+ operator + "' to '" + tvl
+									+ "' and '" + tvr + "'" ) );
+				}
+
+				GroundDataType tl = (GroundDataType) tvl;
+				GroundDataType tr = (GroundDataType) tvr;
+
+				List< ? extends World > worlds;
+				if ( opts.relaxed() ) {
+					worlds = homeWorlds.isEmpty() ? tl.worldArguments() : homeWorlds;
+				}
+				else {
+					worlds = tl.worldArguments();
+
+					if( !( tl.worldArguments().size() == 1 &&
+							tr.worldArguments().size() == 1 &&
+							tl.worldArguments().equals( tr.worldArguments() ) )
+					) {
+						throw new AstPositionedException( position,
+								new StaticVerificationException( "cannot apply '"
+										+ operator + "' to '" + tvl
+										+ "' and '" + tvr + "'" ) );
+					}
+				}
+
+				GroundPrimitiveDataType pl = null;
+				GroundPrimitiveDataType pr = null;
+				switch( operator ) {
+					case PLUS: {
+						if( tl.specialTypeTag() == SpecialTypeTag.STRING
+								|| tr.specialTypeTag() == SpecialTypeTag.STRING
+								|| ( ( tl.specialTypeTag() == SpecialTypeTag.CHARACTER ||
+								tl.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) &&
+								( tr.specialTypeTag() == SpecialTypeTag.CHARACTER ||
+										tr.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) )
+						) {
+							return universe().specialType( SpecialTypeTag.STRING ).applyTo(
+									worlds );
 						}
 					}
+					case MINUS:
+					case MULTIPLY:
+					case DIVIDE:
+					case REMAINDER:
+						pl = assertUnbox( tl, position );
+						pr = assertUnbox( tr, position );
+						if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
+							GroundPrimitiveDataType p = ( pl.primitiveTypeTag().compareTo(
+									pr.primitiveTypeTag() ) > 0 )
+									? pl
+									: pr;
+							if( p.primitiveTypeTag().compareTo(
+									PrimitiveTypeTag.INT ) < 0 ) {
+								// promote byte, char, short to int
+								p = universe().primitiveDataType(
+										PrimitiveTypeTag.INT ).applyTo(
+										worlds );
+							}
+							return p;
+						}
+						break;
+					case LESS:
+					case LESS_EQUALS:
+					case GREATER:
+					case GREATER_EQUALS:
+						pl = assertUnbox( tl, position );
+						pr = assertUnbox( tr, position );
+						if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
+							return universe().primitiveDataType(
+									PrimitiveTypeTag.BOOLEAN ).applyTo(
+									worlds );
+						}
+						break;
+					case OR:
+					case AND:
+						pl = assertUnbox( tl, position );
+						pr = assertUnbox( tr, position );
+						if( pl.primitiveTypeTag().isIntegral() && pr.primitiveTypeTag().isIntegral() ) {
+							if( pl.primitiveTypeTag().compareTo(
+									pr.primitiveTypeTag() ) > 0 ) {
+								return pl;
+							} else {
+								return pr;
+							}
+						}
+					case SHORT_CIRCUITED_OR:
+					case SHORT_CIRCUITED_AND:
+						pl = ( pl == null ) ? assertUnbox( tl, position ) : pl;
+						pr = ( pr == null ) ? assertUnbox( tr, position ) : pr;
+						if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN
+								&& pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
+							return tl;
+						}
+						break;
+					case EQUALS:
+					case NOT_EQUALS:
+						boolean trSubtype = opts.relaxed() ? tr.isSubtypeOf_relaxed( tl ) : tr.isSubtypeOf( tl );
+						boolean tlSubtype = opts.relaxed() ? tl.isSubtypeOf_relaxed( tr ) : tl.isSubtypeOf( tr );
+						if( ( tl instanceof GroundReferenceType && trSubtype ) ||
+							( tr instanceof GroundReferenceType && tlSubtype ) ) {
+							return universe().primitiveDataType(
+									PrimitiveTypeTag.BOOLEAN ).applyTo(
+									worlds );
+						} else {
+							pl = assertUnbox( tl, position );
+							pr = assertUnbox( tr, position );
+							if( pl.primitiveTypeTag() == pr.primitiveTypeTag() ||
+									( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() )
+							) {
+								return universe().primitiveDataType(
+										PrimitiveTypeTag.BOOLEAN ).applyTo(
+										worlds );
+							}
+						}
 				}
 				throw new AstPositionedException( position,
 						new StaticVerificationException( "cannot apply '"
-								+ operator + "' to '" + tvl
-								+ "' and '" + tvr + "'" ) );
+								+ operator + "' to '" + tl
+								+ "' and '" + tr + "'" ) );
 			}
 
 			@Override
 			public GroundDataType visit( AssignExpression n ) {
-				GroundDataTypeOrVoid tvl = synth( scope, n.target(), explicitConstructorArg );
+				GroundDataTypeOrVoid tvl = synth( n.target(), Collections.emptyList() );
 				if( tvl.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
 									"expected assignable variable" ) );
 				}
 				GroundDataType tl = (GroundDataType) tvl;
-				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg );
+				homeWorlds = tl.worldArguments(); // the lefthand side of an assignment determines the worlds of the expression
+				GroundDataTypeOrVoid tvr = synth( n.value() );
 				if( tvr.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
 									"required type '" + tl + "', found '" + tvr + "'" ) );
 				}
 				GroundDataType tr = (GroundDataType) tvr;
+
 				if( n.operator().hasOperation() ) {
 					// tr might be promoted beyond tl
 					tr = visitBinaryOp( n.operator().operation(), tl, tr, n.position() );
 				}
-				if( !tr.isAssignableTo( tl ) ) {
+				boolean assignable = opts.relaxed() ?
+						tr.isAssignableTo_relaxed( tl ) :
+						tr.isAssignableTo( tl );
+				if( !assignable ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
 									"required type '" + tl + "', found '" + tr + "'" ) );
@@ -1580,14 +1783,18 @@ public class Typer {
 
 			@Override
 			public GroundDataType visit( BinaryExpression n ) {
-				GroundDataTypeOrVoid tl = synth( scope, n.left(), explicitConstructorArg );
-				GroundDataTypeOrVoid tr = synth( scope, n.right(), explicitConstructorArg );
+				GroundDataTypeOrVoid tl = synth( n.left() );
+				// In "relaxed" typing mode, we let the left argument's determine where the
+				// expression should be evaluated.
+				if( homeWorlds.isEmpty() && !tl.isVoid() )
+					homeWorlds = ((GroundDataType)tl).worldArguments();
+				GroundDataTypeOrVoid tr = synth( n.right() );
 				return annotate( n, visitBinaryOp( n.operator(), tl, tr, n.position() ) );
 			}
 
 			@Override
 			public GroundDataTypeOrVoid visit( EnclosedExpression n ) {
-				return synth( scope, n.nestedExpression(), explicitConstructorArg );
+				return synth( n.nestedExpression() );
 			}
 
 			private boolean checkMemberAccess( Member m ) {
@@ -1616,6 +1823,7 @@ public class Typer {
 					throw new AstPositionedException( n.position(),
 							new UnresolvedSymbolException( identifier ) );
 				} else {
+					recordDependencies(n, result.get(), homeWorlds);
 					return annotate( n, result.get() );
 				}
 			}
@@ -1653,7 +1861,7 @@ public class Typer {
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
 						.map( x -> assertNotVoid(
-								synth( scope, x, explicitConstructorArg ),
+								synth( x, Collections.emptyList() ),
 								x.position() ) )
 						.collect( Collectors.toList() );
 				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
@@ -1681,13 +1889,16 @@ public class Typer {
 				}
 				Member.GroundConstructor selected = (Member.GroundConstructor) ms.get( 0 );
 				n.setConstructorAnnotation( selected );
+
+				recordDependencies(selected, n.arguments());
+
 				leftStatic = false;
 				return t;
 			}
 
 			@Override
 			public GroundDataTypeOrVoid visit( MethodCallExpression n ) {
-				if( left == null ) {
+				if( left == null ) { // only happens for simple method calls (local)
 					left = scope.lookupThis();
 					leftStatic = explicitConstructorArg;
 				}
@@ -1695,9 +1906,11 @@ public class Typer {
 						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
-						.map( x -> assertNotVoid(
-								synth( scope, x, explicitConstructorArg ),
-								x.position() ) )
+						.map( x -> {
+							return assertNotVoid(
+								synth( x, Collections.emptyList() ),
+								x.position() );
+						} )
 						.collect( Collectors.toList() );
 				if( left instanceof GroundReferenceType ) {
 					GroundReferenceType t = (GroundReferenceType) left;
@@ -1713,7 +1926,8 @@ public class Typer {
 										+ args.stream().map( Object::toString ).collect( Formatting
 										.joining( ",", "(", ")", "" ) )
 										+ "' in '" + t + "'" ) );
-					} else if( ms.size() > 1 ) {
+					}
+					else if( ms.size() > 1 ) {
 						throw new AstPositionedException( n.position(),
 								new StaticVerificationException(
 										"ambiguous method invocation, " +
@@ -1725,7 +1939,11 @@ public class Typer {
 					Member.GroundMethod selected = (Member.GroundMethod) ms.get( 0 );
 					n.setMethodAnnotation( selected );
 					leftStatic = false;
-					return selected.returnType();
+
+					recordDependencies(selected, n.arguments());
+					recordDependencies(n, selected.returnType(), homeWorlds);
+
+					return annotate( n, selected.returnType());
 				} else {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException( "cannot resolve method '"
@@ -1777,24 +1995,32 @@ public class Typer {
 			}
 
 			public GroundDataType visit( LiteralExpression.BooleanLiteralExpression n ) {
+				checkWorlds(n);
+
 				return annotate( n, universe()
 						.primitiveDataType( PrimitiveTypeTag.BOOLEAN )
 						.applyTo( visitWorld( n.world() ) ) );
 			}
 
 			public GroundDataType visit( LiteralExpression.IntegerLiteralExpression n ) {
+				checkWorlds(n);
+
 				return annotate( n, universe()
 						.primitiveDataType( PrimitiveTypeTag.INT )
 						.applyTo( visitWorld( n.world() ) ) );
 			}
 
 			public GroundDataType visit( LiteralExpression.DoubleLiteralExpression n ) {
+				checkWorlds(n);
+
 				return annotate( n, universe()
 						.primitiveDataType( PrimitiveTypeTag.DOUBLE )
 						.applyTo( visitWorld( n.world() ) ) );
 			}
 
 			public GroundDataType visit( LiteralExpression.StringLiteralExpression n ) {
+				checkWorlds(n);
+
 				return annotate( n, universe()
 						.specialType( SpecialTypeTag.STRING )
 						.applyTo( List.of( visitWorld( n.world() ) ) ) );
@@ -1805,8 +2031,58 @@ public class Typer {
 				return annotate( n, visitGroundDataTypeExpression( scope, n, false ) );
 			}
 
+			/**
+			 * In the "relaxed" typing mode, check if an expression's location matches its
+			 * expected location. If it doesn't, record the expression as a dependency.
+			 * @param type The expression's type
+			 * @param toWorlds The place where the expression's result should be located
+			 */
+			private void recordDependencies(
+				Expression expression,
+				GroundDataTypeOrVoid type,
+				List< ? extends World > toWorlds
+			){
+				if (!opts.relaxed() || type.isVoid()) return;
+				var foreignWorlds = ((GroundDataType) type).worldArguments();
+				if( !toWorlds.containsAll( foreignWorlds ) ){
+					enclosingMethod.addDependency(toWorlds, expression, enclosingStatement);
+				}
+			}
+
+			/**
+			 * In the "relaxed" typing mode, check the locations of the arguments match the
+			 * locations expected by the method. Any argument that doesn't match is recorded
+			 * as a dependency for communication inference.
+			 * @param method The method being invoked
+			 * @param args The arguments passed to the method; we assume the arguments already
+			 *             have type annotations
+			 */
+			private void recordDependencies(
+				Member.GroundCallable method,
+				List< Expression > args
+			) {
+				if ( !opts.relaxed() ) return;
+				for( int i = 0; i < args.size(); i++ ){
+					var toWorlds = getParamWorlds( method, i );
+					var argument = args.get(i);
+					var argType = argument.typeAnnotation().get();
+					recordDependencies(argument, argType, toWorlds);
+				}
+			}
+
+			/** Throws an exception if the literal isn't in the world we expect it to be in. */
+			private <T extends LiteralExpression<?>> void checkWorlds( T n ){
+				if ( !opts.relaxed() ) return;
+				if( !homeWorlds.isEmpty() && !homeWorlds.contains( visitWorld( n.world() ) ) ){
+					throw new AstPositionedException( n.position(),
+							 new StaticVerificationException(
+									 "Literal '" + n + "', can't be used in an expression at role '"
+									 + homeWorlds + "'" ) );
+				}
+			}
+
 			public List< ? extends World > visitWorlds( List< WorldArgument > n ) {
-				return n.stream().map( this::visitWorld ).collect( Collectors.toList() );
+				return n.stream().map( this::visitWorld ).toList();
 			}
 
 			public World visitWorld( WorldArgument n ) {
@@ -1814,7 +2090,6 @@ public class Typer {
 			}
 
 		}
-
 	}
 
 	private interface Scope {
@@ -2389,6 +2664,9 @@ public class Typer {
 		private final Map< String, GroundDataType > variables = new HashMap<>();
 
 		@Override
+		public Map< String, GroundDataType > variables() { return variables; }
+
+		@Override
 		public void declareVariable( String identifier, GroundDataType type ) {
 			if( lookupVariable( identifier ).isEmpty() ) {
 				variables.put( identifier, type );
@@ -2446,6 +2724,9 @@ public class Typer {
 		}
 
 		private final Map< String, GroundDataType > variables = new HashMap<>();
+
+		@Override
+		public Map< String, GroundDataType > variables() { return variables; }
 
 		@Override
 		public void declareVariable( String identifier, GroundDataType type ) {
@@ -2529,7 +2810,55 @@ public class Typer {
 
 		Scope parent();
 
+		Map< String, GroundDataType > variables();
+
 		BlockScope newBlockScope();
+
+		/**
+		 * Collects channels available in the scope by looking at the fields of "this"
+		 * and the enclosing method's arguments
+		 */
+		default List<Pair<String, GroundInterface>> getChannels(){
+			Map<String, GroundInterface> channels = new HashMap<>();
+			HigherClassOrInterface diDataChannel = assertLookupClassOrInterface("choral.channels.DiDataChannel");
+			HigherClassOrInterface diSelectChannel = assertLookupClassOrInterface("choral.channels.DiSelectChannel");
+
+			Predicate<GroundInterface> isChannel = (type) ->
+				type.allExtendedInterfaces()
+					.anyMatch( extendedInterface ->
+							diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ||
+							diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) );
+
+			VariableDeclarationScope currentScope = this;
+			while ( true ) {
+				currentScope.variables().forEach( (key, val) -> {
+					if( val instanceof GroundInterface type ){
+						if( isChannel.test( type ) ){
+							channels.putIfAbsent( key, type );
+						}
+					}
+				} );
+
+				if( parent() instanceof VariableDeclarationScope parent ){
+					currentScope = parent;
+				}
+				else {
+					break;
+				}
+			}
+
+			lookupThis().fields().forEach( field -> {
+				if( field.type() instanceof GroundInterface type ){
+					if( isChannel.test( type ) ){
+						channels.putIfAbsent( field.identifier(), type );
+					}
+				}
+			} );
+
+			return channels.entrySet().stream()
+				.map( entry -> new Pair<>( entry.getKey(), entry.getValue() ) )
+				.toList();
+		}
 
 	}
 

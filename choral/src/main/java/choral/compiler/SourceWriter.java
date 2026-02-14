@@ -80,7 +80,7 @@ public class SourceWriter {
 			createEmptyDirectory( folder );
 			units.forEach( ( name, code ) -> writeSources( folder, name, code ) );
 		} catch ( CancelException e ) {
-			System.out.println( "Compilation cancelled by user" );
+			System.err.println( "Compilation cancelled by user" );
 		}
 	}
 

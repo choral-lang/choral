@@ -64,6 +64,16 @@ public interface GroundClass extends GroundClassOrInterface, Class {
 		}
 	}
 
+	@Override
+	default boolean isAssignableTo_relaxed( GroundDataTypeOrVoid type ) {
+		if( isBoxedType() && type instanceof GroundPrimitiveDataType ) {
+			return unboxedType().isAssignableTo_relaxed( type );
+		} else {
+			return !type.isVoid() && ( type instanceof GroundDataType )
+					&& isSubtypeOf_relaxed( (GroundDataType) type );
+		}
+	}
+
 	default Stream< ? extends GroundClassOrInterface > extendedClassesOrInterfaces() {
 		if( extendedClass().isPresent() ) {
 			return Streams.concat( Stream.of( extendedClass().get() ), extendedInterfaces() );

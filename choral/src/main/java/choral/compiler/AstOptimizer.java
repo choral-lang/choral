@@ -1706,7 +1706,7 @@ public class AstOptimizer implements ChoralVisitor {
 				cmCounter++;
 			} else {
 				if( !debugExcludeMethods.contains( lastMethod ) ) {
-					System.out.println(
+					System.err.println(
 							lastMethod + ( ( cmCounter > 1 ) ? ( " x " + cmCounter ) : "" ) );
 				}
 				setLastMethod( currentMethod );

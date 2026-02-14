@@ -1,0 +1,7 @@
+package choral.MustPass.MoveMeant.VitalsStreaming.utils;
+
+public class PatientsRegistry@A {
+
+	public static String@A getPseudoID( String@A name ){ return ""@A; }
+
+}

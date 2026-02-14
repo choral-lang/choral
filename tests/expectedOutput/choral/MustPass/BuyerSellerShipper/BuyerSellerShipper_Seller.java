@@ -27,17 +27,15 @@ class BuyerSellerShipper_Seller {
 		if( catalogue.includes( title ) ){
 			c.< EnumBoolean >select( EnumBoolean.True );
 			c.< Price >com( catalogue.quote( title ) );
-			{
-				switch( c.< EnumBoolean >select( Unit.id ) ){
-					case True -> {
-						catalogue.ship( title ).to( c.< String >com( Unit.id ) );
-					}
-					case False -> {
-						
-					}
-					default -> {
-						throw new RuntimeException( "Received unexpected label from select operation" );
-					}
+			switch( c.< EnumBoolean >select( Unit.id ) ){
+				case True -> {
+					catalogue.ship( title ).to( c.< String >com( Unit.id ) );
+				}
+				case False -> {
+					
+				}
+				default -> {
+					throw new RuntimeException( "Received unexpected label from select operation" );
 				}
 			}
 		} else { 

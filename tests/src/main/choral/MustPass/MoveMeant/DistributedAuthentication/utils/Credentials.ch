@@ -1,0 +1,11 @@
+package choral.MustPass.MoveMeant.DistributedAuthentication.utils;
+
+public class Credentials@A {
+
+	public String@A username;
+	public String@A password;
+
+	public Credentials( String@A username, String@A password ){
+	}
+
+}

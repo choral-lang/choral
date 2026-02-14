@@ -38,7 +38,7 @@ public class ExpressionsMerger extends AbstractMerger< Expression > {
 
 	final private PrettyPrinterVisitor ppv = new PrettyPrinterVisitor();
 
-	static Expression mergeExpressions( Expression n1, Expression n2 ) {
+	public static Expression mergeExpressions( Expression n1, Expression n2 ) {
 		return new ExpressionsMerger().merge( n1, n2 );
 	}
 
