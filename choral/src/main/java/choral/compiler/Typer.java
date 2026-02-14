@@ -1137,46 +1137,12 @@ public class Typer {
 			return ms;
 		}
 
-		GroundDataTypeOrVoid synth( VariableDeclarationScope scope, Expression n,
-			HigherCallable method, Statement statement ) {
-			return new Synth( scope, method, statement ).visit( n );
-		}
-
-		GroundDataTypeOrVoid synth(
-				VariableDeclarationScope scope, Expression n, boolean explicitConstructorArg
-		) {
-			return new Synth( scope, explicitConstructorArg, null, null ).visit( n );
-		}
-
 		GroundDataTypeOrVoid synth(
 				VariableDeclarationScope scope,
 				Expression n,
-				boolean explicitConstructorArg,
-				HigherCallable method,
-				Statement statement
+				boolean explicitConstructorArg
 		) {
-			return new Synth( scope, explicitConstructorArg, method, statement ).visit( n );
-		}
-
-		GroundDataTypeOrVoid synth(
-			VariableDeclarationScope scope,
-			Expression n,
-			List< ? extends World > homeWorlds,
-			HigherCallable method,
-			Statement statement
-		) {
-			return new Synth( scope, homeWorlds, method, statement ).visit( n );
-		}
-
-		GroundDataTypeOrVoid synth(
-				VariableDeclarationScope scope,
-				Expression n,
-				boolean explicitConstructorArg,
-				List< ? extends World > homeWorlds,
-				HigherCallable method,
-				Statement statement
-		) {
-			return new Synth( scope, explicitConstructorArg, homeWorlds, method, statement ).visit( n );
+			return new Synth( scope, explicitConstructorArg, Collections.emptyList(), null, null ).visit( n );
 		}
 
 		GroundDataType assertNotVoid( GroundDataTypeOrVoid t, Position position ) {
@@ -1235,13 +1201,13 @@ public class Typer {
 
 			@Override
 			public Boolean visit( ExpressionStatement n ) {
-				synth( scope, n.expression(), enclosingMethod, n );
+				synth( n.expression(), n );
 				return assertReachableContinuation( n, false );
 			}
 
 			@Override
 			public Boolean visit( IfStatement n ) {
-				GroundDataTypeOrVoid type = synth( scope, n.condition(), enclosingMethod, n );
+				GroundDataTypeOrVoid type = synth( n.condition(), n );
 				if( type.primitiveTypeTag() != PrimitiveTypeTag.BOOLEAN &&
 						type.specialTypeTag() != SpecialTypeTag.BOOLEAN ) {
 					throw new AstPositionedException( n.condition().position(),
@@ -1264,7 +1230,7 @@ public class Typer {
 
 			@Override
 			public Boolean visit( SwitchStatement n ) {
-				GroundDataTypeOrVoid g = synth( scope, n.guard(), enclosingMethod, n );
+				GroundDataTypeOrVoid g = synth( n.guard(), n );
 				if( !legalSwitchPrimitiveTypes.contains( g.primitiveTypeTag() )
 						&& !legalSwitchSpecialTypes.contains( g.specialTypeTag() )
 						&& !g.isEnum() ) {
@@ -1308,7 +1274,7 @@ public class Typer {
 						}
 					} else if( e.getKey() instanceof SwitchArgument.SwitchArgumentLiteral ) {
 						SwitchArgument.SwitchArgumentLiteral l = (SwitchArgument.SwitchArgumentLiteral) e.getKey();
-						GroundDataTypeOrVoid a = synth( scope, l.argument(), enclosingMethod, n );
+						GroundDataTypeOrVoid a = synth( l.argument(), n );
 						String s = l.argument().content().toString();
 						if( !a.isAssignableTo( g ) ) {
 							throw new AstPositionedException( l.position(),
@@ -1386,7 +1352,7 @@ public class Typer {
 						// For the method "public int@A fun()" we know, before looking at any return
 						// statements which type we need. Therefore we can set the homeworld of the
 						// expression directly from the checker.
-						GroundDataTypeOrVoid found = synth( scope, n.returnExpression(), ((GroundDataType) expected).worldArguments(), enclosingMethod, n );
+						GroundDataTypeOrVoid found = synth( n.returnExpression(), n, ((GroundDataType) expected).worldArguments() );
 						if( !found.isAssignableTo( expected ) ) {
 							throw new AstPositionedException( n.position(),
 									new StaticVerificationException(
@@ -1402,7 +1368,7 @@ public class Typer {
 				for( VariableDeclaration x : n.variables() ) {
 					GroundDataType type = visitGroundDataTypeExpression( scope, x.type(), false );
 					scope.declareVariable( x.name().identifier(), type );
-					x.initializer().ifPresent( e -> synth( scope, e, enclosingMethod, n ) );
+					x.initializer().ifPresent( e -> synth( e, n ) );
 				}
 				return assertReachableContinuation( n, false );
 			}
@@ -1417,41 +1383,26 @@ public class Typer {
 				n.setReturnAnnotation( returnChecked );
 				return returnChecked;
 			}
+
+			GroundDataTypeOrVoid synth(
+					Expression n, Statement statement
+			) {
+				return new Synth( scope, false, Collections.emptyList(), enclosingMethod, statement ).visit( n );
+			}
+
+			GroundDataTypeOrVoid synth(
+					Expression n, Statement statement, List< ? extends World > homeWorlds
+			) {
+				return new Synth( scope, false, homeWorlds, enclosingMethod, statement ).visit( n );
+			}
+
 		}
 
 		private final class Synth extends AbstractChoralVisitor< GroundDataTypeOrVoid > {
 
-			public Synth( 
-				VariableDeclarationScope scope, 
-				HigherCallable method,
-				Statement statement 
-			) {
-				this( scope, false, method, statement );
-			}
-
-			public Synth( 
-				VariableDeclarationScope scope, 
-				boolean explicitConstructorArg, 
-				HigherCallable method,
-				Statement statement 
-			) {
-				this.scope = scope;
-				this.explicitConstructorArg = explicitConstructorArg;
-				this.enclosingMethod = method;
-				this.enclosingStatement = statement;
-			}
-
-			public Synth( 
-				VariableDeclarationScope scope, 
-				List< ? extends World > homeWorlds, 
-				HigherCallable method,
-				Statement statement   
-			) {
-				this( scope, false, homeWorlds, method, statement );
-			}
-
-			public Synth( 
-				VariableDeclarationScope scope, boolean explicitConstructorArg, 
+			public Synth(
+				VariableDeclarationScope scope,
+				boolean explicitConstructorArg,
 				List< ? extends World > homeWorlds,
 				HigherCallable method,
 				Statement statement 
@@ -1467,12 +1418,30 @@ public class Typer {
 			private GroundDataTypeOrVoid left = null;
 			private boolean leftStatic = false;
 			private final boolean explicitConstructorArg;
-			/** The worlds at which the expression takes place. */
-			List< ? extends World > homeWorlds = Collections.emptyList();
-			/** A reference to the enclosing method. */
-			HigherCallable enclosingMethod;
-			/** A reference to the enclosing statement. */
-			Statement enclosingStatement;
+
+			/**
+			 * The set of worlds where we think the expression will be evaluated. For example, in
+			 * the statement {@code int@B z = x + y;}, we set B as the home world. We use this
+			 * information for communication inference: if x was located at another world A, we'd
+			 * infer that B needs a copy of x from A.
+			 */
+			private List< ? extends World > homeWorlds;
+			/** The method that contains the current expression. */
+			private final HigherCallable enclosingMethod;
+			/** The statement that contains the current expression. */
+			private final Statement enclosingStatement;
+
+			GroundDataTypeOrVoid synth( Expression n ) {
+				return new Synth(
+						scope, explicitConstructorArg, homeWorlds, enclosingMethod, enclosingStatement
+				).visit( n );
+			}
+
+			GroundDataTypeOrVoid synth( Expression n, List< ? extends World > homeWorlds ) {
+				return new Synth(
+					scope, explicitConstructorArg, homeWorlds, enclosingMethod, enclosingStatement
+				).visit( n );
+			}
 
 			@Override
 			public GroundDataTypeOrVoid visit( Expression n ) {
@@ -1626,7 +1595,7 @@ public class Typer {
 
 			@Override
 			public GroundDataType visit( AssignExpression n ) {
-				GroundDataTypeOrVoid tvl = synth( scope, n.target(), explicitConstructorArg, enclosingMethod, enclosingStatement );
+				GroundDataTypeOrVoid tvl = synth( n.target(), Collections.emptyList() );
 				if( tvl.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
@@ -1634,7 +1603,7 @@ public class Typer {
 				}
 				GroundDataType tl = (GroundDataType) tvl;
 				homeWorlds = tl.worldArguments(); // the lefthand side of an assignment determines the worlds of the expression
-				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg, homeWorlds, enclosingMethod, enclosingStatement );
+				GroundDataTypeOrVoid tvr = synth( n.value() );
 				if( tvr.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
@@ -1656,14 +1625,14 @@ public class Typer {
 
 			@Override
 			public GroundDataType visit( BinaryExpression n ) {
-				GroundDataTypeOrVoid tl = synth( scope, n.left(), explicitConstructorArg );
-				GroundDataTypeOrVoid tr = synth( scope, n.right(), explicitConstructorArg );
+				GroundDataTypeOrVoid tl = synth( n.left() );
+				GroundDataTypeOrVoid tr = synth( n.right() );
 				return annotate( n, visitBinaryOp( n.operator(), tl, tr, n.position() ) );
 			}
 
 			@Override
 			public GroundDataTypeOrVoid visit( EnclosedExpression n ) {
-				return synth( scope, n.nestedExpression(), explicitConstructorArg );
+				return synth( n.nestedExpression() );
 			}
 
 			private boolean checkMemberAccess( Member m ) {
@@ -1729,7 +1698,7 @@ public class Typer {
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
 						.map( x -> assertNotVoid(
-								synth( scope, x, explicitConstructorArg, enclosingMethod, enclosingStatement ),
+								synth( x, Collections.emptyList() ),
 								x.position() ) )
 						.collect( Collectors.toList() );
 				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
@@ -1773,7 +1742,7 @@ public class Typer {
 				List< ? extends GroundDataType > args = n.arguments().stream()
 						.map( x -> {
 							return assertNotVoid(
-								synth( scope, x, explicitConstructorArg, enclosingMethod, enclosingStatement ),
+								synth( x, Collections.emptyList() ),
 								x.position() );
 						} )
 						.collect( Collectors.toList() );
@@ -2625,7 +2594,7 @@ public class Typer {
 			HigherClassOrInterface diDataChannel = assertLookupClassOrInterface("choral.channels.DiDataChannel");
 			HigherClassOrInterface diSelectChannel = assertLookupClassOrInterface("choral.channels.DiSelectChannel");
 
-			Predicate<GroundInterface> isChannel = ( type) ->
+			Predicate<GroundInterface> isChannel = (type) ->
 				type.allExtendedInterfaces()
 					.anyMatch( extendedInterface ->
 							diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ||

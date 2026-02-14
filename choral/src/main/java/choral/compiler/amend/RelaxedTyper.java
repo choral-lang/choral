@@ -1145,49 +1145,9 @@ public class RelaxedTyper {
 		GroundDataTypeOrVoid synth(
 				VariableDeclarationScope scope,
 				Expression n,
-				HigherCallable method,
-				Statement statement
-		) {
-			return new Synth( scope, false, Collections.emptyList(), method, statement ).visit( n );
-		}
-
-		GroundDataTypeOrVoid synth(
-				VariableDeclarationScope scope,
-				Expression n,
 				boolean explicitConstructorArg
 		) {
 			return new Synth( scope, explicitConstructorArg, Collections.emptyList(), null, null ).visit( n );
-		}
-
-		GroundDataTypeOrVoid synth(
-				VariableDeclarationScope scope,
-				Expression n,
-				boolean explicitConstructorArg,
-				HigherCallable method,
-				Statement statement
-		) {
-			return new Synth( scope, explicitConstructorArg, Collections.emptyList(), method, statement ).visit( n );
-		}
-
-		GroundDataTypeOrVoid synth(
-				VariableDeclarationScope scope,
-				Expression n,
-				List< ? extends World > homeWorlds,
-				HigherCallable method,
-				Statement statement
-		) {
-			return new Synth( scope, false, homeWorlds, method, statement ).visit( n );
-		}
-
-		GroundDataTypeOrVoid synth(
-				VariableDeclarationScope scope,
-				Expression n,
-				boolean explicitConstructorArg,
-				List< ? extends World > homeWorlds,
-				HigherCallable method,
-				Statement statement
-		) {
-			return new Synth( scope, explicitConstructorArg, homeWorlds, method, statement ).visit( n );
 		}
 
 		GroundDataType assertNotVoid( GroundDataTypeOrVoid t, Position position ) {
@@ -1199,9 +1159,6 @@ public class RelaxedTyper {
 			}
 		}
 
-		/**
-		 * A relaxed version of Check. Doesn't throw exceptions on data location mismatch.
-		 */
 		private final class Check extends AbstractChoralVisitor< Boolean > {
 
 			private VariableDeclarationScope scope;
@@ -1249,13 +1206,13 @@ public class RelaxedTyper {
 
 			@Override
 			public Boolean visit( ExpressionStatement n ) {
-				synth( scope, n.expression(), enclosingMethod, n );
+				synth( n.expression(), n );
 				return assertReachableContinuation( n, false );
 			}
 
 			@Override
 			public Boolean visit( IfStatement n ) {
-				GroundDataTypeOrVoid type = synth( scope, n.condition(), enclosingMethod, n );
+				GroundDataTypeOrVoid type = synth( n.condition(), n );
 				if( type.primitiveTypeTag() != PrimitiveTypeTag.BOOLEAN &&
 						type.specialTypeTag() != SpecialTypeTag.BOOLEAN ) {
 					throw new AstPositionedException( n.condition().position(),
@@ -1336,7 +1293,7 @@ public class RelaxedTyper {
 						// For the method "public int@A fun()" we know, before looking at any return
 						// statements which type we need. Therefore we can set the homeworld of the
 						// expression directly from the checker.
-						GroundDataTypeOrVoid found = synth( scope, n.returnExpression(), ((GroundDataType) expected).worldArguments(), enclosingMethod, n );
+						GroundDataTypeOrVoid found = synth( n.returnExpression(), n, ((GroundDataType) expected).worldArguments() );
 						if( !found.isAssignableTo_relaxed( expected ) ) {
 							throw new AstPositionedException( n.position(),
 									new StaticVerificationException(
@@ -1352,7 +1309,7 @@ public class RelaxedTyper {
 				for( VariableDeclaration x : n.variables() ) {
 					GroundDataType type = visitGroundDataTypeExpression( scope, x.type(), false );
 					scope.declareVariable( x.name().identifier(), type );
-					x.initializer().ifPresent( e -> synth( scope, e, enclosingMethod, n ) );
+					x.initializer().ifPresent( e -> synth( e, n ) );
 				}
 				return assertReachableContinuation( n, false );
 			}
@@ -1367,11 +1324,21 @@ public class RelaxedTyper {
 				n.setReturnAnnotation( returnChecked );
 				return returnChecked;
 			}
+
+			GroundDataTypeOrVoid synth(
+					Expression n, Statement statement
+			) {
+				return new Synth( scope, false, Collections.emptyList(), enclosingMethod, statement ).visit( n );
+			}
+
+			GroundDataTypeOrVoid synth(
+					Expression n, Statement statement, List< ? extends World > homeWorlds
+			) {
+				return new Synth( scope, false, homeWorlds, enclosingMethod, statement ).visit( n );
+			}
+
 		}
 
-		/**
-		 * A relaxed version of Synth. Doesn't throw exceptions on data location mismatch.
-		 */
 		private final class Synth extends AbstractChoralVisitor< GroundDataTypeOrVoid > {
 
 			public Synth(
@@ -1404,6 +1371,18 @@ public class RelaxedTyper {
 			private final HigherCallable enclosingMethod;
 			/** The statement that contains the current expression. */
 			private final Statement enclosingStatement;
+
+			GroundDataTypeOrVoid synth( Expression n ) {
+				return new Synth(
+						scope, explicitConstructorArg, homeWorlds, enclosingMethod, enclosingStatement
+				).visit( n );
+			}
+
+			GroundDataTypeOrVoid synth( Expression n, List< ? extends World > homeWorlds ) {
+				return new Synth(
+					scope, explicitConstructorArg, homeWorlds, enclosingMethod, enclosingStatement
+				).visit( n );
+			}
 
 			@Override
 			public GroundDataTypeOrVoid visit( Expression n ) {
@@ -1593,7 +1572,7 @@ public class RelaxedTyper {
 
 			@Override
 			public GroundDataType visit( AssignExpression n ) {
-				GroundDataTypeOrVoid tvl = synth( scope, n.target(), explicitConstructorArg, enclosingMethod, enclosingStatement );
+				GroundDataTypeOrVoid tvl = synth( n.target(), Collections.emptyList() );
 				if( tvl.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
@@ -1601,7 +1580,7 @@ public class RelaxedTyper {
 				}
 				GroundDataType tl = (GroundDataType) tvl;
 				homeWorlds = tl.worldArguments(); // the lefthand side of an assignment determines the worlds of the expression
-				GroundDataTypeOrVoid tvr = synth( scope, n.value(), explicitConstructorArg, homeWorlds, enclosingMethod, enclosingStatement );
+				GroundDataTypeOrVoid tvr = synth( n.value() );
 				if( tvr.isVoid() ) {
 					throw new AstPositionedException( n.position(),
 							new StaticVerificationException(
@@ -1627,18 +1606,18 @@ public class RelaxedTyper {
 					homeWorlds = setExpressionHome(n); 	// if homeworlds is not set, check if this 
 														// expression's worlds are limited by literals
 
-				GroundDataTypeOrVoid tl = synth( scope, n.left(), explicitConstructorArg, homeWorlds, enclosingMethod, enclosingStatement );
+				GroundDataTypeOrVoid tl = synth( n.left() );
 				// if homeWorlds was not initially set and the expression did not contain 
 				// lliterals, the leftmost expression desides worlds
 				if( homeWorlds.isEmpty() && !tl.isVoid() ) 	
 					homeWorlds = ((GroundDataType)tl).worldArguments();
-				GroundDataTypeOrVoid tr = synth( scope, n.right(), explicitConstructorArg, homeWorlds, enclosingMethod, enclosingStatement );
+				GroundDataTypeOrVoid tr = synth( n.right() );
 				return annotate( n, visitBinaryOp( n.operator(), tl, tr, n.position() ) );
 			}
 
 			@Override
 			public GroundDataTypeOrVoid visit( EnclosedExpression n ) {
-				return synth( scope, n.nestedExpression(), explicitConstructorArg, homeWorlds, enclosingMethod, enclosingStatement );
+				return synth( n.nestedExpression() );
 			}
 
 			private boolean checkMemberAccess( Member m ) {
@@ -1708,7 +1687,7 @@ public class RelaxedTyper {
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
 						.map( x -> assertNotVoid(
-								synth( scope, x, explicitConstructorArg, enclosingMethod, enclosingStatement ),
+								synth( x, Collections.emptyList() ),
 								x.position() ) )
 						.collect( Collectors.toList() );
 				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
@@ -1767,7 +1746,7 @@ public class RelaxedTyper {
 				List< ? extends GroundDataType > args = n.arguments().stream()
 						.map( x -> {
 							return assertNotVoid(
-								synth( scope, x, explicitConstructorArg, enclosingMethod, enclosingStatement ),
+								synth( x, Collections.emptyList() ),
 								x.position() );
 						} )
 						.collect( Collectors.toList() );
