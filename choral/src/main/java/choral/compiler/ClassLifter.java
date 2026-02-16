@@ -1,7 +1,5 @@
 package choral.compiler;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import choral.ast.CompilationUnit;
 import choral.ast.Name;
 import choral.ast.Position;
@@ -19,7 +17,6 @@ import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import io.github.classgraph.*;
 import io.github.classgraph.TypeArgument.Wildcard;
-import org.slf4j.LoggerFactory;
 
 import java.lang.Enum;
 import java.lang.reflect.Modifier;
@@ -109,9 +106,9 @@ public class ClassLifter {
 				if( classInfo.isEnum() ) {
 					liftEnum( clazz, compilationUnitAccumulator );
 				} else if( classInfo.isInterface() ) {
-					liftInterface( classInfo, compilationUnitAccumulator );
+					liftInterface( classInfo, clazz, compilationUnitAccumulator );
 				} else {
-					liftClass( classInfo, compilationUnitAccumulator );
+					liftClass( classInfo, clazz, compilationUnitAccumulator );
 				}
 			} catch( ClassNotFoundException e ) {
 				System.err.println( "WARNING: Could not find class: " + fullyQualifiedName );
@@ -121,7 +118,10 @@ public class ClassLifter {
 	}
 
 	private static void liftClass(
-			ClassInfo classInfo, List< CompilationUnit > compilationUnitAccumulator ) {
+			ClassInfo classInfo,
+			java.lang.Class< ? > clazz,
+			List< CompilationUnit > compilationUnitAccumulator
+	) {
 		// for keeping track of which dependencies to lift
 		Set< String > dependencyIdentifiers = new HashSet<>();
 
@@ -234,7 +234,9 @@ public class ClassLifter {
 		}
 
 		// add implemented interfaces to dependencies
-		addInterfaceDependencies( classInfo, dependencyIdentifiers );
+		for( ClassInfo superInterface : classInfo.getInterfaces() ) {
+			dependencyIdentifiers.add( superInterface.getName() );
+		}
 
 		EnumSet< ClassModifier > classModifiers = parseModifiers( ClassModifier.class,
 				classInfo.getModifiersStr() );
@@ -300,7 +302,10 @@ public class ClassLifter {
 	}
 
 	private static void liftInterface(
-			ClassInfo interfaceInfo, List< CompilationUnit > compilationUnitAccumulator ) {
+			ClassInfo interfaceInfo,
+			java.lang.Class< ? > clazz,
+			List< CompilationUnit > compilationUnitAccumulator
+	) {
 		// TRANSLATE METHODS
 		Set< String > dependencyIdentifiers = new HashSet<>();
 		List< InterfaceMethodDefinition > choralInterfaceMethods = liftMethods(
@@ -329,7 +334,9 @@ public class ClassLifter {
 		}
 
 		// add super interfaces to dependencies
-		addInterfaceDependencies( interfaceInfo, dependencyIdentifiers );
+		for( ClassInfo superInterface : interfaceInfo.getInterfaces() ) {
+			dependencyIdentifiers.add( superInterface.getName() );
+		}
 
 		EnumSet< InterfaceModifier > interfaceModifiers = parseModifiers( InterfaceModifier.class,
 				interfaceInfo.getModifiersStr() );
@@ -363,17 +370,6 @@ public class ClassLifter {
 			if( trackedCompilationUnits.add( interfaceSig.getBaseClassName() ) ) {
 				liftPackageHelper( interfaceSig.getBaseClassName(), compilationUnitAccumulator );
 			}
-		}
-	}
-
-	/**
-	 * Adds superinterfaces to dependencyIdentifiers. Superinterfaces are always a dependency.
-	 */
-	private static void addInterfaceDependencies(
-			ClassInfo classInfo, Set< String > dependencyIdentifiers ) {
-		ClassInfoList superInterfaces = classInfo.getInterfaces();
-		for( ClassInfo superInterface : superInterfaces ) {
-			dependencyIdentifiers.add( superInterface.getName() );
 		}
 	}
 
