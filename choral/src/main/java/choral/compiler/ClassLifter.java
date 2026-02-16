@@ -554,88 +554,55 @@ public class ClassLifter {
 	 * Does so recursively if given TypeSignature is nested.
 	 */
 	private static TypeExpression liftType( TypeSignature typeSig ) throws LiftException {
-
-		List< TypeExpression > typeExpressions = new ArrayList<>();
-		if( typeSig instanceof ClassRefTypeSignature classref ) { // for nested types
-			String baseClassName = classref.getBaseClassName();
-
-			List< TypeArgument > typeArguments = classref.getTypeArguments();
-			if( typeArguments != null ) {
-				for( int i = 0; i < typeArguments.size(); i++ ) {
-					TypeArgument arg = typeArguments.get( i );
-					TypeSignature argType = arg.getTypeSignature();
-					if( argType == null ) {
-						throw LiftException.wildcard();
-					}
-					TypeExpression typeExpression = liftTypeHelper( argType );
-					typeExpressions.add( typeExpression );
-				}
-			}
-			return new TypeExpression(
-					new Name( baseClassName, NOWHERE ),
-					List.of( DEFAULT_WORLD_ARGUMENT ),
-					typeExpressions,
-					NOWHERE );
-		} else if( typeSig instanceof BaseTypeSignature baseRef ) { // for primitive types
-			return new TypeExpression(
-					new Name( baseRef.getTypeStr(), NOWHERE ),
-					// void should not have world arguments
-					baseRef.getTypeStr().equals( "void" ) ? Collections.emptyList() : List.of(
-							DEFAULT_WORLD_ARGUMENT ),
-					Collections.emptyList(),
-					NOWHERE );
-		} else if( typeSig instanceof TypeVariableSignature typeVar ) { // for type parameters
-			return new TypeExpression(
-					new Name( typeVar.getName(), NOWHERE ),
-					List.of( DEFAULT_WORLD_ARGUMENT ),
-					Collections.emptyList(),
-					NOWHERE );
-		} else if( typeSig instanceof ArrayTypeSignature arrTypeVar ) { // for array types
-			throw LiftException.array();
-		} else {
-			throw new UnsupportedOperationException( "This type of signature is not yet supported: "
-					+ typeSig + ". Type of signature: " + typeSig.getClass().getName() );
-		}
+		return liftType( typeSig, List.of( DEFAULT_WORLD_ARGUMENT ) );
 	}
 
-	// This helper method exists because inner types of a nested type should not have any world arguments
-	private static TypeExpression liftTypeHelper( TypeSignature typeSig )
-			throws LiftException {
+	private static TypeExpression liftType(
+			TypeSignature typeSig,
+			List< WorldArgument > worlds
+	) throws LiftException {
 
-		List< TypeExpression > typeExpressions = new ArrayList<>();
 		if( typeSig instanceof ClassRefTypeSignature classref ) { // for nested types
 			String baseClassName = classref.getBaseClassName();
-
 			List< TypeArgument > typeArguments = classref.getTypeArguments();
+			List< TypeExpression > typeExpressions = new ArrayList<>();
+
 			if( typeArguments != null ) {
-				for( int i = 0; i < typeArguments.size(); i++ ) {
-					TypeArgument arg = typeArguments.get( i );
+				for( TypeArgument arg : typeArguments ) {
 					TypeSignature argType = arg.getTypeSignature();
 					if( argType == null ) throw LiftException.wildcard();
-					TypeExpression typeExpression = liftTypeHelper( argType );
+					TypeExpression typeExpression = liftType( argType, Collections.emptyList() );
 					typeExpressions.add( typeExpression );
 				}
 			}
 			return new TypeExpression(
 					new Name( baseClassName, NOWHERE ),
-					Collections.emptyList(),
+					worlds,
 					typeExpressions,
 					NOWHERE );
-		} else if( typeSig instanceof BaseTypeSignature baseRef ) { // for primitive types
+		}
+		else if( typeSig instanceof BaseTypeSignature baseRef ) { // for primitive types
+			// void should not have world arguments
+			if ( baseRef.getTypeStr().equals( "void" ) )
+				worlds = Collections.emptyList();
+
 			return new TypeExpression(
 					new Name( baseRef.getTypeStr(), NOWHERE ),
+					worlds,
 					Collections.emptyList(),
-					typeExpressions,
 					NOWHERE );
-		} else if( typeSig instanceof TypeVariableSignature typeVar ) { // for type parameters
+		}
+		else if( typeSig instanceof TypeVariableSignature typeVar ) { // for type parameters
 			return new TypeExpression(
 					new Name( typeVar.getName(), NOWHERE ),
-					Collections.emptyList(),
+					worlds,
 					Collections.emptyList(),
 					NOWHERE );
-		} else if( typeSig instanceof ArrayTypeSignature ) { // for array types
+		}
+		else if( typeSig instanceof ArrayTypeSignature ) { // for array types
 			throw LiftException.array();
-		} else { // implement other typesignatures? (might not be necessary)
+		}
+		else {
 			throw new UnsupportedOperationException( "This type of signature is not yet supported: "
 					+ typeSig + ". Type of signature: " + typeSig.getClass().getName() );
 		}
