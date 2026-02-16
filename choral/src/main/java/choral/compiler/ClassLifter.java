@@ -271,7 +271,11 @@ public class ClassLifter {
 		compilationUnitAccumulator.add( compilationUnit );
 
 		// recursively visit referenced classfiles
-		visitDependencies( classInfo, compilationUnitAccumulator, dependencyIdentifiers );
+		for( String dependency : dependencyIdentifiers ) {
+			if( trackedCompilationUnits.add( dependency ) ) {
+				liftPackageHelper( dependency, compilationUnitAccumulator );
+			}
+		}
 
 		// recursively visit super class
 		if( extendedClassTypeSignature != null ) {
@@ -363,7 +367,11 @@ public class ClassLifter {
 		compilationUnitAccumulator.add( compilationUnit );
 
 		// recursively visit referenced classfiles
-		visitDependencies( interfaceInfo, compilationUnitAccumulator, dependencyIdentifiers );
+		for( String dependency : dependencyIdentifiers ) {
+			if( trackedCompilationUnits.add( dependency ) ) {
+				liftPackageHelper( dependency, compilationUnitAccumulator );
+			}
+		}
 
 		// recursively visit super interfaces
 		for( ClassRefTypeSignature interfaceSig : interfaceTypeSignature.getSuperinterfaceSignatures() ) {
@@ -389,18 +397,6 @@ public class ClassLifter {
 		}
 
 		return translatedSuperInterfaces;
-	}
-
-	private static void visitDependencies(
-			ClassInfo classInfo,
-			List< CompilationUnit > compilationUnitAccumulator,
-			Set< String > dependencyIdentifiers
-	) {
-		for( String dependency : dependencyIdentifiers ) {
-			if( trackedCompilationUnits.add( dependency ) ) {
-				liftPackageHelper( dependency, compilationUnitAccumulator );
-			}
-		}
 	}
 
 	// Reflection-based version of liftEnum - package-private for testing
