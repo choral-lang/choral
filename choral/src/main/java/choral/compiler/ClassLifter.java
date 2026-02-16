@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+import java.lang.reflect.Modifier;
 
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +99,7 @@ public class ClassLifter {
     private static final Logger logger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
 
     // private static Set<String> trackedCompilationUnits = new HashSet<>();
-    private static Set<String> trackedCompilationUnits = new HashSet<>(List.of("java.lang.Object", "java.io.Serializable"));
+    private static Set<String> trackedCompilationUnits = new HashSet<>(List.of("java.lang.Object", "java.io.Serializable", "java.lang.Enum"));
 
     /**
      * Finds a given java package and translates it into a choral CompilationUnit
@@ -155,10 +156,15 @@ public class ClassLifter {
     }
 
     private static void liftClass(ClassInfo classInfo, List<CompilationUnit> compilationUnitAccumulator){
+        // for keeping track of which dependencies to lift        
+        Set<String> dependencyIdentifiers = new HashSet<>();
+
         // TRANSLATE FIELDS
         FieldInfoList fieldInfoList = classInfo.getFieldInfo();
         List<Field> choralFields = new ArrayList<>();
         for (FieldInfo fieldInfo : fieldInfoList){
+            // private fields will never be accessed
+            if (fieldInfo.isPrivate()) continue;
 
             EnumSet<FieldModifier> modifiers = parseModifiers(FieldModifier.class, fieldInfo.getModifiersStr());
 
@@ -170,6 +176,9 @@ public class ClassLifter {
                 warn(fieldInfo.getName(), e);
                 continue;
             }
+
+            // add fields type to depencies
+            dependencyIdentifiers.add(fieldTypeSig.toString());
 
             Field field = new Field(
                 new Name(fieldInfo.getName()),
@@ -184,6 +193,7 @@ public class ClassLifter {
         List<ClassMethodDefinition> methods = liftMethods(
             classInfo.getMethodInfo(),
             ClassMethodModifier.class,
+            dependencyIdentifiers,
             (signature, modifiers) -> new ClassMethodDefinition(
                 signature,
                 new NilStatement(NO_POSITION),
@@ -207,7 +217,7 @@ public class ClassLifter {
             }
 
             ConstructorSignature constructorSignature = new ConstructorSignature(
-                new Name(classInfo.getName(), NO_POSITION),  
+                new Name(classInfo.getSimpleName(), NO_POSITION),  
                 liftedSignatureData.typeParameters(), 
                 liftedSignatureData.parameters(), 
                 NO_POSITION);
@@ -248,7 +258,21 @@ public class ClassLifter {
             } 
         }
 
+        // add superclass to depedencies
+        ClassInfo superClass = classInfo.getSuperclass();
+        if (superClass != null) {
+            dependencyIdentifiers.add(superClass.getName());
+        }
+
+        // add implemented interfaces to dependencies
+        addInterfaceDependencies(classInfo, dependencyIdentifiers);
+
         EnumSet<ClassModifier> classModifiers = parseModifiers(ClassModifier.class, classInfo.getModifiersStr());
+
+        // For getting the modifiers not reported by classgraph (should only be for Object class)
+        if (classInfo.getModifiers() == 0){
+            addModifierBits(classInfo, classModifiers);
+        }
 
         choral.ast.body.Class choralClass = new Class(
             new Name(classInfo.getSimpleName(), NO_POSITION), 
@@ -275,7 +299,7 @@ public class ClassLifter {
         compilationUnitAccumulator.add(compilationUnit);  
         
         // recursively visit referenced classfiles
-        visitDependencies(classInfo, compilationUnitAccumulator);
+        visitDependencies(classInfo, compilationUnitAccumulator, dependencyIdentifiers);
 
         // recursively visit super class
         if (extendedClassTypeSignature != null){
@@ -284,13 +308,32 @@ public class ClassLifter {
                 liftPackageHelper(extendedClassTypeSignature.getBaseClassName(), compilationUnitAccumulator);
             }
         }
+
+        // recursively visit super interfaces
+        for (ClassRefTypeSignature interfaceSignature : classTypeSignature.getSuperinterfaceSignatures()){
+            if (trackedCompilationUnits.add(interfaceSignature.getBaseClassName())) {
+                liftPackageHelper(interfaceSignature.getBaseClassName(), compilationUnitAccumulator);
+            }
+        }
+    }
+
+    private static void addModifierBits(ClassInfo classInfo, EnumSet<ClassModifier> modifiers){
+        java.lang.Class<?> test = classInfo.loadClass();
+        int modifierBits = test.getModifiers();
+        String modifierString = Modifier.toString(modifierBits);
+        String[] modifierStrings = modifierString.split(" ");
+        for (String modifier : modifierStrings){
+            modifiers.add(ClassModifier.valueOf(modifier.toUpperCase()));
+        }
     }
 
     private static void liftInterface(ClassInfo interfaceInfo, List<CompilationUnit> compilationUnitAccumulator){
         // TRANSLATE METHODS
+        Set<String> dependencyIdentifiers = new HashSet<>();
         List<InterfaceMethodDefinition> choralInterfaceMethods = liftMethods(
             interfaceInfo.getMethodInfo(),
             InterfaceMethodModifier.class,
+            dependencyIdentifiers,
             (signature, modifiers) -> new InterfaceMethodDefinition(
                 signature,
                 Collections.emptyList(),
@@ -310,6 +353,9 @@ public class ClassLifter {
             warn(interfaceTypeSignature.toString(), e);
             return;
         } 
+
+        // add super interfaces to dependencies
+        addInterfaceDependencies(interfaceInfo, dependencyIdentifiers);
 
         EnumSet<InterfaceModifier> interfaceModifiers = parseModifiers(InterfaceModifier.class, interfaceInfo.getModifiersStr());
 
@@ -335,7 +381,24 @@ public class ClassLifter {
         compilationUnitAccumulator.add(compilationUnit);
 
         // recursively visit referenced classfiles
-        visitDependencies(interfaceInfo, compilationUnitAccumulator);
+        visitDependencies(interfaceInfo, compilationUnitAccumulator, dependencyIdentifiers);
+
+        // recursively visit super interfaces
+        for (ClassRefTypeSignature interfaceSig : interfaceTypeSignature.getSuperinterfaceSignatures()) {
+            if (trackedCompilationUnits.add(interfaceSig.getBaseClassName())) {
+                liftPackageHelper(interfaceSig.getBaseClassName(), compilationUnitAccumulator);
+            }
+        }
+    }
+
+    /**
+     * Adds superinterfaces to dependencyIdentifiers. Superinterfaces are always a dependency. 
+     */
+    private static void addInterfaceDependencies(ClassInfo classInfo, Set<String> dependencyIdentifiers){
+        ClassInfoList superInterfaces = classInfo.getInterfaces();
+        for (ClassInfo superInterface : superInterfaces){
+            dependencyIdentifiers.add(superInterface.getName());
+        }
     }
 
     private static List<TypeExpression> liftSuperInterfaces(List<ClassRefTypeSignature> interfaceSignatures){
@@ -354,16 +417,20 @@ public class ClassLifter {
         return translatedSuperInterfaces;
     }
 
-    private static void visitDependencies(ClassInfo classInfo, List<CompilationUnit> compilationUnitAccumulator){
+    private static void visitDependencies(ClassInfo classInfo, List<CompilationUnit> compilationUnitAccumulator, 
+    Set<String> dependencyIdentifiers) {
         ClassInfoList dependencies = classInfo.getClassDependencies();
         for (ClassInfo dependency : dependencies){
-            if (trackedCompilationUnits.add(dependency.getName())){
-                liftPackageHelper(dependency.getName(), compilationUnitAccumulator);
-            }
+            // only lift dependency if non-private reference exists
+            if (dependencyIdentifiers.contains(dependency.getName())){                 
+                if (trackedCompilationUnits.add(dependency.getName())){
+                    liftPackageHelper(dependency.getName(), compilationUnitAccumulator);
+                }
+            } 
         }
     }
 
-    private static void liftEnum(ClassInfo enumInfo, List<CompilationUnit> compilationUnitAccumulator){
+    private static void liftEnum(ClassInfo enumInfo, List<CompilationUnit> compilationUnitAccumulator) {
         // TRANSLATE CONSTANTS
         FieldInfoList enumConstants = enumInfo.getFieldInfo().filter(FieldInfo::isEnum);
         List<EnumConstant> choralEnumConstants = new ArrayList<>();
@@ -398,15 +465,20 @@ public class ClassLifter {
             null);
 
         compilationUnitAccumulator.add(compilationUnit);
+
     }
 
     private static <M extends Enum<M>, D> List<D> liftMethods(
         MethodInfoList methodInfoList,
         java.lang.Class<M> modifierClass,
+        Set<String> dependencyIdentifiers,
         MethodDefinitionFactory<M, D> factory
     ) {
         List<D> methodDefinitions = new ArrayList<>();
         for (MethodInfo methodInfo : methodInfoList) {
+            // private methods will never be accessed
+            if (methodInfo.isPrivate()) continue;
+
             EnumSet<M> modifiers = parseModifiers(modifierClass, methodInfo.getModifiersStr());
 
             MethodSignature methodSignature;
@@ -416,10 +488,37 @@ public class ClassLifter {
                 warn(methodInfo.getName(), e);
                 continue;
             }
-
             methodDefinitions.add(factory.create(methodSignature, modifiers));
+
+            // by adding method dependencies at this point, arrays and wildcards have already been checked for.  
+            addMethodDependencies(dependencyIdentifiers, methodInfo);
         }
         return methodDefinitions;
+    }
+
+    /**
+     * Add dependencies for a method to dependencyIdentifiers. This currently includes return type, type parameters,
+     * and method parameters. Exceptions are not included since those are not part of the MethodSignature in Choral.
+     */
+    private static void addMethodDependencies(Set<String> dependencyIdentifiers, MethodInfo methodInfo){
+        MethodTypeSignature typeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
+        String returnType = typeSignature.getResultType().toString();
+        dependencyIdentifiers.add(returnType);
+
+        for (TypeParameter typeParameter : typeSignature.getTypeParameters()){
+            ReferenceTypeSignature classBound = typeParameter.getClassBound();
+            if (classBound != null) {
+                dependencyIdentifiers.add(classBound.toString());
+            }
+            
+            for (ReferenceTypeSignature referenceTypeSignature : typeParameter.getInterfaceBounds()){
+                dependencyIdentifiers.add(referenceTypeSignature.toString());
+            }
+        }
+
+        for (MethodParameterInfo param : methodInfo.getParameterInfo()){
+            dependencyIdentifiers.add(param.getTypeSignatureOrTypeDescriptor().toString());
+        }
     }
 
     /**
@@ -434,7 +533,7 @@ public class ClassLifter {
         if (modifiersStr.isEmpty()) return modifiers;
 
         String[] modifierStrings = modifiersStr.split(" ");
-        for (String modifierString : modifierStrings) {
+        for (String modifierString : modifierStrings) {            
             try {
                 modifiers.add(Enum.valueOf(enumClass, modifierString.toUpperCase()));
             } catch (IllegalArgumentException e){
@@ -525,7 +624,7 @@ public class ClassLifter {
                 }
             }
             return new TypeExpression(
-                new Name(simpleName, NO_POSITION), 
+                new Name(baseClassName, NO_POSITION), 
                 List.of(DEFAULT_WORLD_ARGUMENT), 
                 typeExpressions,
                 NO_POSITION);
