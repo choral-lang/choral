@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 import static choral.types.Modifier.*;
 import static choral.types.ModifierUtils.assertLegalModifiers;
 
+/** @see HigherDataType */
 public final class HigherInterface extends HigherClassOrInterface implements Interface {
 
 	public HigherInterface(
@@ -159,6 +160,7 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 
 	}
 
+	/** @see HigherDataType.Proxy */
 	private final class Proxy extends HigherClassOrInterface.Proxy implements GroundInterface {
 
 		private Proxy( Substitution substitution ) {

@@ -46,8 +46,8 @@ public class Universe {
 		return rootPackage;
 	}
 
-	private static final HashMap< String, SpecialTypeTag > specialClassesConversionMap = new HashMap<>(
-			11 );
+	private static final HashMap< String, SpecialTypeTag > specialClassesConversionMap =
+		new HashMap<>( 11 );
 
 	public enum SpecialTypeTag {
 		OBJECT( "java.lang.Object", HigherClassOrInterface.Variety.CLASS ),

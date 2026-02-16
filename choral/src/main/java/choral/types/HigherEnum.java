@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 
 import static choral.types.Modifier.*;
 
+/** @see HigherDataType */
 public final class HigherEnum extends HigherClass implements Enum {
 
 	public HigherEnum(
@@ -193,6 +194,7 @@ public final class HigherEnum extends HigherClass implements Enum {
 
 	}
 
+	/** @see HigherDataType.Proxy */
 	private class Proxy extends HigherClass.Proxy implements GroundEnum {
 
 		private Proxy( Substitution substitution ) {

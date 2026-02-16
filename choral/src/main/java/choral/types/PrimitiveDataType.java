@@ -21,6 +21,7 @@
 
 package choral.types;
 
+/** An unboxed type like {@code int}, {@code char}, etc. */
 public interface PrimitiveDataType extends DataType {
 
 	@Override

@@ -21,6 +21,7 @@
 
 package choral.types;
 
+/** @see choral.types.GroundDataType */
 public interface GroundPrimitiveDataType extends GroundDataType, PrimitiveDataType {
 
 	@Override

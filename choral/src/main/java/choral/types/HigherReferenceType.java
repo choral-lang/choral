@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+/** @see HigherDataType */
 public abstract class HigherReferenceType extends HigherDataType implements ReferenceType {
 
 	HigherReferenceType(
@@ -56,6 +57,7 @@ public abstract class HigherReferenceType extends HigherDataType implements Refe
 
 	}
 
+	/** @see HigherDataType.Proxy */
 	protected abstract class Proxy extends HigherDataType.Proxy implements GroundReferenceType {
 
 		Proxy( Substitution substitution ) {

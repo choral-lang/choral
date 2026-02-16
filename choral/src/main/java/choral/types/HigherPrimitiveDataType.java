@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/** @see HigherDataType */
 public final class HigherPrimitiveDataType extends HigherDataType implements PrimitiveDataType {
 
 	HigherPrimitiveDataType( Universe universe, Universe.PrimitiveTypeTag tag ) {
@@ -119,6 +120,7 @@ public final class HigherPrimitiveDataType extends HigherDataType implements Pri
 
 	}
 
+	/** @see HigherDataType.Proxy */
 	private final class Proxy extends HigherDataType.Proxy implements GroundPrimitiveDataType {
 
 		private Proxy( Substitution substitution ) {

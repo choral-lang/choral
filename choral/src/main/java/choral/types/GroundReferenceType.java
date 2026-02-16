@@ -24,6 +24,7 @@ package choral.types;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+/** @see choral.types.GroundDataType */
 public interface GroundReferenceType extends GroundDataType {
 
 	@Override

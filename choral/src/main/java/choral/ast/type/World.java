@@ -28,6 +28,10 @@ import choral.ast.WithTypeAnnotation;
 
 import java.util.Optional;
 
+/**
+ * An AST node representing a world, i.e. a role parameter. In a definition like
+ * {@code class Foo@(A,B) {...}}, A and B are worlds.
+ */
 public abstract class World extends Node implements WithTypeAnnotation< choral.types.World > {
 	protected final Name name;
 

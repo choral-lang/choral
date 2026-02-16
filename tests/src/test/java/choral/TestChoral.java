@@ -101,6 +101,7 @@ public class TestChoral {
 	private static final String CHORALUNIT_MAIN_FOLDER = Paths.get("..", "choral-unit", "src", "main", "choral").toString();
 	private static final String MUSTFAIL_FOLDER = Paths.get("src", "main", "choral", "MustFail").toString();
 	private static final String MUSTPASS_FOLDER = Paths.get("src", "main", "choral", "MustPass").toString();
+	private static final String TYPER_MUSTFAIL = Paths.get("src", "main", "choral", "MustFail", "Typer").toString();
 	private static final String BASE_PATH = Paths.get("base", "src", "main", "java").toString();
 	private static final String RUNTIME_PATH = Paths.get("runtime", "src", "main", "java").toString();
 	private static final String EXPECTEDOUTPUT_PATH = "expectedOutput";
@@ -384,6 +385,14 @@ public class TestChoral {
 						TARGET_FOLDER,
 						Collections.emptyList(),
 						"MultiFileError", ALL_WORLDS,
+						List.of(BASE_PATH),
+						Collections.emptyList())
+				,
+				new CompilationRequest(
+						List.of(subFolder(TYPER_MUSTFAIL, "ClassClashesWithPackage" )),
+						TARGET_FOLDER,
+						Collections.emptyList(),
+						"ClassClashesWithPackage", ALL_WORLDS,
 						List.of(BASE_PATH),
 						Collections.emptyList())
 		);

@@ -28,6 +28,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Optional;
 
+/**
+ * This class represents a package, like `java.util` or `com.example.foo`. It keeps track of
+ * all packages and types declared inside it. For example, `java.util` is a Package declared
+ * in the `java` package, and `java.util.Collection` is a type declared in the `java.util` Package.
+ */
 public class Package {
 
 	private Package( Universe universe ) {
@@ -72,6 +77,9 @@ public class Package {
 
 	private final Package declarationContext;
 
+	/** Returns the parent Package in which this Package was declared. For example, the `java`
+	 * package is the declaration context of the `java.util` package.
+	 */
 	public Package declarationContext() {
 		return this.declarationContext;
 	}

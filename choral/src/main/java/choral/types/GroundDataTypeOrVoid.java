@@ -21,6 +21,7 @@
 
 package choral.types;
 
+/** @see choral.types.GroundDataType */
 public interface GroundDataTypeOrVoid extends DataTypeOrVoid {
 
 	GroundDataTypeOrVoid applySubstitution( Substitution substitution );
