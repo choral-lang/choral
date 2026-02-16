@@ -73,6 +73,11 @@ public class ThisExpression extends Expression {
 	}
 
 	@Override
+	public String toString(){
+		return "this";
+	}
+
+	@Override
 	public < R > R accept( ChoralVisitorInterface< R > v ) {
 		return v.visit( this );
 	}

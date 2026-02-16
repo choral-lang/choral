@@ -13,18 +13,16 @@ public class ConsumeItems_B {
 	
 	public static void consumeItems( DiChannel_B < Integer > ch, Consumer < Integer > consumer ) {
 		ch.< Integer >com( Unit.id );
-		{
-			switch( ch.< ConsumeChoice >select( Unit.id ) ){
-				case AGAIN -> {
-					consumer.accept( ch.< Integer >com( Unit.id ) );
-					consumeItems( ch, Unit.id, consumer );
-				}
-				case STOP -> {
-					
-				}
-				default -> {
-					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
+		switch( ch.< ConsumeChoice >select( Unit.id ) ){
+			case AGAIN -> {
+				consumer.accept( ch.< Integer >com( Unit.id ) );
+				consumeItems( ch, Unit.id, consumer );
+			}
+			case STOP -> {
+				
+			}
+			default -> {
+				throw new RuntimeException( "Received unexpected label from select operation" );
 			}
 		}
 	}

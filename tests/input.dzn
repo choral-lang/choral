@@ -1,0 +1,20 @@
+in_size = 1;
+statements = [
+"return x + y"];
+statements_roles = [r(B)];
+num_blocks = 1;
+blocks = [|
+0,1,0|];
+block_returns = [1];
+statements_blocks = [1];
+num_ifs = 0;
+if_blocks = [];
+if_roles = [];
+roles = {A,B};
+num_deps = 1;
+dependencies = array1d( DEPS, ["x"]);
+dep_from = array1d( DEPS, [A]);
+dep_to = array1d( DEPS, [B]);
+dep_def_at = array1d( DEPS, [0]);
+dep_used_at = [|
+DEPS[1], 1|];

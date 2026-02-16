@@ -38,6 +38,7 @@ import choral.types.HigherClassOrInterface;
 import choral.types.HigherReferenceType;
 import choral.types.HigherTypeParameter;
 import choral.types.Member;
+import choral.utils.Continuation;
 import choral.utils.Pair;
 import choral.utils.Streams;
 
@@ -315,12 +316,13 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 			).copyPosition( n );
 		} else {
 			List< Statement > cases = List.of( visit( n.ifBranch() ), visit( n.elseBranch() ) );
-			return new BlockStatement(
-					new ExpressionStatement(
-							ExpressionProjector.visit( this.world(), n.condition() ),
-							StatementsMerger.merge( cases ) ),
-					visit( n.continuation() )
-			).copyPosition( n );
+			return new ExpressionStatement(
+				ExpressionProjector.visit( this.world(), n.condition() ),
+				Continuation.continuationAfter(
+					StatementsMerger.merge( cases ),
+					visit( n.continuation() ).copyPosition( n ))
+			);
+			
 		}
 	}
 

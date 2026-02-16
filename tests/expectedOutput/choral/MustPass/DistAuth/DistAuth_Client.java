@@ -39,17 +39,15 @@ public class DistAuth_Client {
 	public AuthResult_A authenticate( Credentials credentials ) {
 		String salt = ch_Client_IP.< String >com( ch_Client_IP.< String >com( credentials.username ) );
 		ch_Client_IP.< String >com( calcHash( salt, credentials.password ) );
-		{
-			switch( ch_Client_IP.< EnumBoolean >select( Unit.id ) ){
-				case True -> {
-					return new AuthResult_A( ch_Client_IP.< AuthToken >com( Unit.id ), Unit.id );
-				}
-				case False -> {
-					return new AuthResult_A();
-				}
-				default -> {
-					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
+		switch( ch_Client_IP.< EnumBoolean >select( Unit.id ) ){
+			case True -> {
+				return new AuthResult_A( ch_Client_IP.< AuthToken >com( Unit.id ), Unit.id );
+			}
+			case False -> {
+				return new AuthResult_A();
+			}
+			default -> {
+				throw new RuntimeException( "Received unexpected label from select operation" );
 			}
 		}
 	}

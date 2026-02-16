@@ -28,6 +28,14 @@ import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 
+/**
+ * A qualified access expression like {@code a.b.c}. For example, {@code System.out.println} is a
+ * {@link ScopedExpression} where {@code out.println} is its "scoped expression" and {@code System}
+ * is its "scope". Likewise, {@code out.println} is a {@link ScopedExpression} where {@code out} is
+ * its "scope", {@code println} is its "scoped expression". In that case, {@code println} would be
+ * a {@link MethodCallExpression}. (If {@code println} were a field instead of a method, it would be
+ * a {@link FieldAccessExpression} instead).
+ */
 public class ScopedExpression extends Expression {
 
 	final private Expression scope, scopedExpression;
@@ -51,6 +59,11 @@ public class ScopedExpression extends Expression {
 
 	public Expression scopedExpression() {
 		return scopedExpression;
+	}
+
+	@Override
+	public String toString(){
+		return scope + "." + scopedExpression;
 	}
 
 	@Override

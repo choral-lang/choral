@@ -44,6 +44,10 @@ public class AssignExpression extends Expression {
 		return m.merge( this, (AssignExpression) n );
 	}
 
+	public String toString(){
+		return target + " " + operator.symbol + " " + value;
+	}
+
 	public enum Operator {
 
 		ASSIGN( "=", null ),

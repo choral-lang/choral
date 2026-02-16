@@ -60,6 +60,11 @@ public class FieldAccessExpression extends Expression {
 		return epp_worlds;
 	}
 
+	@Override
+	public String toString(){
+		return name.toString();
+	}
+
 
 	@Override
 	public < R > R accept( ChoralVisitorInterface< R > v ) {

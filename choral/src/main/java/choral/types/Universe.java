@@ -347,6 +347,15 @@ public class Universe {
 			}
 
 			@Override
+			public boolean isEquivalentTo_relaxed( Type type ) {
+				if( type instanceof GroundNullType ) {
+					GroundNullType t = (GroundNullType) type;
+					return true;
+				}
+				return false;
+			}
+
+			@Override
 			public boolean isSubtypeOf( Type type, boolean strict ) {
 				if( strict && type instanceof GroundNullType ) {
 					return false;
@@ -354,6 +363,18 @@ public class Universe {
 				if( type instanceof GroundReferenceType ) {
 					GroundReferenceType t = (GroundReferenceType) type;
 					return worldArguments.equals( t.worldArguments() );
+				}
+				return false;
+			}
+
+			@Override
+			public boolean isSubtypeOf_relaxed( Type type, boolean strict ) {
+				if( strict && type instanceof GroundNullType ) {
+					return false;
+				}
+				if( type instanceof GroundReferenceType ) {
+					GroundReferenceType t = (GroundReferenceType) type;
+					return true;
 				}
 				return false;
 			}
@@ -374,6 +395,11 @@ public class Universe {
 
 		@Override
 		public boolean isAssignableTo( GroundDataTypeOrVoid type ) {
+			return false;
+		}
+
+		@Override
+		public boolean isAssignableTo_relaxed( GroundDataTypeOrVoid type ) {
 			return false;
 		}
 

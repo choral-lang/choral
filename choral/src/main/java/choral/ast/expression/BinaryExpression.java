@@ -78,6 +78,10 @@ public class BinaryExpression extends Expression {
 		return operator;
 	}
 
+	public String toString(){
+		return left + " " + operator.symbol + " " + right;
+	}
+
 	public enum Operator {
 
 		SHORT_CIRCUITED_OR( "||" ),

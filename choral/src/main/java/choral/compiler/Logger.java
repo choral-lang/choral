@@ -124,9 +124,9 @@ public class Logger {
 					this.errors = true;
 					System.err.println( "[ERROR] " + message );
 				}
-				case WARNING -> System.out.println( "[WARNING] " + message );
-				case INFO -> System.out.println( "[INFO] " + message );
-				case DEBUG -> System.out.println( "[DEBUG] " + message );
+				case WARNING -> System.err.println( "[WARNING] " + message );
+				case INFO -> System.err.println( "[INFO] " + message );
+				case DEBUG -> System.err.println( "[DEBUG] " + message );
 			}
 		}
 	}

@@ -1,0 +1,7 @@
+package choral.MustPass.BiPair;
+
+public class BiPair@( A, B )< L@X, R@Y > {
+	public BiPair( L@A left, R@B right ) {}
+	public L@A left() {}
+	public R@B right() {}
+}

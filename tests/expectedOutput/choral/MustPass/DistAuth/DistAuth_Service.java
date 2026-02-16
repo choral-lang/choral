@@ -31,17 +31,15 @@ public class DistAuth_Service {
 	
 	public AuthResult_B authenticate() {
 		calcHash( Unit.id, Unit.id );
-		{
-			switch( ch_Service_IP.< EnumBoolean >select( Unit.id ) ){
-				case True -> {
-					return new AuthResult_B( Unit.id, ch_Service_IP.< AuthToken >com( Unit.id ) );
-				}
-				case False -> {
-					return new AuthResult_B();
-				}
-				default -> {
-					throw new RuntimeException( "Received unexpected label from select operation" );
-				}
+		switch( ch_Service_IP.< EnumBoolean >select( Unit.id ) ){
+			case True -> {
+				return new AuthResult_B( Unit.id, ch_Service_IP.< AuthToken >com( Unit.id ) );
+			}
+			case False -> {
+				return new AuthResult_B();
+			}
+			default -> {
+				throw new RuntimeException( "Received unexpected label from select operation" );
 			}
 		}
 	}

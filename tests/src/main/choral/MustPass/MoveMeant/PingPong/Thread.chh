@@ -1,0 +1,5 @@
+package java.lang;
+
+public class Thread@A {
+  public static void sleep(int@A x) {}
+}
