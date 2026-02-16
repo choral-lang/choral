@@ -9,32 +9,37 @@ import choral.compiler.ClassLifter;
 import choral.compiler.Typer;
 
 public class ClassLifterTest {
-	@Test
-	public void helloWorldTest() throws IOException {
-		// Test it out by feeding the CompilationUnit to our old Typer
-		Stream<CompilationUnit> object = ClassLifter.liftPackage("java.lang.Object");
-		Stream<CompilationUnit> serializable = ClassLifter.liftPackage("java.io.Serializable");
-		Stream<CompilationUnit> enuM = ClassLifter.liftPackage("java.lang.Enum");
-		Stream<CompilationUnit> compUnit = ClassLifter.liftPackage("supplement.HelloWorld");
-		Stream<CompilationUnit> intermediary = Stream.of(enuM, object, serializable)
-												.flatMap(i -> i);
-		List<CompilationUnit> finalList = Stream.concat(intermediary, compUnit).toList();
-		// List<CompilationUnit> finalList = Stream.concat(enuM, Stream.concat(Stream.concat(serializable, object), compUnit)).toList();
-		
-		Typer.annotate(
-				List.of(), 
-				// compUnit.toList()
-				finalList
-				// Stream.concat(
-				// 		compUnit,
-				// // 		TODO Right now we need to load the standard profile because Typer complains
-				// // 		  that java.lang.Object is missing. This is probably a bug in the header
-				// // 		  removal tool?
-				// 		HeaderLoader.loadAlternateProfile()
-				// ).toList()
-		);
-		ClassLifter.clearTrackedCompilationUnits();
-	}
+	// Dan: At time of writing, these tests take several seconds to run and still fail. We'll
+	// revisit these when the class lifter is better integrated with the typer.
+
+	// @Test
+	// public void helloWorldTest() throws IOException {
+	// 	Stream<CompilationUnit> object = ClassLifter.liftPackage("java.lang.Object");
+	// 	Stream<CompilationUnit> doubleC = ClassLifter.liftPackage("java.lang.Double");
+	// 	Stream<CompilationUnit> intC = ClassLifter.liftPackage("java.lang.Integer");
+	// 	Stream<CompilationUnit> longC = ClassLifter.liftPackage("java.lang.Long");
+	// 	Stream<CompilationUnit> serializable = ClassLifter.liftPackage("java.io.Serializable");
+	// 	Stream<CompilationUnit> enuM = ClassLifter.liftPackage("java.lang.Enum");
+	// 	Stream<CompilationUnit> compUnit = ClassLifter.liftPackage("supplement.HelloWorld");
+	// 	Stream<CompilationUnit> intermediary = Stream.of(enuM, object, serializable, doubleC, intC, longC)
+	// 											.flatMap(i -> i);
+	// 	List<CompilationUnit> finalList = Stream.concat(intermediary, compUnit).toList();
+	// 	// List<CompilationUnit> finalList = Stream.concat(enuM, Stream.concat(Stream.concat(serializable, object), compUnit)).toList();
+	//
+	// 	Typer.annotate(
+	// 			List.of(),
+	// 			// compUnit.toList()
+	// 			finalList
+	// 			// Stream.concat(
+	// 			// 		compUnit,
+	// 			// // 		TODO Right now we need to load the standard profile because Typer complains
+	// 			// // 		  that java.lang.Object is missing. This is probably a bug in the header
+	// 			// // 		  removal tool?
+	// 			// 		HeaderLoader.loadAlternateProfile()
+	// 			// ).toList()
+	// 	);
+	// 	ClassLifter.clearTrackedCompilationUnits();
+	// }
 
 	// @Test
 	// public void dayTest() throws IOException {

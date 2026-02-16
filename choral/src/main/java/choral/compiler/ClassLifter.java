@@ -712,11 +712,12 @@ public class ClassLifter {
     private static List<FormalMethodParameter> getMethodParameters(MethodParameterInfo[] methodParams) 
     throws LiftException {
         List<FormalMethodParameter> parameters = new ArrayList<>();
+        int paramCount = 0;
         for (MethodParameterInfo param : methodParams){
             TypeExpression type = getTypeExpressions(param.getTypeSignatureOrTypeDescriptor());
             parameters.add(new FormalMethodParameter(
                 // param.getName() will very likely return null as most parameters found by ClassGraph are unnamed
-                new Name(param.getName(), NO_POSITION),
+                new Name("param" + paramCount++, NO_POSITION),
                 type,
                 Collections.emptyList(), // ignore annotations for now 
                 NO_POSITION));
