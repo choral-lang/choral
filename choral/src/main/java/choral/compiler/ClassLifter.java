@@ -73,6 +73,7 @@ public class ClassLifter {
 	// Helper method to avoid passing empty mutable list to `liftPackage()` method
 	private static void liftPackageHelper(
 			String fullyQualifiedName, List< CompilationUnit > compilationUnitAccumulator ) {
+		System.out.println( "Lifting class: " + fullyQualifiedName );
 		int lastSeparator = fullyQualifiedName.lastIndexOf( "." );
 		String packageName = fullyQualifiedName.substring( 0, lastSeparator );
 
@@ -136,7 +137,7 @@ public class ClassLifter {
 			}
 
 			// add fields type to depencies
-			dependencyIdentifiers.add( fieldTypeSig.toString() );
+			extractClassDependencies( dependencyIdentifiers, fieldTypeSig );
 
 			Field field = new Field(
 					new Name( fieldInfo.getName() ),
@@ -387,16 +388,13 @@ public class ClassLifter {
 	}
 
 	private static void visitDependencies(
-			ClassInfo classInfo, List< CompilationUnit > compilationUnitAccumulator,
+			ClassInfo classInfo,
+			List< CompilationUnit > compilationUnitAccumulator,
 			Set< String > dependencyIdentifiers
 	) {
-		ClassInfoList dependencies = classInfo.getClassDependencies();
-		for( ClassInfo dependency : dependencies ) {
-			// only lift dependency if non-private reference exists
-			if( dependencyIdentifiers.contains( dependency.getName() ) ) {
-				if( trackedCompilationUnits.add( dependency.getName() ) ) {
-					liftPackageHelper( dependency.getName(), compilationUnitAccumulator );
-				}
+		for( String dependency : dependencyIdentifiers ) {
+			if( trackedCompilationUnits.add( dependency ) ) {
+				liftPackageHelper( dependency, compilationUnitAccumulator );
 			}
 		}
 	}
@@ -476,23 +474,61 @@ public class ClassLifter {
 	private static void addMethodDependencies(
 			Set< String > dependencyIdentifiers, MethodInfo methodInfo ) {
 		MethodTypeSignature typeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
-		String returnType = typeSignature.getResultType().toString();
-		dependencyIdentifiers.add( returnType );
+		TypeSignature returnType = typeSignature.getResultType();
+		extractClassDependencies( dependencyIdentifiers, returnType );
 
 		for( TypeParameter typeParameter : typeSignature.getTypeParameters() ) {
 			ReferenceTypeSignature classBound = typeParameter.getClassBound();
 			if( classBound != null ) {
-				dependencyIdentifiers.add( classBound.toString() );
+				extractClassDependencies( dependencyIdentifiers, classBound );
 			}
 
 			for( ReferenceTypeSignature referenceTypeSignature : typeParameter.getInterfaceBounds() ) {
-				dependencyIdentifiers.add( referenceTypeSignature.toString() );
+				extractClassDependencies( dependencyIdentifiers, referenceTypeSignature );
 			}
 		}
 
 		for( MethodParameterInfo param : methodInfo.getParameterInfo() ) {
-			dependencyIdentifiers.add( param.getTypeSignatureOrTypeDescriptor().toString() );
+			extractClassDependencies( dependencyIdentifiers, param.getTypeSignatureOrTypeDescriptor() );
 		}
+	}
+
+	/**
+	 * Extracts all class dependencies from a type signature and adds them to the dependency set.
+	 * This recursively extracts base class names, handling generic types by also extracting
+	 * dependencies from type arguments. Primitive types are skipped.
+	 *
+	 * For example, "java.util.Map<java.lang.String, java.util.List<java.lang.Integer>>"
+	 * would extract: java.util.Map, java.lang.String, java.util.List, java.lang.Integer
+	 */
+	private static void extractClassDependencies(
+			Set< String > dependencyIdentifiers, TypeSignature typeSignature ) {
+		if( typeSignature instanceof BaseTypeSignature ) {
+			// Skip primitive types - they don't need to be lifted as dependencies
+			return;
+		} else if( typeSignature instanceof ClassRefTypeSignature classRef ) {
+			// Add the base class name (without generic parameters)
+			dependencyIdentifiers.add( classRef.getBaseClassName() );
+
+			// Recursively extract dependencies from type arguments
+			List< TypeArgument > typeArguments = classRef.getTypeArguments();
+			if( typeArguments != null ) {
+				for( TypeArgument typeArg : typeArguments ) {
+					TypeSignature argType = typeArg.getTypeSignature();
+					if( argType != null ) {
+						extractClassDependencies( dependencyIdentifiers, argType );
+					}
+				}
+			}
+		} else if( typeSignature instanceof ArrayTypeSignature arrayType ) {
+			// We don't support arrays
+			return;
+		} else if( typeSignature instanceof TypeVariableSignature ) {
+			// Type variables (e.g., T, E) are not dependencies - they're defined elsewhere
+			return;
+		}
+		// Note: ReferenceTypeSignature is the parent of ClassRefTypeSignature and others,
+		// so if we get here with an unhandled ReferenceTypeSignature subtype, we skip it
 	}
 
 	/**
