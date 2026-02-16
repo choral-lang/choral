@@ -16,7 +16,6 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import io.github.classgraph.*;
-import io.github.classgraph.TypeArgument.Wildcard;
 
 import java.lang.Enum;
 import java.lang.reflect.Modifier;
@@ -58,7 +57,10 @@ public class ClassLifter {
 			"java.lang.Object", "java.io.Serializable", "java.lang.Enum" ) );
 
 
-	///////////////////// MAIN LIFTING METHODS /////////////////////
+
+	/////////////////////////////////////////////////////////////////////
+	////////////////////// CLASS LIFTING METHODS  ///////////////////////
+	/////////////////////////////////////////////////////////////////////
 
 
 	/**
@@ -144,7 +146,7 @@ public class ClassLifter {
 			TypeSignature fieldTypeSig = fieldInfo.getTypeSignatureOrTypeDescriptor();
 			TypeExpression fieldTypeExpression;
 			try {
-				fieldTypeExpression = getTypeExpressions( fieldTypeSig );
+				fieldTypeExpression = liftType( fieldTypeSig );
 			} catch( LiftException e ) {
 				warn( fieldInfo.getName(), e );
 				continue;
@@ -182,9 +184,12 @@ public class ClassLifter {
 			EnumSet< ConstructorModifier > modifiersConstructor = parseModifiers(
 					ConstructorModifier.class, constructor.getModifiers() );
 
-			LiftedSignatureData liftedSignatureData;
+			List< FormalTypeParameter > typeParams;
+			List< FormalMethodParameter > methodParams;
 			try {
-				liftedSignatureData = liftSignatureData( constructor );
+				MethodTypeSignature methodTypeSignature = constructor.getTypeSignatureOrTypeDescriptor();
+				typeParams = liftTypeParameters( methodTypeSignature.getTypeParameters() );
+				methodParams = getMethodParameters( constructor.getParameterInfo() );
 			} catch( LiftException e ) {
 				warn( constructor.getName(), e );
 				continue;
@@ -192,8 +197,8 @@ public class ClassLifter {
 
 			ConstructorSignature constructorSignature = new ConstructorSignature(
 					new Name( classInfo.getSimpleName(), NOWHERE ),
-					liftedSignatureData.typeParameters(),
-					liftedSignatureData.parameters(),
+					typeParams,
+					methodParams,
 					NOWHERE );
 
 			ConstructorDefinition constructorChoral = new ConstructorDefinition(
@@ -227,7 +232,7 @@ public class ClassLifter {
 		TypeExpression extendedExpression = null;
 		if( extendedClassTypeSignature != null ) {
 			try {
-				extendedExpression = getTypeExpressions( extendedClassTypeSignature );
+				extendedExpression = liftType( extendedClassTypeSignature );
 			} catch( LiftException e ) {
 				warn( extendedClassTypeSignature.getBaseClassName(), e );
 			}
@@ -372,27 +377,10 @@ public class ClassLifter {
 		}
 	}
 
-	private static List< TypeExpression > liftSuperInterfaces(
-			List< ClassRefTypeSignature > interfaceSignatures
+	private static void liftEnum(
+			java.lang.Class<?> enumClass,
+			List< CompilationUnit > compilationUnitAccumulator
 	) {
-		List< TypeExpression > translatedSuperInterfaces = new ArrayList<>();
-		for( ClassRefTypeSignature implementedTypeSignature : interfaceSignatures ) {
-			TypeExpression interfaceExpression;
-			try {
-				interfaceExpression = getTypeExpressions( implementedTypeSignature );
-			} catch( LiftException e ) {
-				warn( implementedTypeSignature.getBaseClassName(), e );
-				continue;
-			}
-			translatedSuperInterfaces.add( interfaceExpression );
-		}
-
-		return translatedSuperInterfaces;
-	}
-
-	// Reflection-based version of liftEnum - package-private for testing
-	static void liftEnum(
-			java.lang.Class<?> enumClass, List< CompilationUnit > compilationUnitAccumulator ) {
 		// TRANSLATE CONSTANTS
 		java.lang.reflect.Field[] allFields = enumClass.getFields();
 		List< EnumConstant > choralEnumConstants = new ArrayList<>();
@@ -433,6 +421,30 @@ public class ClassLifter {
 
 	}
 
+
+	/////////////////////////////////////////////////////////////////////
+	///////////////////////// METHOD-LIFTING  ///////////////////////////
+	/////////////////////////////////////////////////////////////////////
+
+
+	private static List< TypeExpression > liftSuperInterfaces(
+			List< ClassRefTypeSignature > interfaceSignatures
+	) {
+		List< TypeExpression > translatedSuperInterfaces = new ArrayList<>();
+		for( ClassRefTypeSignature implementedTypeSignature : interfaceSignatures ) {
+			TypeExpression interfaceExpression;
+			try {
+				interfaceExpression = liftType( implementedTypeSignature );
+			} catch( LiftException e ) {
+				warn( implementedTypeSignature.getBaseClassName(), e );
+				continue;
+			}
+			translatedSuperInterfaces.add( interfaceExpression );
+		}
+
+		return translatedSuperInterfaces;
+	}
+
 	private static < M extends Enum< M >, D > List< D > liftMethods(
 			MethodInfoList methodInfoList,
 			java.lang.Class< M > modifierClass,
@@ -461,108 +473,69 @@ public class ClassLifter {
 		return methodDefinitions;
 	}
 
-	/**
-	 * Add dependencies for a method to dependencyIdentifiers. This currently includes return type, type parameters,
-	 * and method parameters. Exceptions are not included since those are not part of the MethodSignature in Choral.
-	 */
-	private static void addMethodDependencies(
-			Set< String > dependencyIdentifiers, MethodInfo methodInfo ) {
-		MethodTypeSignature typeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
-		TypeSignature returnType = typeSignature.getResultType();
-		extractClassDependencies( dependencyIdentifiers, returnType );
+	private static MethodSignature getMethodSignature(
+			MethodInfo methodInfo
+	) throws LiftException {
+		MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
+		TypeExpression returnType = liftType( methodTypeSignature.getResultType() );
 
-		for( TypeParameter typeParameter : typeSignature.getTypeParameters() ) {
-			ReferenceTypeSignature classBound = typeParameter.getClassBound();
-			if( classBound != null ) {
-				extractClassDependencies( dependencyIdentifiers, classBound );
-			}
-
-			for( ReferenceTypeSignature referenceTypeSignature : typeParameter.getInterfaceBounds() ) {
-				extractClassDependencies( dependencyIdentifiers, referenceTypeSignature );
-			}
-		}
-
-		for( MethodParameterInfo param : methodInfo.getParameterInfo() ) {
-			extractClassDependencies( dependencyIdentifiers, param.getTypeSignatureOrTypeDescriptor() );
-		}
+		return new MethodSignature(
+				new Name( methodInfo.getName(), NOWHERE ),
+				liftTypeParameters( methodTypeSignature.getTypeParameters() ),
+				getMethodParameters( methodInfo.getParameterInfo() ),
+				returnType,
+				NOWHERE );
 	}
 
 	/**
-	 * Extracts all class dependencies from a type signature and adds them to the dependency set.
-	 * This recursively extracts base class names, handling generic types by also extracting
-	 * dependencies from type arguments. Primitive types are skipped.
+	 * Translates method parameters from ClassGraph to Choral's internal representation.
 	 *
-	 * For example, "java.util.Map<java.lang.String, java.util.List<java.lang.Integer>>"
-	 * would extract: java.util.Map, java.lang.String, java.util.List, java.lang.Integer
+	 * @param methodParams
+	 * @return
 	 */
-	private static void extractClassDependencies(
-			Set< String > dependencyIdentifiers, TypeSignature typeSignature ) {
-		if( typeSignature instanceof BaseTypeSignature ) {
-			// Skip primitive types - they don't need to be lifted as dependencies
-			return;
-		} else if( typeSignature instanceof ClassRefTypeSignature classRef ) {
-			// Add the base class name (without generic parameters)
-			dependencyIdentifiers.add( classRef.getBaseClassName() );
-
-			// Recursively extract dependencies from type arguments
-			List< TypeArgument > typeArguments = classRef.getTypeArguments();
-			if( typeArguments != null ) {
-				for( TypeArgument typeArg : typeArguments ) {
-					TypeSignature argType = typeArg.getTypeSignature();
-					if( argType != null ) {
-						extractClassDependencies( dependencyIdentifiers, argType );
-					}
-				}
-			}
-		} else if( typeSignature instanceof ArrayTypeSignature arrayType ) {
-			// We don't support arrays
-			return;
-		} else if( typeSignature instanceof TypeVariableSignature ) {
-			// Type variables (e.g., T, E) are not dependencies - they're defined elsewhere
-			return;
+	private static List< FormalMethodParameter > getMethodParameters(
+			MethodParameterInfo[] methodParams
+	) throws LiftException {
+		List< FormalMethodParameter > parameters = new ArrayList<>();
+		int paramCount = 0;
+		for( MethodParameterInfo param : methodParams ) {
+			TypeExpression type = liftType( param.getTypeSignatureOrTypeDescriptor() );
+			parameters.add( new FormalMethodParameter(
+					new Name( "param" + paramCount++, NOWHERE ),
+					type,
+					Collections.emptyList(), // ignore annotations for now
+					NOWHERE ) );
 		}
-		// Note: ReferenceTypeSignature is the parent of ClassRefTypeSignature and others,
-		// so if we get here with an unhandled ReferenceTypeSignature subtype, we skip it
+		return parameters;
 	}
 
-	/**
-	 * Parses modifiers found by ClassGraph, into modifiers used by choral internals.
-	 */
-	private static < E extends Enum< E > > EnumSet< E > parseModifiers(
-			java.lang.Class< E > enumClass, int modifierBits
-	) {
-		EnumSet< E > modifiers = EnumSet.noneOf( enumClass );
-
-		for( String modifier : Modifier.toString( modifierBits ).split(" ") ) {
-			try {
-				modifiers.add( Enum.valueOf( enumClass, modifier.toUpperCase() ) );
-			} catch( IllegalArgumentException e ) {
-				continue;
-			}
-		}
-		return modifiers;
+	@FunctionalInterface
+	interface MethodDefinitionFactory< M extends Enum< M >, D > {
+		D create( MethodSignature signature, EnumSet< M > modifiers );
 	}
+
+	/////////////////////////////////////////////////////////////////////
+	//////////////////// HELPERS FOR LIFTING TYPES  /////////////////////
+	/////////////////////////////////////////////////////////////////////
+
 
 	private static List< FormalTypeParameter > liftTypeParameters(
 			List< TypeParameter > typeParameters
-	)
-			throws LiftException {
+	) throws LiftException {
+
 		List< FormalTypeParameter > choralTypeParameters = new ArrayList<>();
 		for( TypeParameter typeParameter : typeParameters ) {
 			// choral does not support lower bounds, so only upper bounds are found
 			List< TypeExpression > upperBounds = new ArrayList<>();
 
 			ReferenceTypeSignature classBound = typeParameter.getClassBound();
-
-			TypeExpression classBoundExpression;
 			if( classBound != null ) {
-				classBoundExpression = getTypeExpressions( classBound );
-				upperBounds.add( classBoundExpression );
+				upperBounds.add( liftType( classBound ) );
 			}
 
 			List< ReferenceTypeSignature > interfaceBounds = typeParameter.getInterfaceBounds();
 			for( ReferenceTypeSignature interfaceBound : interfaceBounds ) {
-				upperBounds.add( getTypeExpressions( interfaceBound ) );
+				upperBounds.add( liftType( interfaceBound ) );
 			}
 
 			FormalTypeParameter choralTypeParameter = new FormalTypeParameter(
@@ -579,16 +552,12 @@ public class ClassLifter {
 	/**
 	 * Generates the choral TypeExpression from the given ClassGraph TypeSignature.
 	 * Does so recursively if given TypeSignature is nested.
-	 *
-	 * @param typeSig
-	 * @return
 	 */
-	private static TypeExpression getTypeExpressions( TypeSignature typeSig )
-			throws LiftException {
+	private static TypeExpression liftType( TypeSignature typeSig ) throws LiftException {
+
 		List< TypeExpression > typeExpressions = new ArrayList<>();
 		if( typeSig instanceof ClassRefTypeSignature classref ) { // for nested types
 			String baseClassName = classref.getBaseClassName();
-			String simpleName = baseClassName.substring( baseClassName.lastIndexOf( '.' ) + 1 );
 
 			List< TypeArgument > typeArguments = classref.getTypeArguments();
 			if( typeArguments != null ) {
@@ -598,7 +567,7 @@ public class ClassLifter {
 					if( argType == null ) {
 						throw LiftException.wildcard();
 					}
-					TypeExpression typeExpression = getTypeExpressionsHelper( argType );
+					TypeExpression typeExpression = liftTypeHelper( argType );
 					typeExpressions.add( typeExpression );
 				}
 			}
@@ -630,18 +599,20 @@ public class ClassLifter {
 	}
 
 	// This helper method exists because inner types of a nested type should not have any world arguments
-	private static TypeExpression getTypeExpressionsHelper( TypeSignature typeSig )
+	private static TypeExpression liftTypeHelper( TypeSignature typeSig )
 			throws LiftException {
+
 		List< TypeExpression > typeExpressions = new ArrayList<>();
 		if( typeSig instanceof ClassRefTypeSignature classref ) { // for nested types
 			String baseClassName = classref.getBaseClassName();
+
 			List< TypeArgument > typeArguments = classref.getTypeArguments();
-			if( typeArguments != null && !typeArguments.isEmpty() ) {
+			if( typeArguments != null ) {
 				for( int i = 0; i < typeArguments.size(); i++ ) {
 					TypeArgument arg = typeArguments.get( i );
 					TypeSignature argType = arg.getTypeSignature();
 					if( argType == null ) throw LiftException.wildcard();
-					TypeExpression typeExpression = getTypeExpressionsHelper( argType );
+					TypeExpression typeExpression = liftTypeHelper( argType );
 					typeExpressions.add( typeExpression );
 				}
 			}
@@ -670,66 +641,99 @@ public class ClassLifter {
 		}
 	}
 
-	private static MethodSignature getMethodSignature(
+
+	/////////////////////////////////////////////////////////////////////
+	////////////////////// DEPENDENCY MANAGEMENT  ///////////////////////
+	/////////////////////////////////////////////////////////////////////
+
+
+	/**
+	 * Add dependencies for a method to dependencyIdentifiers. This currently includes return type, type parameters,
+	 * and method parameters. Exceptions are not included since those are not part of the MethodSignature in Choral.
+	 */
+	private static void addMethodDependencies(
+			Set< String > dependencyIdentifiers,
 			MethodInfo methodInfo
-	) throws LiftException {
-		MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
-		TypeExpression returnType = getTypeExpressions( methodTypeSignature.getResultType() );
+	) {
+		MethodTypeSignature typeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
+		TypeSignature returnType = typeSignature.getResultType();
+		extractClassDependencies( dependencyIdentifiers, returnType );
 
-		LiftedSignatureData liftedSignatureData = liftSignatureData( methodInfo );
+		for( TypeParameter typeParameter : typeSignature.getTypeParameters() ) {
+			ReferenceTypeSignature classBound = typeParameter.getClassBound();
+			if( classBound != null ) {
+				extractClassDependencies( dependencyIdentifiers, classBound );
+			}
 
-		return new MethodSignature(
-				new Name( methodInfo.getName(), NOWHERE ),
-				liftedSignatureData.typeParameters(),
-				liftedSignatureData.parameters(),
-				returnType,
-				NOWHERE );
+			for( ReferenceTypeSignature referenceTypeSignature : typeParameter.getInterfaceBounds() ) {
+				extractClassDependencies( dependencyIdentifiers, referenceTypeSignature );
+			}
+		}
+
+		for( MethodParameterInfo param : methodInfo.getParameterInfo() ) {
+			extractClassDependencies( dependencyIdentifiers, param.getTypeSignatureOrTypeDescriptor() );
+		}
 	}
 
 	/**
-	 * Translates method parameters from ClassGraph to Choral's internal representation.
+	 * Extracts all class dependencies from a type signature and adds them to the dependency set.
+	 * This recursively extracts base class names, handling generic types by also extracting
+	 * dependencies from type arguments. Primitive types are skipped.
 	 *
-	 * @param methodParams
-	 * @return
+	 * For example, "java.util.Map<java.lang.String, java.util.List<java.lang.Integer>>"
+	 * would extract: java.util.Map, java.lang.String, java.util.List, java.lang.Integer
 	 */
-	private static List< FormalMethodParameter > getMethodParameters(
-			MethodParameterInfo[] methodParams
-	)
-			throws LiftException {
-		List< FormalMethodParameter > parameters = new ArrayList<>();
-		int paramCount = 0;
-		for( MethodParameterInfo param : methodParams ) {
-			TypeExpression type = getTypeExpressions( param.getTypeSignatureOrTypeDescriptor() );
-			parameters.add( new FormalMethodParameter(
-					new Name( "param" + paramCount++, NOWHERE ),
-					type,
-					Collections.emptyList(), // ignore annotations for now
-					NOWHERE ) );
-		}
-		return parameters;
-	}
-
-	// A record to hold data shared by MethodSignature and ConstructorSignature
-	private record LiftedSignatureData(
-			List< FormalTypeParameter > typeParameters,
-			List< FormalMethodParameter > parameters
+	private static void extractClassDependencies(
+			Set< String > dependencyIdentifiers,
+			TypeSignature typeSignature
 	) {
+		if( typeSignature instanceof BaseTypeSignature ) {
+			// Skip primitive types - they don't need to be lifted as dependencies
+			return;
+		} else if( typeSignature instanceof ClassRefTypeSignature classRef ) {
+			// Add the base class name (without generic parameters)
+			dependencyIdentifiers.add( classRef.getBaseClassName() );
+
+			// Recursively extract dependencies from type arguments
+			List< TypeArgument > typeArguments = classRef.getTypeArguments();
+			if( typeArguments != null ) {
+				for( TypeArgument typeArg : typeArguments ) {
+					TypeSignature argType = typeArg.getTypeSignature();
+					if( argType != null ) {
+						extractClassDependencies( dependencyIdentifiers, argType );
+					}
+				}
+			}
+		} else if( typeSignature instanceof ArrayTypeSignature arrayType ) {
+			// We don't support arrays
+			return;
+		} else if( typeSignature instanceof TypeVariableSignature ) {
+			// Type variables (e.g., T, E) are not dependencies - they're defined elsewhere
+			return;
+		}
+		// Note: ReferenceTypeSignature is the parent of ClassRefTypeSignature and others,
+		// so if we get here with an unhandled ReferenceTypeSignature subtype, we skip it
 	}
 
-	private static LiftedSignatureData liftSignatureData(
-			MethodInfo methodInfo
-	) throws LiftException {
-		MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
-		return new LiftedSignatureData(
-				liftTypeParameters( methodTypeSignature.getTypeParameters() ),
-				getMethodParameters( methodInfo.getParameterInfo() )
-		);
+	/**
+	 * Parses modifiers found by the Java reflection API into modifiers used by choral internals.
+	 */
+	private static < E extends Enum< E > > EnumSet< E > parseModifiers(
+			java.lang.Class< E > enumClass,
+			int modifierBits
+	) {
+		EnumSet< E > modifiers = EnumSet.noneOf( enumClass );
+
+		for( String modifier : Modifier.toString( modifierBits ).split(" ") ) {
+			try {
+				modifiers.add( Enum.valueOf( enumClass, modifier.toUpperCase() ) );
+			} catch( IllegalArgumentException e ) {
+				continue;
+			}
+		}
+		return modifiers;
 	}
 
-	@FunctionalInterface
-	interface MethodDefinitionFactory< M extends Enum< M >, D > {
-		D create( MethodSignature signature, EnumSet< M > modifiers );
-	}
 
 	private static void warn( String id, LiftException e ) {
 		System.out.println( "WARNING: Failed to lift " + id + " because " + e.getMessage() +
@@ -744,7 +748,9 @@ public class ClassLifter {
 		trackedCompilationUnits.clear();
 	}
 
-	@Deprecated // comment or annotation
+	// Currently unused method for translating annotations from ClassGraph to Choral's internal
+	// representation.
+	@Deprecated
 	private static List< Annotation > translateAnnotations(
 			AnnotationInfoList annotationInfoList
 	) {
