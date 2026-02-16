@@ -553,9 +553,6 @@ public class ClassLifter {
 			List< TypeExpression > upperBounds = new ArrayList<>();
 
 			ReferenceTypeSignature classBound = typeParameter.getClassBound();
-			if( containsWildcards( classBound ) ) {
-				throw LiftException.wildcard();
-			}
 
 			TypeExpression classBoundExpression;
 			if( classBound != null ) {
@@ -565,9 +562,6 @@ public class ClassLifter {
 
 			List< ReferenceTypeSignature > interfaceBounds = typeParameter.getInterfaceBounds();
 			for( ReferenceTypeSignature interfaceBound : interfaceBounds ) {
-				if( containsWildcards( interfaceBound ) ) {
-					throw LiftException.wildcard();
-				}
 				upperBounds.add( getTypeExpressions( interfaceBound ) );
 			}
 
@@ -580,24 +574,6 @@ public class ClassLifter {
 			choralTypeParameters.add( choralTypeParameter );
 		}
 		return choralTypeParameters;
-	}
-
-	// recursively checks whether a type parameter contains a wild card.
-	// recursion is done to account for nested types
-	private static boolean containsWildcards( TypeSignature typeSignature ) {
-		if( typeSignature instanceof ClassRefTypeSignature classRef ) {
-			List< TypeArgument > typeArguments = classRef.getTypeArguments();
-			for( TypeArgument typeArgument : typeArguments ) {
-				if( typeArgument.getWildcard() != Wildcard.NONE ) {
-					return true;
-				}
-				TypeSignature argumentTypeSignature = typeArgument.getTypeSignature();
-				if( containsWildcards( argumentTypeSignature ) ) {
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 
 	/**
