@@ -1,13 +1,3 @@
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Stream;
-
-import org.junit.jupiter.api.Test;
-
-import choral.ast.CompilationUnit;
-import choral.compiler.ClassLifter;
-import choral.compiler.Typer;
-
 public class ClassLifterTest {
 	// Dan: At time of writing, these tests take several seconds to run and still fail. We'll
 	// revisit these when the class lifter is better integrated with the typer.
