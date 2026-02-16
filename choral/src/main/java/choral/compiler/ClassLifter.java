@@ -608,6 +608,97 @@ public class ClassLifter {
 		}
 	}
 
+	/**
+	 * Generates the choral TypeExpression from the given Java reflection Type.
+	 * Does so recursively if given Type is nested (has type arguments).
+	 */
+	private static TypeExpression liftType( java.lang.reflect.Type type )
+			throws LiftException {
+		return liftType( type, List.of( DEFAULT_WORLD_ARGUMENT ) );
+	}
+
+	private static TypeExpression liftType(
+			java.lang.reflect.Type type,
+			List< WorldArgument > worlds
+	) throws LiftException {
+
+		// Handle Class types (includes primitive types and regular classes)
+		// We check the class name to avoid conflict with choral.ast.body.Class import
+		if( type.getClass().getName().equals( "java.lang.Class" ) ) {
+			java.lang.Class<?> clazz = (java.lang.Class<?>) type;
+
+			// Handle array types
+			if( clazz.isArray() ) {
+				throw LiftException.array();
+			}
+
+			// Handle primitive types and regular classes
+			String typeName;
+			if( clazz.isPrimitive() ) {
+				typeName = clazz.getName(); // "int", "void", etc.
+				// void should not have world arguments
+				if( typeName.equals( "void" ) ) {
+					worlds = Collections.emptyList();
+				}
+			} else {
+				typeName = clazz.getCanonicalName(); // fully qualified name
+			}
+
+			return new TypeExpression(
+					new Name( typeName, NOWHERE ),
+					worlds,
+					Collections.emptyList(),
+					NOWHERE );
+		}
+		// Handle ParameterizedType (generic types like List<String>)
+		else if( type instanceof java.lang.reflect.ParameterizedType ) {
+			java.lang.reflect.ParameterizedType paramType = (java.lang.reflect.ParameterizedType) type;
+			java.lang.reflect.Type rawType = paramType.getRawType();
+
+			// rawType should be a Class
+			java.lang.Class<?> rawClass = (java.lang.Class<?>) rawType;
+
+			List< TypeExpression > typeExpressions = new ArrayList<>();
+			java.lang.reflect.Type[] typeArgs = paramType.getActualTypeArguments();
+
+			for( java.lang.reflect.Type typeArg : typeArgs ) {
+				// Check for wildcards
+				if( typeArg instanceof java.lang.reflect.WildcardType ) {
+					throw LiftException.wildcard();
+				}
+				// Recursively process type arguments without world arguments
+				TypeExpression typeExpression = liftType( typeArg, Collections.emptyList() );
+				typeExpressions.add( typeExpression );
+			}
+
+			return new TypeExpression(
+					new Name( rawClass.getCanonicalName(), NOWHERE ),
+					worlds,
+					typeExpressions,
+					NOWHERE );
+		}
+		// Handle TypeVariable (type parameters like T, E, K, V)
+		else if( type instanceof java.lang.reflect.TypeVariable< ? > typeVar ) {
+			return new TypeExpression(
+					new Name( typeVar.getName(), NOWHERE ),
+					worlds,
+					Collections.emptyList(),
+					NOWHERE );
+		}
+		// Handle GenericArrayType (generic array types like T[])
+		else if( type instanceof java.lang.reflect.GenericArrayType ) {
+			throw LiftException.array();
+		}
+		// Handle WildcardType (wildcard types like ? extends T, ? super T)
+		else if( type instanceof java.lang.reflect.WildcardType ) {
+			throw LiftException.wildcard();
+		}
+		else {
+			throw new UnsupportedOperationException( "This type is not yet supported: "
+					+ type + ". Type class: " + type.getClass().getName() );
+		}
+	}
+
 
 	/////////////////////////////////////////////////////////////////////
 	////////////////////// DEPENDENCY MANAGEMENT  ///////////////////////
