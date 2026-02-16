@@ -44,6 +44,8 @@ class LiftException extends Exception {
  */
 public class ClassLifter {
 
+	///////////////////// CONSTANTS /////////////////////
+
 	private static final Position NOWHERE = new Position( null, 0, 0 );
 
 	private static final FormalWorldParameter DEFAULT_WORLD_PARAMETER =
@@ -55,6 +57,10 @@ public class ClassLifter {
 	private static final Set< String > trackedCompilationUnits = new HashSet<>( List.of(
 			"java.lang.Object", "java.io.Serializable", "java.lang.Enum" ) );
 
+
+	///////////////////// MAIN LIFTING METHODS /////////////////////
+
+
 	/**
 	 * Finds the given type and lifts it into a choral CompilationUnit.
 	 *
@@ -63,12 +69,12 @@ public class ClassLifter {
 	 */
 	public static Stream< CompilationUnit > liftPackage( String fullyQualifiedName ) {
 		List< CompilationUnit > compilationUnitAccumulator = new ArrayList<>();
-		liftPackageHelper( fullyQualifiedName, compilationUnitAccumulator );
+		liftPackage( fullyQualifiedName, compilationUnitAccumulator );
 		return compilationUnitAccumulator.stream();
 	}
 
 	// Helper method to avoid passing empty mutable list to `liftPackage()` method
-	private static void liftPackageHelper(
+	private static void liftPackage(
 			String fullyQualifiedName, List< CompilationUnit > compilationUnitAccumulator ) {
 		System.out.println( "Lifting class: " + fullyQualifiedName );
 		int lastSeparator = fullyQualifiedName.lastIndexOf( "." );
@@ -133,7 +139,7 @@ public class ClassLifter {
 			if( fieldInfo.isPrivate() ) continue;
 
 			EnumSet< FieldModifier > modifiers = parseModifiers( FieldModifier.class,
-					fieldInfo.getModifiersStr() );
+					fieldInfo.getModifiers() );
 
 			TypeSignature fieldTypeSig = fieldInfo.getTypeSignatureOrTypeDescriptor();
 			TypeExpression fieldTypeExpression;
@@ -174,7 +180,7 @@ public class ClassLifter {
 		List< ConstructorDefinition > choralConstructors = new ArrayList<>();
 		for( MethodInfo constructor : constructors ) {
 			EnumSet< ConstructorModifier > modifiersConstructor = parseModifiers(
-					ConstructorModifier.class, constructor.getModifiersStr() );
+					ConstructorModifier.class, constructor.getModifiers() );
 
 			LiftedSignatureData liftedSignatureData;
 			try {
@@ -239,12 +245,7 @@ public class ClassLifter {
 		}
 
 		EnumSet< ClassModifier > classModifiers = parseModifiers( ClassModifier.class,
-				classInfo.getModifiersStr() );
-
-		// For getting the modifiers not reported by classgraph (should only be for Object class)
-		if( classInfo.getModifiers() == 0 ) {
-			addModifierBits( classInfo, classModifiers );
-		}
+				classInfo.getModifiers() );
 
 		choral.ast.body.Class choralClass = new Class(
 				new Name( classInfo.getSimpleName(), NOWHERE ),
@@ -273,7 +274,7 @@ public class ClassLifter {
 		// recursively visit referenced classfiles
 		for( String dependency : dependencyIdentifiers ) {
 			if( trackedCompilationUnits.add( dependency ) ) {
-				liftPackageHelper( dependency, compilationUnitAccumulator );
+				liftPackage( dependency, compilationUnitAccumulator );
 			}
 		}
 
@@ -281,7 +282,7 @@ public class ClassLifter {
 		if( extendedClassTypeSignature != null ) {
 			if( trackedCompilationUnits.add( extendedClassTypeSignature.getBaseClassName() ) ) {
 				// getBaseClassName returns fully qualified name of class, similarly to getName
-				liftPackageHelper( extendedClassTypeSignature.getBaseClassName(),
+				liftPackage( extendedClassTypeSignature.getBaseClassName(),
 						compilationUnitAccumulator );
 			}
 		}
@@ -289,19 +290,9 @@ public class ClassLifter {
 		// recursively visit super interfaces
 		for( ClassRefTypeSignature interfaceSignature : classTypeSignature.getSuperinterfaceSignatures() ) {
 			if( trackedCompilationUnits.add( interfaceSignature.getBaseClassName() ) ) {
-				liftPackageHelper( interfaceSignature.getBaseClassName(),
+				liftPackage( interfaceSignature.getBaseClassName(),
 						compilationUnitAccumulator );
 			}
-		}
-	}
-
-	private static void addModifierBits( ClassInfo classInfo, EnumSet< ClassModifier > modifiers ) {
-		java.lang.Class< ? > test = classInfo.loadClass();
-		int modifierBits = test.getModifiers();
-		String modifierString = Modifier.toString( modifierBits );
-		String[] modifierStrings = modifierString.split( " " );
-		for( String modifier : modifierStrings ) {
-			modifiers.add( ClassModifier.valueOf( modifier.toUpperCase() ) );
 		}
 	}
 
@@ -343,7 +334,7 @@ public class ClassLifter {
 		}
 
 		EnumSet< InterfaceModifier > interfaceModifiers = parseModifiers( InterfaceModifier.class,
-				interfaceInfo.getModifiersStr() );
+				interfaceInfo.getModifiers() );
 
 		Interface choralInterface = new Interface(
 				new Name( interfaceInfo.getSimpleName(), NOWHERE ),
@@ -369,14 +360,14 @@ public class ClassLifter {
 		// recursively visit referenced classfiles
 		for( String dependency : dependencyIdentifiers ) {
 			if( trackedCompilationUnits.add( dependency ) ) {
-				liftPackageHelper( dependency, compilationUnitAccumulator );
+				liftPackage( dependency, compilationUnitAccumulator );
 			}
 		}
 
 		// recursively visit super interfaces
 		for( ClassRefTypeSignature interfaceSig : interfaceTypeSignature.getSuperinterfaceSignatures() ) {
 			if( trackedCompilationUnits.add( interfaceSig.getBaseClassName() ) ) {
-				liftPackageHelper( interfaceSig.getBaseClassName(), compilationUnitAccumulator );
+				liftPackage( interfaceSig.getBaseClassName(), compilationUnitAccumulator );
 			}
 		}
 	}
@@ -416,7 +407,7 @@ public class ClassLifter {
 		}
 
 		EnumSet< ClassModifier > enumModifiers = parseModifiers( ClassModifier.class,
-				Modifier.toString( enumClass.getModifiers() ) );
+				enumClass.getModifiers() );
 		// Enum for enum modifiers in choral internals is the same Enum used for class modifiers
 		// but enums are not allowed to be abstract
 		enumModifiers.remove( ClassModifier.ABSTRACT );
@@ -453,7 +444,7 @@ public class ClassLifter {
 			// private methods will never be accessed
 			if( methodInfo.isPrivate() ) continue;
 
-			EnumSet< M > modifiers = parseModifiers( modifierClass, methodInfo.getModifiersStr() );
+			EnumSet< M > modifiers = parseModifiers( modifierClass, methodInfo.getModifiers() );
 
 			MethodSignature methodSignature;
 			try {
@@ -536,21 +527,15 @@ public class ClassLifter {
 
 	/**
 	 * Parses modifiers found by ClassGraph, into modifiers used by choral internals.
-	 *
-	 * @param <E>
-	 * @param enumClass
-	 * @param modifiersStr
-	 * @return
 	 */
 	private static < E extends Enum< E > > EnumSet< E > parseModifiers(
-			java.lang.Class< E > enumClass, String modifiersStr ) {
+			java.lang.Class< E > enumClass, int modifierBits
+	) {
 		EnumSet< E > modifiers = EnumSet.noneOf( enumClass );
-		if( modifiersStr.isEmpty() ) return modifiers;
 
-		String[] modifierStrings = modifiersStr.split( " " );
-		for( String modifierString : modifierStrings ) {
+		for( String modifier : Modifier.toString( modifierBits ).split(" ") ) {
 			try {
-				modifiers.add( Enum.valueOf( enumClass, modifierString.toUpperCase() ) );
+				modifiers.add( Enum.valueOf( enumClass, modifier.toUpperCase() ) );
 			} catch( IllegalArgumentException e ) {
 				continue;
 			}
