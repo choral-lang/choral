@@ -102,12 +102,20 @@ public class ClassLifter {
 			}
 
 			trackedCompilationUnits.add( classInfo.getName() );
-			if( classInfo.isEnum() ) {
-				liftEnum( classInfo, compilationUnitAccumulator );
-			} else if( classInfo.isInterface() ) {
-				liftInterface( classInfo, compilationUnitAccumulator );
-			} else {
-				liftClass( classInfo, compilationUnitAccumulator );
+
+			// Load the class using reflection
+			try {
+				java.lang.Class<?> clazz = java.lang.Class.forName( fullyQualifiedName );
+				if( classInfo.isEnum() ) {
+					liftEnum( clazz, compilationUnitAccumulator );
+				} else if( classInfo.isInterface() ) {
+					liftInterface( classInfo, compilationUnitAccumulator );
+				} else {
+					liftClass( classInfo, compilationUnitAccumulator );
+				}
+			} catch( ClassNotFoundException e ) {
+				System.err.println( "WARNING: Could not find class: " + fullyQualifiedName );
+				throw new RuntimeException( "Could not find class: " + fullyQualifiedName, e );
 			}
 		}
 	}
@@ -399,27 +407,30 @@ public class ClassLifter {
 		}
 	}
 
-	private static void liftEnum(
-			ClassInfo enumInfo, List< CompilationUnit > compilationUnitAccumulator ) {
+	// Reflection-based version of liftEnum - package-private for testing
+	static void liftEnum(
+			java.lang.Class<?> enumClass, List< CompilationUnit > compilationUnitAccumulator ) {
 		// TRANSLATE CONSTANTS
-		FieldInfoList enumConstants = enumInfo.getFieldInfo().filter( FieldInfo::isEnum );
+		java.lang.reflect.Field[] allFields = enumClass.getFields();
 		List< EnumConstant > choralEnumConstants = new ArrayList<>();
-		for( FieldInfo constant : enumConstants ) {
-			EnumConstant newConstant = new EnumConstant(
-					new Name( constant.getName(), NOWHERE ),
-					Collections.emptyList(), // ignore annotations for now
-					NOWHERE );
-			choralEnumConstants.add( newConstant );
+		for( java.lang.reflect.Field field : allFields ) {
+			if( field.isEnumConstant() ) {
+				EnumConstant newConstant = new EnumConstant(
+						new Name( field.getName(), NOWHERE ),
+						Collections.emptyList(), // ignore annotations for now
+						NOWHERE );
+				choralEnumConstants.add( newConstant );
+			}
 		}
 
 		EnumSet< ClassModifier > enumModifiers = parseModifiers( ClassModifier.class,
-				enumInfo.getModifiersStr() );
+				Modifier.toString( enumClass.getModifiers() ) );
 		// Enum for enum modifiers in choral internals is the same Enum used for class modifiers
 		// but enums are not allowed to be abstract
 		enumModifiers.remove( ClassModifier.ABSTRACT );
 
 		choral.ast.body.Enum choralEnum = new choral.ast.body.Enum(
-				new Name( enumInfo.getSimpleName(), NOWHERE ),
+				new Name( enumClass.getSimpleName(), NOWHERE ),
 				DEFAULT_WORLD_PARAMETER,
 				choralEnumConstants,
 				Collections.emptyList(), // ignore annotations for now
@@ -427,7 +438,7 @@ public class ClassLifter {
 				NOWHERE );
 
 		CompilationUnit compilationUnit = new CompilationUnit(
-				Optional.of( enumInfo.getPackageName() ),
+				Optional.of( enumClass.getPackageName() ),
 				// No imports, because classfiles use fully qualified names
 				Collections.emptyList(),
 				Collections.emptyList(),
