@@ -111,7 +111,7 @@ public class ClassLifter {
 		Set< String > dependencyIdentifiers = new HashSet<>();
 
 		// TRANSLATE FIELDS
-		java.lang.reflect.Field[] fields = clazz.getFields();
+		java.lang.reflect.Field[] fields = clazz.getDeclaredFields();
 		List< Field > choralFields = new ArrayList<>();
 		for( java.lang.reflect.Field field : fields ) {
 			// private fields will never be accessed
@@ -142,7 +142,7 @@ public class ClassLifter {
 
 		// TRANSLATE METHODS
 		List< ClassMethodDefinition > methods = liftMethods(
-				clazz.getMethods(),
+				clazz.getDeclaredMethods(),
 				ClassMethodModifier.class,
 				dependencyIdentifiers,
 				( signature, modifiers ) -> new ClassMethodDefinition(
@@ -285,7 +285,7 @@ public class ClassLifter {
 		// TRANSLATE METHODS
 		Set< String > dependencyIdentifiers = new HashSet<>();
 		List< InterfaceMethodDefinition > choralInterfaceMethods = liftMethods(
-				clazz.getMethods(),
+				clazz.getDeclaredMethods(),
 				InterfaceMethodModifier.class,
 				dependencyIdentifiers,
 				( signature, modifiers ) -> new InterfaceMethodDefinition(
