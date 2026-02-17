@@ -415,29 +415,8 @@ public class ClassLifter {
 			Set< String > dependencyIdentifiers,
 			MethodDefinitionFactory< M, D > factory
 	) {
-		// Filter out duplicate methods (same name and parameters but different return types)
-		// This happens with covariant return types (e.g., CharBuffer.append returns both CharBuffer and Appendable)
-		// We keep only the most specific return type (the one from the declaring class)
-		Map< String, java.lang.reflect.Method > uniqueMethods = new LinkedHashMap<>();
-		for( java.lang.reflect.Method method : methods ) {
-			// Create a key based on method name and parameter types
-			String key = getMethodKey( method );
-
-			// If we haven't seen this method signature, add it
-			if( !uniqueMethods.containsKey( key ) ) {
-				uniqueMethods.put( key, method );
-			} else {
-				// If we have seen it, keep the more specific one (the one from the actual class, not interface)
-				java.lang.reflect.Method existing = uniqueMethods.get( key );
-				// Prefer the method whose return type is a subtype of the other
-				if( existing.getReturnType().isAssignableFrom( method.getReturnType() ) ) {
-					uniqueMethods.put( key, method );
-				}
-			}
-		}
-
 		List< D > methodDefinitions = new ArrayList<>();
-		for( java.lang.reflect.Method method : uniqueMethods.values() ) {
+		for( java.lang.reflect.Method method : methods ) {
 			// private methods will never be accessed
 			if( Modifier.isPrivate( method.getModifiers() ) ) continue;
 
@@ -456,20 +435,6 @@ public class ClassLifter {
 			addMethodDependencies( dependencyIdentifiers, method );
 		}
 		return methodDefinitions;
-	}
-
-	/**
-	 * Creates a unique key for a method based on its name and parameter types.
-	 * This is used to detect duplicate methods with covariant return types.
-	 */
-	private static String getMethodKey( java.lang.reflect.Method method ) {
-		StringBuilder key = new StringBuilder( method.getName() );
-		key.append( "(" );
-		for( java.lang.reflect.Type paramType : method.getGenericParameterTypes() ) {
-			key.append( paramType.getTypeName() ).append( "," );
-		}
-		key.append( ")" );
-		return key.toString();
 	}
 
 	private static MethodSignature liftMethodSignature(
