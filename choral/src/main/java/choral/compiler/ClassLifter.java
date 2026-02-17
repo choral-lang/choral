@@ -114,7 +114,7 @@ public class ClassLifter {
 				if( classInfo.isEnum() ) {
 					liftEnum( clazz, compilationUnitAccumulator );
 				} else if( classInfo.isInterface() ) {
-					liftInterface( classInfo, clazz, compilationUnitAccumulator );
+					liftInterface( clazz, compilationUnitAccumulator );
 				} else {
 					liftClass( classInfo, clazz, compilationUnitAccumulator );
 				}
@@ -134,34 +134,33 @@ public class ClassLifter {
 		Set< String > dependencyIdentifiers = new HashSet<>();
 
 		// TRANSLATE FIELDS
-		FieldInfoList fieldInfoList = classInfo.getFieldInfo();
+		java.lang.reflect.Field[] fields = clazz.getFields();
 		List< Field > choralFields = new ArrayList<>();
-		for( FieldInfo fieldInfo : fieldInfoList ) {
+		for( java.lang.reflect.Field field : fields ) {
 			// private fields will never be accessed
-			if( fieldInfo.isPrivate() ) continue;
+			if( Modifier.isPrivate( field.getModifiers() ) ) continue;
 
 			EnumSet< FieldModifier > modifiers = parseModifiers( FieldModifier.class,
-					fieldInfo.getModifiers() );
+					field.getModifiers() );
 
-			TypeSignature fieldTypeSig = fieldInfo.getTypeSignatureOrTypeDescriptor();
 			TypeExpression fieldTypeExpression;
 			try {
-				fieldTypeExpression = liftType( fieldTypeSig );
+				fieldTypeExpression = liftType( field.getGenericType() );
 			} catch( LiftException e ) {
-				warn( fieldInfo.getName(), e );
+				warn( field.getName(), e );
 				continue;
 			}
 
 			// add fields type to depencies
-			extractClassDependencies( dependencyIdentifiers, fieldTypeSig );
+			extractClassDependencies( dependencyIdentifiers, field.getGenericType() );
 
-			Field field = new Field(
-					new Name( fieldInfo.getName() ),
+			Field choralField = new Field(
+					new Name( field.getName() ),
 					fieldTypeExpression,
 					Collections.emptyList(), // ignore annotations for now
 					modifiers,
 					NOWHERE );
-			choralFields.add( field );
+			choralFields.add( choralField );
 		}
 
 		// TRANSLATE METHODS
@@ -178,18 +177,17 @@ public class ClassLifter {
 		);
 
 		// TRANSLATE CONSTRUCTORS
-		MethodInfoList constructors = classInfo.getConstructorInfo();
+		java.lang.reflect.Constructor< ? >[] constructors = clazz.getConstructors();
 		List< ConstructorDefinition > choralConstructors = new ArrayList<>();
-		for( MethodInfo constructor : constructors ) {
+		for( java.lang.reflect.Constructor< ? > constructor : constructors ) {
 			EnumSet< ConstructorModifier > modifiersConstructor = parseModifiers(
 					ConstructorModifier.class, constructor.getModifiers() );
 
 			List< FormalTypeParameter > typeParams;
 			List< FormalMethodParameter > methodParams;
 			try {
-				MethodTypeSignature methodTypeSignature = constructor.getTypeSignatureOrTypeDescriptor();
-				typeParams = liftTypeParameters( methodTypeSignature.getTypeParameters() );
-				methodParams = liftMethodParameters( constructor );
+				typeParams = liftTypeParameters( constructor.getTypeParameters() );
+				methodParams = liftMethodParameters( constructor.getGenericParameterTypes() );
 			} catch( LiftException e ) {
 				warn( constructor.getName(), e );
 				continue;
@@ -203,8 +201,7 @@ public class ClassLifter {
 
 			ConstructorDefinition constructorChoral = new ConstructorDefinition(
 					constructorSignature,
-					null, // not supported by ClassGraph
-					// ^Represents calling `this()` or `super()` at the start of a constructor
+					null, // Represents calling `this()` or `super()` at the start of a constructor
 					new NilStatement( NOWHERE ), // ignore constructor body
 					Collections.emptyList(), // ignore annotations for now
 					modifiersConstructor,
@@ -214,46 +211,52 @@ public class ClassLifter {
 		}
 
 		// TRANSLATE TYPE PARAMETERS
-		ClassTypeSignature classTypeSignature = classInfo.getTypeSignatureOrTypeDescriptor();
 		List< FormalTypeParameter > choralTypeParameters;
 		try {
-			choralTypeParameters = liftTypeParameters( classTypeSignature.getTypeParameters() );
+			choralTypeParameters = liftTypeParameters( clazz.getTypeParameters() );
 		} catch( LiftException e ) {
-			warn( classTypeSignature.toString(), e );
+			warn( clazz.getSimpleName(), e );
 			return;
 		}
 
 		// TRANSLATE SUPERINTERFACES
-		ClassRefTypeSignature extendedClassTypeSignature = classTypeSignature.getSuperclassSignature();
-		List< TypeExpression > parentInterfaces = liftSuperInterfaces(
-				classTypeSignature.getSuperinterfaceSignatures() );
+		java.lang.reflect.Type[] genericInterfaces = clazz.getGenericInterfaces();
+		List< TypeExpression > parentInterfaces = new ArrayList<>();
+		for( java.lang.reflect.Type genericInterface : genericInterfaces ) {
+			try {
+				parentInterfaces.add( liftType( genericInterface ) );
+			} catch( LiftException e ) {
+				warn( genericInterface.toString(), e );
+			}
+		}
 
 		// TRANSLATE SUPERCLASS
 		TypeExpression extendedExpression = null;
-		if( extendedClassTypeSignature != null ) {
+		java.lang.reflect.Type genericSuperclass = clazz.getGenericSuperclass();
+		if( genericSuperclass != null ) {
 			try {
-				extendedExpression = liftType( extendedClassTypeSignature );
+				extendedExpression = liftType( genericSuperclass );
 			} catch( LiftException e ) {
-				warn( extendedClassTypeSignature.getBaseClassName(), e );
+				warn( clazz.getSuperclass() != null ? clazz.getSuperclass().getName() : "superclass", e );
 			}
 		}
 
 		// add superclass to depedencies
-		ClassInfo superClass = classInfo.getSuperclass();
+		java.lang.Class< ? > superClass = clazz.getSuperclass();
 		if( superClass != null ) {
 			dependencyIdentifiers.add( superClass.getName() );
 		}
 
 		// add implemented interfaces to dependencies
-		for( ClassInfo superInterface : classInfo.getInterfaces() ) {
+		for( java.lang.Class< ? > superInterface : clazz.getInterfaces() ) {
 			dependencyIdentifiers.add( superInterface.getName() );
 		}
 
 		EnumSet< ClassModifier > classModifiers = parseModifiers( ClassModifier.class,
-				classInfo.getModifiers() );
+				clazz.getModifiers() );
 
 		choral.ast.body.Class choralClass = new Class(
-				new Name( classInfo.getSimpleName(), NOWHERE ),
+				new Name( clazz.getSimpleName(), NOWHERE ),
 				List.of( DEFAULT_WORLD_PARAMETER ),
 				choralTypeParameters,
 				extendedExpression,
@@ -266,7 +269,7 @@ public class ClassLifter {
 				NOWHERE );
 
 		CompilationUnit compilationUnit = new CompilationUnit(
-				Optional.of( classInfo.getPackageName() ),
+				Optional.of( clazz.getPackageName() ),
 				// No imports, because classfiles use fully qualified names
 				Collections.emptyList(),
 				Collections.emptyList(),
@@ -284,25 +287,21 @@ public class ClassLifter {
 		}
 
 		// recursively visit super class
-		if( extendedClassTypeSignature != null ) {
-			if( trackedCompilationUnits.add( extendedClassTypeSignature.getBaseClassName() ) ) {
-				// getBaseClassName returns fully qualified name of class, similarly to getName
-				liftPackage( extendedClassTypeSignature.getBaseClassName(),
-						compilationUnitAccumulator );
+		if( superClass != null ) {
+			if( trackedCompilationUnits.add( superClass.getName() ) ) {
+				liftPackage( superClass.getName(), compilationUnitAccumulator );
 			}
 		}
 
 		// recursively visit super interfaces
-		for( ClassRefTypeSignature interfaceSignature : classTypeSignature.getSuperinterfaceSignatures() ) {
-			if( trackedCompilationUnits.add( interfaceSignature.getBaseClassName() ) ) {
-				liftPackage( interfaceSignature.getBaseClassName(),
-						compilationUnitAccumulator );
+		for( java.lang.Class< ? > superInterface : clazz.getInterfaces() ) {
+			if( trackedCompilationUnits.add( superInterface.getName() ) ) {
+				liftPackage( superInterface.getName(), compilationUnitAccumulator );
 			}
 		}
 	}
 
 	private static void liftInterface(
-			ClassInfo interfaceInfo,
 			java.lang.Class< ? > clazz,
 			List< CompilationUnit > compilationUnitAccumulator
 	) {
@@ -319,30 +318,36 @@ public class ClassLifter {
 						NOWHERE )
 		);
 
-		// find super interfaces
-		ClassTypeSignature interfaceTypeSignature = interfaceInfo.getTypeSignatureOrTypeDescriptor();
-		List< TypeExpression > choralExtendedInterfaces = liftSuperInterfaces(
-				interfaceTypeSignature.getSuperinterfaceSignatures() );
+		// TRANSLATE SUPER INTERFACES
+		java.lang.reflect.Type[] genericInterfaces = clazz.getGenericInterfaces();
+		List< TypeExpression > choralExtendedInterfaces = new ArrayList<>();
+		for( java.lang.reflect.Type genericInterface : genericInterfaces ) {
+			try {
+				choralExtendedInterfaces.add( liftType( genericInterface ) );
+			} catch( LiftException e ) {
+				warn( genericInterface.toString(), e );
+			}
+		}
 
 		// TRANSLATE TYPE PARAMETERS
 		List< FormalTypeParameter > choralTypeParameters;
 		try {
-			choralTypeParameters = liftTypeParameters( interfaceTypeSignature.getTypeParameters() );
+			choralTypeParameters = liftTypeParameters( clazz.getTypeParameters() );
 		} catch( LiftException e ) {
-			warn( interfaceTypeSignature.toString(), e );
+			warn( clazz.getSimpleName(), e );
 			return;
 		}
 
 		// add super interfaces to dependencies
-		for( ClassInfo superInterface : interfaceInfo.getInterfaces() ) {
+		for( java.lang.Class< ? > superInterface : clazz.getInterfaces() ) {
 			dependencyIdentifiers.add( superInterface.getName() );
 		}
 
 		EnumSet< InterfaceModifier > interfaceModifiers = parseModifiers( InterfaceModifier.class,
-				interfaceInfo.getModifiers() );
+				clazz.getModifiers() );
 
 		Interface choralInterface = new Interface(
-				new Name( interfaceInfo.getSimpleName(), NOWHERE ),
+				new Name( clazz.getSimpleName(), NOWHERE ),
 				List.of( DEFAULT_WORLD_PARAMETER ),
 				choralTypeParameters,
 				choralExtendedInterfaces,
@@ -352,7 +357,7 @@ public class ClassLifter {
 				NOWHERE );
 
 		CompilationUnit compilationUnit = new CompilationUnit(
-				Optional.of( interfaceInfo.getPackageName() ),
+				Optional.of( clazz.getPackageName() ),
 				// No imports, because classfiles use fully qualified names
 				Collections.emptyList(),
 				List.of( choralInterface ),
@@ -370,9 +375,9 @@ public class ClassLifter {
 		}
 
 		// recursively visit super interfaces
-		for( ClassRefTypeSignature interfaceSig : interfaceTypeSignature.getSuperinterfaceSignatures() ) {
-			if( trackedCompilationUnits.add( interfaceSig.getBaseClassName() ) ) {
-				liftPackage( interfaceSig.getBaseClassName(), compilationUnitAccumulator );
+		for( java.lang.Class< ? > superInterface : clazz.getInterfaces() ) {
+			if( trackedCompilationUnits.add( superInterface.getName() ) ) {
+				liftPackage( superInterface.getName(), compilationUnitAccumulator );
 			}
 		}
 	}
@@ -427,24 +432,6 @@ public class ClassLifter {
 	/////////////////////////////////////////////////////////////////////
 
 
-	private static List< TypeExpression > liftSuperInterfaces(
-			List< ClassRefTypeSignature > interfaceSignatures
-	) {
-		List< TypeExpression > translatedSuperInterfaces = new ArrayList<>();
-		for( ClassRefTypeSignature implementedTypeSignature : interfaceSignatures ) {
-			TypeExpression interfaceExpression;
-			try {
-				interfaceExpression = liftType( implementedTypeSignature );
-			} catch( LiftException e ) {
-				warn( implementedTypeSignature.getBaseClassName(), e );
-				continue;
-			}
-			translatedSuperInterfaces.add( interfaceExpression );
-		}
-
-		return translatedSuperInterfaces;
-	}
-
 	private static < M extends Enum< M >, D > List< D > liftMethods(
 			java.lang.reflect.Method[] methods,
 			java.lang.Class< M > modifierClass,
@@ -481,7 +468,7 @@ public class ClassLifter {
 		return new MethodSignature(
 				new Name( method.getName(), NOWHERE ),
 				liftTypeParameters( method.getTypeParameters() ),
-				liftMethodParameters( method ),
+				liftMethodParameters( method.getGenericParameterTypes() ),
 				returnType,
 				NOWHERE );
 	}
@@ -490,10 +477,9 @@ public class ClassLifter {
 	 * Translates method parameters from Java reflection to Choral's internal representation.
 	 */
 	private static List< FormalMethodParameter > liftMethodParameters(
-			java.lang.reflect.Method method
+			java.lang.reflect.Type[] parameterTypes
 	) throws LiftException {
 		List< FormalMethodParameter > parameters = new ArrayList<>();
-		java.lang.reflect.Type[] parameterTypes = method.getGenericParameterTypes();
 
 		for( int i = 0; i < parameterTypes.length; i++ ) {
 			TypeExpression type = liftType( parameterTypes[i] );
@@ -545,64 +531,6 @@ public class ClassLifter {
 		return choralTypeParameters;
 	}
 
-	/**
-	 * Generates the choral TypeExpression from the given ClassGraph TypeSignature.
-	 * Does so recursively if given TypeSignature is nested.
-	 */
-	private static TypeExpression liftType( TypeSignature typeSig ) throws LiftException {
-		return liftType( typeSig, List.of( DEFAULT_WORLD_ARGUMENT ) );
-	}
-
-	private static TypeExpression liftType(
-			TypeSignature typeSig,
-			List< WorldArgument > worlds
-	) throws LiftException {
-
-		if( typeSig instanceof ClassRefTypeSignature classref ) { // for nested types
-			String baseClassName = classref.getBaseClassName();
-			List< TypeArgument > typeArguments = classref.getTypeArguments();
-			List< TypeExpression > typeExpressions = new ArrayList<>();
-
-			if( typeArguments != null ) {
-				for( TypeArgument arg : typeArguments ) {
-					TypeSignature argType = arg.getTypeSignature();
-					if( argType == null ) throw LiftException.wildcard();
-					TypeExpression typeExpression = liftType( argType, Collections.emptyList() );
-					typeExpressions.add( typeExpression );
-				}
-			}
-			return new TypeExpression(
-					new Name( baseClassName, NOWHERE ),
-					worlds,
-					typeExpressions,
-					NOWHERE );
-		}
-		else if( typeSig instanceof BaseTypeSignature baseRef ) { // for primitive types
-			// void should not have world arguments
-			if ( baseRef.getTypeStr().equals( "void" ) )
-				worlds = Collections.emptyList();
-
-			return new TypeExpression(
-					new Name( baseRef.getTypeStr(), NOWHERE ),
-					worlds,
-					Collections.emptyList(),
-					NOWHERE );
-		}
-		else if( typeSig instanceof TypeVariableSignature typeVar ) { // for type parameters
-			return new TypeExpression(
-					new Name( typeVar.getName(), NOWHERE ),
-					worlds,
-					Collections.emptyList(),
-					NOWHERE );
-		}
-		else if( typeSig instanceof ArrayTypeSignature ) { // for array types
-			throw LiftException.array();
-		}
-		else {
-			throw new UnsupportedOperationException( "This type of signature is not yet supported: "
-					+ typeSig + ". Type of signature: " + typeSig.getClass().getName() );
-		}
-	}
 
 	/**
 	 * Generates the choral TypeExpression from the given Java reflection Type.
