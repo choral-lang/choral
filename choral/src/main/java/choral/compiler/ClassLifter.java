@@ -5,17 +5,11 @@ import choral.ast.Name;
 import choral.ast.Position;
 import choral.ast.body.*;
 import choral.ast.body.Class;
-import choral.ast.expression.LiteralExpression;
-import choral.ast.expression.LiteralExpression.BooleanLiteralExpression;
-import choral.ast.expression.LiteralExpression.DoubleLiteralExpression;
-import choral.ast.expression.LiteralExpression.IntegerLiteralExpression;
-import choral.ast.expression.LiteralExpression.StringLiteralExpression;
 import choral.ast.statement.NilStatement;
 import choral.ast.type.FormalTypeParameter;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
-import io.github.classgraph.*;
 
 import java.lang.Enum;
 import java.lang.reflect.Modifier;
@@ -79,54 +73,33 @@ public class ClassLifter {
 	private static void liftPackage(
 			String fullyQualifiedName, List< CompilationUnit > compilationUnitAccumulator ) {
 		System.out.println( "Lifting class: " + fullyQualifiedName );
-		int lastSeparator = fullyQualifiedName.lastIndexOf( "." );
-		String packageName = fullyQualifiedName.substring( 0, lastSeparator );
 
-		try( ScanResult scanResult = new ClassGraph()
-				//.verbose()
-				.enableAllInfo()
-				.enableInterClassDependencies()
-				.enableExternalClasses()
-				.enableSystemJarsAndModules()
-				.acceptPackages( packageName )
-				.scan() ) {
-			ClassInfo classInfo = scanResult.getClassInfo( fullyQualifiedName );
+		try {
+			java.lang.Class<?> clazz = java.lang.Class.forName( fullyQualifiedName );
 
-			if( classInfo == null ) {
-				System.err.println( "WARNING: Could not find class: " + fullyQualifiedName );
-				System.err.println( "Package scanned: " + packageName );
-				System.err.println(
-						"All classes found in scan: " + scanResult.getAllClasses().size() );
-				throw new RuntimeException( "Could not find class: " + fullyQualifiedName );
-			}
-
-			if( classInfo.isInnerClass() ) {
+			// Skip inner classes
+			if( clazz.isMemberClass() ) {
 				System.err.println( "WARNING: Class lifter couldn't import inner class: " +
-                        fullyQualifiedName );
+						fullyQualifiedName );
 				return;
 			}
 
-			trackedCompilationUnits.add( classInfo.getName() );
+			trackedCompilationUnits.add( clazz.getName() );
 
-			// Load the class using reflection
-			try {
-				java.lang.Class<?> clazz = java.lang.Class.forName( fullyQualifiedName );
-				if( classInfo.isEnum() ) {
-					liftEnum( clazz, compilationUnitAccumulator );
-				} else if( classInfo.isInterface() ) {
-					liftInterface( clazz, compilationUnitAccumulator );
-				} else {
-					liftClass( classInfo, clazz, compilationUnitAccumulator );
-				}
-			} catch( ClassNotFoundException e ) {
-				System.err.println( "WARNING: Could not find class: " + fullyQualifiedName );
-				throw new RuntimeException( "Could not find class: " + fullyQualifiedName, e );
+			if( clazz.isEnum() ) {
+				liftEnum( clazz, compilationUnitAccumulator );
+			} else if( clazz.isInterface() ) {
+				liftInterface( clazz, compilationUnitAccumulator );
+			} else {
+				liftClass( clazz, compilationUnitAccumulator );
 			}
+		} catch( ClassNotFoundException e ) {
+			System.err.println( "WARNING: Could not find class: " + fullyQualifiedName );
+			throw new RuntimeException( "Could not find class: " + fullyQualifiedName, e );
 		}
 	}
 
 	private static void liftClass(
-			ClassInfo classInfo,
 			java.lang.Class< ? > clazz,
 			List< CompilationUnit > compilationUnitAccumulator
 	) {
@@ -194,7 +167,7 @@ public class ClassLifter {
 			}
 
 			ConstructorSignature constructorSignature = new ConstructorSignature(
-					new Name( classInfo.getSimpleName(), NOWHERE ),
+					new Name( clazz.getSimpleName(), NOWHERE ),
 					typeParams,
 					methodParams,
 					NOWHERE );
@@ -747,44 +720,5 @@ public class ClassLifter {
 	 */
 	public static void clearTrackedCompilationUnits() {
 		trackedCompilationUnits.clear();
-	}
-
-	// Currently unused method for translating annotations from ClassGraph to Choral's internal
-	// representation.
-	@Deprecated
-	private static List< Annotation > translateAnnotations(
-			AnnotationInfoList annotationInfoList
-	) {
-		List< Annotation > annotations = new ArrayList<>();
-
-		for( AnnotationInfo annotationInfo : annotationInfoList ) {
-			String annotationName = annotationInfo.getName();
-			AnnotationParameterValueList annotationParameterValueList = annotationInfo.getParameterValues();
-			Map< Name, LiteralExpression > annotationValues = new HashMap<>();
-
-			for( AnnotationParameterValue annotationParameterValue : annotationParameterValueList ) {
-				Object annotationValue = annotationParameterValue.getValue();
-				if( annotationValue instanceof String s ) {
-					annotationValues.put( new Name( annotationParameterValue.getName(), NOWHERE ),
-							new StringLiteralExpression( s, DEFAULT_WORLD_ARGUMENT ) );
-				} else if( annotationValue instanceof Integer i ) {
-					annotationValues.put( new Name( annotationParameterValue.getName(), NOWHERE ),
-							new IntegerLiteralExpression( i, DEFAULT_WORLD_ARGUMENT ) );
-				} else if( annotationValue instanceof Boolean b ) {
-					annotationValues.put( new Name( annotationParameterValue.getName(), NOWHERE ),
-							new BooleanLiteralExpression( b, DEFAULT_WORLD_ARGUMENT ) );
-				} else if( annotationValue instanceof Double d ) {
-					annotationValues.put( new Name( annotationParameterValue.getName(), NOWHERE ),
-							new DoubleLiteralExpression( d, DEFAULT_WORLD_ARGUMENT ) );
-				} else {
-					throw new RuntimeException(
-							"ClassGraph found value in annotation parameter list not compatible with choral: "
-									+ annotationValue.toString() + annotationValue.getClass().descriptorString() );
-				}
-			}
-			Annotation annotation = new Annotation( new Name( annotationName ), annotationValues );
-			annotations.add( annotation );
-		}
-		return annotations;
 	}
 }
