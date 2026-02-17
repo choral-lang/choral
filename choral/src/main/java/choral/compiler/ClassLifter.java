@@ -419,6 +419,10 @@ public class ClassLifter {
 		for( java.lang.reflect.Method method : methods ) {
 			// private methods will never be accessed
 			if( Modifier.isPrivate( method.getModifiers() ) ) continue;
+			// Java "bridge" methods cause problems because they give out "erased" types. For
+			// example, `IntStream` has a method `java.util.Iterator iterator()` - notice the return
+			// type is missing a type parameter. Choral can't cope with this, so we skip it.
+			if( method.isBridge() ) continue;
 
 			EnumSet< M > modifiers = parseModifiers( modifierClass, method.getModifiers() );
 
