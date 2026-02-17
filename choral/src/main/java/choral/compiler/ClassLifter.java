@@ -28,6 +28,10 @@ class LiftException extends Exception {
 	static LiftException wildcard() {
 		return new LiftException( "wildcard" );
 	}
+
+	static LiftException innerClass() {
+		return new LiftException( "inner class" );
+	}
 }
 
 /**
@@ -529,6 +533,11 @@ public class ClassLifter {
 				throw LiftException.array();
 			}
 
+			// Handle inner classes
+			if( clazz.isMemberClass() ) {
+				throw LiftException.innerClass();
+			}
+
 			// Handle primitive types and regular classes
 			String typeName;
 			if( clazz.isPrimitive() ) {
@@ -554,6 +563,11 @@ public class ClassLifter {
 
 			// rawType should be a Class
 			java.lang.Class<?> rawClass = (java.lang.Class<?>) rawType;
+
+			// Check if the raw class is an inner class
+			if( rawClass.isMemberClass() ) {
+				throw LiftException.innerClass();
+			}
 
 			List< TypeExpression > typeExpressions = new ArrayList<>();
 			java.lang.reflect.Type[] typeArgs = paramType.getActualTypeArguments();
