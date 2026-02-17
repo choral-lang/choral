@@ -166,7 +166,7 @@ public class ClassLifter {
 
 		// TRANSLATE METHODS
 		List< ClassMethodDefinition > methods = liftMethods(
-				classInfo.getMethodInfo(),
+				clazz.getMethods(),
 				ClassMethodModifier.class,
 				dependencyIdentifiers,
 				( signature, modifiers ) -> new ClassMethodDefinition(
@@ -189,7 +189,7 @@ public class ClassLifter {
 			try {
 				MethodTypeSignature methodTypeSignature = constructor.getTypeSignatureOrTypeDescriptor();
 				typeParams = liftTypeParameters( methodTypeSignature.getTypeParameters() );
-				methodParams = getMethodParameters( constructor.getParameterInfo() );
+				methodParams = liftMethodParameters( constructor );
 			} catch( LiftException e ) {
 				warn( constructor.getName(), e );
 				continue;
@@ -309,7 +309,7 @@ public class ClassLifter {
 		// TRANSLATE METHODS
 		Set< String > dependencyIdentifiers = new HashSet<>();
 		List< InterfaceMethodDefinition > choralInterfaceMethods = liftMethods(
-				interfaceInfo.getMethodInfo(),
+				clazz.getMethods(),
 				InterfaceMethodModifier.class,
 				dependencyIdentifiers,
 				( signature, modifiers ) -> new InterfaceMethodDefinition(
@@ -446,62 +446,59 @@ public class ClassLifter {
 	}
 
 	private static < M extends Enum< M >, D > List< D > liftMethods(
-			MethodInfoList methodInfoList,
+			java.lang.reflect.Method[] methods,
 			java.lang.Class< M > modifierClass,
 			Set< String > dependencyIdentifiers,
 			MethodDefinitionFactory< M, D > factory
 	) {
 		List< D > methodDefinitions = new ArrayList<>();
-		for( MethodInfo methodInfo : methodInfoList ) {
+		for( java.lang.reflect.Method method : methods ) {
 			// private methods will never be accessed
-			if( methodInfo.isPrivate() ) continue;
+			if( Modifier.isPrivate( method.getModifiers() ) ) continue;
 
-			EnumSet< M > modifiers = parseModifiers( modifierClass, methodInfo.getModifiers() );
+			EnumSet< M > modifiers = parseModifiers( modifierClass, method.getModifiers() );
 
 			MethodSignature methodSignature;
 			try {
-				methodSignature = getMethodSignature( methodInfo );
+				methodSignature = liftMethodSignature( method );
 			} catch( LiftException e ) {
-				warn( methodInfo.getName(), e );
+				warn( method.getName(), e );
 				continue;
 			}
 			methodDefinitions.add( factory.create( methodSignature, modifiers ) );
 
 			// by adding method dependencies at this point, arrays and wildcards have already been checked for.
-			addMethodDependencies( dependencyIdentifiers, methodInfo );
+			addMethodDependencies( dependencyIdentifiers, method );
 		}
 		return methodDefinitions;
 	}
 
-	private static MethodSignature getMethodSignature(
-			MethodInfo methodInfo
+	private static MethodSignature liftMethodSignature(
+			java.lang.reflect.Method method
 	) throws LiftException {
-		MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
-		TypeExpression returnType = liftType( methodTypeSignature.getResultType() );
+		TypeExpression returnType = liftType( method.getGenericReturnType() );
 
 		return new MethodSignature(
-				new Name( methodInfo.getName(), NOWHERE ),
-				liftTypeParameters( methodTypeSignature.getTypeParameters() ),
-				getMethodParameters( methodInfo.getParameterInfo() ),
+				new Name( method.getName(), NOWHERE ),
+				liftTypeParameters( method.getTypeParameters() ),
+				liftMethodParameters( method ),
 				returnType,
 				NOWHERE );
 	}
 
 	/**
-	 * Translates method parameters from ClassGraph to Choral's internal representation.
-	 *
-	 * @param methodParams
-	 * @return
+	 * Translates method parameters from Java reflection to Choral's internal representation.
 	 */
-	private static List< FormalMethodParameter > getMethodParameters(
-			MethodParameterInfo[] methodParams
+	private static List< FormalMethodParameter > liftMethodParameters(
+			java.lang.reflect.Method method
 	) throws LiftException {
 		List< FormalMethodParameter > parameters = new ArrayList<>();
-		int paramCount = 0;
-		for( MethodParameterInfo param : methodParams ) {
-			TypeExpression type = liftType( param.getTypeSignatureOrTypeDescriptor() );
+		java.lang.reflect.Type[] parameterTypes = method.getGenericParameterTypes();
+
+		for( int i = 0; i < parameterTypes.length; i++ ) {
+			TypeExpression type = liftType( parameterTypes[i] );
 			parameters.add( new FormalMethodParameter(
-					new Name( "param" + paramCount++, NOWHERE ),
+					new Name( "param" + i, NOWHERE ),
 					type,
 					Collections.emptyList(), // ignore annotations for now
 					NOWHERE ) );
@@ -520,22 +517,21 @@ public class ClassLifter {
 
 
 	private static List< FormalTypeParameter > liftTypeParameters(
-			List< TypeParameter > typeParameters
+			java.lang.reflect.TypeVariable< ? >[] typeParameters
 	) throws LiftException {
 
 		List< FormalTypeParameter > choralTypeParameters = new ArrayList<>();
-		for( TypeParameter typeParameter : typeParameters ) {
+		for( java.lang.reflect.TypeVariable< ? > typeParameter : typeParameters ) {
 			// choral does not support lower bounds, so only upper bounds are found
 			List< TypeExpression > upperBounds = new ArrayList<>();
 
-			ReferenceTypeSignature classBound = typeParameter.getClassBound();
-			if( classBound != null ) {
-				upperBounds.add( liftType( classBound ) );
-			}
-
-			List< ReferenceTypeSignature > interfaceBounds = typeParameter.getInterfaceBounds();
-			for( ReferenceTypeSignature interfaceBound : interfaceBounds ) {
-				upperBounds.add( liftType( interfaceBound ) );
+			java.lang.reflect.Type[] bounds = typeParameter.getBounds();
+			for( java.lang.reflect.Type bound : bounds ) {
+				// Skip Object as a bound - it's the default and not meaningful
+				if( bound.equals( Object.class ) ) {
+					continue;
+				}
+				upperBounds.add( liftType( bound ) );
 			}
 
 			FormalTypeParameter choralTypeParameter = new FormalTypeParameter(
@@ -711,66 +707,85 @@ public class ClassLifter {
 	 */
 	private static void addMethodDependencies(
 			Set< String > dependencyIdentifiers,
-			MethodInfo methodInfo
+			java.lang.reflect.Method method
 	) {
-		MethodTypeSignature typeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
-		TypeSignature returnType = typeSignature.getResultType();
-		extractClassDependencies( dependencyIdentifiers, returnType );
+		// Extract return type dependencies
+		extractClassDependencies( dependencyIdentifiers, method.getGenericReturnType() );
 
-		for( TypeParameter typeParameter : typeSignature.getTypeParameters() ) {
-			ReferenceTypeSignature classBound = typeParameter.getClassBound();
-			if( classBound != null ) {
-				extractClassDependencies( dependencyIdentifiers, classBound );
-			}
-
-			for( ReferenceTypeSignature referenceTypeSignature : typeParameter.getInterfaceBounds() ) {
-				extractClassDependencies( dependencyIdentifiers, referenceTypeSignature );
+		// Extract type parameter bounds dependencies
+		for( java.lang.reflect.TypeVariable< ? > typeParameter : method.getTypeParameters() ) {
+			for( java.lang.reflect.Type bound : typeParameter.getBounds() ) {
+				extractClassDependencies( dependencyIdentifiers, bound );
 			}
 		}
 
-		for( MethodParameterInfo param : methodInfo.getParameterInfo() ) {
-			extractClassDependencies( dependencyIdentifiers, param.getTypeSignatureOrTypeDescriptor() );
+		// Extract parameter type dependencies
+		for( java.lang.reflect.Type paramType : method.getGenericParameterTypes() ) {
+			extractClassDependencies( dependencyIdentifiers, paramType );
 		}
 	}
 
 	/**
-	 * Extracts all class dependencies from a type signature and adds them to the dependency set.
-	 * This recursively extracts base class names, handling generic types by also extracting
-	 * dependencies from type arguments. Primitive types are skipped.
+	 * Extracts all class dependencies from a Java reflection Type and adds them to the dependency set.
+	 * This recursively extracts class names, handling generic types by also extracting
+	 * dependencies from type arguments. Primitive types and inner classes are skipped.
 	 *
 	 * For example, "java.util.Map<java.lang.String, java.util.List<java.lang.Integer>>"
 	 * would extract: java.util.Map, java.lang.String, java.util.List, java.lang.Integer
 	 */
 	private static void extractClassDependencies(
 			Set< String > dependencyIdentifiers,
-			TypeSignature typeSignature
+			java.lang.reflect.Type type
 	) {
-		if( typeSignature instanceof BaseTypeSignature ) {
-			// Skip primitive types - they don't need to be lifted as dependencies
-			return;
-		} else if( typeSignature instanceof ClassRefTypeSignature classRef ) {
-			// Add the base class name (without generic parameters)
-			dependencyIdentifiers.add( classRef.getBaseClassName() );
+		// Handle Class types (includes primitive types and regular classes)
+		if( type.getClass().getName().equals( "java.lang.Class" ) ) {
+			java.lang.Class<?> clazz = (java.lang.Class<?>) type;
 
-			// Recursively extract dependencies from type arguments
-			List< TypeArgument > typeArguments = classRef.getTypeArguments();
-			if( typeArguments != null ) {
-				for( TypeArgument typeArg : typeArguments ) {
-					TypeSignature argType = typeArg.getTypeSignature();
-					if( argType != null ) {
-						extractClassDependencies( dependencyIdentifiers, argType );
-					}
+			// Skip primitive types, arrays, and inner classes
+			if( clazz.isPrimitive() || clazz.isArray() || clazz.isMemberClass() ) {
+				return;
+			}
+
+			// Add the class name (using getName() to match ClassGraph's behavior)
+			// getName() returns the binary name which is what we need for consistency
+			dependencyIdentifiers.add( clazz.getName() );
+		}
+		// Handle ParameterizedType (generic types like List<String>)
+		else if( type instanceof java.lang.reflect.ParameterizedType ) {
+			java.lang.reflect.ParameterizedType paramType = (java.lang.reflect.ParameterizedType) type;
+			java.lang.reflect.Type rawType = paramType.getRawType();
+
+			// Add the raw type
+			if( rawType instanceof java.lang.Class<?> rawClass ) {
+				// Skip inner classes
+				if( !rawClass.isMemberClass() ) {
+					dependencyIdentifiers.add( rawClass.getName() );
 				}
 			}
-		} else if( typeSignature instanceof ArrayTypeSignature arrayType ) {
+
+			// Recursively extract dependencies from type arguments
+			for( java.lang.reflect.Type typeArg : paramType.getActualTypeArguments() ) {
+				// Skip wildcards
+				if( !(typeArg instanceof java.lang.reflect.WildcardType) ) {
+					extractClassDependencies( dependencyIdentifiers, typeArg );
+				}
+			}
+		}
+		// Handle GenericArrayType (generic array types like T[])
+		else if( type instanceof java.lang.reflect.GenericArrayType ) {
 			// We don't support arrays
 			return;
-		} else if( typeSignature instanceof TypeVariableSignature ) {
-			// Type variables (e.g., T, E) are not dependencies - they're defined elsewhere
+		}
+		// Handle TypeVariable (type parameters like T, E)
+		else if( type instanceof java.lang.reflect.TypeVariable< ? > ) {
+			// Type variables are not dependencies - they're defined elsewhere
 			return;
 		}
-		// Note: ReferenceTypeSignature is the parent of ClassRefTypeSignature and others,
-		// so if we get here with an unhandled ReferenceTypeSignature subtype, we skip it
+		// Handle WildcardType (wildcard types like ? extends T)
+		else if( type instanceof java.lang.reflect.WildcardType ) {
+			// Wildcards are not supported
+			return;
+		}
 	}
 
 	/**
