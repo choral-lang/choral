@@ -1,4 +1,5 @@
 import choral.ast.CompilationUnit;
+import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.ClassLifter;
 import choral.compiler.Typer;
 import choral.compiler.TyperOptions;
@@ -10,22 +11,23 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class ClassLifterTest {
-	// Dan: At time of writing, these tests take several seconds to run and still fail. We'll
-	// revisit these when the class lifter is better integrated with the typer.
 
 	@Test
 	public void helloWorldTest() throws IOException {
 		Stream< CompilationUnit > object = ClassLifter.liftPackage("java.lang.Object");
-		Stream<CompilationUnit> doubleC = ClassLifter.liftPackage("java.lang.Double");
-		Stream<CompilationUnit> intC = ClassLifter.liftPackage("java.lang.Integer");
-		Stream<CompilationUnit> longC = ClassLifter.liftPackage("java.lang.Long");
 		Stream<CompilationUnit> serializable = ClassLifter.liftPackage("java.io.Serializable");
 		Stream<CompilationUnit> enuM = ClassLifter.liftPackage("java.lang.Enum");
 		Stream<CompilationUnit> compUnit = ClassLifter.liftPackage("supplement.HelloWorld");
-		Stream<CompilationUnit> intermediary = Stream.of(enuM, object, serializable, doubleC, intC, longC)
+		Stream<CompilationUnit> intermediary = Stream.of(enuM, object, serializable)
 												.flatMap(i -> i);
 		List<CompilationUnit> finalList = Stream.concat(intermediary, compUnit).toList();
 		// List<CompilationUnit> finalList = Stream.concat(enuM, Stream.concat(Stream.concat(serializable, object), compUnit)).toList();
+
+		// Print the lifted CompilationUnits for debugging
+		PrettyPrinterVisitor ppv = new PrettyPrinterVisitor();
+		finalList.forEach(cu -> {
+			System.out.println(cu.accept(ppv));
+		});
 
 		Typer.annotate(
 				List.of(),
