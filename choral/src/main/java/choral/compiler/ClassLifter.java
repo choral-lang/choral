@@ -12,6 +12,7 @@ import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 
 import java.lang.Enum;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Stream;
@@ -154,38 +155,18 @@ public class ClassLifter {
 		);
 
 		// TRANSLATE CONSTRUCTORS
-		java.lang.reflect.Constructor< ? >[] constructors = clazz.getConstructors();
-		List< ConstructorDefinition > choralConstructors = new ArrayList<>();
-		for( java.lang.reflect.Constructor< ? > constructor : constructors ) {
-			EnumSet< ConstructorModifier > modifiersConstructor = parseModifiers(
-					ConstructorModifier.class, constructor.getModifiers() );
-
-			List< FormalTypeParameter > typeParams;
-			List< FormalMethodParameter > methodParams;
-			try {
-				typeParams = liftTypeParameters( constructor.getTypeParameters() );
-				methodParams = liftMethodParameters( constructor.getGenericParameterTypes() );
-			} catch( LiftException e ) {
-				warn( constructor.getName(), e );
-				continue;
-			}
-
-			ConstructorSignature constructorSignature = new ConstructorSignature(
-					new Name( clazz.getSimpleName(), NOWHERE ),
-					typeParams,
-					methodParams,
-					NOWHERE );
-
-			ConstructorDefinition constructorChoral = new ConstructorDefinition(
-					constructorSignature,
+		List< ConstructorDefinition > choralConstructors = liftConstructors(
+				clazz.getConstructors(),
+				ConstructorModifier.class,
+				dependencyIdentifiers,
+				( signature, modifiers) -> new ConstructorDefinition(
+					signature,
 					null, // Represents calling `this()` or `super()` at the start of a constructor
-					new NilStatement( NOWHERE ), // ignore constructor body
-					Collections.emptyList(), // ignore annotations for now
-					modifiersConstructor,
-					NOWHERE );
-
-			choralConstructors.add( constructorChoral );
-		}
+					new NilStatement( NOWHERE ),
+					Collections.emptyList(),
+					modifiers,
+					NOWHERE )
+		);
 
 		// TRANSLATE TYPE PARAMETERS
 		List< FormalTypeParameter > choralTypeParameters;
@@ -409,6 +390,10 @@ public class ClassLifter {
 	/////////////////////////////////////////////////////////////////////
 
 
+	/**
+	 * Lifts Java methods into their Choral representation.
+	 * @see #liftConstructors
+	 */
 	private static < M extends Enum< M >, D > List< D > liftMethods(
 			java.lang.reflect.Method[] methods,
 			java.lang.Class< M > modifierClass,
@@ -441,16 +426,56 @@ public class ClassLifter {
 		return methodDefinitions;
 	}
 
+	/**
+	 * Lifts Java constructors into their Choral representation.
+	 * @see #liftMethods
+	 */
+	private static < M extends Enum< M >, D > List< D > liftConstructors(
+			java.lang.reflect.Constructor< ? >[] constructors,
+			java.lang.Class< M > modifierClass,
+			Set< String > dependencyIdentifiers,
+			ConstructorDefinitionFactory< M, D > factory
+	) {
+		List< D > methodDefinitions = new ArrayList<>();
+		for( java.lang.reflect.Constructor< ? > ctor : constructors ) {
+			// private methods will never be accessed
+			if( Modifier.isPrivate( ctor.getModifiers() ) ) continue;
+
+			EnumSet< M > modifiers = parseModifiers( modifierClass, ctor.getModifiers() );
+
+			ConstructorSignature methodSignature;
+			try {
+				methodSignature = liftConstructorSignature( ctor );
+			} catch( LiftException e ) {
+				warn( ctor.getName(), e );
+				continue;
+			}
+			methodDefinitions.add( factory.create( methodSignature, modifiers ) );
+
+			// by adding method dependencies at this point, arrays and wildcards have already been checked for.
+			addMethodDependencies( dependencyIdentifiers, ctor );
+		}
+		return methodDefinitions;
+	}
+
 	private static MethodSignature liftMethodSignature(
 			java.lang.reflect.Method method
 	) throws LiftException {
-		TypeExpression returnType = liftType( method.getGenericReturnType() );
-
 		return new MethodSignature(
 				new Name( method.getName(), NOWHERE ),
 				liftTypeParameters( method.getTypeParameters() ),
 				liftMethodParameters( method.getGenericParameterTypes() ),
-				returnType,
+				liftType( method.getGenericReturnType() ),
+				NOWHERE );
+	}
+
+	private static ConstructorSignature liftConstructorSignature(
+			java.lang.reflect.Constructor< ? > constructor
+	) throws LiftException {
+		return new ConstructorSignature(
+				new Name( constructor.getClass().getSimpleName(), NOWHERE ),
+				liftTypeParameters( constructor.getTypeParameters() ),
+				liftMethodParameters( constructor.getGenericParameterTypes() ),
 				NOWHERE );
 	}
 
@@ -476,6 +501,11 @@ public class ClassLifter {
 	@FunctionalInterface
 	interface MethodDefinitionFactory< M extends Enum< M >, D > {
 		D create( MethodSignature signature, EnumSet< M > modifiers );
+	}
+
+	@FunctionalInterface
+	interface ConstructorDefinitionFactory< M extends Enum< M >, D > {
+		D create( ConstructorSignature signature, EnumSet< M > modifiers );
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -515,7 +545,7 @@ public class ClassLifter {
 
 	/**
 	 * Generates the choral TypeExpression from the given Java reflection Type.
-	 * Does so recursively if given Type is nested (and or has type arguments).
+	 * Does so recursively if given Type is nested (or has type arguments).
 	 */
 	private static TypeExpression liftType( java.lang.reflect.Type type )
 			throws LiftException {
@@ -626,10 +656,11 @@ public class ClassLifter {
 	 */
 	private static void addMethodDependencies(
 			Set< String > dependencyIdentifiers,
-			java.lang.reflect.Method method
+			java.lang.reflect.Executable method
 	) {
 		// Extract return type dependencies
-		extractClassDependencies( dependencyIdentifiers, method.getGenericReturnType() );
+		if (method instanceof java.lang.reflect.Method m)
+			extractClassDependencies( dependencyIdentifiers, m.getGenericReturnType() );
 
 		// Extract type parameter bounds dependencies
 		for( java.lang.reflect.TypeVariable< ? > typeParameter : method.getTypeParameters() ) {
