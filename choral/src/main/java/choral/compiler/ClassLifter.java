@@ -83,7 +83,7 @@ public class ClassLifter {
 
 			// Skip inner classes
 			if( clazz.isMemberClass() ) {
-				System.err.println( "WARNING: Class lifter couldn't import inner class: " +
+				System.err.println( "WARNING: Class lifter does not support inner classes, skipping: " +
 						fullyQualifiedName );
 				return;
 			}
@@ -515,7 +515,7 @@ public class ClassLifter {
 
 	/**
 	 * Generates the choral TypeExpression from the given Java reflection Type.
-	 * Does so recursively if given Type is nested (has type arguments).
+	 * Does so recursively if given Type is nested (and or has type arguments).
 	 */
 	private static TypeExpression liftType( java.lang.reflect.Type type )
 			throws LiftException {
@@ -665,7 +665,6 @@ public class ClassLifter {
 				return;
 			}
 
-			// Add the class name (using getName() to match ClassGraph's behavior)
 			// getName() returns the binary name which is what we need for consistency
 			dependencyIdentifiers.add( clazz.getName() );
 		}
