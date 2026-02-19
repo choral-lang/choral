@@ -2892,6 +2892,8 @@ public class Typer {
 				this.task = task;
 			}
 
+			// Represents how many times isReady() was called when the task was not ready to be run
+			// Is used to impose natural ordering on tasks with same phase
 			int rounds = 0;
 
 			@Override // overriden from Comparable
