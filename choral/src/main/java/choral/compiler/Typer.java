@@ -864,8 +864,10 @@ public class Typer {
 								.allMatch( GroundReferenceType::isInterfaceFinalised );
 					}
 				}
-				return super.isReady() && dependenciesReady;
-			}
+				// super.isReady() will always return true. 
+				// return super.isReady() && dependenciesReady;
+				return dependenciesReady;
+			}  
 		}
 
 	}
@@ -2892,7 +2894,7 @@ public class Typer {
 
 			int rounds = 0;
 
-			@Override
+			@Override // overriden from Comparable
 			public int compareTo( TaskQueue.Task o ) {
 				int i = this.phase.compareTo( o.phase );
 				if( i == 0 ) {
@@ -2901,7 +2903,7 @@ public class Typer {
 				return i;
 			}
 
-			@Override
+			@Override // overriden from Runnable
 			public void run() {
 				if( status() == Status.READY ) {
 					status = Status.PROCESSING;
@@ -2910,6 +2912,7 @@ public class Typer {
 				}
 			}
 
+			// The isReady() check can fail when callling the isReady() method from memberTask
 			private void prepare() {
 				if( status() == Status.WAITING ) {
 					if( isReady() ) {
@@ -2920,6 +2923,7 @@ public class Typer {
 				}
 			}
 
+			// This method is actually necessary, it exists to be overriden in memberTask
 			protected boolean isReady() {
 				return true;
 			}
@@ -2937,14 +2941,21 @@ public class Typer {
 		PriorityQueue< TaskQueue.Task > tasks = new PriorityQueue<>(
 				Comparator.naturalOrder() );
 
+		/**
+		 * This method processes tasks in the priority queue up till the passed phase
+		 * @param to the phase limiting how many tasks to be processed.
+		 */
 		public void process( Phase to ) {
 			while( !tasks.isEmpty() ) {
-				if( tasks.peek().phase.compareTo( to ) < 1 ) {
+				// task at head of queue is of prior or same phase as "to"
+				if( tasks.peek().phase.compareTo( to ) < 1 ) { 
 					TaskQueue.Task task = tasks.poll();
+					// because TaskQueue.Task is used, this prepare() call will always set status to READY
+					// If the task isn't already PROCESSING or FINISHED
 					task.prepare();
 					switch( task.status() ) {
 						case READY -> task.run();
-						case WAITING -> enqueue( task );
+						case WAITING -> enqueue( task ); // so this case should never happen
 					}
 				} else {
 					// no more tasks for this and prior phases
@@ -2953,9 +2964,13 @@ public class Typer {
 			}
 		}
 
+		/**
+		 * This method processes all tasks in the task queue
+		 */
 		public void process() {
 			while( !tasks.isEmpty() ) {
 				TaskQueue.Task task = tasks.poll();
+				// The issue mentioned in above method also occurs here
 				task.prepare();
 				switch( task.status() ) {
 					case READY -> task.run();
@@ -2964,12 +2979,23 @@ public class Typer {
 			}
 		}
 
+		/**
+		 * Enqueues the passed task to the priority queue, if the status of the task is 
+		 * WAITING or READY
+		 * @param t
+		 */
 		void enqueue( TaskQueue.Task t ) {
 			if( t.status() == Task.Status.WAITING || t.status() == Task.Status.READY ) {
 				tasks.add( t );
 			}
 		}
 
+		/**
+		 * Enqueues the passed runnable to the priority queue as a task, 
+		 * with the passed phase as the phase the task should be run during. 
+		 * @param p The phase during which the runnable should be run
+		 * @param t The runnable enqueued as a task. 
+		 */
 		void enqueue( Phase p, Runnable t ) {
 			enqueue( new TaskQueue.Task( p, t ) );
 		}
