@@ -1158,9 +1158,12 @@ public class Typer {
 			} while( ms.isEmpty() && phase < 3 );
 //			System.out.println( "=================================================" );
 
-			ms = checkArgWorlds( ms, args );
-
-			return ms;
+			if ( opts.relaxed() ) {
+				return filterMethodsUsingWorlds( ms, args );
+			}
+			else {
+				return ms;
+			}
 		}
 
 		/**
@@ -1184,10 +1187,12 @@ public class Typer {
 		 * {@code myMethod(1@A, chAB.com(true@A))}---even though they could conceivably
 		 * have wanted us to infer {@code myMethod(chAB.com(1@A), chAB.com(true@A))}.
 		 */
-		private static List<Member.GroundCallable> checkArgWorlds(
+		private static List<Member.GroundCallable> filterMethodsUsingWorlds(
 				List< Member.GroundCallable > methods,
 				List< ? extends GroundDataType > args
 		){
+			if (methods.size() <= 1)
+				return methods;
 			for( int i = 0; i < args.size(); i++ ){
 				final int index = i;
 				var argWorlds = args.get(index).worldArguments();
