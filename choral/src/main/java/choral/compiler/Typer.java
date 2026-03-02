@@ -1496,10 +1496,12 @@ public class Typer {
 			}
 
 			/**
-			 * Asserts whether the passed statement has a continued statement that can be reached. 
-			 * @param n The statement to check continuantion of. 
-			 * @param returnChecked
-			 * @return Whether the statement has a reachable continued statement. 
+			 * Visits the statement's continuation and checks for unreachable statements (e.g., statements
+			 * that will never be executed because the method is guaranteed to return or throw before
+			 * control flow reaches them).
+			 * @param n A statement that has already been typechecked.
+			 * @param returnChecked True if 'n' is guaranteed to return before reaching its continuation.
+			 * @return True if 'n' or its continuation are guaranteed to return a value.
 			 */
 			public boolean assertReachableContinuation( Statement n, boolean returnChecked ) {
 				// There exists a continued statement, but the checking is already done(?)
