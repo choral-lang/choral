@@ -32,10 +32,10 @@ import choral.exceptions.ChoralException;
 import java.util.Map;
 
 /**
- * switch ( Expression ) {
- * case Identifier | Literal at World ( Identifier | Literal at World )* -> { block }
- * case Identifier | Literal at World ( Identifier | Literal at World )* -> { block }
- * default -> { block }
+ * switch ( Expression ) { <p>
+ * case Identifier | Literal at World ( Identifier | Literal at World )* -> { block } <p>
+ * case Identifier | Literal at World ( Identifier | Literal at World )* -> { block } <p>
+ * default -> { block } <p>
  * }
  */
 

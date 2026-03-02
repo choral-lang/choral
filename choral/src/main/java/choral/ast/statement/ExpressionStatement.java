@@ -30,7 +30,7 @@ import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 
 /**
- * A statement wrapping an expression
+ * A statement wrapping an expression. <p> 
  * expressionStatement; continuation
  */
 

@@ -30,7 +30,7 @@ import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 
 /**
- * if( e ) { statement } else { statement }; continuation
+ * if( expression ) { statement } else { statement }; continuation
  */
 
 public class IfStatement extends Statement {

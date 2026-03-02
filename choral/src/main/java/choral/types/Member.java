@@ -463,7 +463,7 @@ public abstract class Member implements HasSource {
 		 */
 		private Map<World, List<Pair<Expression, Statement>>> worldDependencies =  new HashMap<>();
 		
-		public void addDependency( List<? extends World> worlds, Expression expression, Statement statement ){
+		public void addDependencies( List<? extends World> worlds, Expression expression, Statement statement ){
 			for( World world : worlds ){
 				addDependency(world, expression, statement);
 			}

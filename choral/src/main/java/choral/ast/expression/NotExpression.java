@@ -27,7 +27,9 @@ import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
-
+/**
+ * NotExpression refers to applying the {@code !} operator to an expression. 
+ */
 public class NotExpression extends Expression {
 
 	private final Expression expression;

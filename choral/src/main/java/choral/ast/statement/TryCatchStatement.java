@@ -41,6 +41,7 @@ import java.util.List;
 
 public class TryCatchStatement extends Statement {
 
+	// each pair corresponds to a exception catch and it's statement body. 
 	private final List< Pair< VariableDeclaration, Statement > > catches;
 	private final Statement body;
 
