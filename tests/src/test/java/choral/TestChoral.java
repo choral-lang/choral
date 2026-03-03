@@ -131,6 +131,7 @@ public class TestChoral {
 	@TestFactory
 	public Stream< DynamicTest > typer() {
 		CompilationRequestBuilder mustPass = new CompilationRequestBuilder();
+		mustPass.addSources("OnDemandImports", subFolder(TYPER_PASS, "OnDemandImports"));
 		CompilationRequestBuilder mustFail = new CompilationRequestBuilder();
 
 		return Stream.concat(

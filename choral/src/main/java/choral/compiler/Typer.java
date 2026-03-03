@@ -2408,6 +2408,7 @@ public class Typer {
 					Package pkg = declarationPackage.universe().rootPackage();
 					String[] path = ip.name().split( "\\." );
 					int i = 0;
+					// why - 1 ?
 					while( i < path.length - 1 ) {
 						Optional< Package > x = pkg.declaredPackage( path[ i ] );
 						if( x.isPresent() ) {
@@ -2424,7 +2425,7 @@ public class Typer {
 					if( type.isPresent() ) {
 						assertPublicAccess( type.get() );
 						singleImports.add( type.get() );
-					} else {
+					} else { // class lifter here?
 						throw new AstPositionedException( ip.position(),
 								new StaticVerificationException(
 										"cannot resolve symbol '" + path[ i ] + "'" ) );
@@ -2443,6 +2444,8 @@ public class Typer {
 					String[] path = ip.name().split( "\\." );
 					int i = 0;
 					while( i < path.length - 1 /* last one is always ".*" */ ) {
+						// declaredPackage() returns full path up till passed package / class. 
+						// so passing "io" from "java.io", will return "java.io"
 						Optional< Package > x = pkg.declaredPackage( path[ i ] );
 						if( x.isPresent() ) {
 							pkg = x.get();
