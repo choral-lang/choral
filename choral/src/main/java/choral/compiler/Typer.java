@@ -2408,7 +2408,7 @@ public class Typer {
 					Package pkg = declarationPackage.universe().rootPackage();
 					String[] path = ip.name().split( "\\." );
 					int i = 0;
-					// why - 1 ?
+					// final element will always be a class or interface, not a package. 
 					while( i < path.length - 1 ) {
 						Optional< Package > x = pkg.declaredPackage( path[ i ] );
 						if( x.isPresent() ) {
