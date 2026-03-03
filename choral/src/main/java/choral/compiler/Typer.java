@@ -1363,9 +1363,8 @@ public class Typer {
 				Set<String> casesFound = new HashSet<>(n.cases().size());
 				for( Map.Entry< SwitchArgument< ? >, Statement > e : n.cases().entrySet() ) {
 					// e -> entry ??
-					if( e.getKey() instanceof SwitchArgument.SwitchArgumentLabel ) {
-						// l -> label??
-						SwitchArgument.SwitchArgumentLabel l = (SwitchArgument.SwitchArgumentLabel) e.getKey();
+					// l -> label??
+					if( e.getKey() instanceof SwitchArgument.SwitchArgumentLabel l) {
 						if( g.isEnum() ) {
 							GroundEnum ge = (GroundEnum) g;
 							String id = l.argument().identifier();
@@ -1384,9 +1383,8 @@ public class Typer {
 									new StaticVerificationException(
 											"required a literal of type '" + g + "', found a label" ) );
 						}
-					} else if( e.getKey() instanceof SwitchArgument.SwitchArgumentLiteral ) {
 						// l -> label ??
-						SwitchArgument.SwitchArgumentLiteral l = (SwitchArgument.SwitchArgumentLiteral) e.getKey();
+					} else if( e.getKey() instanceof SwitchArgument.SwitchArgumentLiteral l) {
 						// a -> argument ??
 						GroundDataTypeOrVoid a = synth( l.argument(), n );
 						String s = l.argument().content().toString();
@@ -1662,14 +1660,13 @@ public class Typer {
 			 * @return null if unboxing failed. The unboxed typer otherwise. 
 			 */
 			private GroundPrimitiveDataType unbox( GroundDataTypeOrVoid type ) {
-				if( type instanceof GroundPrimitiveDataType ) {
-					return (GroundPrimitiveDataType) type;
+				if( type instanceof GroundPrimitiveDataType groundType) {
+					return groundType;
 				}
-				if( type instanceof GroundClass ) {
-					GroundClass c = (GroundClass) type;
+				if( type instanceof GroundClass groundClass) {
 					for( PrimitiveTypeTag p : PrimitiveTypeTag.values() ) {
-						if( p.boxedType() == c.specialTypeTag() ) {
-							return universe().primitiveDataType( p ).applyTo( c.worldArguments() );
+						if( p.boxedType() == groundClass.specialTypeTag() ) {
+							return universe().primitiveDataType( p ).applyTo( groundClass.worldArguments() );
 						}
 					}
 				}
@@ -2019,13 +2016,12 @@ public class Typer {
 				
 				// this if statement should only be entered if "scope.lookupThis()" has been called
 				// and the resulting value saved to "left". 
-				if( left instanceof GroundReferenceType ) {
-					GroundReferenceType t = (GroundReferenceType) left;
+				if( left instanceof GroundReferenceType type) {
 					// find most accurately fitting method based on type arguments and regular arguments
 					List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
 							typeargsArgs.left(),
 							typeargsArgs.right(),
-							t.methods( n.name().identifier() ).filter( this::checkMemberAccess )
+							type.methods( n.name().identifier() ).filter( this::checkMemberAccess )
 					);
 					// no method matching passed args and typeargs was found
 					if( ms.isEmpty() ) {
@@ -2034,7 +2030,7 @@ public class Typer {
 										+ n.name().identifier()
 										+ typeargsArgs.right().stream().map( Object::toString ).collect( Formatting
 										.joining( ",", "(", ")", "" ) )
-										+ "' in '" + t + "'" ) );
+										+ "' in '" + type + "'" ) );
 					}
 					// too many methods matching passed args and typeargs was found
 					else if( ms.size() > 1 ) {
