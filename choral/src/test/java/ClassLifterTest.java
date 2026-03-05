@@ -12,38 +12,38 @@ import java.util.stream.Stream;
 
 public class ClassLifterTest {
 
-	// @Test
-	// public void helloWorldTest() throws IOException {
-	// 	Stream< CompilationUnit > object = ClassLifter.liftPackage("java.lang.Object");
-	// 	Stream<CompilationUnit> serializable = ClassLifter.liftPackage("java.io.Serializable");
-	// 	Stream<CompilationUnit> enuM = ClassLifter.liftPackage("java.lang.Enum");
-	// 	Stream<CompilationUnit> compUnit = ClassLifter.liftPackage("supplement.HelloWorld");
-	// 	Stream<CompilationUnit> intermediary = Stream.of(enuM, object, serializable)
-	// 											.flatMap(i -> i);
-	// 	List<CompilationUnit> finalList = Stream.concat(intermediary, compUnit).toList();
-	// 	// List<CompilationUnit> finalList = Stream.concat(enuM, Stream.concat(Stream.concat(serializable, object), compUnit)).toList();
+	@Test
+	public void helloWorldTest() throws IOException {
+		Stream< CompilationUnit > object = ClassLifter.liftPackage("java.lang.Object");
+		Stream<CompilationUnit> serializable = ClassLifter.liftPackage("java.io.Serializable");
+		Stream<CompilationUnit> enuM = ClassLifter.liftPackage("java.lang.Enum");
+		Stream<CompilationUnit> compUnit = ClassLifter.liftPackage("supplement.HelloWorld");
+		Stream<CompilationUnit> intermediary = Stream.of(enuM, object, serializable)
+												.flatMap(i -> i);
+		List<CompilationUnit> finalList = Stream.concat(intermediary, compUnit).toList();
+		// List<CompilationUnit> finalList = Stream.concat(enuM, Stream.concat(Stream.concat(serializable, object), compUnit)).toList();
 
-	// 	// Print the lifted CompilationUnits for debugging
-	// 	PrettyPrinterVisitor ppv = new PrettyPrinterVisitor();
-	// 	finalList.forEach(cu -> {
-	// 		System.out.println(cu.accept(ppv));
-	// 	});
+		// Print the lifted CompilationUnits for debugging
+		PrettyPrinterVisitor ppv = new PrettyPrinterVisitor();
+		// finalList.forEach(cu -> {
+		// 	System.out.println(cu.accept(ppv));
+		// });		
 
-	// 	Typer.annotate(
-	// 			List.of(),
-	// 			// compUnit.toList()
-	// 			finalList,
-	// 			// Stream.concat(
-	// 			// 		compUnit,
-	// 			// // 		TODO Right now we need to load the standard profile because Typer complains
-	// 			// // 		  that java.lang.Object is missing. This is probably a bug in the header
-	// 			// // 		  removal tool?
-	// 			// 		HeaderLoader.loadAlternateProfile()
-	// 			// ).toList()
-	// 			new TyperOptions( VerbosityLevel.WARNINGS )
-	// 	);
-	// 	ClassLifter.clearTrackedCompilationUnits();
-	// }
+		Typer.annotate(
+				List.of(),
+				// compUnit.toList()
+				finalList,
+				// Stream.concat(
+				// 		compUnit,
+				// // 		TODO Right now we need to load the standard profile because Typer complains
+				// // 		  that java.lang.Object is missing. This is probably a bug in the header
+				// // 		  removal tool?
+				// 		HeaderLoader.loadAlternateProfile()
+				// ).toList()
+				new TyperOptions( VerbosityLevel.WARNINGS )
+		);
+		ClassLifter.clearTrackedCompilationUnits();
+	}
 
 	// @Test
 	// public void dayTest() throws IOException {

@@ -88,10 +88,15 @@ public abstract class Member implements HasSource {
 		assertIllegalCombinationOfModifiers( modifiers, ABSTRACT, STATIC );
 		assertIllegalCombinationOfModifiers( modifiers, ABSTRACT, PRIVATE );
 		assertIllegalCombinationOfModifiers( modifiers, ABSTRACT, FINAL );
+		assertIllegalCombinationOfModifiers(modifiers, DEFAULT, ABSTRACT);
 	}
 
 	protected final EnumSet< Modifier > modifiers() {
 		return modifiers;
+	}
+
+	public final boolean isDefault() {
+		return modifiers.contains(DEFAULT);
 	}
 
 	public final boolean isAbstract() {

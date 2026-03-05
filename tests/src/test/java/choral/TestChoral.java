@@ -132,6 +132,9 @@ public class TestChoral {
 	public Stream< DynamicTest > typer() {
 		CompilationRequestBuilder mustPass = new CompilationRequestBuilder();
 		mustPass.addSources("OnDemandImports", subFolder(TYPER_PASS, "OnDemandImports"));
+		//mustPass.addSources("InterfaceDefaultMethod", subFolder(TYPER_PASS, "InterfaceDefaultMethod"));
+		//^Test case for implementing default for interface methods, only supported in internals currently
+		// Parser and projector still missing support. 
 		CompilationRequestBuilder mustFail = new CompilationRequestBuilder();
 
 		return Stream.concat(

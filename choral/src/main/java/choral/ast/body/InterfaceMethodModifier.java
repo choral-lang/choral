@@ -25,9 +25,9 @@ public enum InterfaceMethodModifier {
 	// The Java Language Specification recommends listing modifiers in the following order
 	PUBLIC( "public" ),
 	// PRIVATE("private"),
-	ABSTRACT( "abstract" );
+	ABSTRACT( "abstract" ),
 	// STATIC("static"),
-	// DEFAULT("default");
+	DEFAULT("default");
 
 	public final String label;
 

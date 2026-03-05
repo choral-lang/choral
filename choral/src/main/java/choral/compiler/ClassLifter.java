@@ -77,15 +77,15 @@ public class ClassLifter {
 	// Helper method to avoid passing empty mutable list to `liftPackage()` method
 	private static void liftPackage(
 			String fullyQualifiedName, List< CompilationUnit > compilationUnitAccumulator ) {
-		System.out.println( "Lifting class: " + fullyQualifiedName );
+		//System.out.println( "Lifting class: " + fullyQualifiedName );
 
 		try {
 			java.lang.Class<?> clazz = java.lang.Class.forName( fullyQualifiedName );
 
 			// Skip inner classes
 			if( clazz.isMemberClass() ) {
-				System.err.println( "WARNING: Class lifter does not support inner classes, skipping: " +
-						fullyQualifiedName );
+				// System.err.println( "WARNING: Class lifter does not support inner classes, skipping: " +
+				// 		fullyQualifiedName );
 				return;
 			}
 
@@ -267,7 +267,7 @@ public class ClassLifter {
 		Set< String > dependencyIdentifiers = new HashSet<>();
 		List< InterfaceMethodDefinition > choralInterfaceMethods = liftMethods(
 				clazz.getDeclaredMethods(),
-				InterfaceMethodModifier.class,
+				InterfaceMethodModifier.class, 
 				dependencyIdentifiers,
 				( signature, modifiers ) -> new InterfaceMethodDefinition(
 						signature,
@@ -410,6 +410,9 @@ public class ClassLifter {
 			if( method.isBridge() ) continue;
 
 			EnumSet< M > modifiers = parseModifiers( modifierClass, method.getModifiers() );
+			if(method.isDefault()) {
+				modifiers.add( Enum.valueOf( modifierClass, "DEFAULT" ));
+			}
 
 			MethodSignature methodSignature;
 			try {
@@ -758,8 +761,8 @@ public class ClassLifter {
 
 
 	private static void warn( String id, LiftException e ) {
-		System.out.println( "WARNING: Failed to lift " + id + " because " + e.getMessage() +
-                " types are not supported" );
+		// System.out.println( "WARNING: Failed to lift " + id + " because " + e.getMessage() +
+        //         " types are not supported" );
 	}
 
 	/**

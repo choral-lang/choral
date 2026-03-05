@@ -49,7 +49,11 @@ public class InterfaceMethodDefinition extends MethodDefinition {
 	}
 
 	public boolean isAbstract() {
-		return true;
+		return modifiers.contains(InterfaceMethodModifier.ABSTRACT);
+	}
+
+	public boolean isDefault() {
+		return modifiers.contains(InterfaceMethodModifier.DEFAULT);
 	}
 
 	@Override

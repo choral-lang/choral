@@ -107,7 +107,7 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 	}
 
 	public void addImplicitMethodModifiers( EnumSet< Modifier > modifiers ) {
-		modifiers.add( ABSTRACT );
+		if (!modifiers.contains(DEFAULT)) modifiers.add( ABSTRACT );
 		modifiers.add( PUBLIC );
 	}
 
@@ -151,7 +151,7 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 		}
 
 		public void addMethod( Member.HigherMethod method ) {
-			assert ( method.isPublic() && method.isAbstract() );
+			assert ( method.isPublic() && method.isAbstract() || method.isDefault() );
 //			if(!method.isPublic() || !method.isAbstract()){
 //				throw new IllegalArgumentException("interface methods must be public and abstract");
 //			}
