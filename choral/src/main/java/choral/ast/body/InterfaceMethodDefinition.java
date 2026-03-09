@@ -56,6 +56,10 @@ public class InterfaceMethodDefinition extends MethodDefinition {
 		return modifiers.contains(InterfaceMethodModifier.DEFAULT);
 	}
 
+	public boolean isStatic() {
+		return modifiers.contains(InterfaceMethodModifier.STATIC);
+	}
+
 	@Override
 	public < R > R accept( ChoralVisitorInterface< R > v ) {
 		return v.visit( this );

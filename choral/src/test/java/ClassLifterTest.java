@@ -24,9 +24,11 @@ public class ClassLifterTest {
 		// List<CompilationUnit> finalList = Stream.concat(enuM, Stream.concat(Stream.concat(serializable, object), compUnit)).toList();
 
 		// Print the lifted CompilationUnits for debugging
-		PrettyPrinterVisitor ppv = new PrettyPrinterVisitor();
+		// PrettyPrinterVisitor ppv = new PrettyPrinterVisitor();
 		// finalList.forEach(cu -> {
-		// 	System.out.println(cu.accept(ppv));
+		// 	if(cu.packageDeclaration().get().equalsIgnoreCase("java.lang")){
+		// 		System.out.println(cu.accept(ppv));
+		// 	} 
 		// });		
 
 		Typer.annotate(
