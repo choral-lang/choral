@@ -394,8 +394,16 @@ public abstract class Member implements HasSource {
 				if( !t1.isSameKind( t2 ) ) {
 					return false;
 				}
+				// Substitue this' world parameters with others' world parameters
+				// and rename type parameter i for this' method, to the name of type parameter i in others' method 
 				GroundReferenceType g1 = t1.applyTo( t2.worldParameters ).applySubstitution( s1 );
+				// Substitue others' world parameters with this' world parameters
+				// and rename type parameter i for others' method, to the name of type parameter i in this' method 
 				GroundReferenceType g2 = t2.applyTo( t1.worldParameters ).applySubstitution( s2 );
+				// Per JLS 8.4.2: after renaming each B_i to A_i, the bounds of corresponding
+				// type parameters must be the same (checked via mutual subtype satisfaction).
+				// implementation detail: Instead of only doing "B_i to A_i" (s2),
+				// we also do "A_i to B_i" (s1)
 				if( !t1.innerType().upperBound().allMatch( g2::isSubtypeOf )
 						|| !t2.innerType().upperBound().allMatch( g1::isSubtypeOf ) ) {
 					return false;
@@ -404,6 +412,7 @@ public abstract class Member implements HasSource {
 			for( int i = 0; i < this.arity(); i++ ) {
 				GroundDataType t1 = this.innerCallable().signature().parameters().get( i ).type();
 				GroundDataType t2 = other.innerCallable().signature().parameters().get( i ).type();
+				// 
 				if( !t1.isEquivalentTo( t2.applySubstitution( s2 ) ) ) {
 					return false;
 				}
@@ -415,7 +424,16 @@ public abstract class Member implements HasSource {
 			return this.sameSignatureOf( other ) || this.sameSignatureErasureOf( other );
 		}
 
+		/**
+		 * checks whether the signature of {@code this} method, 
+		 * is equal to the erasure of the signature of {@code other}
+		 * @param other
+		 * @return
+		 */
 		public boolean sameSignatureErasureOf( HigherCallable other ) {
+			// the type parameters of other does not matter, they will be erased.
+			// therefore ensure this does not have type parameters, because if it does
+			// the signature will never match
 			if( !this.typeParameters.isEmpty() || this.arity() != other.arity() || !this.identifier().equals(
 					other.identifier() ) ) {
 				return false;

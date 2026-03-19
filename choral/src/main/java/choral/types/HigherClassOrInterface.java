@@ -454,14 +454,17 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			// inherited methods (sec. 8.4.8)
 			extendedClassesOrInterfaces().flatMap( GroundReferenceType::methods )
 					.filter( x -> x.isAccessibleFrom( this ) )
+					// x -> methodToBeInherited ??
 					.forEach( x -> {
 						boolean inherited = true;
 						boolean implemented = false;
+						// y -> declaredMethod ??
 						for( Member.HigherMethod y : declaredMethods ) {
 							boolean sameSignature = y.sameSignatureOf( x );
 							boolean sameErasure = y.sameSignatureErasureOf( x );
+							// check if method y's signature is a subsignature of method x's signature
 							if( sameSignature || sameErasure ) {
-								// check both instance or both static
+								// check both static or neither static
 								if( !y.isStatic() && x.isStatic() ) {
 									throw new StaticVerificationException( "instance method '" + y
 											+ "' in '" + this + "' cannot override static method '"
@@ -533,12 +536,58 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 						}
 						if( inherited ) {
 							// check implementation
+							// bad variable name??
+							boolean implementationRequirementSatisfied = false;
 							if( !implemented && !isAbstract() && x.isAbstract() ) {
-								throw new StaticVerificationException( "'" + this + "' must either "
+								for(Member.HigherMethod inheritedMethod : inheritedMethods){
+									if(!inheritedMethod.isAbstract() && inheritedMethod.isSubSignatureOf(x) 
+										&& inheritedMethod.isReturnTypeAssignable(x)){
+										implementationRequirementSatisfied = true;
+										break;
+									}
+								}
+								if(!implementationRequirementSatisfied) {
+									throw new StaticVerificationException( "'" + this + "' must either "
 										+ "be declared as abstract or implement abstract method '"
 										+ x + "' in '" + x.declarationContext() + "'" );
+								}
 							}
-							inheritedMethods.add( x.copyFor( this ) );
+							boolean isDiamondDuplicate = false;
+							// handle default methods with identical signature to existing inherited method
+							if(x.isDefault()){
+								for(Member.HigherMethod inheritedMethod : inheritedMethods){
+									// Might need to handle case of existing non-default + new default 
+									boolean sameSignature = x.sameSignatureOf(inheritedMethod);
+									
+									// only throw exception if both is default. 
+									if(inheritedMethod.isDefault() && sameSignature){
+										GroundReferenceType xContext = x.declarationContext();
+										GroundReferenceType inheritedContext = inheritedMethod.declarationContext();
+										
+										// diamond path duplicate -> method is already present
+										if(xContext.isEquivalentTo_relaxed(inheritedContext)){
+											isDiamondDuplicate = true;
+											break;
+										}
+
+										// Check if one methods defining interface is more specific than the others'
+										boolean xPriority = xContext.isSubtypeOf_relaxed(inheritedContext);
+										boolean inheritedPriotiy = inheritedContext.isSubtypeOf_relaxed(xContext);
+
+										// If neither interface has priority, it means two completely separate interfaces 
+										// defined identical default methods -> illegal. 
+										if(!xPriority && !inheritedPriotiy){
+											throw new StaticVerificationException("Duplicate default methods inherited. " +
+											"'" + this + "' must override '" + x + "'' from '" + x.declarationContext() + 
+											"' which is identical to '" + inheritedMethod + "' from '" + 
+											inheritedMethod.declarationContext() + "'");
+										}
+									}
+								}
+							}
+							if (!implementationRequirementSatisfied && !implemented && !isDiamondDuplicate){
+								inheritedMethods.add( x.copyFor( this ) );
+							}
 						}
 					} );
 			interfaceFinalised = true;
