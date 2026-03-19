@@ -553,10 +553,11 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 								}
 							}
 							boolean isDiamondDuplicate = false;
-							// handle default methods with identical signature to existing inherited method
+							// handle default methods with identical signature to existing inherited default method
 							if(x.isDefault()){
 								for(Member.HigherMethod inheritedMethod : inheritedMethods){
-									// Might need to handle case of existing non-default + new default 
+									// sameSignatureOf method is bi-directional
+									// x.SameSignatureOf(inheritedMethod) == inheritedMethod.sameSignatureOf(x) 
 									boolean sameSignature = x.sameSignatureOf(inheritedMethod);
 									
 									// only throw exception if both is default. 
