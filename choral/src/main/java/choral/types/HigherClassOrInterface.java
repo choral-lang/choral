@@ -583,6 +583,11 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 											"' which is identical to '" + inheritedMethod + "' from '" + 
 											inheritedMethod.declarationContext() + "'");
 										}
+
+										assert (xPriority ? x.isReturnTypeAssignable(inheritedMethod)
+														: inheritedMethod.isReturnTypeAssignable(x))
+											: "Return type incompatibility was not caught. Error in finaliseInterface. " 
+											+ " Return type compatibility assumption was made based on interface finalization order.";
 									}
 								}
 							}
