@@ -584,6 +584,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 											inheritedMethod.declarationContext() + "'");
 										}
 
+										// Defensive check, in case interface finalisation order ever changes. 
 										assert (xPriority ? x.isReturnTypeAssignable(inheritedMethod)
 														: inheritedMethod.isReturnTypeAssignable(x))
 											: "Return type incompatibility was not caught. Error in finaliseInterface. " 
