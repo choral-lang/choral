@@ -136,6 +136,12 @@ public class TestChoral {
 		//^Test case for implementing default for interface methods, only supported in internals currently
 		// Parser and projector still missing support. 
 		CompilationRequestBuilder mustFail = new CompilationRequestBuilder();
+		mustFail.addSources("InstanceOverridesStatic", subFolder(TYPER_FAIL, "InstanceOverridesStatic"));
+		mustFail.addSources("StaticOverridesInstance", subFolder(TYPER_FAIL, "StaticOverridesInstance"));
+		mustFail.addSources("WeakerAccess1", subFolder(TYPER_FAIL, "WeakerAccess1"));
+		mustFail.addSources("WeakerAccess2", subFolder(TYPER_FAIL, "WeakerAccess2"));
+		mustFail.addSources("WeakerAccess3", subFolder(TYPER_FAIL, "WeakerAccess3"));
+		mustFail.addSources("OverrideFinal", subFolder(TYPER_FAIL, "OverrideFinal"));
 
 		return Stream.concat(
 				mustPass.build().map(request ->
