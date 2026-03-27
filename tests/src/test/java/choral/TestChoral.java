@@ -142,6 +142,7 @@ public class TestChoral {
 		mustFail.addSources("WeakerAccess2", subFolder(TYPER_FAIL, "WeakerAccess2"));
 		mustFail.addSources("WeakerAccess3", subFolder(TYPER_FAIL, "WeakerAccess3"));
 		mustFail.addSources("OverrideFinal", subFolder(TYPER_FAIL, "OverrideFinal"));
+		mustFail.addSources("IncompatibleReturnType", subFolder(TYPER_FAIL, "IncompatibleReturnType"));
 
 		return Stream.concat(
 				mustPass.build().map(request ->

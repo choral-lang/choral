@@ -18,5 +18,6 @@ target/
 /choral/src/main/antlr4/
 .vscode/*
 CLAUDE.md
+AGENTS.md
 /tests/bin
 /tests/projectedOutput
