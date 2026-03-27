@@ -54,11 +54,6 @@ public class DiagnosticsProvider {
             diagnostics.add(diagnostic);
         }
 
-        for (Diagnostic d : diagnostics) {
-            System.err.println("  - " + d.getMessage() + " at line " + d.getRange().getStart().getLine()
-            + " and at column " + d.getRange().getStart().getCharacter());
-        }
-
         return diagnostics;
     }
 
