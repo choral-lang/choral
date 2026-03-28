@@ -218,7 +218,7 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 			assert ( constructor.declarationContext() == this );
 			for( HigherConstructor x : constructors ) {
 				if( x.sameErasureAs( constructor ) ) {
-					if( x.sameSignatureOf( constructor ) ) {
+					if( x.sameSignatureAs( constructor ) ) {
 						throw new StaticVerificationException( "constructor '" + constructor
 								+ "' is already defined in '" + typeConstructor() + "'" );
 					} else {
