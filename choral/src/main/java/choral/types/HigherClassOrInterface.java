@@ -458,13 +458,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 						boolean inherited = true;
 						boolean implemented = false;
 						for( Member.HigherMethod declaredMethod : declaredMethods ) {
-							// JLS 8.4.2: declaredMethod's signature is a subsignature of methodToInherit's signature if
-							// 1. declaredMethod has the same signature as methodToInherit, or
-							// 2. declaredMethod has the same signature as methodToInherit's erasure.
-							boolean sameSignature = declaredMethod.sameSignatureAs( methodToInherit );
-							boolean sameErasure = declaredMethod.sameSignatureAsErasureOf( methodToInherit );
-							if( sameSignature || sameErasure ) {
-								// Since it is a subsignature, ensure (a) both methods are static or (b) neither static
+							if( declaredMethod.isSubSignatureOf( methodToInherit ) ) {
+								// Ensure (a) both methods are static or (b) neither static
 								if( !declaredMethod.isStatic() && methodToInherit.isStatic() ) {
 									throw new StaticVerificationException( "instance method '" + declaredMethod
 											+ "' in '" + this + "' cannot override static method '"
@@ -498,16 +493,20 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 											+ methodToInherit + "' in '" + methodToInherit.declarationContext()
 											+ "', attempting to use incompatible return type" );
 								}
+
+								boolean matchesSignature = declaredMethod.sameSignatureAs( methodToInherit );
+								boolean matchesErasure = declaredMethod.sameSignatureAsErasureOf( methodToInherit );
 								// inherit selection annotation
-								if( methodToInherit.isSelectionMethod() && sameSignature ) {
+								if( methodToInherit.isSelectionMethod() && matchesSignature ) {
 									declaredMethod.setSelectionMethod();
 								}
-								if (methodToInherit.isTypeSelectionMethod() && sameSignature) {
+								if (methodToInherit.isTypeSelectionMethod() && matchesSignature) {
 									declaredMethod.setTypeSelectionMethod();
 								}
 								implemented = !declaredMethod.isAbstract();
-								inherited = sameErasure && !sameSignature;
+								inherited = matchesErasure && !matchesSignature;
 								if( inherited ) {
+									inherited = true;
 									for( Member.HigherMethod z : inheritedMethods ) {
 										if( z.isSubSignatureOf( methodToInherit ) ) {
 											// // TODO When does this happen?

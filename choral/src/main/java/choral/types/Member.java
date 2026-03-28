@@ -418,6 +418,11 @@ public abstract class Member implements HasSource {
 			return true;
 		}
 
+		/**
+		 * JLS 8.4.2: This method's signature is a subsignature of {@code other}'s signature if:
+		 * 1. this method has the same signature as the other signature, or
+		 * 2. this method has the same signature as the other signature's ERASURE.
+		 */
 		public boolean isSubSignatureOf( HigherCallable other ) {
 			return this.sameSignatureAs( other ) || this.sameSignatureAsErasureOf( other );
 		}
