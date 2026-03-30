@@ -495,10 +495,9 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 								break;
 							}
 							// TODO When does this happen?
-							// (8.4.8.3) It's a compile-time error if:
-							// 1. child's signature is not a subsignature of parent's signature; and
-							// 2. child's signature has the same erasure as parent's signature.
 							else if( methodToInherit.sameErasureAs( declaredMethod ) ) {
+								// (JLS 8.4.8.3) If the class declares a method m1 that matches the erasure of a parent
+								// method m2, then m1 must be a subsignature of m2.
 								throw new StaticVerificationException( "method '" + declaredMethod
 										+ "' in '" + this + "' clashes with method '"
 										+ methodToInherit + "' in '" + methodToInherit.declarationContext()
