@@ -445,13 +445,13 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			if( interfaceFinalised ) {
 				return;
 			}
-			// inherited fields
+			// (JSL 8.3) Inherit fields from direct superclasses and superinterfaces
 			extendedClassesOrInterfaces().flatMap( GroundReferenceType::fields )
 					.filter( x -> x.isAccessibleFrom( this )
 							&& declaredFields().noneMatch(
 							y -> x.identifier().equals( y.identifier() ) ) )
 					.forEach( inheritedFields::add );
-			// inherited methods (sec. 8.4.8)
+			// (JSL 8.4.8) Inherit methods from direct superclasses and superinterfaces
 			extendedClassesOrInterfaces().flatMap( GroundReferenceType::methods )
 					.filter( x -> x.isAccessibleFrom( this ) )
 					.forEach( methodToInherit -> {
