@@ -322,6 +322,7 @@ public class ImportProjector implements ChoralVisitorInterface< Void > {
 	public Void visit( InterfaceMethodDefinition n ) {
 		visit( n.signature() );
 		n.annotations().forEach( this::visit );
+		n.body().ifPresent( this::visit );
 		return null;
 	}
 

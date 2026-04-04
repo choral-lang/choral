@@ -141,10 +141,8 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 					n.modifiers(),
 					n.position()
 			) );
-			MethodCallExpression proxyMethod = new MethodCallExpression( n.signature().name(),
-					parameterBypass, typeParameters );
-			Statement proxyStatement = n.signature().returnType().name().identifier().equals(
-					"void" ) ?
+			MethodCallExpression proxyMethod = new MethodCallExpression( n.signature().name(), parameterBypass, typeParameters );
+			Statement proxyStatement = n.signature().returnType().name().identifier().equals( "void" ) ?
 					new ExpressionStatement( proxyMethod, new NilStatement() )
 					: new ReturnStatement( proxyMethod, new NilStatement() );
 			return new ClassMethodDefinition(
@@ -167,44 +165,44 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 
 	@Override
 	public InterfaceMethodDefinition visit( InterfaceMethodDefinition n ) {
-		// lots of commented code needed for static and default methods (not supported yet)
 		Set< Name > unitParameters = _visit( n.signature() );
 		if( !unitParameters.isEmpty() ) {
-			MethodSignature methodSignature = new MethodSignature(
+			MethodSignature sytheticMethodSignature = new MethodSignature(
 					n.signature().name(),
 					n.signature().typeParameters(),
 					n.signature().parameters().stream() // we remove Unit parameters
-							.filter( p -> unitParameters.contains( n.signature().name() ) )
+							.filter( p -> !unitParameters.contains( p.name() ) )
 							.collect( Collectors.toList() ),
 					n.signature().returnType(),
 					n.position()
 			);
-//			List< Expression > parameterBypass = n.signature().parameters().stream()
-//					.filter( p -> !unitParameters.contains( p.name() ) ) // we keep only the non-Unit parameters
-//					.map( p -> new FieldAccessExpression( p.name() ) )
-//					.collect( Collectors.toList() );
-//			List< TypeExpression > typeParameters = n.signature().typeParameters().stream()
-//					.map( ftp -> new TypeExpression(
-//							ftp.name(),
-//							ftp.worldParameters().stream()
-//									.map( FormalWorldParameter::toWorldArgument )
-//									.collect( Collectors.toList() ),
-//							Collections.emptyList() )
-//					).collect( Collectors.toList() );
+			List< Expression > parameterBypass = n.signature().parameters().stream()
+					.filter( p -> !unitParameters.contains(
+							p.name() ) ) // we keep only the non-Unit parameters
+					.map( p -> new FieldAccessExpression( p.name() ) )
+					.collect( Collectors.toList() );
+			List< TypeExpression > typeParameters = n.signature().typeParameters().stream()
+					.map( ftp -> new TypeExpression(
+							ftp.name(),
+							ftp.worldParameters().stream()
+									.map( FormalWorldParameter::toWorldArgument )
+									.collect( Collectors.toList() ),
+							Collections.emptyList() )
+					).collect( Collectors.toList() );
 			syntheticInterfaceMethods.add( new InterfaceMethodDefinition(
-					methodSignature,
-//					n.body(),
+					sytheticMethodSignature,
+					n.body().orElse( null ),
 					n.annotations(),
 					n.modifiers(),
 					n.position()
 			) );
-//			MethodCallExpression proxyMethod = new MethodCallExpression( n.signature().name(), parameterBypass, typeParameters );
-//			Statement proxyStatement = n.signature().returnType().name().identifier().equals( "void" ) ?
-//					new ExpressionStatement( proxyMethod, new NilStatement() )
-//					: new ReturnStatement( proxyMethod, new NilStatement() );
+			MethodCallExpression proxyMethod = new MethodCallExpression( n.signature().name(), parameterBypass, typeParameters );
+			Statement proxyStatement = n.signature().returnType().name().identifier().equals( "void" ) ?
+					new ExpressionStatement( proxyMethod, new NilStatement() )
+					: new ReturnStatement( proxyMethod, new NilStatement() );
 			return new InterfaceMethodDefinition(
 					visit( n.signature() ),
-//					proxyStatement,
+					n.body().isPresent() ? proxyStatement : null,
 					n.annotations(),
 					n.modifiers(),
 					n.position()
@@ -212,7 +210,7 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 		} else {
 			return new InterfaceMethodDefinition(
 					visit( n.signature() ),
-//					n.body(),
+					n.body().orElse( null ),
 					n.annotations(),
 					n.modifiers(),
 					n.position()

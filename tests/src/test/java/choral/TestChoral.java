@@ -103,6 +103,7 @@ public class TestChoral {
 		builder.addSources( "IfDesugarTest", subFolder( MUSTPASS, "IfDesugar" ) );
 		builder.addSources( "ChainingExample", subFolder( MUSTPASS, "ChainingOperator" ) );
 		builder.addSources( "BuyBook2", subFolder( MUSTPASS, "BookSellingSoloist" ) );
+		builder.addSources( "CourtesyDefaultMethods", subFolder( MUSTPASS, "CourtesyDefaultMethods" ) );
 		//// https://github.com/choral-lang/choral/issues/29
 		// builder.addSources( "SwitchTest", subFolder( MUSTPASS, "SwitchTest" ) );
 		//// https://github.com/choral-lang/choral/issues/27
@@ -135,12 +136,10 @@ public class TestChoral {
 	public Stream< DynamicTest > typer() {
 		CompilationRequestBuilder mustPass = new CompilationRequestBuilder();
 		mustPass.addSources("OnDemandImports", subFolder(TYPER_PASS, "OnDemandImports"));
+		mustPass.addSources("InterfaceDefaultMethod", subFolder(TYPER_PASS, "InterfaceDefaultMethod"));
 		mustPass.addSources("ClassLifterIntegration", subFolder(TYPER_PASS,"ClassLifterIntegration"));
 		mustPass.addSources("DualJavaImport", subFolder(TYPER_PASS, "DualJavaImport"));
 		mustPass.addSources("StandardLibraryReduction", subFolder(TYPER_PASS, "StandardLibraryReduction"));
-		//mustPass.addSources("InterfaceDefaultMethod", subFolder(TYPER_PASS, "InterfaceDefaultMethod"));
-		//^Test case for implementing default for interface methods, only supported in internals currently
-		// Parser and projector still missing support. 
 		CompilationRequestBuilder mustFail = new CompilationRequestBuilder();
 		mustFail.addSources("InstanceOverridesStatic", subFolder(TYPER_FAIL, "InstanceOverridesStatic"));
 		mustFail.addSources("StaticOverridesInstance", subFolder(TYPER_FAIL, "StaticOverridesInstance"));
@@ -378,7 +377,7 @@ public class TestChoral {
 	 * updated instead of diffed, based on the {@code choral.updateExpected} system property.
 	 *
 	 * <p>The property value is a comma-separated list of test names.
-	 * Example: {@code mvn test -pl tests -Dchoral.updateExpected=MyTest1,MyTest2}
+	 * Example: {@code mvn test -Dchoral.updateExpected=MyTest1,MyTest2}
 	 */
 	private static boolean shouldUpdate( CompilationRequest req ) {
 		String prop = System.getProperty( "choral.updateExpected", "" ).trim();
@@ -491,7 +490,7 @@ public class TestChoral {
 									} )
 									.collect( Collectors.joining( "\n" ) )
 							+ "\n=============================================================================="
-							+ "\nTo accept the new snapshot, run: mvn test -pl tests -Dchoral.updateExpected="
+							+ "\nTo accept the new snapshot, run: mvn test -Dchoral.updateExpected="
 							+ compilationRequest.symbol() );
 					continue;
 				}
@@ -501,7 +500,7 @@ public class TestChoral {
 				if( projectedJavaFiles.size() != expectedFiles.size() ) {
 					errors.add( "The number of projected files (" + projectedJavaFiles.size()
 							+ ") does not equal the number of expected files (" + expectedFiles.size() + ").\n"
-							+ "  Accept with: mvn test -pl tests -Dchoral.updateExpected="
+							+ "  Accept with: mvn test -Dchoral.updateExpected="
 							+ compilationRequest.symbol() );
 					continue;
 				}
@@ -524,7 +523,7 @@ public class TestChoral {
 						String diff = String.join( "\n", diffOutput );
 						errors.add( "There was a difference between the expected output and "
 								+ "the generated output, now printing diff:\n" + diff
-								+ "\n  Accept with: mvn test -pl tests -Dchoral.updateExpected="
+								+ "\n  Accept with: mvn test -Dchoral.updateExpected="
 								+ compilationRequest.symbol() );
 					}
 				}
