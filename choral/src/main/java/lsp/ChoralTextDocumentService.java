@@ -57,6 +57,11 @@ public class ChoralTextDocumentService implements TextDocumentService {
     private void analyzeAndPublish(String uri, String content){
         List<Diagnostic> diagnostics = diagnosticsProvider.analyze(uri, content);
 
+        for (Diagnostic d : diagnostics) {
+            System.err.println("  - " + d.getMessage() + " at line " + d.getRange().getStart().getLine()
+                    + " and at column " + d.getRange().getStart().getCharacter());
+        }
+
         publishDiagnostics(uri, diagnostics);        
     }
 

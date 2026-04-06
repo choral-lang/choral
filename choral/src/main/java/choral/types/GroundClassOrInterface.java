@@ -45,6 +45,10 @@ public interface GroundClassOrInterface extends ClassOrInterface, GroundReferenc
 
 	boolean isInheritanceFinalised();
 
+	/**
+	 * Returns the type's direct superinterfaces (i.e. the interfaces listed after the 'implements' clause)
+	 * and, if it exists, the type's direct superclass (i.e. the class listed after the 'extends' clause)
+	 */
 	default Stream< ? extends GroundClassOrInterface > extendedClassesOrInterfaces() {
 		return extendedInterfaces();
 	}

@@ -363,7 +363,7 @@ public abstract class Member implements HasSource {
 			return newTypeParams;
 		}
 
-		public boolean sameSignatureOf( HigherCallable other ) {
+		public boolean sameSignatureAs(HigherCallable other ) {
 			if( !this.identifier().equals( other.identifier() )
 					|| this.typeParameters.size() != other.typeParameters.size()
 					|| this.arity() != other.arity() ) {
@@ -393,16 +393,15 @@ public abstract class Member implements HasSource {
 				if( !t1.isSameKind( t2 ) ) {
 					return false;
 				}
-				// Substitue this' world parameters with others' world parameters
-				// and rename type parameter i for this' method, to the name of type parameter i in others' method 
+				// Substitute this method's world parameters with other's world parameters
+				// and rename type parameter i for this method to the name of type parameter i in the other method
 				GroundReferenceType g1 = t1.applyTo( t2.worldParameters ).applySubstitution( s1 );
-				// Substitue others' world parameters with this' world parameters
-				// and rename type parameter i for others' method, to the name of type parameter i in this' method 
+				// Substitute the other method's world parameters with this method's world parameters
+				// and rename type parameter i for the other method to the name of type parameter i in this method
 				GroundReferenceType g2 = t2.applyTo( t1.worldParameters ).applySubstitution( s2 );
 				// Per JLS 8.4.2: after renaming each B_i to A_i, the bounds of corresponding
 				// type parameters must be the same (checked via mutual subtype satisfaction).
-				// implementation detail: Instead of only doing "B_i to A_i" (s2),
-				// we also do "A_i to B_i" (s1)
+				// Implementation detail: Instead of only doing "B_i to A_i" (s2), we also do "A_i to B_i" (s1)
 				if( !t1.innerType().upperBound().allMatch( g2::isSubtypeOf )
 						|| !t2.innerType().upperBound().allMatch( g1::isSubtypeOf ) ) {
 					return false;
@@ -411,7 +410,6 @@ public abstract class Member implements HasSource {
 			for( int i = 0; i < this.arity(); i++ ) {
 				GroundDataType t1 = this.innerCallable().signature().parameters().get( i ).type();
 				GroundDataType t2 = other.innerCallable().signature().parameters().get( i ).type();
-				// 
 				if( !t1.isEquivalentTo( t2.applySubstitution( s2 ) ) ) {
 					return false;
 				}
@@ -419,22 +417,25 @@ public abstract class Member implements HasSource {
 			return true;
 		}
 
+		/**
+		 * JLS 8.4.2: This method's signature is a subsignature of {@code other}'s signature if:
+		 * 1. this method has the same signature as the other signature, or
+		 * 2. this method has the same signature as the other signature's ERASURE.
+		 */
 		public boolean isSubSignatureOf( HigherCallable other ) {
-			return this.sameSignatureOf( other ) || this.sameSignatureErasureOf( other );
+			return this.sameSignatureAs( other ) || this.sameSignatureAsErasureOf( other );
 		}
 
 		/**
-		 * checks whether the signature of {@code this} method, 
-		 * is equal to the erasure of the signature of {@code other}
-		 * @param other
-		 * @return
+		 * Checks whether the signature of this method is equal to the erasure of the signature of the {@code other}
+		 * method.
 		 */
-		public boolean sameSignatureErasureOf( HigherCallable other ) {
-			// the type parameters of other does not matter, they will be erased.
-			// therefore ensure this does not have type parameters, because if it does
-			// the signature will never match
-			if( !this.typeParameters.isEmpty() || this.arity() != other.arity() || !this.identifier().equals(
-					other.identifier() ) ) {
+		public boolean sameSignatureAsErasureOf(HigherCallable other ) {
+			// If this method has a different name or takes a different number of arguments, then the signatures
+			// certainly don't match. Also note that the erasure of a type does not have type parameters.
+			// If this method has type parameters, it cannot have the same signature as the erasure of `other`.
+			if( !this.identifier().equals( other.identifier() ) || this.arity() != other.arity()
+					|| !this.typeParameters.isEmpty() ) {
 				return false;
 			}
 			for( int i = 0; i < this.arity(); i++ ) {
@@ -448,13 +449,16 @@ public abstract class Member implements HasSource {
 		}
 
 		public boolean sameErasureAs( HigherCallable other ) {
-			if( this.arity() != other.arity() || !this.identifier().equals( other.identifier() ) ) {
+			if( !this.identifier().equals( other.identifier() ) || this.arity() != other.arity()  ) {
 				return false;
 			}
 			for( int i = 0; i < this.arity(); i++ ) {
 				GroundDataType t1 = this.innerCallable().signature().parameters().get( i ).type();
 				GroundDataType t2 = other.innerCallable().signature().parameters().get( i ).type();
 				if( !t1.isEquivalentToErasureOf( t2 ) && !t2.isEquivalentToErasureOf( t1 ) ) {
+					// TODO This condition is fishy. "t1 is not equivalent to the erasure of t2" and
+					//  "t2 is not equivalent to the erasure of t1" is not the same thing as
+					//  "the erasure of t1 is not equivalent to the erasure of t2".
 					return false;
 				}
 			}
@@ -463,8 +467,8 @@ public abstract class Member implements HasSource {
 
 		public boolean isOverrideEquivalentTo( HigherCallable other ) {
 			// (sec. 8.4.2)
-			return this.sameSignatureOf( other ) ||
-					( this.sameSignatureErasureOf( other ) == !other.sameSignatureErasureOf(
+			return this.sameSignatureAs( other ) ||
+					( this.sameSignatureAsErasureOf( other ) == !other.sameSignatureAsErasureOf(
 							this ) );
 		}
 

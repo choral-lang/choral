@@ -446,78 +446,43 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			if( interfaceFinalised ) {
 				return;
 			}
-			// inherited fields
+			// (JSL 8.3) Inherit fields from direct superclasses and superinterfaces
 			extendedClassesOrInterfaces().flatMap( GroundReferenceType::fields )
 					.filter( x -> x.isAccessibleFrom( this )
 							&& declaredFields().noneMatch(
 							y -> x.identifier().equals( y.identifier() ) ) )
 					.forEach( inheritedFields::add );
-			// inherited methods (sec. 8.4.8)
+			// (JSL 8.4.8) Inherit methods from direct superclasses and superinterfaces
 			extendedClassesOrInterfaces().flatMap( GroundReferenceType::methods )
 					.filter( x -> x.isAccessibleFrom( this ) )
-					// x -> methodToBeInherited ??
-					.forEach( x -> {
-						boolean inherited = true;
-						boolean implemented = false;
-						// y -> declaredMethod ??
-						for( Member.HigherMethod y : declaredMethods ) {
-							boolean sameSignature = y.sameSignatureOf( x );
-							boolean sameErasure = y.sameSignatureErasureOf( x );
-							// check if method y's signature is a subsignature of method x's signature
-							if( sameSignature || sameErasure ) {
-								// check both static or neither static
-								if( !y.isStatic() && x.isStatic() ) {
-									throw new StaticVerificationException( "instance method '" + y
-											+ "' in '" + this + "' cannot override static method '"
-											+ x + "' in '" + x.declarationContext() + "'" );
+					.forEach( methodToInherit -> {
+						boolean inherited = true;     // true iff methodToInherit should be inherited
+						boolean implemented = false;  // true iff a method in this class that implements methodToInherit
+						for( Member.HigherMethod declaredMethod : declaredMethods ) {
+							if( declaredMethod.isSubSignatureOf( methodToInherit ) ) {
+								// If the parent method is a selection method, mark the child as a selection method too
+								if( methodToInherit.isSelectionMethod() ) {
+									declaredMethod.setSelectionMethod();
 								}
-								if( y.isStatic() && !x.isStatic() ) {
-									throw new StaticVerificationException( "static method '" + y
-											+ "' in '" + this + "' cannot override instance method '"
-											+ x + "' in '" + x.declarationContext() + "'" );
+								if (methodToInherit.isTypeSelectionMethod()) {
+									declaredMethod.setTypeSelectionMethod();
 								}
-								// check access privileges
-								if( y.isPrivate() || ( x.isPublic() && !y.isPublic() )
-										|| ( x.isProtected() && y.isPackagePrivate() ) ) {
-									throw new StaticVerificationException( "method '" + y
-											+ "' in '" + this + "' clashes with method '"
-											+ x + "' in '" + x.declarationContext()
-											+ "', attempting to assign weaker access privileges '"
-											+ ModifierUtils.prettyAccess( y.modifiers() ) + "' to '"
-											+ ModifierUtils.prettyAccess( x.modifiers() ) + "'" );
-								}
-								// check not final
-								if( x.isFinal() ) {
-									throw new StaticVerificationException( "method '" + y
-											+ "' in '" + this + "' cannot override final method '"
-											+ x + "' in '" + x.declarationContext() + "'" );
-								}
-								// check assignable return type;
-								if( !y.isReturnTypeAssignable( x ) ) {
-									throw new StaticVerificationException( "method '" + y
-											+ "' in '" + this + "' clashes with method '"
-											+ x + "' in '" + x.declarationContext()
-											+ "', attempting to use incompatible return type" );
-								}
-								// inherit selection annotation
-								if( x.isSelectionMethod() && sameSignature ) {
-									y.setSelectionMethod();
-								}
-								if (x.isTypeSelectionMethod() && sameSignature) {
-									y.setTypeSelectionMethod();
-								}
-								implemented = !y.isAbstract();
-								inherited = sameErasure && !sameSignature;
-								if( inherited ) {
+
+								// Now check that 'declaredMethod' satisfies all the requirements in JLS 8.4.8
+								checkOverrideRequirementsOrThrow(declaredMethod, methodToInherit);
+
+								implemented = !declaredMethod.isAbstract();
+								if( declaredMethod.sameSignatureAsErasureOf( methodToInherit ) && !declaredMethod.sameSignatureAs( methodToInherit ) ) {
+									inherited = true;
 									for( Member.HigherMethod z : inheritedMethods ) {
-										if( z.isSubSignatureOf( x ) ) {
-											// check assignable return type;
-											if( !z.isReturnTypeAssignable( x ) ) {
+										if( z.isSubSignatureOf( methodToInherit ) ) {
+											// // TODO When does this happen?
+											if( !z.isReturnTypeAssignable( methodToInherit ) ) {
 												throw new StaticVerificationException(
 														"method '" + z
 																+ "' in '" + z.declarationContext()
-																+ "' clashes with method '" + x
-																+ "' in '" + x.declarationContext()
+																+ "' clashes with method '" + methodToInherit
+																+ "' in '" + methodToInherit.declarationContext()
 																+ "', attempting to use incompatible return type" );
 											}
 											inherited = false;
@@ -525,24 +490,29 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 										}
 									}
 								}
-								break;
-							} else {
-								if( x.sameErasureAs( y ) ) {
-									throw new StaticVerificationException( "method '" + y
-											+ "' in '" + this + "' clashes with method '"
-											+ x + "' in '" + x.declarationContext()
-											+ "', both methods have the same erasure" );
+								else {
+									inherited = false;
 								}
+								break;
+							}
+							// TODO When does this happen?
+							else if( methodToInherit.sameErasureAs( declaredMethod ) ) {
+								// (JLS 8.4.8.3) If the class declares a method m1 that matches the erasure of a parent
+								// method m2, then m1 must be a subsignature of m2.
+								throw new StaticVerificationException( "method '" + declaredMethod
+										+ "' in '" + this + "' clashes with method '"
+										+ methodToInherit + "' in '" + methodToInherit.declarationContext()
+										+ "', both methods have the same erasure" );
 							}
 						}
 						if( inherited ) {
-							// check implementation
+							// TODO check implementation
 							// bad variable name??
 							boolean implementationRequirementSatisfied = false;
-							if( !implemented && !isAbstract() && x.isAbstract() ) {
+							if( !implemented && !isAbstract() && methodToInherit.isAbstract() ) {
 								for(Member.HigherMethod inheritedMethod : inheritedMethods){
-									if(!inheritedMethod.isAbstract() && inheritedMethod.isSubSignatureOf(x) 
-										&& inheritedMethod.isReturnTypeAssignable(x)){
+									if(!inheritedMethod.isAbstract() && inheritedMethod.isSubSignatureOf(methodToInherit)
+										&& inheritedMethod.isReturnTypeAssignable(methodToInherit)){
 										implementationRequirementSatisfied = true;
 										break;
 									}
@@ -550,20 +520,20 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 								if(!implementationRequirementSatisfied) {
 									throw new StaticVerificationException( "'" + this + "' must either "
 										+ "be declared as abstract or implement abstract method '"
-										+ x + "' in '" + x.declarationContext() + "'" );
+										+ methodToInherit + "' in '" + methodToInherit.declarationContext() + "'" );
 								}
 							}
 							boolean isDiamondDuplicate = false;
 							// handle default methods with identical signature to existing inherited default method
-							if(x.isDefault()){
+							if(methodToInherit.isDefault()){
 								for(Member.HigherMethod inheritedMethod : inheritedMethods){
 									// sameSignatureOf method is bi-directional
-									// x.SameSignatureOf(inheritedMethod) == inheritedMethod.sameSignatureOf(x) 
-									boolean sameSignature = x.sameSignatureOf(inheritedMethod);
+									// methodToInherit.SameSignatureOf(inheritedMethod) == inheritedMethod.sameSignatureOf(methodToInherit)
+									boolean sameSignature = methodToInherit.sameSignatureAs(inheritedMethod);
 									
 									// only throw exception if both is default. 
 									if(inheritedMethod.isDefault() && sameSignature){
-										GroundReferenceType xContext = x.declarationContext();
+										GroundReferenceType xContext = methodToInherit.declarationContext();
 										GroundReferenceType inheritedContext = inheritedMethod.declarationContext();
 										
 										// diamond path duplicate -> method is already present
@@ -580,25 +550,67 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 										// defined identical default methods -> illegal. 
 										if(!xPriority && !inheritedPriotiy){
 											throw new StaticVerificationException("Duplicate default methods inherited. " +
-											"'" + this + "' must override '" + x + "'' from '" + x.declarationContext() + 
+											"'" + this + "' must override '" + methodToInherit + "'' from '" + methodToInherit.declarationContext() +
 											"' which is identical to '" + inheritedMethod + "' from '" + 
 											inheritedMethod.declarationContext() + "'");
 										}
 
 										// Defensive check, in case interface finalisation order ever changes. 
-										assert (xPriority ? x.isReturnTypeAssignable(inheritedMethod)
-														: inheritedMethod.isReturnTypeAssignable(x))
+										assert (xPriority ? methodToInherit.isReturnTypeAssignable(inheritedMethod)
+														: inheritedMethod.isReturnTypeAssignable(methodToInherit))
 											: "Return type incompatibility was not caught. Error in finaliseInterface. " 
 											+ " Return type compatibility assumption was made based on interface finalization order.";
 									}
 								}
 							}
 							if (!implementationRequirementSatisfied && !implemented && !isDiamondDuplicate){
-								inheritedMethods.add( x.copyFor( this ) );
+								inheritedMethods.add( methodToInherit.copyFor( this ) );
 							}
 						}
 					} );
 			interfaceFinalised = true;
+		}
+
+		private void checkOverrideRequirementsOrThrow(Member.HigherMethod child, Member.HigherMethod parent) {
+			// (8.4.3.3) Ensure we're not overriding a final method
+			if( parent.isFinal() ) {
+				throw new StaticVerificationException( "method '" + child
+						+ "' in '" + this + "' cannot override final method '"
+						+ parent + "' in '" + parent.declarationContext() + "'" );
+			}
+			// (8.4.8.1) Ensure instance methods don't override static methods
+			if( !child.isStatic() && parent.isStatic() ) {
+				throw new StaticVerificationException( "instance method '" + child
+						+ "' in '" + this + "' cannot override static method '"
+						+ parent + "' in '" + parent.declarationContext() + "'" );
+			}
+			// (8.4.8.2) Ensure static methods don't hide instance methods
+			if( child.isStatic() && !parent.isStatic() ) {
+				throw new StaticVerificationException( "static method '" + child
+						+ "' in '" + this + "' cannot override instance method '"
+						+ parent + "' in '" + parent.declarationContext() + "'" );
+			}
+			// (8.4.8.3) Ensure method return types are covariant
+			if( !child.isReturnTypeAssignable(parent) ) {
+				throw new StaticVerificationException( "method '" + child
+						+ "' in '" + this + "' clashes with method '"
+						+ parent + "' in '" + parent.declarationContext()
+						+ "', attempting to use incompatible return type" );
+			}
+
+			// (8.4.8.3) JLS says we should issue a warning if child is not a subtype of parent; we skip that check.
+			// (8.4.8.3) Choral doesn't have checked exceptions yet, so we skip those checks.
+
+			// (8.4.8.3) Ensure the access modifiers are compatible
+			if( child.isPrivate() || ( parent.isPublic() && !child.isPublic() )
+					|| ( parent.isProtected() && child.isPackagePrivate() ) ) {
+				throw new StaticVerificationException( "method '" + child
+						+ "' in '" + this + "' clashes with method '"
+						+ parent + "' in '" + parent.declarationContext()
+						+ "', attempting to assign weaker access privileges '"
+						+ ModifierUtils.prettyAccess( child.modifiers() ) + "' to '"
+						+ ModifierUtils.prettyAccess( parent.modifiers() ) + "'" );
+			}
 		}
 
 
@@ -631,7 +643,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			assert ( method.declarationContext() == this );
 			for( Member.HigherMethod x : declaredMethods ) {
 				if( x.sameErasureAs( method ) ) {
-					if( x.sameSignatureOf( method ) ) {
+					if( x.sameSignatureAs( method ) ) {
 						throw new StaticVerificationException( "method '" + method
 								+ "' is already defined in '" + typeConstructor() + "'" );
 					} else {
