@@ -133,6 +133,7 @@ public class Typer {
 				visitClass( scope, pkg, x );
 			}
 			for( choral.ast.body.Enum x : n.enums() ) {
+				System.out.println("enum name: " + x.name());
 				checkPrimaryTemplate( x, n, "enum" );
 				visitEnum( scope, pkg, x );
 			}
@@ -2497,6 +2498,7 @@ public class Typer {
 				} else {
 					result = Optional.empty();
 				}
+				// call classlifter with "declarationPackage.universe().rootPackage()"
 			} else {
 				// search current package
 				result = declarationPackage.declaredType( query );
@@ -2524,13 +2526,13 @@ public class Typer {
 						result = Optional.of( results.get( 0 ) );
 					} else {
 						throw new StaticVerificationException(
-								"reference to '" + query + "' is ambiguous, " +
-										results.stream().map(
-														x -> "'" + x.identifier( true ) + "'" )
-												.collect( Collectors.collectingAndThen(
-														Collectors.toList(),
-														Formatting.joiningOxfordComma() ) ) +
-										" are ambiguous"
+							"reference to '" + query + "' is ambiguous, " +
+									results.stream().map(
+													x -> "'" + x.identifier( true ) + "'" )
+											.collect( Collectors.collectingAndThen(
+													Collectors.toList(),
+													Formatting.joiningOxfordComma() ) ) +
+									" are ambiguous"
 						);
 					}
 				}

@@ -358,6 +358,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			assert ( !isInheritanceFinalised() );
 			if( type.worldArguments().size() != worldArguments().size() ||
 					!type.worldArguments().containsAll( worldParameters ) ) {
+				System.out.println("type.worldArguments(): " + type.worldArguments().get(0).equals(worldArguments().get(0)));
 				throw new StaticVerificationException(
 						"illegal inheritance, '" + type + "' and '" + this + "' must have the same roles" );
 			}

@@ -146,15 +146,14 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 					extendedInterfaces().flatMap( x -> x.methods() ) );
 		}
 
+		@Override
 		public void addField( Member.Field field ) {
 			throw new UnsupportedOperationException( "interfaces cannot have fields" );
 		}
 
+		@Override
 		public void addMethod( Member.HigherMethod method ) {
 			assert ( method.isPublic() && method.isAbstract() || method.isDefault() || method.isStatic() );
-//			if(!method.isPublic() || !method.isAbstract()){
-//				throw new IllegalArgumentException("interface methods must be public and abstract");
-//			}
 			super.addMethod( method );
 		}
 

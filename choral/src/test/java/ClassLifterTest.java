@@ -3,6 +3,8 @@ import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.ClassLifter;
 import choral.compiler.Typer;
 import choral.compiler.TyperOptions;
+import choral.types.HigherClassOrInterface;
+import choral.types.Universe;
 import choral.utils.VerbosityLevel;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +16,29 @@ public class ClassLifterTest {
 
 	@Test
 	public void helloWorldTest() throws IOException {
-		Stream< CompilationUnit > object = ClassLifter.liftPackage("java.lang.Object");
-		Stream<CompilationUnit> serializable = ClassLifter.liftPackage("java.io.Serializable");
-		Stream<CompilationUnit> enuM = ClassLifter.liftPackage("java.lang.Enum");
-		Stream<CompilationUnit> compUnit = ClassLifter.liftPackage("supplement.HelloWorld");
-		Stream<CompilationUnit> intermediary = Stream.of(enuM, object, serializable)
-												.flatMap(i -> i);
-		List<CompilationUnit> finalList = Stream.concat(intermediary, compUnit).toList();
+		Universe universe = new Universe();
+		
+		// Stream<HigherClassOrInterface> baseStream = ClassLifter.liftPackage
+		// 	("java.util.stream.BaseStream", universe.rootPackage());
+		
+		Stream< HigherClassOrInterface > object = ClassLifter.liftPackage(
+			"java.lang.Object", universe.rootPackage());
+		// System.out.println(object.anyMatch(x -> x.identifier().contains("BaseStream")));
+		
+		// Stream<HigherClassOrInterface> serializable = ClassLifter.liftPackage
+		// 	("java.io.Serializable", universe.rootPackage());
+		
+		// Stream<HigherClassOrInterface> enuM = ClassLifter.liftPackage(
+		// 	"java.lang.Enum", universe.rootPackage());
+
+		// Stream<HigherClassOrInterface> compUnit = ClassLifter.liftPackage(
+		// 	"supplement.HelloWorld", universe.rootPackage());
+
+
+
+		// Stream<HigherClassOrInterface> intermediary = Stream.of(enuM, object, serializable)
+		// 										.flatMap(i -> i);
+		// List<CompilationUnit> finalList = Stream.concat(intermediary, compUnit).toList();
 		// List<CompilationUnit> finalList = Stream.concat(enuM, Stream.concat(Stream.concat(serializable, object), compUnit)).toList();
 
 		// Print the lifted CompilationUnits for debugging
@@ -29,22 +47,22 @@ public class ClassLifterTest {
 		// 	if(cu.packageDeclaration().get().equalsIgnoreCase("java.lang")){
 		// 		System.out.println(cu.accept(ppv));
 		// 	} 
-		// });		
+		// });
 
-		Typer.annotate(
-				List.of(),
-				// compUnit.toList()
-				finalList,
-				// Stream.concat(
-				// 		compUnit,
-				// // 		TODO Right now we need to load the standard profile because Typer complains
-				// // 		  that java.lang.Object is missing. This is probably a bug in the header
-				// // 		  removal tool?
-				// 		HeaderLoader.loadAlternateProfile()
-				// ).toList()
-				new TyperOptions( VerbosityLevel.WARNINGS )
-		);
-		ClassLifter.clearTrackedCompilationUnits();
+		// Typer.annotate(
+		// 		List.of(),
+		// 		// compUnit.toList()
+		// 		finalList,
+		// 		// Stream.concat(
+		// 		// 		compUnit,
+		// 		// // 		TODO Right now we need to load the standard profile because Typer complains
+		// 		// // 		  that java.lang.Object is missing. This is probably a bug in the header
+		// 		// // 		  removal tool?
+		// 		// 		HeaderLoader.loadAlternateProfile()
+		// 		// ).toList()
+		// 		new TyperOptions( VerbosityLevel.WARNINGS )
+		// );
+		// ClassLifter.clearTrackedCompilationUnits();
 	}
 
 	// @Test

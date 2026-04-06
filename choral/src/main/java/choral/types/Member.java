@@ -90,7 +90,6 @@ public abstract class Member implements HasSource {
 		assertIllegalCombinationOfModifiers( modifiers, ABSTRACT, FINAL );
 		assertIllegalCombinationOfModifiers(modifiers, DEFAULT, ABSTRACT);
 		assertIllegalCombinationOfModifiers(modifiers, DEFAULT, STATIC);
-		assertIllegalCombinationOfModifiers(modifiers, ABSTRACT, STATIC);
 	}
 
 	protected final EnumSet< Modifier > modifiers() {
