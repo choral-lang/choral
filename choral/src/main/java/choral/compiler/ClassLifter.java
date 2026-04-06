@@ -1179,8 +1179,8 @@ public class ClassLifter {
 
 
 	private static void warn( String id, LiftException e ) {
-		System.out.println( "WARNING: Failed to lift " + id + " because " + e.getMessage() +
-                " types are not supported" );
+		// System.out.println( "WARNING: Failed to lift " + id + " because " + e.getMessage() +
+        //         " types are not supported" );
 	}
 
 	/**
