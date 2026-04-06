@@ -30,6 +30,8 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
+import choral.compiler.typer.Phase;
+import choral.compiler.typer.TaskQueue;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.StaticVerificationException;
 import choral.types.Package;
@@ -49,31 +51,6 @@ import java.util.stream.Stream;
 public class Typer {
 
 	/**
-	 * Choral and Java allow you to use a type or a method before it's been declared; it's perfectly
-	 * valid to implement a method foo on line 10 that uses a method bar on line 20. For
-	 * this to work, we have to split up typechecking into multiple phases:
-	 * <ol>
-	 * <li> Type symbol declarations: Declare all the packages, classes, interfaces, and enums
-	 * without inspecting their contents.
-	 * <li> Hierarchy: Check if the inheritance hierarchy is ok. This phase detects inheritance
-	 * cycles, like when Foo extends Bar and Bar extends Foo.
-	 * <li> Bounds checks: Check type bounds.
-	 * <li> Member declarations: Declare fields, methods, and constructors without inspecting their
-	 * implementations.
-	 * <li> Member definitions: Typecheck the body of a method or constructor.
-	 * <li> Member global checks: Check for mutual recursion between constructors.
-	 * </ol>
-	 */
-	private enum Phase {
-		TYPE_SYMBOL_DECLARATIONS,
-		HIERARCHY,
-		BOUND_CHECKS,
-		MEMBER_DECLARATIONS,
-		MEMBER_DEFINITIONS,
-		MEMBER_GLOBAL_CHECKS,
-	}
-
-	/**
 	 * The main entry point for type checking.
 	 * @param sourceUnits Compilation units representing source code
 	 * @param headerUnits Compilation units representing header files
@@ -84,8 +61,17 @@ public class Typer {
 			Collection< CompilationUnit > headerUnits,
 			TyperOptions opts
 	) {
-		TaskQueue taskQueue = new TaskQueue();
 		Universe universe = new Universe();
+		return annotate( sourceUnits, headerUnits, universe, opts );
+	}
+
+	public static Collection< CompilationUnit > annotate(
+			Collection< CompilationUnit > sourceUnits,
+			Collection< CompilationUnit > headerUnits,
+			Universe universe,
+			TyperOptions opts
+	) {
+		TaskQueue taskQueue = new TaskQueue();
 		Visitor headerVisitor = new HeaderVisitor( taskQueue, universe, opts );
 		headerUnits.forEach( cu -> taskQueue.enqueue( Phase.TYPE_SYMBOL_DECLARATIONS,
 				() -> headerVisitor.visit( cu ) ) );
@@ -336,7 +322,7 @@ public class Typer {
 				taskQueue.enqueue( Phase.MEMBER_GLOBAL_CHECKS,
 						() -> checkConstructorsDependencies( constructorDependencies,
 								explicitConstructorInvocations ) );
-				taskQueue.enqueue( new MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
+				taskQueue.enqueue( new TaskQueue.MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
 					try {
 						t.innerType().finaliseInterface();
 					} catch( StaticVerificationException e ) {
@@ -388,7 +374,7 @@ public class Typer {
 						throw new AstPositionedException( c.position(), e );
 					}
 				}
-				taskQueue.enqueue( new MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
+				taskQueue.enqueue( new TaskQueue.MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
 					try {
 						t.innerType().finaliseInterface();
 					} catch( StaticVerificationException e ) {
@@ -481,7 +467,7 @@ public class Typer {
 					tm.innerCallable().finalise();
 					t.innerType().addMethod( tm );
 				}
-				taskQueue.enqueue( new MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
+				taskQueue.enqueue( new TaskQueue.MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
 					try {
 						t.innerType().finaliseInterface();
 					} catch( StaticVerificationException e ) {
@@ -633,7 +619,7 @@ public class Typer {
 							visitGroundReferenceTypeExpression( scope, m, delayBoundChecks ) );
 				}
 				p.innerType().finaliseBound();
-				taskQueue.enqueue( new MemberTask( Phase.MEMBER_DECLARATIONS, p, () -> {
+				taskQueue.enqueue( new TaskQueue.MemberTask( Phase.MEMBER_DECLARATIONS, p, () -> {
 					try {
 						p.innerType().finaliseInterface();
 					} catch( StaticVerificationException e ) {
@@ -825,48 +811,6 @@ public class Typer {
 		< N extends WithTypeAnnotation< ? super T >, T > T annotate( N n, T t ) {
 			n.setTypeAnnotation( t );
 			return t;
-		}
-
-		private static class MemberTask
-				extends TaskQueue.Task {
-
-			private final HigherReferenceType type;
-
-			public MemberTask( Phase phase, HigherReferenceType type, Runnable task ) {
-				super( phase, task );
-				this.type = type;
-			}
-
-			@Override
-			public int compareTo( TaskQueue.Task o ) {
-				int i = super.compareTo( o );
-				if( i == 0 && o instanceof MemberTask ) {
-					MemberTask m = (MemberTask) o;
-					if( m.type.isStrictSubtypeOf( this.type ) ) {
-						i = 1;
-					} else if( this.type.isStrictSubtypeOf( m.type ) ) {
-						i = -1;
-					}
-				}
-				return i;
-			}
-
-			boolean dependenciesReady = false;
-
-			@Override
-			protected boolean isReady() {
-				if( !dependenciesReady ) {
-					if( type instanceof HigherTypeParameter ) {
-						dependenciesReady = ( (HigherTypeParameter) type ).innerType()
-								.upperBound().allMatch( GroundReferenceType::isInterfaceFinalised );
-					} else {
-						dependenciesReady = ( (HigherClassOrInterface) type ).innerType()
-								.extendedClassesOrInterfaces()
-								.allMatch( GroundReferenceType::isInterfaceFinalised );
-					}
-				}
-				return dependenciesReady;
-			}  
 		}
 
 	}
@@ -2996,141 +2940,6 @@ public class Typer {
 			return channels.entrySet().stream()
 				.map( entry -> new Pair<>( entry.getKey(), entry.getValue() ) )
 				.toList();
-		}
-
-	}
-
-	/**
-	 * A priority queue of typechecking tasks, sorted by @Typer.Phase. We use the queue to ensure
-	 * that tasks in phase N are all completed before those in phase N+1.
-	 * <p>
-	 * TODO What are "rounds"? When do we use the "status" of a task?
-	 */
-	private static class TaskQueue {
-
-		final Map< HigherClassOrInterface, TaskQueue.Task > hierarchyConstructionTasks = new HashMap<>();
-
-		static class Task
-				implements Comparable< TaskQueue.Task >, Runnable {
-
-			private final Phase phase;
-			private final Runnable task;
-
-			public Task( Phase phase, Runnable task ) {
-				this.phase = phase;
-				this.task = task;
-			}
-
-
-			/** Represents how many times isReady() was called when the task was not ready to be run.
-			 * Is used to impose natural ordering on tasks with same phase
-			 */
-			int rounds = 0;
-
-			@Override // overriden from Comparable
-			public int compareTo( TaskQueue.Task o ) {
-				int i = this.phase.compareTo( o.phase );
-				if( i == 0 ) {
-					i = Integer.compare( this.rounds, o.rounds );
-				}
-				return i;
-			}
-
-			@Override // overriden from Runnable
-			public void run() {
-				if( status() == Status.READY ) {
-					status = Status.PROCESSING;
-					task.run();
-					status = Status.FINISHED;
-				}
-			}
-
-			// The isReady() check can fail when callling the isReady() method from memberTask
-			private void prepare() {
-				if( status() == Status.WAITING ) {
-					if( isReady() ) {
-						status = Status.READY;
-					} else {
-						rounds += 1;
-					}
-				}
-			}
-
-			// This method is actually necessary, it exists to be overriden in memberTask
-			protected boolean isReady() {
-				return true;
-			}
-
-			enum Status {WAITING, READY, PROCESSING, FINISHED}
-
-			protected TaskQueue.Task.Status status = TaskQueue.Task.Status.WAITING;
-
-			public TaskQueue.Task.Status status() {
-				return status;
-			}
-
-		}
-
-		PriorityQueue< TaskQueue.Task > tasks = new PriorityQueue<>(
-				Comparator.naturalOrder() );
-
-		/**
-		 * This method processes tasks in the priority queue up till the passed phase
-		 * @param to the phase limiting how many tasks to be processed.
-		 */
-		public void process( Phase to ) {
-			while( !tasks.isEmpty() ) {
-				// task at head of queue is of prior or same phase as "to"
-				if( tasks.peek().phase.compareTo( to ) < 1 ) { 
-					TaskQueue.Task task = tasks.poll();
-					// because TaskQueue.Task is used, this prepare() call will always set status to READY
-					// If the task isn't already PROCESSING or FINISHED
-					task.prepare();
-					switch( task.status() ) {
-						case READY -> task.run();
-						case WAITING -> enqueue( task ); // so this case should never happen
-					}
-				} else {
-					// no more tasks for this and prior phases
-					break;
-				}
-			}
-		}
-
-		/**
-		 * This method processes all tasks in the task queue
-		 */
-		public void process() {
-			while( !tasks.isEmpty() ) {
-				TaskQueue.Task task = tasks.poll();
-				// The issue mentioned in above method also occurs here
-				task.prepare();
-				switch( task.status() ) {
-					case READY -> task.run();
-					case WAITING -> enqueue( task );
-				}
-			}
-		}
-
-		/**
-		 * Enqueues the passed task to the priority queue, if the status of the task is 
-		 * WAITING or READY
-		 * @param t
-		 */
-		void enqueue( TaskQueue.Task t ) {
-			if( t.status() == Task.Status.WAITING || t.status() == Task.Status.READY ) {
-				tasks.add( t );
-			}
-		}
-
-		/**
-		 * Enqueues the passed runnable to the priority queue as a task, 
-		 * with the passed phase as the phase the task should be run during. 
-		 * @param p The phase during which the runnable should be run
-		 * @param t The runnable enqueued as a task. 
-		 */
-		void enqueue( Phase p, Runnable t ) {
-			enqueue( new TaskQueue.Task( p, t ) );
 		}
 
 	}

@@ -319,7 +319,7 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 						for( Member.HigherMethod z : inheritedMethods ) {
 							if( z.isSubSignatureOf( x ) ) {
 								// check assignable return type;
-								if( !z.isReturnTypeAssignable( x ) ) {
+								if( !z.isReturnTypeSubstitutableFor( x ) ) {
 									throw new StaticVerificationException( "method '" + z
 											+ "' in '" + z.declarationContext()
 											+ "' clashes with method '" + x

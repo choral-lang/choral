@@ -1,6 +1,5 @@
-import choral.ast.CompilationUnit;
-import choral.ast.visitors.PrettyPrinterVisitor;
-import choral.compiler.ClassLifter;
+import choral.compiler.typer.ClassLifter;
+import choral.compiler.HeaderLoader;
 import choral.compiler.Typer;
 import choral.compiler.TyperOptions;
 import choral.types.HigherClassOrInterface;
@@ -10,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Optional;
 
 public class ClassLifterTest {
 
@@ -20,9 +19,12 @@ public class ClassLifterTest {
 		
 		// Stream<HigherClassOrInterface> baseStream = ClassLifter.liftPackage
 		// 	("java.util.stream.BaseStream", universe.rootPackage());
+
+		// Run the typer to initialize special types like java.lang.Object
+		Typer.annotate( List.of(), HeaderLoader.loadStandardProfile().toList(), universe, new TyperOptions( VerbosityLevel.WARNINGS ) );
 		
-		Stream< HigherClassOrInterface > object = ClassLifter.liftPackage(
-			"java.lang.Object", universe.rootPackage());
+		Optional< HigherClassOrInterface > object = new ClassLifter(universe).liftClassOrInterface(
+			"java.lang.Object");
 		// System.out.println(object.anyMatch(x -> x.identifier().contains("BaseStream")));
 		
 		// Stream<HigherClassOrInterface> serializable = ClassLifter.liftPackage

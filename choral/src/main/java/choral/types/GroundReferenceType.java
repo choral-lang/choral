@@ -37,6 +37,10 @@ public interface GroundReferenceType extends GroundDataType {
 
 	Optional< ? extends Member.Field > field( String name );
 
+	/**
+	 * Returns this type's <i>member methods</i>, i.e. the methods this type declares and the methods
+	 * it inherits from superclasses and superinterfaces. See the Java Language Spec for details.
+	 */
 	Stream< ? extends Member.HigherMethod > methods();
 
 	Stream< ? extends Member.HigherMethod > methods( String name );

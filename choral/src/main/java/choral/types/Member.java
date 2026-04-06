@@ -363,6 +363,22 @@ public abstract class Member implements HasSource {
 			return newTypeParams;
 		}
 
+		/**
+		 * (JLS 8.4.2) Two methods or constructors, M and N, have the <b>same signature</b> if:
+		 * 1. They have the same name,
+		 * 2. They have the same type parameters, and
+		 * 3. After adapting the formal parameter types of N to the type parameters of M, they have the same formal
+		 *    parameter types.
+		 * <p>
+		 * (JLS 8.4.4) Two methods or constructors M and N have the <b>same type parameters</b> if both:
+		 * 1. M and N have same number of type parameters (possibly zero).
+		 * 2. Where A1, ..., An are the type parameters of M and B1, ..., Bn are the type parameters of N,
+		 *    let θ=[B1:=A1, ..., Bn:=An]. Then, for all i (1 ≤ i ≤ n), the bound of Ai is the same type as θ applied to
+		 *    the bound of Bi.
+		 * <p>
+		 * (JLS 8.4.4) Let M and N be methods or constructors with the same type parameters, by a substitution θ applied
+		 * to N. A type mentioned in N can be <b>adapted to the type parameters of M</b> by applying θ to the type.
+		 */
 		public boolean sameSignatureAs(HigherCallable other ) {
 			if( !this.identifier().equals( other.identifier() )
 					|| this.typeParameters.size() != other.typeParameters.size()
@@ -418,9 +434,13 @@ public abstract class Member implements HasSource {
 		}
 
 		/**
-		 * JLS 8.4.2: This method's signature is a subsignature of {@code other}'s signature if:
+		 * (JLS 8.4.2) This method's signature is a subsignature of {@code other}'s signature if:
 		 * 1. this method has the same signature as the other signature, or
 		 * 2. this method has the same signature as the other signature's ERASURE.
+		 * <p>
+		 * "The notion of subsignature is designed to express a relationship between two methods whose signatures are
+		 * not identical, but in which one may override the other. Specifically, it allows a method whose signature does
+		 * not use generic types to override any generified version of that method."
 		 */
 		public boolean isSubSignatureOf( HigherCallable other ) {
 			return this.sameSignatureAs( other ) || this.sameSignatureAsErasureOf( other );
@@ -465,11 +485,24 @@ public abstract class Member implements HasSource {
 			return true;
 		}
 
+		/**
+		 * (JLS 8.4.2) Two method signatures m1 and m2 are override-equivalent iff either m1 is a subsignature of
+		 * m2 or m2 is a subsignature of m1.
+		 * <p>
+		 * Note that the following methods are override-equivalent, even though one of them is abstract:
+		 * <pre>{@code
+		 * class Point {
+		 *   int x, y;
+		 *   abstract void move(int dx, int dy);
+		 *   void move(int dx, int dy) { x += dx; y += dy; }
+		 * }
+		 * }</pre>
+		 */
 		public boolean isOverrideEquivalentTo( HigherCallable other ) {
-			// (sec. 8.4.2)
+			// Inlined the definition of #isSubSignatureOf for efficiency
 			return this.sameSignatureAs( other ) ||
-					( this.sameSignatureAsErasureOf( other ) == !other.sameSignatureAsErasureOf(
-							this ) );
+					this.sameSignatureAsErasureOf( other ) ||
+					other.sameSignatureAsErasureOf( this );
 		}
 
 		public int arity() {
@@ -629,24 +662,51 @@ public abstract class Member implements HasSource {
 			return identifier() + innerCallable().signature();
 		}
 
-		public boolean isReturnTypeAssignable( HigherMethod other ) {
-			if( this.innerCallable().returnType.isVoid() && other.innerCallable().returnType.isVoid() ) {
-				return true;
+		/**
+		 * (JLS 8.4.5) A method declaration d1 with return type R1 is **return-type-substitutable** for another method
+		 * d2 with return type R2 iff any of the following is true:
+		 * 1. If R1 is void then R2 is void.
+		 * 2. If R1 is a primitive type then R2 is identical to R1.
+		 * 3. If R1 is a reference type then one of the following is true:
+		 * 	(a) R1, adapted to the type parameters of d2 (JLS 8.4.4), is a subtype of R2.
+		 * 	(b) R1 can be converted to a subtype of R2 by unchecked conversion (JLS 5.1.9).
+		 * 	(c) d1 does not have the same signature as d2 (JLS 8.4.2), and R1 is the same as the erasure of R2.
+		 */
+		public boolean isReturnTypeSubstitutableFor(HigherMethod other ) {
+			HigherMethod d1 = this;
+			HigherMethod d2 = other;
+			GroundDataTypeOrVoid r1 = d1.innerCallable().returnType;
+			GroundDataTypeOrVoid r2 = d2.innerCallable().returnType;
+			if ( r1.isVoid() ) {
+				return r2.isVoid();
 			}
-			if( !this.innerCallable().returnType.isVoid() && !other.innerCallable().returnType.isVoid() ) {
-				Substitution s2 = new Substitution() {
+			if( r1 instanceof GroundPrimitiveDataType rp1 ) {
+				return r2 instanceof GroundPrimitiveDataType rp2 && rp1.isEquivalentTo( rp2 );
+			}
+			if ( r1 instanceof GroundReferenceType rr1 ) {
+				// (a) Adapt r1 to the type parameters of the other method and check if it's a subtype of r2
+				Substitution s1 = new Substitution() {
 					@Override
 					public HigherReferenceType get( HigherTypeParameter placeHolder ) {
-						int i = other.typeParameters().indexOf( placeHolder );
+						int i = d1.typeParameters().indexOf( placeHolder );
 						return ( i == -1 )
 								? placeHolder
-								: HigherMethod.this.typeParameters().get( i );
+								: d2.typeParameters().get( i );
 					}
 				};
-				GroundDataType g2 = (GroundDataType) other.innerCallable.returnType.applySubstitution(
-						s2 );
-				return innerCallable().returnType.isAssignableTo( g2 );
-			}
+				if ( !r2.isVoid() && rr1.applySubstitution( s1 ).isSubtypeOf( (GroundDataType)r2 ) ) {
+					return true;
+				}
+
+				// (b) Check if r1 can be converted to a subtype of r2 by unchecked conversion.
+				// Nothing to do here, since Choral doesn't support raw types.
+
+				// (c) Check if this method does not have the same signature as the other method and r1 is the same as
+				// the erasure of r2
+                return !this.sameSignatureAs( other ) &&
+                        r2 instanceof GroundReferenceType rr2 &&
+                        rr1.isEquivalentToErasureOf( rr2 );
+            }
 			return false;
 		}
 

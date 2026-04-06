@@ -477,7 +477,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 									for( Member.HigherMethod z : inheritedMethods ) {
 										if( z.isSubSignatureOf( methodToInherit ) ) {
 											// // TODO When does this happen?
-											if( !z.isReturnTypeAssignable( methodToInherit ) ) {
+											if( !z.isReturnTypeSubstitutableFor( methodToInherit ) ) {
 												throw new StaticVerificationException(
 														"method '" + z
 																+ "' in '" + z.declarationContext()
@@ -512,7 +512,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 							if( !implemented && !isAbstract() && methodToInherit.isAbstract() ) {
 								for(Member.HigherMethod inheritedMethod : inheritedMethods){
 									if(!inheritedMethod.isAbstract() && inheritedMethod.isSubSignatureOf(methodToInherit)
-										&& inheritedMethod.isReturnTypeAssignable(methodToInherit)){
+										&& inheritedMethod.isReturnTypeSubstitutableFor(methodToInherit)){
 										implementationRequirementSatisfied = true;
 										break;
 									}
@@ -556,8 +556,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 										}
 
 										// Defensive check, in case interface finalisation order ever changes. 
-										assert (xPriority ? methodToInherit.isReturnTypeAssignable(inheritedMethod)
-														: inheritedMethod.isReturnTypeAssignable(methodToInherit))
+										assert (xPriority ? methodToInherit.isReturnTypeSubstitutableFor(inheritedMethod)
+														: inheritedMethod.isReturnTypeSubstitutableFor(methodToInherit))
 											: "Return type incompatibility was not caught. Error in finaliseInterface. " 
 											+ " Return type compatibility assumption was made based on interface finalization order.";
 									}
@@ -591,7 +591,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 						+ parent + "' in '" + parent.declarationContext() + "'" );
 			}
 			// (8.4.8.3) Ensure method return types are covariant
-			if( !child.isReturnTypeAssignable(parent) ) {
+			if( !child.isReturnTypeSubstitutableFor(parent) ) {
 				throw new StaticVerificationException( "method '" + child
 						+ "' in '" + this + "' clashes with method '"
 						+ parent + "' in '" + parent.declarationContext()
