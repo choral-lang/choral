@@ -273,56 +273,18 @@ public class ClassLifter {
 	}
 
 	private Optional< HigherClassOrInterface > liftInterface( java.lang.Class< ? > clazz ) {
-		// TRANSLATE METHODS
 		Set< String > dependencyIdentifiers = new HashSet<>();
-		List< InterfaceMethodDefinition > choralInterfaceMethods = liftMethods(
-				clazz.getDeclaredMethods(),
-				InterfaceMethodModifier.class, 
-				dependencyIdentifiers,
-				( signature, modifiers ) -> new InterfaceMethodDefinition(
-						signature,
-						Collections.emptyList(),
-						modifiers,
-						NOWHERE )
-		);
-
-		// TRANSLATE SUPER INTERFACES
-		java.lang.reflect.Type[] genericInterfaces = clazz.getGenericInterfaces();
-		List< TypeExpression > choralExtendedInterfaces = new ArrayList<>();
-		for( java.lang.reflect.Type genericInterface : genericInterfaces ) {
-			try {
-				choralExtendedInterfaces.add( liftType( genericInterface ) );
-			} catch( LiftException e ) {
-				warn( genericInterface.toString(), e );
-			}
-		}
-
-		// TRANSLATE TYPE PARAMETERS
-		List< FormalTypeParameter > choralTypeParameters;
-		try {
-			choralTypeParameters = liftTypeParameters( clazz.getTypeParameters() );
-		} catch( LiftException e ) {
-			warn( clazz.getSimpleName(), e );
-			return Optional.empty();
+		// Extract dependencies from class members
+		for(java.lang.reflect.Method method : clazz.getDeclaredMethods()){
+			if( Modifier.isPrivate( method.getModifiers() ) ) continue;
+			if(method.isBridge()) continue;
+			addMethodDependencies(dependencyIdentifiers, method);
 		}
 
 		// add super interfaces to dependencies
 		for( java.lang.Class< ? > superInterface : clazz.getInterfaces() ) {
 			dependencyIdentifiers.add( superInterface.getName() );
 		}
-
-		EnumSet< InterfaceModifier > interfaceModifiers = parseModifiers( InterfaceModifier.class,
-				clazz.getModifiers() );
-
-		Interface choralInterface = new Interface(
-				new Name( clazz.getSimpleName(), NOWHERE ),
-				List.of( DEFAULT_WORLD_PARAMETER ),
-				choralTypeParameters,
-				choralExtendedInterfaces,
-				choralInterfaceMethods,
-				Collections.emptyList(), // ignore annotations for now
-				interfaceModifiers,
-				NOWHERE );
 
 		Package pkg = universe.rootPackage().declarePackage(clazz.getPackageName());
 
@@ -335,8 +297,7 @@ public class ClassLifter {
 			modifiers, 
 			clazz.getSimpleName(), 
 			List.of(world),
-			higherLiftTypeParameters(clazz.getTypeParameters()),
-			choralInterface);
+			higherLiftTypeParameters(clazz.getTypeParameters()));
 
 		// recursively visit super interfaces
 		for( java.lang.Class< ? > superInterface : clazz.getInterfaces() ) {
