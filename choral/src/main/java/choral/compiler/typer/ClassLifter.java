@@ -210,7 +210,7 @@ public class ClassLifter {
 		var clazzParams = clazz.getTypeParameters();
 		for(int i = 0; i < clazzParams.length; i++ ){
 			try {
-				addBounds(choralParams.get(i), clazzParams[i]);
+				addBounds(choralParams.get(i), clazzParams[i].getBounds());
 			} catch (LiftException e) {
 				// If we can't lift the type parameters, give up.
 				warn(clazz.getCanonicalName(), e);
@@ -325,7 +325,7 @@ public class ClassLifter {
 		var clazzParams = clazz.getTypeParameters();
 		for(int i = 0; i < clazzParams.length; i++ ){
 			try {
-				addBounds(choralParams.get(i), clazzParams[i]);
+				addBounds(choralParams.get(i), clazzParams[i].getBounds());
 			} catch (LiftException e) {
 				// If we can't lift the type parameters, give up.
 				warn(clazz.getCanonicalName(), e);
@@ -398,7 +398,7 @@ public class ClassLifter {
 		var choralParams = higherMethod.typeParameters();
 		var clazzParams = method.getTypeParameters();
 		for(int i = 0; i < clazzParams.length; i++ ){
-			addBounds(choralParams.get(i), clazzParams[i]);
+			addBounds(choralParams.get(i), clazzParams[i].getBounds());
 		}
 
 		for(java.lang.reflect.Type formalParam : method.getGenericParameterTypes()){
@@ -430,7 +430,7 @@ public class ClassLifter {
 		var choralParams = higherConstructor.typeParameters();
 		var clazzParams = constructor.getTypeParameters();
 		for(int i = 0; i < clazzParams.length; i++ ){
-			addBounds(choralParams.get(i), clazzParams[i]);
+			addBounds(choralParams.get(i), clazzParams[i].getBounds());
 		}
 
 		// add formal parameters
@@ -447,7 +447,6 @@ public class ClassLifter {
 		}
 		return higherConstructor;
 	}
-
 	/////////////////////////////////////////////////////////////////////
 	//////////////////// HELPERS FOR LIFTING TYPES  /////////////////////
 	/////////////////////////////////////////////////////////////////////
@@ -469,15 +468,17 @@ public class ClassLifter {
 
 	private void addBounds(
 			HigherTypeParameter typeParameter,
-			java.lang.reflect.Type upperBound
+			java.lang.reflect.Type[] upperBounds
 	) throws LiftException {
 		// Skip Object as a bound - it's the default and not meaningful
-		if(upperBound.equals(Object.class)){
-			return;
+		for(java.lang.reflect.Type bound : upperBounds){
+			if(bound.equals(Object.class)){
+				return;
+			}
+			GroundReferenceType liftedBound = (GroundReferenceType)higherliftType(bound);
+			typeParameter.innerType().addUpperBound( liftedBound );
 		}
-		GroundReferenceType liftedBound = (GroundReferenceType)higherliftType(upperBound);
-		typeParameter.innerType().addUpperBound( liftedBound );
-		// TODO "finalise" the bounds - see Typer
+		typeParameter.innerType().finaliseBound();
 	}
 
 	private static List< FormalTypeParameter > liftTypeParameters(
