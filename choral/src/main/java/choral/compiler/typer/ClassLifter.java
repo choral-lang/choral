@@ -481,43 +481,6 @@ public class ClassLifter {
 		typeParameter.innerType().finaliseBound();
 	}
 
-	private static List< FormalTypeParameter > liftTypeParameters(
-			java.lang.reflect.TypeVariable< ? >[] typeParameters
-	) throws LiftException {
-		List< FormalTypeParameter > choralTypeParameters = new ArrayList<>();
-		for( java.lang.reflect.TypeVariable< ? > typeParameter : typeParameters ) {
-			// choral does not support lower bounds, so only upper bounds are found
-			List< TypeExpression > upperBounds = new ArrayList<>();
-
-			java.lang.reflect.Type[] bounds = typeParameter.getBounds();
-			for( java.lang.reflect.Type bound : bounds ) {
-				// Skip Object as a bound - it's the default and not meaningful
-				if( bound.equals( Object.class ) ) {
-					continue;
-				}
-				upperBounds.add( liftType( bound ) );
-			}
-
-			FormalTypeParameter choralTypeParameter = new FormalTypeParameter(
-					new Name( typeParameter.getName(), NOWHERE ),
-					List.of( DEFAULT_WORLD_PARAMETER ),
-					upperBounds,
-					Collections.emptyList(), // ignore annotations for now
-					NOWHERE );
-			choralTypeParameters.add( choralTypeParameter );
-		}
-		return choralTypeParameters;
-	}
-
-	/**
-	 * Generates the choral TypeExpression from the given Java reflection Type.
-	 * Does so recursively if given Type is nested (or has type arguments).
-	 */
-	private static TypeExpression liftType( java.lang.reflect.Type type)
-			throws LiftException {
-		return liftType( type, List.of( DEFAULT_WORLD_ARGUMENT ) );
-	}
-
 	/**
 	 * Generates the choral GroundDataTypeOrVoid from the given Java reflection Type.
 	 * Does so recursively if given Type is nested (or has type arguments).
