@@ -32,6 +32,7 @@ import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.compiler.typer.Phase;
 import choral.compiler.typer.TaskQueue;
+import choral.compiler.typer.scope.*;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.StaticVerificationException;
 import choral.types.Package;
@@ -44,7 +45,6 @@ import choral.utils.Pair;
 
 import java.io.File;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -108,10 +108,7 @@ public class Typer {
 		protected void visit( choral.ast.CompilationUnit n ) {
 			Package pkg = universe.rootPackage();
 			if( n.packageDeclaration().isPresent() ) {
-				String[] path = n.packageDeclaration().get().split( "\\." );
-				for( String s : path ) {
-					pkg = pkg.declarePackage( s );
-				}
+				pkg = pkg.declarePackage( n.packageDeclaration().get() );
 			}
 			CompilationUnitScope scope = new CompilationUnitScope( pkg, n.imports() );
 			for( choral.ast.body.Class x : n.classes() ) {
@@ -130,7 +127,7 @@ public class Typer {
 			visitImportDeclarations( scope, n.imports() );
 		}
 
-		protected void visitImportDeclarations( Scope scope, List< ImportDeclaration > ns ) {
+		protected void visitImportDeclarations(Scope scope, List< ImportDeclaration > ns ) {
 		}
 
 		protected abstract void checkPrimaryTemplate(
@@ -178,7 +175,7 @@ public class Typer {
 				} else {
 					try {
 						GroundClass s = visitGroundClassExpression(
-								classOrInterfaceStaticScope.getScope(),
+								classOrInterfaceStaticScope.getInstanceScope(),
 								n.superClass().get(), true );
 						t.innerType().setExtendedClass( s );
 						checkExtendsForCycles( t.innerType(), s );
@@ -189,7 +186,7 @@ public class Typer {
 				for( choral.ast.type.TypeExpression x : n.implementsInterfaces() ) {
 					try {
 						GroundInterface s = visitGroundInterfaceExpression(
-								classOrInterfaceStaticScope.getScope(),
+								classOrInterfaceStaticScope.getInstanceScope(),
 								x, true );
 						t.innerType().addExtendedInterface( s );
 						checkExtendsForCycles( t.innerType(), s );
@@ -198,7 +195,7 @@ public class Typer {
 					}
 				}
 				t.innerType().finaliseInheritance();
-				visitTypeParametersBound( classOrInterfaceStaticScope.getScope(),
+				visitTypeParametersBound( classOrInterfaceStaticScope.getInstanceScope(),
 						n.typeParameters(),
 						true );
 				taskQueue.hierarchyConstructionTasks.remove( t );
@@ -218,7 +215,7 @@ public class Typer {
 							visitGroundDataTypeExpression(
 									( ms.contains( Modifier.STATIC ) )
 											? classOrInterfaceStaticScope
-											: classOrInterfaceStaticScope.getScope(),
+											: classOrInterfaceStaticScope.getInstanceScope(),
 									nm.typeExpression(), false ) );
 					nm.setTypeAnnotation( tm );
 					tm.setSourceCode( nm );
@@ -244,7 +241,7 @@ public class Typer {
 					tm.setSourceCode( nm );
 					CallableScope callableScope = ( ms.contains( Modifier.STATIC ) )
 							? classOrInterfaceStaticScope.getScope( tm )
-							: classOrInterfaceStaticScope.getScope().getScope( tm );
+							: classOrInterfaceStaticScope.getInstanceScope().getScope( tm );
 					visitTypeParametersBound( callableScope, nm.signature().typeParameters(),
 							true );
 					for( FormalMethodParameter x : nm.signature().parameters() ) {
@@ -300,7 +297,7 @@ public class Typer {
 							typeParams );
 					nm.setTypeAnnotation( tm );
 					tm.setSourceCode( nm );
-					CallableScope callableScope = classOrInterfaceStaticScope.getScope().getScope(
+					CallableScope callableScope = classOrInterfaceStaticScope.getInstanceScope().getScope(
 							tm );
 					visitTypeParametersBound( callableScope, nm.signature().typeParameters(),
 							false );
@@ -408,7 +405,7 @@ public class Typer {
 				for( choral.ast.type.TypeExpression x : n.extendsInterfaces() ) {
 					try {
 						GroundInterface s = visitGroundInterfaceExpression(
-								classOrInterfaceStaticScope.getScope(),
+								classOrInterfaceStaticScope.getInstanceScope(),
 								x, true );
 						t.innerType().addExtendedInterface( s );
 						checkExtendsForCycles( t.innerType(), s );
@@ -418,7 +415,7 @@ public class Typer {
 				}
 				t.innerType().finaliseInheritance();
 				taskQueue.hierarchyConstructionTasks.remove( t );
-				visitTypeParametersBound( classOrInterfaceStaticScope.getScope(),
+				visitTypeParametersBound( classOrInterfaceStaticScope.getInstanceScope(),
 						n.typeParameters(), true );
 			} );
 			taskQueue.hierarchyConstructionTasks.put( t, h );
@@ -441,7 +438,7 @@ public class Typer {
 					tm.setSourceCode( nm );
 					CallableScope methodScope = ( ms.contains( Modifier.STATIC ) )
 							? classOrInterfaceStaticScope.getScope( tm )
-							: classOrInterfaceStaticScope.getScope().getScope( tm );
+							: classOrInterfaceStaticScope.getInstanceScope().getScope( tm );
 					visitTypeParametersBound( methodScope, nm.signature().typeParameters(),
 							true );
 					for( FormalMethodParameter x : nm.signature().parameters() ) {
@@ -1303,7 +1300,7 @@ public class Typer {
 									+ "', or an enum type" ) );
 				}
 				boolean returnChecked = true;
-				// determines whether a case falls into the default case or not. 
+				// determines whether a case falls into the default case or not.
 				boolean hasDefault = false;
 				Set<String> casesFound = new HashSet<>(n.cases().size());
 				for( Map.Entry< SwitchArgument< ? >, Statement > e : n.cases().entrySet() ) {
@@ -1344,7 +1341,7 @@ public class Typer {
 									"duplicate case '" + s + "'",
 									l.argument().position() );
 						}
-						// if not a literalcase or a labelcase, fall through to default case. 
+						// if not a literalcase or a labelcase, fall through to default case.
 					} else {
 						hasDefault = true;
 					}
@@ -1358,7 +1355,7 @@ public class Typer {
 			public Boolean visit( TryCatchStatement n ) {
 				boolean returnChecked = visitAsInBlock( n.body() );
 				// c -> catch ??
-				// The "VariableDeclaration" here represents the caught exception 
+				// The "VariableDeclaration" here represents the caught exception
 				for( Pair< VariableDeclaration, Statement > c : n.catches() ) {
 					// te -> typeException ??
 					// get the type of the exception
@@ -1454,7 +1451,7 @@ public class Typer {
 							"unreachable statement",
 							n.continuation().position() );
 				}
-				returnChecked |= visit( n.continuation() ); 
+				returnChecked |= visit( n.continuation() );
 				n.setReturnAnnotation( returnChecked );
 				return returnChecked;
 			}
@@ -1515,8 +1512,8 @@ public class Typer {
 
 			/**
 			 * Duplicates current synth and visits {@code n} on the new synth.
-			 * This is done to create a synth with a clean slate. 
-			 * A synth that does not get affected by the work done on the current synth. 
+			 * This is done to create a synth with a clean slate.
+			 * A synth that does not get affected by the work done on the current synth.
 			 * @param n
 			 * @return
 			 */
@@ -1529,8 +1526,8 @@ public class Typer {
 			/**
 			 * Duplicates current synth, but replaces current homeWorlds with passed homeWorlds,
 			 * and then visits {@code n} on the new synth.
-			 * This is done to create a synth with a clean slate. 
-			 * A synth that does not get affected by the work done on the current synth. 
+			 * This is done to create a synth with a clean slate.
+			 * A synth that does not get affected by the work done on the current synth.
 			 * @param n
 			 * @param homeWorlds
 			 * @return
@@ -1582,7 +1579,7 @@ public class Typer {
 			}
 
 			/**
-			 * Attempt to unbox {@code type}, throw StaticVerificationException if unboxing fails. 
+			 * Attempt to unbox {@code type}, throw StaticVerificationException if unboxing fails.
 			 * @param type
 			 * @param position
 			 * @return the unboxed type
@@ -1602,7 +1599,7 @@ public class Typer {
 
 			/**
 			 * @param type
-			 * @return null if unboxing failed. The unboxed typer otherwise. 
+			 * @return null if unboxing failed. The unboxed typer otherwise.
 			 */
 			private GroundPrimitiveDataType unbox( GroundDataTypeOrVoid type ) {
 				if( type instanceof GroundPrimitiveDataType groundType) {
@@ -1618,7 +1615,7 @@ public class Typer {
 				return null;
 			}
 
-			
+
 			private GroundDataType visitBinaryOp(
 					BinaryExpression.Operator operator, GroundDataTypeOrVoid tvl,
 					GroundDataTypeOrVoid tvr,
@@ -1644,8 +1641,8 @@ public class Typer {
 					worlds = tl.worldArguments();
 
 					if( !( tl.worldArguments().size() == 1 &&
-							tr.worldArguments().size() == 1 && 
-							tl.worldArguments().equals( tr.worldArguments() ) 
+							tr.worldArguments().size() == 1 &&
+							tl.worldArguments().equals( tr.worldArguments() )
 							)
 					) {
 						throw new AstPositionedException( position,
@@ -1655,13 +1652,13 @@ public class Typer {
 					}
 				}
 
-				// pl -> primitive left ??   
+				// pl -> primitive left ??
 				GroundPrimitiveDataType pl = null;
 				// pr -> primitive right ??
 				GroundPrimitiveDataType pr = null;
 				switch( operator ) {
 					case PLUS: { // fall-through. If not applying PLUS to a string, apply the logic in case REMAINDER
-						// Check whether left or right is a string, char or character. 
+						// Check whether left or right is a string, char or character.
 						if( tl.specialTypeTag() == SpecialTypeTag.STRING
 								|| tr.specialTypeTag() == SpecialTypeTag.STRING
 								|| ( ( tl.specialTypeTag() == SpecialTypeTag.CHARACTER ||
@@ -1710,7 +1707,7 @@ public class Typer {
 									worlds );
 						}
 						break;
-					case OR: // bitwise / non-short-circuting comparison. 
+					case OR: // bitwise / non-short-circuting comparison.
 					case AND:
 						pl = assertUnbox( tl, position );
 						pr = assertUnbox( tr, position );
@@ -1776,7 +1773,7 @@ public class Typer {
 				// tl -> type left ??
 				GroundDataType tl = (GroundDataType) tvl;
 				// the lefthand side of an assignment determines the worlds of the expression
-				homeWorlds = tl.worldArguments(); 
+				homeWorlds = tl.worldArguments();
 				// tvr -> type void right ??
 				GroundDataTypeOrVoid tvr = synth( n.value() );
 				if( tvr.isVoid() ) {
@@ -1839,7 +1836,7 @@ public class Typer {
 				if( left instanceof GroundReferenceType ) {
 					// if left is a class or interface, check if the field is contained within.
 					// Also check if the field is accessible from the current scope.
-					// if it is, return the field's type. 
+					// if it is, return the field's type.
 					result = ( (GroundReferenceType) left ).field( identifier )
 							.filter( this::checkMemberAccess )
 							.map( Member.Field::type );
@@ -1861,7 +1858,7 @@ public class Typer {
 				TypeExpression m = n.typeExpression();
 				HigherReferenceType type = scope.assertLookupReferenceType( m.name().identifier() );
 				// check if all the worldarguments of the passed expression can be found in the current scope
-				// if any worldarguments can't be found, throw exception. 
+				// if any worldarguments can't be found, throw exception.
 				List< World > worldArgs = m.worldArguments().stream()
 						.map( x -> scope.lookupWorldParameter( x.name().identifier() ).orElseThrow(
 								() -> new AstPositionedException( x.position(),
@@ -1878,8 +1875,8 @@ public class Typer {
 			}
 
 			/**
-			 * Finds the constructor used in the passed instantiationexpression, and annotates the 
-			 * passed expression with the found constructor. 
+			 * Finds the constructor used in the passed instantiationexpression, and annotates the
+			 * passed expression with the found constructor.
 			 */
 			@Override
 			public GroundDataType visit( ClassInstantiationExpression n ) {
@@ -1900,8 +1897,8 @@ public class Typer {
 				// 				x.position() ) )
 				// 		.collect( Collectors.toList() );
 
-				// find the most specific constructor(s), based on the previously found type arguments and 
-				// regular arguments. 
+				// find the most specific constructor(s), based on the previously found type arguments and
+				// regular arguments.
 				// ms -> most specific ??
 				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
 						typeargsArgs.left(),
@@ -1939,7 +1936,7 @@ public class Typer {
 
 			/**
 			 * Finds the method used in the passed expression. Annotates the passed expression with
-			 * the found method definition, and the return type of the method. 
+			 * the found method definition, and the return type of the method.
 			 */
 			@Override
 			public GroundDataTypeOrVoid visit( MethodCallExpression n ) {
@@ -1958,9 +1955,9 @@ public class Typer {
 				// 				x.position() );
 				// 		} )
 				// 		.collect( Collectors.toList() );
-				
+
 				// this if statement should only be entered if "scope.lookupThis()" has been called
-				// and the resulting value saved to "left". 
+				// and the resulting value saved to "left".
 				if( left instanceof GroundReferenceType type) {
 					// find most accurately fitting method based on type arguments and regular arguments
 					List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
@@ -2008,12 +2005,12 @@ public class Typer {
 			/**
 			 * Helper method that gets the type arguments and regular arguments for either a methodcallExpression
 			 * or a ClassInstantiationExpression. Type arguments are stored in the left value, and regular arguments
-			 * in the right value. 
+			 * in the right value.
 			 * @param scope
 			 * @param expression
 			 * @return
 			 */
-			public Pair<List< ? extends HigherReferenceType >, List< ? extends GroundDataType >> 
+			public Pair<List< ? extends HigherReferenceType >, List< ? extends GroundDataType >>
 			getArgsTypeargs(VariableDeclarationScope scope, InvocationExpression expression){
 				List< ? extends HigherReferenceType > typeArgs = expression.typeArguments().stream()
 						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
@@ -2028,7 +2025,7 @@ public class Typer {
 
 
 			/**
-			 * Ensures the passed expression is a boolean. 
+			 * Ensures the passed expression is a boolean.
 			 */
 			@Override
 			public GroundDataType visit( NotExpression n ) {
@@ -2168,780 +2165,6 @@ public class Typer {
 			}
 
 		}
-	}
-
-	private interface Scope {
-
-		Optional< ? extends HigherDataType > lookupDataType( String query );
-
-		HigherDataType assertLookupDataType( String query );
-
-		HigherDataType assertLookupDataType( Name query );
-
-		Optional< ? extends HigherReferenceType > lookupReferenceType( String query );
-
-		HigherReferenceType assertLookupReferenceType( String query );
-
-		HigherReferenceType assertLookupReferenceType( Name query );
-
-		Optional< ? extends HigherClassOrInterface > lookupClassOrInterface( String query );
-
-		HigherClassOrInterface assertLookupClassOrInterface( String query );
-
-		HigherClassOrInterface assertLookupClassOrInterface( Name query );
-
-		Optional< ? extends HigherTypeParameter > lookupTypeParameter( String query );
-
-		HigherTypeParameter assertLookupTypeParameter( String query );
-
-		HigherTypeParameter assertLookupTypeParameter( Name query );
-
-		Optional< ? extends World > lookupWorldParameter( String query );
-
-		World assertLookupWorldParameter( String query );
-
-		World assertLookupWorldParameter( Name query );
-
-	}
-
-	private static abstract class BaseScope implements Scope {
-
-		@Override
-		public final HigherDataType assertLookupDataType( String query ) {
-			return lookupDataType( query ).orElseThrow(
-					() -> new UnresolvedSymbolException( query ) );
-		}
-
-		@Override
-		public final HigherDataType assertLookupDataType( Name query ) {
-			return lookupDataType( query.identifier() ).orElseThrow(
-					() -> new AstPositionedException( query.position(),
-							new UnresolvedSymbolException( query.identifier() ) ) );
-		}
-
-		@Override
-		public final HigherReferenceType assertLookupReferenceType( String query ) {
-			return lookupReferenceType( query ).orElseThrow(
-					() -> new UnresolvedSymbolException( query ) );
-		}
-
-		@Override
-		public final HigherReferenceType assertLookupReferenceType( Name query ) {
-			return lookupReferenceType( query.identifier() ).orElseThrow(
-					() -> new AstPositionedException( query.position(),
-							new UnresolvedSymbolException( query.identifier() ) ) );
-		}
-
-		@Override
-		public final HigherClassOrInterface assertLookupClassOrInterface( String query ) {
-			return lookupClassOrInterface( query ).orElseThrow(
-					() -> new UnresolvedSymbolException( query ) );
-		}
-
-		@Override
-		public final HigherClassOrInterface assertLookupClassOrInterface( Name query ) {
-			return lookupClassOrInterface( query.identifier() ).orElseThrow(
-					() -> new AstPositionedException( query.position(),
-							new UnresolvedSymbolException( query.identifier() ) ) );
-		}
-
-		@Override
-		public final HigherTypeParameter assertLookupTypeParameter( String query ) {
-			return lookupTypeParameter( query ).orElseThrow(
-					() -> new UnresolvedSymbolException( query ) );
-		}
-
-		@Override
-		public final HigherTypeParameter assertLookupTypeParameter( Name query ) {
-			return lookupTypeParameter( query.identifier() ).orElseThrow(
-					() -> new AstPositionedException( query.position(),
-							new UnresolvedSymbolException( query.identifier() ) ) );
-		}
-
-		@Override
-		public final World assertLookupWorldParameter( String query ) {
-			return lookupWorldParameter( query ).orElseThrow(
-					() -> new UnresolvedSymbolException( query ) );
-		}
-
-		@Override
-		public final World assertLookupWorldParameter( Name query ) {
-			return lookupWorldParameter( query.identifier() ).orElseThrow(
-					() -> new AstPositionedException( query.position(),
-							new UnresolvedSymbolException( query.identifier() ) ) );
-		}
-	}
-
-	public static class UnresolvedSymbolException
-			extends StaticVerificationException {
-		public UnresolvedSymbolException( String symbol ) {
-			super( "cannot resolve symbol '" + symbol + "'" );
-		}
-	}
-
-	private static abstract class ChildScope extends BaseScope {
-
-		protected abstract Scope parent();
-
-		@Override
-		public Optional< ? extends HigherDataType > lookupDataType( String query ) {
-			return parent().lookupDataType( query );
-		}
-
-		@Override
-		public Optional< ? extends HigherReferenceType > lookupReferenceType( String query ) {
-			return parent().lookupReferenceType( query );
-		}
-
-		@Override
-		public Optional< ? extends HigherClassOrInterface > lookupClassOrInterface(
-				String query
-		) {
-			return parent().lookupClassOrInterface( query );
-		}
-
-		@Override
-		public Optional< ? extends HigherTypeParameter > lookupTypeParameter( String query ) {
-			return parent().lookupTypeParameter( query );
-		}
-
-		@Override
-		public Optional< ? extends World > lookupWorldParameter( String query ) {
-			return parent().lookupWorldParameter( query );
-		}
-
-	}
-
-	private static final class CompilationUnitScope extends BaseScope {
-
-		private final List< HigherClassOrInterface > singleImports;
-		private final List< ImportDeclaration > singleImportStatements;
-		private final List< Package > onDemandImports;
-		private final List< ImportDeclaration > onDemandImportStatements;
-		private final Package declarationPackage;
-
-		private final static String[] defaultOnDemandImports = new String[] { "java.lang", "choral.lang" };
-
-		public CompilationUnitScope(
-				Package declarationPackage, List< ImportDeclaration > declaredImports
-		) {
-			super();
-			this.declarationPackage = declarationPackage;
-			singleImportStatements = new ArrayList<>( declaredImports.size() );
-			onDemandImportStatements = new ArrayList<>( declaredImports.size() );
-			for( ImportDeclaration ip : declaredImports ) {
-				if( ip.isOnDemand() ) {
-					onDemandImportStatements.add( ip );
-				} else {
-					singleImportStatements.add( ip );
-				}
-			}
-			singleImports = new ArrayList<>( singleImportStatements.size() );
-			onDemandImports = new ArrayList<>(
-					onDemandImportStatements.size() + defaultOnDemandImports.length );
-			Package root = declarationPackage.universe().rootPackage();
-			for( String defaultOnDemandImport : defaultOnDemandImports ) {
-				onDemandImports.add( root.declarePackage( defaultOnDemandImport ) );
-			}
-		}
-
-		private boolean pendingSingleImports = true;
-
-		private void resolveSingleImports() {
-			if( pendingSingleImports ) {
-				for( ImportDeclaration ip : singleImportStatements ) {
-					Package pkg = declarationPackage.universe().rootPackage();
-					String[] path = ip.name().split( "\\." );
-					int i = 0;
-					// final element will always be a class or interface, not a package. 
-					while( i < path.length - 1 ) {
-						Optional< Package > x = pkg.declaredPackage( path[ i ] );
-						if( x.isPresent() ) {
-							pkg = x.get();
-						} else {
-							throw new AstPositionedException( ip.position(),
-									new StaticVerificationException(
-											"cannot resolve symbol '" + path[ i ] + "'" ) );
-						}
-						i += 1;
-					}
-					Optional< ? extends HigherClassOrInterface > type = pkg.declaredType(
-							path[ i ] );
-					if( type.isPresent() ) {
-						assertPublicAccess( type.get() );
-						singleImports.add( type.get() );
-					} else { // class lifter here?
-						throw new AstPositionedException( ip.position(),
-								new StaticVerificationException(
-										"cannot resolve symbol '" + path[ i ] + "'" ) );
-					}
-				}
-				pendingSingleImports = false;
-			}
-		}
-
-		private boolean pendingOnDemandImports = true;
-
-		private void resolveOnDemandImports() {
-			if( pendingOnDemandImports ) {
-				for( ImportDeclaration ip : onDemandImportStatements ) {
-					Package pkg = declarationPackage.universe().rootPackage();
-					String[] path = ip.name().split( "\\." );
-					int i = 0;
-					while( i < path.length - 1 /* last one is always ".*" */ ) {
-						// declaredPackage() returns full path up till passed package / class. 
-						// so passing "io" from "java.io", will return "java.io"
-						Optional< Package > x = pkg.declaredPackage( path[ i ] );
-						if( x.isPresent() ) {
-							pkg = x.get();
-						} else {
-							throw new AstPositionedException( ip.position(),
-									new StaticVerificationException(
-											"cannot resolve symbol '" + path[ i ] + "'" ) );
-						}
-						i += 1;
-					}
-					onDemandImports.add( pkg );
-				}
-				pendingOnDemandImports = false;
-			}
-		}
-
-		@Override
-		public Optional< ? extends HigherDataType > lookupDataType( String query ) {
-			Optional< ? extends HigherDataType > result = lookupClassOrInterface( query );
-			if( result.isEmpty() ) {
-				result = declarationPackage.universe().primitiveDataType( query );
-			}
-			return result;
-		}
-
-		@Override
-		public Optional< ? extends HigherReferenceType > lookupReferenceType( String query ) {
-			return lookupClassOrInterface( query );
-		}
-
-		@Override
-		public Optional< ? extends HigherClassOrInterface > lookupClassOrInterface(
-				String query
-		) {
-			String[] path = query.split( "\\." );
-			Optional< ? extends HigherClassOrInterface > result;
-			if( path.length > 1 ) {
-				// fully qualified name (only because Choral does not have nested classes yet)
-				Optional< Package > pkg = Optional.of(
-						declarationPackage.universe().rootPackage() );
-				int i = 0;
-				while( pkg.isPresent() && i < path.length - 1 ) {
-					pkg = pkg.get().declaredPackage( path[ i ] );
-					i += 1;
-				}
-				if( pkg.isPresent() && i == path.length - 1 ) {
-					Package p = pkg.get();
-					result = p.declaredType( path[ i ] );
-				} else {
-					result = Optional.empty();
-				}
-				// call classlifter with "declarationPackage.universe().rootPackage()"
-			} else {
-				// search current package
-				result = declarationPackage.declaredType( query );
-				// search imports
-				if( result.isEmpty() ) {
-					resolveSingleImports();
-					for( HigherClassOrInterface type : singleImports ) {
-						if( type.identifier().equals( query ) ) {
-							result = Optional.of( type );
-							break;
-						}
-					}
-				}
-				// search delayed imports
-				if( result.isEmpty() ) {
-					resolveOnDemandImports();
-					List< HigherClassOrInterface > results = onDemandImports.stream()
-							.map( x -> x.declaredType( query ) ).filter(
-									Optional::isPresent ).map(
-									Optional::get )
-							.filter( this::hasPublicAccess ).collect( Collectors.toList() );
-					if( results.size() == 0 ) {
-						result = Optional.empty();
-					} else if( results.size() == 1 ) {
-						result = Optional.of( results.get( 0 ) );
-					} else {
-						throw new StaticVerificationException(
-							"reference to '" + query + "' is ambiguous, " +
-									results.stream().map(
-													x -> "'" + x.identifier( true ) + "'" )
-											.collect( Collectors.collectingAndThen(
-													Collectors.toList(),
-													Formatting.joiningOxfordComma() ) ) +
-									" are ambiguous"
-						);
-					}
-				}
-			}
-			result.ifPresent( this::assertPublicAccess );
-			return result;
-		}
-
-		public Optional< ? extends HigherTypeParameter > lookupTypeParameter( String query ) {
-			return Optional.empty();
-		}
-
-		public Optional< World > lookupWorldParameter( String query ) {
-			return Optional.empty();
-		}
-
-		private final Map< HigherClassOrInterface, ClassOrInterfaceStaticScope > templateScopes = new HashMap<>();
-
-		public ClassOrInterfaceStaticScope getScope( HigherClassOrInterface type ) {
-			ClassOrInterfaceStaticScope scope = templateScopes.get( type );
-			if( scope == null ) {
-				scope = new ClassOrInterfaceStaticScope( this, type );
-				templateScopes.put( type, scope );
-			}
-			return scope;
-		}
-
-		private boolean hasPublicAccess( HigherClassOrInterface type ) {
-			return type.declarationContext() == declarationPackage || type.isPublic();
-		}
-
-		private void assertPublicAccess( HigherClassOrInterface type ) {
-			if( !hasPublicAccess( type ) ) {
-				throw new StaticVerificationException( type.variety().labelSingular
-						+ " '"
-						+ type.identifier( true )
-						+ "' has not public access" );
-			}
-		}
-	}
-
-	private interface ClassOrInterfaceScope extends Scope {
-		CallableScope getScope( Member.HigherCallable callable );
-	}
-
-	private static final class ClassOrInterfaceInstanceScope
-			extends ChildScope
-			implements ClassOrInterfaceScope, TypeParameterDeclarationScope {
-
-		ClassOrInterfaceInstanceScope( ClassOrInterfaceStaticScope parent ) {
-			this.parent = parent;
-		}
-
-		private final ClassOrInterfaceStaticScope parent;
-
-		@Override
-		protected ClassOrInterfaceStaticScope parent() {
-			return parent;
-		}
-
-		@Override
-		public Optional< ? extends HigherDataType > lookupDataType( String query ) {
-			Optional< ? extends HigherDataType > result = parent.type.typeParameter( query );
-			if( result.isEmpty() ) {
-				result = super.lookupDataType( query );
-			}
-			return result;
-		}
-
-		@Override
-		public Optional< ? extends HigherReferenceType > lookupReferenceType( String query ) {
-			Optional< ? extends HigherReferenceType > result = parent.type.typeParameter( query );
-			if( result.isEmpty() ) {
-				result = super.lookupReferenceType( query );
-			}
-			return result;
-		}
-
-		@Override
-		public Optional< ? extends HigherTypeParameter > lookupTypeParameter( String query ) {
-			return parent.type.typeParameter( query );
-		}
-
-		private final Map< HigherTypeParameter, TypeParameterScope > typeParameterScopes = new HashMap<>();
-
-		@Override
-		public TypeParameterScope getScope( HigherTypeParameter parameter ) {
-			TypeParameterScope scope = typeParameterScopes.get( parameter );
-			if( scope == null ) {
-				scope = new TypeParameterScope( this, parameter );
-				typeParameterScopes.put( parameter, scope );
-			}
-			return scope;
-		}
-
-		private final Map< Member.HigherCallable, CallableScope > callableScopes = new HashMap<>();
-
-		@Override
-		public CallableScope getScope( Member.HigherCallable callable ) {
-			CallableScope scope = callableScopes.get( callable );
-			if( scope == null ) {
-				scope = new CallableScope( this, callable );
-				callableScopes.put( callable, scope );
-			}
-			return scope;
-		}
-	}
-
-	private static final class ClassOrInterfaceStaticScope
-			extends ChildScope
-			implements ClassOrInterfaceScope {
-
-		ClassOrInterfaceStaticScope( CompilationUnitScope parent, HigherClassOrInterface type ) {
-			this.parent = parent;
-			this.type = type;
-		}
-
-		private final CompilationUnitScope parent;
-
-		@Override
-		protected CompilationUnitScope parent() {
-			return parent;
-		}
-
-		private final HigherClassOrInterface type;
-
-		@Override
-		public Optional< ? extends World > lookupWorldParameter( String query ) {
-			return type.worldParameter( query );
-		}
-
-		private final ClassOrInterfaceInstanceScope instanceScope = new ClassOrInterfaceInstanceScope(
-				this );
-
-		public ClassOrInterfaceInstanceScope getScope() {
-			return instanceScope;
-		}
-
-		private final Map< Member.HigherCallable, CallableScope > callableScopes = new HashMap<>();
-
-		public CallableScope getScope( Member.HigherCallable callable ) {
-			CallableScope scope = callableScopes.get( callable );
-			if( scope == null ) {
-				scope = new CallableScope( this, callable );
-				callableScopes.put( callable, scope );
-			}
-			return scope;
-		}
-
-	}
-
-	private interface TypeParameterDeclarationScope
-			extends Scope {
-		TypeParameterScope getScope( HigherTypeParameter p );
-	}
-
-	private static final class TypeParameterScope
-			extends ChildScope {
-
-		private final HigherTypeParameter typeParameter;
-
-		public TypeParameterScope(
-				TypeParameterDeclarationScope parent, HigherTypeParameter typeParameter
-		) {
-			this.parent = parent;
-			this.typeParameter = typeParameter;
-		}
-
-		private final TypeParameterDeclarationScope parent;
-
-		@Override
-		protected TypeParameterDeclarationScope parent() {
-			return parent;
-		}
-
-		@Override
-		public Optional< ? extends World > lookupWorldParameter( String query ) {
-			return typeParameter.worldParameter( query );
-		}
-
-	}
-
-	private static final class CallableScope
-			extends ChildScope
-			implements TypeParameterDeclarationScope {
-
-		private final Member.HigherCallable callable;
-
-		public CallableScope( ClassOrInterfaceScope parent, Member.HigherCallable callable ) {
-			this.parent = parent;
-			this.callable = callable;
-		}
-
-		private final ClassOrInterfaceScope parent;
-
-		@Override
-		protected ClassOrInterfaceScope parent() {
-			return parent;
-		}
-
-		@Override
-		public Optional< ? extends HigherDataType > lookupDataType( String query ) {
-			Optional< ? extends HigherDataType > result = callable.typeParameter( query );
-			if( result.isEmpty() ) {
-				return super.lookupDataType( query );
-			}
-			return result;
-		}
-
-		@Override
-		public Optional< ? extends HigherReferenceType > lookupReferenceType( String query ) {
-			Optional< ? extends HigherReferenceType > result = callable.typeParameter( query );
-			if( result.isEmpty() ) {
-				return super.lookupReferenceType( query );
-			}
-			return result;
-		}
-
-		@Override
-		public Optional< ? extends HigherTypeParameter > lookupTypeParameter( String query ) {
-			Optional< ? extends HigherTypeParameter > result = callable.typeParameter( query );
-			if( result.isEmpty() && !callable.isStatic() ) {
-				return super.lookupTypeParameter( query );
-			}
-			return result;
-		}
-
-		private final Map< HigherTypeParameter, TypeParameterScope > typeParameterScopes = new HashMap<>();
-
-		@Override
-		public TypeParameterScope getScope( HigherTypeParameter parameter ) {
-			TypeParameterScope scope = typeParameterScopes.get( parameter );
-			if( scope == null ) {
-				scope = new TypeParameterScope( this, parameter );
-				typeParameterScopes.put( parameter, scope );
-			}
-			return scope;
-		}
-
-		private CallableBodyScope bodyScope;
-
-		public CallableBodyScope getScope() {
-			if( bodyScope == null ) {
-				bodyScope = new CallableBodyScope( this );
-			}
-			return bodyScope;
-		}
-	}
-
-	private static final class CallableBodyScope extends ChildScope
-			implements VariableDeclarationScope {
-
-		private CallableBodyScope( CallableScope parent ) {
-			this.parent = parent;
-			for( Signature.Parameter p : parent.callable.innerCallable().signature().parameters() ) {
-				variables.put( p.identifier(), p.type() );
-			}
-		}
-
-		private final CallableScope parent;
-
-		@Override
-		public CallableScope parent() {
-			return parent;
-		}
-
-		private final Map< String, GroundDataType > variables = new HashMap<>();
-
-		@Override
-		public Map< String, GroundDataType > variables() { return variables; }
-
-		@Override
-		public void declareVariable( String identifier, GroundDataType type ) {
-			if( lookupVariable( identifier ).isEmpty() ) {
-				variables.put( identifier, type );
-			} else {
-				throw new StaticVerificationException( "variable '" + identifier
-						+ "' already defined in the scope" );
-			}
-		}
-
-		@Override
-		public Optional< ? extends GroundDataType > lookupVariable( String identifier ) {
-			return Optional.ofNullable( variables.get( identifier ) );
-		}
-
-		@Override
-		public Optional< ? extends GroundDataType > lookupVariableOrField( String identifier ) {
-			GroundDataType result = variables.get( identifier );
-			if( result == null ) {
-				return parent().callable.declarationContext().field( identifier )
-						.map( Member.Field::type );
-			} else {
-				return Optional.of( result );
-			}
-		}
-
-		@Override
-		public GroundClass lookupThis() {
-			return (GroundClass) parent.callable.declarationContext();
-		}
-
-		@Override
-		public GroundClass lookupSuper() {
-			return lookupThis().extendedClass().orElseThrow(
-					() -> new UnresolvedSymbolException( "super" ) );
-		}
-
-		public BlockScope newBlockScope() {
-			return new BlockScope( this );
-		}
-
-	}
-
-	private static class BlockScope extends ChildScope
-			implements VariableDeclarationScope {
-
-		private BlockScope( VariableDeclarationScope parent ) {
-			this.parent = parent;
-		}
-
-		private final VariableDeclarationScope parent;
-
-		@Override
-		public VariableDeclarationScope parent() {
-			return parent;
-		}
-
-		private final Map< String, GroundDataType > variables = new HashMap<>();
-
-		@Override
-		public Map< String, GroundDataType > variables() { return variables; }
-
-		@Override
-		public void declareVariable( String identifier, GroundDataType type ) {
-			if( lookupVariable( identifier ).isEmpty() ) {
-				variables.put( identifier, type );
-			} else {
-				throw new StaticVerificationException( "variable '" + identifier
-						+ "' already defined in the scope" );
-			}
-		}
-
-		@Override
-		public Optional< ? extends GroundDataType > lookupVariable( String identifier ) {
-			GroundDataType result = variables.get( identifier );
-			if( result == null ) {
-				return parent().lookupVariable( identifier );
-			} else {
-				return Optional.of( result );
-			}
-		}
-
-		@Override
-		public Optional< ? extends GroundDataType > lookupVariableOrField( String identifier ) {
-			GroundDataType result = variables.get( identifier );
-			if( result == null ) {
-				return parent().lookupVariableOrField( identifier );
-			} else {
-				return Optional.of( result );
-			}
-		}
-
-		@Override
-		public GroundClass lookupThis() {
-			return parent().lookupThis();
-		}
-
-		@Override
-		public GroundClass lookupSuper() {
-			return parent().lookupSuper();
-		}
-
-		public BlockScope newBlockScope() {
-			return new BlockScope( this );
-		}
-
-	}
-
-	private interface VariableDeclarationScope extends Scope {
-
-		Optional< ? extends GroundDataType > lookupVariable( String identifier );
-
-		default GroundDataType assertLookupVariable( String identifier ) {
-			return lookupVariable( identifier ).orElseThrow(
-					() -> new UnresolvedSymbolException( identifier ) );
-		}
-
-		default GroundDataType assertLookupVariable( Name query ) {
-			return lookupVariable( query.identifier() ).orElseThrow(
-					() -> new AstPositionedException( query.position(),
-							new UnresolvedSymbolException( query.identifier() ) ) );
-		}
-
-		void declareVariable( String identifier, GroundDataType type );
-
-		Optional< ? extends GroundDataType > lookupVariableOrField( String identifier );
-
-		default GroundDataType assertLookupVariableOrField( String identifier ) {
-			return lookupVariableOrField( identifier ).orElseThrow(
-					() -> new UnresolvedSymbolException( identifier ) );
-		}
-
-		default GroundDataType assertLookupVariableOrField( Name query ) {
-			return lookupVariableOrField( query.identifier() ).orElseThrow(
-					() -> new AstPositionedException( query.position(),
-							new UnresolvedSymbolException( query.identifier() ) ) );
-		}
-
-		GroundClass lookupThis();
-
-		GroundClass lookupSuper();
-
-		Scope parent();
-
-		Map< String, GroundDataType > variables();
-
-		BlockScope newBlockScope();
-
-		/**
-		 * Collects channels available in the scope by looking at the fields of "this"
-		 * and the enclosing method's arguments
-		 */
-		default List<Pair<String, GroundInterface>> getChannels(){
-			Map<String, GroundInterface> channels = new HashMap<>();
-			HigherClassOrInterface diDataChannel = assertLookupClassOrInterface("choral.channels.DiDataChannel");
-			HigherClassOrInterface diSelectChannel = assertLookupClassOrInterface("choral.channels.DiSelectChannel");
-
-			Predicate<GroundInterface> isChannel = (type) ->
-				type.allExtendedInterfaces()
-					.anyMatch( extendedInterface ->
-							diDataChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) ||
-							diSelectChannel.innerType().isSubtypeOf( extendedInterface.typeConstructor().innerType() ) );
-
-			VariableDeclarationScope currentScope = this;
-			while ( true ) {
-				currentScope.variables().forEach( (key, val) -> {
-					if( val instanceof GroundInterface type ){
-						if( isChannel.test( type ) ){
-							channels.putIfAbsent( key, type );
-						}
-					}
-				} );
-
-				if( parent() instanceof VariableDeclarationScope parent ){
-					currentScope = parent;
-				}
-				else {
-					break;
-				}
-			}
-
-			lookupThis().fields().forEach( field -> {
-				if( field.type() instanceof GroundInterface type ){
-					if( isChannel.test( type ) ){
-						channels.putIfAbsent( field.identifier(), type );
-					}
-				}
-			} );
-
-			return channels.entrySet().stream()
-				.map( entry -> new Pair<>( entry.getKey(), entry.getValue() ) )
-				.toList();
-		}
-
 	}
 
 }
