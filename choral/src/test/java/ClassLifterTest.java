@@ -23,16 +23,20 @@ public class ClassLifterTest {
 		// Run the typer to initialize special types like java.lang.Object
 		Typer.annotate( List.of(), HeaderLoader.loadStandardProfile().toList(), universe, new TyperOptions( VerbosityLevel.WARNINGS ) );
 		
-		Optional< HigherClassOrInterface > object = new ClassLifter(universe).liftClassOrInterface(
-			"java.lang.Object");
-		// System.out.println(object.anyMatch(x -> x.identifier().contains("BaseStream")));
-		
-		// Stream<HigherClassOrInterface> serializable = ClassLifter.liftPackage
-		// 	("java.io.Serializable", universe.rootPackage());
-		
-		// Stream<HigherClassOrInterface> enuM = ClassLifter.liftPackage(
-		// 	"java.lang.Enum", universe.rootPackage());
+		ClassLifter classLifter = new ClassLifter(universe);
 
+		// assert(classLifter.liftClassOrInterface("java.lang.Object").isPresent());
+		// assert(classLifter.liftClassOrInterface("java.lang.Enum").isPresent());
+
+		// duplicate 'iterator'
+		// assert(classLifter.liftClassOrInterface("java.util.stream.BaseStream").isPresent());
+		
+		// duplicate 'PrintStream'
+		// assert(classLifter.liftClassOrInterface("java.io.PrintStream").isPresent());
+
+		// duplicate 'Serializable'
+		// assert(classLifter.liftClassOrInterface("java.io.Serializable").isPresent());
+		
 		// Stream<HigherClassOrInterface> compUnit = ClassLifter.liftPackage(
 		// 	"supplement.HelloWorld", universe.rootPackage());
 

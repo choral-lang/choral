@@ -112,6 +112,7 @@ public class ClassLifter {
 			if( specialType.isPresent() ) {
 				return specialType;
 			}
+
 			var cachedType = universe.rootPackage().declaredType( fullyQualifiedName );
 			if( cachedType.isPresent() ) {
 				return cachedType;
@@ -479,31 +480,8 @@ public class ClassLifter {
 	private Optional< HigherClassOrInterface > liftEnum( java.lang.Class<?> enumClass ) {
 		// TRANSLATE CONSTANTS
 		java.lang.reflect.Field[] allFields = enumClass.getFields();
-		List< EnumConstant > choralEnumConstants = new ArrayList<>();
-		for( java.lang.reflect.Field field : allFields ) {
-			if( field.isEnumConstant() ) {
-				EnumConstant newConstant = new EnumConstant(
-						new Name( field.getName(), NOWHERE ),
-						Collections.emptyList(), // ignore annotations for now
-						NOWHERE );
-				choralEnumConstants.add( newConstant );
-			}
-		}
 
-		EnumSet< ClassModifier > enumModifiers = parseModifiers( ClassModifier.class,
-				enumClass.getModifiers() );
-		// Enum for enum modifiers in choral internals is the same Enum used for class modifiers
-		// but enums are not allowed to be abstract
-		enumModifiers.remove( ClassModifier.ABSTRACT );
-
-		choral.ast.body.Enum choralEnum = new choral.ast.body.Enum(
-				new Name( enumClass.getSimpleName(), NOWHERE ),
-				DEFAULT_WORLD_PARAMETER,
-				choralEnumConstants,
-				Collections.emptyList(), // ignore annotations for now
-				enumModifiers,
-				NOWHERE );
-
+		// TODO: Check if this line is actually needed / whether removing it breaks anything
 		Package pkg = universe.rootPackage().declarePackage(enumClass.getPackageName());
 
 		EnumSet<choral.types.Modifier> modifiers = parseModifiers(choral.types.Modifier.class, enumClass.getModifiers());
@@ -515,8 +493,7 @@ public class ClassLifter {
 			pkg, 
 			modifiers, 
 			enumClass.getSimpleName(), 
-			world, 
-			choralEnum);
+			world);
 
 		for( java.lang.reflect.Field field : allFields){
 			if( field.isEnumConstant()){
