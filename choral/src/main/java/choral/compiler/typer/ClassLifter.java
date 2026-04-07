@@ -132,96 +132,24 @@ public class ClassLifter {
 	}
 
 	private Optional< HigherClassOrInterface > liftClass( java.lang.Class< ? > clazz ) {
-		System.out.println("lifting " + clazz.getCanonicalName());
 		// for keeping track of which dependencies to lift
 		Set< String > dependencyIdentifiers = new HashSet<>();
 
-		// TRANSLATE FIELDS
 		java.lang.reflect.Field[] fields = clazz.getDeclaredFields();
-		List< Field > choralFields = new ArrayList<>();
-		for( java.lang.reflect.Field field : fields ) {
-			// private fields will never be accessed
-			if( Modifier.isPrivate( field.getModifiers() ) ) continue;
-
-			EnumSet< FieldModifier > modifiers = parseModifiers( FieldModifier.class,
-					field.getModifiers() );
-
-			TypeExpression fieldTypeExpression;
-			try {
-				fieldTypeExpression = liftType( field.getGenericType() );
-			} catch( LiftException e ) {
-				warn( field.getName(), e );
-				continue;
-			}
-
-			// add fields type to depencies
+		
+		// Extract dependencies from class members
+		for( java.lang.reflect.Field field : clazz.getDeclaredFields() ) {
+			if(Modifier.isPrivate(field.getModifiers())) continue;
 			extractClassDependencies( dependencyIdentifiers, field.getGenericType() );
-
-			Field choralField = new Field(
-					new Name( field.getName() ),
-					fieldTypeExpression,
-					Collections.emptyList(), // ignore annotations for now
-					modifiers,
-					NOWHERE );
-			choralFields.add( choralField );
 		}
-
-		// TRANSLATE METHODS
-		List< ClassMethodDefinition > methods = liftMethods(
-				clazz.getDeclaredMethods(),
-				ClassMethodModifier.class,
-				dependencyIdentifiers,
-				( signature, modifiers ) -> new ClassMethodDefinition(
-						signature,
-						new NilStatement( NOWHERE ),
-						Collections.emptyList(),
-						modifiers,
-						NOWHERE )
-		);
-
-		// TRANSLATE CONSTRUCTORS
-		List< ConstructorDefinition > choralConstructors = liftConstructors(
-				clazz.getConstructors(),
-				ConstructorModifier.class,
-				dependencyIdentifiers,
-				( signature, modifiers) -> new ConstructorDefinition(
-					signature,
-					null, // Represents calling `this()` or `super()` at the start of a constructor
-					new NilStatement( NOWHERE ),
-					Collections.emptyList(),
-					modifiers,
-					NOWHERE )
-		);
-
-		// TRANSLATE TYPE PARAMETERS
-		List< FormalTypeParameter > choralTypeParameters;
-		try {
-			choralTypeParameters = liftTypeParameters( clazz.getTypeParameters() );
-		} catch( LiftException e ) {
-			warn( clazz.getSimpleName(), e );
-			return Optional.empty();
+		for(java.lang.reflect.Method method : clazz.getDeclaredMethods()){
+			if( Modifier.isPrivate( method.getModifiers() ) ) continue;
+			if(method.isBridge()) continue;
+			addMethodDependencies(dependencyIdentifiers, method);
 		}
-
-		// TRANSLATE SUPERINTERFACES
-		java.lang.reflect.Type[] genericInterfaces = clazz.getGenericInterfaces();
-		List< TypeExpression > parentInterfaces = new ArrayList<>();
-		for( java.lang.reflect.Type genericInterface : genericInterfaces ) {
-			try {
-				parentInterfaces.add( liftType( genericInterface ) );
-			} catch( LiftException e ) {
-				warn( genericInterface.toString(), e );
-			}
-		}
-
-		// TRANSLATE SUPERCLASS
-		TypeExpression extendedExpression = null;
-		java.lang.reflect.Type genericSuperclass = clazz.getGenericSuperclass();
-		if( genericSuperclass != null ) {
-			try {
-				extendedExpression = liftType( genericSuperclass );
-			} catch( LiftException e ) {
-				warn( clazz.getSuperclass() != null ? clazz.getSuperclass().getName() : "superclass", e );
-			}
+		for(java.lang.reflect.Constructor< ? > constructor : clazz.getConstructors()){
+			if( Modifier.isPrivate( constructor.getModifiers() ) ) continue;
+			addMethodDependencies(dependencyIdentifiers, constructor);
 		}
 
 		// add superclass to depedencies
@@ -235,22 +163,6 @@ public class ClassLifter {
 			dependencyIdentifiers.add( superInterface.getName() );
 		}
 
-		EnumSet< ClassModifier > classModifiers = parseModifiers( ClassModifier.class,
-				clazz.getModifiers() );
-
-		choral.ast.body.Class choralClass = new Class(
-				new Name( clazz.getSimpleName(), NOWHERE ),
-				List.of( DEFAULT_WORLD_PARAMETER ),
-				choralTypeParameters,
-				extendedExpression,
-				parentInterfaces,
-				choralFields,
-				methods,
-				choralConstructors,
-				Collections.emptyList(), // ignore annotations for now
-				classModifiers,
-				NOWHERE );
-
 		Package pkg = universe.rootPackage().declarePackage(clazz.getPackageName());
 
 		EnumSet<choral.types.Modifier> modifiers = parseModifiers(choral.types.Modifier.class, clazz.getModifiers());
@@ -260,8 +172,7 @@ public class ClassLifter {
 			modifiers, 
 			clazz.getSimpleName(), 
 			List.of( new World(universe, WORLD_IDENTIFIER) ),
-			higherLiftTypeParameters( clazz.getTypeParameters() ),
-			choralClass);
+			higherLiftTypeParameters( clazz.getTypeParameters() ));
 
 		// recursively visit super class
 		if( superClass != null ) {
@@ -330,7 +241,6 @@ public class ClassLifter {
 			} else{
 				throw new RuntimeException("field '" + field.getName() + "' was found to be of type void: ");
 			}
-			
 		} 
 
 		// add methods
