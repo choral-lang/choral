@@ -404,6 +404,7 @@ public class ClassLifter {
 		for(java.lang.reflect.Type formalParam : method.getGenericParameterTypes()){
 			GroundDataTypeOrVoid liftedFormalParameterOrVoid = higherliftType(formalParam);
 			if(liftedFormalParameterOrVoid instanceof GroundDataType liftedFormalParameter){
+				// TODO: check if 'formalParam.getTypeName()' returns a valid name
 				higherMethod.innerCallable().signature().addParameter(formalParam.getTypeName(), liftedFormalParameter);
 			} else {
 				throw new RuntimeException("method was found to contain void parameter: " 
@@ -415,46 +416,6 @@ public class ClassLifter {
 		higherMethod.innerCallable().setReturnType(returnType);
 		return higherMethod;
 	}
-
-	/**
-	 * Lifts Java methods into their Choral representation.
-	 * @see #liftConstructors
-	 */
-	private static < M extends Enum< M >, D > List< D > liftMethods(
-			java.lang.reflect.Method[] methods,
-			java.lang.Class< M > modifierClass,
-			Set< String > dependencyIdentifiers,
-			MethodDefinitionFactory< M, D > factory
-	) {
-		List< D > methodDefinitions = new ArrayList<>();
-		for( java.lang.reflect.Method method : methods ) {
-			// private methods will never be accessed
-			if( Modifier.isPrivate( method.getModifiers() ) ) continue;
-			// Java "bridge" methods cause problems because they give out "erased" types. For
-			// example, `IntStream` has a method `java.util.Iterator iterator()` - notice the return
-			// type is missing a type parameter. Choral can't cope with this, so we skip it.
-			if( method.isBridge() ) continue;
-
-			EnumSet< M > modifiers = parseModifiers( modifierClass, method.getModifiers() );
-			if(method.isDefault()) {
-				modifiers.add( Enum.valueOf( modifierClass, "DEFAULT" ));
-			}
-
-			MethodSignature methodSignature;
-			try {
-				methodSignature = liftMethodSignature( method );
-			} catch( LiftException e ) {
-				warn( method.getName(), e );
-				continue;
-			}
-			methodDefinitions.add( factory.create( methodSignature, modifiers ) );
-
-			// by adding method dependencies at this point, arrays and wildcards have already been checked for.
-			addMethodDependencies( dependencyIdentifiers, method );
-		}
-		return methodDefinitions;
-	}
-
 
 	private Member.HigherConstructor higherLiftConstructor(Constructor<?> constructor,
 	GroundClass declarationContext) throws LiftException{
@@ -476,6 +437,7 @@ public class ClassLifter {
 		for(java.lang.reflect.Type type : constructor.getGenericParameterTypes()){
 			GroundDataTypeOrVoid liftedTypeOrVoid = higherliftType(type);
 			if(liftedTypeOrVoid instanceof GroundDataType liftedType ){
+				// TODO: check if 'type.getTypeName()' returns a valid name
 				higherConstructor.innerCallable().signature().addParameter(type.getTypeName(), liftedType);
 			} else{
 				throw new RuntimeException("constructor was found to contain void parameter: " 
@@ -484,88 +446,6 @@ public class ClassLifter {
 
 		}
 		return higherConstructor;
-	}
-
-	/**
-	 * Lifts Java constructors into their Choral representation.
-	 * @see #liftMethods
-	 */
-	private static < M extends Enum< M >, D > List< D > liftConstructors(
-			java.lang.reflect.Constructor< ? >[] constructors,
-			java.lang.Class< M > modifierClass,
-			Set< String > dependencyIdentifiers,
-			ConstructorDefinitionFactory< M, D > factory
-	) {
-		List< D > methodDefinitions = new ArrayList<>();
-		for( java.lang.reflect.Constructor< ? > ctor : constructors ) {
-			// private methods will never be accessed
-			if( Modifier.isPrivate( ctor.getModifiers() ) ) continue;
-
-			EnumSet< M > modifiers = parseModifiers( modifierClass, ctor.getModifiers() );
-
-			ConstructorSignature methodSignature;
-			try {
-				methodSignature = liftConstructorSignature( ctor );
-			} catch( LiftException e ) {
-				warn( ctor.getName(), e );
-				continue;
-			}
-			methodDefinitions.add( factory.create( methodSignature, modifiers ) );
-
-			// by adding method dependencies at this point, arrays and wildcards have already been checked for.
-			addMethodDependencies( dependencyIdentifiers, ctor );
-		}
-		return methodDefinitions;
-	}
-
-	private static MethodSignature liftMethodSignature(
-			java.lang.reflect.Method method
-	) throws LiftException {
-		return new MethodSignature(
-				new Name( method.getName(), NOWHERE ),
-				liftTypeParameters( method.getTypeParameters() ),
-				liftMethodParameters( method.getGenericParameterTypes() ),
-				liftType( method.getGenericReturnType() ),
-				NOWHERE );
-	}
-
-	private static ConstructorSignature liftConstructorSignature(
-			java.lang.reflect.Constructor< ? > constructor
-	) throws LiftException {
-		return new ConstructorSignature(
-				new Name( constructor.getClass().getSimpleName(), NOWHERE ),
-				liftTypeParameters( constructor.getTypeParameters() ),
-				liftMethodParameters( constructor.getGenericParameterTypes() ),
-				NOWHERE );
-	}
-
-	/**
-	 * Translates method parameters from Java reflection to Choral's internal representation.
-	 */
-	private static List< FormalMethodParameter > liftMethodParameters(
-			java.lang.reflect.Type[] parameterTypes
-	) throws LiftException {
-		List< FormalMethodParameter > parameters = new ArrayList<>();
-
-		for( int i = 0; i < parameterTypes.length; i++ ) {
-			TypeExpression type = liftType( parameterTypes[i] );
-			parameters.add( new FormalMethodParameter(
-					new Name( "param" + i, NOWHERE ),
-					type,
-					Collections.emptyList(), // ignore annotations for now
-					NOWHERE ) );
-		}
-		return parameters;
-	}
-
-	@FunctionalInterface
-	interface MethodDefinitionFactory< M extends Enum< M >, D > {
-		D create( MethodSignature signature, EnumSet< M > modifiers );
-	}
-
-	@FunctionalInterface
-	interface ConstructorDefinitionFactory< M extends Enum< M >, D > {
-		D create( ConstructorSignature signature, EnumSet< M > modifiers );
 	}
 
 	/////////////////////////////////////////////////////////////////////
