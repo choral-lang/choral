@@ -246,6 +246,7 @@ public class ClassLifter {
 		// add methods
 		for(Method method : clazz.getDeclaredMethods()){
 			if(Modifier.isPrivate(method.getModifiers())) continue;
+			if(method.isBridge()) continue;
 			Member.HigherMethod higherMethod;
 			try{
 				higherMethod = higherLiftMethod(method, higherClass.innerType());
@@ -335,6 +336,7 @@ public class ClassLifter {
 		// add methods to higherinterface
 		for(Method method : clazz.getDeclaredMethods()){
 			if(Modifier.isPrivate(method.getModifiers())) continue;
+			if(method.isBridge()) continue;
 			Member.HigherMethod higherMethod;
 			try{
 				higherMethod = higherLiftMethod(method, higherInterface.innerType());
@@ -383,6 +385,8 @@ public class ClassLifter {
 	GroundClassOrInterface declarationContext) throws LiftException{
 		EnumSet<choral.types.Modifier> methodModifiers = parseModifiers(
 			choral.types.Modifier.class, method.getModifiers());
+		// Default not part of modifier bits
+		if(method.isDefault()) methodModifiers.add(choral.types.Modifier.valueOf("DEFAULT"));
 
 		Member.HigherMethod higherMethod = new Member.HigherMethod(
 			declarationContext, 
