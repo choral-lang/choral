@@ -4,8 +4,10 @@ import choral.ast.Name;
 import choral.ast.Position;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.WorldArgument;
+import choral.compiler.typer.scope.ClassOrInterfaceInstanceScope;
 import choral.compiler.typer.scope.ClassOrInterfaceStaticScope;
 import choral.compiler.typer.scope.CompilationUnitScope;
+import choral.compiler.typer.scope.Scope;
 import choral.types.HigherClassOrInterface;
 import choral.types.HigherEnum;
 import choral.types.HigherInterface;
@@ -63,15 +65,7 @@ public class ClassLifter {
 
 	///////////////////// CONSTANTS /////////////////////
 
-	private static final Position NOWHERE = new Position( null, 0, 0 );
-
 	private static final String WORLD_IDENTIFIER = "A";
-
-	private static final FormalWorldParameter DEFAULT_WORLD_PARAMETER =
-			new FormalWorldParameter( new Name( WORLD_IDENTIFIER, NOWHERE ), NOWHERE );
-
-	private static final WorldArgument DEFAULT_WORLD_ARGUMENT =
-			new WorldArgument( new Name( WORLD_IDENTIFIER, NOWHERE ), NOWHERE );
 
 
 	///////////////////// LOCAL STATE /////////////////////
@@ -163,8 +157,8 @@ public class ClassLifter {
 			liftTypeParameters( clazz.getTypeParameters() ));
 		List<? extends World> worlds = higherClass.worldParameters();
 
-		ClassOrInterfaceStaticScope scope = new CompilationUnitScope( pkg, List.of() )
-				.getScope( higherClass );
+		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of() )
+				.getScope( higherClass ).getInstanceScope();
 
 		// recursively visit super class
 		java.lang.Class< ? > superClass = clazz.getSuperclass();
@@ -287,8 +281,8 @@ public class ClassLifter {
 			liftTypeParameters(clazz.getTypeParameters()));
 		List<? extends World> worlds = higherInterface.worldParameters();
 
-		ClassOrInterfaceStaticScope scope = new CompilationUnitScope( pkg, List.of() )
-				.getScope( higherInterface );
+		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of() )
+				.getScope( higherInterface ).getInstanceScope();
 
 		// recursively visit super interfaces
 		for( java.lang.Class< ? > superInterface : clazz.getInterfaces() ) {
@@ -368,8 +362,8 @@ public class ClassLifter {
 
 	private Member.HigherMethod liftMethod(Method method,
 			GroundClassOrInterface declarationContext,
-			ClassOrInterfaceStaticScope scope) throws LiftException{
-		// System.out.println("Lifting method: " + method + " in " + declarationContext);
+			ClassOrInterfaceInstanceScope scope) throws LiftException{
+		System.out.println("Lifting method: " + method + " in " + declarationContext);
 		EnumSet<choral.types.Modifier> methodModifiers = parseModifiers(method.getModifiers());
 		// Default not part of modifier bits
 		if(method.isDefault()) methodModifiers.add(choral.types.Modifier.valueOf("DEFAULT"));
@@ -399,7 +393,7 @@ public class ClassLifter {
 	}
 
 	private Member.HigherConstructor liftConstructor(Constructor<?> constructor,
-			GroundClass declarationContext, ClassOrInterfaceStaticScope scope) throws LiftException{
+			GroundClass declarationContext, ClassOrInterfaceInstanceScope scope) throws LiftException{
 		EnumSet<choral.types.Modifier> constructorModifiers = parseModifiers(constructor.getModifiers());
 		Member.HigherConstructor higherConstructor = new Member.HigherConstructor(
 			declarationContext, 
@@ -433,7 +427,6 @@ public class ClassLifter {
 
 	private List< HigherTypeParameter > liftTypeParameters(
 			java.lang.reflect.TypeVariable< ? >[] typeParameters
-			// ,ClassOrInterfaceStaticScope scope
 	) {
 		List< HigherTypeParameter > results = new ArrayList<>();
 		for(java.lang.reflect.TypeVariable<?> typeParameter : typeParameters){
@@ -450,7 +443,7 @@ public class ClassLifter {
 	private void addBounds(
 			HigherTypeParameter typeParameter,
 			java.lang.reflect.Type[] upperBounds,
-			ClassOrInterfaceStaticScope scope
+			ClassOrInterfaceInstanceScope scope
 	) throws LiftException {
 		for(java.lang.reflect.Type bound : upperBounds){
 			if(bound.equals(Object.class)) continue;
@@ -467,16 +460,16 @@ public class ClassLifter {
 	 * Generates the choral GroundDataTypeOrVoid from the given Java reflection Type.
 	 * Does so recursively if given Type is nested (or has type arguments).
 	 */
-	private GroundDataTypeOrVoid liftType(java.lang.reflect.Type type, ClassOrInterfaceStaticScope scope )
+	private GroundDataTypeOrVoid liftType(java.lang.reflect.Type type, ClassOrInterfaceInstanceScope scope )
 			throws LiftException {
 		Optional<? extends World> world = scope.lookupWorldParameter(WORLD_IDENTIFIER);
 		return liftType( type, List.of( world.get() ), scope );
-	} 
+	}
 
 	private GroundDataTypeOrVoid liftType(
 			java.lang.reflect.Type type,
 			List< World > worlds,
-			ClassOrInterfaceStaticScope scope
+			ClassOrInterfaceInstanceScope scope
 	) throws LiftException {
 
 		// Handle Class types (includes primitive types and regular classes)
@@ -533,8 +526,7 @@ public class ClassLifter {
 				if( typeArg instanceof java.lang.reflect.WildcardType ) {
 					throw LiftException.wildcard();
 				}
-				// Recursively process type arguments without world arguments
-				GroundDataTypeOrVoid liftedTypeArgument = liftType( typeArg, Collections.emptyList(), scope );
+				GroundDataTypeOrVoid liftedTypeArgument = liftType( typeArg, worlds, scope );
 				if(liftedTypeArgument instanceof GroundReferenceType liftedHigherReferenceType){
 					liftedTypeArguments.add( liftedHigherReferenceType.typeConstructor() );
 				} else{
@@ -553,11 +545,9 @@ public class ClassLifter {
 		}
 		// Handle TypeVariable (type parameters like T, E, K, V)
 		else if( type instanceof java.lang.reflect.TypeVariable< ? > typeVar ) {
-			HigherTypeParameter higherTypeParameter = new HigherTypeParameter(
-				universe, 
-				typeVar.getName(), 
-				worlds);
-			return higherTypeParameter.innerType();
+			HigherTypeParameter higherTypeParameter =
+				scope.assertLookupTypeParameter( typeVar.getName() );
+			return higherTypeParameter.applyTo( worlds );
 		}
 		// Handle GenericArrayType (generic array types like T[])
 		else if( type instanceof java.lang.reflect.GenericArrayType ) {
