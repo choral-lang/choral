@@ -108,26 +108,9 @@ public class ClassLifter {
 	}
 
 	private Optional< HigherClassOrInterface > liftClass( java.lang.Class< ? > clazz ) {
-		// for keeping track of which dependencies to lift
-		Set< String > dependencyIdentifiers = new HashSet<>();
 		String fullyQualifiedName = clazz.getCanonicalName();
 		java.lang.reflect.Field[] fields = clazz.getDeclaredFields();
 		
-		// Extract dependencies from class members
-		for( java.lang.reflect.Field field : clazz.getDeclaredFields() ) {
-			if(Modifier.isPrivate(field.getModifiers())) continue;
-			extractClassDependencies( dependencyIdentifiers, field.getGenericType() );
-		}
-		for(java.lang.reflect.Method method : clazz.getDeclaredMethods()){
-			if( Modifier.isPrivate( method.getModifiers() ) ) continue;
-			if(method.isBridge()) continue;
-			addMethodDependencies(dependencyIdentifiers, method);
-		}
-		for(java.lang.reflect.Constructor< ? > constructor : clazz.getConstructors()){
-			if( Modifier.isPrivate( constructor.getModifiers() ) ) continue;
-			addMethodDependencies(dependencyIdentifiers, constructor);
-		}
-
 		Package pkg = universe.rootPackage().declarePackage(clazz.getPackageName());
 
 		EnumSet<choral.types.Modifier> modifiers = parseModifiers(clazz.getModifiers());
@@ -166,11 +149,6 @@ public class ClassLifter {
 			// TODO What about its type parameters and their upper bounds?
 			GroundInterface groundInterface = (GroundInterface) result.get().applyTo( worlds );
 			higherClass.innerType().addExtendedInterface(groundInterface);
-		}
-
-		// recursively visit referenced classfiles
-		for( String dependency : dependencyIdentifiers ) {
-			liftClassOrInterface(dependency );
 		}
 
 		// add bounds to type parameters
@@ -242,15 +220,7 @@ public class ClassLifter {
 	}
 
 	private Optional< HigherClassOrInterface > liftInterface( java.lang.Class< ? > clazz ) {
-		Set< String > dependencyIdentifiers = new HashSet<>();
 		String fullyQualifiedName = clazz.getCanonicalName();
-
-		// Extract dependencies from class members
-		for(java.lang.reflect.Method method : clazz.getDeclaredMethods()){
-			if( Modifier.isPrivate( method.getModifiers() ) ) continue;
-			if(method.isBridge()) continue;
-			addMethodDependencies(dependencyIdentifiers, method);
-		}
 
 		Package pkg = universe.rootPackage().declarePackage(clazz.getPackageName());
 
@@ -277,11 +247,6 @@ public class ClassLifter {
 			// TODO What about its type parameters and their upper bounds?
 			GroundInterface groundInterface = (GroundInterface) result.get().applyTo( worlds );
 			higherInterface.innerType().addExtendedInterface(groundInterface);
-		}
-
-		// recursively visit referenced classfiles
-		for( String dependency : dependencyIdentifiers ) {
-			liftClassOrInterface( dependency );
 		}
 
 		// add bounds to type parameters
@@ -346,7 +311,7 @@ public class ClassLifter {
 	private Member.HigherMethod liftMethod(Method method,
 			GroundClassOrInterface declarationContext,
 			ClassOrInterfaceInstanceScope scope) throws LiftException{
-		System.out.println("Lifting method: " + method + " in " + declarationContext);
+		//System.out.println("Lifting method: " + method + " in " + declarationContext);
 		EnumSet<choral.types.Modifier> methodModifiers = parseModifiers(method.getModifiers());
 		// Default not part of modifier bits
 		if(method.isDefault()) methodModifiers.add(choral.types.Modifier.valueOf("DEFAULT"));
@@ -446,15 +411,7 @@ public class ClassLifter {
 	 */
 	private GroundDataTypeOrVoid liftType(java.lang.reflect.Type type, Scope scope )
 			throws LiftException {
-		Optional<? extends World> world = scope.lookupWorldParameter(WORLD_IDENTIFIER);
-		return liftType( type, List.of( world.get() ), scope );
-	}
-
-	private GroundDataTypeOrVoid liftType(
-			java.lang.reflect.Type type,
-			List< World > worlds,
-			Scope scope
-	) throws LiftException {
+		List< World > worlds = List.of( scope.lookupWorldParameter(WORLD_IDENTIFIER).get() );
 
 		// Handle Class types (includes primitive types and regular classes)
 		// We check the class name to avoid conflict with choral.ast.body.Class import
@@ -510,7 +467,7 @@ public class ClassLifter {
 				if( typeArg instanceof java.lang.reflect.WildcardType ) {
 					throw LiftException.wildcard();
 				}
-				GroundDataTypeOrVoid liftedTypeArgument = liftType( typeArg, worlds, scope );
+				GroundDataTypeOrVoid liftedTypeArgument = liftType( typeArg, scope );
 				if(liftedTypeArgument instanceof GroundReferenceType liftedHigherReferenceType){
 					liftedTypeArguments.add( liftedHigherReferenceType.typeConstructor() );
 				} else{
@@ -551,94 +508,6 @@ public class ClassLifter {
 	////////////////////// DEPENDENCY MANAGEMENT  ///////////////////////
 	/////////////////////////////////////////////////////////////////////
 
-
-	/**
-	 * Add dependencies for a method to dependencyIdentifiers. This currently includes return type, type parameters,
-	 * and method parameters. Exceptions are not included since those are not part of the MethodSignature in Choral.
-	 */
-	private static void addMethodDependencies(
-			Set< String > dependencyIdentifiers,
-			java.lang.reflect.Executable method
-	) {
-		// Extract return type dependencies
-		if (method instanceof java.lang.reflect.Method m)
-			extractClassDependencies( dependencyIdentifiers, m.getGenericReturnType() );
-
-		// Extract type parameter bounds dependencies
-		for( java.lang.reflect.TypeVariable< ? > typeParameter : method.getTypeParameters() ) {
-			for( java.lang.reflect.Type bound : typeParameter.getBounds() ) {
-				extractClassDependencies( dependencyIdentifiers, bound );
-			}
-		}
-
-		// Extract parameter type dependencies
-		for( java.lang.reflect.Type paramType : method.getGenericParameterTypes() ) {
-			extractClassDependencies( dependencyIdentifiers, paramType );
-		}
-	}
-
-	/**
-	 * Extracts all class dependencies from a Java reflection Type and adds them to the dependency set.
-	 * This recursively extracts class names, handling generic types by also extracting
-	 * dependencies from type arguments. Primitive types and inner classes are skipped.
-	 *
-	 * For example, "java.util.Map<java.lang.String, java.util.List<java.lang.Integer>>"
-	 * would extract: java.util.Map, java.lang.String, java.util.List, java.lang.Integer
-	 */
-	private static void extractClassDependencies(
-			Set< String > dependencyIdentifiers,
-			java.lang.reflect.Type type
-	) {
-		// Handle Class types (includes primitive types and regular classes)
-		if( type.getClass().getName().equals( "java.lang.Class" ) ) {
-			java.lang.Class<?> clazz = (java.lang.Class<?>) type;
-
-			// Skip primitive types, arrays, and inner classes
-			if( clazz.isPrimitive() || clazz.isArray() || clazz.isMemberClass() ) {
-				return;
-			}
-
-			// getName() returns the binary name which is what we need for consistency
-			dependencyIdentifiers.add( clazz.getName() );
-		}
-		// Handle ParameterizedType (generic types like List<String>)
-		else if( type instanceof java.lang.reflect.ParameterizedType ) {
-			java.lang.reflect.ParameterizedType paramType = (java.lang.reflect.ParameterizedType) type;
-			java.lang.reflect.Type rawType = paramType.getRawType();
-
-			// Add the raw type
-			if( rawType instanceof java.lang.Class<?> rawClass ) {
-				// Skip inner classes
-				if( !rawClass.isMemberClass() ) {
-					dependencyIdentifiers.add( rawClass.getName() );
-				}
-			}
-
-			// Recursively extract dependencies from type arguments
-			for( java.lang.reflect.Type typeArg : paramType.getActualTypeArguments() ) {
-				// Skip wildcards
-				if( !(typeArg instanceof java.lang.reflect.WildcardType) ) {
-					extractClassDependencies( dependencyIdentifiers, typeArg );
-				}
-			}
-		}
-		// Handle GenericArrayType (generic array types like T[])
-		else if( type instanceof java.lang.reflect.GenericArrayType ) {
-			// We don't support arrays
-			return;
-		}
-		// Handle TypeVariable (type parameters like T, E)
-		else if( type instanceof java.lang.reflect.TypeVariable< ? > ) {
-			// Type variables are not dependencies - they're defined elsewhere
-			return;
-		}
-		// Handle WildcardType (wildcard types like ? extends T)
-		else if( type instanceof java.lang.reflect.WildcardType ) {
-			// Wildcards are not supported
-			return;
-		}
-	}
-
 	/**
 	 * Parses modifiers found by the Java reflection API into modifiers used by choral internals.
 	 */
@@ -656,7 +525,7 @@ public class ClassLifter {
 
 
 	private static void warn( String id, LiftException e ) {
-		// System.out.println( "WARNING: Failed to lift " + id + " because " + e.getMessage() +
-        //         " types are not supported" );
+		System.out.println( "WARNING: Failed to lift " + id + " because " + e.getMessage() +
+                " types are not supported" );
 	}
 }
