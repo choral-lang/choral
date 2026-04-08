@@ -25,14 +25,14 @@ public class ClassLifterTest {
 		
 		ClassLifter classLifter = new ClassLifter(universe);
 
-		// assert(classLifter.liftClassOrInterface("java.lang.Object").isPresent());
-		// assert(classLifter.liftClassOrInterface("java.lang.Enum").isPresent());
+		assert(classLifter.liftClassOrInterface("java.lang.Object").isPresent());
+		assert(classLifter.liftClassOrInterface("java.lang.Enum").isPresent());
 
 		assert(classLifter.liftClassOrInterface("java.util.stream.BaseStream").isPresent());
 		
-		// assert(classLifter.liftClassOrInterface("java.io.PrintStream").isPresent());
+		assert(classLifter.liftClassOrInterface("java.io.PrintStream").isPresent());
 
-		// assert(classLifter.liftClassOrInterface("java.io.Serializable").isPresent());
+		assert(classLifter.liftClassOrInterface("java.io.Serializable").isPresent());
 		
 		// Stream<HigherClassOrInterface> compUnit = ClassLifter.liftPackage(
 		// 	"supplement.HelloWorld", universe.rootPackage());

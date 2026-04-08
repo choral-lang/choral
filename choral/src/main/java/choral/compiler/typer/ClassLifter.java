@@ -1,13 +1,6 @@
 package choral.compiler.typer;
 
-import choral.ast.Name;
-import choral.ast.Position;
-import choral.ast.type.FormalWorldParameter;
-import choral.ast.type.WorldArgument;
-import choral.compiler.typer.scope.ClassOrInterfaceInstanceScope;
-import choral.compiler.typer.scope.ClassOrInterfaceStaticScope;
-import choral.compiler.typer.scope.CompilationUnitScope;
-import choral.compiler.typer.scope.Scope;
+import choral.compiler.typer.scope.*;
 import choral.types.HigherClassOrInterface;
 import choral.types.HigherEnum;
 import choral.types.HigherInterface;
@@ -20,7 +13,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import choral.types.GroundClass;
 import choral.types.GroundClassOrInterface;
@@ -63,21 +55,12 @@ class LiftException extends Exception {
  */
 public class ClassLifter {
 
-	///////////////////// CONSTANTS /////////////////////
-
 	private static final String WORLD_IDENTIFIER = "A";
-
-
-	///////////////////// LOCAL STATE /////////////////////
-
 	private final Universe universe;
-	private final TaskQueue taskQueue;
 
 	public ClassLifter( Universe universe ) {
 		this.universe = universe;
-		this.taskQueue = new TaskQueue();
 	}
-
 
 	/////////////////////////////////////////////////////////////////////
 	////////////////////// CLASS LIFTING METHODS  ///////////////////////
@@ -445,9 +428,10 @@ public class ClassLifter {
 			java.lang.reflect.Type[] upperBounds,
 			ClassOrInterfaceInstanceScope scope
 	) throws LiftException {
+		TypeParameterScope parameterScope = scope.getScope( typeParameter );
 		for(java.lang.reflect.Type bound : upperBounds){
 			if(bound.equals(Object.class)) continue;
-			GroundReferenceType liftedBound = (GroundReferenceType) liftType(bound, scope);
+			GroundReferenceType liftedBound = (GroundReferenceType) liftType(bound, parameterScope);
 			typeParameter.innerType().addUpperBound( liftedBound );
 		}
 		// Locks the type parameter so that no more bounds can be added
@@ -460,7 +444,7 @@ public class ClassLifter {
 	 * Generates the choral GroundDataTypeOrVoid from the given Java reflection Type.
 	 * Does so recursively if given Type is nested (or has type arguments).
 	 */
-	private GroundDataTypeOrVoid liftType(java.lang.reflect.Type type, ClassOrInterfaceInstanceScope scope )
+	private GroundDataTypeOrVoid liftType(java.lang.reflect.Type type, Scope scope )
 			throws LiftException {
 		Optional<? extends World> world = scope.lookupWorldParameter(WORLD_IDENTIFIER);
 		return liftType( type, List.of( world.get() ), scope );
@@ -469,7 +453,7 @@ public class ClassLifter {
 	private GroundDataTypeOrVoid liftType(
 			java.lang.reflect.Type type,
 			List< World > worlds,
-			ClassOrInterfaceInstanceScope scope
+			Scope scope
 	) throws LiftException {
 
 		// Handle Class types (includes primitive types and regular classes)
