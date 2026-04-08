@@ -454,7 +454,9 @@ public class ClassLifter {
 			GroundReferenceType liftedBound = (GroundReferenceType) liftType(bound);
 			typeParameter.innerType().addUpperBound( liftedBound );
 		}
-		// TODO Missing documentation; what does this do?
+		// Locks the type parameter so that no more bounds can be added
+		// The type parameter is at this point considered finished. 
+		// Puts the type parameter into a "read-only" mode. 
 		typeParameter.innerType().finaliseBound();
 	}
 
