@@ -36,7 +36,7 @@ public class ClassLifterTest {
 		
 		assert(classLifter.liftClassOrInterface("supplement.HelloWorld").isPresent());
 
-		// choral.compiler.typer.scope.UnresolvedSymbolException: cannot resolve symbol 'T'
+		// java.lang.RuntimeException: Missing type: 'java.lang.invoke.MethodType' even after attempting to eagerly lift the type
 		assert(classLifter.liftClassOrInterface("java.util.HashMap").isPresent());		
 
 		// choral.compiler.typer.scope.UnresolvedSymbolException: cannot resolve symbol 'R'
