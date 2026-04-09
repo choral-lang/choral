@@ -131,7 +131,7 @@ public class ClassLifter {
 		if( superClass != null ) {
 			Optional< HigherClassOrInterface > result = liftClassOrInterface( superClass.getName() );
 			if( result.isEmpty() ) {
-				System.err.println( "WARNING: Could not lift superclass, skipping: " + fullyQualifiedName );
+				System.err.println( "WARNING: Could not lift superclass '" + superClass.getName() + "', skipping: " + fullyQualifiedName );
 				return Optional.empty();
 			}
 			// TODO What about its type parameters and their upper bounds?
@@ -143,7 +143,7 @@ public class ClassLifter {
 		for( java.lang.Class< ? > superInterface : clazz.getInterfaces() ) {
 			Optional< HigherClassOrInterface > result = liftClassOrInterface( superInterface.getName() );
 			if( result.isEmpty() ) {
-				System.err.println( "WARNING: Could not lift superinterface, skipping: " + fullyQualifiedName );
+				System.err.println( "WARNING: Could not lift superinterface: '" + superInterface.getName() + "', skipping: " + fullyQualifiedName );
 				return Optional.empty();
 			}
 			// TODO What about its type parameters and their upper bounds?
@@ -163,6 +163,8 @@ public class ClassLifter {
 				return Optional.empty();
 			}
 		}
+
+		// higherClass.innerType().finaliseInheritance();
 
 		// add fields
 		for(java.lang.reflect.Field field : fields){
@@ -262,6 +264,8 @@ public class ClassLifter {
 			}
 		}
 
+		// higherInterface.innerType().finaliseInheritance();
+
 		// add methods to higherinterface
 		for(Method method : clazz.getDeclaredMethods()){
 			if(Modifier.isPrivate(method.getModifiers())) continue;
@@ -283,7 +287,6 @@ public class ClassLifter {
 		// TRANSLATE CONSTANTS
 		java.lang.reflect.Field[] allFields = enumClass.getFields();
 
-		// TODO: Check if this line is actually needed / whether removing it breaks anything
 		Package pkg = universe.rootPackage().declarePackage(enumClass.getPackageName());
 
 		EnumSet<choral.types.Modifier> modifiers = parseModifiers(enumClass.getModifiers());
@@ -322,6 +325,8 @@ public class ClassLifter {
 			methodModifiers, 
 			liftTypeParameters( method.getTypeParameters() ));
 
+		CallableScope methodScope = scope.getScope(higherMethod);
+
 		// add bounds to type parameters
 		var choralParams = higherMethod.typeParameters();
 		var clazzParams = method.getTypeParameters();
@@ -333,10 +338,12 @@ public class ClassLifter {
 		for(java.lang.reflect.Type formalParam : method.getGenericParameterTypes()){
 			higherMethod.innerCallable().signature().addParameter(
 					"x" + i++,
-					(GroundDataType)liftType(formalParam, scope) );
+					(GroundDataType)liftType(formalParam, methodScope) );
 		}
-		GroundDataTypeOrVoid returnType = liftType(method.getGenericReturnType(), scope);
+		GroundDataTypeOrVoid returnType = liftType(method.getGenericReturnType(), methodScope);
 		higherMethod.innerCallable().setReturnType(returnType);
+
+		// higherMethod.innerCallable().finalise();
 		return higherMethod;
 	}
 
@@ -356,16 +363,15 @@ public class ClassLifter {
 		}
 
 		// add formal parameters
+		int i = 0;
 		for(java.lang.reflect.Type type : constructor.getGenericParameterTypes()){
 			GroundDataTypeOrVoid liftedTypeOrVoid = liftType(type, scope);
 			if(liftedTypeOrVoid instanceof GroundDataType liftedType ){
-				// TODO: check if 'type.getTypeName()' returns a valid name
-				higherConstructor.innerCallable().signature().addParameter(type.getTypeName(), liftedType);
+				higherConstructor.innerCallable().signature().addParameter("arg" + i++, liftedType);
 			} else{
 				throw new RuntimeException("constructor was found to contain void parameter: " 
 				+ higherConstructor.identifier());
 			}
-
 		}
 		return higherConstructor;
 	}
@@ -485,7 +491,7 @@ public class ClassLifter {
 			return higherType.get().applyTo(worlds, liftedTypeArguments);
 		}
 		// Handle TypeVariable (type parameters like T, E, K, V)
-		else if( type instanceof java.lang.reflect.TypeVariable< ? > typeVar ) {
+		else if( type instanceof java.lang.reflect.TypeVariable< ? > typeVar ) {			
 			HigherTypeParameter higherTypeParameter =
 				scope.assertLookupTypeParameter( typeVar.getName() );
 			return higherTypeParameter.applyTo( worlds );
@@ -525,7 +531,7 @@ public class ClassLifter {
 
 
 	private static void warn( String id, LiftException e ) {
-		System.out.println( "WARNING: Failed to lift " + id + " because " + e.getMessage() +
-                " types are not supported" );
+		// System.out.println( "WARNING: Failed to lift " + id + " because " + e.getMessage() +
+        //         " types are not supported" );
 	}
 }
