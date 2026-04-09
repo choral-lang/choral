@@ -144,7 +144,7 @@ public class ClassLifter {
 			Optional< HigherClassOrInterface > result = liftClassOrInterface( superInterface.getName() );
 			if( result.isEmpty() ) {
 				System.err.println( "WARNING: Could not lift superinterface: '" + superInterface.getName() + "', skipping: " + fullyQualifiedName );
-				return Optional.empty();
+				continue;
 			}
 			// TODO What about its type parameters and their upper bounds?
 			GroundInterface groundInterface = (GroundInterface) result.get().applyTo( worlds );
@@ -244,7 +244,7 @@ public class ClassLifter {
 			Optional< HigherClassOrInterface > result = liftClassOrInterface( superInterface.getName() );
 			if( result.isEmpty() ) {
 				System.err.println( "WARNING: Could not lift superinterface, skipping: " + fullyQualifiedName );
-				return Optional.empty();
+				continue;
 			}
 			// TODO What about its type parameters and their upper bounds?
 			GroundInterface groundInterface = (GroundInterface) result.get().applyTo( worlds );

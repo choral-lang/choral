@@ -40,7 +40,7 @@ public class ClassLifterTest {
 		assert(classLifter.liftClassOrInterface("java.util.HashMap").isPresent());		
 
 		// choral.compiler.typer.scope.UnresolvedSymbolException: cannot resolve symbol 'R'
-		// assert(classLifter.liftClassOrInterface("java.util.ArrayDeque").isPresent());
+		assert(classLifter.liftClassOrInterface("java.util.ArrayDeque").isPresent());
 
 		// Stream<HigherClassOrInterface> intermediary = Stream.of(enuM, object, serializable)
 		// 										.flatMap(i -> i);
