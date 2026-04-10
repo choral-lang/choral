@@ -312,7 +312,7 @@ public class ClassLifter {
 			}
 		}
 
-		higherEnum.innerType().finaliseInheritance();
+		higherEnum.innerType().finaliseInterface();
 		return Optional.of( higherEnum );
 	}
 
