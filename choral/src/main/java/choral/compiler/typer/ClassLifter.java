@@ -12,7 +12,10 @@ import choral.types.World;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
+
+import javax.management.RuntimeErrorException;
 
 import choral.types.GroundClass;
 import choral.types.GroundClassOrInterface;
@@ -127,29 +130,31 @@ public class ClassLifter {
 				.getScope( higherClass ).getInstanceScope();
 
 		// recursively visit super class
-		java.lang.Class< ? > superClass = clazz.getSuperclass();
-		if( superClass != null ) {
-			Optional< HigherClassOrInterface > result = liftClassOrInterface( superClass.getName() );
-			if( result.isEmpty() ) {
-				System.err.println( "WARNING: Could not lift superclass '" + superClass.getName() + "', skipping: " + fullyQualifiedName );
+		java.lang.reflect.Type genericSuperClass = clazz.getGenericSuperclass();
+		if(genericSuperClass != null){
+			GroundClass liftedSuperClass;
+			try {
+				liftedSuperClass = (GroundClass)liftSuperType(genericSuperClass, scope, worlds);
+			} catch (LiftException e) {
+				warn(fullyQualifiedName, e);
 				return Optional.empty();
 			}
-			// TODO What about its type parameters and their upper bounds?
-			GroundClass groundClass = (GroundClass) result.get().applyTo( worlds );
-			higherClass.innerType().setExtendedClass( groundClass );
+			higherClass.innerType().setExtendedClass(liftedSuperClass);
 		}
 
 		// recursively visit super interfaces
-		for( java.lang.Class< ? > superInterface : clazz.getInterfaces() ) {
-			Optional< HigherClassOrInterface > result = liftClassOrInterface( superInterface.getName() );
-			if( result.isEmpty() ) {
-				System.err.println( "WARNING: Could not lift superinterface: '" + superInterface.getName() + "', skipping: " + fullyQualifiedName );
+		for(java.lang.reflect.Type genericSuperInterface : clazz.getGenericInterfaces()){
+			GroundInterface liftedSuperInterface;
+			try {
+				liftedSuperInterface = (GroundInterface)liftSuperType(genericSuperInterface, scope, worlds);
+			} catch (LiftException e) {
+				warn(fullyQualifiedName, e);
 				continue;
 			}
-			// TODO What about its type parameters and their upper bounds?
-			GroundInterface groundInterface = (GroundInterface) result.get().applyTo( worlds );
-			higherClass.innerType().addExtendedInterface(groundInterface);
+			higherClass.innerType().addExtendedInterface(liftedSuperInterface);
 		}
+
+		higherClass.innerType().finaliseInheritance();
 
 		// add bounds to type parameters
 		var choralParams = higherClass.typeParameters();
@@ -163,8 +168,6 @@ public class ClassLifter {
 				return Optional.empty();
 			}
 		}
-
-		// higherClass.innerType().finaliseInheritance();
 
 		// add fields
 		for(java.lang.reflect.Field field : fields){
@@ -218,6 +221,7 @@ public class ClassLifter {
 			higherClass.innerType().addConstructor(higherConstructor);
 		}
 
+		higherClass.innerType().finaliseInterface();
 		return Optional.of( higherClass );
 	}
 
@@ -240,16 +244,18 @@ public class ClassLifter {
 				.getScope( higherInterface ).getInstanceScope();
 
 		// recursively visit super interfaces
-		for( java.lang.Class< ? > superInterface : clazz.getInterfaces() ) {
-			Optional< HigherClassOrInterface > result = liftClassOrInterface( superInterface.getName() );
-			if( result.isEmpty() ) {
-				System.err.println( "WARNING: Could not lift superinterface, skipping: " + fullyQualifiedName );
+		for(java.lang.reflect.Type genericSuperInterface : clazz.getGenericInterfaces()){
+			GroundInterface liftedSuperInterface;
+			try {
+				liftedSuperInterface = (GroundInterface)liftSuperType(genericSuperInterface, scope, worlds);
+			} catch (LiftException e) {
+				warn(fullyQualifiedName, e);
 				continue;
 			}
-			// TODO What about its type parameters and their upper bounds?
-			GroundInterface groundInterface = (GroundInterface) result.get().applyTo( worlds );
-			higherInterface.innerType().addExtendedInterface(groundInterface);
+			higherInterface.innerType().addExtendedInterface(liftedSuperInterface);
 		}
+
+		higherInterface.innerType().finaliseInheritance();
 
 		// add bounds to type parameters
 		var choralParams = higherInterface.typeParameters();
@@ -263,8 +269,6 @@ public class ClassLifter {
 				return Optional.empty();
 			}
 		}
-
-		// higherInterface.innerType().finaliseInheritance();
 
 		// add methods to higherinterface
 		for(Method method : clazz.getDeclaredMethods()){
@@ -280,6 +284,7 @@ public class ClassLifter {
 			higherInterface.innerType().addMethod(higherMethod);
 		}
 
+		higherInterface.innerType().finaliseInterface();
 		return Optional.of( higherInterface );
 	}
 
@@ -298,13 +303,52 @@ public class ClassLifter {
 			enumClass.getSimpleName(), 
 			new World(universe, WORLD_IDENTIFIER));
 
+		higherEnum.innerType().setExtendedClass();
+		higherEnum.innerType().finaliseInheritance();
+
 		for( java.lang.reflect.Field field : allFields){
 			if( field.isEnumConstant()){
 				higherEnum.innerType().addCase(field.getName());		
 			}
 		}
 
+		higherEnum.innerType().finaliseInheritance();
 		return Optional.of( higherEnum );
+	}
+
+	private GroundReferenceType liftSuperType(java.lang.reflect.Type superType, 
+			ClassOrInterfaceInstanceScope scope, List<? extends World> worlds) throws LiftException{
+		String rawName;
+		List<HigherReferenceType> typeArgs = new ArrayList<>();
+
+		if(superType instanceof ParameterizedType parameterizedSuper){
+			java.lang.Class<?> rawSuper = (java.lang.Class<?>)parameterizedSuper.getRawType();
+			if(rawSuper.isMemberClass()) throw LiftException.innerClass();
+			rawName = rawSuper.getName();
+
+			for (java.lang.reflect.Type typeArgument : parameterizedSuper.getActualTypeArguments()){
+				if(typeArgument instanceof java.lang.reflect.WildcardType) throw LiftException.wildcard();
+				GroundDataTypeOrVoid liftedTypeArgument = liftType(typeArgument, scope);
+				if(liftedTypeArgument instanceof  GroundReferenceType validTypeArgument){
+					typeArgs.add(validTypeArgument.typeConstructor());
+				} else {
+					throw new RuntimeException("Type argument resolved to void in super-type: " + liftedTypeArgument);
+				}
+			}
+		} else if (superType instanceof java.lang.Class<?> rawSuper){
+			if(rawSuper.isMemberClass()) throw LiftException.innerClass();
+			rawName = rawSuper.getName();
+		} else {
+			throw LiftException.exoticType(superType);
+		}
+
+		Optional<HigherClassOrInterface> higherType = liftClassOrInterface(rawName);
+		if(higherType.isEmpty()){
+			throw new LiftException("Could not lift parent type: " + rawName);
+		}
+
+		return typeArgs.isEmpty() ? (GroundReferenceType) higherType.get().applyTo(worlds)
+			: (GroundReferenceType) higherType.get().applyTo(worlds, typeArgs);
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -343,7 +387,7 @@ public class ClassLifter {
 		GroundDataTypeOrVoid returnType = liftType(method.getGenericReturnType(), methodScope);
 		higherMethod.innerCallable().setReturnType(returnType);
 
-		// higherMethod.innerCallable().finalise();
+		higherMethod.innerCallable().finalise();
 		return higherMethod;
 	}
 
@@ -373,6 +417,8 @@ public class ClassLifter {
 				+ higherConstructor.identifier());
 			}
 		}
+
+		higherConstructor.innerCallable().finalise();
 		return higherConstructor;
 	}
 	/////////////////////////////////////////////////////////////////////
@@ -411,11 +457,12 @@ public class ClassLifter {
 		typeParameter.innerType().finaliseBound();
 	}
 
+
 	/**
 	 * Generates the choral GroundDataTypeOrVoid from the given Java reflection Type.
 	 * Does so recursively if given Type is nested (or has type arguments).
 	 */
-	private GroundDataTypeOrVoid liftType(java.lang.reflect.Type type, Scope scope )
+	private GroundDataTypeOrVoid liftType(java.lang.reflect.Type type, Scope scope)
 			throws LiftException {
 		List< World > worlds = List.of( scope.lookupWorldParameter(WORLD_IDENTIFIER).get() );
 

@@ -36,10 +36,8 @@ public class ClassLifterTest {
 		
 		assert(classLifter.liftClassOrInterface("supplement.HelloWorld").isPresent());
 
-		// java.lang.RuntimeException: Missing type: 'java.lang.invoke.MethodType' even after attempting to eagerly lift the type
 		assert(classLifter.liftClassOrInterface("java.util.HashMap").isPresent());		
 
-		// choral.compiler.typer.scope.UnresolvedSymbolException: cannot resolve symbol 'R'
 		assert(classLifter.liftClassOrInterface("java.util.ArrayDeque").isPresent());
 
 		// Stream<HigherClassOrInterface> intermediary = Stream.of(enuM, object, serializable)
