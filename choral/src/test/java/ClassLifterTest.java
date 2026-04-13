@@ -1,24 +1,20 @@
-import choral.compiler.typer.ClassLifter;
+import java.io.IOException;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
 import choral.compiler.HeaderLoader;
 import choral.compiler.Typer;
 import choral.compiler.TyperOptions;
-import choral.types.HigherClassOrInterface;
+import choral.compiler.typer.ClassLifter;
 import choral.types.Universe;
 import choral.utils.VerbosityLevel;
-import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
 
 public class ClassLifterTest {
 
 	@Test
 	public void helloWorldTest() throws IOException {
 		Universe universe = new Universe();
-		
-		// Stream<HigherClassOrInterface> baseStream = ClassLifter.liftPackage
-		// 	("java.util.stream.BaseStream", universe.rootPackage());
 
 		// Run the typer to initialize special types like java.lang.Object
 		Typer.annotate( List.of(), HeaderLoader.loadStandardProfile().toList(), universe, new TyperOptions( VerbosityLevel.WARNINGS ) );
@@ -26,6 +22,7 @@ public class ClassLifterTest {
 		ClassLifter classLifter = new ClassLifter(universe);
 
 		assert(classLifter.liftClassOrInterface("java.lang.Object").isPresent());
+		
 		assert(classLifter.liftClassOrInterface("java.lang.Enum").isPresent());
 
 		assert(classLifter.liftClassOrInterface("java.util.stream.BaseStream").isPresent());

@@ -1,22 +1,20 @@
 package choral.compiler.typer;
 
-import choral.compiler.typer.scope.*;
-import choral.types.HigherClassOrInterface;
-import choral.types.HigherEnum;
-import choral.types.HigherInterface;
-import choral.types.HigherTypeParameter;
-import choral.types.Member;
-import choral.types.Package;
-import choral.types.World;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 
-import javax.management.RuntimeErrorException;
-
+import choral.compiler.typer.scope.CallableScope;
+import choral.compiler.typer.scope.ClassOrInterfaceInstanceScope;
+import choral.compiler.typer.scope.CompilationUnitScope;
+import choral.compiler.typer.scope.Scope;
+import choral.compiler.typer.scope.TypeParameterScope;
 import choral.types.GroundClass;
 import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
@@ -24,10 +22,17 @@ import choral.types.GroundDataTypeOrVoid;
 import choral.types.GroundInterface;
 import choral.types.GroundReferenceType;
 import choral.types.HigherClass;
+import choral.types.HigherClassOrInterface;
+import choral.types.HigherEnum;
+import choral.types.HigherInterface;
 import choral.types.HigherPrimitiveDataType;
 import choral.types.HigherReferenceType;
+import choral.types.HigherTypeParameter;
+import choral.types.Member;
+import choral.types.Package;
 import choral.types.Universe;
 import choral.types.Universe.PrimitiveTypeTag;
+import choral.types.World;
 
 class LiftException extends Exception {
 	LiftException( String message ) {
@@ -60,9 +65,11 @@ public class ClassLifter {
 
 	private static final String WORLD_IDENTIFIER = "A";
 	private final Universe universe;
+	private final TaskQueue taskQueue;
 
 	public ClassLifter( Universe universe ) {
 		this.universe = universe;
+		this.taskQueue = new TaskQueue();
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -76,7 +83,20 @@ public class ClassLifter {
 	 * @param fullyQualifiedName The fully qualified name of type to be lifted.
 	 * @return A choral type representing the type, or nothing if classpath lookup failed.
 	 */
-	public Optional< HigherClassOrInterface > liftClassOrInterface( String fullyQualifiedName ) {
+	public Optional< HigherClassOrInterface > liftClassOrInterface( String fullyQualifiedName ){
+		Optional< HigherClassOrInterface > result = liftClassOrInterfaceHelper(fullyQualifiedName);
+		taskQueue.process();
+		return result;
+	}
+
+	/**
+	 * Looks up the given type on the classpath and lifts it into a Choral type - adding it
+	 * to the Universe as a side-effect.
+	 *
+	 * @param fullyQualifiedName The fully qualified name of type to be lifted.
+	 * @return A choral type representing the type, or nothing if classpath lookup failed.
+	 */
+	private Optional< HigherClassOrInterface > liftClassOrInterfaceHelper( String fullyQualifiedName ) {
 		var specialType = universe.specialTypeTag( fullyQualifiedName ).map( universe::specialType );
 		if( specialType.isPresent() ) {
 			return specialType;
@@ -221,7 +241,10 @@ public class ClassLifter {
 			higherClass.innerType().addConstructor(higherConstructor);
 		}
 
-		higherClass.innerType().finaliseInterface();
+		TaskQueue.MemberTask task = new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherClass, () -> {
+			higherClass.innerType().finaliseInterface();
+		});
+		taskQueue.enqueue(task);
 		return Optional.of( higherClass );
 	}
 
@@ -284,7 +307,10 @@ public class ClassLifter {
 			higherInterface.innerType().addMethod(higherMethod);
 		}
 
-		higherInterface.innerType().finaliseInterface();
+		TaskQueue.MemberTask task = new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherInterface, () -> {
+			higherInterface.innerType().finaliseInterface();
+		});
+		taskQueue.enqueue(task);
 		return Optional.of( higherInterface );
 	}
 
@@ -312,7 +338,10 @@ public class ClassLifter {
 			}
 		}
 
-		higherEnum.innerType().finaliseInterface();
+		TaskQueue.MemberTask task = new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherEnum, () -> {
+			higherEnum.innerType().finaliseInterface();
+		});
+		taskQueue.enqueue(task);
 		return Optional.of( higherEnum );
 	}
 
@@ -342,7 +371,7 @@ public class ClassLifter {
 			throw LiftException.exoticType(superType);
 		}
 
-		Optional<HigherClassOrInterface> higherType = liftClassOrInterface(rawName);
+		Optional<HigherClassOrInterface> higherType = liftClassOrInterfaceHelper(rawName);
 		if(higherType.isEmpty()){
 			throw new LiftException("Could not lift parent type: " + rawName);
 		}
@@ -492,7 +521,7 @@ public class ClassLifter {
 				return primitiveType.applyTo(worlds);
 			} else {
 				String typeName = clazz.getCanonicalName();
-				Optional<HigherClassOrInterface> higherType = liftClassOrInterface(typeName);
+				Optional<HigherClassOrInterface> higherType = liftClassOrInterfaceHelper(typeName);
 				if(higherType.isEmpty()){
 					throw new RuntimeException("Missing type: " + "'" + typeName +
 						"' even after attempting to eagerly lift the type");
@@ -530,7 +559,7 @@ public class ClassLifter {
 			}
 
 			String typeName = rawClass.getCanonicalName();
-			Optional<HigherClassOrInterface> higherType = liftClassOrInterface(typeName);
+			Optional<HigherClassOrInterface> higherType = liftClassOrInterfaceHelper(typeName);
 			if(higherType.isEmpty()){
 				throw new RuntimeException("Missing type: " + "'" + typeName +
 						"' even after attempting to eagerly lift the type");
