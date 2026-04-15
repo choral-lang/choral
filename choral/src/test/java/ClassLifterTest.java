@@ -37,9 +37,12 @@ public class ClassLifterTest {
 
 		assert(classLifter.liftClassOrInterface("java.util.HashMap").isPresent());		
 
+		assert(classLifter.liftClassOrInterface("java.util.Deque").isPresent());
+
 		assert(classLifter.liftClassOrInterface("java.util.ArrayDeque").isPresent());
 
-		assert(classLifter.liftClassOrInterface("java.util.Deque").isPresent());
+		assert(classLifter.liftClassOrInterface("java.util.Random").isPresent());
+		
 
 		// Stream<HigherClassOrInterface> intermediary = Stream.of(enuM, object, serializable)
 		// 										.flatMap(i -> i);
