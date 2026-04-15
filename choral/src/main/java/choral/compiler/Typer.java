@@ -30,6 +30,7 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
+import choral.compiler.typer.ClassLifter;
 import choral.compiler.typer.Phase;
 import choral.compiler.typer.TaskQueue;
 import choral.compiler.typer.scope.*;
@@ -89,11 +90,13 @@ public class Typer {
 
 		private final TaskQueue taskQueue;
 		private final Universe universe;
+		private final ClassLifter classLifter;
 		protected final TyperOptions opts;
 
 		public Visitor( TaskQueue taskQueue, Universe universe, TyperOptions opts ) {
 			this.taskQueue = taskQueue;
 			this.universe = universe;
+			this.classLifter = new ClassLifter( universe, taskQueue );
 			this.opts = opts;
 		}
 
@@ -110,7 +113,7 @@ public class Typer {
 			if( n.packageDeclaration().isPresent() ) {
 				pkg = pkg.declarePackage( n.packageDeclaration().get() );
 			}
-			CompilationUnitScope scope = new CompilationUnitScope( pkg, n.imports(), taskQueue );
+			CompilationUnitScope scope = new CompilationUnitScope( pkg, n.imports(), classLifter );
 			for( choral.ast.body.Class x : n.classes() ) {
 				checkPrimaryTemplate( x, n, "class" );
 				visitClass( scope, pkg, x );
