@@ -7,6 +7,7 @@ import choral.compiler.HeaderLoader;
 import choral.compiler.Typer;
 import choral.compiler.TyperOptions;
 import choral.compiler.typer.ClassLifter;
+import choral.compiler.typer.TaskQueue;
 import choral.types.Universe;
 import choral.utils.VerbosityLevel;
 
@@ -15,11 +16,12 @@ public class ClassLifterTest {
 	@Test
 	public void helloWorldTest() throws IOException {
 		Universe universe = new Universe();
+		TaskQueue taskQueue = new TaskQueue();
 
 		// Run the typer to initialize special types like java.lang.Object
 		Typer.annotate( List.of(), HeaderLoader.loadStandardProfile().toList(), universe, new TyperOptions( VerbosityLevel.WARNINGS ) );
 		
-		ClassLifter classLifter = new ClassLifter(universe);
+		ClassLifter classLifter = new ClassLifter(universe, taskQueue);
 
 		assert(classLifter.liftClassOrInterface("java.lang.Object").isPresent());
 		
@@ -36,6 +38,8 @@ public class ClassLifterTest {
 		assert(classLifter.liftClassOrInterface("java.util.HashMap").isPresent());		
 
 		assert(classLifter.liftClassOrInterface("java.util.ArrayDeque").isPresent());
+
+		assert(classLifter.liftClassOrInterface("java.util.Deque").isPresent());
 
 		// Stream<HigherClassOrInterface> intermediary = Stream.of(enuM, object, serializable)
 		// 										.flatMap(i -> i);

@@ -110,7 +110,7 @@ public class Typer {
 			if( n.packageDeclaration().isPresent() ) {
 				pkg = pkg.declarePackage( n.packageDeclaration().get() );
 			}
-			CompilationUnitScope scope = new CompilationUnitScope( pkg, n.imports() );
+			CompilationUnitScope scope = new CompilationUnitScope( pkg, n.imports(), taskQueue );
 			for( choral.ast.body.Class x : n.classes() ) {
 				checkPrimaryTemplate( x, n, "class" );
 				visitClass( scope, pkg, x );

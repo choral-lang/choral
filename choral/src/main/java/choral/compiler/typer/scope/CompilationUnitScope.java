@@ -10,6 +10,9 @@ import choral.utils.Formatting;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import choral.compiler.typer.ClassLifter;
+import choral.compiler.typer.TaskQueue;
+
 /**
  * Top-level scope for a single Choral source file. Resolves type names by searching the current
  * package, single-type imports, then on-demand imports — with {@code java.lang} and
@@ -27,8 +30,11 @@ public final class CompilationUnitScope extends BaseScope {
 	private boolean pendingSingleImports = true;
 	private boolean pendingOnDemandImports = true;
 
+	private final ClassLifter classLifter;
+
 	public CompilationUnitScope(
-			choral.types.Package declarationPackage, List< ImportDeclaration > declaredImports
+			choral.types.Package declarationPackage, List< ImportDeclaration > declaredImports,
+			TaskQueue taskQueue
 	) {
 		super();
 		this.declarationPackage = declarationPackage;
@@ -48,6 +54,7 @@ public final class CompilationUnitScope extends BaseScope {
 		for( String defaultOnDemandImport : defaultOnDemandImports ) {
 			onDemandImports.add( root.declarePackage( defaultOnDemandImport ) );
 		}
+		classLifter = new ClassLifter(declarationPackage.universe(), taskQueue);
 	}
 
 	private void resolveSingleImports() {
@@ -110,7 +117,7 @@ public final class CompilationUnitScope extends BaseScope {
 	@Override
 	public Optional< ? extends HigherClassOrInterface > lookupClassOrInterface( String query ) {
 		String[] path = query.split( "\\." );
-		Optional< ? extends HigherClassOrInterface > result;
+		Optional< ? extends HigherClassOrInterface > result = Optional.empty();
 		if( path.length > 1 ) {
 			// fully qualified name (only because Choral does not have nested classes yet)
 			Optional< choral.types.Package > pkg = Optional.of(
@@ -123,10 +130,10 @@ public final class CompilationUnitScope extends BaseScope {
 			if( pkg.isPresent() && i == path.length - 1 ) {
 				Package p = pkg.get();
 				result = p.declaredType( path[ i ] );
-			} else {
-				result = Optional.empty();
+			} 
+			if(result.isEmpty()){
+				result = classLifter.liftClassOrInterface(query);
 			}
-			// call classlifter with "declarationPackage.universe().rootPackage()"
 		} else {
 			// search current package
 			result = declarationPackage.declaredType( query );

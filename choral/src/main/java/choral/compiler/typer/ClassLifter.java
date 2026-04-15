@@ -67,9 +67,9 @@ public class ClassLifter {
 	private final Universe universe;
 	private final TaskQueue taskQueue;
 
-	public ClassLifter( Universe universe ) {
+	public ClassLifter( Universe universe, TaskQueue taskQueue ) {
 		this.universe = universe;
-		this.taskQueue = new TaskQueue();
+		this.taskQueue = taskQueue;
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -146,7 +146,7 @@ public class ClassLifter {
 			liftTypeParameters( clazz.getTypeParameters() ));
 		List<? extends World> worlds = higherClass.worldParameters();
 
-		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of() )
+		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of(), taskQueue )
 				.getScope( higherClass ).getInstanceScope();
 
 		// recursively visit super class
@@ -263,7 +263,7 @@ public class ClassLifter {
 			liftTypeParameters(clazz.getTypeParameters()));
 		List<? extends World> worlds = higherInterface.worldParameters();
 
-		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of() )
+		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of(), taskQueue )
 				.getScope( higherInterface ).getInstanceScope();
 
 		// recursively visit super interfaces
