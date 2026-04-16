@@ -132,10 +132,11 @@ public class TestChoral {
 	public Stream< DynamicTest > typer() {
 		CompilationRequestBuilder mustPass = new CompilationRequestBuilder();
 		mustPass.addSources("OnDemandImports", subFolder(TYPER_PASS, "OnDemandImports"));
+		mustPass.addSources("ClassLifterIntegration", subFolder(TYPER_PASS,"ClassLifterIntegration"));
+		mustPass.addSources("DualJavaImport", subFolder(TYPER_PASS, "DualJavaImport"));
 		//mustPass.addSources("InterfaceDefaultMethod", subFolder(TYPER_PASS, "InterfaceDefaultMethod"));
 		//^Test case for implementing default for interface methods, only supported in internals currently
 		// Parser and projector still missing support. 
-		mustPass.addSources("ClassLifterIntegration", subFolder(TYPER_PASS,"ClassLifterIntegration"));
 		CompilationRequestBuilder mustFail = new CompilationRequestBuilder();
 		mustFail.addSources("InstanceOverridesStatic", subFolder(TYPER_FAIL, "InstanceOverridesStatic"));
 		mustFail.addSources("StaticOverridesInstance", subFolder(TYPER_FAIL, "StaticOverridesInstance"));

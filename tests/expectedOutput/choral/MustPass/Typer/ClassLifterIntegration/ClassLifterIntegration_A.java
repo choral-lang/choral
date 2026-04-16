@@ -8,6 +8,7 @@ class ClassLifterIntegration_A {
 	public void test() {
 		String test = "test";
 		Random rn = new Random();
+		rn.nextInt();
 	}
 
 }
