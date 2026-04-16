@@ -17,6 +17,7 @@ java/lang/Class.chh
 java/lang/Comparable.chh
 java/lang/System.chh
 java/lang/Throwable.chh
+java/util/Optional.chh
 java/nio/ByteBuffer.chh
 java/nio/charset/StandardCharsets.chh
 java/nio/charset/Charset.chh
