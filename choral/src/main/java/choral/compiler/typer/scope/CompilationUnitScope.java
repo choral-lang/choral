@@ -29,15 +29,15 @@ public final class CompilationUnitScope extends BaseScope {
 	private final Map< HigherClassOrInterface, ClassOrInterfaceStaticScope > templateScopes = new HashMap<>();
 	private boolean pendingSingleImports = true;
 	private boolean pendingOnDemandImports = true;
-
 	private final ClassLifter classLifter;
 
 	public CompilationUnitScope(
 			choral.types.Package declarationPackage, List< ImportDeclaration > declaredImports,
-			TaskQueue taskQueue
+			ClassLifter classLifter
 	) {
 		super();
 		this.declarationPackage = declarationPackage;
+		this.classLifter = classLifter;
 		singleImportStatements = new ArrayList<>( declaredImports.size() );
 		onDemandImportStatements = new ArrayList<>( declaredImports.size() );
 		for( ImportDeclaration ip : declaredImports ) {
@@ -54,7 +54,6 @@ public final class CompilationUnitScope extends BaseScope {
 		for( String defaultOnDemandImport : defaultOnDemandImports ) {
 			onDemandImports.add( root.declarePackage( defaultOnDemandImport ) );
 		}
-		classLifter = new ClassLifter(declarationPackage.universe(), taskQueue);
 	}
 
 	private void resolveSingleImports() {

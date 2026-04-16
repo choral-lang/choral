@@ -84,19 +84,6 @@ public class ClassLifter {
 	 * @return A choral type representing the type, or nothing if classpath lookup failed.
 	 */
 	public Optional< HigherClassOrInterface > liftClassOrInterface( String fullyQualifiedName ){
-		Optional< HigherClassOrInterface > result = liftClassOrInterfaceHelper(fullyQualifiedName);
-		taskQueue.process();
-		return result;
-	}
-
-	/**
-	 * Looks up the given type on the classpath and lifts it into a Choral type - adding it
-	 * to the Universe as a side-effect.
-	 *
-	 * @param fullyQualifiedName The fully qualified name of type to be lifted.
-	 * @return A choral type representing the type, or nothing if classpath lookup failed.
-	 */
-	private Optional< HigherClassOrInterface > liftClassOrInterfaceHelper( String fullyQualifiedName ) {
 		var specialType = universe.specialTypeTag( fullyQualifiedName ).map( universe::specialType );
 		if( specialType.isPresent() ) {
 			return specialType;
@@ -146,7 +133,7 @@ public class ClassLifter {
 			liftTypeParameters( clazz.getTypeParameters() ));
 		List<? extends World> worlds = higherClass.worldParameters();
 
-		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of(), taskQueue )
+		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of(), this )
 				.getScope( higherClass ).getInstanceScope();
 
 		// recursively visit super class
@@ -263,7 +250,7 @@ public class ClassLifter {
 			liftTypeParameters(clazz.getTypeParameters()));
 		List<? extends World> worlds = higherInterface.worldParameters();
 
-		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of(), taskQueue )
+		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of(), this )
 				.getScope( higherInterface ).getInstanceScope();
 
 		// recursively visit super interfaces
@@ -371,7 +358,7 @@ public class ClassLifter {
 			throw LiftException.exoticType(superType);
 		}
 
-		Optional<HigherClassOrInterface> higherType = liftClassOrInterfaceHelper(rawName);
+		Optional<HigherClassOrInterface> higherType = liftClassOrInterface(rawName);
 		if(higherType.isEmpty()){
 			throw new LiftException("Could not lift parent type: " + rawName);
 		}
@@ -451,7 +438,7 @@ public class ClassLifter {
 		return higherConstructor;
 	}
 	/////////////////////////////////////////////////////////////////////
-	//////////////////// HELPERS FOR LIFTING TYPES  /////////////////////
+	//////////////////// S FOR LIFTING TYPES  /////////////////////
 	/////////////////////////////////////////////////////////////////////
 
 	private List< HigherTypeParameter > liftTypeParameters(
@@ -521,7 +508,7 @@ public class ClassLifter {
 				return primitiveType.applyTo(worlds);
 			} else {
 				String typeName = clazz.getCanonicalName();
-				Optional<HigherClassOrInterface> higherType = liftClassOrInterfaceHelper(typeName);
+				Optional<HigherClassOrInterface> higherType = liftClassOrInterface(typeName);
 				if(higherType.isEmpty()){
 					throw new RuntimeException("Missing type: " + "'" + typeName +
 						"' even after attempting to eagerly lift the type");
@@ -559,7 +546,7 @@ public class ClassLifter {
 			}
 
 			String typeName = rawClass.getCanonicalName();
-			Optional<HigherClassOrInterface> higherType = liftClassOrInterfaceHelper(typeName);
+			Optional<HigherClassOrInterface> higherType = liftClassOrInterface(typeName);
 			if(higherType.isEmpty()){
 				throw new RuntimeException("Missing type: " + "'" + typeName +
 						"' even after attempting to eagerly lift the type");
