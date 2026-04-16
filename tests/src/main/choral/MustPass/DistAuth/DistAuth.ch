@@ -1,5 +1,7 @@
 package choral.MustPass.DistAuth;
 
+import java.util.Optional;
+
 import choral.MustPass.AuthResult.AuthResult;
 import choral.MustPass.DistAuthUtils.AuthToken;
 import choral.MustPass.DistAuth.Base64_Encoder;
@@ -10,6 +12,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import choral.runtime.TLSChannel.TLSChannel;
 import choral.MustPass.DistAuth.EnumBoolean;
+
 
 public class DistAuth@( Client, Service, IP ){
 	private TLSChannel@( Client, IP )< Object > ch_Client_IP;

@@ -1,5 +1,7 @@
 package choral.MustPass.LoggerExample;
 
+import java.lang.Math;
+
 interface Logger@( L ) {
     void write( String@( L ) msg );
 }

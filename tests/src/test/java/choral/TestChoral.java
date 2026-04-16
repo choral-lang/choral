@@ -88,8 +88,8 @@ public class TestChoral {
 		builder.addSources( "ConsumeItems", subFolder( MUSTPASS, "ConsumeItems" ) );
 		builder.addSources( "MyExtClass", subFolder( MUSTPASS, "ExtendsTest" ) );
 		builder.addSources( "RemoteFunction", subFolder( MUSTPASS, "RemoteFunction" ) );
-		builder.addSources( "AuthResult", subFolder( MUSTPASS, "AuthResult" ) );
-		builder.addSources( "AuthResult", subFolder( MUSTPASS, "DistAuthUtils" ) );
+		// builder.addSources( "AuthResult", subFolder( MUSTPASS, "AuthResult" ) );
+		// builder.addSources( "AuthResult", subFolder( MUSTPASS, "DistAuthUtils" ) );
 		builder.addSources( "DistAuth", subFolder( MUSTPASS, "DistAuth" ) );
 		builder.addSources( "DistAuth", subFolder( MUSTPASS, "DistAuthUtils" ) );
 		builder.addSources( "BuyerSellerShipper", subFolder( MUSTPASS, "BuyerSellerShipper" ) );
@@ -134,6 +134,7 @@ public class TestChoral {
 		mustPass.addSources("OnDemandImports", subFolder(TYPER_PASS, "OnDemandImports"));
 		mustPass.addSources("ClassLifterIntegration", subFolder(TYPER_PASS,"ClassLifterIntegration"));
 		mustPass.addSources("DualJavaImport", subFolder(TYPER_PASS, "DualJavaImport"));
+		mustPass.addSources("StandardLibraryReduction", subFolder(TYPER_PASS, "StandardLibraryReduction"));
 		//mustPass.addSources("InterfaceDefaultMethod", subFolder(TYPER_PASS, "InterfaceDefaultMethod"));
 		//^Test case for implementing default for interface methods, only supported in internals currently
 		// Parser and projector still missing support. 

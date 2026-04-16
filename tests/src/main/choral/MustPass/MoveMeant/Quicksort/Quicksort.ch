@@ -4,6 +4,7 @@ import choral.channels.SymChannel;
 import java.util.List;
 import java.util.ArrayList;
 import choral.runtime.Serializers.KryoSerializable;
+import java.lang.Math;
 
 enum Loop@R{ STOP, GO }
 enum Recv@R{ B, C }

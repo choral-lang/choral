@@ -4,6 +4,7 @@ import choral.annotations.Choreography;
 import choral.channels.SymChannel_A;
 import choral.channels.SymChannel_B;
 import choral.lang.Unit;
+import java.lang.Math;
 
 @Choreography( role = "A", name = "Karatsuba" )
 public class Karatsuba_A {
