@@ -300,6 +300,10 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 						Kind.getStar() ) );
 	}
 
+	/**
+	 * Returns the GroundClass or GroundInterface that serves as this type's definition.
+	 * @see HigherDataType.Proxy
+	 */
 	public abstract Definition innerType();
 
 	public abstract class Definition extends HigherReferenceType.Definition

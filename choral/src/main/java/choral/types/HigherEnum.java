@@ -138,6 +138,9 @@ public final class HigherEnum extends HigherClass implements Enum {
 
 		@Override
 		public void finaliseInterface() {
+			if( isInterfaceFinalised() ) {
+				return;
+			}
 			Member.HigherConstructor c = new Member.HigherConstructor(
 					this,
 					EnumSet.of( PRIVATE ),

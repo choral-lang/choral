@@ -273,10 +273,10 @@ public abstract class HigherDataType extends TypeBase
 	 * type table instead.
 	 * <p>
 	 * A class <code>class Foo@(A,B) { ... }</code> is modeled as a HigherClass with world parameters
-	 * A and B. Internally, the HigherClass maintains a GroundClass as an "archetype".
+	 * A and B. Internally, the HigherClass maintains a GroundClass as its "inner type".
 	 * Every time Foo is applied to a pair of worlds, say C and D, the
 	 * instance of HigherClass returns a Proxy. The Proxy redirects all queries (e.g., for methods,
-	 * fields, etc) to the archetype and then applies the substitution [C/A, D/B] to the result on
+	 * fields, etc) to the inner type and then applies the substitution [C/A, D/B] to the result on
 	 * the fly. This trick allows the type checker to incrementally enrich the definition of Foo
 	 * without having to run around backpatching all its instances.
 	 * <p>
@@ -284,7 +284,7 @@ public abstract class HigherDataType extends TypeBase
 	 * would be class <code>Enum@A< T@B extends Enum@B<T> > {...}</code>. To build the definition of
 	 * Enum, we need to specify that it takes a type parameter, and that the type parameter has Enum as an
 	 * upper bound. Having Enum is as an upper bound is a problem, because Enum hasn't been defined
-	 * yet! But with the Archetype-Proxy trick, we can use a proxy for Enum@B and continue building
+	 * yet! But with the InnerType-Proxy trick, we can use a proxy for Enum@B and continue building
 	 * the definition of Enum.
 	 */
 	protected abstract class Proxy extends TypeBase implements GroundDataType {

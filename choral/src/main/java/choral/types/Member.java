@@ -509,18 +509,22 @@ public abstract class Member implements HasSource {
 			return innerCallable().signature().parameters().size();
 		}
 
+		/**
+		 * Returns the GroundCallable that serves as this callable's definition.
+		 * @see HigherDataType.Proxy
+		 */
 		public abstract Definition innerCallable();
 
 		/**
-		 * A map mapping worlds to a list of their dependencies.
+		 * A mapping from worlds to their dependencies in the body of this callable, used for communication inference.
 		 * <p>
-		 * For example:
+		 * For example, if the body were:
 		 * <pre>
 		 * {@code
 		 * int@A i_A = 0@A;
 		 * int@B i_B = i_A;}
 		 * </pre>
-		 * World {@code B} would depend on {@code i_A}.
+		 * The mapping for {@code B} would contain a reference to the statement {@code int@A i_A = 0@A}.
 		 */
 		private Map<World, List<Pair<Expression, Statement>>> worldDependencies =  new HashMap<>();
 		
