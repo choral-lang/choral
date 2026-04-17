@@ -61,6 +61,8 @@ public class TestChoral {
 	private static final String CHORALUNIT = Paths.get("..", "choral-unit", "src", "main", "choral").toString();
 	private static final String MUSTFAIL = Paths.get("src", "main", "choral", "MustFail").toString();
 	private static final String MUSTPASS = Paths.get("src", "main", "choral", "MustPass").toString();
+	private static final String MUSTPASS_MISC = subFolder( MUSTPASS, "Misc" );
+	private static final String MUSTFAIL_MISC = subFolder( MUSTFAIL, "Misc" );
 	private static final String MOVEMEANT_PASS = subFolder( MUSTPASS, "MoveMeant" );
 	private static final String MOVEMEANT_FAIL = subFolder( MUSTFAIL, "MoveMeant" );
 	private static final String TYPER_PASS = subFolder( MUSTPASS, "Typer" );
@@ -86,30 +88,24 @@ public class TestChoral {
 	@TestFactory
 	public Stream< DynamicTest > mustPass() {
 		CompilationRequestBuilder builder = new CompilationRequestBuilder();
-		builder.addSources( "HelloRoles", subFolder( MUSTPASS, "HelloRoles" ) );
-		builder.addSources( "BiPair", subFolder( MUSTPASS, "BiPair" ) );
-		builder.addSources( "ConsumeItems", subFolder( MUSTPASS, "ConsumeItems" ) );
-		builder.addSources( "MyExtClass", subFolder( MUSTPASS, "ExtendsTest" ) );
-		builder.addSources( "RemoteFunction", subFolder( MUSTPASS, "RemoteFunction" ) );
-		builder.addSources( "AuthResult", subFolder( MUSTPASS, "AuthResult" ) );
-		builder.addSources( "AuthResult", subFolder( MUSTPASS, "DistAuthUtils" ) );
-		builder.addSources( "DistAuth", subFolder( MUSTPASS, "DistAuth" ) );
-		builder.addSources( "DistAuth", subFolder( MUSTPASS, "DistAuthUtils" ) );
-		builder.addSources( "BuyerSellerShipper", subFolder( MUSTPASS, "BuyerSellerShipper" ) );
-		builder.addSources( "DiffieHellman", subFolder( MUSTPASS, "DiffieHellman" ) );
-		builder.addSources( "DiffieHellman", subFolder( MUSTPASS, "BiPair" ) );
-		builder.addSources( "TestSwitch", subFolder( MUSTPASS, "TestSwitch" ) );
-		builder.addSources( "LoggerExample", subFolder( MUSTPASS, "LoggerExample" ) );
-		builder.addSources( "IfDesugarTest", subFolder( MUSTPASS, "IfDesugar" ) );
-		builder.addSources( "ChainingExample", subFolder( MUSTPASS, "ChainingOperator" ) );
-		builder.addSources( "BuyBook2", subFolder( MUSTPASS, "BookSellingSoloist" ) );
-		builder.addSources( "CourtesyDefaultMethods", subFolder( MUSTPASS, "CourtesyDefaultMethods" ) );
-		//// https://github.com/choral-lang/choral/issues/29
-		// builder.addSources( "SwitchTest", subFolder( MUSTPASS, "SwitchTest" ) );
-		//// https://github.com/choral-lang/choral/issues/27
-		// builder.addSources( "MirrorChannel", subFolder( MUSTPASS, "MirrorChannel" ) );
-		//// https://github.com/choral-lang/choral/issues/28
-		// builder.addSources( "Autoboxing", subFolder( MUSTPASS, "Autoboxing" ) );
+		builder.addSources( "HelloRoles", subFolder( MUSTPASS_MISC, "HelloRoles.ch" ) );
+		builder.addSources( "BiPair", subFolder( MUSTPASS_MISC, "BiPair.ch" ) );
+		builder.addSources( "ConsumeItems", subFolder( MUSTPASS_MISC, "ConsumeItems" ) );
+		builder.addSources( "MyExtClass", subFolder( MUSTPASS_MISC, "ExtendsTest.ch" ) );
+		builder.addSources( "RemoteFunction", subFolder( MUSTPASS_MISC, "RemoteFunction.ch" ) );
+		builder.addSources( "AuthResult", subFolder( MUSTPASS_MISC, "AuthResult" ) );
+		builder.addSources( "AuthResult", subFolder( MUSTPASS_MISC, "AuthToken.ch" ) );
+		builder.addSources( "DistAuth", subFolder( MUSTPASS_MISC, "DistAuth" ) );
+		builder.addSources( "DistAuth", subFolder( MUSTPASS_MISC, "AuthToken.ch" ) );
+		builder.addSources( "BuyerSellerShipper", subFolder( MUSTPASS_MISC, "BuyerSellerShipper" ) );
+		builder.addSources( "DiffieHellman", subFolder( MUSTPASS_MISC, "DiffieHellman.ch" ) );
+		builder.addSources( "DiffieHellman", subFolder( MUSTPASS_MISC, "BiPair.ch" ) );
+		builder.addSources( "TestSwitch", subFolder( MUSTPASS_MISC, "TestSwitch.ch" ) );
+		builder.addSources( "LoggerExample", subFolder( MUSTPASS_MISC, "LoggerExample.ch" ) );
+		builder.addSources( "IfDesugarTest", subFolder( MUSTPASS_MISC, "IfDesugar" ) );
+		builder.addSources( "ChainingExample", subFolder( MUSTPASS_MISC, "ChainingOperator.ch" ) );
+		builder.addSources( "BuyBook2", subFolder( MUSTPASS_MISC, "BookSellingSoloist.ch" ) );
+		builder.addSources( "CourtesyDefaultMethods", subFolder( MUSTPASS_MISC, "CourtesyDefaultMethods.ch" ) );
 
 		return builder.build().map(request ->
 				dynamicTest(request.symbol, new MustPassTest( request )));
@@ -118,15 +114,15 @@ public class TestChoral {
 	@TestFactory
 	public Stream< DynamicTest > mustFail() {
 		CompilationRequestBuilder builder = new CompilationRequestBuilder();
-		builder.addSources( "WrongType", subFolder( MUSTFAIL, "WrongType" ) );
-		builder.addSources( "MultiFoo", subFolder( MUSTFAIL, "MultiFoo" ) );
-		builder.addSources( "CyclicInheritance_A", subFolder( MUSTFAIL, "CyclicInheritance" ) );
-		builder.addSources( "LotsOfErrors", subFolder( MUSTFAIL, "LotsOfErrors" ) );
-		builder.addSources( "VariableDeclarations", subFolder( MUSTFAIL, "VariableDeclarations" ) );
-		builder.addSources( "TwoWorldList", subFolder( MUSTFAIL, "IllegalInheritance" ) );
-		builder.addSources( "NonMatchingReturnType", subFolder( MUSTFAIL, "NonMatchingReturnType" ) );
-		builder.addSources( "MultiFileError", subFolder( MUSTFAIL, "MultiFileError" ) );
-		builder.addSources( "MultiFileError", subFolder( MUSTFAIL, "MultiFileErrorUtil" ) );
+		builder.addSources( "WrongType", subFolder( MUSTFAIL_MISC, "WrongType.ch" ) );
+		builder.addSources( "MultiFoo", subFolder( MUSTFAIL_MISC, "MultiFoo.ch" ) );
+		builder.addSources( "CyclicInheritance_A", subFolder( MUSTFAIL_MISC, "CyclicInheritance.ch" ) );
+		builder.addSources( "LotsOfErrors", subFolder( MUSTFAIL_MISC, "LotsOfErrors.ch" ) );
+		builder.addSources( "VariableDeclarations", subFolder( MUSTFAIL_MISC, "VariableDeclarations.ch" ) );
+		builder.addSources( "TwoWorldList", subFolder( MUSTFAIL_MISC, "Interfaces.ch" ) );
+		builder.addSources( "NonMatchingReturnType", subFolder( MUSTFAIL_MISC, "Foo.ch" ) );
+		builder.addSources( "MultiFileError", subFolder( MUSTFAIL_MISC, "MultiFileError.ch" ) );
+		builder.addSources( "MultiFileError", subFolder( MUSTFAIL_MISC, "ErrorHelper.ch" ) );
 
 		return builder.build().map(request ->
 				dynamicTest(request.symbol, new MustFailTest( request )));
@@ -135,31 +131,31 @@ public class TestChoral {
 	@TestFactory
 	public Stream< DynamicTest > typer() {
 		CompilationRequestBuilder mustPass = new CompilationRequestBuilder();
-		mustPass.addSources("OnDemandImports", subFolder(TYPER_PASS, "OnDemandImports"));
-		mustPass.addSources("InterfaceDefaultMethod", subFolder(TYPER_PASS, "InterfaceDefaultMethod"));
-		mustPass.addSources("ClassLifterIntegration", subFolder(TYPER_PASS,"ClassLifterIntegration"));
-		mustPass.addSources("DualJavaImport", subFolder(TYPER_PASS, "DualJavaImport"));
-		mustPass.addSources("StandardLibraryReduction", subFolder(TYPER_PASS, "StandardLibraryReduction"));
-		mustPass.addSources("AbstractInheritsAbstract", subFolder(TYPER_PASS, "AbstractInheritsAbstract"));
-		mustPass.addSources("ConcreteImplementsAbstract", subFolder(TYPER_PASS, "ConcreteImplementsAbstract"));
-		mustPass.addSources("ClassBeatsDefault", subFolder(TYPER_PASS, "ClassBeatsDefault"));
-		mustPass.addSources("DiamondDefaultSameOrigin", subFolder(TYPER_PASS, "DiamondDefaultSameOrigin"));
-		mustPass.addSources("CovariantReturn", subFolder(TYPER_PASS, "CovariantReturn"));
-		mustPass.addSources("FieldInheritance", subFolder(TYPER_PASS, "FieldInheritance"));
-		mustPass.addSources("MultiInterfaceInheritance", subFolder(TYPER_PASS, "MultiInterfaceInheritance"));
+		mustPass.addSources("OnDemandImports", subFolder(TYPER_PASS, "OnDemandImports.ch"));
+		mustPass.addSources("InterfaceDefaultMethod", subFolder(TYPER_PASS, "InterfaceDefaultMethod.ch"));
+		mustPass.addSources("ClassLifterIntegration", subFolder(TYPER_PASS,"ClassLifterIntegration.ch"));
+		mustPass.addSources("DualJavaImport", subFolder(TYPER_PASS, "DualJavaImport.ch"));
+		mustPass.addSources("StandardLibraryReduction", subFolder(TYPER_PASS, "StandardLibraryReduction.ch"));
+		mustPass.addSources("AbstractInheritsAbstract", subFolder(TYPER_PASS, "AbstractInheritsAbstract.ch"));
+		mustPass.addSources("ConcreteImplementsAbstract", subFolder(TYPER_PASS, "ConcreteImplementsAbstract.ch"));
+		mustPass.addSources("ClassBeatsDefault", subFolder(TYPER_PASS, "ClassBeatsDefault.ch"));
+		mustPass.addSources("DiamondDefaultSameOrigin", subFolder(TYPER_PASS, "DiamondDefaultSameOrigin.ch"));
+		mustPass.addSources("CovariantReturn", subFolder(TYPER_PASS, "CovariantReturn.ch"));
+		mustPass.addSources("FieldInheritance", subFolder(TYPER_PASS, "FieldInheritance.ch"));
+		mustPass.addSources("MultiInterfaceInheritance", subFolder(TYPER_PASS, "MultiInterfaceInheritance.ch"));
 
 		CompilationRequestBuilder mustFail = new CompilationRequestBuilder();
-		mustFail.addSources("InstanceOverridesStatic", subFolder(TYPER_FAIL, "InstanceOverridesStatic"));
-		mustFail.addSources("StaticOverridesInstance", subFolder(TYPER_FAIL, "StaticOverridesInstance"));
-		mustFail.addSources("WeakerAccess1", subFolder(TYPER_FAIL, "WeakerAccess1"));
-		mustFail.addSources("WeakerAccess2", subFolder(TYPER_FAIL, "WeakerAccess2"));
-		mustFail.addSources("WeakerAccess3", subFolder(TYPER_FAIL, "WeakerAccess3"));
-		mustFail.addSources("OverrideFinal", subFolder(TYPER_FAIL, "OverrideFinal"));
-		mustFail.addSources("IncompatibleReturnType", subFolder(TYPER_FAIL, "IncompatibleReturnType"));
-		mustFail.addSources("UnimplementedAbstract", subFolder(TYPER_FAIL, "UnimplementedAbstract"));
-		mustFail.addSources("ConflictingDefaults", subFolder(TYPER_FAIL, "ConflictingDefaults"));
-		mustFail.addSources("AbstractNotImplementedChain", subFolder(TYPER_FAIL, "AbstractNotImplementedChain"));
-		mustFail.addSources("OverrideWithWeakerAccessInherited", subFolder(TYPER_FAIL, "OverrideWithWeakerAccessInherited"));
+		mustFail.addSources("WeakerAccess1", subFolder( TYPER_FAIL, "WeakerAccess1.ch" ));
+		mustFail.addSources("WeakerAccess2", subFolder( TYPER_FAIL, "WeakerAccess2.ch" ));
+		mustFail.addSources("WeakerAccess3", subFolder( TYPER_FAIL, "WeakerAccess3.ch" ));
+		mustFail.addSources("OverrideFinal", subFolder( TYPER_FAIL, "OverrideFinal.ch" ));
+		mustFail.addSources("IncompatibleReturnType", subFolder( TYPER_FAIL, "IncompatibleReturnType.ch" ));
+		mustFail.addSources("InstanceOverridesStatic", subFolder(TYPER_FAIL, "InstanceOverridesStatic.ch"));
+		mustFail.addSources("StaticOverridesInstance", subFolder(TYPER_FAIL, "StaticOverridesInstance.ch"));
+		mustFail.addSources("UnimplementedAbstract", subFolder(TYPER_FAIL, "UnimplementedAbstract.ch"));
+		mustFail.addSources("ConflictingDefaults", subFolder(TYPER_FAIL, "ConflictingDefaults.ch"));
+		mustFail.addSources("AbstractNotImplementedChain", subFolder(TYPER_FAIL, "AbstractNotImplementedChain.ch"));
+		mustFail.addSources("OverrideWithWeakerAccessInherited", subFolder(TYPER_FAIL, "OverrideWithWeakerAccessInherited.ch"));
 
 		return Stream.concat(
 				mustPass.build().map(request ->
@@ -173,42 +169,34 @@ public class TestChoral {
 	public Stream< DynamicTest > moveMeant() {
 		CompilationRequestBuilder mustPass = new CompilationRequestBuilder("--infer-comms");
 		CompilationRequestBuilder mustFail = new CompilationRequestBuilder("--infer-comms");
-		//// Bug: Mysterious OOM
-		// mustPass.addSources( "DistributedAuthentication", subFolder( MOVEMEANT, "DistributedAuthentication" ) );
-		// mustPass.addSources( "DistributedAuthentication", subFolder( MUSTPASS, "BiPair" ) );
-		//// Bug in the "simple" inference model: dependency not found
-		// mustPass.addSources( "NestedBlocks", subFolder( MOVEMEANT, "NestedBlocks" ) );
-		// mustPass.addSources( "NestedBlocks", subFolder( MOVEMEANT, "utils" ) );
-		/// Bug: Choral backend generates bad code
-		// mustPass.addSources( "SimpleIfStatements", subFolder( MOVEMEANT, "SimpleIfStatements" ) );
-		mustPass.addSources( "BiPair", subFolder( MOVEMEANT_PASS, "BiPair" ) );
+		mustPass.addSources( "BiPair", subFolder( MOVEMEANT_PASS, "BiPair.ch" ) );
 		mustPass.addSources( "BuyerSellerShipper", subFolder( MOVEMEANT_PASS, "BuyerSellerShipper" ) );
-		mustPass.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT_PASS, "ChannelsAsArgs" ) );
+		mustPass.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT_PASS, "ChannelsAsArgs.ch" ) );
 		mustPass.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT_PASS, "utils" ) );
-		mustPass.addSources( "ChannelsAsFields", subFolder( MOVEMEANT_PASS, "ChannelsAsFields" ) );
+		mustPass.addSources( "ChannelsAsFields", subFolder( MOVEMEANT_PASS, "ChannelsAsFields.ch" ) );
 		mustPass.addSources( "ChannelsAsFields", subFolder( MOVEMEANT_PASS, "utils" ) );
-		mustPass.addSources( "ChannelTypesExample", subFolder( MOVEMEANT_PASS, "ChannelTypesExample" ) );
+		mustPass.addSources( "ChannelTypesExample", subFolder( MOVEMEANT_PASS, "ChannelTypesExample.ch" ) );
 		mustPass.addSources( "ConsumeItems", subFolder( MOVEMEANT_PASS, "ConsumeItems" ) );
-		mustPass.addSources( "DiffieHellman", subFolder( MOVEMEANT_PASS, "DiffieHellman" ) );
-		mustPass.addSources( "DiffieHellman", subFolder( MUSTPASS, "BiPair" ) );
-		mustPass.addSources( "DownloadFile", subFolder( MOVEMEANT_PASS, "DownloadFile" ) );
+		mustPass.addSources( "DiffieHellman", subFolder( MOVEMEANT_PASS, "DiffieHellman.ch" ) );
+		mustPass.addSources( "DiffieHellman", subFolder( MUSTPASS_MISC, "BiPair.ch" ) );
+		mustPass.addSources( "DownloadFile", subFolder( MOVEMEANT_PASS, "DownloadFile.ch" ) );
 		mustPass.addSources( "DownloadFile", subFolder( MOVEMEANT_PASS, "SendPackets" ) );
-		mustPass.addSources( "HelloRoles", subFolder( MOVEMEANT_PASS, "HelloRoles" ) );
-		mustPass.addSources( "Increments", subFolder( MOVEMEANT_PASS, "Increments" ) );
-		mustPass.addSources( "Karatsuba", subFolder( MOVEMEANT_PASS, "Karatsuba" ) );
-		mustPass.addSources( "Mergesort", subFolder( MOVEMEANT_PASS, "Mergesort" ) );
-		mustPass.addSources( "OverloadOnRoles", subFolder( MOVEMEANT_PASS, "OverloadOnRoles" ) );
+		mustPass.addSources( "HelloRoles", subFolder( MOVEMEANT_PASS, "HelloRoles.ch" ) );
+		mustPass.addSources( "Increments", subFolder( MOVEMEANT_PASS, "Increments.ch" ) );
+		mustPass.addSources( "Karatsuba", subFolder( MOVEMEANT_PASS, "Karatsuba.ch" ) );
+		mustPass.addSources( "Mergesort", subFolder( MOVEMEANT_PASS, "Mergesort.ch" ) );
+		mustPass.addSources( "OverloadOnRoles", subFolder( MOVEMEANT_PASS, "OverloadOnRoles.ch" ) );
 		mustPass.addSources( "PingPong", subFolder( MOVEMEANT_PASS, "PingPong" ) );
-		mustPass.addSources( "Quicksort", subFolder( MOVEMEANT_PASS, "Quicksort" ) );
-		mustPass.addSources( "RemoteFunction", subFolder( MOVEMEANT_PASS, "RemoteFunction" ) );
+		mustPass.addSources( "Quicksort", subFolder( MOVEMEANT_PASS, "Quicksort.ch" ) );
+		mustPass.addSources( "RemoteFunction", subFolder( MOVEMEANT_PASS, "RemoteFunction.ch" ) );
 		mustPass.addSources( "SendPackets", subFolder( MOVEMEANT_PASS, "SendPackets" ) );
-		mustPass.addSources( "SimpleArithmetic", subFolder( MOVEMEANT_PASS, "SimpleArithmetic" ) );
+		mustPass.addSources( "SimpleArithmetic", subFolder( MOVEMEANT_PASS, "SimpleArithmetic.ch" ) );
 		mustPass.addSources( "SimpleIf3", subFolder( MOVEMEANT_PASS, "SimpleIf3" ) );
-		mustPass.addSources( "SimpleKOC", subFolder( MOVEMEANT_PASS, "SimpleKOC" ) );
-		mustPass.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT_PASS, "SimpleMethodCalls" ) );
+		mustPass.addSources( "SimpleKOC", subFolder( MOVEMEANT_PASS, "SimpleKOC.ch" ) );
+		mustPass.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT_PASS, "SimpleMethodCalls.ch" ) );
 		mustPass.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT_PASS, "utils" ) );
-		mustPass.addSources( "SimpleReturns", subFolder( MOVEMEANT_PASS, "SimpleReturns" ) );
-		mustPass.addSources( "SimpleVariableReplacement", subFolder( MOVEMEANT_PASS, "SimpleVariableReplacement" ) );
+		mustPass.addSources( "SimpleReturns", subFolder( MOVEMEANT_PASS, "SimpleReturns.ch" ) );
+		mustPass.addSources( "SimpleVariableReplacement", subFolder( MOVEMEANT_PASS, "SimpleVariableReplacement.ch" ) );
 		mustPass.addSources( "SplitAndCombine", subFolder( MOVEMEANT_PASS, "SplitAndCombine" ) );
 		mustPass.addSources( "SSOWithRetry", subFolder( MOVEMEANT_PASS, "SSOWithRetry" ) );
 		mustPass.addSources( "VitalsStreaming", subFolder( MOVEMEANT_PASS, "VitalsStreaming" ) );
@@ -331,6 +319,29 @@ public class TestChoral {
 
 	///////////////////////////////// HELPERS /////////////////////////////////////
 
+	/**
+	 * Resolves Choral source files from a source path.
+	 *
+	 * <p>The path can point either to a folder (searched recursively) or directly to a
+	 * single {@code .ch} file.
+	 */
+	private static List< Path > getChoralFiles( String sourcePath ) throws IOException {
+		Path path = Path.of( sourcePath );
+		if( Files.isDirectory( path ) ) {
+			try( Stream< Path > files = Files.walk( path ) ) {
+				return files
+						.filter( file -> file.toString().endsWith( ".ch" ) )
+						.toList();
+			}
+		}
+
+		if( Files.isRegularFile( path ) && path.toString().endsWith( ".ch" ) ) {
+			return List.of( path );
+		}
+
+		throw new NoSuchFileException( "Choral source path not found (or not a .ch file): " + sourcePath );
+	}
+
 	/** Tries to compile the test and returns the results produced by the Choral compiler. */
 	private static CompilationResults compile(CompilationRequest compilationRequest){
 		ArrayList< String > parameters = new ArrayList<>();
@@ -438,11 +449,14 @@ public class TestChoral {
 		try {
 			// Get the package names declared in the source folders of the compilation request
 			HashSet< String > packages = new HashSet<>();
-			for( String folder : compilationRequest.sourceFolder() ) {
-				Path path = Path.of( folder );
-				List< Path > choralFiles = Files.walk( path ).filter(
-						file -> file.toString().endsWith( ".ch" )
-				).toList();
+			for( String sourcePath : compilationRequest.sourceFolder() ) {
+				List< Path > choralFiles;
+				try {
+					choralFiles = getChoralFiles( sourcePath );
+				} catch( IOException e ) {
+					errors.add( "Source path not found: " + sourcePath );
+					continue;
+				}
 				for( Path file : choralFiles ) {
 					String fileContent = Files.readString( file );
 					// Find the package declared at the top of the file
@@ -654,26 +668,23 @@ public class TestChoral {
 
 		// Concatenate all the expected errors in all the files in the source folders
 		ArrayList<TestError> expectedErrors = new ArrayList<>();
-		for (String path : compilationRequest.sourceFolder()){
-			Path directoryPath = Path.of(path);
-			if (!Files.isDirectory(directoryPath)){
-				errors.add( "Directory not found: " + directoryPath );
+		for( String sourcePath : compilationRequest.sourceFolder() ) {
+			List< Path > testFiles;
+			try {
+				testFiles = getChoralFiles( sourcePath );
+			} catch (IOException e) {
+				errors.add( "Source path not found: " + sourcePath );
 				continue;
 			}
-			try (Stream<Path> testFiles = Files.walk(directoryPath)) {
-				testFiles
-					.filter(file -> file.toString().endsWith(".ch"))
-					.forEach(file -> {
-						try {
-							String[] fileContent = Files.readString(file).split("\n");
-							expectedErrors.addAll(findExpectedErrors(file.toString(), fileContent));
-						} catch (IOException e) {
-							errors.add("Error reading file '" + file + "': " + e.getMessage());
-						}
-					});
-			} catch (IOException e) {
-				errors.add("Error reading file '" + directoryPath + "': " + e.getMessage());
-			}
+
+			testFiles.forEach( file -> {
+				try {
+					String[] fileContent = Files.readString( file ).split( "\n" );
+					expectedErrors.addAll( findExpectedErrors( file.toString(), fileContent ) );
+				} catch( IOException e ) {
+					errors.add( "Error reading file '" + file + "': " + e.getMessage() );
+				}
+			} );
 		}
 
 		// Add an error for each expected error not found in actual errors, and vice versa.
