@@ -23,10 +23,7 @@ package choral.types;
 
 import choral.ast.Node;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -153,7 +150,7 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 
 		@Override
 		public void addMethod( Member.HigherMethod method ) {
-			assert ( method.isPublic() && method.isAbstract() || method.isDefault() || method.isStatic() ) 
+			assert ( method.isPublic() && method.isAbstract() || method.isDefault() || method.isStatic() )
 				: "'" + method.identifier() + "' modifiers : " + method.modifiers();
 			super.addMethod( method );
 		}

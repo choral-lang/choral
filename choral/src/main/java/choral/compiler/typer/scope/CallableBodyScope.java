@@ -1,10 +1,8 @@
 package choral.compiler.typer.scope;
 
+import choral.compiler.Typer;
 import choral.exceptions.StaticVerificationException;
-import choral.types.GroundClass;
-import choral.types.GroundDataType;
-import choral.types.Member;
-import choral.types.Signature;
+import choral.types.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,14 +62,18 @@ public final class CallableBodyScope extends ChildScope
 	}
 
 	@Override
-	public GroundClass lookupThis() {
-		return (GroundClass) parent.callable.declarationContext();
+	public GroundClassOrInterface lookupThis() {
+		return parent.callable.declarationContext();
 	}
 
 	@Override
 	public GroundClass lookupSuper() {
-		return lookupThis().extendedClass().orElseThrow(
-				() -> new UnresolvedSymbolException( "super" ) );
+		if( lookupThis() instanceof GroundClass c ) {
+			return c.extendedClass().orElseThrow(
+					() -> new UnresolvedSymbolException( "super" ) );
+		} else {
+			throw new UnresolvedSymbolException( "super" );
+		}
 	}
 
 	public BlockScope newBlockScope() {

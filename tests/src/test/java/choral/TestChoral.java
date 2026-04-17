@@ -78,7 +78,7 @@ public class TestChoral {
 	private static final String GREEN = "\u001B[32m";
 	private static final String RED = "\u001B[31m";
 	private static final String RESET = "\u001B[0m";
-	private static final int COLUMN_WIDTH = 40;
+	private static final int COLUMN_WIDTH = 50;
 
 
 	///////////////////////////////// ADD TESTS HERE /////////////////////////////////////
@@ -140,6 +140,7 @@ public class TestChoral {
 		mustPass.addSources("ClassLifterIntegration", subFolder(TYPER_PASS,"ClassLifterIntegration"));
 		mustPass.addSources("DualJavaImport", subFolder(TYPER_PASS, "DualJavaImport"));
 		mustPass.addSources("StandardLibraryReduction", subFolder(TYPER_PASS, "StandardLibraryReduction"));
+
 		CompilationRequestBuilder mustFail = new CompilationRequestBuilder();
 		mustFail.addSources("InstanceOverridesStatic", subFolder(TYPER_FAIL, "InstanceOverridesStatic"));
 		mustFail.addSources("StaticOverridesInstance", subFolder(TYPER_FAIL, "StaticOverridesInstance"));

@@ -119,7 +119,6 @@ public class Typer {
 				visitClass( scope, pkg, x );
 			}
 			for( choral.ast.body.Enum x : n.enums() ) {
-				System.out.println("enum name: " + x.name());
 				checkPrimaryTemplate( x, n, "enum" );
 				visitEnum( scope, pkg, x );
 			}
@@ -230,8 +229,9 @@ public class Typer {
 						ms.add( Modifier.valueOf( x.name() ) );
 					}
 					if( ms.contains( Modifier.ABSTRACT ) && !t.isAbstract() ) {
-						throw StaticVerificationException.of(
-								"abstract method in non-abstract class", nm.position() );
+						throw new AstPositionedException( nm.position(),
+								new StaticVerificationException(
+										"abstract method in non-abstract class" ) );
 					}
 					List< HigherTypeParameter > typeParams = visitTypeParameters(
 							nm.signature().typeParameters() );
@@ -466,6 +466,14 @@ public class Typer {
 					checkIfTypeSelectionMethod( tm, nm.annotations() );
 					tm.innerCallable().finalise();
 					t.innerType().addMethod( tm );
+					taskQueue.enqueue( Phase.MEMBER_DEFINITIONS, () -> {
+						try {
+							visitMethodBody( methodScope.getScope(), tm,
+									nm.body().orElse( null ) );
+						} catch( StaticVerificationException e ) {
+							throw new AstPositionedException( nm.position(), e );
+						}
+					} );
 				}
 				taskQueue.enqueue( new TaskQueue.MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
 					try {
@@ -965,7 +973,7 @@ public class Typer {
 			} else {
 				MethodCallExpression n = d.explicitConstructorInvocation().get();
 				GroundClass t = ( "this".equals( n.name().identifier() ) )
-						? scope.lookupThis()
+						? (GroundClass) scope.lookupThis()
 						: scope.lookupSuper();
 				if( t == null ) {
 					throw new AstPositionedException( n.position(),
@@ -1340,9 +1348,8 @@ public class Typer {
 											+ "', found '" + g + "'" ) );
 						}
 						if(!casesFound.add(s)){
-							throw StaticVerificationException.of(
-									"duplicate case '" + s + "'",
-									l.argument().position() );
+							throw new AstPositionedException( l.argument().position(),
+									new StaticVerificationException( "duplicate case '" + s + "'" ) );
 						}
 						// if not a literalcase or a labelcase, fall through to default case.
 					} else {
@@ -1450,9 +1457,8 @@ public class Typer {
 				// There exists a continued statement, but the checking is already done(?)
 				// has continued statement, but returns (?)
 				if( returnChecked && n.hasContinuation() ) {
-					throw StaticVerificationException.of(
-							"unreachable statement",
-							n.continuation().position() );
+					throw new AstPositionedException( n.continuation().position(),
+							new StaticVerificationException( "unreachable statement" ) );
 				}
 				returnChecked |= visit( n.continuation() );
 				n.setReturnAnnotation( returnChecked );
