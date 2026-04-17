@@ -132,18 +132,6 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 		}
 
 		@Override
-		public Stream< ? extends Member.Field > fields() {
-			return Stream.concat( declaredFields(),
-					extendedInterfaces().flatMap( x -> x.fields() ) );
-		}
-
-		@Override
-		public Stream< ? extends Member.HigherMethod > methods() {
-			return Stream.concat( declaredMethods(),
-					extendedInterfaces().flatMap( x -> x.methods() ) );
-		}
-
-		@Override
 		public void addField( Member.Field field ) {
 			throw new UnsupportedOperationException( "interfaces cannot have fields" );
 		}

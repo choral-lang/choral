@@ -449,129 +449,264 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			if( interfaceFinalised ) {
 				return;
 			}
-			// (JSL 8.3) Inherit fields from direct superclasses and superinterfaces
+			inheritFields();
+			inheritMethods();
+			interfaceFinalised = true;
+		}
+
+		/**
+		 * (JLS 8.3) Inherit fields from direct superclasses and superinterfaces.
+		 * A field is inherited if it is accessible from this type and not hidden
+		 * by a field declared in this type with the same name.
+		 */
+		private void inheritFields() {
 			extendedClassesOrInterfaces().flatMap( GroundReferenceType::fields )
-					.filter( x -> x.isAccessibleFrom( this )
-							&& declaredFields().noneMatch(
-							y -> x.identifier().equals( y.identifier() ) ) )
+					.filter( x -> x.isAccessibleFrom( this ) &&
+							declaredFields().noneMatch( y -> x.identifier().equals( y.identifier() ) ) )
 					.forEach( inheritedFields::add );
-			// (JSL 8.4.8) Inherit methods from direct superclasses and superinterfaces
+		}
+
+		/**
+		 * (JLS 8.4.8) Inherit methods from direct superclasses and superinterfaces.
+		 * For each accessible method from a parent type, determines whether it should
+		 * be inherited, overridden, or causes a conflict.
+		 */
+		private void inheritMethods() {
+			// We maintain two parallel lists:
+			// - candidates: methods copied for this type (declarationContext = this),
+			//   used for diamond detection and abstract implementation checks
+			// - originalCandidates: the original methods before copyFor, used for
+			//   default method conflict detection (where original context matters)
+			List< Member.HigherMethod > candidates = new ArrayList<>();
+			List< Member.HigherMethod > originalCandidates = new ArrayList<>();
 			extendedClassesOrInterfaces().flatMap( GroundReferenceType::methods )
 					.filter( x -> x.isAccessibleFrom( this ) )
-					.forEach( methodToInherit -> {
-						boolean inherited = true;     // true iff methodToInherit should be inherited
-						boolean implemented = false;  // true iff a method in this class that implements methodToInherit
-						for( Member.HigherMethod declaredMethod : declaredMethods ) {
-							if( declaredMethod.isSubSignatureOf( methodToInherit ) ) {
-								// If the parent method is a selection method, mark the child as a selection method too
-								if( methodToInherit.isSelectionMethod() ) {
-									declaredMethod.setSelectionMethod();
-								}
-								if (methodToInherit.isTypeSelectionMethod()) {
-									declaredMethod.setTypeSelectionMethod();
-								}
+					.forEach( x -> processMethodToInherit( x, candidates, originalCandidates ) );
+			inheritedMethods.addAll( candidates );
+		}
 
-								// Now check that 'declaredMethod' satisfies all the requirements in JLS 8.4.8
-								checkOverrideRequirementsOrThrow(declaredMethod, methodToInherit);
+		/**
+		 * Processes a single method from a parent type to determine whether it should
+		 * be inherited by this type. Checks for overrides, erasure clashes, abstract
+		 * implementation requirements, and default method conflicts.
+		 * <p>
+		 * Accepted methods are added to {@code candidates} (as originals, not copies).
+		 * The caller is responsible for calling {@code copyFor} when moving them to
+		 * {@code inheritedMethods}.
+		 */
+		private void processMethodToInherit(
+				Member.HigherMethod methodToInherit,
+				List< Member.HigherMethod > candidates,
+				List< Member.HigherMethod > originalCandidates
+		) {
+			boolean inherited = true;     // true iff methodToInherit should be inherited
+			boolean implemented = false;  // true iff a method in this class implements methodToInherit
 
-								implemented = !declaredMethod.isAbstract();
-								if( declaredMethod.sameSignatureAsErasureOf( methodToInherit ) && !declaredMethod.sameSignatureAs( methodToInherit ) ) {
-									inherited = true;
-									for( Member.HigherMethod z : inheritedMethods ) {
-										if( z.isSubSignatureOf( methodToInherit ) ) {
-											// // TODO When does this happen?
-											if( !z.isReturnTypeSubstitutableFor( methodToInherit ) ) {
-												throw new StaticVerificationException(
-														"method '" + z
-																+ "' in '" + z.declarationContext()
-																+ "' clashes with method '" + methodToInherit
-																+ "' in '" + methodToInherit.declarationContext()
-																+ "', attempting to use incompatible return type" );
-											}
-											inherited = false;
-											break;
-										}
-									}
-								}
-								else {
-									inherited = false;
-								}
-								break;
-							}
-							// TODO When does this happen?
-							else if( methodToInherit.sameErasureAs( declaredMethod ) ) {
-								// (JLS 8.4.8.3) If the class declares a method m1 that matches the erasure of a parent
-								// method m2, then m1 must be a subsignature of m2.
-								throw new StaticVerificationException( "method '" + declaredMethod
-										+ "' in '" + this + "' clashes with method '"
-										+ methodToInherit + "' in '" + methodToInherit.declarationContext()
-										+ "', both methods have the same erasure" );
-							}
+			// Phase 1: Check against declared methods for overrides and erasure clashes
+			for( Member.HigherMethod declaredMethod : declaredMethods ) {
+				if( declaredMethod.isSubSignatureOf( methodToInherit ) ) {
+					propagateSelectionFlags( declaredMethod, methodToInherit );
+					checkOverrideRequirementsOrThrow( declaredMethod, methodToInherit );
+
+					implemented = !declaredMethod.isAbstract();
+					inherited = checkErasureOnlyOverride( declaredMethod, methodToInherit, candidates );
+					break;
+				}
+				// TODO When does this happen?
+				else if( methodToInherit.sameErasureAs( declaredMethod ) ) {
+					// (JLS 8.4.8.3) If the class declares a method m1 that matches the erasure of a parent
+					// method m2, then m1 must be a subsignature of m2.
+					throw new StaticVerificationException( "method '" + declaredMethod
+							+ "' in '" + this + "' clashes with method '"
+							+ methodToInherit + "' in '" + methodToInherit.declarationContext()
+							+ "', both methods have the same erasure" );
+				}
+			}
+
+			if( !inherited ) {
+				return;
+			}
+
+			// Phase 2: Check abstract implementation requirements
+			boolean implementationRequirementSatisfied =
+					checkAbstractImplementation( methodToInherit, implemented, candidates );
+
+			// Phase 3: Check for default method diamond conflicts.
+			// Uses originalCandidates to compare original declaration contexts.
+			boolean isDiamondDuplicate = checkDefaultMethodConflicts(
+					methodToInherit, originalCandidates );
+
+			// Phase 4: Add to candidates if appropriate
+			if( !implementationRequirementSatisfied && !implemented && !isDiamondDuplicate ) {
+				candidates.add( methodToInherit.copyFor( this ) );
+				originalCandidates.add( methodToInherit );
+			}
+		}
+
+		/**
+		 * If the parent method is a selection or type-selection method,
+		 * propagate those flags to the overriding declared method.
+		 */
+		private void propagateSelectionFlags(
+				Member.HigherMethod declaredMethod, Member.HigherMethod parentMethod
+		) {
+			if( parentMethod.isSelectionMethod() ) {
+				declaredMethod.setSelectionMethod();
+			}
+			if( parentMethod.isTypeSelectionMethod() ) {
+				declaredMethod.setTypeSelectionMethod();
+			}
+		}
+
+		/**
+		 * Handles the case where a declared method has the same signature as the erasure
+		 * of the parent method, but not the same full signature. In this case the parent
+		 * method may still need to be inherited (for bridge method purposes), unless an
+		 * already-inherited method covers it.
+		 *
+		 * @return true if methodToInherit should still be inherited, false otherwise
+		 */
+		private boolean checkErasureOnlyOverride(
+				Member.HigherMethod declaredMethod, Member.HigherMethod methodToInherit,
+				List< Member.HigherMethod > candidates
+		) {
+			if( declaredMethod.sameSignatureAsErasureOf( methodToInherit )
+					&& !declaredMethod.sameSignatureAs( methodToInherit ) ) {
+				// Declared method matches erasure but not full signature --
+				// inherit the parent method unless an already-inherited method covers it.
+				for( Member.HigherMethod z : candidates ) {
+					if( z.isSubSignatureOf( methodToInherit ) ) {
+						// TODO When does this happen?
+						if( !z.isReturnTypeSubstitutableFor( methodToInherit ) ) {
+							throw new StaticVerificationException(
+									"method '" + z
+											+ "' in '" + z.declarationContext()
+											+ "' clashes with method '" + methodToInherit
+											+ "' in '" + methodToInherit.declarationContext()
+											+ "', attempting to use incompatible return type" );
 						}
-						if( inherited ) {
-							// TODO check implementation
-							// bad variable name??
-							boolean implementationRequirementSatisfied = false;
-							if( !implemented && !isAbstract() && methodToInherit.isAbstract() ) {
-								for(Member.HigherMethod inheritedMethod : inheritedMethods){
-									if(!inheritedMethod.isAbstract() && inheritedMethod.isSubSignatureOf(methodToInherit)
-										&& inheritedMethod.isReturnTypeSubstitutableFor(methodToInherit)){
-										implementationRequirementSatisfied = true;
-										break;
-									}
-								}
-								if(!implementationRequirementSatisfied) {
-									throw new StaticVerificationException( "'" + this + "' must either "
-										+ "be declared as abstract or implement abstract method '"
-										+ methodToInherit + "' in '" + methodToInherit.declarationContext() + "'" );
-								}
-							}
-							boolean isDiamondDuplicate = false;
-							// handle default methods with identical signature to existing inherited default method
-							if(methodToInherit.isDefault()){
-								for(Member.HigherMethod inheritedMethod : inheritedMethods){
-									// sameSignatureOf method is bi-directional
-									// methodToInherit.SameSignatureOf(inheritedMethod) == inheritedMethod.sameSignatureOf(methodToInherit)
-									boolean sameSignature = methodToInherit.sameSignatureAs(inheritedMethod);
-									
-									// only throw exception if both is default. 
-									if(inheritedMethod.isDefault() && sameSignature){
-										GroundReferenceType xContext = methodToInherit.declarationContext();
-										GroundReferenceType inheritedContext = inheritedMethod.declarationContext();
-										
-										// diamond path duplicate -> method is already present
-										if(xContext.isEquivalentTo_relaxed(inheritedContext)){
-											isDiamondDuplicate = true;
-											break;
-										}
+						return false; // already covered by an inherited method
+					}
+				}
+				return true; // still needs to be inherited
+			} else {
+				return false; // full signature match, no need to inherit
+			}
+		}
 
-										// Check if one methods defining interface is more specific than the others'
-										boolean xPriority = xContext.isSubtypeOf_relaxed(inheritedContext);
-										boolean inheritedPriotiy = inheritedContext.isSubtypeOf_relaxed(xContext);
+		/**
+		 * If this type is concrete and the method to inherit is abstract, checks whether
+		 * an already-inherited concrete method satisfies the implementation requirement.
+		 * Throws if the requirement is not satisfied.
+		 *
+		 * @return true if the requirement was satisfied by an inherited method
+		 *         (meaning methodToInherit itself need not be added to inheritedMethods)
+		 */
+		private boolean checkAbstractImplementation(
+				Member.HigherMethod methodToInherit, boolean implementedByDeclaredMethod,
+				List< Member.HigherMethod > candidates
+		) {
+			if( implementedByDeclaredMethod || isAbstract() || !methodToInherit.isAbstract() ) {
+				return false;
+			}
+			for( Member.HigherMethod candidate : candidates ) {
+				if( !candidate.isAbstract()
+						&& candidate.isSubSignatureOf( methodToInherit )
+						&& candidate.isReturnTypeSubstitutableFor( methodToInherit ) ) {
+					return true;
+				}
+			}
+			throw new StaticVerificationException( "'" + this + "' must either "
+					+ "be declared as abstract or implement abstract method '"
+					+ methodToInherit + "' in '" + methodToInherit.declarationContext() + "'" );
+		}
 
-										// If neither interface has priority, it means two completely separate interfaces 
-										// defined identical default methods -> illegal. 
-										if(!xPriority && !inheritedPriotiy){
-											throw new StaticVerificationException("Duplicate default methods inherited. " +
-											"'" + this + "' must override '" + methodToInherit + "'' from '" + methodToInherit.declarationContext() +
-											"' which is identical to '" + inheritedMethod + "' from '" + 
-											inheritedMethod.declarationContext() + "'");
-										}
+		/**
+		 * For default methods, checks whether this method is a diamond duplicate
+		 * (same origin reached via multiple paths) or a conflict with an unrelated
+		 * default method.
+		 *
+		 * @return true if methodToInherit is a diamond duplicate and should not be added
+		 */
+		private boolean checkDefaultMethodConflicts(
+				Member.HigherMethod methodToInherit, List< Member.HigherMethod > originalCandidates
+		) {
+			if( !methodToInherit.isDefault() ) {
+				return false;
+			}
+			for( Member.HigherMethod candidate : originalCandidates ) {
+				if( !candidate.isDefault()
+						|| !methodToInherit.sameSignatureAs( candidate ) ) {
+					continue;
+				}
 
-										// Defensive check, in case interface finalisation order ever changes. 
-										assert (xPriority ? methodToInherit.isReturnTypeSubstitutableFor(inheritedMethod)
-														: inheritedMethod.isReturnTypeSubstitutableFor(methodToInherit))
-											: "Return type incompatibility was not caught. Error in finaliseInterface. " 
-											+ " Return type compatibility assumption was made based on interface finalization order.";
-									}
-								}
-							}
-							if (!implementationRequirementSatisfied && !implemented && !isDiamondDuplicate){
-								inheritedMethods.add( methodToInherit.copyFor( this ) );
-							}
-						}
-					} );
-			interfaceFinalised = true;
+				GroundReferenceType xContext = methodToInherit.declarationContext();
+				GroundReferenceType candidateContext = candidate.declarationContext();
+
+				// Diamond path duplicate: method is already present from the same origin
+				if( xContext.isEquivalentTo_relaxed( candidateContext ) ) {
+					return true;
+				}
+
+				// Check if one method's defining interface is more specific than the other's
+				boolean xPriority = xContext.isSubtypeOf_relaxed( candidateContext );
+				boolean candidatePriority = candidateContext.isSubtypeOf_relaxed( xContext );
+
+				if( xPriority || candidatePriority ) {
+					// One interface is more specific — not a conflict.
+					// Defensive check for return type compatibility.
+					assert ( xPriority
+							? methodToInherit.isReturnTypeSubstitutableFor( candidate )
+							: candidate.isReturnTypeSubstitutableFor( methodToInherit ) )
+							: "Return type incompatibility was not caught. Error in finaliseInterface. "
+							+ " Return type compatibility assumption was made based on interface finalization order.";
+					return xPriority; // if xContext is more specific, candidate already covers it
+				}
+
+				// Neither has direct priority. Check for a common ancestor that defines
+				// the same default method (diamond inheritance through unrelated paths).
+				if( shareCommonDefaultOrigin( methodToInherit, xContext, candidateContext ) ) {
+					return true;
+				}
+
+				// Two completely separate interfaces defined identical default methods.
+				throw new StaticVerificationException(
+						"Duplicate default methods inherited. "
+								+ "'" + this + "' must override '" + methodToInherit
+								+ "'' from '" + methodToInherit.declarationContext()
+								+ "' which is identical to '" + candidate
+								+ "' from '" + candidate.declarationContext() + "'" );
+			}
+			return false;
+		}
+
+		/**
+		 * Checks whether two unrelated supertypes both inherited a default method
+		 * with the given signature from a common ancestor interface (diamond inheritance).
+		 */
+		private boolean shareCommonDefaultOrigin(
+				Member.HigherMethod method,
+				GroundReferenceType context1,
+				GroundReferenceType context2
+		) {
+			if( !( context1 instanceof GroundClassOrInterface c1 )
+					|| !( context2 instanceof GroundClassOrInterface c2 ) ) {
+				return false;
+			}
+			// Collect all super-interfaces of context2 (including itself)
+			Set< HigherClassOrInterface > context2Supers = new HashSet<>();
+			context2Supers.add( c2.typeConstructor() );
+			c2.allExtendedInterfaces().forEach( i -> context2Supers.add( i.typeConstructor() ) );
+			// Check if any super-interface of context1 is also a super-interface of context2
+			// and declares a default method with the same signature
+			return c1.allExtendedInterfaces().anyMatch( i -> {
+				if( !context2Supers.contains( i.typeConstructor() ) ) {
+					return false;
+				}
+				// Check if this common ancestor declares the method
+				return i.typeConstructor().innerType().declaredMethods()
+						.anyMatch( m -> m.isDefault() && m.sameSignatureAs( method ) );
+			} );
 		}
 
 		private void checkOverrideRequirementsOrThrow(Member.HigherMethod child, Member.HigherMethod parent) {
@@ -628,6 +763,16 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		@Override
 		public final Stream< Member.Field > declaredFields() {
 			return declaredFields.stream();
+		}
+
+		@Override
+		public Stream< ? extends Member.Field > fields() {
+			return Stream.concat( declaredFields(), inheritedFields.stream() );
+		}
+
+		@Override
+		public Stream< ? extends Member.HigherMethod > methods() {
+			return Stream.concat( declaredMethods(), inheritedMethods.stream() );
 		}
 
 		public void addField( Member.Field field ) {

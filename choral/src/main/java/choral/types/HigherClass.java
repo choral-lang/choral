@@ -231,23 +231,6 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 			constructors.add( constructor );
 		}
 
-		@Override
-		public final Stream< ? extends Member.Field > fields() {
-			return Stream.concat( declaredFields(), inheritedFields.stream() );
-		}
-
-		/**
-		 * {@inheritDoc} <p>
-		 * (JLS 8.2) The members of a class type are all of the following:
-		 *	- Members inherited from its direct superclass (JLS 8.1.4)
-		 *	- Members inherited from any direct superinterfaces (JLS 8.1.5)
-		 *	- Members declared in the body of the class (JLS 8.1.6)
-		 */
-		@Override
-		public final Stream< ? extends Member.HigherMethod > methods() {
-			return Stream.concat( declaredMethods(), inheritedMethods.stream() );
-		}
-
 	}
 
 	/** @see HigherDataType.Proxy */
