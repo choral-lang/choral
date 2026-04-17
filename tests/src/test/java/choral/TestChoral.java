@@ -140,6 +140,13 @@ public class TestChoral {
 		mustPass.addSources("ClassLifterIntegration", subFolder(TYPER_PASS,"ClassLifterIntegration"));
 		mustPass.addSources("DualJavaImport", subFolder(TYPER_PASS, "DualJavaImport"));
 		mustPass.addSources("StandardLibraryReduction", subFolder(TYPER_PASS, "StandardLibraryReduction"));
+		mustPass.addSources("AbstractInheritsAbstract", subFolder(TYPER_PASS, "AbstractInheritsAbstract"));
+		mustPass.addSources("ConcreteImplementsAbstract", subFolder(TYPER_PASS, "ConcreteImplementsAbstract"));
+		mustPass.addSources("ClassBeatsDefault", subFolder(TYPER_PASS, "ClassBeatsDefault"));
+		mustPass.addSources("DiamondDefaultSameOrigin", subFolder(TYPER_PASS, "DiamondDefaultSameOrigin"));
+		mustPass.addSources("CovariantReturn", subFolder(TYPER_PASS, "CovariantReturn"));
+		mustPass.addSources("FieldInheritance", subFolder(TYPER_PASS, "FieldInheritance"));
+		mustPass.addSources("MultiInterfaceInheritance", subFolder(TYPER_PASS, "MultiInterfaceInheritance"));
 
 		CompilationRequestBuilder mustFail = new CompilationRequestBuilder();
 		mustFail.addSources("InstanceOverridesStatic", subFolder(TYPER_FAIL, "InstanceOverridesStatic"));
@@ -149,6 +156,10 @@ public class TestChoral {
 		mustFail.addSources("WeakerAccess3", subFolder(TYPER_FAIL, "WeakerAccess3"));
 		mustFail.addSources("OverrideFinal", subFolder(TYPER_FAIL, "OverrideFinal"));
 		mustFail.addSources("IncompatibleReturnType", subFolder(TYPER_FAIL, "IncompatibleReturnType"));
+		mustFail.addSources("UnimplementedAbstract", subFolder(TYPER_FAIL, "UnimplementedAbstract"));
+		mustFail.addSources("ConflictingDefaults", subFolder(TYPER_FAIL, "ConflictingDefaults"));
+		mustFail.addSources("AbstractNotImplementedChain", subFolder(TYPER_FAIL, "AbstractNotImplementedChain"));
+		mustFail.addSources("OverrideWithWeakerAccessInherited", subFolder(TYPER_FAIL, "OverrideWithWeakerAccessInherited"));
 
 		return Stream.concat(
 				mustPass.build().map(request ->
