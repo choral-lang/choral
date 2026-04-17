@@ -27,13 +27,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.tools.Diagnostic;
@@ -75,7 +78,7 @@ public class TestChoral {
 	private static final String GREEN = "\u001B[32m";
 	private static final String RED = "\u001B[31m";
 	private static final String RESET = "\u001B[0m";
-	private static final int COLUMN_WIDTH = 30;
+	private static final int COLUMN_WIDTH = 40;
 
 
 	///////////////////////////////// ADD TESTS HERE /////////////////////////////////////
@@ -339,15 +342,12 @@ public class TestChoral {
 		int exitCode;
 		ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
 		ByteArrayOutputStream testError = new ByteArrayOutputStream();
-		PrintStream originalOutput = System.out;
 		PrintStream originalError = System.err;
 
 		try {
-			System.setOut( new PrintStream( testOutput ) );
 			System.setErr( new PrintStream( testError ) );
 			exitCode = Choral.compile( parameters.toArray( new String[ 0 ] ) );
 		} finally {
-			System.setOut( originalOutput );
 			System.setErr( originalError );
 		}
 
@@ -359,9 +359,65 @@ public class TestChoral {
 		return sourceFolder + File.separator + subFolder;
 	}
 
+	/**
+	 * Fails the current test, printing full error details to stdout (so they appear in the
+	 * clean per-test section) and throwing an {@link AssertionError} with just the symbol
+	 * name and an empty stack trace (so the Surefire failure block stays minimal).
+	 */
+	private static void fail( String symbol, List< String > errors ) {
+		String details = errors.stream()
+				.map( e -> "    " + e.replace( "\n", "\n    " ) )
+				.collect( Collectors.joining( "\n" ) );
+		AssertionError e = new AssertionError( symbol + "\n\n" + details + "\n" );
+		e.setStackTrace( new StackTraceElement[ 0 ] );
+		throw e;
+	}
+
+	/**
+	 * Returns {@code true} if the expected output for this compilation request should be
+	 * updated instead of diffed, based on the {@code choral.updateExpected} system property.
+	 *
+	 * <p>The property value is a comma-separated list of test names.
+	 * Example: {@code mvn test -pl tests -Dchoral.updateExpected=MyTest1,MyTest2}
+	 */
+	private static boolean shouldUpdate( CompilationRequest req ) {
+		String prop = System.getProperty( "choral.updateExpected", "" ).trim();
+		if( prop.isEmpty() ) return false;
+		Set< String > targets = Arrays.stream( prop.split( "," ) )
+				.map( String::trim )
+				.filter( s -> !s.isEmpty() )
+				.collect( Collectors.toSet() );
+        return targets.contains(req.symbol());
+    }
+
+	/**
+	 * Replaces {@code expectedDir} with a fresh recursive copy of {@code projectedDir},
+	 * deleting any stale files that no longer exist in the projection.
+	 */
+	private static void updateSnapshot( Path projectedDir, Path expectedDir ) throws IOException {
+		if( Files.exists( expectedDir ) ) {
+			try( var walk = Files.walk( expectedDir ) ) {
+				walk.sorted( Comparator.reverseOrder() )
+						.forEach( p -> p.toFile().delete() );
+			}
+		}
+		try( var walk = Files.walk( projectedDir ) ) {
+			walk.forEach( src -> {
+				Path dest = expectedDir.resolve( projectedDir.relativize( src ) );
+				try {
+					if( Files.isDirectory( src ) ) Files.createDirectories( dest );
+					else Files.copy( src, dest, StandardCopyOption.REPLACE_EXISTING );
+				} catch( IOException e ) {
+					throw new UncheckedIOException( e );
+				}
+			} );
+		}
+	}
+
 	/** Compiles the test, expecting it to succeed. */
 	private static void project( CompilationRequest compilationRequest ) {
 		ArrayList< String > errors = new ArrayList<>();
+		boolean update = shouldUpdate( compilationRequest );
 
 		CompilationResults results = compile(compilationRequest);
 		if( results.exitCode != 0 )
@@ -397,33 +453,56 @@ public class TestChoral {
 				List< Path > projectedJavaFiles;
 				List< Path > expectedFiles;
 
-				// Get all the projected and expected Java files
+				// Get all the projected Java files
 				Path projectFolder = Path.of( PROJECTED, packageList );
 				try {
 					projectedJavaFiles = Files.walk( projectFolder ).filter(
 							javaFile -> javaFile.toString().endsWith( ".java" )
 					).sorted().toList();
-				}
-					catch ( NoSuchFileException e ) {
+				} catch ( NoSuchFileException e ) {
 					errors.add("Failed to compile Choral files");
 					continue;
 				}
 
+				// If updating, overwrite expectedOutput with the fresh projection now,
+				// so that the diff below is a no-op and javac compiles the new files.
+				Path expectedFolderPath = Path.of( EXPECTED, packageList );
+				if( update ) {
+					updateSnapshot( projectFolder, expectedFolderPath );
+					System.out.printf( "%-" + COLUMN_WIDTH + "s %s[SNAPSHOT UPDATED]%s%n",
+							compilationRequest.symbol, GREEN, RESET );
+				}
+
+				// Get the expected Java files
 				try {
-					Path expectedFolderPath = Path.of( EXPECTED, packageList );
 					expectedFiles = Files.walk( expectedFolderPath ).filter(
 							expectedFile -> expectedFile.toString().endsWith( ".java" )
 					).sorted().toList();
-				}
-				catch ( NoSuchFileException e ) {
-					errors.add("Missing files in the expectedOutput directory: " + e.getMessage());
+				} catch ( NoSuchFileException e ) {
+					errors.add(
+							"No snapshot found for '" + compilationRequest.symbol() + "' in /tests/expectedOutput/.\n\n"
+							+ projectedJavaFiles.stream()
+									.map( p -> {
+										try {
+											return "=== " + p + " ===\n" + Files.readString( p );
+										} catch( IOException ex ) {
+											return "=== " + p + " === (could not read: " + ex.getMessage() + ")";
+										}
+									} )
+									.collect( Collectors.joining( "\n" ) )
+							+ "\n=============================================================================="
+							+ "\nTo accept the new snapshot, run: mvn test -pl tests -Dchoral.updateExpected="
+							+ compilationRequest.symbol() );
 					continue;
 				}
 
 				// PHASE 1: CHECK IF EXPECTED AND PROJECTED CODE DIFFER
 
 				if( projectedJavaFiles.size() != expectedFiles.size() ) {
-					errors.add("The number of projected files does not equal the number of expected files");
+					errors.add( "The number of projected files (" + projectedJavaFiles.size()
+							+ ") does not equal the number of expected files (" + expectedFiles.size() + ").\n"
+							+ "  Accept with: mvn test -pl tests -Dchoral.updateExpected="
+							+ compilationRequest.symbol() );
 					continue;
 				}
 
@@ -443,8 +522,10 @@ public class TestChoral {
 
 					if( !diffOutput.isEmpty() ) {
 						String diff = String.join( "\n", diffOutput );
-						errors.add("There was a difference between the expected output and " +
-								"the generated output, now printing diff:\n" + diff);
+						errors.add( "There was a difference between the expected output and "
+								+ "the generated output, now printing diff:\n" + diff
+								+ "\n  Accept with: mvn test -pl tests -Dchoral.updateExpected="
+								+ compilationRequest.symbol() );
 					}
 				}
 
@@ -492,8 +573,7 @@ public class TestChoral {
 
 		if( !errors.isEmpty() ) {
 			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
-			String errorMessages = String.join("\n", errors);
-			Assertions.fail(errorMessages);
+			fail( compilationRequest.symbol, errors );
 		} else {
 			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET );
 		}
@@ -556,8 +636,7 @@ public class TestChoral {
 		CompilationResults results = compile(compilationRequest);
 
 		if( results.exitCode == 0 )
-			errors.add("Program compiled with exit code 0, which means no errors were found." +
-				"This test is expected to have errors" );
+			errors.add("Compilation succeeded unexpectedly. This test should have compilation errors." );
 
 		String[] outputLines = results.stderr.split( "\n" );
 		List<TestError> actualErrors = findActualErrors(outputLines);
@@ -589,12 +668,12 @@ public class TestChoral {
 		// Add an error for each expected error not found in actual errors, and vice versa.
 		// The expected error can be a substring of the actual error.
 		for (TestError expected : subtract(expectedErrors, actualErrors)) {
-			errors.add("Expected to find the following error on line " + expected.line() +
-				": " + expected.message());
+			errors.add("Expected error on line " + expected.line() +
+				":\t" + expected.message());
 		}
 		for (TestError actual : subtract(actualErrors, expectedErrors)) {
-			errors.add("Got an unexpected error on line " + actual.line() +
-				": " + actual.message());
+			errors.add("Unexpected error on line " + actual.line() +
+				":\t" + actual.message());
 		}
 
 		if (errors.isEmpty()){
@@ -602,8 +681,7 @@ public class TestChoral {
 		}
 		else {
 			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
-			String errorMessages = String.join("\n", errors);
-			Assertions.fail(errorMessages);
+			fail( compilationRequest.symbol, errors );
 		}
 	}
 
