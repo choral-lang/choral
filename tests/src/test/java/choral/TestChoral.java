@@ -143,6 +143,14 @@ public class TestChoral {
 		mustPass.addSources("CovariantReturn", subFolder(TYPER_PASS, "CovariantReturn.ch"));
 		mustPass.addSources("FieldInheritance", subFolder(TYPER_PASS, "FieldInheritance.ch"));
 		mustPass.addSources("MultiInterfaceInheritance", subFolder(TYPER_PASS, "MultiInterfaceInheritance.ch"));
+		mustPass.addSources("FieldHidingDifferentType", subFolder(TYPER_PASS, "FieldHidingDifferentType.ch"));
+		mustPass.addSources("ConcreteInheritsConcreteFromSuperclass", subFolder(TYPER_PASS, "ConcreteInheritsConcreteFromSuperclass.ch"));
+		mustPass.addSources("StaticHidesStatic", subFolder(TYPER_PASS, "StaticHidesStatic.ch"));
+		mustPass.addSources("OverrideProtectedWithPublic", subFolder(TYPER_PASS, "OverrideProtectedWithPublic.ch"));
+		mustPass.addSources("AbstractSuperclassTrumpsDefault", subFolder(TYPER_PASS, "AbstractSuperclassTrumpsDefault.ch"));
+		mustPass.addSources("DefaultOverriddenByMoreSpecific", subFolder(TYPER_PASS, "DefaultOverriddenByMoreSpecific.ch"));
+		mustPass.addSources("InterfaceInheritsMultipleAbstracts", subFolder(TYPER_PASS, "InterfaceInheritsMultipleAbstracts.ch"));
+		mustPass.addSources("ConcreteInheritsImplementation", subFolder(TYPER_PASS, "ConcreteInheritsImplementation.ch"));
 
 		CompilationRequestBuilder mustFail = new CompilationRequestBuilder();
 		mustFail.addSources("WeakerAccess1", subFolder( TYPER_FAIL, "WeakerAccess1.ch" ));
@@ -156,6 +164,12 @@ public class TestChoral {
 		mustFail.addSources("ConflictingDefaults", subFolder(TYPER_FAIL, "ConflictingDefaults.ch"));
 		mustFail.addSources("AbstractNotImplementedChain", subFolder(TYPER_FAIL, "AbstractNotImplementedChain.ch"));
 		mustFail.addSources("OverrideWithWeakerAccessInherited", subFolder(TYPER_FAIL, "OverrideWithWeakerAccessInherited.ch"));
+		mustFail.addSources("InterfaceInheritsConflictingDefaults", subFolder(TYPER_FAIL, "InterfaceInheritsConflictingDefaults.ch"));
+		// Gap tests — moved to xKnownBugs/ (compiler does not yet check these):
+		// mustFail.addSources("DefaultAbstractConflict", subFolder(TYPER_FAIL, "xKnownBugs/DefaultAbstractConflict.ch"));
+		// mustFail.addSources("InheritedAbstractsIncompatibleReturn", subFolder(TYPER_FAIL, "xKnownBugs/InheritedAbstractsIncompatibleReturn.ch"));
+		// mustFail.addSources("InterfaceInheritsAbstractsIncompatibleReturn", subFolder(TYPER_FAIL, "xKnownBugs/InterfaceInheritsAbstractsIncompatibleReturn.ch"));
+		// mustFail.addSources("IncompatibleAbstractMethods", subFolder(TYPER_FAIL, "xKnownBugs/IncompatibleAbstractMethods.ch"));
 
 		return Stream.concat(
 				mustPass.build().map(request ->
