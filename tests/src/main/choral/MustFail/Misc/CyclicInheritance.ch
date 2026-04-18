@@ -1,3 +1,3 @@
-class CyclicInheritance_A@W extends CyclicInheritance_B@W{ CyclicInheritance_A(){} }
+class CyclicInheritance@W extends CyclicInheritance_B@W{ CyclicInheritance(){} }
 
-class CyclicInheritance_B@W extends CyclicInheritance_A@W { CyclicInheritance_B(){} } //! Cyclic inheritance: 'CyclicInheritance_B@(W)' cannot extend 'CyclicInheritance_A@(W)'
+class CyclicInheritance_B@W extends CyclicInheritance@W { CyclicInheritance_B(){} } //! Cyclic inheritance: 'CyclicInheritance_B@(W)' cannot extend 'CyclicInheritance@(W)'

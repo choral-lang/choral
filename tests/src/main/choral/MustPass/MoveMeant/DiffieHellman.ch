@@ -2,7 +2,7 @@ package choral.MustPass.MoveMeant.DiffieHellman;
 
 import java.math.BigInteger;
 import choral.channels.SymDataChannel;
-import choral.MustPass.BiPair.BiPair;
+import choral.MustPass.MoveMeant.shared.BiPair;
 
 public class DiffieHellman@(Alice,Bob) {
 

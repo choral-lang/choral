@@ -1,7 +1,6 @@
 package choral.MustPass.MoveMeant.DownloadFile;
 
-import choral.MustPass.MoveMeant.SendPackets.SendPackets_C;
-import choral.MustPass.MoveMeant.SendPackets.utils.Client;
+import choral.MustPass.MoveMeant.shared.utils.Client;
 import choral.annotations.Choreography;
 import choral.channels.SymChannel_A;
 import choral.lang.Unit;

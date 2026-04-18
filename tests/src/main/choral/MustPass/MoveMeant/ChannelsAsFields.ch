@@ -1,7 +1,7 @@
 package choral.MustPass.MoveMeant.ChannelsAsFields;
 
-import choral.MustPass.MoveMeant.utils.Client;
-import choral.MustPass.MoveMeant.utils.Price;
+import choral.MustPass.MoveMeant.shared.utils.Client;
+import choral.MustPass.MoveMeant.shared.utils.Price;
 import choral.channels.SymChannel;
 import choral.channels.DiDataChannel;
 import choral.channels.DiSelectChannel;

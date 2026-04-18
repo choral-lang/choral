@@ -11,7 +11,7 @@ public class OverloadOnRoles_A {
 	SymChannel_A < Object > ch_AB;
 	SymChannel_A < Object > ch_AC;
 
-	public void fun( Client_A client ) {
+	public void fun( RoleClient_A client ) {
 		Integer I_A = 0;
 		client.fun( I_A );
 		client.fun( Unit.id );

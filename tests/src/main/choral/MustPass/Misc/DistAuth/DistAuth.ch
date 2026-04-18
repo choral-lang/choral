@@ -1,7 +1,5 @@
 package choral.MustPass.DistAuth;
 
-import choral.MustPass.AuthResult.AuthResult;
-import choral.MustPass.DistAuthUtils.AuthToken;
 import choral.MustPass.DistAuth.Base64_Encoder;
 import choral.MustPass.DistAuth.ClientRegistry;
 import choral.MustPass.DistAuth.Credentials;

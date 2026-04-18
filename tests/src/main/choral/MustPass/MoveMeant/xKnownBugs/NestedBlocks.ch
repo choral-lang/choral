@@ -1,6 +1,6 @@
 package choral.MustPass.MoveMeant.NestedBlocks;
 
-import choral.MustPass.MoveMeant.utils.Client;
+import choral.MustPass.MoveMeant.shared.utils.Client;
 import choral.channels.SymChannel;
 
 // Bug in the "simple" inference model (`dependency not found`).

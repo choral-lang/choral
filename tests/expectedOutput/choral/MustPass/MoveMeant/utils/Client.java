@@ -1,15 +1,24 @@
 package choral.MustPass.MoveMeant.utils;
 
-import choral.MustPass.MoveMeant.utils.Price;
 import choral.annotations.Choreography;
 import java.lang.Integer;
 import java.lang.Object;
+import java.util.List;
 
 @Choreography( role = "A", name = "Client" )
 public class Client {
 	public static Price price;
 	Object obj;
+	public List < Integer > file;
 
+	public List < Integer > append( List < Integer > file, Integer packet ) {
+		return null;
+	}
+	
+	public List < Integer > emptyFile() {
+		return null;
+	}
+	
 	public void fun0() {
 		
 	}

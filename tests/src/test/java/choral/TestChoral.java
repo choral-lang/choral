@@ -48,7 +48,6 @@ import javax.tools.ToolProvider;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.api.Assertions;
 
 import com.github.difflib.DiffUtils;
 import com.github.difflib.UnifiedDiffUtils;
@@ -61,12 +60,6 @@ public class TestChoral {
 	private static final String CHORALUNIT = Paths.get("..", "choral-unit", "src", "main", "choral").toString();
 	private static final String MUSTFAIL = Paths.get("src", "main", "choral", "MustFail").toString();
 	private static final String MUSTPASS = Paths.get("src", "main", "choral", "MustPass").toString();
-	private static final String MUSTPASS_MISC = subFolder( MUSTPASS, "Misc" );
-	private static final String MUSTFAIL_MISC = subFolder( MUSTFAIL, "Misc" );
-	private static final String MOVEMEANT_PASS = subFolder( MUSTPASS, "MoveMeant" );
-	private static final String MOVEMEANT_FAIL = subFolder( MUSTFAIL, "MoveMeant" );
-	private static final String TYPER_PASS = subFolder( MUSTPASS, "Typer" );
-	private static final String TYPER_FAIL = subFolder( MUSTFAIL, "Typer" );
 	private static final String BASE_PATH = Paths.get("base", "src", "main", "java").toString();
 	private static final String RUNTIME_PATH = Paths.get("runtime", "src", "main", "java").toString();
 	/** Location of Java code produced by the Choral compiler. */
@@ -86,142 +79,26 @@ public class TestChoral {
 	///////////////////////////////// ADD TESTS HERE /////////////////////////////////////
 
 	@TestFactory
-	public Stream< DynamicTest > mustPass() {
-		CompilationRequestBuilder builder = new CompilationRequestBuilder();
-		builder.addSources( "HelloRoles", subFolder( MUSTPASS_MISC, "HelloRoles.ch" ) );
-		builder.addSources( "BiPair", subFolder( MUSTPASS_MISC, "BiPair.ch" ) );
-		builder.addSources( "ConsumeItems", subFolder( MUSTPASS_MISC, "ConsumeItems" ) );
-		builder.addSources( "MyExtClass", subFolder( MUSTPASS_MISC, "ExtendsTest.ch" ) );
-		builder.addSources( "RemoteFunction", subFolder( MUSTPASS_MISC, "RemoteFunction.ch" ) );
-		builder.addSources( "AuthResult", subFolder( MUSTPASS_MISC, "AuthResult" ) );
-		builder.addSources( "AuthResult", subFolder( MUSTPASS_MISC, "AuthToken.ch" ) );
-		builder.addSources( "DistAuth", subFolder( MUSTPASS_MISC, "DistAuth" ) );
-		builder.addSources( "DistAuth", subFolder( MUSTPASS_MISC, "AuthToken.ch" ) );
-		builder.addSources( "BuyerSellerShipper", subFolder( MUSTPASS_MISC, "BuyerSellerShipper" ) );
-		builder.addSources( "DiffieHellman", subFolder( MUSTPASS_MISC, "DiffieHellman.ch" ) );
-		builder.addSources( "DiffieHellman", subFolder( MUSTPASS_MISC, "BiPair.ch" ) );
-		builder.addSources( "TestSwitch", subFolder( MUSTPASS_MISC, "TestSwitch.ch" ) );
-		builder.addSources( "LoggerExample", subFolder( MUSTPASS_MISC, "LoggerExample.ch" ) );
-		builder.addSources( "IfDesugarTest", subFolder( MUSTPASS_MISC, "IfDesugar" ) );
-		builder.addSources( "ChainingExample", subFolder( MUSTPASS_MISC, "ChainingOperator.ch" ) );
-		builder.addSources( "BuyBook2", subFolder( MUSTPASS_MISC, "BookSellingSoloist.ch" ) );
-		builder.addSources( "CourtesyDefaultMethods", subFolder( MUSTPASS_MISC, "CourtesyDefaultMethods.ch" ) );
-
-		return builder.build().map(request ->
-				dynamicTest(request.symbol, new MustPassTest( request )));
-	}
-
-	@TestFactory
-	public Stream< DynamicTest > mustFail() {
-		CompilationRequestBuilder builder = new CompilationRequestBuilder();
-		builder.addSources( "WrongType", subFolder( MUSTFAIL_MISC, "WrongType.ch" ) );
-		builder.addSources( "MultiFoo", subFolder( MUSTFAIL_MISC, "MultiFoo.ch" ) );
-		builder.addSources( "CyclicInheritance_A", subFolder( MUSTFAIL_MISC, "CyclicInheritance.ch" ) );
-		builder.addSources( "LotsOfErrors", subFolder( MUSTFAIL_MISC, "LotsOfErrors.ch" ) );
-		builder.addSources( "VariableDeclarations", subFolder( MUSTFAIL_MISC, "VariableDeclarations.ch" ) );
-		builder.addSources( "TwoWorldList", subFolder( MUSTFAIL_MISC, "Interfaces.ch" ) );
-		builder.addSources( "NonMatchingReturnType", subFolder( MUSTFAIL_MISC, "Foo.ch" ) );
-		builder.addSources( "MultiFileError", subFolder( MUSTFAIL_MISC, "MultiFileError.ch" ) );
-		builder.addSources( "MultiFileError", subFolder( MUSTFAIL_MISC, "ErrorHelper.ch" ) );
-
-		return builder.build().map(request ->
-				dynamicTest(request.symbol, new MustFailTest( request )));
+	public Stream< DynamicTest > misc() {
+		return Stream.concat(
+				discoverTests( subFolder( MUSTPASS, "Misc" ) ),
+				discoverTests( subFolder( MUSTFAIL, "Misc" ) )
+		);
 	}
 
 	@TestFactory
 	public Stream< DynamicTest > typer() {
-		CompilationRequestBuilder mustPass = new CompilationRequestBuilder();
-		mustPass.addSources("OnDemandImports", subFolder(TYPER_PASS, "OnDemandImports.ch"));
-		mustPass.addSources("InterfaceDefaultMethod", subFolder(TYPER_PASS, "InterfaceDefaultMethod.ch"));
-		mustPass.addSources("ClassLifterIntegration", subFolder(TYPER_PASS,"ClassLifterIntegration.ch"));
-		mustPass.addSources("DualJavaImport", subFolder(TYPER_PASS, "DualJavaImport.ch"));
-		mustPass.addSources("StandardLibraryReduction", subFolder(TYPER_PASS, "StandardLibraryReduction.ch"));
-		mustPass.addSources("AbstractInheritsAbstract", subFolder(TYPER_PASS, "AbstractInheritsAbstract.ch"));
-		mustPass.addSources("ConcreteImplementsAbstract", subFolder(TYPER_PASS, "ConcreteImplementsAbstract.ch"));
-		mustPass.addSources("ClassBeatsDefault", subFolder(TYPER_PASS, "ClassBeatsDefault.ch"));
-		mustPass.addSources("DiamondDefaultSameOrigin", subFolder(TYPER_PASS, "DiamondDefaultSameOrigin.ch"));
-		mustPass.addSources("CovariantReturn", subFolder(TYPER_PASS, "CovariantReturn.ch"));
-		mustPass.addSources("FieldInheritance", subFolder(TYPER_PASS, "FieldInheritance.ch"));
-		mustPass.addSources("MultiInterfaceInheritance", subFolder(TYPER_PASS, "MultiInterfaceInheritance.ch"));
-		mustPass.addSources("FieldHidingDifferentType", subFolder(TYPER_PASS, "FieldHidingDifferentType.ch"));
-		mustPass.addSources("ConcreteInheritsConcreteFromSuperclass", subFolder(TYPER_PASS, "ConcreteInheritsConcreteFromSuperclass.ch"));
-		mustPass.addSources("StaticHidesStatic", subFolder(TYPER_PASS, "StaticHidesStatic.ch"));
-		mustPass.addSources("OverrideProtectedWithPublic", subFolder(TYPER_PASS, "OverrideProtectedWithPublic.ch"));
-		mustPass.addSources("AbstractSuperclassTrumpsDefault", subFolder(TYPER_PASS, "AbstractSuperclassTrumpsDefault.ch"));
-		mustPass.addSources("DefaultOverriddenByMoreSpecific", subFolder(TYPER_PASS, "DefaultOverriddenByMoreSpecific.ch"));
-		mustPass.addSources("InterfaceInheritsMultipleAbstracts", subFolder(TYPER_PASS, "InterfaceInheritsMultipleAbstracts.ch"));
-		mustPass.addSources("ConcreteInheritsImplementation", subFolder(TYPER_PASS, "ConcreteInheritsImplementation.ch"));
-
-		CompilationRequestBuilder mustFail = new CompilationRequestBuilder();
-		mustFail.addSources("WeakerAccess1", subFolder( TYPER_FAIL, "WeakerAccess1.ch" ));
-		mustFail.addSources("WeakerAccess2", subFolder( TYPER_FAIL, "WeakerAccess2.ch" ));
-		mustFail.addSources("WeakerAccess3", subFolder( TYPER_FAIL, "WeakerAccess3.ch" ));
-		mustFail.addSources("OverrideFinal", subFolder( TYPER_FAIL, "OverrideFinal.ch" ));
-		mustFail.addSources("IncompatibleReturnType", subFolder( TYPER_FAIL, "IncompatibleReturnType.ch" ));
-		mustFail.addSources("InstanceOverridesStatic", subFolder(TYPER_FAIL, "InstanceOverridesStatic.ch"));
-		mustFail.addSources("StaticOverridesInstance", subFolder(TYPER_FAIL, "StaticOverridesInstance.ch"));
-		mustFail.addSources("UnimplementedAbstract", subFolder(TYPER_FAIL, "UnimplementedAbstract.ch"));
-		mustFail.addSources("ConflictingDefaults", subFolder(TYPER_FAIL, "ConflictingDefaults.ch"));
-		mustFail.addSources("AbstractNotImplementedChain", subFolder(TYPER_FAIL, "AbstractNotImplementedChain.ch"));
-		mustFail.addSources("OverrideWithWeakerAccessInherited", subFolder(TYPER_FAIL, "OverrideWithWeakerAccessInherited.ch"));
-		mustFail.addSources("InterfaceInheritsConflictingDefaults", subFolder(TYPER_FAIL, "InterfaceInheritsConflictingDefaults.ch"));
-		mustFail.addSources("DefaultAbstractConflict", subFolder(TYPER_FAIL, "DefaultAbstractConflict.ch"));
-		mustFail.addSources("InheritedAbstractsIncompatibleReturn", subFolder(TYPER_FAIL, "InheritedAbstractsIncompatibleReturn.ch"));
-		mustFail.addSources("InterfaceInheritsAbstractsIncompatibleReturn", subFolder(TYPER_FAIL, "InterfaceInheritsAbstractsIncompatibleReturn.ch"));
-		mustFail.addSources("IncompatibleAbstractMethods", subFolder(TYPER_FAIL, "IncompatibleAbstractMethods.ch"));
-
 		return Stream.concat(
-				mustPass.build().map(request ->
-						dynamicTest(request.symbol, new MustPassTest( request ))),
-				mustFail.build().map(request ->
-						dynamicTest(request.symbol, new MustFailTest( request )))
+				discoverTests( subFolder( MUSTPASS, "Typer" ) ),
+				discoverTests( subFolder( MUSTFAIL, "Typer" ) )
 		);
 	}
 
 	@TestFactory
 	public Stream< DynamicTest > moveMeant() {
-		CompilationRequestBuilder mustPass = new CompilationRequestBuilder("--infer-comms");
-		CompilationRequestBuilder mustFail = new CompilationRequestBuilder("--infer-comms");
-		mustPass.addSources( "BiPair", subFolder( MOVEMEANT_PASS, "BiPair.ch" ) );
-		mustPass.addSources( "BuyerSellerShipper", subFolder( MOVEMEANT_PASS, "BuyerSellerShipper" ) );
-		mustPass.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT_PASS, "ChannelsAsArgs.ch" ) );
-		mustPass.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT_PASS, "utils" ) );
-		mustPass.addSources( "ChannelsAsFields", subFolder( MOVEMEANT_PASS, "ChannelsAsFields.ch" ) );
-		mustPass.addSources( "ChannelsAsFields", subFolder( MOVEMEANT_PASS, "utils" ) );
-		mustPass.addSources( "ChannelTypesExample", subFolder( MOVEMEANT_PASS, "ChannelTypesExample.ch" ) );
-		mustPass.addSources( "ConsumeItems", subFolder( MOVEMEANT_PASS, "ConsumeItems" ) );
-		mustPass.addSources( "DiffieHellman", subFolder( MOVEMEANT_PASS, "DiffieHellman.ch" ) );
-		mustPass.addSources( "DiffieHellman", subFolder( MUSTPASS_MISC, "BiPair.ch" ) );
-		mustPass.addSources( "DownloadFile", subFolder( MOVEMEANT_PASS, "DownloadFile.ch" ) );
-		mustPass.addSources( "DownloadFile", subFolder( MOVEMEANT_PASS, "SendPackets" ) );
-		mustPass.addSources( "HelloRoles", subFolder( MOVEMEANT_PASS, "HelloRoles.ch" ) );
-		mustPass.addSources( "Increments", subFolder( MOVEMEANT_PASS, "Increments.ch" ) );
-		mustPass.addSources( "Karatsuba", subFolder( MOVEMEANT_PASS, "Karatsuba.ch" ) );
-		mustPass.addSources( "Mergesort", subFolder( MOVEMEANT_PASS, "Mergesort.ch" ) );
-		mustPass.addSources( "OverloadOnRoles", subFolder( MOVEMEANT_PASS, "OverloadOnRoles.ch" ) );
-		mustPass.addSources( "PingPong", subFolder( MOVEMEANT_PASS, "PingPong" ) );
-		mustPass.addSources( "Quicksort", subFolder( MOVEMEANT_PASS, "Quicksort.ch" ) );
-		mustPass.addSources( "RemoteFunction", subFolder( MOVEMEANT_PASS, "RemoteFunction.ch" ) );
-		mustPass.addSources( "SendPackets", subFolder( MOVEMEANT_PASS, "SendPackets" ) );
-		mustPass.addSources( "SimpleArithmetic", subFolder( MOVEMEANT_PASS, "SimpleArithmetic.ch" ) );
-		mustPass.addSources( "SimpleIf3", subFolder( MOVEMEANT_PASS, "SimpleIf3" ) );
-		mustPass.addSources( "SimpleKOC", subFolder( MOVEMEANT_PASS, "SimpleKOC.ch" ) );
-		mustPass.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT_PASS, "SimpleMethodCalls.ch" ) );
-		mustPass.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT_PASS, "utils" ) );
-		mustPass.addSources( "SimpleReturns", subFolder( MOVEMEANT_PASS, "SimpleReturns.ch" ) );
-		mustPass.addSources( "SimpleVariableReplacement", subFolder( MOVEMEANT_PASS, "SimpleVariableReplacement.ch" ) );
-		mustPass.addSources( "SplitAndCombine", subFolder( MOVEMEANT_PASS, "SplitAndCombine" ) );
-		mustPass.addSources( "SSOWithRetry", subFolder( MOVEMEANT_PASS, "SSOWithRetry" ) );
-		mustPass.addSources( "VitalsStreaming", subFolder( MOVEMEANT_PASS, "VitalsStreaming" ) );
-
-		mustFail.addSources( "AmbiguousRecipient1", subFolder( MOVEMEANT_FAIL, "AmbiguousRecipient1" ) );
-		mustFail.addSources( "AmbiguousRecipient2", subFolder( MOVEMEANT_FAIL, "AmbiguousRecipient2" ) );
-
 		return Stream.concat(
-				mustPass.build().map(request ->
-					dynamicTest(request.symbol, new MustPassTest( request ))),
-				mustFail.build().map(request ->
-					dynamicTest(request.symbol, new MustFailTest( request )))
+				discoverTests( subFolder( MUSTPASS, "MoveMeant" ), "--infer-comms" ),
+				discoverTests( subFolder( MUSTFAIL, "MoveMeant" ), "--infer-comms" )
 		);
 	}
 
@@ -244,64 +121,72 @@ public class TestChoral {
 									  List< String > classPaths,
 									  List< String > flags) {}
 
-	/**
-	 * Helper class for building CompilationRequest objects.
-	 */
-	private static class CompilationRequestBuilder {
-		private final Map<String, CompilationRequestData> requests = new LinkedHashMap<>();
-		private final List<String> flags;
+	private static Stream< DynamicTest > discoverTests( String categoryRoot, String... flags ) {
+		Path categoryPath = Path.of( categoryRoot );
+		Path sharedPath = categoryPath.resolve( "shared" );
+		List< DynamicTest > requests = new ArrayList<>();
 
-		public CompilationRequestBuilder(String... flags) {
-			this.flags = List.of(flags);
+		boolean isMustPass;
+		if ( categoryRoot.startsWith( MUSTPASS ) ) {
+			isMustPass = true;
+		} else if ( categoryRoot.startsWith( MUSTFAIL ) ) {
+			isMustPass = false;
+		} else {
+			throw new IllegalArgumentException( "Invalid test directory " + categoryRoot +
+					": should be contained in '" + MUSTPASS + "' or '" + MUSTFAIL + "'" );
 		}
 
-		public CompilationRequestBuilder() {
-			this("");
-		}
+		try( Stream< Path > entries = Files.list( categoryPath ) ) {
+			for( Path test : entries.sorted( Comparator.comparing( path -> path.getFileName().toString() ) ).toList() ) {
+				String name = test.getFileName().toString();
+				if( name.equals( "shared" ) || name.equals( "xKnownBugs" ) ) {
+					continue;
+				}
 
-		private class CompilationRequestData {
-			final String symbol;
-			final List<String> sourceFolders = new ArrayList<>();
-			final List<String> javaSources = new ArrayList<>();
-			final List<String> worlds = new ArrayList<>();
-			final List<String> classPaths = new ArrayList<>();
+				String symbol;
+				String sourcePath;
+				if( Files.isRegularFile( test ) && name.endsWith( ".ch" ) ) {
+					symbol = name.substring( 0, name.length() - 3 );
+					sourcePath = test.toString();
+				} else if( Files.isDirectory( test ) ) {
+					symbol = name;
+					Path mainFile = test.resolve( symbol + ".ch" );
+					if( !Files.isRegularFile( mainFile ) ) {
+						throw new IllegalStateException(
+								"Malformed test directory '" + test
+								+ "': expected to find a file called '" + symbol + ".ch'"
+						);
+					}
+					sourcePath = test.toString();
+				} else {
+					continue;
+				}
 
-			CompilationRequestData(String symbol) {
-				this.symbol = symbol;
+				List< String > sources = new ArrayList<>();
+				sources.add( sourcePath );
+				if( Files.isDirectory( sharedPath ) ) {
+					sources.add( sharedPath.toString() );
+				}
+
+				CompilationRequest request = new CompilationRequest(
+						symbol,
+						sources,
+						List.of(),
+						List.of(),
+						List.of(),
+						List.of( flags )
+				);
+				if( isMustPass ) {
+					requests.add( dynamicTest( symbol, new MustPassTest( request ) ) );
+				} else {
+					requests.add( dynamicTest( symbol, new MustFailTest( request ) ) );
+				}
 			}
-
-			CompilationRequest build() {
-				return new CompilationRequest(symbol, sourceFolders, javaSources, worlds, classPaths, flags);
-			}
+		} catch( IOException e ) {
+			throw new UncheckedIOException( "Unable to discover tests in " + categoryRoot, e );
 		}
 
-		public CompilationRequestBuilder addSources(String symbol, String sourceFolder) {
-			requests.computeIfAbsent(symbol, CompilationRequestData::new)
-					.sourceFolders.add(sourceFolder);
-			return this;
-		}
-
-		public CompilationRequestBuilder addJavaSources(String symbol, String javaSources) {
-			requests.computeIfAbsent(symbol, CompilationRequestData::new)
-					.javaSources.add(javaSources);
-			return this;
-		}
-
-		public CompilationRequestBuilder addWorlds(String symbol, String... worlds) {
-			requests.computeIfAbsent(symbol, CompilationRequestData::new)
-					.worlds.addAll(Arrays.asList(worlds));
-			return this;
-		}
-
-		public CompilationRequestBuilder addClassPaths(String symbol, String... classPaths) {
-			requests.computeIfAbsent(symbol, CompilationRequestData::new)
-					.classPaths.addAll(Arrays.asList(classPaths));
-			return this;
-		}
-
-		public Stream<CompilationRequest> build() {
-			return requests.values().stream().map(CompilationRequestData::build);
-		}
+		return requests.stream();
 	}
 
 	private record CompilationResults(int exitCode, String stdout, String stderr) {}
@@ -422,7 +307,7 @@ public class TestChoral {
 				.map( String::trim )
 				.filter( s -> !s.isEmpty() )
 				.collect( Collectors.toSet() );
-        return targets.contains(req.symbol());
+        return targets.contains("all") || targets.contains(req.symbol());
     }
 
 	/**
@@ -431,10 +316,7 @@ public class TestChoral {
 	 */
 	private static void updateSnapshot( Path projectedDir, Path expectedDir ) throws IOException {
 		if( Files.exists( expectedDir ) ) {
-			try( var walk = Files.walk( expectedDir ) ) {
-				walk.sorted( Comparator.reverseOrder() )
-						.forEach( p -> p.toFile().delete() );
-			}
+			deleteRecursively( expectedDir );
 		}
 		try( var walk = Files.walk( projectedDir ) ) {
 			walk.forEach( src -> {
@@ -446,6 +328,16 @@ public class TestChoral {
 					throw new UncheckedIOException( e );
 				}
 			} );
+		}
+	}
+
+	private static void deleteRecursively( Path root ) throws IOException {
+		if( !Files.exists( root ) ) {
+			return;
+		}
+		try( var walk = Files.walk( root ) ) {
+			walk.sorted( Comparator.reverseOrder() )
+					.forEach( p -> p.toFile().delete() );
 		}
 	}
 
@@ -490,6 +382,7 @@ public class TestChoral {
 				String[] packageList = packageName.split( "\\." );
 				List< Path > projectedJavaFiles;
 				List< Path > expectedFiles;
+				Path expectedFolderPath = Path.of( EXPECTED, packageList );
 
 				// Get all the projected Java files
 				Path projectFolder = Path.of( PROJECTED, packageList );
@@ -498,14 +391,15 @@ public class TestChoral {
 							javaFile -> javaFile.toString().endsWith( ".java" )
 					).sorted().toList();
 				} catch ( NoSuchFileException e ) {
-					errors.add("Failed to compile Choral files");
-					continue;
+					projectedJavaFiles = List.of();
+					if( update ) {
+						deleteRecursively( expectedFolderPath );
+					}
 				}
 
 				// If updating, overwrite expectedOutput with the fresh projection now,
 				// so that the diff below is a no-op and javac compiles the new files.
-				Path expectedFolderPath = Path.of( EXPECTED, packageList );
-				if( update ) {
+				if( update && Files.isDirectory( projectFolder ) ) {
 					updateSnapshot( projectFolder, expectedFolderPath );
 					System.out.printf( "%-" + COLUMN_WIDTH + "s %s[SNAPSHOT UPDATED]%s%n",
 							compilationRequest.symbol, GREEN, RESET );
@@ -517,6 +411,9 @@ public class TestChoral {
 							expectedFile -> expectedFile.toString().endsWith( ".java" )
 					).sorted().toList();
 				} catch ( NoSuchFileException e ) {
+					if( projectedJavaFiles.isEmpty() ) {
+						continue;
+					}
 					errors.add(
 							"No snapshot found for '" + compilationRequest.symbol() + "' in /tests/expectedOutput/.\n\n"
 							+ projectedJavaFiles.stream()

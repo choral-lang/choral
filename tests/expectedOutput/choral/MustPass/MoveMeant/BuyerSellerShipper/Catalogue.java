@@ -1,5 +1,6 @@
 package choral.MustPass.MoveMeant.BuyerSellerShipper;
 
+import choral.MustPass.MoveMeant.shared.utils.Price;
 import choral.annotations.Choreography;
 
 @Choreography( role = "A", name = "Catalogue" )

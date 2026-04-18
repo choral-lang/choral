@@ -4,7 +4,7 @@ import choral.channels.SymChannel;
 import java.lang.Object;
 import java.lang.Integer;
 
-class Client@(A,B) {
+class RoleClient@(A,B) {
 
 	Object@A obj;
 
@@ -24,7 +24,7 @@ public class OverloadOnRoles@(A,B,C){
     SymChannel@( A, C )< Object > ch_AC;
     SymChannel@( C, B )< Object > ch_CB;
 
-    public void fun( Client@(A,B) client ){
+    public void fun( RoleClient@(A,B) client ){
         Integer@A I_A = 0@A;
         Integer@B I_B = 0@B;
         Integer@C I_C = 0@C;
@@ -38,4 +38,3 @@ public class OverloadOnRoles@(A,B,C){
         client.fun2( I_C, I_B ); // I_C sent to A
     }
 }
-
