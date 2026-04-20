@@ -16,16 +16,7 @@ java/io/Serializable.chh
 java/lang/Comparable.chh
 java/lang/Throwable.chh
 java/util/Optional.chh
-java/nio/ByteBuffer.chh
-java/nio/charset/StandardCharsets.chh
 java/nio/charset/Charset.chh
-java/security/MessageDigest.chh
-java/security/NoSuchAlgorithmException.chh
-java/util/ArrayList.chh
-java/util/Iterator.chh
-java/util/List.chh
-java/util/function/Consumer.chh
-java/util/function/Function.chh
 choral/channels/BiChannel.chh
 choral/channels/BiDataChannel.chh
 choral/channels/DiChannel.chh
