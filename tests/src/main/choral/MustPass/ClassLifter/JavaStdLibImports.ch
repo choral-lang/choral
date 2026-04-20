@@ -62,8 +62,9 @@ import java.io.FileNotFoundException;
 // --- java.util ---
 import java.util.List;
 import java.util.ArrayList;
-// LinkedList, Vector, Stack omitted: ClassLifter gives them addAll(Collection)
-// but List.chh declares addAll(List), causing a return-type clash.
+import java.util.LinkedList;
+import java.util.Vector;
+import java.util.Stack;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.TreeSet;
@@ -95,7 +96,7 @@ import java.util.StringJoiner;
 
 // --- java.util.concurrent ---
 import java.util.concurrent.ConcurrentHashMap;
-// CopyOnWriteArrayList omitted: same addAll(List) clash as LinkedList/Vector.
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -145,22 +146,22 @@ class JavaStdLibImports@( A, B ) {
 		StringBuilder@A sb = new StringBuilder@A( "init"@A );
 		StringBuffer@A sbuf = new StringBuffer@A( "init"@A );
 
-		// java.lang - static method calls
-		//int@A abs = Math@A.abs( -1@A );
-		//int@A max = Math@A.max( 1@A, 2@A );
-		//int@A hash = Objects@A.hashCode( s );
-		//String@A istr = Integer@A.toString( 42@A );
-		//String@A lstr = Long@A.toString( 100@A );
+        // java.lang - static method calls
+        int@A abs = Math@A.abs( -1@A );
+        int@A max = Math@A.max( 1@A, 2@A );
+        int@A hash = Objects@A.hashCode( s );
+        String@A istr = Integer@A.toString( 42@A );
+        String@A lstr = Long@A.toString( 100@A );
 
-		// java.util - collections via static factory / constructors
-		//List@A<String> list = new ArrayList@A<String>();
-		//list.add( "a"@A );
-		//Set@A<String> set = new HashSet@A<String>();
-		//set.add( "b"@A );
-		//Map@A<String, Integer> map = new HashMap@A<String, Integer>();
-		//Deque@A<String> deque = new ArrayDeque@A<String>();
-		//deque.addFirst( "c"@A );
-		//deque.addLast( "d"@A );
+        // java.util - collections via static factory / constructors
+        List@A<String> list = new ArrayList@A<String>();
+        list.add( "a"@A );
+        Set@A<String> set = new HashSet@A<String>();
+        set.add( "b"@A );
+        Map@A<String, Integer> map = new HashMap@A<String, Integer>();
+        Deque@A<String> deque = new ArrayDeque@A<String>();
+        deque.addFirst( "c"@A );
+        deque.addLast( "d"@A );
 
 		// java.util - utility classes
 		Optional@A<String> opt = Optional@A.<String>of( "present"@A );
@@ -169,8 +170,8 @@ class JavaStdLibImports@( A, B ) {
 		String@A ustr = uuid.toString();
 		BitSet@A bits = new BitSet@A();
 		bits.set( 0@A );
-		//StringJoiner@A sj = new StringJoiner@A( ","@A );
-		//sj.add( "x"@A );
+        StringJoiner@A sj = new StringJoiner@A( ","@A );
+        sj.add( "x"@A );
 
 		// java.math
 		BigInteger@A bi = BigInteger@A.ZERO;
