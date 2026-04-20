@@ -79,7 +79,7 @@ public class TestChoral {
 	///////////////////////////////// ADD TESTS HERE /////////////////////////////////////
 
 	@TestFactory
-	public Stream< DynamicTest > misc() {
+	public Stream< DynamicTest > Misc() {
 		return Stream.concat(
 				discoverTests( subFolder( MUSTPASS, "Misc" ) ),
 				discoverTests( subFolder( MUSTFAIL, "Misc" ) )
@@ -87,7 +87,7 @@ public class TestChoral {
 	}
 
 	@TestFactory
-	public Stream< DynamicTest > typer() {
+	public Stream< DynamicTest > Typer() {
 		return Stream.concat(
 				discoverTests( subFolder( MUSTPASS, "Typer" ) ),
 				discoverTests( subFolder( MUSTFAIL, "Typer" ) )
@@ -95,7 +95,15 @@ public class TestChoral {
 	}
 
 	@TestFactory
-	public Stream< DynamicTest > moveMeant() {
+	public Stream< DynamicTest > ClassLifter() {
+		return Stream.concat(
+				discoverTests( subFolder( MUSTPASS, "ClassLifter" ) ),
+				discoverTests( subFolder( MUSTFAIL, "ClassLifter" ) )
+		);
+	}
+
+	@TestFactory
+	public Stream< DynamicTest > MoveMeant() {
 		return Stream.concat(
 				discoverTests( subFolder( MUSTPASS, "MoveMeant" ), "--infer-comms" ),
 				discoverTests( subFolder( MUSTFAIL, "MoveMeant" ), "--infer-comms" )

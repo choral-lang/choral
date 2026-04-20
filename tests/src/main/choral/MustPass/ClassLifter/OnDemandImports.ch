@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.OnDemandImports;
+package choral.MustPass.ClassLifter.OnDemandImports;
 
 import java.time.chrono.AbstractChronology;
 

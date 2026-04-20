@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.DualJavaImport;
+package choral.MustPass.ClassLifter.DualJavaImport;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
