@@ -872,7 +872,7 @@ public class Typer {
 		protected void visitImportDeclarations( Scope scope, List< ImportDeclaration > imports ) {
 			taskQueue().enqueue( Phase.HIERARCHY, () -> {
 				for( ImportDeclaration n : imports ) {
-					System.out.println("import declaration: " + n.name());
+					// System.out.println("import declaration: " + n.name());
 					if( !n.isOnDemand() ) {
 						n.setTypeAnnotation( scope.assertLookupClassOrInterface( n.name() ) );
 					}

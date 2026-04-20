@@ -137,7 +137,7 @@ public final class CompilationUnitScope extends BaseScope {
 				result = p.declaredType( path[ i ] );
 			} 
 			if(result.isEmpty()){
-				System.out.println("Classlifter query: " + query);
+				// System.out.println("Classlifter query: " + query);
 				result = classLifter.liftClassOrInterface(query);
 			}
 		} else {
