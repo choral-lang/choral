@@ -27,13 +27,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.tools.Diagnostic;
@@ -45,7 +48,6 @@ import javax.tools.ToolProvider;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.api.Assertions;
 
 import com.github.difflib.DiffUtils;
 import com.github.difflib.UnifiedDiffUtils;
@@ -58,10 +60,6 @@ public class TestChoral {
 	private static final String CHORALUNIT = Paths.get("..", "choral-unit", "src", "main", "choral").toString();
 	private static final String MUSTFAIL = Paths.get("src", "main", "choral", "MustFail").toString();
 	private static final String MUSTPASS = Paths.get("src", "main", "choral", "MustPass").toString();
-	private static final String MOVEMEANT_PASS = subFolder( MUSTPASS, "MoveMeant" );
-	private static final String MOVEMEANT_FAIL = subFolder( MUSTFAIL, "MoveMeant" );
-	private static final String TYPER_PASS = subFolder( MUSTPASS, "Typer" );
-	private static final String TYPER_FAIL = subFolder( MUSTFAIL, "Typer" );
 	private static final String BASE_PATH = Paths.get("base", "src", "main", "java").toString();
 	private static final String RUNTIME_PATH = Paths.get("runtime", "src", "main", "java").toString();
 	/** Location of Java code produced by the Choral compiler. */
@@ -75,138 +73,32 @@ public class TestChoral {
 	private static final String GREEN = "\u001B[32m";
 	private static final String RED = "\u001B[31m";
 	private static final String RESET = "\u001B[0m";
-	private static final int COLUMN_WIDTH = 30;
+	private static final int COLUMN_WIDTH = 50;
 
 
 	///////////////////////////////// ADD TESTS HERE /////////////////////////////////////
 
 	@TestFactory
-	public Stream< DynamicTest > mustPass() {
-		CompilationRequestBuilder builder = new CompilationRequestBuilder();
-		builder.addSources( "HelloRoles", subFolder( MUSTPASS, "HelloRoles" ) );
-		builder.addSources( "BiPair", subFolder( MUSTPASS, "BiPair" ) );
-		builder.addSources( "ConsumeItems", subFolder( MUSTPASS, "ConsumeItems" ) );
-		builder.addSources( "MyExtClass", subFolder( MUSTPASS, "ExtendsTest" ) );
-		builder.addSources( "RemoteFunction", subFolder( MUSTPASS, "RemoteFunction" ) );
-		builder.addSources( "AuthResult", subFolder( MUSTPASS, "AuthResult" ) );
-		builder.addSources( "AuthResult", subFolder( MUSTPASS, "DistAuthUtils" ) );
-		builder.addSources( "DistAuth", subFolder( MUSTPASS, "DistAuth" ) );
-		builder.addSources( "DistAuth", subFolder( MUSTPASS, "DistAuthUtils" ) );
-		builder.addSources( "BuyerSellerShipper", subFolder( MUSTPASS, "BuyerSellerShipper" ) );
-		builder.addSources( "DiffieHellman", subFolder( MUSTPASS, "DiffieHellman" ) );
-		builder.addSources( "DiffieHellman", subFolder( MUSTPASS, "BiPair" ) );
-		builder.addSources( "TestSwitch", subFolder( MUSTPASS, "TestSwitch" ) );
-		builder.addSources( "LoggerExample", subFolder( MUSTPASS, "LoggerExample" ) );
-		builder.addSources( "IfDesugarTest", subFolder( MUSTPASS, "IfDesugar" ) );
-		builder.addSources( "ChainingExample", subFolder( MUSTPASS, "ChainingOperator" ) );
-		builder.addSources( "BuyBook2", subFolder( MUSTPASS, "BookSellingSoloist" ) );
-		//// https://github.com/choral-lang/choral/issues/29
-		// builder.addSources( "SwitchTest", subFolder( MUSTPASS, "SwitchTest" ) );
-		//// https://github.com/choral-lang/choral/issues/27
-		// builder.addSources( "MirrorChannel", subFolder( MUSTPASS, "MirrorChannel" ) );
-		//// https://github.com/choral-lang/choral/issues/28
-		// builder.addSources( "Autoboxing", subFolder( MUSTPASS, "Autoboxing" ) );
-
-		return builder.build().map(request ->
-				dynamicTest(request.symbol, new MustPassTest( request )));
-	}
-
-	@TestFactory
-	public Stream< DynamicTest > mustFail() {
-		CompilationRequestBuilder builder = new CompilationRequestBuilder();
-		builder.addSources( "WrongType", subFolder( MUSTFAIL, "WrongType" ) );
-		builder.addSources( "MultiFoo", subFolder( MUSTFAIL, "MultiFoo" ) );
-		builder.addSources( "CyclicInheritance_A", subFolder( MUSTFAIL, "CyclicInheritance" ) );
-		builder.addSources( "LotsOfErrors", subFolder( MUSTFAIL, "LotsOfErrors" ) );
-		builder.addSources( "VariableDeclarations", subFolder( MUSTFAIL, "VariableDeclarations" ) );
-		builder.addSources( "TwoWorldList", subFolder( MUSTFAIL, "IllegalInheritance" ) );
-		builder.addSources( "NonMatchingReturnType", subFolder( MUSTFAIL, "NonMatchingReturnType" ) );
-		builder.addSources( "MultiFileError", subFolder( MUSTFAIL, "MultiFileError" ) );
-		builder.addSources( "MultiFileError", subFolder( MUSTFAIL, "MultiFileErrorUtil" ) );
-
-		return builder.build().map(request ->
-				dynamicTest(request.symbol, new MustFailTest( request )));
+	public Stream< DynamicTest > misc() {
+		return Stream.concat(
+				discoverTests( subFolder( MUSTPASS, "Misc" ) ),
+				discoverTests( subFolder( MUSTFAIL, "Misc" ) )
+		);
 	}
 
 	@TestFactory
 	public Stream< DynamicTest > typer() {
-		CompilationRequestBuilder mustPass = new CompilationRequestBuilder();
-		mustPass.addSources("OnDemandImports", subFolder(TYPER_PASS, "OnDemandImports"));
-		mustPass.addSources("ClassLifterIntegration", subFolder(TYPER_PASS,"ClassLifterIntegration"));
-		mustPass.addSources("DualJavaImport", subFolder(TYPER_PASS, "DualJavaImport"));
-		mustPass.addSources("StandardLibraryReduction", subFolder(TYPER_PASS, "StandardLibraryReduction"));
-		//mustPass.addSources("InterfaceDefaultMethod", subFolder(TYPER_PASS, "InterfaceDefaultMethod"));
-		//^Test case for implementing default for interface methods, only supported in internals currently
-		// Parser and projector still missing support. 
-		CompilationRequestBuilder mustFail = new CompilationRequestBuilder();
-		mustFail.addSources("InstanceOverridesStatic", subFolder(TYPER_FAIL, "InstanceOverridesStatic"));
-		mustFail.addSources("StaticOverridesInstance", subFolder(TYPER_FAIL, "StaticOverridesInstance"));
-		mustFail.addSources("WeakerAccess1", subFolder(TYPER_FAIL, "WeakerAccess1"));
-		mustFail.addSources("WeakerAccess2", subFolder(TYPER_FAIL, "WeakerAccess2"));
-		mustFail.addSources("WeakerAccess3", subFolder(TYPER_FAIL, "WeakerAccess3"));
-		mustFail.addSources("OverrideFinal", subFolder(TYPER_FAIL, "OverrideFinal"));
-		mustFail.addSources("IncompatibleReturnType", subFolder(TYPER_FAIL, "IncompatibleReturnType"));
-
 		return Stream.concat(
-				mustPass.build().map(request ->
-						dynamicTest(request.symbol, new MustPassTest( request ))),
-				mustFail.build().map(request ->
-						dynamicTest(request.symbol, new MustFailTest( request )))
+				discoverTests( subFolder( MUSTPASS, "Typer" ) ),
+				discoverTests( subFolder( MUSTFAIL, "Typer" ) )
 		);
 	}
 
 	@TestFactory
 	public Stream< DynamicTest > moveMeant() {
-		CompilationRequestBuilder mustPass = new CompilationRequestBuilder("--infer-comms");
-		CompilationRequestBuilder mustFail = new CompilationRequestBuilder("--infer-comms");
-		//// Bug: Mysterious OOM
-		// mustPass.addSources( "DistributedAuthentication", subFolder( MOVEMEANT, "DistributedAuthentication" ) );
-		// mustPass.addSources( "DistributedAuthentication", subFolder( MUSTPASS, "BiPair" ) );
-		//// Bug in the "simple" inference model: dependency not found
-		// mustPass.addSources( "NestedBlocks", subFolder( MOVEMEANT, "NestedBlocks" ) );
-		// mustPass.addSources( "NestedBlocks", subFolder( MOVEMEANT, "utils" ) );
-		/// Bug: Choral backend generates bad code
-		// mustPass.addSources( "SimpleIfStatements", subFolder( MOVEMEANT, "SimpleIfStatements" ) );
-		mustPass.addSources( "BiPair", subFolder( MOVEMEANT_PASS, "BiPair" ) );
-		mustPass.addSources( "BuyerSellerShipper", subFolder( MOVEMEANT_PASS, "BuyerSellerShipper" ) );
-		mustPass.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT_PASS, "ChannelsAsArgs" ) );
-		mustPass.addSources( "ChannelsAsArgs", subFolder( MOVEMEANT_PASS, "utils" ) );
-		mustPass.addSources( "ChannelsAsFields", subFolder( MOVEMEANT_PASS, "ChannelsAsFields" ) );
-		mustPass.addSources( "ChannelsAsFields", subFolder( MOVEMEANT_PASS, "utils" ) );
-		mustPass.addSources( "ChannelTypesExample", subFolder( MOVEMEANT_PASS, "ChannelTypesExample" ) );
-		mustPass.addSources( "ConsumeItems", subFolder( MOVEMEANT_PASS, "ConsumeItems" ) );
-		mustPass.addSources( "DiffieHellman", subFolder( MOVEMEANT_PASS, "DiffieHellman" ) );
-		mustPass.addSources( "DiffieHellman", subFolder( MUSTPASS, "BiPair" ) );
-		mustPass.addSources( "DownloadFile", subFolder( MOVEMEANT_PASS, "DownloadFile" ) );
-		mustPass.addSources( "DownloadFile", subFolder( MOVEMEANT_PASS, "SendPackets" ) );
-		mustPass.addSources( "HelloRoles", subFolder( MOVEMEANT_PASS, "HelloRoles" ) );
-		mustPass.addSources( "Increments", subFolder( MOVEMEANT_PASS, "Increments" ) );
-		mustPass.addSources( "Karatsuba", subFolder( MOVEMEANT_PASS, "Karatsuba" ) );
-		mustPass.addSources( "Mergesort", subFolder( MOVEMEANT_PASS, "Mergesort" ) );
-		mustPass.addSources( "OverloadOnRoles", subFolder( MOVEMEANT_PASS, "OverloadOnRoles" ) );
-		mustPass.addSources( "PingPong", subFolder( MOVEMEANT_PASS, "PingPong" ) );
-		mustPass.addSources( "Quicksort", subFolder( MOVEMEANT_PASS, "Quicksort" ) );
-		mustPass.addSources( "RemoteFunction", subFolder( MOVEMEANT_PASS, "RemoteFunction" ) );
-		mustPass.addSources( "SendPackets", subFolder( MOVEMEANT_PASS, "SendPackets" ) );
-		mustPass.addSources( "SimpleArithmetic", subFolder( MOVEMEANT_PASS, "SimpleArithmetic" ) );
-		mustPass.addSources( "SimpleIf3", subFolder( MOVEMEANT_PASS, "SimpleIf3" ) );
-		mustPass.addSources( "SimpleKOC", subFolder( MOVEMEANT_PASS, "SimpleKOC" ) );
-		mustPass.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT_PASS, "SimpleMethodCalls" ) );
-		mustPass.addSources( "SimpleMethodCalls", subFolder( MOVEMEANT_PASS, "utils" ) );
-		mustPass.addSources( "SimpleReturns", subFolder( MOVEMEANT_PASS, "SimpleReturns" ) );
-		mustPass.addSources( "SimpleVariableReplacement", subFolder( MOVEMEANT_PASS, "SimpleVariableReplacement" ) );
-		mustPass.addSources( "SplitAndCombine", subFolder( MOVEMEANT_PASS, "SplitAndCombine" ) );
-		mustPass.addSources( "SSOWithRetry", subFolder( MOVEMEANT_PASS, "SSOWithRetry" ) );
-		mustPass.addSources( "VitalsStreaming", subFolder( MOVEMEANT_PASS, "VitalsStreaming" ) );
-
-		mustFail.addSources( "AmbiguousRecipient1", subFolder( MOVEMEANT_FAIL, "AmbiguousRecipient1" ) );
-		mustFail.addSources( "AmbiguousRecipient2", subFolder( MOVEMEANT_FAIL, "AmbiguousRecipient2" ) );
-
 		return Stream.concat(
-				mustPass.build().map(request ->
-					dynamicTest(request.symbol, new MustPassTest( request ))),
-				mustFail.build().map(request ->
-					dynamicTest(request.symbol, new MustFailTest( request )))
+				discoverTests( subFolder( MUSTPASS, "MoveMeant" ), "--infer-comms" ),
+				discoverTests( subFolder( MUSTFAIL, "MoveMeant" ), "--infer-comms" )
 		);
 	}
 
@@ -229,64 +121,91 @@ public class TestChoral {
 									  List< String > classPaths,
 									  List< String > flags) {}
 
-	/**
-	 * Helper class for building CompilationRequest objects.
-	 */
-	private static class CompilationRequestBuilder {
-		private final Map<String, CompilationRequestData> requests = new LinkedHashMap<>();
-		private final List<String> flags;
+	private static Stream< DynamicTest > discoverTests( String categoryRoot, String... flags ) {
+		Path categoryPath = Path.of( categoryRoot );
+		Path sharedPath = categoryPath.resolve( "shared" );
+		List< DynamicTest > requests = new ArrayList<>();
 
-		public CompilationRequestBuilder(String... flags) {
-			this.flags = List.of(flags);
+		boolean isMustPass;
+		if ( categoryRoot.startsWith( MUSTPASS ) ) {
+			isMustPass = true;
+		} else if ( categoryRoot.startsWith( MUSTFAIL ) ) {
+			isMustPass = false;
+		} else {
+			throw new IllegalArgumentException( "Invalid test directory " + categoryRoot +
+					": should be contained in '" + MUSTPASS + "' or '" + MUSTFAIL + "'" );
 		}
 
-		public CompilationRequestBuilder() {
-			this("");
-		}
-
-		private class CompilationRequestData {
-			final String symbol;
-			final List<String> sourceFolders = new ArrayList<>();
-			final List<String> javaSources = new ArrayList<>();
-			final List<String> worlds = new ArrayList<>();
-			final List<String> classPaths = new ArrayList<>();
-
-			CompilationRequestData(String symbol) {
-				this.symbol = symbol;
+		try( Stream< Path > entries = Files.list( categoryPath ) ) {
+			// Make sure the shared/ directory doesn't contain .ch files, since those don't
+			// actually get projected!
+			if( Files.isDirectory( sharedPath ) ) {
+				try( Stream< Path > sharedFiles = Files.walk( sharedPath ) ) {
+					List< Path > sharedChoralSources = sharedFiles
+							.filter( file -> Files.isRegularFile( file ) && file.toString().endsWith( ".ch" ) )
+							.sorted()
+							.toList();
+					if( !sharedChoralSources.isEmpty() ) {
+						throw new IllegalStateException(
+								"Shared directory '" + sharedPath + "' contains .ch files. "
+										+ "Move shared Choral sources into test-specific roots. Found:\n"
+										+ sharedChoralSources.stream().map( Path::toString )
+										.collect( Collectors.joining( "\n" ) )
+						);
+					}
+				}
 			}
 
-			CompilationRequest build() {
-				return new CompilationRequest(symbol, sourceFolders, javaSources, worlds, classPaths, flags);
+			for( Path test : entries.sorted( Comparator.comparing( path -> path.getFileName().toString() ) ).toList() ) {
+				String name = test.getFileName().toString();
+				if( name.equals( "shared" ) || name.equals( "xKnownBugs" ) ) {
+					continue;
+				}
+
+				String symbol;
+				String sourcePath;
+				if( Files.isRegularFile( test ) && name.endsWith( ".ch" ) ) {
+					symbol = name.substring( 0, name.length() - 3 );
+					sourcePath = test.toString();
+				} else if( Files.isDirectory( test ) ) {
+					symbol = name;
+					Path mainFile = test.resolve( symbol + ".ch" );
+					if( !Files.isRegularFile( mainFile ) ) {
+						throw new IllegalStateException(
+								"Malformed test directory '" + test
+								+ "': expected to find a file called '" + symbol + ".ch'"
+						);
+					}
+					sourcePath = test.toString();
+				} else {
+					continue;
+				}
+
+				List< String > sources = new ArrayList<>();
+				sources.add( sourcePath );
+				if( Files.isDirectory( sharedPath ) ) {
+					sources.add( sharedPath.toString() );
+				}
+
+				CompilationRequest request = new CompilationRequest(
+						symbol,
+						sources,
+						List.of(),
+						List.of(),
+						List.of(),
+						List.of( flags )
+				);
+				if( isMustPass ) {
+					requests.add( dynamicTest( symbol, new MustPassTest( request ) ) );
+				} else {
+					requests.add( dynamicTest( symbol, new MustFailTest( request ) ) );
+				}
 			}
+		} catch( IOException e ) {
+			throw new UncheckedIOException( "Unable to discover tests in " + categoryRoot, e );
 		}
 
-		public CompilationRequestBuilder addSources(String symbol, String sourceFolder) {
-			requests.computeIfAbsent(symbol, CompilationRequestData::new)
-					.sourceFolders.add(sourceFolder);
-			return this;
-		}
-
-		public CompilationRequestBuilder addJavaSources(String symbol, String javaSources) {
-			requests.computeIfAbsent(symbol, CompilationRequestData::new)
-					.javaSources.add(javaSources);
-			return this;
-		}
-
-		public CompilationRequestBuilder addWorlds(String symbol, String... worlds) {
-			requests.computeIfAbsent(symbol, CompilationRequestData::new)
-					.worlds.addAll(Arrays.asList(worlds));
-			return this;
-		}
-
-		public CompilationRequestBuilder addClassPaths(String symbol, String... classPaths) {
-			requests.computeIfAbsent(symbol, CompilationRequestData::new)
-					.classPaths.addAll(Arrays.asList(classPaths));
-			return this;
-		}
-
-		public Stream<CompilationRequest> build() {
-			return requests.values().stream().map(CompilationRequestData::build);
-		}
+		return requests.stream();
 	}
 
 	private record CompilationResults(int exitCode, String stdout, String stderr) {}
@@ -317,6 +236,29 @@ public class TestChoral {
 
 	///////////////////////////////// HELPERS /////////////////////////////////////
 
+	/**
+	 * Resolves Choral source files from a source path.
+	 *
+	 * <p>The path can point either to a folder (searched recursively) or directly to a
+	 * single {@code .ch} file.
+	 */
+	private static List< Path > getChoralFiles( String sourcePath ) throws IOException {
+		Path path = Path.of( sourcePath );
+		if( Files.isDirectory( path ) ) {
+			try( Stream< Path > files = Files.walk( path ) ) {
+				return files
+						.filter( file -> file.toString().endsWith( ".ch" ) )
+						.toList();
+			}
+		}
+
+		if( Files.isRegularFile( path ) && path.toString().endsWith( ".ch" ) ) {
+			return List.of( path );
+		}
+
+		throw new NoSuchFileException( "Choral source path not found (or not a .ch file): " + sourcePath );
+	}
+
 	/** Tries to compile the test and returns the results produced by the Choral compiler. */
 	private static CompilationResults compile(CompilationRequest compilationRequest){
 		ArrayList< String > parameters = new ArrayList<>();
@@ -339,15 +281,12 @@ public class TestChoral {
 		int exitCode;
 		ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
 		ByteArrayOutputStream testError = new ByteArrayOutputStream();
-		PrintStream originalOutput = System.out;
 		PrintStream originalError = System.err;
 
 		try {
-			System.setOut( new PrintStream( testOutput ) );
 			System.setErr( new PrintStream( testError ) );
 			exitCode = Choral.compile( parameters.toArray( new String[ 0 ] ) );
 		} finally {
-			System.setOut( originalOutput );
 			System.setErr( originalError );
 		}
 
@@ -359,9 +298,72 @@ public class TestChoral {
 		return sourceFolder + File.separator + subFolder;
 	}
 
+	/**
+	 * Fails the current test, printing full error details to stdout (so they appear in the
+	 * clean per-test section) and throwing an {@link AssertionError} with just the symbol
+	 * name and an empty stack trace (so the Surefire failure block stays minimal).
+	 */
+	private static void fail( String symbol, List< String > errors ) {
+		String details = errors.stream()
+				.map( e -> "    " + e.replace( "\n", "\n    " ) )
+				.collect( Collectors.joining( "\n" ) );
+		AssertionError e = new AssertionError( symbol + "\n\n" + details + "\n" );
+		e.setStackTrace( new StackTraceElement[ 0 ] );
+		throw e;
+	}
+
+	/**
+	 * Returns {@code true} if the expected output for this compilation request should be
+	 * updated instead of diffed, based on the {@code choral.updateExpected} system property.
+	 *
+	 * <p>The property value is a comma-separated list of test names.
+	 * Example: {@code mvn test -Dchoral.updateExpected=MyTest1,MyTest2}
+	 */
+	private static boolean shouldUpdate( CompilationRequest req ) {
+		String prop = System.getProperty( "choral.updateExpected", "" ).trim();
+		if( prop.isEmpty() ) return false;
+		Set< String > targets = Arrays.stream( prop.split( "," ) )
+				.map( String::trim )
+				.filter( s -> !s.isEmpty() )
+				.collect( Collectors.toSet() );
+        return targets.contains("all") || targets.contains(req.symbol());
+    }
+
+	/**
+	 * Replaces {@code expectedDir} with a fresh recursive copy of {@code projectedDir},
+	 * deleting any stale files that no longer exist in the projection.
+	 */
+	private static void updateSnapshot( Path projectedDir, Path expectedDir ) throws IOException {
+		if( Files.exists( expectedDir ) ) {
+			deleteRecursively( expectedDir );
+		}
+		try( var walk = Files.walk( projectedDir ) ) {
+			walk.forEach( src -> {
+				Path dest = expectedDir.resolve( projectedDir.relativize( src ) );
+				try {
+					if( Files.isDirectory( src ) ) Files.createDirectories( dest );
+					else Files.copy( src, dest, StandardCopyOption.REPLACE_EXISTING );
+				} catch( IOException e ) {
+					throw new UncheckedIOException( e );
+				}
+			} );
+		}
+	}
+
+	private static void deleteRecursively( Path root ) throws IOException {
+		if( !Files.exists( root ) ) {
+			return;
+		}
+		try( var walk = Files.walk( root ) ) {
+			walk.sorted( Comparator.reverseOrder() )
+					.forEach( p -> p.toFile().delete() );
+		}
+	}
+
 	/** Compiles the test, expecting it to succeed. */
 	private static void project( CompilationRequest compilationRequest ) {
 		ArrayList< String > errors = new ArrayList<>();
+		boolean update = shouldUpdate( compilationRequest );
 
 		CompilationResults results = compile(compilationRequest);
 		if( results.exitCode != 0 )
@@ -371,11 +373,14 @@ public class TestChoral {
 		try {
 			// Get the package names declared in the source folders of the compilation request
 			HashSet< String > packages = new HashSet<>();
-			for( String folder : compilationRequest.sourceFolder() ) {
-				Path path = Path.of( folder );
-				List< Path > choralFiles = Files.walk( path ).filter(
-						file -> file.toString().endsWith( ".ch" )
-				).toList();
+			for( String sourcePath : compilationRequest.sourceFolder() ) {
+				List< Path > choralFiles;
+				try {
+					choralFiles = getChoralFiles( sourcePath );
+				} catch( IOException e ) {
+					errors.add( "Source path not found: " + sourcePath );
+					continue;
+				}
 				for( Path file : choralFiles ) {
 					String fileContent = Files.readString( file );
 					// Find the package declared at the top of the file
@@ -392,60 +397,125 @@ public class TestChoral {
 
 			// For each package, compare the projected Java files with the expected ones,
 			// and try compiling the expected ones.
-			for( String packageName : packages ) {
+			List< Path > missingProjectedFiles = new ArrayList<>();
+			List< Path > newProjectedFiles = new ArrayList<>();
+			List< String > fileDiffs = new ArrayList<>();
+			boolean filesDiffer = false;
+			for( String packageName : new TreeSet<>( packages ) ) {
 				String[] packageList = packageName.split( "\\." );
 				List< Path > projectedJavaFiles;
 				List< Path > expectedFiles;
+				Path expectedFolderPath = Path.of( EXPECTED, packageList );
 
-				// Get all the projected and expected Java files
+				// Get all the projected Java files
 				Path projectFolder = Path.of( PROJECTED, packageList );
 				try {
 					projectedJavaFiles = Files.walk( projectFolder ).filter(
 							javaFile -> javaFile.toString().endsWith( ".java" )
 					).sorted().toList();
-				}
-					catch ( NoSuchFileException e ) {
-					errors.add("Failed to compile Choral files");
-					continue;
+				} catch ( NoSuchFileException e ) {
+					projectedJavaFiles = List.of();
+					if( update ) {
+						deleteRecursively( expectedFolderPath );
+					}
 				}
 
+				// If updating, overwrite expectedOutput with the fresh projection now,
+				// so that the diff below is a no-op and javac compiles the new files.
+				if( update && Files.isDirectory( projectFolder ) ) {
+					updateSnapshot( projectFolder, expectedFolderPath );
+					System.out.printf( "%-" + COLUMN_WIDTH + "s %s[SNAPSHOT UPDATED]%s%n",
+							compilationRequest.symbol, GREEN, RESET );
+				}
+
+				// Get the expected Java files
 				try {
-					Path expectedFolderPath = Path.of( EXPECTED, packageList );
 					expectedFiles = Files.walk( expectedFolderPath ).filter(
 							expectedFile -> expectedFile.toString().endsWith( ".java" )
 					).sorted().toList();
-				}
-				catch ( NoSuchFileException e ) {
-					errors.add("Missing files in the expectedOutput directory: " + e.getMessage());
+				} catch ( NoSuchFileException e ) {
+					if( projectedJavaFiles.isEmpty() ) {
+						continue;
+					}
+					errors.add(
+							"No snapshot found for '" + compilationRequest.symbol() + "' in /tests/expectedOutput/.\n\n"
+							+ projectedJavaFiles.stream()
+									.map( p -> {
+										try {
+											return "=== " + p + " ===\n" + Files.readString( p );
+										} catch( IOException ex ) {
+											return "=== " + p + " === (could not read: " + ex.getMessage() + ")";
+										}
+									} )
+									.collect( Collectors.joining( "\n" ) )
+							+ "\n=============================================================================="
+							+ "\nTo accept the new snapshot, run: mvn test -Dchoral.updateExpected="
+							+ compilationRequest.symbol() );
 					continue;
 				}
 
 				// PHASE 1: CHECK IF EXPECTED AND PROJECTED CODE DIFFER
 
-				if( projectedJavaFiles.size() != expectedFiles.size() ) {
-					errors.add("The number of projected files does not equal the number of expected files");
-					continue;
+				Map< String, Path > projectedByName = projectedJavaFiles.stream().collect(
+						Collectors.toMap(
+								p -> p.getFileName().toString(),
+								p -> p,
+								(a, b) -> a,
+								TreeMap::new
+						)
+				);
+				Map< String, Path > expectedByName = expectedFiles.stream().collect(
+						Collectors.toMap(
+								p -> p.getFileName().toString(),
+								p -> p,
+								(a, b) -> a,
+								TreeMap::new
+						)
+				);
+
+				Set< String > missingProjected = new TreeSet<>( expectedByName.keySet() );
+				missingProjected.removeAll( projectedByName.keySet() );
+				if( !missingProjected.isEmpty() ) {
+					filesDiffer = true;
+					for( String fileName : missingProjected ) {
+						missingProjectedFiles.add( expectedByName.get( fileName ) );
+					}
 				}
 
-				for( int i = 0; i < expectedFiles.size(); i++ ) {
-					List< String > original = Files.readAllLines( expectedFiles.get( i ) );
-					List< String > projected = Files.readAllLines( projectedJavaFiles.get( i ) );
+				Set< String > extraProjected = new TreeSet<>( projectedByName.keySet() );
+				extraProjected.removeAll( expectedByName.keySet() );
+				if( !extraProjected.isEmpty() ) {
+					filesDiffer = true;
+					for( String fileName : extraProjected ) {
+						newProjectedFiles.add( projectedByName.get( fileName ) );
+					}
+				}
+
+				Set< String > commonFiles = new TreeSet<>( expectedByName.keySet() );
+				commonFiles.retainAll( projectedByName.keySet() );
+				for( String fileName : commonFiles ) {
+					Path expectedFile = expectedByName.get( fileName );
+					Path projectedFile = projectedByName.get( fileName );
+					List< String > original = Files.readAllLines( expectedFile );
+					List< String > projected = Files.readAllLines( projectedFile );
 
 					Patch< String > patch = DiffUtils.diff( original, projected );
 
 					List<String> diffOutput = UnifiedDiffUtils.generateUnifiedDiff(
-							expectedFiles.get( i ).toString(),
-							projectedJavaFiles.get( i ).toString(),
+							expectedFile.toString(),
+							projectedFile.toString(),
 							original,
 							patch,
 							3
 					);
-
-					if( !diffOutput.isEmpty() ) {
-						String diff = String.join( "\n", diffOutput );
-						errors.add("There was a difference between the expected output and " +
-								"the generated output, now printing diff:\n" + diff);
+					if ( !diffOutput.isEmpty() ) {
+						filesDiffer = true;
+						fileDiffs.add( String.join( "\n", diffOutput ) );
 					}
+				}
+
+				if( filesDiffer ) {
+					continue;
 				}
 
 				// PHASE 2: TRY COMPILING THE EXPECTED JAVA CODE
@@ -486,14 +556,37 @@ public class TestChoral {
 					errors.add( "Expected Java code does not compile:\n" + javaErrors );
 				}
 			}
+
+			for( Path missingProjectedFile : missingProjectedFiles ) {
+				errors.add( "Missing projected file: " + missingProjectedFile + "\n" );
+			}
+
+			for( Path newProjectedFile : newProjectedFiles ) {
+				String content;
+				try {
+					content = Files.readString( newProjectedFile );
+				} catch( IOException e ) {
+					content = "(could not read: " + e.getMessage() + ")";
+				}
+				errors.add( "Unexpected projected file:\n=== " + newProjectedFile + " ===\n" + content );
+			}
+
+			for( String diff : fileDiffs ) {
+				errors.add( "Projected output differs from expected output:\n" + diff + "\n" );
+			}
+
+			if ( filesDiffer ) {
+				errors.add( "Accept changes by running: mvn test -Dchoral.updateExpected="
+						+ compilationRequest.symbol() + "\n" );
+			}
+
 		} catch( Throwable e ) {
 			errors.add( e.toString() );
 		}
 
 		if( !errors.isEmpty() ) {
 			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
-			String errorMessages = String.join("\n", errors);
-			Assertions.fail(errorMessages);
+			fail( compilationRequest.symbol, errors );
 		} else {
 			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET );
 		}
@@ -556,45 +649,41 @@ public class TestChoral {
 		CompilationResults results = compile(compilationRequest);
 
 		if( results.exitCode == 0 )
-			errors.add("Program compiled with exit code 0, which means no errors were found." +
-				"This test is expected to have errors" );
+			errors.add("Compilation succeeded unexpectedly. This test should have compilation errors." );
 
 		String[] outputLines = results.stderr.split( "\n" );
 		List<TestError> actualErrors = findActualErrors(outputLines);
 
 		// Concatenate all the expected errors in all the files in the source folders
 		ArrayList<TestError> expectedErrors = new ArrayList<>();
-		for (String path : compilationRequest.sourceFolder()){
-			Path directoryPath = Path.of(path);
-			if (!Files.isDirectory(directoryPath)){
-				errors.add( "Directory not found: " + directoryPath );
+		for( String sourcePath : compilationRequest.sourceFolder() ) {
+			List< Path > testFiles;
+			try {
+				testFiles = getChoralFiles( sourcePath );
+			} catch (IOException e) {
+				errors.add( "Source path not found: " + sourcePath );
 				continue;
 			}
-			try (Stream<Path> testFiles = Files.walk(directoryPath)) {
-				testFiles
-					.filter(file -> file.toString().endsWith(".ch"))
-					.forEach(file -> {
-						try {
-							String[] fileContent = Files.readString(file).split("\n");
-							expectedErrors.addAll(findExpectedErrors(file.toString(), fileContent));
-						} catch (IOException e) {
-							errors.add("Error reading file '" + file + "': " + e.getMessage());
-						}
-					});
-			} catch (IOException e) {
-				errors.add("Error reading file '" + directoryPath + "': " + e.getMessage());
-			}
+
+			testFiles.forEach( file -> {
+				try {
+					String[] fileContent = Files.readString( file ).split( "\n" );
+					expectedErrors.addAll( findExpectedErrors( file.toString(), fileContent ) );
+				} catch( IOException e ) {
+					errors.add( "Error reading file '" + file + "': " + e.getMessage() );
+				}
+			} );
 		}
 
 		// Add an error for each expected error not found in actual errors, and vice versa.
 		// The expected error can be a substring of the actual error.
 		for (TestError expected : subtract(expectedErrors, actualErrors)) {
-			errors.add("Expected to find the following error on line " + expected.line() +
-				": " + expected.message());
+			errors.add("Expected error on line " + expected.line() +
+				":\t" + expected.message());
 		}
 		for (TestError actual : subtract(actualErrors, expectedErrors)) {
-			errors.add("Got an unexpected error on line " + actual.line() +
-				": " + actual.message());
+			errors.add("Unexpected error on line " + actual.line() +
+				":\t" + actual.message());
 		}
 
 		if (errors.isEmpty()){
@@ -602,8 +691,7 @@ public class TestChoral {
 		}
 		else {
 			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
-			String errorMessages = String.join("\n", errors);
-			Assertions.fail(errorMessages);
+			fail( compilationRequest.symbol, errors );
 		}
 	}
 

@@ -23,10 +23,7 @@ package choral.types;
 
 import choral.ast.Node;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -135,25 +132,13 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 		}
 
 		@Override
-		public Stream< ? extends Member.Field > fields() {
-			return Stream.concat( declaredFields(),
-					extendedInterfaces().flatMap( x -> x.fields() ) );
-		}
-
-		@Override
-		public Stream< ? extends Member.HigherMethod > methods() {
-			return Stream.concat( declaredMethods(),
-					extendedInterfaces().flatMap( x -> x.methods() ) );
-		}
-
-		@Override
 		public void addField( Member.Field field ) {
 			throw new UnsupportedOperationException( "interfaces cannot have fields" );
 		}
 
 		@Override
 		public void addMethod( Member.HigherMethod method ) {
-			assert ( method.isPublic() && method.isAbstract() || method.isDefault() || method.isStatic() ) 
+			assert ( method.isPublic() && method.isAbstract() || method.isDefault() || method.isStatic() )
 				: "'" + method.identifier() + "' modifiers : " + method.modifiers();
 			super.addMethod( method );
 		}

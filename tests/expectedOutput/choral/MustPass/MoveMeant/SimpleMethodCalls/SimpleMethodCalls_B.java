@@ -1,6 +1,5 @@
 package choral.MustPass.MoveMeant.SimpleMethodCalls;
 
-import choral.MustPass.MoveMeant.utils.Client;
 import choral.annotations.Choreography;
 import choral.channels.SymChannel_B;
 import choral.lang.Unit;

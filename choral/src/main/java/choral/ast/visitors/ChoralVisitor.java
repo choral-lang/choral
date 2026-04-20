@@ -419,7 +419,7 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 	public Node visit( InterfaceMethodDefinition n ) {
 		return new InterfaceMethodDefinition(
 				safeVisit( n.signature() ),
-//                safeVisit(n.body()),
+				n.body().map( this::safeVisit ).orElse( null ),
 				visitAndCollect( n.annotations() ),
 				n.modifiers(),
 				n.position()

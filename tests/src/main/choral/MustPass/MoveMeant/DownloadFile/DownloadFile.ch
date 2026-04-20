@@ -1,10 +1,6 @@
 package choral.MustPass.MoveMeant.DownloadFile;
 
 import choral.channels.SymChannel;
-import choral.MustPass.MoveMeant.SendPackets.utils.Client;
-import choral.MustPass.MoveMeant.SendPackets.utils.Server;
-
-import choral.MustPass.MoveMeant.SendPackets.SendPackets;
 
 public class DownloadFile@( Downloader, Storage ){
 

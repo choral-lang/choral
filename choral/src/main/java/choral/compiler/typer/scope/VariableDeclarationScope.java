@@ -3,6 +3,7 @@ package choral.compiler.typer.scope;
 import choral.ast.Name;
 import choral.exceptions.AstPositionedException;
 import choral.types.GroundClass;
+import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
 import choral.types.GroundInterface;
 import choral.types.HigherClassOrInterface;
@@ -50,7 +51,7 @@ public interface VariableDeclarationScope extends Scope {
 						new UnresolvedSymbolException( query.identifier() ) ) );
 	}
 
-	GroundClass lookupThis();
+	GroundClassOrInterface lookupThis();
 
 	GroundClass lookupSuper();
 

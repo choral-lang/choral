@@ -1,5 +1,6 @@
 package choral.MustPass.MoveMeant.BuyerSellerShipper;
 
+
 public class Catalogue@A {
 
 	public void addTitle( String@A t, Price@A p ){

@@ -782,6 +782,7 @@ public class AstOptimizer implements ChoralVisitor {
 
 		return new InterfaceMethodDefinition(
 				visitMethodHeader( imd.methodHeader() ),
+				visitMethodBody( imd.methodBody() ).orElse( null ),
 				imd.annotation().stream().map( this::visitAnnotation ).collect(
 						Collectors.toList() ),
 				modifiers,

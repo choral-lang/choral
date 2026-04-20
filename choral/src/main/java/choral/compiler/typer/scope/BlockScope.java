@@ -2,6 +2,7 @@ package choral.compiler.typer.scope;
 
 import choral.exceptions.StaticVerificationException;
 import choral.types.GroundClass;
+import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
 
 import java.util.HashMap;
@@ -62,7 +63,7 @@ public class BlockScope extends ChildScope
 	}
 
 	@Override
-	public GroundClass lookupThis() {
+	public GroundClassOrInterface lookupThis() {
 		return parent().lookupThis();
 	}
 
