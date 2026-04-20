@@ -11,10 +11,10 @@ public class Auth@( A, B ) {
 	public EnumBoolean@A run( String@A username, String@A password ){
 		String@B user = c.< String >com( username );
 		String@B psw = c.< String >com( password );
-		switch( 1@A ){
-			case 1@A, 2@A -> { System@A.out.println( "1"@A ); }
-			default -> { System@A.out.println( "NOT 1!"@A ); }
-		}
+        switch( 1@A ){
+            case 1@A, 2@A -> { /* no-op */ }
+            default -> { /* no-op */ }
+        }
 		if( user.equals( "USR"@B ) && psw.equals( "PSW"@B ) ){
 			select( EnumBoolean@B.True, c );
 			return c.< EnumBoolean >com( EnumBoolean@B.True );
