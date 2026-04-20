@@ -320,7 +320,7 @@ interfaceMethodModifier
 //	|	'private'//Introduced in Java 9
 	|	'abstract'
 	|	'default'
-//	|	'static'
+	|	'static'
 	;
 
 annotation
