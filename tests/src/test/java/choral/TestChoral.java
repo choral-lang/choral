@@ -378,7 +378,7 @@ public class TestChoral {
 
 			// For each package, compare the projected Java files with the expected ones,
 			// and try compiling the expected ones.
-			for( String packageName : packages ) {
+			for( String packageName : new TreeSet<>( packages ) ) {
 				String[] packageList = packageName.split( "\\." );
 				List< Path > projectedJavaFiles;
 				List< Path > expectedFiles;
@@ -433,35 +433,83 @@ public class TestChoral {
 
 				// PHASE 1: CHECK IF EXPECTED AND PROJECTED CODE DIFFER
 
-				if( projectedJavaFiles.size() != expectedFiles.size() ) {
-					errors.add( "The number of projected files (" + projectedJavaFiles.size()
-							+ ") does not equal the number of expected files (" + expectedFiles.size() + ").\n"
-							+ "  Accept with: mvn test -Dchoral.updateExpected="
-							+ compilationRequest.symbol() );
-					continue;
+				Map< String, Path > projectedByName = projectedJavaFiles.stream().collect(
+						Collectors.toMap(
+								p -> p.getFileName().toString(),
+								p -> p,
+								(a, b) -> a,
+								TreeMap::new
+						)
+				);
+				Map< String, Path > expectedByName = expectedFiles.stream().collect(
+						Collectors.toMap(
+								p -> p.getFileName().toString(),
+								p -> p,
+								(a, b) -> a,
+								TreeMap::new
+						)
+				);
+
+				Set< String > extraProjected = new TreeSet<>( projectedByName.keySet() );
+				extraProjected.removeAll( expectedByName.keySet() );
+				Set< String > missingProjected = new TreeSet<>( expectedByName.keySet() );
+				missingProjected.removeAll( projectedByName.keySet() );
+				boolean compareErrors = false;
+
+				if( !missingProjected.isEmpty() ) {
+					compareErrors = true;
+					StringBuilder msg = new StringBuilder( "Missing projected files:\n" );
+					for( String fileName : missingProjected ) {
+						msg.append( "  - " ).append( expectedByName.get( fileName ) ).append( "\n" );
+					}
+					errors.add( msg.toString() );
 				}
 
-				for( int i = 0; i < expectedFiles.size(); i++ ) {
-					List< String > original = Files.readAllLines( expectedFiles.get( i ) );
-					List< String > projected = Files.readAllLines( projectedJavaFiles.get( i ) );
+				if( !extraProjected.isEmpty() ) {
+					compareErrors = true;
+					for( String fileName : extraProjected ) {
+						Path projectedFile = projectedByName.get( fileName );
+						String content;
+						try {
+							content = Files.readString( projectedFile );
+						} catch( IOException e ) {
+							content = "(could not read: " + e.getMessage() + ")";
+						}
+						errors.add( "Unexpected projected file:\n" + "===" + projectedFile + "===\n"
+								+ content + "\n" );
+					}
+				}
+
+				Set< String > commonFiles = new TreeSet<>( expectedByName.keySet() );
+				commonFiles.retainAll( projectedByName.keySet() );
+
+				for( String fileName : commonFiles ) {
+					Path expectedFile = expectedByName.get( fileName );
+					Path projectedFile = projectedByName.get( fileName );
+					List< String > original = Files.readAllLines( expectedFile );
+					List< String > projected = Files.readAllLines( projectedFile );
 
 					Patch< String > patch = DiffUtils.diff( original, projected );
 
 					List<String> diffOutput = UnifiedDiffUtils.generateUnifiedDiff(
-							expectedFiles.get( i ).toString(),
-							projectedJavaFiles.get( i ).toString(),
+							expectedFile.toString(),
+							projectedFile.toString(),
 							original,
 							patch,
 							3
 					);
 
 					if( !diffOutput.isEmpty() ) {
+						compareErrors = true;
 						String diff = String.join( "\n", diffOutput );
-						errors.add( "There was a difference between the expected output and "
-								+ "the generated output, now printing diff:\n" + diff
-								+ "\n  Accept with: mvn test -Dchoral.updateExpected="
-								+ compilationRequest.symbol() );
+						errors.add( "Projected output differs from expected output:\n" + diff + "\n" );
 					}
+				}
+
+				if( compareErrors ) {
+					errors.add( "Accept changes by running: mvn test -Dchoral.updateExpected=" +
+							compilationRequest.symbol() + "\n");
+					continue;
 				}
 
 				// PHASE 2: TRY COMPILING THE EXPECTED JAVA CODE
