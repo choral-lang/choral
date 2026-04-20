@@ -378,6 +378,10 @@ public class TestChoral {
 
 			// For each package, compare the projected Java files with the expected ones,
 			// and try compiling the expected ones.
+			List< Path > missingProjectedFiles = new ArrayList<>();
+			List< Path > newProjectedFiles = new ArrayList<>();
+			List< String > fileDiffs = new ArrayList<>();
+			boolean filesDiffer = false;
 			for( String packageName : new TreeSet<>( packages ) ) {
 				String[] packageList = packageName.split( "\\." );
 				List< Path > projectedJavaFiles;
@@ -450,39 +454,26 @@ public class TestChoral {
 						)
 				);
 
-				Set< String > extraProjected = new TreeSet<>( projectedByName.keySet() );
-				extraProjected.removeAll( expectedByName.keySet() );
 				Set< String > missingProjected = new TreeSet<>( expectedByName.keySet() );
 				missingProjected.removeAll( projectedByName.keySet() );
-				boolean compareErrors = false;
-
 				if( !missingProjected.isEmpty() ) {
-					compareErrors = true;
-					StringBuilder msg = new StringBuilder( "Missing projected files:\n" );
+					filesDiffer = true;
 					for( String fileName : missingProjected ) {
-						msg.append( "  - " ).append( expectedByName.get( fileName ) ).append( "\n" );
+						missingProjectedFiles.add( expectedByName.get( fileName ) );
 					}
-					errors.add( msg.toString() );
 				}
 
+				Set< String > extraProjected = new TreeSet<>( projectedByName.keySet() );
+				extraProjected.removeAll( expectedByName.keySet() );
 				if( !extraProjected.isEmpty() ) {
-					compareErrors = true;
+					filesDiffer = true;
 					for( String fileName : extraProjected ) {
-						Path projectedFile = projectedByName.get( fileName );
-						String content;
-						try {
-							content = Files.readString( projectedFile );
-						} catch( IOException e ) {
-							content = "(could not read: " + e.getMessage() + ")";
-						}
-						errors.add( "Unexpected projected file:\n" + "===" + projectedFile + "===\n"
-								+ content + "\n" );
+						newProjectedFiles.add( projectedByName.get( fileName ) );
 					}
 				}
 
 				Set< String > commonFiles = new TreeSet<>( expectedByName.keySet() );
 				commonFiles.retainAll( projectedByName.keySet() );
-
 				for( String fileName : commonFiles ) {
 					Path expectedFile = expectedByName.get( fileName );
 					Path projectedFile = projectedByName.get( fileName );
@@ -498,17 +489,13 @@ public class TestChoral {
 							patch,
 							3
 					);
-
-					if( !diffOutput.isEmpty() ) {
-						compareErrors = true;
-						String diff = String.join( "\n", diffOutput );
-						errors.add( "Projected output differs from expected output:\n" + diff + "\n" );
+					if ( !diffOutput.isEmpty() ) {
+						filesDiffer = true;
+						fileDiffs.add( String.join( "\n", diffOutput ) );
 					}
 				}
 
-				if( compareErrors ) {
-					errors.add( "Accept changes by running: mvn test -Dchoral.updateExpected=" +
-							compilationRequest.symbol() + "\n");
+				if( filesDiffer ) {
 					continue;
 				}
 
@@ -550,6 +537,30 @@ public class TestChoral {
 					errors.add( "Expected Java code does not compile:\n" + javaErrors );
 				}
 			}
+
+			for( Path missingProjectedFile : missingProjectedFiles ) {
+				errors.add( "Missing projected file: " + missingProjectedFile + "\n" );
+			}
+
+			for( Path newProjectedFile : newProjectedFiles ) {
+				String content;
+				try {
+					content = Files.readString( newProjectedFile );
+				} catch( IOException e ) {
+					content = "(could not read: " + e.getMessage() + ")";
+				}
+				errors.add( "Unexpected projected file:\n=== " + newProjectedFile + " ===\n" + content );
+			}
+
+			for( String diff : fileDiffs ) {
+				errors.add( "Projected output differs from expected output:\n" + diff + "\n" );
+			}
+
+			if ( filesDiffer ) {
+				errors.add( "Accept changes by running: mvn test -Dchoral.updateExpected="
+						+ compilationRequest.symbol() + "\n" );
+			}
+
 		} catch( Throwable e ) {
 			errors.add( e.toString() );
 		}
