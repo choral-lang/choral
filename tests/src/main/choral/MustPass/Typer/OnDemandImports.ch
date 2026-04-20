@@ -1,9 +1,9 @@
 package choral.MustPass.Typer.OnDemandImports;
 
-import java.util.*;
+import java.time.chrono.AbstractChronology;
 
 class OnDemandImports@( A, B ) {
 	public void test(){
-		String@A test = "test"@A;
+		AbstractChronology@A x = null@A;
 	}
 }

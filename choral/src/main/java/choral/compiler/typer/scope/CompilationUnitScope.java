@@ -31,6 +31,7 @@ public final class CompilationUnitScope extends BaseScope {
 	private final List< ImportDeclaration > singleImportStatements;
 	private final List< Package > onDemandImports;
 	private final List< ImportDeclaration > onDemandImportStatements;
+	private final List<String> javaOnDemandImportStatements;
 	private final choral.types.Package declarationPackage;
 	private final Map< HigherClassOrInterface, ClassOrInterfaceStaticScope > templateScopes = new HashMap<>();
 	private boolean pendingSingleImports = true;
@@ -56,6 +57,7 @@ public final class CompilationUnitScope extends BaseScope {
 		singleImports = new ArrayList<>( singleImportStatements.size() );
 		onDemandImports = new ArrayList<>(
 				onDemandImportStatements.size() + defaultOnDemandImports.length );
+		javaOnDemandImportStatements = new ArrayList<>(onDemandImportStatements.size());
 		choral.types.Package root = declarationPackage.universe().rootPackage();
 		for( String defaultOnDemandImport : defaultOnDemandImports ) {
 			onDemandImports.add( root.declarePackage( defaultOnDemandImport ) );
@@ -86,20 +88,25 @@ public final class CompilationUnitScope extends BaseScope {
 				choral.types.Package pkg = declarationPackage.universe().rootPackage();
 				String[] path = ip.name().split( "\\." );
 				int i = 0;
+				boolean javaPackage = false;
 				while( i < path.length - 1 /* last one is always "*" */ ) {
 					// declaredPackage() returns full path up till passed package / class.
 					// so passing "io" from "java.io", will return "java.io"
 					Optional< choral.types.Package > x = pkg.declaredPackage( path[ i ] );
-					if( x.isPresent() ) {
+					if( x.isPresent() ) { 
 						pkg = x.get();
-					} else {
-						throw new AstPositionedException( ip.position(),
-								new StaticVerificationException(
-										"cannot resolve symbol '" + path[ i ] + "'" ) );
+					} else { // We assume package to be java package, save for later
+						javaPackage = true;
+						break;
 					}
 					i += 1;
 				}
-				onDemandImports.add( pkg );
+				if(!javaPackage){
+					onDemandImports.add( pkg );
+				} else {
+					// 'ip.name().length() - 2' is to cut off the * symbol. 
+					javaOnDemandImportStatements.add(ip.name().substring(0, ip.name().length() - 2));
+				}
 			}
 			pendingOnDemandImports = false;
 		}
@@ -157,23 +164,34 @@ public final class CompilationUnitScope extends BaseScope {
 			if( result.isEmpty() ) {
 				resolveOnDemandImports();
 				List< HigherClassOrInterface > results = onDemandImports.stream()
-						.map( x -> x.declaredType( query ) ).filter(
-								Optional::isPresent ).map(
-								Optional::get )
-						.filter( this::hasPublicAccess ).collect( Collectors.toList() );
+						.map( x -> x.declaredType( query ) )
+						.filter(Optional::isPresent )
+						.map(Optional::get )
+						.filter( this::hasPublicAccess )
+						.collect( Collectors.toList() );
+				
+				List<HigherClassOrInterface> liftedResults = javaOnDemandImportStatements.stream()
+						.map(javaPackage -> lookupClassOrInterface(javaPackage + "." +  query))
+						.filter(Optional::isPresent)
+						.map(Optional::get)
+						.filter(this::hasPublicAccess)
+						.collect(Collectors.toList());
+				// if(query.equalsIgnoreCase("LocalTime"))System.out.println(query + " lifted results: " + liftedResults.size());
+
+				results.addAll(liftedResults);
 				if( results.size() == 0 ) {
 					result = Optional.empty();
 				} else if( results.size() == 1 ) {
 					result = Optional.of( results.get( 0 ) );
 				} else {
 					throw new StaticVerificationException(
-							"reference to '" + query + "' is ambiguous, " +
-									results.stream().map(
-													x -> "'" + x.identifier( true ) + "'" )
-											.collect( Collectors.collectingAndThen(
-													Collectors.toList(),
-													Formatting.joiningOxfordComma() ) ) +
-									" are ambiguous"
+						"reference to '" + query + "' is ambiguous, " +
+						results.stream().map(
+										x -> "'" + x.identifier( true ) + "'" )
+								.collect( Collectors.collectingAndThen(
+										Collectors.toList(),
+										Formatting.joiningOxfordComma() ) ) +
+						" are ambiguous"
 					);
 				}
 			}

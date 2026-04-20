@@ -23,13 +23,7 @@ public class ClassLifterTest {
 		Typer.annotate( List.of(), HeaderLoader.loadStandardProfile().toList(), universe, new TyperOptions( VerbosityLevel.WARNINGS ) );
 		
 		ClassLifter classLifter = new ClassLifter(universe, taskQueue);
-		System.out.println("Past initialization phase");
-		
-		HigherClass test = (HigherClass)classLifter.liftClassOrInterface("java.util.Optional").get();
-		System.out.println("of method in Optional: " + test.innerType().methods().anyMatch( method -> {
-			return method.identifier().equalsIgnoreCase("of");
-		}));
-		
+				
 		assert(classLifter.liftClassOrInterface("java.lang.Object").isPresent());
 		
 		assert(classLifter.liftClassOrInterface("java.lang.Enum").isPresent());
@@ -50,6 +44,7 @@ public class ClassLifterTest {
 
 		assert(classLifter.liftClassOrInterface("java.util.Random").isPresent());
 		
+		assert(classLifter.liftClassOrInterface("java.time.chrono.AbstractChronology").isPresent());
 
 		// Stream<HigherClassOrInterface> intermediary = Stream.of(enuM, object, serializable)
 		// 										.flatMap(i -> i);
