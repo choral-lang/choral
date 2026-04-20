@@ -1,17 +1,23 @@
 package choral.compiler.typer.scope;
 
-import choral.ast.ImportDeclaration;
-import choral.exceptions.AstPositionedException;
-import choral.exceptions.StaticVerificationException;
-import choral.types.*;
-import choral.types.Package;
-import choral.utils.Formatting;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import choral.ast.ImportDeclaration;
 import choral.compiler.typer.ClassLifter;
-import choral.compiler.typer.TaskQueue;
+import choral.exceptions.AstPositionedException;
+import choral.exceptions.StaticVerificationException;
+import choral.types.HigherClassOrInterface;
+import choral.types.HigherDataType;
+import choral.types.HigherReferenceType;
+import choral.types.HigherTypeParameter;
+import choral.types.Package;
+import choral.types.World;
+import choral.utils.Formatting;
 
 /**
  * Top-level scope for a single Choral source file. Resolves type names by searching the current
@@ -80,7 +86,7 @@ public final class CompilationUnitScope extends BaseScope {
 				choral.types.Package pkg = declarationPackage.universe().rootPackage();
 				String[] path = ip.name().split( "\\." );
 				int i = 0;
-				while( i < path.length - 1 /* last one is always ".*" */ ) {
+				while( i < path.length - 1 /* last one is always "*" */ ) {
 					// declaredPackage() returns full path up till passed package / class.
 					// so passing "io" from "java.io", will return "java.io"
 					Optional< choral.types.Package > x = pkg.declaredPackage( path[ i ] );
@@ -131,6 +137,7 @@ public final class CompilationUnitScope extends BaseScope {
 				result = p.declaredType( path[ i ] );
 			} 
 			if(result.isEmpty()){
+				System.out.println("Classlifter query: " + query);
 				result = classLifter.liftClassOrInterface(query);
 			}
 		} else {
