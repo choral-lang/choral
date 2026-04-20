@@ -165,11 +165,10 @@ public class TestChoral {
 		mustFail.addSources("AbstractNotImplementedChain", subFolder(TYPER_FAIL, "AbstractNotImplementedChain.ch"));
 		mustFail.addSources("OverrideWithWeakerAccessInherited", subFolder(TYPER_FAIL, "OverrideWithWeakerAccessInherited.ch"));
 		mustFail.addSources("InterfaceInheritsConflictingDefaults", subFolder(TYPER_FAIL, "InterfaceInheritsConflictingDefaults.ch"));
-		// Gap tests — moved to xKnownBugs/ (compiler does not yet check these):
-		// mustFail.addSources("DefaultAbstractConflict", subFolder(TYPER_FAIL, "xKnownBugs/DefaultAbstractConflict.ch"));
-		// mustFail.addSources("InheritedAbstractsIncompatibleReturn", subFolder(TYPER_FAIL, "xKnownBugs/InheritedAbstractsIncompatibleReturn.ch"));
-		// mustFail.addSources("InterfaceInheritsAbstractsIncompatibleReturn", subFolder(TYPER_FAIL, "xKnownBugs/InterfaceInheritsAbstractsIncompatibleReturn.ch"));
-		// mustFail.addSources("IncompatibleAbstractMethods", subFolder(TYPER_FAIL, "xKnownBugs/IncompatibleAbstractMethods.ch"));
+		mustFail.addSources("DefaultAbstractConflict", subFolder(TYPER_FAIL, "DefaultAbstractConflict.ch"));
+		mustFail.addSources("InheritedAbstractsIncompatibleReturn", subFolder(TYPER_FAIL, "InheritedAbstractsIncompatibleReturn.ch"));
+		mustFail.addSources("InterfaceInheritsAbstractsIncompatibleReturn", subFolder(TYPER_FAIL, "InterfaceInheritsAbstractsIncompatibleReturn.ch"));
+		mustFail.addSources("IncompatibleAbstractMethods", subFolder(TYPER_FAIL, "IncompatibleAbstractMethods.ch"));
 
 		return Stream.concat(
 				mustPass.build().map(request ->

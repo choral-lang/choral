@@ -13,5 +13,5 @@ interface WithAbstract@( A ) {
     String@A greet();
 }
 
-class DefaultAbstractConflict@( A ) implements WithDefault@( A ), WithAbstract@( A ) { //! must either be declared as abstract or implement abstract method
+class DefaultAbstractConflict@( A ) implements WithDefault@( A ), WithAbstract@( A ) { //! Duplicate default methods inherited
 }
