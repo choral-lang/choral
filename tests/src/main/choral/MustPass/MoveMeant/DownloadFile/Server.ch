@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.shared.utils;
+package choral.MustPass.MoveMeant.DownloadFile;
 
 import java.util.List;
 

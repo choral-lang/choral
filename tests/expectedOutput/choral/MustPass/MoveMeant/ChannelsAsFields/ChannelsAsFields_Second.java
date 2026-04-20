@@ -1,6 +1,5 @@
 package choral.MustPass.MoveMeant.ChannelsAsFields;
 
-import choral.MustPass.MoveMeant.shared.utils.Client;
 import choral.annotations.Choreography;
 import choral.channels.DiDataChannel_B;
 import choral.channels.DiSelectChannel_B;

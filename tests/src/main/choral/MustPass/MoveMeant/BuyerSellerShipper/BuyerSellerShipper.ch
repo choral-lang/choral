@@ -2,7 +2,6 @@ package choral.MustPass.MoveMeant.BuyerSellerShipper;
 
 import choral.MustPass.MoveMeant.BuyerSellerShipper.Customer;
 import choral.MustPass.MoveMeant.BuyerSellerShipper.Catalogue;
-import choral.MustPass.MoveMeant.shared.utils.Price;
 import choral.channels.SymChannel;
 import choral.runtime.UI.Panel;
 

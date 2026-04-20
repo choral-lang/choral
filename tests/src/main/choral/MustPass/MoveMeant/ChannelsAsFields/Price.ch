@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.shared.utils;
+package choral.MustPass.MoveMeant.ChannelsAsFields;
 
 import choral.runtime.Serializers.KryoSerializable;
 

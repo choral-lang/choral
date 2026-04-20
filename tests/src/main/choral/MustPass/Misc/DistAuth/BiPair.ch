@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.shared;
+package choral.MustPass.DistAuth;
 
 public class BiPair@( A, B )< L@X, R@Y > {
 	private L@A left;

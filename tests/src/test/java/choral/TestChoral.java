@@ -137,6 +137,25 @@ public class TestChoral {
 		}
 
 		try( Stream< Path > entries = Files.list( categoryPath ) ) {
+			// Make sure the shared/ directory doesn't contain .ch files, since those don't
+			// actually get projected!
+			if( Files.isDirectory( sharedPath ) ) {
+				try( Stream< Path > sharedFiles = Files.walk( sharedPath ) ) {
+					List< Path > sharedChoralSources = sharedFiles
+							.filter( file -> Files.isRegularFile( file ) && file.toString().endsWith( ".ch" ) )
+							.sorted()
+							.toList();
+					if( !sharedChoralSources.isEmpty() ) {
+						throw new IllegalStateException(
+								"Shared directory '" + sharedPath + "' contains .ch files. "
+										+ "Move shared Choral sources into test-specific roots. Found:\n"
+										+ sharedChoralSources.stream().map( Path::toString )
+										.collect( Collectors.joining( "\n" ) )
+						);
+					}
+				}
+			}
+
 			for( Path test : entries.sorted( Comparator.comparing( path -> path.getFileName().toString() ) ).toList() ) {
 				String name = test.getFileName().toString();
 				if( name.equals( "shared" ) || name.equals( "xKnownBugs" ) ) {

@@ -1,6 +1,5 @@
 package choral.MustPass.DiffieHellman;
 
-import choral.MustPass.shared.BiPair_A;
 import choral.annotations.Choreography;
 import choral.channels.SymDataChannel_A;
 import choral.lang.Unit;

@@ -1,7 +1,6 @@
 package choral.MustPass.DistAuth;
 
 import java.util.Optional;
-import choral.MustPass.shared.BiPair;
 
 public class AuthResult@( A, B ) extends
    BiPair@( A, B )< Optional< AuthToken >, Optional< AuthToken > > {

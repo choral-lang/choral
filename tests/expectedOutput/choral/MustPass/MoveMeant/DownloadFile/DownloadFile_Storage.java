@@ -1,6 +1,5 @@
 package choral.MustPass.MoveMeant.DownloadFile;
 
-import choral.MustPass.MoveMeant.shared.utils.Server;
 import choral.annotations.Choreography;
 import choral.channels.SymChannel_B;
 import choral.lang.Unit;

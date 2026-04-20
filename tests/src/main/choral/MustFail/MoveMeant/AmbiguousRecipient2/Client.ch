@@ -1,4 +1,4 @@
-package choral.MustFail.MoveMeant.shared.utils;
+package choral.MustFail.MoveMeant.AmbiguousRecipient2;
 
 import java.lang.Object;
 import java.lang.Integer;

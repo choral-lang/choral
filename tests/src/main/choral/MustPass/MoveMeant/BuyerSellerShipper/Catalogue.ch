@@ -1,6 +1,5 @@
 package choral.MustPass.MoveMeant.BuyerSellerShipper;
 
-import choral.MustPass.MoveMeant.shared.utils.Price;
 
 public class Catalogue@A {
 
