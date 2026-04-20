@@ -511,11 +511,13 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 				);
 
 				// Phase 2: Inherit abstract/default from direct superinterfaces.
+				// JLS 9.4.1.1: static interface methods are not inherited.
 				// JLS 8.4.8 condition (d): skip if a concrete superclass method has
 				// a subsignature.
 				extendedInterfaces()
 						.flatMap( GroundReferenceType::methods )
-						.filter( m -> m.isAccessibleFrom( this ) )
+						.filter( m -> !m.isStatic()
+								&& m.isAccessibleFrom( this ) )
 						.forEach( m -> collectCandidateIfNotSatisfied(
 								m, candidates, concreteSuperclassMethods,
 								implementedByDeclared ) );
@@ -523,9 +525,11 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			} else {
 				// === INTERFACE INHERITANCE (JLS 9.4.1) ===
 				// Inherit abstract/default from direct superinterfaces.
+				// JLS 9.4.1.1: static interface methods are not inherited.
 				extendedInterfaces()
 						.flatMap( GroundReferenceType::methods )
-						.filter( m -> m.isAccessibleFrom( this ) )
+						.filter( m -> !m.isStatic()
+								&& m.isAccessibleFrom( this ) )
 						.forEach( m -> collectCandidate(
 								m, candidates, implementedByDeclared ) );
 			}
