@@ -311,18 +311,35 @@ public class ClassLifter {
 		modifiers.remove(choral.types.Modifier.ABSTRACT);
 
 		HigherEnum higherEnum = new HigherEnum(
-			pkg, 
-			modifiers, 
-			enumClass.getSimpleName(), 
+			pkg,
+			modifiers,
+			enumClass.getSimpleName(),
 			new World(universe, WORLD_IDENTIFIER));
+
+		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of(), this )
+				.getScope( higherEnum ).getInstanceScope();
 
 		higherEnum.innerType().setExtendedClass();
 		higherEnum.innerType().finaliseInheritance();
 
 		for( java.lang.reflect.Field field : allFields){
 			if( field.isEnumConstant()){
-				higherEnum.innerType().addCase(field.getName());		
+				higherEnum.innerType().addCase(field.getName());
 			}
+		}
+
+		// add methods
+		for(Method method : enumClass.getDeclaredMethods()){
+			if(Modifier.isPrivate(method.getModifiers())) continue;
+			if(method.isBridge()) continue;
+			Member.HigherMethod higherMethod;
+			try{
+				higherMethod = liftMethod(method, higherEnum.innerType(), scope);
+			} catch(LiftException e){
+				warn(method.getName(), e);
+				continue;
+			}
+			higherEnum.innerType().addMethod(higherMethod);
 		}
 
 		TaskQueue.MemberTask task = new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherEnum, () -> {
