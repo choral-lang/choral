@@ -69,10 +69,6 @@ public final class CompilationUnitScope extends BaseScope {
 		}
 	}
 
-	private void resolveOnDemandImports() {
-		/* NO-OP */
-	}
-
 	@Override
 	public Optional< ? extends HigherDataType > lookupDataType( String query ) {
 		var result = declarationPackage.universe().primitiveDataType( query );
@@ -90,21 +86,7 @@ public final class CompilationUnitScope extends BaseScope {
 		String[] path = query.split( "\\." );
 		Optional< ? extends HigherClassOrInterface > result = Optional.empty();
 		if( path.length > 1 ) {
-			// fully qualified name (only because Choral does not have nested classes yet)
-			Optional< choral.types.Package > pkg = Optional.of(
-					declarationPackage.universe().rootPackage() );
-			int i = 0;
-			while( pkg.isPresent() && i < path.length - 1 ) {
-				pkg = pkg.get().declaredPackage( path[ i ] );
-				i += 1;
-			}
-			if( pkg.isPresent() && i == path.length - 1 ) {
-				Package p = pkg.get();
-				result = p.declaredType( path[ i ] );
-			} 
-			if(result.isEmpty()){
-				result = classLifter.lookup(query);
-			}
+			result = classLifter.lookup(query);
 		} else {
 			// search current package
 			result = declarationPackage.declaredType( query );
@@ -120,13 +102,12 @@ public final class CompilationUnitScope extends BaseScope {
 			}
 			// search delayed imports
 			if( result.isEmpty() ) {
-				resolveOnDemandImports();
 				List< HigherClassOrInterface > results = onDemandImports.stream()
-						.map( x -> lookupClassOrInterface( x + "." + query ) )
+						.map( x -> classLifter.lookup( x + "." + query ) )
 						.filter(Optional::isPresent )
 						.map(Optional::get )
 						.filter( this::hasPublicAccess )
-						.collect( Collectors.toList() );
+						.toList();
 
 				if( results.isEmpty() ) {
 					result = Optional.empty();
