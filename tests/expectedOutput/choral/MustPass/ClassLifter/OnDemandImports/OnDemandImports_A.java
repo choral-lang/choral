@@ -1,12 +1,12 @@
-package choral.MustPass.Typer.OnDemandImports;
+package choral.MustPass.ClassLifter.OnDemandImports;
 
 import choral.annotations.Choreography;
-import java.net.*;
+import java.time.chrono.AbstractChronology;
 
 @Choreography( role = "A", name = "OnDemandImports" )
 class OnDemandImports_A {
 	public void test() {
-		URI time = new URI( "https://example.com/search?q=hello%20world" );
+		AbstractChronology x = null;
 	}
 
 }

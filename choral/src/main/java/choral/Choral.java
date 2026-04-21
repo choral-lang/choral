@@ -364,10 +364,10 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 				e.printStackTrace();
 			}
 		} else {
-			System.err.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
-			if( verbosity == VerbosityLevel.DEBUG ) {
-				e.printStackTrace();
-			}
+			System.err.println( "Internal compiler error." );
+			e.printStackTrace();
+			System.err.println( "Please submit a bug report at " +
+					"https://github.com/choral-lang/choral/issues" );
 		}
 	}
 
@@ -471,7 +471,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 @Command()
 class VerbosityOptions {
 
-	private VerbosityLevel verbosity;
+	private VerbosityLevel verbosity = VerbosityLevel.WARNINGS;
 
 	public VerbosityLevel verbosity() {
 		return this.verbosity;
@@ -479,7 +479,6 @@ class VerbosityOptions {
 
 	@Option( names = { "--verbosity" },
 			description = "Verbosity level: ${COMPLETION-CANDIDATES}.",
-			defaultValue = "WARNINGS",
 			paramLabel = "<LEVEL>"
 	)
 	private void setVerbosity( VerbosityLevel value ) {

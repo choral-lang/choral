@@ -301,25 +301,38 @@ public class ClassLifter {
 		return Optional.of( higherInterface );
 	}
 
-	private Optional< HigherClassOrInterface > liftEnum( java.lang.Class<?> enumClass ) {
-		// TRANSLATE CONSTANTS
-		java.lang.reflect.Field[] allFields = enumClass.getFields();
+	private Optional< HigherClassOrInterface > liftEnum( java.lang.Class<?> clazz ) {
+		String fullyQualifiedName = clazz.getCanonicalName();
+		java.lang.reflect.Field[] allFields = clazz.getFields();
 
-		Package pkg = universe.rootPackage().declarePackage(enumClass.getPackageName());
+		Package pkg = universe.rootPackage().declarePackage(clazz.getPackageName());
 
-		EnumSet<choral.types.Modifier> modifiers = parseModifiers(enumClass.getModifiers());
+		EnumSet<choral.types.Modifier> modifiers = parseModifiers(clazz.getModifiers());
 		modifiers.remove(choral.types.Modifier.ABSTRACT);
 
 		HigherEnum higherEnum = new HigherEnum(
-			pkg,
-			modifiers,
-			enumClass.getSimpleName(),
+			pkg, 
+			modifiers, 
+			clazz.getSimpleName(),
 			new World(universe, WORLD_IDENTIFIER));
-
+		List<? extends World> worlds = higherEnum.worldParameters();
 		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of(), this )
 				.getScope( higherEnum ).getInstanceScope();
 
 		higherEnum.innerType().setExtendedClass();
+
+		// recursively visit super interfaces
+		for(java.lang.reflect.Type genericSuperInterface : clazz.getGenericInterfaces()){
+			GroundInterface liftedSuperInterface;
+			try {
+				liftedSuperInterface = (GroundInterface)liftSuperType(genericSuperInterface, scope, worlds);
+			} catch (LiftException e) {
+				warn(fullyQualifiedName, e);
+				continue;
+			}
+			higherEnum.innerType().addExtendedInterface(liftedSuperInterface);
+		}
+
 		higherEnum.innerType().finaliseInheritance();
 
 		for( java.lang.reflect.Field field : allFields){
@@ -329,7 +342,7 @@ public class ClassLifter {
 		}
 
 		// add methods
-		for(Method method : enumClass.getDeclaredMethods()){
+		for(Method method : clazz.getDeclaredMethods()){
 			if(Modifier.isPrivate(method.getModifiers())) continue;
 			if(method.isBridge()) continue;
 			Member.HigherMethod higherMethod;
