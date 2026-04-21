@@ -1,0 +1,8 @@
+/* Choral Header Version 0.1 */
+package java.util.function;
+
+public interface Function@A< T@X, R@X > {
+
+    R@A apply( T@A t );
+
+}
