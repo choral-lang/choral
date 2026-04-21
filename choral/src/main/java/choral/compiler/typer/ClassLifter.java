@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+import choral.ast.Position;
 import choral.compiler.TyperOptions;
 import choral.compiler.typer.scope.CallableScope;
 import choral.compiler.typer.scope.ClassOrInterfaceInstanceScope;
@@ -70,6 +71,13 @@ public class ClassLifter {
 	private final TaskQueue taskQueue;
 	private final TyperOptions opts;
 
+	/**
+	 * The position of the import or usage site that triggered the current lift operation.
+	 * Set at the start of {@link #lookup(String, Position)} and restored on exit.
+	 * May be {@code null} when no position is available.
+	 */
+	private Position currentPosition;
+
 	public ClassLifter( Universe universe, TaskQueue taskQueue, TyperOptions opts ) {
 		this.universe = universe;
 		this.taskQueue = taskQueue;
@@ -88,10 +96,30 @@ public class ClassLifter {
 	 * @return A choral type representing the type, or nothing if classpath lookup failed.
 	 */
 	public Optional< HigherClassOrInterface > lookup( String fullyQualifiedName ) {
+		return lookup( fullyQualifiedName, null );
+	}
+
+	/**
+	 * Looks up the given type on the classpath and lifts it into a Choral type - adding it
+	 * to the Universe as a side-effect. If warnings are emitted during lifting, they will
+	 * be associated with the given {@code position}.
+	 *
+	 * @param fullyQualifiedName The fully qualified name of type to be lifted.
+	 * @param position The position of the import or usage site that triggered this lookup
+	 *                 (may be {@code null}).
+	 * @return A choral type representing the type, or nothing if classpath lookup failed.
+	 */
+	public Optional< HigherClassOrInterface > lookup(
+			String fullyQualifiedName, Position position
+	) {
+		Position previousPosition = this.currentPosition;
+		this.currentPosition = position;
 		try {
 			return Optional.of( liftClassOrInterface( fullyQualifiedName ) );
 		} catch( LiftException e ) {
 			return Optional.empty();
+		} finally {
+			this.currentPosition = previousPosition;
 		}
 	}
 
@@ -536,6 +564,7 @@ public class ClassLifter {
 
 	private void warn( String id, LiftException e ) {
 		opts.warningChannel().accept(
+				currentPosition,
 				"WARNING: Failed to lift " + id + " because " + e.getMessage() +
 						" types are not supported"
 		);

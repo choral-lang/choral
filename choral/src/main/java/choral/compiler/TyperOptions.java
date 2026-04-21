@@ -1,8 +1,9 @@
 package choral.compiler;
 
+import choral.ast.Position;
 import choral.utils.VerbosityLevel;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  * Options for configuring {@link choral.compiler.Typer}.
@@ -10,14 +11,14 @@ import java.util.function.Consumer;
 public class TyperOptions {
 	private final VerbosityLevel verbosity;
 	private final boolean relaxed;
-	private final Consumer< String > warningChannel;
+	private final BiConsumer< Position, String > warningChannel;
 
-	public TyperOptions( VerbosityLevel verbosity, Consumer< String > warningChannel ) {
+	public TyperOptions( VerbosityLevel verbosity, BiConsumer< Position, String > warningChannel ) {
 		// Default to "normal" mode, where communications are written manually
 		this( verbosity, false, warningChannel );
 	}
 
-	private TyperOptions( VerbosityLevel verbosity, boolean relaxed, Consumer< String > warningChannel ) {
+	private TyperOptions( VerbosityLevel verbosity, boolean relaxed, BiConsumer< Position, String > warningChannel ) {
 		this.verbosity = verbosity;
 		this.relaxed = relaxed;
 		this.warningChannel = warningChannel;
@@ -31,8 +32,10 @@ public class TyperOptions {
 	 * inference. */
 	public boolean relaxed() { return relaxed; }
 
-	/** The channel where warning messages should be published. */
-	public Consumer< String > warningChannel() { return warningChannel; }
+	/** The channel where warning messages should be published.
+	 * The first argument is the position of the import or usage site that triggered the
+	 * warning (may be {@code null} if no position is available). */
+	public BiConsumer< Position, String > warningChannel() { return warningChannel; }
 
 	/**
 	 * @return A copy of TyperOptions with {@link #relaxed} mode enabled.

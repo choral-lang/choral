@@ -42,7 +42,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -523,11 +523,17 @@ class VerbosityOptions {
 			description = "Suppress warnings when a Java type cannot be lifted automatically." )
 	private boolean suppressLiftWarnings = false;
 
-	public Consumer< String > warningChannel() {
+	public BiConsumer< Position, String > warningChannel() {
 		if ( suppressLiftWarnings ) {
-			return s -> {};
+			return ( position, message ) -> {};
 		} else {
-			return System.out::println;
+			return ( position, message ) -> {
+				if( position != null ) {
+					System.out.println( message + " at " + position.formattedPosition() );
+				} else {
+					System.out.println( message );
+				}
+			};
 		}
 	}
 }

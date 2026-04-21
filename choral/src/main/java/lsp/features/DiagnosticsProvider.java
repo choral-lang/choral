@@ -64,9 +64,12 @@ public class DiagnosticsProvider {
         return diagnostics;
     }
 
-    private void publishLiftWarning( String message ) {
+    private void publishLiftWarning( choral.ast.Position position, String message ) {
         if( client != null ) {
-            client.logMessage( new MessageParams( MessageType.Warning, message ) );
+            String formatted = position != null
+                    ? message + " at " + position.formattedPosition()
+                    : message;
+            client.logMessage( new MessageParams( MessageType.Warning, formatted ) );
         }
     }
 

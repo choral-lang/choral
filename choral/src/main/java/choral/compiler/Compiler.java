@@ -332,7 +332,7 @@ public class Compiler {
 
 	private void type() {
 		TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS,
-				msg -> log( Level.WARNING, msg ) );
+				( position, msg ) -> log( Level.WARNING, msg ) );
 		Typer.annotate( targetCompilationUnits, Collections.emptyList(), typerOptions );
 	}
 

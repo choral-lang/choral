@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import choral.ast.ImportDeclaration;
+import choral.ast.Position;
 import choral.compiler.typer.ClassLifter;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.StaticVerificationException;
@@ -19,8 +20,9 @@ import choral.utils.Formatting;
  */
 public final class CompilationUnitScope extends BaseScope {
 
-	private final static String[] defaultOnDemandImports = new String[] { "java.lang", "choral.lang" };
-	private final Set< String > onDemandImports;
+	private final static String[] defaultOnDemandImports =
+			new String[] { "java.lang.*", "choral.lang.*" };
+	private final List< ImportDeclaration > onDemandImports;
 
 	private final List< ImportDeclaration > singleImportStatements;
 	private final List< HigherClassOrInterface > singleImports;
@@ -38,16 +40,22 @@ public final class CompilationUnitScope extends BaseScope {
 		this.declarationPackage = declarationPackage;
 		this.classLifter = classLifter;
 		singleImportStatements = new ArrayList<>( declaredImports.size() );
-		onDemandImports = new HashSet<>( declaredImports.size() );
+		onDemandImports = new ArrayList<>( declaredImports.size() );
+		HashSet< String > seenImports = new HashSet<>( declaredImports.size() );
 		for( ImportDeclaration ip : declaredImports ) {
 			if( ip.isOnDemand() ) {
-				// 'ip.name().length() - 2' is to cut off the '.*' segment
-				onDemandImports.add(ip.name().substring(0, ip.name().length() - 2));
+				if ( seenImports.add( ip.name() ) )
+					onDemandImports.add( ip );
 			} else {
 				singleImportStatements.add( ip );
 			}
 		}
-		onDemandImports.addAll( Arrays.asList( defaultOnDemandImports ) );
+		for( String defaultImport : defaultOnDemandImports ) {
+			if( seenImports.add( defaultImport ) ) {
+				ImportDeclaration ip = new ImportDeclaration( defaultImport, null );
+				onDemandImports.add( ip );
+			}
+		}
 		singleImports = new ArrayList<>( singleImportStatements.size() );
 	}
 
@@ -86,7 +94,7 @@ public final class CompilationUnitScope extends BaseScope {
 		String[] path = query.split( "\\." );
 		Optional< ? extends HigherClassOrInterface > result = Optional.empty();
 		if( path.length > 1 ) {
-			result = classLifter.lookup(query);
+			result = classLifter.lookup( query, null );
 		} else {
 			// search current package
 			result = declarationPackage.declaredType( query );
@@ -103,7 +111,11 @@ public final class CompilationUnitScope extends BaseScope {
 			// search delayed imports
 			if( result.isEmpty() ) {
 				List< HigherClassOrInterface > results = onDemandImports.stream()
-						.map( x -> classLifter.lookup( x + "." + query ) )
+						.map( ip -> {
+							// 'ip.name().length() - 2' is to cut off the '.*' segment
+							String prefix = ip.name().substring( 0, ip.name().length() - 2 );
+							return classLifter.lookup( prefix + "." + query, ip.position() );
+						})
 						.filter(Optional::isPresent )
 						.map(Optional::get )
 						.filter( this::hasPublicAccess )
