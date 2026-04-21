@@ -331,7 +331,7 @@ public class Compiler {
 	}
 
 	private void type() {
-		TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS );
+		TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS, true, false );
 		Typer.annotate( targetCompilationUnits, Collections.emptyList(), typerOptions );
 	}
 

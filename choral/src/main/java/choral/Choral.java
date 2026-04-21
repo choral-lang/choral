@@ -121,7 +121,11 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 										true, strictHeaderSearch )
 						)
 						.collect( Collectors.toList() );
-				TyperOptions typerOptions = new TyperOptions( verbosityOptions.verbosity() );
+				TyperOptions typerOptions = new TyperOptions(
+						verbosityOptions.verbosity(),
+						verbosityOptions.suppressLiftWarnings(),
+						false
+				);
 				Collection< CompilationUnit > annotatedUnits =
 						Typer.annotate( sourceUnits, headerUnits, typerOptions );
 				if( !skipProjectability ) {
@@ -212,7 +216,11 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 
 				AtomicReference< Collection< CompilationUnit > > annotatedUnits =
 						new AtomicReference<>( sourceUnits );
-				TyperOptions typerOptions = new TyperOptions( verbosityOptions.verbosity() );
+				TyperOptions typerOptions = new TyperOptions(
+						verbosityOptions.verbosity(),
+						verbosityOptions.suppressLiftWarnings(),
+						false
+				);
 
 				// If the user asks, we can insert missing communications by analyzing the
 				// source unit dataflow graphs.
@@ -320,7 +328,11 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 										true, strictHeaderSearch )
 						)
 						.collect( Collectors.toList() );
-				TyperOptions typerOptions = new TyperOptions( verbosityOptions.verbosity() );
+				TyperOptions typerOptions = new TyperOptions(
+						verbosityOptions.verbosity(),
+						verbosityOptions.suppressLiftWarnings(),
+						false
+				);
 				Collection< CompilationUnit > annotatedUnits =
 						Typer.annotate( sourceUnits, headerUnits, typerOptions );
 				annotatedUnits.parallelStream().map( HeaderCompiler::compile )
@@ -507,6 +519,14 @@ class VerbosityOptions {
 		if( value ) {
 			this.setVerbosity( VerbosityLevel.DEBUG );
 		}
+	}
+
+	@Option( names = { "--suppress-lifter-warnings" },
+			description = "Suppress warnings when a Java type cannot be lifted automatically." )
+	private boolean suppressLiftWarnings = false;
+
+	public boolean suppressLiftWarnings() {
+		return suppressLiftWarnings;
 	}
 }
 

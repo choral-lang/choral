@@ -31,9 +31,8 @@ public class DiagnosticsProvider {
             
             List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
 
-            TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS );
-            Collection<CompilationUnit> typedUnits =
-                    Typer.annotate( Arrays.asList(compUnit), headerUnits, typerOptions );
+            TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS, true, false );
+            Typer.annotate( Arrays.asList(compUnit), headerUnits, typerOptions );
 
         } catch (ChoralCompoundException e) {
             for (ChoralException cause : e.getCauses()) {

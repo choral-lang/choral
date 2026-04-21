@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+import choral.compiler.TyperOptions;
 import choral.compiler.typer.scope.CallableScope;
 import choral.compiler.typer.scope.ClassOrInterfaceInstanceScope;
 import choral.compiler.typer.scope.CompilationUnitScope;
@@ -67,10 +68,12 @@ public class ClassLifter {
 	private static final String WORLD_IDENTIFIER = "A";
 	private final Universe universe;
 	private final TaskQueue taskQueue;
+	private final TyperOptions opts;
 
-	public ClassLifter( Universe universe, TaskQueue taskQueue ) {
+	public ClassLifter( Universe universe, TaskQueue taskQueue, TyperOptions opts ) {
 		this.universe = universe;
 		this.taskQueue = taskQueue;
+		this.opts = opts;
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -531,8 +534,10 @@ public class ClassLifter {
 	}
 
 
-	private static void warn( String id, LiftException e ) {
-		System.err.println( "WARNING: Failed to lift " + id + " because " + e.getMessage() +
-                " types are not supported" );
+	private void warn( String id, LiftException e ) {
+		if( !opts.suppressLiftWarnings() ) {
+			System.err.println( "WARNING: Failed to lift " + id + " because " + e.getMessage() +
+					" types are not supported" );
+		}
 	}
 }

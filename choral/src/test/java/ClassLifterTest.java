@@ -17,11 +17,12 @@ public class ClassLifterTest {
 	public void helloWorldTest() throws IOException {
 		Universe universe = new Universe();
 		TaskQueue taskQueue = new TaskQueue();
+		TyperOptions opts = new TyperOptions( VerbosityLevel.WARNINGS, true, false );
 
 		// Run the typer to initialize special types like java.lang.Object
-		Typer.annotate( List.of(), HeaderLoader.loadStandardProfile().toList(), universe, new TyperOptions( VerbosityLevel.WARNINGS ) );
+		Typer.annotate( List.of(), HeaderLoader.loadStandardProfile().toList(), universe, opts );
 		
-		ClassLifter classLifter = new ClassLifter(universe, taskQueue);
+		ClassLifter classLifter = new ClassLifter(universe, taskQueue, opts);
 
 		classLifter.lookup("java.lang.System");
 		classLifter.lookup("java.lang.Object");

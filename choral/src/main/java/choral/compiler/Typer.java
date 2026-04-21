@@ -96,7 +96,7 @@ public class Typer {
 		public Visitor( TaskQueue taskQueue, Universe universe, TyperOptions opts ) {
 			this.taskQueue = taskQueue;
 			this.universe = universe;
-			this.classLifter = new ClassLifter( universe, taskQueue );
+			this.classLifter = new ClassLifter( universe, taskQueue, opts );
 			this.opts = opts;
 		}
 
