@@ -149,17 +149,7 @@ public class ClassLifter {
 			higherClass.innerType().setExtendedClass(liftedSuperClass);
 		}
 
-		// recursively visit super interfaces
-		for(java.lang.reflect.Type genericSuperInterface : clazz.getGenericInterfaces()){
-			GroundInterface liftedSuperInterface;
-			try {
-				liftedSuperInterface = (GroundInterface)liftSuperType(genericSuperInterface, scope, worlds);
-			} catch (LiftException e) {
-				warn(fullyQualifiedName, e);
-				continue;
-			}
-			higherClass.innerType().addExtendedInterface(liftedSuperInterface);
-		}
+		addSuperInterfaces(clazz, higherClass, scope);
 
 		higherClass.innerType().finaliseInheritance();
 
@@ -201,19 +191,7 @@ public class ClassLifter {
 			}
 		} 
 
-		// add methods
-		for(Method method : clazz.getDeclaredMethods()){
-			if(Modifier.isPrivate(method.getModifiers())) continue;
-			if(method.isBridge()) continue;
-			Member.HigherMethod higherMethod;
-			try{
-				higherMethod = liftMethod(method, higherClass.innerType(), scope);
-			} catch(LiftException e){
-				warn(method.getName(), e);
-				continue;
-			}
-			higherClass.innerType().addMethod(higherMethod);
-		}
+		addMethods(clazz, higherClass, scope);
 
 		// add constructors to higherClass
 		for(Constructor<?> constructor : clazz.getConstructors()){
@@ -228,16 +206,11 @@ public class ClassLifter {
 			higherClass.innerType().addConstructor(higherConstructor);
 		}
 
-		TaskQueue.MemberTask task = new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherClass, () -> {
-			higherClass.innerType().finaliseInterface();
-		});
-		taskQueue.enqueue(task);
+		enqueueFinaliseInterfaceTask(higherClass);
 		return Optional.of( higherClass );
 	}
 
 	private Optional< HigherClassOrInterface > liftInterface( java.lang.Class< ? > clazz ) {
-		String fullyQualifiedName = clazz.getCanonicalName();
-
 		Package pkg = universe.rootPackage().declarePackage(clazz.getPackageName());
 
 		EnumSet<choral.types.Modifier> modifiers = parseModifiers(clazz.getModifiers());
@@ -248,22 +221,11 @@ public class ClassLifter {
 			clazz.getSimpleName(), 
 			List.of(new World(universe, WORLD_IDENTIFIER)),
 			liftTypeParameters(clazz.getTypeParameters()));
-		List<? extends World> worlds = higherInterface.worldParameters();
 
 		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of(), this )
 				.getScope( higherInterface ).getInstanceScope();
 
-		// recursively visit super interfaces
-		for(java.lang.reflect.Type genericSuperInterface : clazz.getGenericInterfaces()){
-			GroundInterface liftedSuperInterface;
-			try {
-				liftedSuperInterface = (GroundInterface)liftSuperType(genericSuperInterface, scope, worlds);
-			} catch (LiftException e) {
-				warn(fullyQualifiedName, e);
-				continue;
-			}
-			higherInterface.innerType().addExtendedInterface(liftedSuperInterface);
-		}
+		addSuperInterfaces(clazz, higherInterface, scope);
 
 		higherInterface.innerType().finaliseInheritance();
 
@@ -280,29 +242,13 @@ public class ClassLifter {
 			}
 		}
 
-		// add methods to higherinterface
-		for(Method method : clazz.getDeclaredMethods()){
-			if(Modifier.isPrivate(method.getModifiers())) continue;
-			if(method.isBridge()) continue;
-			Member.HigherMethod higherMethod;
-			try{
-				higherMethod = liftMethod(method, higherInterface.innerType(), scope);
-			} catch(LiftException e){
-				warn(method.getName(), e);
-				continue;
-			}
-			higherInterface.innerType().addMethod(higherMethod);
-		}
+		addMethods(clazz, higherInterface, scope);
 
-		TaskQueue.MemberTask task = new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherInterface, () -> {
-			higherInterface.innerType().finaliseInterface();
-		});
-		taskQueue.enqueue(task);
+		enqueueFinaliseInterfaceTask(higherInterface);
 		return Optional.of( higherInterface );
 	}
 
 	private Optional< HigherClassOrInterface > liftEnum( java.lang.Class<?> clazz ) {
-		String fullyQualifiedName = clazz.getCanonicalName();
 		java.lang.reflect.Field[] allFields = clazz.getFields();
 
 		Package pkg = universe.rootPackage().declarePackage(clazz.getPackageName());
@@ -315,24 +261,13 @@ public class ClassLifter {
 			modifiers, 
 			clazz.getSimpleName(),
 			new World(universe, WORLD_IDENTIFIER));
-		List<? extends World> worlds = higherEnum.worldParameters();
 
 		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of(), this )
 				.getScope( higherEnum ).getInstanceScope();
 
 		higherEnum.innerType().setExtendedClass();
 
-		// recursively visit super interfaces
-		for(java.lang.reflect.Type genericSuperInterface : clazz.getGenericInterfaces()){
-			GroundInterface liftedSuperInterface;
-			try {
-				liftedSuperInterface = (GroundInterface)liftSuperType(genericSuperInterface, scope, worlds);
-			} catch (LiftException e) {
-				warn(fullyQualifiedName, e);
-				continue;
-			}
-			higherEnum.innerType().addExtendedInterface(liftedSuperInterface);
-		}
+		addSuperInterfaces(clazz, higherEnum, scope);
 
 		higherEnum.innerType().finaliseInheritance();
 
@@ -342,25 +277,68 @@ public class ClassLifter {
 			}
 		}
 
-		// add methods
+		addMethods(clazz, higherEnum, scope);
+
+		enqueueFinaliseInterfaceTask(higherEnum);
+		return Optional.of( higherEnum );
+	}
+
+	/**
+	 * Adds each of the given Java class's generic super-interfaces to the inner type
+	 * of the given Choral type. Super-interfaces that fail to lift are skipped with a warning.
+	 */
+	private void addSuperInterfaces(
+			java.lang.Class<?> clazz,
+			HigherClassOrInterface higherType,
+			ClassOrInterfaceInstanceScope scope
+	) {
+		String fullyQualifiedName = clazz.getCanonicalName();
+		List<? extends World> worlds = higherType.worldParameters();
+		for(java.lang.reflect.Type genericSuperInterface : clazz.getGenericInterfaces()){
+			GroundInterface liftedSuperInterface;
+			try {
+				liftedSuperInterface = (GroundInterface)liftSuperType(genericSuperInterface, scope, worlds);
+			} catch (LiftException e) {
+				warn(fullyQualifiedName, e);
+				continue;
+			}
+			higherType.innerType().addExtendedInterface(liftedSuperInterface);
+		}
+	}
+
+	/**
+	 * Lifts each of the given Java class's declared methods and adds them to the inner type
+	 * of the given Choral type. Private and bridge methods are skipped, as are methods
+	 * whose signatures fail to lift.
+	 */
+	private void addMethods(
+			java.lang.Class<?> clazz,
+			HigherClassOrInterface higherType,
+			ClassOrInterfaceInstanceScope scope
+	) {
 		for(Method method : clazz.getDeclaredMethods()){
 			if(Modifier.isPrivate(method.getModifiers())) continue;
 			if(method.isBridge()) continue;
 			Member.HigherMethod higherMethod;
 			try{
-				higherMethod = liftMethod(method, higherEnum.innerType(), scope);
+				higherMethod = liftMethod(method, higherType.innerType(), scope);
 			} catch(LiftException e){
 				warn(method.getName(), e);
 				continue;
 			}
-			higherEnum.innerType().addMethod(higherMethod);
+			higherType.innerType().addMethod(higherMethod);
 		}
+	}
 
-		TaskQueue.MemberTask task = new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherEnum, () -> {
-			higherEnum.innerType().finaliseInterface();
+	/**
+	 * Enqueues a task to finalise the interface of the given Choral type's inner type
+	 * during the {@link Phase#MEMBER_DECLARATIONS} phase.
+	 */
+	private void enqueueFinaliseInterfaceTask(HigherClassOrInterface higherType) {
+		TaskQueue.MemberTask task = new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherType, () -> {
+			higherType.innerType().finaliseInterface();
 		});
 		taskQueue.enqueue(task);
-		return Optional.of( higherEnum );
 	}
 
 	private GroundReferenceType liftSuperType(java.lang.reflect.Type superType, 
