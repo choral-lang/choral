@@ -299,7 +299,7 @@ public class ClassLifter {
 			try{
 				higherMethod = liftMethod(method, higherType.innerType(), scope);
 			} catch(LiftException e){
-				warn(method.getName(), e);
+				warn(clazz.getCanonicalName() + "#" + method.getName(), e);
 				continue;
 			}
 			higherType.innerType().addMethod(higherMethod);
@@ -316,7 +316,7 @@ public class ClassLifter {
 			try{
 				higherConstructor = liftConstructor(constructor, higherClass.innerType(), scope );
 			} catch(LiftException e){
-				warn(constructor.getName(), e);
+				warn(clazz.getCanonicalName() + "#" + constructor.getName(), e);
 				continue;
 			}
 			higherClass.innerType().addConstructor(higherConstructor);
@@ -335,7 +335,7 @@ public class ClassLifter {
 			try{
 				fieldType = (GroundDataType)liftType(field.getGenericType(), scope );
 			} catch(LiftException e){
-				warn(field.getName(), e);
+				warn(field.getClass().getCanonicalName() + "#" + field.getName(), e);
 				continue;
 			}
 			Member.Field choralField = new Member.Field(

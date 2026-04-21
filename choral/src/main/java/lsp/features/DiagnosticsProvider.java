@@ -38,14 +38,19 @@ public class DiagnosticsProvider {
             
             List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
 
-            TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS,
-                    this::publishLiftWarning );
+            TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS, (pos, s) -> {
+                if ( pos == null ) return; // Skip the default warnings that don't have positions
+                Diagnostic diagnostic = warningDiagnostic(s);
+                setRange( diagnostic, pos );
+                diagnostics.add(diagnostic);
+            });
             Typer.annotate( List.of( compUnit ), headerUnits, typerOptions );
 
         } catch (ChoralCompoundException e) {
             for (ChoralException cause : e.getCauses()) {
                 if ( cause instanceof AstPositionedException ape ) {
-					Diagnostic diagnostic = errorDiagnostic(ape.position(), ape.getMessage());
+					Diagnostic diagnostic = errorDiagnostic( ape.getMessage() );
+                    setRange( diagnostic, ape.position() );
                     diagnostics.add(diagnostic);
                 } else {
                     Diagnostic diagnostic = errorDiagnostic( e.getMessage() );
@@ -53,7 +58,8 @@ public class DiagnosticsProvider {
                 }
             }
         } catch (AstPositionedException e) {
-            Diagnostic diagnostic = errorDiagnostic( e.position(), e.getMessage() );
+            Diagnostic diagnostic = errorDiagnostic( e.getMessage() );
+            setRange( diagnostic, e.position() );
             diagnostics.add(diagnostic);
 
         } catch (Exception e){
@@ -64,21 +70,11 @@ public class DiagnosticsProvider {
         return diagnostics;
     }
 
-    private void publishLiftWarning( choral.ast.Position position, String message ) {
-        if( client != null ) {
-            String formatted = position != null
-                    ? message + " at " + position.formattedPosition()
-                    : message;
-            client.logMessage( new MessageParams( MessageType.Warning, formatted ) );
-        }
-    }
-
-    private static Diagnostic errorDiagnostic( choral.ast.Position position, String message) {
-        Diagnostic diagnostic = errorDiagnostic(message);
-        // position.line() -1 to account for diff between 0-indexing and 1-indexing
-        Range range = new Range(new Position(position.line() - 1, position.column()),
-                                new Position(position.line() - 1, position.column()));
-        diagnostic.setRange(range);
+    private static Diagnostic warningDiagnostic( String message ) {
+        Diagnostic diagnostic = new Diagnostic();
+        diagnostic.setSeverity(DiagnosticSeverity.Warning);
+        diagnostic.setMessage(message);
+        diagnostic.setSource("choral-compiler");
         return diagnostic;
     }
 
@@ -88,5 +84,12 @@ public class DiagnosticsProvider {
         diagnostic.setMessage(message);
         diagnostic.setSource("choral-compiler");
         return diagnostic;
+    }
+
+    private static void setRange( Diagnostic diagnostic, choral.ast.Position position ) {
+      // position.line() -1 to account for diff between 0-indexing and 1-indexing
+      Range range = new Range(new Position(position.line() - 1, position.column()),
+              new Position(position.line() - 1, position.column()));
+      diagnostic.setRange(range);
     }
 }

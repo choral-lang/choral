@@ -51,7 +51,7 @@ public class ChoralWorkspaceService implements WorkspaceService {
                 List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
 
                 // Collect data dependencies and infer communications
-                var opts = new TyperOptions( VerbosityLevel.WARNINGS, this::publishLiftWarning )
+                var opts = new TyperOptions( VerbosityLevel.WARNINGS, (pos, msg) -> {} )
                         .relaxedMode();
                 var checkedUnit = Typer.annotate( List.of(parsedUnit), headerUnits, opts );
                 var fixedUnit = MoveMeant.infer( checkedUnit, headerUnits, opts );
@@ -68,15 +68,6 @@ public class ChoralWorkspaceService implements WorkspaceService {
         else {
             System.err.println("Unknown command: " + params.getCommand());
             return CompletableFuture.completedFuture(null);
-        }
-    }
-
-    private void publishLiftWarning( choral.ast.Position position, String message ) {
-        if( client != null ) {
-            String formatted = position != null
-                    ? message + " at " + position.formattedPosition()
-                    : message;
-            client.logMessage( new MessageParams( MessageType.Warning, formatted ) );
         }
     }
 }

@@ -62,12 +62,12 @@ public final class CompilationUnitScope extends BaseScope {
 	private void resolveSingleImports() {
 		if( pendingSingleImports ) {
 			for( ImportDeclaration ip : singleImportStatements ) {
-				choral.types.Package pkg = declarationPackage.universe().rootPackage();
-				Optional< ? extends HigherClassOrInterface > type = pkg.declaredType( ip.name() );
+				Optional< ? extends HigherClassOrInterface > type =
+						classLifter.lookup( ip.name(), ip.position() );
 				if( type.isPresent() ) {
 					assertPublicAccess( type.get() );
 					singleImports.add( type.get() );
-				} else { // class lifter here?
+				} else {
 					throw new AstPositionedException( ip.position(),
 							new StaticVerificationException(
 									"cannot resolve symbol '" + ip.name() + "'" ) );
