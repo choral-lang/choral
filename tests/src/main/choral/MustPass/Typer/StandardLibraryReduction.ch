@@ -1,6 +1,5 @@
 package choral.MustPass.Typer.StandardLibraryReduction;
 
-import java.lang.Math;
 import java.math.BigInteger;
 import java.util.Optional;
 
