@@ -88,7 +88,6 @@ public class ClassLifter {
 		try {
 			return Optional.of( liftClassOrInterface( fullyQualifiedName ) );
 		} catch( LiftException e ) {
-			System.err.println( "WARNING: Could not find class: " + fullyQualifiedName );
 			return Optional.empty();
 		}
 	}
@@ -108,7 +107,6 @@ public class ClassLifter {
 
 		java.lang.Class<?> clazz;
 		try {
-			// System.out.println( "Loading class or interface: " + fullyQualifiedName );
 			clazz = java.lang.Class.forName( fullyQualifiedName );
 		} catch( ClassNotFoundException e ) {
 			throw LiftException.notFound( fullyQualifiedName );
@@ -325,7 +323,6 @@ public class ClassLifter {
 	private Member.HigherMethod liftMethod(Method method,
 			GroundClassOrInterface declarationContext,
 			ClassOrInterfaceInstanceScope scope) throws LiftException{
-		//System.out.println("Lifting method: " + method + " in " + declarationContext);
 		EnumSet<choral.types.Modifier> methodModifiers = parseModifiers(method.getModifiers());
 		// Default not part of modifier bits
 		if(method.isDefault()) methodModifiers.add(choral.types.Modifier.valueOf("DEFAULT"));
