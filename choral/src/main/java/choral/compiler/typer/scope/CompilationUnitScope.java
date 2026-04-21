@@ -1,11 +1,15 @@
 package choral.compiler.typer.scope;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import choral.ast.ImportDeclaration;
 import choral.compiler.typer.ClassLifter;
@@ -31,7 +35,9 @@ public final class CompilationUnitScope extends BaseScope {
 	private final List< ImportDeclaration > singleImportStatements;
 	private final List< Package > onDemandImports;
 	private final List< ImportDeclaration > onDemandImportStatements;
-	private final List<String> javaOnDemandImportStatements;
+	private final Set<String> javaOnDemandImportStatements;
+	private final List<String> specialTypes = new ArrayList<>(Arrays.asList("Object", "Enum", "String", "Exception",
+		"Number", "Boolean", "Byte", "Character", "Short", "Integer", "Long", "Float", "Double"));
 	private final choral.types.Package declarationPackage;
 	private final Map< HigherClassOrInterface, ClassOrInterfaceStaticScope > templateScopes = new HashMap<>();
 	private boolean pendingSingleImports = true;
@@ -57,7 +63,7 @@ public final class CompilationUnitScope extends BaseScope {
 		singleImports = new ArrayList<>( singleImportStatements.size() );
 		onDemandImports = new ArrayList<>(
 				onDemandImportStatements.size() + defaultOnDemandImports.length );
-		javaOnDemandImportStatements = new ArrayList<>(onDemandImportStatements.size());
+		javaOnDemandImportStatements = new HashSet<>(onDemandImportStatements.size() + 1);
 		choral.types.Package root = declarationPackage.universe().rootPackage();
 		for( String defaultOnDemandImport : defaultOnDemandImports ) {
 			onDemandImports.add( root.declarePackage( defaultOnDemandImport ) );
@@ -104,7 +110,7 @@ public final class CompilationUnitScope extends BaseScope {
 				if(!javaPackage){
 					onDemandImports.add( pkg );
 				} else {
-					// 'ip.name().length() - 2' is to cut off the * symbol. 
+					// 'ip.name().length() - 2' is to cut off the '.*' segment 
 					javaOnDemandImportStatements.add(ip.name().substring(0, ip.name().length() - 2));
 				}
 			}
@@ -170,13 +176,20 @@ public final class CompilationUnitScope extends BaseScope {
 						.filter( this::hasPublicAccess )
 						.collect( Collectors.toList() );
 				
-				List<HigherClassOrInterface> liftedResults = javaOnDemandImportStatements.stream()
+				List<HigherClassOrInterface> liftedResults = new ArrayList<>();
+
+				if(!specialTypes.contains(query)){
+					Stream<String> javaPackages = results.isEmpty()
+						? Stream.concat(javaOnDemandImportStatements.stream(), Stream.of("java.lang")).distinct()
+						: javaOnDemandImportStatements.stream(); 
+					
+					liftedResults = javaPackages
 						.map(javaPackage -> lookupClassOrInterface(javaPackage + "." +  query))
 						.filter(Optional::isPresent)
 						.map(Optional::get)
 						.filter(this::hasPublicAccess)
 						.collect(Collectors.toList());
-				// if(query.equalsIgnoreCase("LocalTime"))System.out.println(query + " lifted results: " + liftedResults.size());
+				}
 
 				results.addAll(liftedResults);
 				if( results.size() == 0 ) {

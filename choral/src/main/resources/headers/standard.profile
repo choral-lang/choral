@@ -13,9 +13,7 @@ java/lang/Float.chh
 java/lang/Double.chh
 java/io/PrintStream.chh
 java/io/Serializable.chh
-java/lang/Class.chh
 java/lang/Comparable.chh
-java/lang/System.chh
 java/lang/Throwable.chh
 java/util/Optional.chh
 java/nio/ByteBuffer.chh

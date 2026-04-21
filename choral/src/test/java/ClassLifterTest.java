@@ -23,7 +23,9 @@ public class ClassLifterTest {
 		Typer.annotate( List.of(), HeaderLoader.loadStandardProfile().toList(), universe, new TyperOptions( VerbosityLevel.WARNINGS ) );
 		
 		ClassLifter classLifter = new ClassLifter(universe, taskQueue);
-				
+
+		assert(classLifter.liftClassOrInterface("java.lang.System").isPresent());
+		
 		assert(classLifter.liftClassOrInterface("java.lang.Object").isPresent());
 		
 		assert(classLifter.liftClassOrInterface("java.lang.Enum").isPresent());

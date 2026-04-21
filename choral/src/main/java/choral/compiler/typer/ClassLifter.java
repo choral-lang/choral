@@ -112,7 +112,7 @@ public class ClassLifter {
 				return liftClass( clazz );
 			}
 		} catch( ClassNotFoundException e ) {
-			System.err.println( "WARNING: Could not find class: " + fullyQualifiedName );
+			// System.err.println( "WARNING: Could not find class: " + fullyQualifiedName );
 			return Optional.empty();
 		}
 	}
@@ -316,7 +316,7 @@ public class ClassLifter {
 			clazz.getSimpleName(),
 			new World(universe, WORLD_IDENTIFIER));
 		List<? extends World> worlds = higherEnum.worldParameters();
-		
+
 		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of(), this )
 				.getScope( higherEnum ).getInstanceScope();
 
