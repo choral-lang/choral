@@ -180,7 +180,7 @@ public final class CompilationUnitScope extends BaseScope {
 
 				if(!specialTypes.contains(query)){
 					Stream<String> javaPackages = results.isEmpty()
-						? Stream.concat(javaOnDemandImportStatements.stream(), Stream.of("java.lang")).distinct()
+						? Stream.concat(javaOnDemandImportStatements.stream(), Stream.of("java.lang"))
 						: javaOnDemandImportStatements.stream(); 
 					
 					liftedResults = javaPackages
