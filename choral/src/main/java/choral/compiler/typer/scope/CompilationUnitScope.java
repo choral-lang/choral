@@ -178,11 +178,15 @@ public final class CompilationUnitScope extends BaseScope {
 				
 				List<HigherClassOrInterface> liftedResults = new ArrayList<>();
 
+				// types contained in 'specialTypes' enum are not created the same way other types are.
+				// this makes them difficult to lift. 
 				if(!specialTypes.contains(query)){
+					// java.lang should not cause ambiguity issues. 
+					// ambiguity issues should only arise from explicitly written import statements. 
 					Stream<String> javaPackages = results.isEmpty()
 						? Stream.concat(javaOnDemandImportStatements.stream(), Stream.of("java.lang"))
 						: javaOnDemandImportStatements.stream(); 
-					
+
 					liftedResults = javaPackages
 						.map(javaPackage -> lookupClassOrInterface(javaPackage + "." +  query))
 						.filter(Optional::isPresent)
