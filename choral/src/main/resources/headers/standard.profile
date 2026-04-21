@@ -1,6 +1,7 @@
 java/lang/Object.chh
 java/lang/Enum.chh
 java/lang/String.chh
+java/lang/CharSequence.chh
 java/lang/Exception.chh
 java/lang/Number.chh
 java/lang/Boolean.chh

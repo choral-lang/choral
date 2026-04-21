@@ -4,13 +4,15 @@ package java.lang;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 
-public final class String@A implements Serializable@A {
+public final class String@A implements Serializable@A, CharSequence@A {
 
     public String() { }
 
     public String(String@A original) { }
 
     public char@A charAt(int@A index) { }
+
+    public int@A length() { }
 
     public boolean@A equalsIgnoreCase(String@A anotherString) { }
 
@@ -43,6 +45,8 @@ public final class String@A implements Serializable@A {
     public String@A substring(int@A beginIndex) { }
 
     public String@A substring(int@A beginIndex, int@A endIndex) { }
+
+    public CharSequence@A subSequence(int@A start, int@A end) { }
 
     public String@A concat(String@A str) { }
 
