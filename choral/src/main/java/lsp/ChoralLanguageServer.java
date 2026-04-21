@@ -68,6 +68,7 @@ public class ChoralLanguageServer implements LanguageServer, LanguageClientAware
         System.err.println("Client connected in Language Server");
         this.client = client;
         textDocumentService.setClient(client);
+		workspaceService.setClient( client );
     }
 
     public LanguageClient getClient(){

@@ -271,6 +271,7 @@ public class TestChoral {
 	private static CompilationResults compile(CompilationRequest compilationRequest){
 		ArrayList< String > parameters = new ArrayList<>();
 		parameters.add( "epp" );
+		parameters.add( "--suppress-lifter-warnings" ); // Don't warn about unliftable types
 		parameters.add( "--verbosity=DEBUG" );
 		parameters.add( "--headers=" +
 				String.join( File.pathSeparator, compilationRequest.sourceFolder() ) +

@@ -42,6 +42,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -123,8 +124,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						.collect( Collectors.toList() );
 				TyperOptions typerOptions = new TyperOptions(
 						verbosityOptions.verbosity(),
-						verbosityOptions.suppressLiftWarnings(),
-						false
+						verbosityOptions.warningChannel()
 				);
 				Collection< CompilationUnit > annotatedUnits =
 						Typer.annotate( sourceUnits, headerUnits, typerOptions );
@@ -218,8 +218,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						new AtomicReference<>( sourceUnits );
 				TyperOptions typerOptions = new TyperOptions(
 						verbosityOptions.verbosity(),
-						verbosityOptions.suppressLiftWarnings(),
-						false
+						verbosityOptions.warningChannel()
 				);
 
 				// If the user asks, we can insert missing communications by analyzing the
@@ -330,8 +329,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 						.collect( Collectors.toList() );
 				TyperOptions typerOptions = new TyperOptions(
 						verbosityOptions.verbosity(),
-						verbosityOptions.suppressLiftWarnings(),
-						false
+						verbosityOptions.warningChannel()
 				);
 				Collection< CompilationUnit > annotatedUnits =
 						Typer.annotate( sourceUnits, headerUnits, typerOptions );
@@ -525,8 +523,12 @@ class VerbosityOptions {
 			description = "Suppress warnings when a Java type cannot be lifted automatically." )
 	private boolean suppressLiftWarnings = false;
 
-	public boolean suppressLiftWarnings() {
-		return suppressLiftWarnings;
+	public Consumer< String > warningChannel() {
+		if ( suppressLiftWarnings ) {
+			return s -> {};
+		} else {
+			return System.out::println;
+		}
 	}
 }
 

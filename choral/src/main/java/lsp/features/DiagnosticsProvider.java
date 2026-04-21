@@ -1,16 +1,17 @@
 package lsp.features;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import choral.compiler.TyperOptions;
 import choral.utils.VerbosityLevel;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.MessageParams;
+import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.services.LanguageClient;
 
 import choral.ast.CompilationUnit;
 import choral.compiler.HeaderLoader;
@@ -21,6 +22,12 @@ import choral.compiler.Typer;
 import choral.exceptions.AstPositionedException;
 
 public class DiagnosticsProvider {
+  private LanguageClient client;
+
+  public void setClient( LanguageClient client ) {
+    this.client = client;
+  }
+
     public List<Diagnostic> analyze(String uri, String content){
         List<Diagnostic> diagnostics = new ArrayList<>();
 
@@ -31,8 +38,9 @@ public class DiagnosticsProvider {
             
             List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
 
-            TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS, true, false );
-            Typer.annotate( Arrays.asList(compUnit), headerUnits, typerOptions );
+            TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS,
+                    this::publishLiftWarning );
+            Typer.annotate( List.of( compUnit ), headerUnits, typerOptions );
 
         } catch (ChoralCompoundException e) {
             for (ChoralException cause : e.getCauses()) {
@@ -54,6 +62,12 @@ public class DiagnosticsProvider {
         }
 
         return diagnostics;
+    }
+
+    private void publishLiftWarning( String message ) {
+        if( client != null ) {
+            client.logMessage( new MessageParams( MessageType.Warning, message ) );
+        }
     }
 
     private static Diagnostic errorDiagnostic( choral.ast.Position position, String message) {

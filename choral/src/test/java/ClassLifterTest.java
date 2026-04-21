@@ -17,7 +17,7 @@ public class ClassLifterTest {
 	public void helloWorldTest() throws IOException {
 		Universe universe = new Universe();
 		TaskQueue taskQueue = new TaskQueue();
-		TyperOptions opts = new TyperOptions( VerbosityLevel.WARNINGS, true, false );
+		TyperOptions opts = new TyperOptions( VerbosityLevel.WARNINGS, msg -> {} );
 
 		// Run the typer to initialize special types like java.lang.Object
 		Typer.annotate( List.of(), HeaderLoader.loadStandardProfile().toList(), universe, opts );

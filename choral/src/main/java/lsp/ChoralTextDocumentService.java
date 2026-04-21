@@ -52,6 +52,7 @@ public class ChoralTextDocumentService implements TextDocumentService {
     public void setClient(LanguageClient client){
         System.err.println("Client connected in Text Document Service");
         this.client = client;
+		diagnosticsProvider.setClient( client );
     }
 
     private void analyzeAndPublish(String uri, String content){
