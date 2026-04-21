@@ -1,9 +1,6 @@
 package choral.compiler.typer;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -51,6 +48,10 @@ class LiftException extends Exception {
 		return new LiftException( "inner class" );
 	}
 
+	static LiftException notFound( String query ) {
+		return new LiftException( query );
+	}
+
 	static LiftException exoticType( java.lang.reflect.Type type ) {
 		return new LiftException( type.getClass().getName() );
 	}
@@ -83,136 +84,82 @@ public class ClassLifter {
 	 * @param fullyQualifiedName The fully qualified name of type to be lifted.
 	 * @return A choral type representing the type, or nothing if classpath lookup failed.
 	 */
-	public Optional< HigherClassOrInterface > liftClassOrInterface( String fullyQualifiedName ){
-		var specialType = universe.specialTypeTag( fullyQualifiedName ).map( universe::specialType );
-		if( specialType.isPresent() ) {
-			return specialType;
-		}
-
-		var cachedType = universe.rootPackage().declaredType( fullyQualifiedName );
-		if( cachedType.isPresent() ) {
-			return cachedType;
-		}
-
+	public Optional< HigherClassOrInterface > lookup( String fullyQualifiedName ) {
 		try {
-			// System.out.println( "Loading class or interface: " + fullyQualifiedName );
-			java.lang.Class<?> clazz = java.lang.Class.forName( fullyQualifiedName );
-
-			// Skip inner classes
-			if( clazz.isMemberClass() ) {
-				System.err.println( "WARNING: Class lifter does not support inner classes, skipping: " + fullyQualifiedName );
-				return Optional.empty();
-			}
-
-			if( clazz.isEnum() ) {
-				return liftEnum( clazz );
-			} else if( clazz.isInterface() ) {
-				return liftInterface( clazz );
-			} else {
-				return liftClass( clazz );
-			}
-		} catch( ClassNotFoundException e ) {
-			// System.err.println( "WARNING: Could not find class: " + fullyQualifiedName );
+			return Optional.of( liftClassOrInterface( fullyQualifiedName ) );
+		} catch( LiftException e ) {
+			System.err.println( "WARNING: Could not find class: " + fullyQualifiedName );
 			return Optional.empty();
 		}
 	}
 
-	private Optional< HigherClassOrInterface > liftClass( java.lang.Class< ? > clazz ) {
-		String fullyQualifiedName = clazz.getCanonicalName();
-		java.lang.reflect.Field[] fields = clazz.getDeclaredFields();
-		
-		Package pkg = universe.rootPackage().declarePackage(clazz.getPackageName());
+	private HigherClassOrInterface liftClassOrInterface( String fullyQualifiedName )
+			throws LiftException {
 
+		var specialType = universe.specialTypeTag( fullyQualifiedName ).map( universe::specialType );
+		if( specialType.isPresent() ) {
+			return specialType.get();
+		}
+
+		var cachedType = universe.rootPackage().declaredType( fullyQualifiedName );
+		if( cachedType.isPresent() ) {
+			return cachedType.get();
+		}
+
+		java.lang.Class<?> clazz;
+		try {
+			// System.out.println( "Loading class or interface: " + fullyQualifiedName );
+			clazz = java.lang.Class.forName( fullyQualifiedName );
+		} catch( ClassNotFoundException e ) {
+			throw LiftException.notFound( fullyQualifiedName );
+		}
+
+		if( clazz.isMemberClass() ) {
+			throw LiftException.innerClass();
+		} else if( clazz.isEnum() ) {
+			return liftEnum( clazz );
+		} else if( clazz.isInterface() ) {
+			return liftInterface( clazz );
+		} else {
+			return liftClass( clazz );
+		}
+	}
+
+	private HigherClassOrInterface liftClass( java.lang.Class< ? > clazz )
+		throws LiftException {
+
+		Package pkg = universe.rootPackage().declarePackage(clazz.getPackageName());
 		EnumSet<choral.types.Modifier> modifiers = parseModifiers(clazz.getModifiers());
 
 		HigherClass higherClass = new HigherClass(
-			pkg, 
-			modifiers, 
-			clazz.getSimpleName(), 
+			pkg,
+			modifiers,
+			clazz.getSimpleName(),
 			List.of( new World(universe, WORLD_IDENTIFIER) ),
 			liftTypeParameters( clazz.getTypeParameters() ));
-		List<? extends World> worlds = higherClass.worldParameters();
 
 		ClassOrInterfaceInstanceScope scope = new CompilationUnitScope( pkg, List.of(), this )
 				.getScope( higherClass ).getInstanceScope();
 
-		// recursively visit super class
-		java.lang.reflect.Type genericSuperClass = clazz.getGenericSuperclass();
-		if(genericSuperClass != null){
-			GroundClass liftedSuperClass;
-			try {
-				liftedSuperClass = (GroundClass)liftSuperType(genericSuperClass, scope, worlds);
-			} catch (LiftException e) {
-				warn(fullyQualifiedName, e);
-				return Optional.empty();
-			}
-			higherClass.innerType().setExtendedClass(liftedSuperClass);
-		}
-
+		addSuperClass( clazz, higherClass, scope ); // Throws on failure
 		addSuperInterfaces(clazz, higherClass, scope);
-
 		higherClass.innerType().finaliseInheritance();
 
-		// add bounds to type parameters
-		var choralParams = higherClass.typeParameters();
-		var clazzParams = clazz.getTypeParameters();
-		for(int i = 0; i < clazzParams.length; i++ ){
-			try {
-				addBounds(choralParams.get(i), clazzParams[i].getBounds(), scope);
-			} catch (LiftException e) {
-				// If we can't lift the type parameters, give up.
-				warn(clazz.getCanonicalName(), e);
-				return Optional.empty();
-			}
-		}
-
-		// add fields
-		for(java.lang.reflect.Field field : fields){
-			// private fields will never be accessed
-			if(Modifier.isPrivate(field.getModifiers())) continue;
-			
-			EnumSet<choral.types.Modifier> fieldModifiers = parseModifiers( field.getModifiers());
-			GroundDataTypeOrVoid fieldTypeOrVoid;
-			try{
-				fieldTypeOrVoid = liftType(field.getGenericType(), scope);
-			} catch(LiftException e){
-				warn(field.getName(), e);
-				continue;
-			}
-			if(fieldTypeOrVoid instanceof GroundDataType fieldType){
-				Member.Field choralField = new Member.Field(
-					higherClass.innerType(), 
-					field.getName(),
-					fieldModifiers,
-					fieldType);
-				higherClass.innerType().addField(choralField);
-			} else{
-				throw new RuntimeException("field '" + field.getName() + "' was found to be of type void: ");
-			}
-		} 
-
+		addTypeBounds( clazz, higherClass, scope ); // Throws on failure
+		addFields( clazz.getDeclaredFields(), scope, higherClass );
 		addMethods(clazz, higherClass, scope);
+		addConstructors( clazz, higherClass, scope );
 
-		// add constructors to higherClass
-		for(Constructor<?> constructor : clazz.getConstructors()){
-			if(Modifier.isPrivate(constructor.getModifiers())) continue;
-			Member.HigherConstructor higherConstructor;
-			try{
-				higherConstructor = liftConstructor(constructor, higherClass.innerType(), scope);
-			} catch(LiftException e){
-				warn(constructor.getName(), e);
-				continue;
-			}
-			higherClass.innerType().addConstructor(higherConstructor);
-		}
-
-		enqueueFinaliseInterfaceTask(higherClass);
-		return Optional.of( higherClass );
+		taskQueue.enqueue( new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherClass, () -> {
+			((HigherClassOrInterface) higherClass).innerType().finaliseInterface();
+		}));
+		return higherClass;
 	}
 
-	private Optional< HigherClassOrInterface > liftInterface( java.lang.Class< ? > clazz ) {
-		Package pkg = universe.rootPackage().declarePackage(clazz.getPackageName());
+	private HigherClassOrInterface liftInterface( java.lang.Class< ? > clazz )
+		throws LiftException {
 
+		Package pkg = universe.rootPackage().declarePackage(clazz.getPackageName());
 		EnumSet<choral.types.Modifier> modifiers = parseModifiers(clazz.getModifiers());
 
 		HigherInterface higherInterface = new HigherInterface(
@@ -226,35 +173,21 @@ public class ClassLifter {
 				.getScope( higherInterface ).getInstanceScope();
 
 		addSuperInterfaces(clazz, higherInterface, scope);
-
 		higherInterface.innerType().finaliseInheritance();
 
-		// add bounds to type parameters
-		var choralParams = higherInterface.typeParameters();
-		var clazzParams = clazz.getTypeParameters();
-		for(int i = 0; i < clazzParams.length; i++ ){
-			try {
-				addBounds(choralParams.get(i), clazzParams[i].getBounds(), scope);
-			} catch (LiftException e) {
-				// If we can't lift the type parameters, give up.
-				warn(clazz.getCanonicalName(), e);
-				return Optional.empty();
-			}
-		}
-
+		addTypeBounds( clazz, higherInterface, scope );
 		addMethods(clazz, higherInterface, scope);
 
-		enqueueFinaliseInterfaceTask(higherInterface);
-		return Optional.of( higherInterface );
+		taskQueue.enqueue( new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherInterface, () -> {
+			((HigherClassOrInterface) higherInterface).innerType().finaliseInterface();
+		}));
+		return higherInterface;
 	}
 
-	private Optional< HigherClassOrInterface > liftEnum( java.lang.Class<?> clazz ) {
-		java.lang.reflect.Field[] allFields = clazz.getFields();
+	private HigherClassOrInterface liftEnum( java.lang.Class<?> clazz ) {
 
 		Package pkg = universe.rootPackage().declarePackage(clazz.getPackageName());
-
 		EnumSet<choral.types.Modifier> modifiers = parseModifiers(clazz.getModifiers());
-		modifiers.remove(choral.types.Modifier.ABSTRACT);
 
 		HigherEnum higherEnum = new HigherEnum(
 			pkg, 
@@ -266,21 +199,30 @@ public class ClassLifter {
 				.getScope( higherEnum ).getInstanceScope();
 
 		higherEnum.innerType().setExtendedClass();
-
 		addSuperInterfaces(clazz, higherEnum, scope);
-
 		higherEnum.innerType().finaliseInheritance();
 
-		for( java.lang.reflect.Field field : allFields){
+		for( java.lang.reflect.Field field : clazz.getFields() ){
 			if( field.isEnumConstant()){
 				higherEnum.innerType().addCase(field.getName());
 			}
 		}
-
 		addMethods(clazz, higherEnum, scope);
 
-		enqueueFinaliseInterfaceTask(higherEnum);
-		return Optional.of( higherEnum );
+		taskQueue.enqueue( new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherEnum, () -> {
+			((HigherClassOrInterface) higherEnum).innerType().finaliseInterface();
+		}));
+		return higherEnum;
+	}
+
+	private void addSuperClass(
+			Class< ? > clazz, HigherClass higherClass, ClassOrInterfaceInstanceScope scope
+	) throws LiftException {
+		Type genericSuperClass = clazz.getGenericSuperclass();
+		if(genericSuperClass != null){
+			higherClass.innerType().setExtendedClass(
+					(GroundClass)liftType(genericSuperClass, scope ) );
+		}
 	}
 
 	/**
@@ -293,11 +235,10 @@ public class ClassLifter {
 			ClassOrInterfaceInstanceScope scope
 	) {
 		String fullyQualifiedName = clazz.getCanonicalName();
-		List<? extends World> worlds = higherType.worldParameters();
 		for(java.lang.reflect.Type genericSuperInterface : clazz.getGenericInterfaces()){
 			GroundInterface liftedSuperInterface;
 			try {
-				liftedSuperInterface = (GroundInterface)liftSuperType(genericSuperInterface, scope, worlds);
+				liftedSuperInterface = (GroundInterface)liftType(genericSuperInterface, scope);
 			} catch (LiftException e) {
 				warn(fullyQualifiedName, e);
 				continue;
@@ -306,11 +247,17 @@ public class ClassLifter {
 		}
 	}
 
-	/**
-	 * Lifts each of the given Java class's declared methods and adds them to the inner type
-	 * of the given Choral type. Private and bridge methods are skipped, as are methods
-	 * whose signatures fail to lift.
-	 */
+	private void addTypeBounds(
+			Class< ? > clazz, HigherClassOrInterface higherType, ClassOrInterfaceInstanceScope scope
+	) throws LiftException {
+		var choralParams = higherType.typeParameters();
+		var clazzParams = clazz.getTypeParameters();
+		for(int i = 0; i < clazzParams.length; i++ ){
+			// If we can't lift the type parameters, pass the exception up to the caller.
+			addBounds(choralParams.get(i), clazzParams[i].getBounds(), scope );
+		}
+	}
+
 	private void addMethods(
 			java.lang.Class<?> clazz,
 			HigherClassOrInterface higherType,
@@ -330,50 +277,45 @@ public class ClassLifter {
 		}
 	}
 
-	/**
-	 * Enqueues a task to finalise the interface of the given Choral type's inner type
-	 * during the {@link Phase#MEMBER_DECLARATIONS} phase.
-	 */
-	private void enqueueFinaliseInterfaceTask(HigherClassOrInterface higherType) {
-		TaskQueue.MemberTask task = new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherType, () -> {
-			higherType.innerType().finaliseInterface();
-		});
-		taskQueue.enqueue(task);
+
+	private void addConstructors(
+			Class< ? > clazz, HigherClass higherClass, ClassOrInterfaceInstanceScope scope
+	) {
+		for(Constructor<?> constructor : clazz.getConstructors()){
+			if(Modifier.isPrivate(constructor.getModifiers())) continue;
+			Member.HigherConstructor higherConstructor;
+			try{
+				higherConstructor = liftConstructor(constructor, higherClass.innerType(), scope );
+			} catch(LiftException e){
+				warn(constructor.getName(), e);
+				continue;
+			}
+			higherClass.innerType().addConstructor(higherConstructor);
+		}
 	}
 
-	private GroundReferenceType liftSuperType(java.lang.reflect.Type superType, 
-			ClassOrInterfaceInstanceScope scope, List<? extends World> worlds) throws LiftException{
-		String rawName;
-		List<HigherReferenceType> typeArgs = new ArrayList<>();
+	private void addFields(
+			Field[] fields, ClassOrInterfaceInstanceScope scope, HigherClassOrInterface higherClass
+	) {
+		for( Field field : fields ){
+			// private fields will never be accessed
+			if(Modifier.isPrivate(field.getModifiers())) continue;
 
-		if(superType instanceof ParameterizedType parameterizedSuper){
-			java.lang.Class<?> rawSuper = (java.lang.Class<?>)parameterizedSuper.getRawType();
-			if(rawSuper.isMemberClass()) throw LiftException.innerClass();
-			rawName = rawSuper.getName();
-
-			for (java.lang.reflect.Type typeArgument : parameterizedSuper.getActualTypeArguments()){
-				if(typeArgument instanceof java.lang.reflect.WildcardType) throw LiftException.wildcard();
-				GroundDataTypeOrVoid liftedTypeArgument = liftType(typeArgument, scope);
-				if(liftedTypeArgument instanceof  GroundReferenceType validTypeArgument){
-					typeArgs.add(validTypeArgument.typeConstructor());
-				} else {
-					throw new RuntimeException("Type argument resolved to void in super-type: " + liftedTypeArgument);
-				}
+			EnumSet<choral.types.Modifier> fieldModifiers = parseModifiers( field.getModifiers());
+			GroundDataType fieldType;
+			try{
+				fieldType = (GroundDataType)liftType(field.getGenericType(), scope );
+			} catch(LiftException e){
+				warn(field.getName(), e);
+				continue;
 			}
-		} else if (superType instanceof java.lang.Class<?> rawSuper){
-			if(rawSuper.isMemberClass()) throw LiftException.innerClass();
-			rawName = rawSuper.getName();
-		} else {
-			throw LiftException.exoticType(superType);
+			Member.Field choralField = new Member.Field(
+					higherClass.innerType(),
+					field.getName(),
+					fieldModifiers,
+					fieldType);
+			higherClass.innerType().addField(choralField);
 		}
-
-		Optional<HigherClassOrInterface> higherType = liftClassOrInterface(rawName);
-		if(higherType.isEmpty()){
-			throw new LiftException("Could not lift parent type: " + rawName);
-		}
-
-		return typeArgs.isEmpty() ? (GroundReferenceType) higherType.get().applyTo(worlds)
-			: (GroundReferenceType) higherType.get().applyTo(worlds, typeArgs);
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -517,12 +459,7 @@ public class ClassLifter {
 				return primitiveType.applyTo(worlds);
 			} else {
 				String typeName = clazz.getCanonicalName();
-				Optional<HigherClassOrInterface> higherType = liftClassOrInterface(typeName);
-				if(higherType.isEmpty()){
-					throw new RuntimeException("Missing type: " + "'" + typeName +
-						"' even after attempting to eagerly lift the type");
-				}
-				return higherType.get().applyTo(worlds);
+				return liftClassOrInterface(typeName).applyTo(worlds);
 			}
 		}
 		// Handle ParameterizedType (generic types like List<String>)
@@ -555,12 +492,7 @@ public class ClassLifter {
 			}
 
 			String typeName = rawClass.getCanonicalName();
-			Optional<HigherClassOrInterface> higherType = liftClassOrInterface(typeName);
-			if(higherType.isEmpty()){
-				throw new RuntimeException("Missing type: " + "'" + typeName +
-						"' even after attempting to eagerly lift the type");
-			}
-			return higherType.get().applyTo(worlds, liftedTypeArguments);
+			return liftClassOrInterface(typeName).applyTo(worlds, liftedTypeArguments);
 		}
 		// Handle TypeVariable (type parameters like T, E, K, V)
 		else if( type instanceof java.lang.reflect.TypeVariable< ? > typeVar ) {			
@@ -603,7 +535,7 @@ public class ClassLifter {
 
 
 	private static void warn( String id, LiftException e ) {
-		// System.out.println( "WARNING: Failed to lift " + id + " because " + e.getMessage() +
-        //         " types are not supported" );
+		System.err.println( "WARNING: Failed to lift " + id + " because " + e.getMessage() +
+                " types are not supported" );
 	}
 }

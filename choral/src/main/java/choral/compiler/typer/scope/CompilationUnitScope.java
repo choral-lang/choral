@@ -1,13 +1,6 @@
 package choral.compiler.typer.scope;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -15,12 +8,8 @@ import choral.ast.ImportDeclaration;
 import choral.compiler.typer.ClassLifter;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.StaticVerificationException;
-import choral.types.HigherClassOrInterface;
-import choral.types.HigherDataType;
-import choral.types.HigherReferenceType;
-import choral.types.HigherTypeParameter;
+import choral.types.*;
 import choral.types.Package;
-import choral.types.World;
 import choral.utils.Formatting;
 
 /**
@@ -31,17 +20,14 @@ import choral.utils.Formatting;
 public final class CompilationUnitScope extends BaseScope {
 
 	private final static String[] defaultOnDemandImports = new String[] { "java.lang", "choral.lang" };
-	private final List< HigherClassOrInterface > singleImports;
+	private final Set< String > onDemandImports;
+
 	private final List< ImportDeclaration > singleImportStatements;
-	private final List< Package > onDemandImports;
-	private final List< ImportDeclaration > onDemandImportStatements;
-	private final Set<String> javaOnDemandImportStatements;
-	private final List<String> specialTypes = new ArrayList<>(Arrays.asList("Object", "Enum", "String", "Exception",
-		"Number", "Boolean", "Byte", "Character", "Short", "Integer", "Long", "Float", "Double"));
+	private final List< HigherClassOrInterface > singleImports;
+	private boolean pendingSingleImports = true;
+
 	private final choral.types.Package declarationPackage;
 	private final Map< HigherClassOrInterface, ClassOrInterfaceStaticScope > templateScopes = new HashMap<>();
-	private boolean pendingSingleImports = true;
-	private boolean pendingOnDemandImports = true;
 	private final ClassLifter classLifter;
 
 	public CompilationUnitScope(
@@ -52,22 +38,17 @@ public final class CompilationUnitScope extends BaseScope {
 		this.declarationPackage = declarationPackage;
 		this.classLifter = classLifter;
 		singleImportStatements = new ArrayList<>( declaredImports.size() );
-		onDemandImportStatements = new ArrayList<>( declaredImports.size() );
+		onDemandImports = new HashSet<>( declaredImports.size() );
 		for( ImportDeclaration ip : declaredImports ) {
 			if( ip.isOnDemand() ) {
-				onDemandImportStatements.add( ip );
+				// 'ip.name().length() - 2' is to cut off the '.*' segment
+				onDemandImports.add(ip.name().substring(0, ip.name().length() - 2));
 			} else {
 				singleImportStatements.add( ip );
 			}
 		}
+		onDemandImports.addAll( Arrays.asList( defaultOnDemandImports ) );
 		singleImports = new ArrayList<>( singleImportStatements.size() );
-		onDemandImports = new ArrayList<>(
-				onDemandImportStatements.size() + defaultOnDemandImports.length );
-		javaOnDemandImportStatements = new HashSet<>(onDemandImportStatements.size() + 1);
-		choral.types.Package root = declarationPackage.universe().rootPackage();
-		for( String defaultOnDemandImport : defaultOnDemandImports ) {
-			onDemandImports.add( root.declarePackage( defaultOnDemandImport ) );
-		}
 	}
 
 	private void resolveSingleImports() {
@@ -89,42 +70,14 @@ public final class CompilationUnitScope extends BaseScope {
 	}
 
 	private void resolveOnDemandImports() {
-		if( pendingOnDemandImports ) {
-			for( ImportDeclaration ip : onDemandImportStatements ) {
-				choral.types.Package pkg = declarationPackage.universe().rootPackage();
-				String[] path = ip.name().split( "\\." );
-				int i = 0;
-				boolean javaPackage = false;
-				while( i < path.length - 1 /* last one is always "*" */ ) {
-					// declaredPackage() returns full path up till passed package / class.
-					// so passing "io" from "java.io", will return "java.io"
-					Optional< choral.types.Package > x = pkg.declaredPackage( path[ i ] );
-					if( x.isPresent() ) { 
-						pkg = x.get();
-					} else { // We assume package to be java package, save for later
-						javaPackage = true;
-						break;
-					}
-					i += 1;
-				}
-				if(!javaPackage){
-					onDemandImports.add( pkg );
-				} else {
-					// 'ip.name().length() - 2' is to cut off the '.*' segment 
-					javaOnDemandImportStatements.add(ip.name().substring(0, ip.name().length() - 2));
-				}
-			}
-			pendingOnDemandImports = false;
-		}
+		/* NO-OP */
 	}
 
 	@Override
 	public Optional< ? extends HigherDataType > lookupDataType( String query ) {
-		Optional< ? extends HigherDataType > result = lookupClassOrInterface( query );
-		if( result.isEmpty() ) {
-			result = declarationPackage.universe().primitiveDataType( query );
-		}
-		return result;
+		var result = declarationPackage.universe().primitiveDataType( query );
+		if( result.isPresent() ) return result;
+		return lookupClassOrInterface( query );
 	}
 
 	@Override
@@ -150,8 +103,7 @@ public final class CompilationUnitScope extends BaseScope {
 				result = p.declaredType( path[ i ] );
 			} 
 			if(result.isEmpty()){
-				// System.out.println("Classlifter query: " + query);
-				result = classLifter.liftClassOrInterface(query);
+				result = classLifter.lookup(query);
 			}
 		} else {
 			// search current package
@@ -170,33 +122,13 @@ public final class CompilationUnitScope extends BaseScope {
 			if( result.isEmpty() ) {
 				resolveOnDemandImports();
 				List< HigherClassOrInterface > results = onDemandImports.stream()
-						.map( x -> x.declaredType( query ) )
+						.map( x -> lookupClassOrInterface( x + "." + query ) )
 						.filter(Optional::isPresent )
 						.map(Optional::get )
 						.filter( this::hasPublicAccess )
 						.collect( Collectors.toList() );
-				
-				List<HigherClassOrInterface> liftedResults = new ArrayList<>();
 
-				// types contained in 'specialTypes' enum are not created the same way other types are.
-				// this makes them difficult to lift. 
-				if(!specialTypes.contains(query)){
-					// java.lang should not cause ambiguity issues. 
-					// ambiguity issues should only arise from explicitly written import statements. 
-					Stream<String> javaPackages = results.isEmpty()
-						? Stream.concat(javaOnDemandImportStatements.stream(), Stream.of("java.lang"))
-						: javaOnDemandImportStatements.stream(); 
-
-					liftedResults = javaPackages
-						.map(javaPackage -> lookupClassOrInterface(javaPackage + "." +  query))
-						.filter(Optional::isPresent)
-						.map(Optional::get)
-						.filter(this::hasPublicAccess)
-						.collect(Collectors.toList());
-				}
-
-				results.addAll(liftedResults);
-				if( results.size() == 0 ) {
+				if( results.isEmpty() ) {
 					result = Optional.empty();
 				} else if( results.size() == 1 ) {
 					result = Optional.of( results.get( 0 ) );
