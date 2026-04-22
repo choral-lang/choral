@@ -26,6 +26,7 @@ import choral.ast.Position;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.*;
 import choral.compiler.Compiler;
+import choral.compiler.merge.MergeException;
 import choral.compiler.moveMeant.MoveMeant;
 import choral.utils.Streams.WrappedException;
 import choral.exceptions.AstPositionedException;
@@ -351,16 +352,32 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 	private static void printNiceErrorMessage(
 			Throwable e, VerbosityLevel verbosity
 	) {
-		if( e instanceof AstPositionedException ) {
-			AstPositionedException pe = (AstPositionedException) e;
-			if (pe.position() == null) {
-				// TODO: position should be defined!
-				System.err.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
-				if( verbosity == VerbosityLevel.DEBUG ) {
-					e.printStackTrace();
-				}
-			} else {
-				printNiceErrorMessage( (AstPositionedException) e, verbosity );
+		if( e instanceof AstPositionedException pe ) {
+			Position p = pe.position();
+			System.err.printf(
+					"%1$s:%2$d:%3$d: error: %4$s.\n\n%5$s\n",
+					relativizePath( p.sourceFile() ),
+					p.line(),
+					p.column(),
+					capitalizeFirst( pe.getInnerMessage() ),
+					formattedSnippet( pe.position() )
+			);
+			if( verbosity == VerbosityLevel.DEBUG ) {
+				e.printStackTrace();
+			}
+		} else if( e instanceof MergeException me ) {
+			Position p1 = me.n1().position(), p2 = me.n2().position();
+			String sourceFile = p1.sourceFile();
+			System.err.printf(
+					"%1$s: error: %2$s.\n\n%3$s%4$s\n%5$s\n",
+					relativizePath( sourceFile ),
+					capitalizeFirst( me.getMessage() ),
+					formattedSnippet( p1 ),
+					"   ····\n   ····",
+					formattedSnippet( p2 )
+			);
+			if( verbosity == VerbosityLevel.DEBUG ) {
+				e.printStackTrace();
 			}
 		} else if( e instanceof ChoralCompoundException ) {
 			for( ChoralException c : ( (ChoralCompoundException) e ).getCauses() ) {
@@ -375,21 +392,27 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 			}
 		} else {
 			System.err.println( "Internal compiler error." );
+			System.err.println( e instanceof MergeException );
 			e.printStackTrace();
 			System.err.println( "Please submit a bug report at " +
 					"https://github.com/choral-lang/choral/issues" );
 		}
 	}
 
-	private static void printNiceErrorMessage(
-			AstPositionedException e, VerbosityLevel verbosity
-	) {
+	/**
+	 * Produces a pretty-printed code snippet of the error line and its surrounding context, with a
+	 * marker pointing to the error column.
+	 * @param p the location of the error
+	 */
+	private static String formattedSnippet( Position p ) {
+		if ( p == null || p.sourceFile() == null ) {
+			return "";
+		}
 		// -- parameters ---------------
 		int tabSize = 2;       // size of soft tabs
 		int contextLines = 1;  // number lines to display before and after the error line
 		// -----------------------------
 		StringBuilder formattedSnippet = new StringBuilder();
-		Position p = e.position();
 		try( Stream< String > allLines = Files.lines( Paths.get( p.sourceFile() ) ) ) {
 			int lineDigits = (int) Math.ceil( Math.log10( p.line() ) ) + 1;
 			String format = "  %" + lineDigits + "d | %s\n";
@@ -411,25 +434,14 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 							length += tabSize - 1;
 						}
 					}
-					formattedSnippet.append( " ".repeat( lineDigits + 2 ) ).append( " | " ).append(
-							"-".repeat(
-									length ) ).append( "^\n" );
+					formattedSnippet.append( " ".repeat( lineDigits + 2 ) ).append( " | " )
+							.append( "-".repeat( length ) ).append( "^\n" );
 				}
 			}
 		} catch( IOException ex ) {
 			// give up printing the code snippet
 		}
-		System.err.printf(
-				"%1$s:%2$d:%3$d: error: %4$s.\n\n%5$s\n",
-				relativizePath( p.sourceFile() ),
-				p.line(),
-				p.column(),
-				capitalizeFirst( e.getInnerMessage() ),
-				formattedSnippet
-		);
-		if( verbosity == VerbosityLevel.DEBUG ) {
-			e.printStackTrace();
-		}
+		return formattedSnippet.toString();
 	}
 
 	public static String relativizePath( String path ) {

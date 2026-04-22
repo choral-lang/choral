@@ -85,8 +85,8 @@ public class SwitchStatement extends Statement {
 				position = this.position().line() + ":" + this.position().column() + ":";
 			}
 			throw new ChoralException(
-					position + "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-							this ) + "\n with " + n.getClass().getSimpleName() );
+					"Could not merge \n" + new PrettyPrinterVisitor().visit( this ) +
+							"\nwith " + n.getClass().getSimpleName() );
 		}
 	}
 
