@@ -1,7 +1,6 @@
 java/lang/Object.chh
 java/lang/Enum.chh
 java/lang/String.chh
-java/lang/CharSequence.chh
 java/lang/Exception.chh
 java/lang/Number.chh
 java/lang/Boolean.chh
@@ -14,9 +13,6 @@ java/lang/Float.chh
 java/lang/Double.chh
 java/io/PrintStream.chh
 java/io/Serializable.chh
-java/lang/Comparable.chh
-java/lang/Throwable.chh
-java/util/Optional.chh
 java/nio/charset/Charset.chh
 choral/channels/BiChannel.chh
 choral/channels/BiDataChannel.chh
