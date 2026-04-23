@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.DistributedAuthentication.utils;
+package MoveMeant.DistAuth.utils;
 
 import java.util.Optional;
 

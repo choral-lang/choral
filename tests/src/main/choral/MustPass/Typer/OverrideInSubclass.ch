@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.OverrideInSubclass;
+package Typer.OverrideInSubclass;
 
 // (JLS 8.4.8.1) The method "eat" inherited from Animal overrides
 // the abstract method "CanEat.eat", so OverrideInSubclass compiles

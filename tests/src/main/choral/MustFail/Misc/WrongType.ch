@@ -1,4 +1,4 @@
-package choral.examples.HelloRoles;
+package Misc.WrongType;
 
 class WrongType@( A ) {
     public void sayHello() {

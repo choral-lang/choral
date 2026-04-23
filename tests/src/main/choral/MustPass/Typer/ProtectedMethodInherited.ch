@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.ProtectedMethodInherited;
+package Typer.ProtectedMethodInherited;
 
 // A package-private class extends Base, which has a protected method m.
 // Protected methods are inherited, so calling m() in the child is allowed.

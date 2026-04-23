@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.StaticOverridesStaticInferface;
+package Typer.StaticOverridesStaticInferface;
 
 // JLS 9.4.1.1: Static interface methods are not inherited by implementing
 // classes or sub-interfaces. Therefore, a class may declare a static method

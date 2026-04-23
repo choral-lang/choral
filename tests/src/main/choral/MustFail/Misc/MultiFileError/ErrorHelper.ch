@@ -1,4 +1,4 @@
-package choral.MustFail.MultiFileErrorUtil;
+package Misc.MultiFileError;
 
 public class ErrorHelper@B{
     public static int@B Helper(){

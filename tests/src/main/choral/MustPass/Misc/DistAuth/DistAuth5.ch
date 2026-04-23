@@ -1,4 +1,4 @@
-package choral.MustPass.DistAuth;
+package Misc.DistAuth;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.DefaultOverridesDefault;
+package Typer.DefaultOverridesDefault;
 
 interface I@( A ) {
     default void greet() {}

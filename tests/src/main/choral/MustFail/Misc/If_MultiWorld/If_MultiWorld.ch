@@ -1,4 +1,4 @@
-package choral.mustfail.if_multiworld;
+package Misc.If_MultiWorld;
 
 import choral.channels.SymChannel;
 

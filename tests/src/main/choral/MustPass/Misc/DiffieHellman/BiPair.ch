@@ -1,4 +1,4 @@
-package choral.MustPass.DiffieHellman;
+package Misc.DiffieHellman;
 
 public class BiPair@( A, B )< L@X, R@Y > {
 	private L@A left;

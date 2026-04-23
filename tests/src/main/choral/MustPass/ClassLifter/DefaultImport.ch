@@ -1,4 +1,4 @@
-package choral.MustPass.ClassLifter.DefaultImport;
+package ClassLifter.DefaultImport;
 
 class DefaultImport@( A ) {
 	public void test(){

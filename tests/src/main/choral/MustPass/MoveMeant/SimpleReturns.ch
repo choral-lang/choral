@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.SimpleReturns;
+package MoveMeant.SimpleReturns;
 
 import choral.channels.SymChannel;
 

@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.DefaultOverriddenByMoreSpecific;
+package Typer.DefaultOverriddenByMoreSpecific;
 
 // JLS 8.4.8.4: When the same default method is inherited via multiple paths, and
 // a sub-interface overrides it with a more specific default, the most specific

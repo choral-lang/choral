@@ -1,4 +1,4 @@
-package choral.MustPass.MirrorChannel;
+package Misc.MirrorChannel;
 
 // Known bug: https://github.com/choral-lang/choral/issues/27
 

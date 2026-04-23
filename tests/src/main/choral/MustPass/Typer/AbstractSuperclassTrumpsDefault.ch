@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.AbstractSuperclassTrumpsDefault;
+package Typer.AbstractSuperclassTrumpsDefault;
 
 // JLS 8.4.8.4: "It is a compile-time error if a class C inherits a default method
 // whose signature is override-equivalent with another method inherited by C, unless

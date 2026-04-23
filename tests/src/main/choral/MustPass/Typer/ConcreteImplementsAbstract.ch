@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.ConcreteImplementsAbstract;
+package Typer.ConcreteImplementsAbstract;
 
 // A concrete class implements all inherited abstract methods.
 abstract class Base@( A ) {

@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.PingPong;
+package MoveMeant.PingPong;
 
 import choral.channels.DiSelectChannel;
 

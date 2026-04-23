@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.ConcreteInheritsImplementation;
+package Typer.ConcreteInheritsImplementation;
 
 // JLS 8.1.5 / 8.4.3.1: A non-abstract class must implement all abstract methods
 // from its superinterfaces. Here, the concrete superclass provides the implementation

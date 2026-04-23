@@ -1,4 +1,4 @@
-package choral.MustPass.BuyerSellerShipper;
+package Misc.BuyerSellerShipper;
 
 import choral.runtime.Serializers.KryoSerializable;
 

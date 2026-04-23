@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.InheritedDefaultDefaultConflict;
+package Typer.InheritedDefaultDefaultConflict;
 
 // (JLS 8.4.8.4 Rule B) A class C inherits two override-equivalent default methods.
 // This is a compile-time error since there is no abstract method from a superclass

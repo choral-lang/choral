@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.MultiInterfaceInheritance;
+package Typer.MultiInterfaceInheritance;
 
 // A class implementing multiple interfaces with non-overlapping abstract methods.
 interface Fooable@( A ) {

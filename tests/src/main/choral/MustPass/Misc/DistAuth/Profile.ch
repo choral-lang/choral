@@ -1,4 +1,4 @@
-package choral.MustPass.DistAuth;
+package Misc.DistAuth;
 
 public class Profile@A {
 

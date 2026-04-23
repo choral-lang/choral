@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.InheritedAbstractsIncompatibleReturn;
+package Typer.InheritedAbstractsIncompatibleReturn;
 
 // JLS 8.4.8.4: When a class inherits multiple override-equivalent abstract methods,
 // "one of the inherited methods must be return-type-substitutable for every other

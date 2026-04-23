@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.ErasureClashInherited;
+package Typer.ErasureClashInherited;
 
 // (JLS 8.4.8.3) Cross-class erasure clash: ErasureClashInherited declares a generic method
 // whose erasure matches the inherited process(String) from Base, but the generic method's

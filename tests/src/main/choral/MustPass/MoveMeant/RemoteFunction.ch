@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.RemoteFunction;
+package MoveMeant.RemoteFunction;
 
 import choral.channels.BiDataChannel;
 import java.util.function.Function;

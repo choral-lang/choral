@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.OverrideWithWeakerAccessInherited;
+package Typer.OverrideWithWeakerAccessInherited;
 
 // A class inherits a public method from an interface and tries to override it with package-private.
 interface Iface@( A ) {

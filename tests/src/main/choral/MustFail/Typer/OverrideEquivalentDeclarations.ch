@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.OverrideEquivalentDeclarations;
+package Typer.OverrideEquivalentDeclarations;
 
 // JSL 8.4.2: Classes can't declare override-equivalent signatures
 class Point@A {

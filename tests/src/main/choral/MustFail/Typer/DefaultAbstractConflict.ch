@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.DefaultAbstractConflict;
+package Typer.DefaultAbstractConflict;
 
 // JLS 8.4.8.4: "It is a compile-time error if a class C inherits a default method
 // whose signature is override-equivalent with another method inherited by C, unless

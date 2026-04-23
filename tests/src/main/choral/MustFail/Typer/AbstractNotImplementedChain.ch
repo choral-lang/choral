@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.AbstractNotImplementedChain;
+package Typer.AbstractNotImplementedChain;
 
 // Abstract method inherited through a chain of classes, not implemented in the concrete leaf.
 abstract class GrandParent@( A ) {

@@ -1,4 +1,4 @@
-package choral.MustPass.ExtendsTest;
+package Misc.MyExtClass;
 
 interface MyInterface@( A, B ){}
 

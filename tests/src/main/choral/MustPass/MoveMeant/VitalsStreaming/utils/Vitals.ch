@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.VitalsStreaming.utils;
+package MoveMeant.VitalsStreaming.utils;
 
 public class Vitals@A {
 

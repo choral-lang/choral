@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.InterfaceInheritsMultipleAbstracts;
+package Typer.InterfaceInheritsMultipleAbstracts;
 
 // JLS 9.4.1.3: When all inherited override-equivalent methods are abstract, the
 // interface inherits all of them with no error. "If [...] none of the inherited

@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.SimpleMethodCalls;
+package MoveMeant.SimpleMethodCalls;
 
 import java.lang.Object;
 import java.lang.Integer;

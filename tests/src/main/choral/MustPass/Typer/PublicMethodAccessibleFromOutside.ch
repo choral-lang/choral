@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.PublicMethodAccessibleFromOutside;
+package Typer.PublicMethodAccessibleFromOutside;
 
 // A package-private class C extends Base, which has a public method m.
 // Public methods are inherited and accessible from outside C.

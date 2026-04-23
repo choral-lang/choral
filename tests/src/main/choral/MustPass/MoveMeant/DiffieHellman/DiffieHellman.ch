@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.DiffieHellman;
+package MoveMeant.DiffieHellman;
 
 import java.math.BigInteger;
 import choral.channels.SymDataChannel;

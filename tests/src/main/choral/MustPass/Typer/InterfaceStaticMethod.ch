@@ -1,4 +1,4 @@
-package choral.Typer.InterfaceStaticMethod;
+package Typer.InterfaceStaticMethod;
 
 public interface InterfaceStaticMethod@( A ) {
     static String@A greet( String@A name ) {

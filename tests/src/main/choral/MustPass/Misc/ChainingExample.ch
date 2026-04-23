@@ -1,4 +1,4 @@
-package choral.MustPass.ChainingOperator;
+package Misc.ChainingExample;
 
 import choral.channels.SymChannel;
 

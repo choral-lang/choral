@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.StaticHidesStatic;
+package Typer.StaticHidesStatic;
 
 // JLS 8.4.8.2: "If a class C declares or inherits a static method m, then m is
 // said to hide any method m' [...] in the supertypes of C" where m is a

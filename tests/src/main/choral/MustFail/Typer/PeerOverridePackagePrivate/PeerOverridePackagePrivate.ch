@@ -1,6 +1,6 @@
-package choral.MustFail.Typer.PeerOverridePackagePrivate;
+package Typer.PeerOverridePackagePrivate;
 
-import choral.MustFail.Typer.PeerOverridePackagePrivateBase.Base;
+import Typer.PeerOverridePackagePrivateBase.Base;
 
 public class PeerOverridePackagePrivate@( A ) //! Implementation is not abstract and does not override abstract method
   extends Base@( A )< String > {

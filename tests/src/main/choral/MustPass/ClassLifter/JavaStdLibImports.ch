@@ -1,4 +1,4 @@
-package choral.MustPass.ClassLifter.JavaStdLibImports;
+package ClassLifter.JavaStdLibImports;
 
 // Stress-test for ClassLifter: imports common classes, interfaces, and
 // enums from the Java standard library to verify that reflective lifting

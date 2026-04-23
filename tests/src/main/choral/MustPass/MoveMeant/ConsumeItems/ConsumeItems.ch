@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.ConsumeItems;
+package MoveMeant.ConsumeItems;
 
 import choral.channels.DiChannel;
 import java.util.function.Consumer;

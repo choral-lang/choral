@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.InterfaceInheritsConflictingDefaults;
+package Typer.InterfaceInheritsConflictingDefaults;
 
 // JLS 9.4.1.3: "It is a compile-time error if an interface I inherits a default
 // method whose signature is override-equivalent with another method inherited by I."

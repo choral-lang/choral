@@ -5,6 +5,7 @@
 *    - duplicated declarations of data types, world parameters, type parameters, fields, enum cases
 *    - undefined and duplicated world arguments in type applications
 ***********************************************************************************************************************/
+package Misc.LotsOfErrors;
 
 class LotsOfErrors@W<T@X extends A@W>{
     LotsOfErrors@W f;

@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.Increments;
+package MoveMeant.Increments;
 
 import choral.channels.SymChannel;
 

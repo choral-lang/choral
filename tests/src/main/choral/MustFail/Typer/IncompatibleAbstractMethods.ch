@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.IncompatibleAbstractMethods;
+package Typer.IncompatibleAbstractMethods;
 
 // JLS 8.1.1.1: An abstract class with two abstract methods that have the same
 // signature but incompatible return types is an error, because no concrete subclass

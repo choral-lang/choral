@@ -1,4 +1,4 @@
-package choral.MustPass.VariableDeclarations;
+package Misc.VariableDeclarations;
 
 class VariableDeclarations@(A, B) {
 	void method() {

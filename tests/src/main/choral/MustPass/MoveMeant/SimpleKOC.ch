@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.SimpleKOC;
+package MoveMeant.SimpleKOC;
 
 import choral.channels.SymChannel;
 

@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.InterfaceDefaultMethod;
+package Typer.InterfaceDefaultMethod;
 
 public interface InterfaceDefaultMethod@(A){
     default void defaultMehod(){

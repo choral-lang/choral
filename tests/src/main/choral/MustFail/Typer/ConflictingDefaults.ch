@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.ConflictingDefaults;
+package Typer.ConflictingDefaults;
 
 // Two unrelated interfaces with identical default methods -- class must override.
 interface Left@( A ) {

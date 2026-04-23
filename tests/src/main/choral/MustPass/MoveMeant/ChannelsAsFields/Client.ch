@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.ChannelsAsFields;
+package MoveMeant.ChannelsAsFields;
 
 import java.lang.Object;
 import java.lang.Integer;

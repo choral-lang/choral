@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.Quicksort;
+package MoveMeant.Quicksort;
 
 import choral.channels.SymChannel;
 import java.util.List;

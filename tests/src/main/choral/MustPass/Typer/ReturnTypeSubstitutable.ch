@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.ReturnTypeSubstitutable;
+package Typer.ReturnTypeSubstitutable;
 
 class Parent@( A ) {
 }

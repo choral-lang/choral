@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.ChannelsAsArgs;
+package MoveMeant.ChannelsAsArgs;
 
 import choral.channels.SymChannel;
 import choral.channels.DiDataChannel;

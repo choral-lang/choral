@@ -1,4 +1,4 @@
-package choral.MustFail.MoveMeant.AmbiguousRecipient2;
+package MoveMeant.AmbiguousRecipient2;
 
 import choral.channels.SymChannel;
 

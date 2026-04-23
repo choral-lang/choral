@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.ConcreteInheritsConcreteFromSuperclass;
+package Typer.ConcreteInheritsConcreteFromSuperclass;
 
 // JLS 8.4.8: A class C inherits from its direct superclass all concrete methods m
 // (both static and instance) for which m is a member of C's direct superclass,

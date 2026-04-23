@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.ChannelsAsArgs;
+package MoveMeant.ChannelsAsArgs;
 
 import java.lang.Object;
 import java.lang.Integer;

@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.PeerOverriding;
+package Typer.PeerOverriding;
 
 // (JLS 8.4.8.1) Peer overriding: the concrete process(String) method in Base
 // overrides the abstract process(T=String) method after type substitution,

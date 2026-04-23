@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.StaticOverridesInstance;
+package Typer.StaticOverridesInstance;
 
 class Base@( A ) {
     public void foo() {}

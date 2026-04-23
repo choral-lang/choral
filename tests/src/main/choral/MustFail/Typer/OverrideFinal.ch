@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.OverrideFinal;
+package Typer.OverrideFinal;
 
 class Base@( A ) {
     public final void foo() {}

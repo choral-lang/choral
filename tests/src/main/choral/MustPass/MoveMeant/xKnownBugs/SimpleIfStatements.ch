@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.SimpleIfStatements;
+package MoveMeant.SimpleIfStatements;
 
 import choral.channels.SymChannel;
 

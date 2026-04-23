@@ -1,4 +1,4 @@
-package choral.MustPass.AutoBoxing;
+package Misc.AutoBoxing;
 
 // Known bug: https://github.com/choral-lang/choral/issues/28
 

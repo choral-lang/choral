@@ -1,13 +1,13 @@
-package choral.MustPass.DistAuth;
+package Misc.DistAuth;
 
-import choral.MustPass.DistAuth.Base64_Encoder;
-import choral.MustPass.DistAuth.ClientRegistry;
-import choral.MustPass.DistAuth.Credentials;
+import Misc.DistAuth.Base64_Encoder;
+import Misc.DistAuth.ClientRegistry;
+import Misc.DistAuth.Credentials;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import choral.runtime.TLSChannel.TLSChannel;
-import choral.MustPass.DistAuth.EnumBoolean;
+import Misc.DistAuth.EnumBoolean;
 
 public class DistAuth@( Client, Service, IP ){
 	private TLSChannel@( Client, IP )< Object > ch_Client_IP;

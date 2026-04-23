@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.WeakerAccess3;
+package Typer.WeakerAccess3;
 
 // Case 3: superMethod.isProtected() && declaredMethod.isPackagePrivate()
 // Super is protected, override is package-private (not private, and super is not public,

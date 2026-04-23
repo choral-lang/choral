@@ -1,6 +1,6 @@
-package choral.MustFail.MultiFileError;
+package Misc.MultiFileError;
 
-import choral.MustFail.MultiFileErrorUtil.ErrorHelper;
+import Misc.MultiFileError.ErrorHelper;
 
 class MultiFileError@(A,B){
     public void Run(){

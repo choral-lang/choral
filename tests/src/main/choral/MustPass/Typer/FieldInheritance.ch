@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.FieldInheritance;
+package Typer.FieldInheritance;
 
 // Fields from a superclass should be inherited by the subclass.
 class Base@( A ) {

@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.DiamondDefaultSameOrigin;
+package Typer.DiamondDefaultSameOrigin;
 
 // Diamond inheritance where the same default method is inherited via two paths.
 // This should be fine because both paths lead to the same origin.

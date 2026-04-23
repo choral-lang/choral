@@ -1,4 +1,4 @@
-package choral.MustPass.DistAuth;
+package Misc.DistAuth;
 
 public class AuthToken@A {
 	private String@A id;

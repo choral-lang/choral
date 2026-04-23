@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.AbstractInheritsAbstract;
+package Typer.AbstractInheritsAbstract;
 
 // An abstract class can inherit abstract methods without implementing them.
 abstract class Base@( A ) {

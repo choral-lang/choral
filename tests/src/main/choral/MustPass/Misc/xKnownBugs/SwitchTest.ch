@@ -1,4 +1,4 @@
-package choral.MustPass.SwitchTest;
+package Misc.SwitchTest;
 
 // Known bug: https://github.com/choral-lang/choral/issues/29
 

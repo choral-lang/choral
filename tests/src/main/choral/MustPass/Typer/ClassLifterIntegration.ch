@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.ClassLifterIntegration;
+package Typer.ClassLifterIntegration;
 
 import java.util.Random;
 

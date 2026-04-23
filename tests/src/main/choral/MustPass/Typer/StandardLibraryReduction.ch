@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.StandardLibraryReduction;
+package Typer.StandardLibraryReduction;
 
 import java.math.BigInteger;
 import java.util.Optional;

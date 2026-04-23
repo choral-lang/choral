@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.InheritedDefaultDefaultWithAbstractSuperclass;
+package Typer.InheritedDefaultDefaultWithAbstractSuperclass;
 
 // (JLS 8.4.8.4 Rule B exception) Two override-equivalent default methods are inherited,
 // but an abstract method from a *superclass* (AbstractBase) that is OE with them is also

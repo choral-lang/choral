@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.ClassBeatsDefault;
+package Typer.ClassBeatsDefault;
 
 // A concrete method in a class should take priority over a default method from an interface.
 interface Greeter@( A ) {

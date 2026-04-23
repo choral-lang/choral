@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.UnimplementedAbstract;
+package Typer.UnimplementedAbstract;
 
 // A concrete class that doesn't implement an inherited abstract method.
 abstract class Base@( A ) {

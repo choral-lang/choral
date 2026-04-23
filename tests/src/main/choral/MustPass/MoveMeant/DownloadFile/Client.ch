@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.DownloadFile;
+package MoveMeant.DownloadFile;
 
 import java.lang.Object;
 import java.lang.Integer;

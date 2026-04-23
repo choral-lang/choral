@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.IncompatibleReturnType;
+package Typer.IncompatibleReturnType;
 
 abstract class Base@( A ) {
     public abstract String@A foo();

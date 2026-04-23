@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.DistributedAuthentication;
+package MoveMeant.DistAuth;
 
 import choral.runtime.Serializers.KryoSerializable;
 

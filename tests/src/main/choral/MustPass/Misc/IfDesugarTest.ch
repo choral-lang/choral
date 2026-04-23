@@ -1,4 +1,4 @@
-package choral.MustPass.IfDesugarTest;
+package Misc.IfDesugarTest;
 
 import java.util.Random;
 

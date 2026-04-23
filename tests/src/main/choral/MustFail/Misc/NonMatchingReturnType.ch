@@ -1,4 +1,4 @@
-package foo;
+package Misc.NonMatchingReturnType;
 
 abstract class C0@A{
 
@@ -27,7 +27,7 @@ class C2@A implements I1@A, I2@A {
 
 }
 
-public class NonMatchingReturnType@A<T@X extends I0@X & I3@X> { //! Method 'm(java.lang.Object@(X))' in 'foo.I3@(X)' clashes with method 'm(java.lang.Object@(X))' in 'foo.I0@(X)', attempting to use incompatible return type
+public class NonMatchingReturnType@A<T@X extends I0@X & I3@X> { //! Method 'm(java.lang.Object@(X))' in 'Misc.NonMatchingReturnType.I3@(X)' clashes with method 'm(java.lang.Object@(X))' in 'Misc.NonMatchingReturnType.I0@(X)', attempting to use incompatible return type
 
 }
 

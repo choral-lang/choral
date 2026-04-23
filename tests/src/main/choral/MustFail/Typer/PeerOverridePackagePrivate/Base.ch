@@ -1,4 +1,4 @@
-package choral.MustFail.Typer.PeerOverridePackagePrivateBase;
+package Typer.PeerOverridePackagePrivateBase;
 
 // The abstract process(T) is package-private (no modifier).
 // The concrete process(String) is public.

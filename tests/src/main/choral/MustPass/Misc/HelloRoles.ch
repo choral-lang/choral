@@ -1,4 +1,4 @@
-package choral.MustPass.HelloRoles;
+package Misc.HelloRoles;
 
 class HelloRoles@( A, B ) {
 	public void sayHello() {

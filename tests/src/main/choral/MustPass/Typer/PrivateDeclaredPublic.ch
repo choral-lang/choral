@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.PrivateDeclaredPublic;
+package Typer.PrivateDeclaredPublic;
 
 // Base has a private method m (not inherited by C).
 // C declares its own public method m with the same signature.

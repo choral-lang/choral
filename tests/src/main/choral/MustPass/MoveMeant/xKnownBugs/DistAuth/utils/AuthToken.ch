@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.DistributedAuthentication.utils;
+package MoveMeant.DistAuth.utils;
 
 public class AuthToken@A {
 	public AuthToken( String@A id ) {}

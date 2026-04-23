@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.Karatsuba;
+package MoveMeant.Karatsuba;
 
 import choral.channels.SymChannel;
 

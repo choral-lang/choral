@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.FieldHidingDifferentType;
+package Typer.FieldHidingDifferentType;
 
 // JLS 8.3: "If the class declares a field with a certain name, then the declaration
 // of that field is said to hide any and all accessible declarations of fields with

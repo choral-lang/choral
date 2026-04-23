@@ -1,4 +1,4 @@
-package choral.MustPass.BookSellingSoloist;
+package Misc.BuyBook2;
 
 import choral.channels.SymChannel;
 

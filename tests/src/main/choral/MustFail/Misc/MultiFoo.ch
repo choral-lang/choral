@@ -1,4 +1,4 @@
-package choral.examples.MultiFoo;
+package Misc.MultiFoo;
 
 class Foo@( A, B ){}
 

@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.SSOWithRetry.utils;
+package MoveMeant.SSOWithRetry.utils;
 
 public class Service@A {
     public Token@A newToken(){

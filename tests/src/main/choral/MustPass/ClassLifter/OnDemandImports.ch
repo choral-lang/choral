@@ -1,4 +1,4 @@
-package choral.MustPass.ClassLifter.OnDemandImports;
+package ClassLifter.OnDemandImports;
 
 import java.time.*;
 

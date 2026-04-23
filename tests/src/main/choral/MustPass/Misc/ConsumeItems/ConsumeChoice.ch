@@ -1,3 +1,3 @@
-package choral.MustPass.ConsumeItems;
+package Misc.ConsumeItems;
 
 public enum ConsumeChoice@R { AGAIN, STOP }

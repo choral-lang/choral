@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.OverrideProtectedWithPublic;
+package Typer.OverrideProtectedWithPublic;
 
 // JLS 8.4.8.3: "The access modifier of an overriding or hiding method must
 // provide at least as much access as the overridden or hidden method."

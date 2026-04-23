@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.OverloadOnRoles;
+package MoveMeant.OverloadOnRoles;
 
 import choral.channels.SymChannel;
 import java.lang.Object;

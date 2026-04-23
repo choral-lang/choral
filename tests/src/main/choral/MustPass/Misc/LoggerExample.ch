@@ -1,4 +1,4 @@
-package choral.MustPass.LoggerExample;
+package Misc.LoggerExample;
 
 
 interface Logger@( L ) {

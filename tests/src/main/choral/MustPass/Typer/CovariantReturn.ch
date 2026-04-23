@@ -1,4 +1,4 @@
-package choral.MustPass.Typer.CovariantReturn;
+package Typer.CovariantReturn;
 
 // Overriding a method with a covariant return type should be allowed.
 class Base@( A ) {
