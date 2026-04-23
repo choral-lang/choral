@@ -300,6 +300,10 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 						Kind.getStar() ) );
 	}
 
+	/**
+	 * Returns the GroundClass or GroundInterface that serves as this type's definition.
+	 * @see HigherDataType.Proxy
+	 */
 	public abstract Definition innerType();
 
 	public abstract class Definition extends HigherReferenceType.Definition
@@ -445,103 +449,444 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			if( interfaceFinalised ) {
 				return;
 			}
-			// inherited fields
-			extendedClassesOrInterfaces().flatMap( GroundReferenceType::fields )
-					.filter( x -> x.isAccessibleFrom( this )
-							&& declaredFields().noneMatch(
-							y -> x.identifier().equals( y.identifier() ) ) )
-					.forEach( inheritedFields::add );
-			// inherited methods (sec. 8.4.8)
-			extendedClassesOrInterfaces().flatMap( GroundReferenceType::methods )
-					.filter( x -> x.isAccessibleFrom( this ) )
-					.forEach( x -> {
-						boolean inherited = true;
-						boolean implemented = false;
-						for( Member.HigherMethod y : declaredMethods ) {
-							boolean sameSignature = y.sameSignatureOf( x );
-							boolean sameErasure = y.sameSignatureErasureOf( x );
-							if( sameSignature || sameErasure ) {
-								// check both instance or both static
-								if( !y.isStatic() && x.isStatic() ) {
-									throw new StaticVerificationException( "instance method '" + y
-											+ "' in '" + this + "' cannot override static method '"
-											+ x + "' in '" + x.declarationContext() + "'" );
-								}
-								if( y.isStatic() && !x.isStatic() ) {
-									throw new StaticVerificationException( "static method '" + y
-											+ "' in '" + this + "' cannot override instance method '"
-											+ x + "' in '" + x.declarationContext() + "'" );
-								}
-								// check access privileges
-								if( y.isPrivate() || ( x.isPublic() && !y.isPublic() )
-										|| ( x.isProtected() && y.isPackagePrivate() ) ) {
-									throw new StaticVerificationException( "method '" + y
-											+ "' in '" + this + "' clashes with method '"
-											+ x + "' in '" + x.declarationContext()
-											+ "', attempting to assign weaker access privileges '"
-											+ ModifierUtils.prettyAccess( y.modifiers() ) + "' to '"
-											+ ModifierUtils.prettyAccess( x.modifiers() ) + "'" );
-								}
-								// check not final
-								if( x.isFinal() ) {
-									throw new StaticVerificationException( "method '" + y
-											+ "' in '" + this + "' cannot override final method '"
-											+ x + "' in '" + x.declarationContext() + "'" );
-								}
-								// check assignable return type;
-								if( !y.isReturnTypeAssignable( x ) ) {
-									throw new StaticVerificationException( "method '" + y
-											+ "' in '" + this + "' clashes with method '"
-											+ x + "' in '" + x.declarationContext()
-											+ "', attempting to use incompatible return type" );
-								}
-								// inherit selection annotation
-								if( x.isSelectionMethod() && sameSignature ) {
-									y.setSelectionMethod();
-								}
-								if (x.isTypeSelectionMethod() && sameSignature) {
-									y.setTypeSelectionMethod();
-								}
-								implemented = !y.isAbstract();
-								inherited = sameErasure && !sameSignature;
-								if( inherited ) {
-									for( Member.HigherMethod z : inheritedMethods ) {
-										if( z.isSubSignatureOf( x ) ) {
-											// check assignable return type;
-											if( !z.isReturnTypeAssignable( x ) ) {
-												throw new StaticVerificationException(
-														"method '" + z
-																+ "' in '" + z.declarationContext()
-																+ "' clashes with method '" + x
-																+ "' in '" + x.declarationContext()
-																+ "', attempting to use incompatible return type" );
-											}
-											inherited = false;
-											break;
-										}
-									}
-								}
-								break;
-							} else {
-								if( x.sameErasureAs( y ) ) {
-									throw new StaticVerificationException( "method '" + y
-											+ "' in '" + this + "' clashes with method '"
-											+ x + "' in '" + x.declarationContext()
-											+ "', both methods have the same erasure" );
-								}
-							}
-						}
-						if( inherited ) {
-							// check implementation
-							if( !implemented && !isAbstract() && x.isAbstract() ) {
-								throw new StaticVerificationException( "'" + this + "' must either "
-										+ "be declared as abstract or implement abstract method '"
-										+ x + "' in '" + x.declarationContext() + "'" );
-							}
-							inheritedMethods.add( x.copyFor( this ) );
-						}
-					} );
+			inheritFields();
+			inheritMethods();
 			interfaceFinalised = true;
+		}
+
+		/**
+		 * (JLS 8.3) Inherit fields from direct superclasses and superinterfaces.
+		 * A field is inherited if it is accessible from this type and not hidden
+		 * by a field declared in this type with the same name.
+		 */
+		private void inheritFields() {
+			extendedClassesOrInterfaces().flatMap( GroundReferenceType::fields )
+					.filter( x -> x.isAccessibleFrom( this ) &&
+							declaredFields().noneMatch( y -> x.identifier().equals( y.identifier() ) ) )
+					.forEach( inheritedFields::add );
+		}
+
+		/**
+		 * Collect inherited methods, applying JLS rules for overriding,
+		 * override-equivalent resolution, return-type compatibility, and abstract
+		 * obligations (JLS 8.4.8 for classes, 9.4.1 for interfaces).
+		 */
+		private void inheritMethods() {
+			List< Member.HigherMethod > candidates = new ArrayList<>();
+			Set< Member.HigherMethod > implementedByDeclared = new HashSet<>();
+
+			if( this instanceof GroundClass gc ) {
+				// === CLASS INHERITANCE (JLS 8.4.8) ===
+
+				// Phase 1a: Inherit concrete methods from direct superclass
+				gc.extendedClass().ifPresent( superclass ->
+						superclass.methods()
+								.filter( m -> !m.isAbstract() && m.isAccessibleFrom( this ) )
+								.forEach( m -> collectCandidate(
+										m, candidates, implementedByDeclared ) )
+				);
+
+				List< Member.HigherMethod > concreteSuperclassMethods =
+						new ArrayList<>( candidates );
+
+				// (JLS 8.4.8 (d)) An abstract supertype method is not inherited if a
+				// concrete superclass method already has a subsignature.
+				gc.extendedClass().ifPresent( superclass ->
+						superclass.methods()
+								.filter( m -> m.isAbstract() && m.isAccessibleFrom( this ) )
+								.forEach( m -> collectCandidateIfNotSatisfied(
+										m, candidates, concreteSuperclassMethods,
+										implementedByDeclared ) )
+				);
+
+				// (JLS 9.4.1.1) Static interface methods are not inherited.
+				extendedInterfaces()
+						.flatMap( GroundReferenceType::methods )
+						.filter( m -> !m.isStatic() && m.isAccessibleFrom( this ) )
+						.forEach( m -> collectCandidateIfNotSatisfied(
+								m, candidates, concreteSuperclassMethods,
+								implementedByDeclared ) );
+
+			} else {
+				// (JLS 9.4.1.1) Static interface methods are not inherited.
+				extendedInterfaces()
+						.flatMap( GroundReferenceType::methods )
+						.filter( m -> !m.isStatic() && m.isAccessibleFrom( this ) )
+						.forEach( m -> collectCandidate(
+								m, candidates, implementedByDeclared ) );
+			}
+
+			resolveOverrideEquivalentGroups( candidates );
+			checkInheritedMethodCompatibility( candidates, implementedByDeclared );
+
+			if( this instanceof GroundClass gc && !isAbstract() ) {
+				checkInaccessibleAbstractObligations( gc );
+			}
+
+			for( Member.HigherMethod m : candidates ) {
+				inheritedMethods.add( m.copyFor( this ) );
+			}
+		}
+
+		/**
+		 * Add {@code methodToInherit} as a candidate unless a declared method overrides it
+		 * (JLS 8.4.8.1–.3). Records an entry in {@code implementedByDeclared} when the
+		 * overriding declared method is concrete. Erasure-only overrides keep the parent
+		 * around for bridge generation.
+		 */
+		private void collectCandidate(
+				Member.HigherMethod methodToInherit,
+				List< Member.HigherMethod > candidates,
+				Set< Member.HigherMethod > implementedByDeclared
+		) {
+			for( Member.HigherMethod declaredMethod : declaredMethods ) {
+				if( declaredMethod.isSubSignatureOf( methodToInherit ) ) {
+					propagateSelectionFlags( declaredMethod, methodToInherit );
+					checkOverrideRequirementsOrThrow( declaredMethod, methodToInherit );
+
+					if( !declaredMethod.isAbstract() ) {
+						implementedByDeclared.add( methodToInherit );
+					}
+
+					// (JLS 8.4.8.3) Erasure-only override: declared method matches erasure
+					// but not full signature. The parent method may still need to be inherited
+					// for bridge method purposes.
+					if( declaredMethod.sameSignatureAsErasureOf( methodToInherit )
+							&& !declaredMethod.sameSignatureAs( methodToInherit )
+							&& !isAlreadyCoveredByCandidate( methodToInherit, candidates ) ) {
+						candidates.add( methodToInherit );
+					}
+					return;
+				}
+				if( methodToInherit.sameErasureAs( declaredMethod ) ) {
+					// (JLS 8.4.8.3) Same erasure but not a subsignature.
+					throw new StaticVerificationException( "method '" + declaredMethod
+							+ "' in '" + this + "' clashes with method '"
+							+ methodToInherit + "' in '" + methodToInherit.declarationContext()
+							+ "', both methods have the same erasure" );
+				}
+			}
+
+			candidates.add( methodToInherit );
+		}
+
+		/**
+		 * (JLS 8.4.8 (d)) Variant of {@link #collectCandidate} that skips parent methods
+		 * already satisfied by a concrete superclass method.
+		 */
+		private void collectCandidateIfNotSatisfied(
+				Member.HigherMethod methodToInherit,
+				List< Member.HigherMethod > candidates,
+				List< Member.HigherMethod > concreteSuperclassMethods,
+				Set< Member.HigherMethod > implementedByDeclared
+		) {
+			for( Member.HigherMethod c : concreteSuperclassMethods ) {
+				if( c.isSubSignatureOf( methodToInherit ) ) {
+					if( !c.isReturnTypeSubstitutableFor( methodToInherit ) ) {
+						throw new StaticVerificationException(
+								"method '" + c
+										+ "' in '" + c.declarationContext()
+										+ "' clashes with method '" + methodToInherit
+										+ "' in '" + methodToInherit.declarationContext()
+										+ "', attempting to use incompatible return type" );
+					}
+					return;
+				}
+			}
+			collectCandidate( methodToInherit, candidates, implementedByDeclared );
+		}
+
+		/**
+		 * Checks whether an already-collected candidate covers a method that needs
+		 * inheritance only for bridge purposes (erasure-only override).
+		 */
+		private boolean isAlreadyCoveredByCandidate(
+				Member.HigherMethod methodToInherit,
+				List< Member.HigherMethod > candidates
+		) {
+			for( Member.HigherMethod z : candidates ) {
+				if( z.isSubSignatureOf( methodToInherit ) ) {
+					if( !z.isReturnTypeSubstitutableFor( methodToInherit ) ) {
+						throw new StaticVerificationException(
+								"method '" + z
+										+ "' in '" + z.declarationContext()
+										+ "' clashes with method '" + methodToInherit
+										+ "' in '" + methodToInherit.declarationContext()
+										+ "', attempting to use incompatible return type" );
+					}
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private void propagateSelectionFlags(
+				Member.HigherMethod declaredMethod, Member.HigherMethod parentMethod
+		) {
+			if( parentMethod.isSelectionMethod() ) {
+				declaredMethod.setSelectionMethod();
+			}
+			if( parentMethod.isTypeSelectionMethod() ) {
+				declaredMethod.setTypeSelectionMethod();
+			}
+		}
+
+		/**
+		 * Resolve override-equivalent pairs in {@code candidates}, removing duplicates and
+		 * losers by specificity, diamond identity, or default-method resolution. Throws on
+		 * unresolvable conflicts (JLS 8.4.8.4 / 9.4.1.3). Modifies {@code candidates} in place.
+		 */
+		private void resolveOverrideEquivalentGroups(
+				List< Member.HigherMethod > candidates
+		) {
+			// Backward iteration so removals don't shift unprocessed indices.
+			for( int i = candidates.size() - 1; i >= 0; i-- ) {
+				Member.HigherMethod m = candidates.get( i );
+				for( int j = 0; j < i; j++ ) {
+					Member.HigherMethod earlier = candidates.get( j );
+					if( !m.sameSignatureAs( earlier ) ) {
+						continue;
+					}
+
+					// Two override-equivalent inherited methods found.
+					// Determine which to keep, or error on conflict.
+					int resolution = resolveOverrideEquivalentPair( m, earlier );
+					if( resolution < 0 ) {
+						// Remove m (earlier wins or it's a duplicate)
+						candidates.remove( i );
+						break;
+					} else if( resolution > 0 ) {
+						// Remove earlier (m wins)
+						candidates.remove( j );
+						i--; // adjust index since we removed before i
+						break;
+					}
+					// resolution == 0: both are abstract, keep both
+				}
+			}
+		}
+
+		/**
+		 * Resolves a pair of override-equivalent inherited methods.
+		 *
+		 * @return negative if {@code m} should be removed (earlier wins),
+		 *         positive if {@code earlier} should be removed (m wins),
+		 *         zero if both should be kept (e.g., both abstract).
+		 * @throws StaticVerificationException on unresolvable conflict
+		 */
+		private int resolveOverrideEquivalentPair(
+				Member.HigherMethod m, Member.HigherMethod earlier
+		) {
+			GroundReferenceType mContext = m.declarationContext();
+			GroundReferenceType earlierContext = earlier.declarationContext();
+
+			// (JLS 8.4.8, 9.4.1) The more specific declarer wins.
+			if( mContext.isSubtypeOf_relaxed( earlierContext ) ) {
+				return 1;
+			}
+			if( earlierContext.isSubtypeOf_relaxed( mContext ) ) {
+				return -1;
+			}
+
+			// (JLS 8.4.8.4, 9.4.1.3) Diamond: same default method via two paths.
+			if( m.isDefault() && earlier.isDefault()
+					&& shareCommonDefaultOrigin( m, mContext, earlierContext ) ) {
+				return -1;
+			}
+
+			// JLS 8.4.8.4: "It is a compile-time error if a class C inherits a default
+			// method whose signature is override-equivalent with another method inherited
+			// by C, unless there exists an abstract method declared in a superclass of C
+			// and inherited by C that is override-equivalent with the two methods."
+			//
+			// JLS 9.4.1.3: "It is a compile-time error if an interface I inherits a
+			// default method whose signature is override-equivalent with another method
+			// inherited by I."
+			if( m.isDefault() || earlier.isDefault() ) {
+				// For classes, check whether the superclass-abstract exception applies
+				if( !isInterface() && hasSuperclassAbstractOverrideEquivalent( m ) ) {
+					// The superclass abstract method neutralizes the conflict.
+					// Keep both — Phase 4 will verify return-type compatibility.
+					return 0;
+				}
+				throw new StaticVerificationException(
+						"Duplicate default methods inherited. "
+								+ "'" + this + "' must override '" + m
+								+ "'' from '" + m.declarationContext()
+								+ "' which is identical to '" + earlier
+								+ "' from '" + earlier.declarationContext() + "'" );
+			}
+
+			return 0;
+		}
+
+		/**
+		 * Checks whether there exists an abstract method declared
+		 * in a superclass of this class (and inherited by this class) that is
+		 * override-equivalent with the given method. This only applies to classes (not interfaces).
+		 */
+		private boolean hasSuperclassAbstractOverrideEquivalent( Member.HigherMethod method ) {
+			if( !( this instanceof GroundClass gc ) ) {
+				return false;
+			}
+			return gc.extendedClass()
+					.map( superclass -> superclass.methods()
+							.anyMatch( sm -> sm.isAbstract() && sm.isSubSignatureOf( method ) ) )
+					.orElse( false );
+		}
+
+		/**
+		 * (JLS 8.4.8.4 / 9.4.1.3) Among override-equivalent inherited methods, one must be
+		 * return-type-substitutable for every other. (JLS 8.1.5 / 8.4.3.1) A concrete class
+		 * must implement every inherited abstract method.
+		 */
+		private void checkInheritedMethodCompatibility(
+				List< Member.HigherMethod > candidates,
+				Set< Member.HigherMethod > implementedByDeclared
+		) {
+			for( int i = 0; i < candidates.size(); i++ ) {
+				Member.HigherMethod m = candidates.get( i );
+
+				// Check return-type compatibility against all earlier override-equivalent
+				// methods in the candidate list.
+				// JLS 8.4.8.4: "one of the inherited methods must be return-type-substitutable
+				// for every other inherited method; otherwise, a compile-time error occurs."
+				// JLS 9.4.1.3: same rule for interfaces.
+				for( int j = 0; j < i; j++ ) {
+					Member.HigherMethod earlier = candidates.get( j );
+					if( !m.sameSignatureAs( earlier ) ) {
+						continue;
+					}
+					if( !m.isReturnTypeSubstitutableFor( earlier )
+							&& !earlier.isReturnTypeSubstitutableFor( m ) ) {
+						throw new StaticVerificationException(
+								"method '" + m + "' in '" + m.declarationContext()
+										+ "' clashes with method '" + earlier
+										+ "' in '" + earlier.declarationContext()
+										+ "', attempting to use incompatible return type" );
+					}
+				}
+
+				// Check abstract implementation obligations.
+				// JLS 8.1.5: "A non-abstract class must implement all abstract methods
+				// from its superinterfaces."
+				// JLS 8.4.3.1: "Every non-abstract subclass of an abstract class must
+				// implement its abstract methods."
+				if( !isAbstract() && m.isAbstract() && !implementedByDeclared.contains( m ) ) {
+					checkAbstractImplementation( m, candidates );
+				}
+			}
+		}
+
+		/**
+		 * For a concrete class inheriting an abstract method, checks whether an
+		 * already-inherited concrete method satisfies the implementation requirement.
+		 * Throws if no implementation is found.
+		 */
+		private void checkAbstractImplementation(
+				Member.HigherMethod abstractMethod,
+				List< Member.HigherMethod > candidates
+		) {
+			for( Member.HigherMethod candidate : candidates ) {
+				if( candidate != abstractMethod
+						&& !candidate.isAbstract()
+						&& candidate.isSubSignatureOf( abstractMethod )
+						&& candidate.isReturnTypeSubstitutableFor( abstractMethod ) ) {
+					return;
+				}
+			}
+			throw new StaticVerificationException( "'" + this + "' must either "
+					+ "be declared as abstract or implement abstract method '"
+					+ abstractMethod + "' in '" + abstractMethod.declarationContext() + "'" );
+		}
+
+		/**
+		 * (JLS 8.1.5 / 8.4.3.1) An inaccessible abstract superclass method can never be
+		 * overridden (JLS 8.4.8.1 requires accessibility), so any such method is always an
+		 * error for a concrete subclass.
+		 */
+		private void checkInaccessibleAbstractObligations( GroundClass gc ) {
+			gc.extendedClass().ifPresent( superclass ->
+					superclass.methods()
+							.filter( m -> m.isAbstract() && !m.isAccessibleFrom( this ) )
+							.forEach( m -> {
+								throw new StaticVerificationException(
+										"Implementation is not abstract and does not"
+												+ " override abstract method '"
+												+ m + "' in '"
+												+ m.declarationContext() + "'" );
+							} )
+			);
+		}
+
+		/**
+		 * True if a common ancestor interface of {@code context1} and {@code context2}
+		 * declares a default method with {@code method}'s signature (diamond inheritance).
+		 */
+		private boolean shareCommonDefaultOrigin(
+				Member.HigherMethod method,
+				GroundReferenceType context1,
+				GroundReferenceType context2
+		) {
+			if( !( context1 instanceof GroundClassOrInterface c1 )
+					|| !( context2 instanceof GroundClassOrInterface c2 ) ) {
+				return false;
+			}
+			Set< HigherClassOrInterface > context2Supers = new HashSet<>();
+			context2Supers.add( c2.typeConstructor() );
+			c2.allExtendedInterfaces().forEach( i -> context2Supers.add( i.typeConstructor() ) );
+			// Check if any super-interface of context1 is also a super-interface of context2
+			// and declares a default method with the same signature
+			return c1.allExtendedInterfaces().anyMatch( i -> {
+				if( !context2Supers.contains( i.typeConstructor() ) ) {
+					return false;
+				}
+				// Check if this common ancestor declares the method
+				return i.typeConstructor().innerType().declaredMethods()
+						.anyMatch( m -> m.isDefault() && m.sameSignatureAs( method ) );
+			} );
+		}
+
+		private void checkOverrideRequirementsOrThrow(Member.HigherMethod child, Member.HigherMethod parent) {
+			// (8.4.3.3) Ensure we're not overriding a final method
+			if( parent.isFinal() ) {
+				throw new StaticVerificationException( "method '" + child
+						+ "' in '" + this + "' cannot override final method '"
+						+ parent + "' in '" + parent.declarationContext() + "'" );
+			}
+			// (8.4.8.1) Ensure instance methods don't override static methods
+			if( !child.isStatic() && parent.isStatic() ) {
+				throw new StaticVerificationException( "instance method '" + child
+						+ "' in '" + this + "' cannot override static method '"
+						+ parent + "' in '" + parent.declarationContext() + "'" );
+			}
+			// (8.4.8.2) Ensure static methods don't hide instance methods
+			if( child.isStatic() && !parent.isStatic() ) {
+				throw new StaticVerificationException( "static method '" + child
+						+ "' in '" + this + "' cannot override instance method '"
+						+ parent + "' in '" + parent.declarationContext() + "'" );
+			}
+			// (8.4.8.3) Ensure method return types are covariant
+			if( !child.isReturnTypeSubstitutableFor(parent) ) {
+				throw new StaticVerificationException( "method '" + child
+						+ "' in '" + this + "' clashes with method '"
+						+ parent + "' in '" + parent.declarationContext()
+						+ "', attempting to use incompatible return type" );
+			}
+
+			// (8.4.8.3) JLS says we should issue a warning if child is not a subtype of parent; we skip that check.
+			// (8.4.8.3) Choral doesn't have checked exceptions yet, so we skip those checks.
+
+			// (8.4.8.3) Ensure the access modifiers are compatible
+			if( child.isPrivate() || ( parent.isPublic() && !child.isPublic() )
+					|| ( parent.isProtected() && child.isPackagePrivate() ) ) {
+				throw new StaticVerificationException( "method '" + child
+						+ "' in '" + this + "' clashes with method '"
+						+ parent + "' in '" + parent.declarationContext()
+						+ "', attempting to assign weaker access privileges '"
+						+ ModifierUtils.prettyAccess( child.modifiers() ) + "' to '"
+						+ ModifierUtils.prettyAccess( parent.modifiers() ) + "'" );
+			}
 		}
 
 
@@ -556,6 +901,16 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		@Override
 		public final Stream< Member.Field > declaredFields() {
 			return declaredFields.stream();
+		}
+
+		@Override
+		public Stream< ? extends Member.Field > fields() {
+			return Stream.concat( declaredFields(), inheritedFields.stream() );
+		}
+
+		@Override
+		public Stream< ? extends Member.HigherMethod > methods() {
+			return Stream.concat( declaredMethods(), inheritedMethods.stream() );
 		}
 
 		public void addField( Member.Field field ) {
@@ -574,7 +929,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			assert ( method.declarationContext() == this );
 			for( Member.HigherMethod x : declaredMethods ) {
 				if( x.sameErasureAs( method ) ) {
-					if( x.sameSignatureOf( method ) ) {
+					if( x.sameSignatureAs( method ) ) {
 						throw new StaticVerificationException( "method '" + method
 								+ "' is already defined in '" + typeConstructor() + "'" );
 					} else {

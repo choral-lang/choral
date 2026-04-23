@@ -40,13 +40,4 @@ public class StaticVerificationException extends ChoralException {
 		}
 	}
 
-	public static ChoralException of( String message, Position p ) {
-		StaticVerificationException e = new StaticVerificationException( message );
-		if( p == null) {
-			return new AstPositionedException( p, e );
-		} else {
-			return e;
-		}
-	}
-
 }

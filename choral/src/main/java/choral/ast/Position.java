@@ -21,7 +21,6 @@
 
 package choral.ast;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class Position {
@@ -29,6 +28,10 @@ public class Position {
 	private final int column;
 	private final String sourceFile;
 
+	/**
+	 * Constructor for Position.
+	 * @param sourceFile Path to the source file, or null if unknown.
+	 */
 	public Position( String sourceFile, int line, int column ) {
 		this.line = line;
 		this.column = column;
@@ -47,15 +50,16 @@ public class Position {
 		return sourceFile;
 	}
 
+	public String prettyPath() {
+		if (sourceFile == null) {
+			return "<unknown>";
+		}
+		return Paths.get( "." ).toAbsolutePath().relativize(
+				Paths.get( sourceFile ).toAbsolutePath() ).toString();
+	}
+
 	public String formattedPosition() {
-		if (sourceFile == null){ 
-			return String.format( "line %d column %d", line, column );
-		}
-		else {
-			Path absolutePath = Paths.get( sourceFile ).toAbsolutePath();
-			Path relativePath = Paths.get( "." ).toAbsolutePath().relativize( absolutePath );
-			return String.format( "file '%s' line %d column %d", relativePath, line, column );
-		}
+		return String.format( "file '%s' line %d column %d", prettyPath(), line, column );
 	}
 
 	public String toString() {

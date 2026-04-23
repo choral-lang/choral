@@ -1,8 +1,9 @@
-package choral.MustPass.MoveMeant.Mergesort;
+package MoveMeant.Mergesort;
 
 import choral.channels.SymChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.lang.Math;
 
 enum MChoice@R { L, R }
 

@@ -20,7 +20,7 @@ public class LSPTest {
 				}""";
 
 		List< Diagnostic > diagnostics = diagProvider.analyze( "", code );
-		assert diagnostics.isEmpty();
+		assert diagnostics.isEmpty() : diagnostics;
 	}
 
 	@Test

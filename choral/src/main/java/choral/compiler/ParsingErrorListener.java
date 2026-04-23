@@ -33,8 +33,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static choral.Choral.relativizePath;
-
 public class ParsingErrorListener extends BaseErrorListener {
 
 	private final String file;
@@ -62,7 +60,7 @@ public class ParsingErrorListener extends BaseErrorListener {
 		Collections.reverse( stack );
 		String file = recognizer.getInputStream().getSourceName().equals( "<unknown>" )
 				? this.file
-				: relativizePath( recognizer.getInputStream().getSourceName() );
+				: recognizer.getInputStream().getSourceName();
 		errors.add( new SyntaxException( new Position( file, line, charPositionInLine ), msg ) );
 	}
 }

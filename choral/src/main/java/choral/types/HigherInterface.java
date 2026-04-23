@@ -23,10 +23,7 @@ package choral.types;
 
 import choral.ast.Node;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -107,7 +104,7 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 	}
 
 	public void addImplicitMethodModifiers( EnumSet< Modifier > modifiers ) {
-		modifiers.add( ABSTRACT );
+		if (!modifiers.contains(DEFAULT) && !modifiers.contains(STATIC)) modifiers.add( ABSTRACT );
 		modifiers.add( PUBLIC );
 	}
 
@@ -135,26 +132,14 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 		}
 
 		@Override
-		public Stream< ? extends Member.Field > fields() {
-			return Stream.concat( declaredFields(),
-					extendedInterfaces().flatMap( x -> x.fields() ) );
-		}
-
-		@Override
-		public Stream< ? extends Member.HigherMethod > methods() {
-			return Stream.concat( declaredMethods(),
-					extendedInterfaces().flatMap( x -> x.methods() ) );
-		}
-
 		public void addField( Member.Field field ) {
 			throw new UnsupportedOperationException( "interfaces cannot have fields" );
 		}
 
+		@Override
 		public void addMethod( Member.HigherMethod method ) {
-			assert ( method.isPublic() && method.isAbstract() );
-//			if(!method.isPublic() || !method.isAbstract()){
-//				throw new IllegalArgumentException("interface methods must be public and abstract");
-//			}
+			assert ( method.isPublic() && method.isAbstract() || method.isDefault() || method.isStatic() )
+				: "'" + method.identifier() + "' modifiers : " + method.modifiers();
 			super.addMethod( method );
 		}
 

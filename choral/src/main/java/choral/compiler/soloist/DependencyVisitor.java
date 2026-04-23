@@ -436,7 +436,7 @@ public class DependencyVisitor implements ChoralVisitorInterface< Void > {
 	@Override
 	public Void visit( InterfaceMethodDefinition n ) {
 		visit( n.signature() );
-//		visit( n.body() );
+		n.body().ifPresent( this::visit );
 		return null;
 	}
 

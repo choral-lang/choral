@@ -128,6 +128,10 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 	public InterfaceMethodDefinition visit( InterfaceMethodDefinition n ) {
 		return new InterfaceMethodDefinition(
 				visit( n.signature() ),
+				n.body().isPresent() ?
+						StatementsUnitNormaliser.visitStatement(
+								StatementsProjector.visit( this.world(), n.body().get() ) )
+						: null,
 				visitAndCollect( n.annotations() ),
 				n.modifiers(),
 				n.position()

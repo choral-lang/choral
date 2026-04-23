@@ -5,7 +5,10 @@ import choral.choralUnit.annotations.Test;
 import choral.annotations.Choreography;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
+import choral.choralUnit.Assert;
 import choral.choralUnit.testUtils.TestUtils_B;
 import choral.choralUnit.testUtils.TestUtils_A;
 import choral.channels.SymChannel_A;
@@ -29,7 +32,9 @@ public class QuicksortTest_A {
 		ch_AB = TestUtils_A.newLocalChannel( "ch_AB", Unit.id );
 		SymChannel_B< Object > ch_CA;
 		ch_CA = TestUtils_B.newLocalChannel( Unit.id, "ch_CA" );
-		System.out.println( new Quicksort_A( ch_AB, Unit.id, ch_CA ).sort( a ) );
+		List< Integer > sorted = new Quicksort_A( ch_AB, Unit.id, ch_CA ).sort( a );
+		List< Integer > expected = Arrays.asList( 1, 2, 5, 7, 12, 22, 45 );
+		Assert.assertEquals( sorted, expected, "success", "failure" );
 	}
 
 }

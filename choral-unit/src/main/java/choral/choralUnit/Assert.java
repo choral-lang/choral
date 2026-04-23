@@ -21,14 +21,9 @@
 
 package choral.choralUnit;
 
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 public class Assert {
 
 	private static final String NEWLINE = "\n";
-	private static final String TAB = "\t";
-	private static final String SUCCESS = "ChoralUnit Test Success:";
 	private static final String FAILURE = "ChoralUnit Test Failure:";
 
 	public static void assertEquals(
@@ -48,7 +43,6 @@ public class Assert {
 							+ o2 + " of class " + o2.getClass()
 			);
 		}
-		System.out.println( SUCCESS + NEWLINE + indent( successMessage ) );
 	}
 
 	public static void assertNotNull( Object o1, String successMessage, String failureMessage ) {
@@ -58,11 +52,5 @@ public class Assert {
 							+ "assertion negated: object is null"
 			);
 		}
-		System.out.println( SUCCESS + NEWLINE + indent( successMessage ) );
-	}
-
-	private static String indent( String s ) {
-		return Stream.of( s.split( NEWLINE ) ).map( l -> TAB + l ).collect(
-				Collectors.joining( NEWLINE ) );
 	}
 }

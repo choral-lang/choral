@@ -218,7 +218,7 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 			assert ( constructor.declarationContext() == this );
 			for( HigherConstructor x : constructors ) {
 				if( x.sameErasureAs( constructor ) ) {
-					if( x.sameSignatureOf( constructor ) ) {
+					if( x.sameSignatureAs( constructor ) ) {
 						throw new StaticVerificationException( "constructor '" + constructor
 								+ "' is already defined in '" + typeConstructor() + "'" );
 					} else {
@@ -229,16 +229,6 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 				}
 			}
 			constructors.add( constructor );
-		}
-
-		@Override
-		public final Stream< ? extends Member.Field > fields() {
-			return Stream.concat( declaredFields(), inheritedFields.stream() );
-		}
-
-		@Override
-		public final Stream< ? extends Member.HigherMethod > methods() {
-			return Stream.concat( declaredMethods(), inheritedMethods.stream() );
 		}
 
 	}

@@ -1,7 +1,7 @@
-package choral.MustPass.MoveMeant.SSOWithRetry;
+package MoveMeant.SSOWithRetry;
 
 import choral.channels.SymChannel;
-import choral.MustPass.MoveMeant.SSOWithRetry.utils.*;
+import MoveMeant.SSOWithRetry.utils.*;
 
 import choral.runtime.Serializers.KryoSerializable;
 

@@ -22,22 +22,31 @@
 package choral.ast.body;
 
 import choral.ast.Position;
+import choral.ast.statement.Statement;
 import choral.ast.visitors.ChoralVisitorInterface;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 
 public class InterfaceMethodDefinition extends MethodDefinition {
+	private final Statement body;
 	private final EnumSet< InterfaceMethodModifier > modifiers;
 
 	public InterfaceMethodDefinition(
 			final MethodSignature signature,
+			final Statement body,
 			final List< Annotation > annotations,
 			final EnumSet< InterfaceMethodModifier > modifiers,
 			final Position position
 	) {
 		super( signature, annotations, position );
+		this.body = body;
 		this.modifiers = modifiers;
+	}
+
+	public Optional< Statement > body() {
+		return Optional.ofNullable( body );
 	}
 
 	public EnumSet< InterfaceMethodModifier > modifiers() {
@@ -49,7 +58,15 @@ public class InterfaceMethodDefinition extends MethodDefinition {
 	}
 
 	public boolean isAbstract() {
-		return true;
+		return modifiers.contains(InterfaceMethodModifier.ABSTRACT);
+	}
+
+	public boolean isDefault() {
+		return modifiers.contains(InterfaceMethodModifier.DEFAULT);
+	}
+
+	public boolean isStatic() {
+		return modifiers.contains(InterfaceMethodModifier.STATIC);
 	}
 
 	@Override

@@ -312,15 +312,15 @@ interfaceBody
 	;
 
 interfaceMethodDeclaration
-	: annotation* interfaceMethodModifier* methodHeader SEMI
+	: annotation* interfaceMethodModifier* methodHeader methodBody
 	;
 
 interfaceMethodModifier
 	:	'public'
 //	|	'private'//Introduced in Java 9
 	|	'abstract'
-//	|	'default'
-//	|	'static'
+	|	'default'
+	|	'static'
 	;
 
 annotation

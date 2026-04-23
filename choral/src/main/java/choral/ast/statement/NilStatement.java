@@ -63,7 +63,7 @@ public class NilStatement extends Statement {
 				position = this.position().line() + ":" + this.position().column() + ":";
 			}
 			throw new ChoralException(
-					position + "error: Could not merge \n" + "NilStatement" + "\n with " + n.getClass().getSimpleName() );
+					"Could not merge NilStatement with " + n.getClass().getSimpleName() );
 		}
 	}
 }

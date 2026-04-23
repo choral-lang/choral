@@ -23,7 +23,7 @@ public class PrintCompilationUnits {
 
 	public static void printCompilationUnits( Collection< CompilationUnit > compilationUnits ){
 		compilationUnits.stream().forEach( compilationUnit -> {
-			String string = "\u001B[34mPrimaty type:\u001B[0m " + compilationUnit.primaryType() + " at " + compilationUnit.position();
+			String string = "\u001B[34mSource file:\u001B[0m " + compilationUnit.position().sourceFile();
 			printWithIndentation(string, 1);
 			string = blue("Package: ") + (compilationUnit.packageDeclaration().isPresent()?compilationUnit.packageDeclaration().get():"None");
 			printWithIndentation(string, 2);
