@@ -39,23 +39,27 @@ class LiftException extends Exception {
 	}
 
 	static LiftException array() {
-		return new LiftException( "array" );
+		return new LiftException( "array types are not supported" );
 	}
 
 	static LiftException wildcard() {
-		return new LiftException( "wildcard" );
+		return new LiftException( "wildcard types are not supported" );
 	}
 
 	static LiftException innerClass() {
-		return new LiftException( "inner class" );
-	}
-
-	static LiftException notFound( String query ) {
-		return new LiftException( query );
+		return new LiftException( "inner classes are not supported" );
 	}
 
 	static LiftException exoticType( java.lang.reflect.Type type ) {
-		return new LiftException( type.getClass().getName() );
+		return new LiftException( type.getClass().getName() + " is not a supported type kind" );
+	}
+
+	static LiftException notFound( String query ) {
+		return new LiftException( query + " could not be found on the classpath" );
+	}
+
+	static LiftException castFailed( String typeName, String expectedKind ) {
+		return new LiftException( "expected " + typeName + " to be a " + expectedKind );
 	}
 }
 
@@ -87,17 +91,6 @@ public class ClassLifter {
 	/////////////////////////////////////////////////////////////////////
 	////////////////////// CLASS LIFTING METHODS  ///////////////////////
 	/////////////////////////////////////////////////////////////////////
-
-	/**
-	 * Looks up the given type on the classpath and lifts it into a Choral type - adding it
-	 * to the Universe as a side-effect.
-	 *
-	 * @param fullyQualifiedName The fully qualified name of type to be lifted.
-	 * @return A choral type representing the type, or nothing if classpath lookup failed.
-	 */
-	public Optional< HigherClassOrInterface > lookup( String fullyQualifiedName ) {
-		return lookup( fullyQualifiedName, null );
-	}
 
 	/**
 	 * Looks up the given type on the classpath and lifts it into a Choral type - adding it
@@ -179,9 +172,8 @@ public class ClassLifter {
 		addMethods(clazz, higherClass, scope);
 		addConstructors( clazz, higherClass, scope );
 
-		taskQueue.enqueue( new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherClass, () -> {
-			((HigherClassOrInterface) higherClass).innerType().finaliseInterface();
-		}));
+		taskQueue.enqueue( new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherClass, () ->
+				higherClass.innerType().finaliseInterface() ));
 		return higherClass;
 	}
 
@@ -207,9 +199,8 @@ public class ClassLifter {
 		addTypeBounds( clazz, higherInterface, scope );
 		addMethods(clazz, higherInterface, scope);
 
-		taskQueue.enqueue( new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherInterface, () -> {
-			((HigherClassOrInterface) higherInterface).innerType().finaliseInterface();
-		}));
+		taskQueue.enqueue( new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherInterface, () ->
+				higherInterface.innerType().finaliseInterface() ));
 		return higherInterface;
 	}
 
@@ -238,9 +229,8 @@ public class ClassLifter {
 		}
 		addMethods(clazz, higherEnum, scope);
 
-		taskQueue.enqueue( new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherEnum, () -> {
-			((HigherClassOrInterface) higherEnum).innerType().finaliseInterface();
-		}));
+		taskQueue.enqueue( new TaskQueue.MemberTask(Phase.MEMBER_DECLARATIONS, higherEnum, () ->
+				higherEnum.innerType().finaliseInterface() ));
 		return higherEnum;
 	}
 
@@ -250,7 +240,7 @@ public class ClassLifter {
 		Type genericSuperClass = clazz.getGenericSuperclass();
 		if(genericSuperClass != null){
 			higherClass.innerType().setExtendedClass(
-					(GroundClass)liftType(genericSuperClass, scope ) );
+					liftClass(genericSuperClass, scope ) );
 		}
 	}
 
@@ -267,7 +257,7 @@ public class ClassLifter {
 		for(java.lang.reflect.Type genericSuperInterface : clazz.getGenericInterfaces()){
 			GroundInterface liftedSuperInterface;
 			try {
-				liftedSuperInterface = (GroundInterface)liftType(genericSuperInterface, scope);
+				liftedSuperInterface = liftInterface(genericSuperInterface, scope);
 			} catch (LiftException e) {
 				warn(fullyQualifiedName, e);
 				continue;
@@ -333,7 +323,7 @@ public class ClassLifter {
 			EnumSet<choral.types.Modifier> fieldModifiers = parseModifiers( field.getModifiers());
 			GroundDataType fieldType;
 			try{
-				fieldType = (GroundDataType)liftType(field.getGenericType(), scope );
+				fieldType = liftDataType(field.getGenericType(), scope );
 			} catch(LiftException e){
 				warn(field.getClass().getCanonicalName() + "#" + field.getName(), e);
 				continue;
@@ -377,7 +367,7 @@ public class ClassLifter {
 		for(java.lang.reflect.Type formalParam : method.getGenericParameterTypes()){
 			higherMethod.innerCallable().signature().addParameter(
 					"x" + i++,
-					(GroundDataType)liftType(formalParam, methodScope) );
+					liftDataType(formalParam, methodScope) );
 		}
 		GroundDataTypeOrVoid returnType = liftType(method.getGenericReturnType(), methodScope);
 		higherMethod.innerCallable().setReturnType(returnType);
@@ -443,7 +433,7 @@ public class ClassLifter {
 		TypeParameterScope parameterScope = scope.getScope( typeParameter );
 		for(java.lang.reflect.Type bound : upperBounds){
 			if(bound.equals(Object.class)) continue;
-			GroundReferenceType liftedBound = (GroundReferenceType) liftType(bound, parameterScope);
+			GroundReferenceType liftedBound = liftReferenceType(bound, parameterScope);
 			typeParameter.innerType().addUpperBound( liftedBound );
 		}
 		// Locks the type parameter so that no more bounds can be added
@@ -541,6 +531,29 @@ public class ClassLifter {
 		}
 	}
 
+	private GroundClass liftClass(java.lang.reflect.Type type, Scope scope) throws LiftException {
+		GroundDataTypeOrVoid lifted = liftType(type, scope);
+		if( lifted instanceof GroundClass gc ) return gc;
+		throw LiftException.castFailed(type.getTypeName(), "class");
+	}
+
+	private GroundInterface liftInterface(java.lang.reflect.Type type, Scope scope) throws LiftException {
+		GroundDataTypeOrVoid lifted = liftType(type, scope);
+		if( lifted instanceof GroundInterface gi ) return gi;
+		throw LiftException.castFailed(type.getTypeName(), "interface");
+	}
+
+	private GroundDataType liftDataType(java.lang.reflect.Type type, Scope scope) throws LiftException {
+		GroundDataTypeOrVoid lifted = liftType(type, scope);
+		if( lifted instanceof GroundDataType gd ) return gd;
+		throw LiftException.castFailed(type.getTypeName(), "data type");
+	}
+
+	private GroundReferenceType liftReferenceType(java.lang.reflect.Type type, Scope scope) throws LiftException {
+		GroundDataTypeOrVoid lifted = liftType(type, scope);
+		if( lifted instanceof GroundReferenceType gd ) return gd;
+		throw LiftException.castFailed(type.getTypeName(), "reference type");
+	}
 
 	/////////////////////////////////////////////////////////////////////
 	////////////////////// DEPENDENCY MANAGEMENT  ///////////////////////
@@ -565,8 +578,7 @@ public class ClassLifter {
 	private void warn( String id, LiftException e ) {
 		opts.info(
 				currentPosition,
-				"ClassLifter failed to lift " + id + " because " + e.getMessage() +
-						" types are not supported"
+				"ClassLifter failed to lift " + id + ": " + e.getMessage()
 		);
 	}
 }

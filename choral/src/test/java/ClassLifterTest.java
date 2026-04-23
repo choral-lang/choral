@@ -24,17 +24,17 @@ public class ClassLifterTest {
 		
 		ClassLifter classLifter = new ClassLifter(universe, taskQueue, opts);
 
-		classLifter.lookup("java.lang.System");
-		classLifter.lookup("java.lang.Object");
-		classLifter.lookup("java.lang.Enum");
-		classLifter.lookup("java.util.stream.BaseStream");
-		classLifter.lookup("java.io.PrintStream");
-		classLifter.lookup("java.io.Serializable");
-		classLifter.lookup("supplement.HelloWorld");
-		classLifter.lookup("java.util.HashMap");
-		classLifter.lookup("java.util.Deque");
-		classLifter.lookup("java.util.ArrayDeque");
-		classLifter.lookup("java.util.Random");
-		classLifter.lookup("java.time.chrono.AbstractChronology");
+		classLifter.lookup("java.lang.System", null );
+		classLifter.lookup("java.lang.Object", null );
+		classLifter.lookup("java.lang.Enum", null );
+		classLifter.lookup("java.util.stream.BaseStream", null );
+		classLifter.lookup("java.io.PrintStream", null );
+		classLifter.lookup("java.io.Serializable", null );
+		classLifter.lookup("supplement.HelloWorld", null );
+		classLifter.lookup("java.util.HashMap", null );
+		classLifter.lookup("java.util.Deque", null );
+		classLifter.lookup("java.util.ArrayDeque", null );
+		classLifter.lookup("java.util.Random", null );
+		classLifter.lookup("java.time.chrono.AbstractChronology", null );
 	}
 }
