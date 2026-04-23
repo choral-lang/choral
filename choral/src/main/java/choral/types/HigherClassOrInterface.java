@@ -467,16 +467,9 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		/**
-		 * Inherit methods from direct superclasses and superinterfaces and check requirements.
-		 * <ol>
-		 *   <li>Compute candidates for inheritance.</li>
-		 *   <li>Resolve override-equivalent groups (JLS 8.4.8.4, 9.4.1.3).</li>
-		 *   <li>Check return-type compatibility and abstract obligations
-		 *       (JLS 8.4.8.4, 9.4.1.3, 8.1.5, 8.4.3.1).</li>
-		 *   <li>Check inaccessible abstract obligations from superclass
-		 *       (JLS 8.1.5, 8.4.3.1).</li>
-		 *   <li>Copy survivors into {@code inheritedMethods}.</li>
-		 * </ol>
+		 * Collect inherited methods, applying JLS rules for overriding,
+		 * override-equivalent resolution, return-type compatibility, and abstract
+		 * obligations (JLS 8.4.8 for classes, 9.4.1 for interfaces).
 		 */
 		private void inheritMethods() {
 			List< Member.HigherMethod > candidates = new ArrayList<>();
@@ -488,91 +481,64 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 				// Phase 1a: Inherit concrete methods from direct superclass
 				gc.extendedClass().ifPresent( superclass ->
 						superclass.methods()
-								.filter( m -> !m.isAbstract()
-										&& m.isAccessibleFrom( this ) )
+								.filter( m -> !m.isAbstract() && m.isAccessibleFrom( this ) )
 								.forEach( m -> collectCandidate(
 										m, candidates, implementedByDeclared ) )
 				);
 
-				// Snapshot: everything in candidates now is concrete from the superclass.
 				List< Member.HigherMethod > concreteSuperclassMethods =
 						new ArrayList<>( candidates );
 
-				// Phase 1b: Inherit abstract methods from direct superclass
-				// JLS 8.4.8 condition (d): skip if a concrete superclass method has
-				// a subsignature.
+				// (JLS 8.4.8 (d)) An abstract supertype method is not inherited if a
+				// concrete superclass method already has a subsignature.
 				gc.extendedClass().ifPresent( superclass ->
 						superclass.methods()
-								.filter( m -> m.isAbstract()
-										&& m.isAccessibleFrom( this ) )
+								.filter( m -> m.isAbstract() && m.isAccessibleFrom( this ) )
 								.forEach( m -> collectCandidateIfNotSatisfied(
 										m, candidates, concreteSuperclassMethods,
 										implementedByDeclared ) )
 				);
 
-				// Phase 2: Inherit abstract/default from direct superinterfaces.
-				// JLS 9.4.1.1: static interface methods are not inherited.
-				// JLS 8.4.8 condition (d): skip if a concrete superclass method has
-				// a subsignature.
+				// (JLS 9.4.1.1) Static interface methods are not inherited.
 				extendedInterfaces()
 						.flatMap( GroundReferenceType::methods )
-						.filter( m -> !m.isStatic()
-								&& m.isAccessibleFrom( this ) )
+						.filter( m -> !m.isStatic() && m.isAccessibleFrom( this ) )
 						.forEach( m -> collectCandidateIfNotSatisfied(
 								m, candidates, concreteSuperclassMethods,
 								implementedByDeclared ) );
 
 			} else {
-				// === INTERFACE INHERITANCE (JLS 9.4.1) ===
-				// Inherit abstract/default from direct superinterfaces.
-				// JLS 9.4.1.1: static interface methods are not inherited.
+				// (JLS 9.4.1.1) Static interface methods are not inherited.
 				extendedInterfaces()
 						.flatMap( GroundReferenceType::methods )
-						.filter( m -> !m.isStatic()
-								&& m.isAccessibleFrom( this ) )
+						.filter( m -> !m.isStatic() && m.isAccessibleFrom( this ) )
 						.forEach( m -> collectCandidate(
 								m, candidates, implementedByDeclared ) );
 			}
 
-			// Phase 3: Resolve override-equivalent groups among candidates.
-			// Detects default method conflicts (JLS 8.4.8.4, 9.4.1.3),
-			// specificity resolution, and diamond duplicates.
 			resolveOverrideEquivalentGroups( candidates );
-
-			// Phase 4: Check return-type compatibility among inherited
-			// override-equivalent methods (JLS 8.4.8.4, 9.4.1.3) and abstract
-			// implementation obligations (JLS 8.1.5, 8.4.3.1).
 			checkInheritedMethodCompatibility( candidates, implementedByDeclared );
 
-			// Phase 5: Check inaccessible abstract methods from the direct
-			// superclass (JLS 8.1.5, 8.4.3.1). A concrete class must satisfy
-			// these, but since they're inaccessible, no method can override
-			// them — always an error.
 			if( this instanceof GroundClass gc && !isAbstract() ) {
 				checkInaccessibleAbstractObligations( gc );
 			}
 
-			// Phase 6: Copy surviving candidates into inheritedMethods.
 			for( Member.HigherMethod m : candidates ) {
 				inheritedMethods.add( m.copyFor( this ) );
 			}
 		}
 
 		/**
-		 * Phase 1: Determines whether a parent method could be inherited. Checks for overrides and
-		 * erasure clashes.
-		 * <p>
-		 * If the method survives, it is added to {@code candidates} in its original form.
-		 * If a declared method implements it (concrete override), it is recorded in
-		 * {@code implementedByDeclared} so Phase 3 can skip the abstract obligation check.
+		 * Add {@code methodToInherit} as a candidate unless a declared method overrides it
+		 * (JLS 8.4.8.1–.3). Records an entry in {@code implementedByDeclared} when the
+		 * overriding declared method is concrete. Erasure-only overrides keep the parent
+		 * around for bridge generation.
 		 */
 		private void collectCandidate(
 				Member.HigherMethod methodToInherit,
 				List< Member.HigherMethod > candidates,
 				Set< Member.HigherMethod > implementedByDeclared
 		) {
-			// Check against declared methods for overrides and erasure clashes
-			// (JLS 8.4.8.1, 8.4.8.2, 8.4.8.3)
 			for( Member.HigherMethod declaredMethod : declaredMethods ) {
 				if( declaredMethod.isSubSignatureOf( methodToInherit ) ) {
 					propagateSelectionFlags( declaredMethod, methodToInherit );
@@ -586,16 +552,14 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 					// but not full signature. The parent method may still need to be inherited
 					// for bridge method purposes.
 					if( declaredMethod.sameSignatureAsErasureOf( methodToInherit )
-							&& !declaredMethod.sameSignatureAs( methodToInherit ) ) {
-						if( !isAlreadyCoveredByCandidate( methodToInherit, candidates ) ) {
-							candidates.add( methodToInherit );
-						}
+							&& !declaredMethod.sameSignatureAs( methodToInherit )
+							&& !isAlreadyCoveredByCandidate( methodToInherit, candidates ) ) {
+						candidates.add( methodToInherit );
 					}
 					return;
 				}
-				else if( methodToInherit.sameErasureAs( declaredMethod ) ) {
-					// (JLS 8.4.8.3) Erasure clash: declared method has same erasure as
-					// parent method but is not a subsignature.
+				if( methodToInherit.sameErasureAs( declaredMethod ) ) {
+					// (JLS 8.4.8.3) Same erasure but not a subsignature.
 					throw new StaticVerificationException( "method '" + declaredMethod
 							+ "' in '" + this + "' clashes with method '"
 							+ methodToInherit + "' in '" + methodToInherit.declarationContext()
@@ -603,17 +567,12 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 				}
 			}
 
-			// No declared method overrides/hides this parent method — it's a candidate.
 			candidates.add( methodToInherit );
 		}
 
 		/**
-		 * Like {@link #collectCandidate}, but first checks JLS 8.4.8 condition (d):
-		 * "no concrete method inherited by C from its direct superclass has a signature
-		 * that is a subsignature of the signature of m."
-		 * <p>
-		 * If a concrete superclass method already satisfies this method, it is not
-		 * added to candidates. Otherwise delegates to {@link #collectCandidate}.
+		 * (JLS 8.4.8 (d)) Variant of {@link #collectCandidate} that skips parent methods
+		 * already satisfied by a concrete superclass method.
 		 */
 		private void collectCandidateIfNotSatisfied(
 				Member.HigherMethod methodToInherit,
@@ -631,7 +590,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 										+ "' in '" + methodToInherit.declarationContext()
 										+ "', attempting to use incompatible return type" );
 					}
-					return; // satisfied by concrete superclass method
+					return;
 				}
 			}
 			collectCandidate( methodToInherit, candidates, implementedByDeclared );
@@ -661,10 +620,6 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			return false;
 		}
 
-		/**
-		 * If the parent method is a selection or type-selection method,
-		 * propagate those flags to the overriding declared method.
-		 */
 		private void propagateSelectionFlags(
 				Member.HigherMethod declaredMethod, Member.HigherMethod parentMethod
 		) {
@@ -677,25 +632,14 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		/**
-		 * Phase 2: Resolve override-equivalent groups among candidates.
-		 * <p>
-		 * For each pair of candidates with the same signature, applies:
-		 * <ul>
-		 *   <li>Diamond duplicate removal: same method inherited via multiple paths
-		 *       (JLS 8.4.8.4, 9.4.1.3).</li>
-		 *   <li>Specificity resolution: when one interface is a subtype of another,
-		 *       the more specific method wins.</li>
-		 *   <li>Default method conflict detection (JLS 8.4.8.4 for classes, 9.4.1.3
-		 *       for interfaces): error if a default method is override-equivalent with
-		 *       another inherited method and no resolution applies.</li>
-		 * </ul>
-		 * <p>
-		 * Modifies {@code candidates} in place by removing duplicates/losers.
+		 * Resolve override-equivalent pairs in {@code candidates}, removing duplicates and
+		 * losers by specificity, diamond identity, or default-method resolution. Throws on
+		 * unresolvable conflicts (JLS 8.4.8.4 / 9.4.1.3). Modifies {@code candidates} in place.
 		 */
 		private void resolveOverrideEquivalentGroups(
 				List< Member.HigherMethod > candidates
 		) {
-			// Iterate backwards so we can safely remove elements while iterating.
+			// Backward iteration so removals don't shift unprocessed indices.
 			for( int i = candidates.size() - 1; i >= 0; i-- ) {
 				Member.HigherMethod m = candidates.get( i );
 				for( int j = 0; j < i; j++ ) {
@@ -717,7 +661,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 						i--; // adjust index since we removed before i
 						break;
 					}
-					// resolution == 0: both are abstract, keep both (checked in Phase 3)
+					// resolution == 0: both are abstract, keep both
 				}
 			}
 		}
@@ -733,29 +677,21 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		private int resolveOverrideEquivalentPair(
 				Member.HigherMethod m, Member.HigherMethod earlier
 		) {
-			boolean mIsDefault = m.isDefault();
-			boolean earlierIsDefault = earlier.isDefault();
-
 			GroundReferenceType mContext = m.declarationContext();
 			GroundReferenceType earlierContext = earlier.declarationContext();
 
-			// Specificity: one interface is a subtype of the other (JLS 8.4.8 C2
-			// condition e, 9.4.1 H1). The more specific method wins.
-			boolean mMoreSpecific = mContext.isSubtypeOf_relaxed( earlierContext );
-			boolean earlierMoreSpecific = earlierContext.isSubtypeOf_relaxed( mContext );
-			if( mMoreSpecific ) {
-				return 1; // m is more specific, remove earlier
+			// (JLS 8.4.8, 9.4.1) The more specific declarer wins.
+			if( mContext.isSubtypeOf_relaxed( earlierContext ) ) {
+				return 1;
 			}
-			if( earlierMoreSpecific ) {
-				return -1; // earlier is more specific, remove m
+			if( earlierContext.isSubtypeOf_relaxed( mContext ) ) {
+				return -1;
 			}
 
-			// Common ancestor diamond: two unrelated supertypes both inherited
-			// the same default method from a shared ancestor (JLS 8.4.8.4 G5,
-			// 9.4.1.3 J4).
-			if( mIsDefault && earlierIsDefault
+			// (JLS 8.4.8.4, 9.4.1.3) Diamond: same default method via two paths.
+			if( m.isDefault() && earlier.isDefault()
 					&& shareCommonDefaultOrigin( m, mContext, earlierContext ) ) {
-				return -1; // diamond, remove m
+				return -1;
 			}
 
 			// JLS 8.4.8.4: "It is a compile-time error if a class C inherits a default
@@ -766,14 +702,12 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			// JLS 9.4.1.3: "It is a compile-time error if an interface I inherits a
 			// default method whose signature is override-equivalent with another method
 			// inherited by I."
-			if( mIsDefault || earlierIsDefault ) {
+			if( m.isDefault() || earlier.isDefault() ) {
 				// For classes, check whether the superclass-abstract exception applies
-				if( !isInterface() ) {
-					if( hasSuperclassAbstractOverrideEquivalent( m ) ) {
-						// The superclass abstract method neutralizes the conflict.
-						// Keep both — Phase 4 will verify return-type compatibility.
-						return 0;
-					}
+				if( !isInterface() && hasSuperclassAbstractOverrideEquivalent( m ) ) {
+					// The superclass abstract method neutralizes the conflict.
+					// Keep both — Phase 4 will verify return-type compatibility.
+					return 0;
 				}
 				throw new StaticVerificationException(
 						"Duplicate default methods inherited. "
@@ -783,17 +717,13 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 								+ "' from '" + earlier.declarationContext() + "'" );
 			}
 
-			// Both abstract, or concrete from superclass + abstract from interface:
-			// keep both for return-type compatibility checking in Phase 3.
 			return 0;
 		}
 
 		/**
-		 * JLS 8.4.8.4 exception: checks whether there exists an abstract method declared
+		 * Checks whether there exists an abstract method declared
 		 * in a superclass of this class (and inherited by this class) that is
-		 * override-equivalent with the given method.
-		 * <p>
-		 * This only applies to classes (not interfaces).
+		 * override-equivalent with the given method. This only applies to classes (not interfaces).
 		 */
 		private boolean hasSuperclassAbstractOverrideEquivalent( Member.HigherMethod method ) {
 			if( !( this instanceof GroundClass gc ) ) {
@@ -801,19 +731,14 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			}
 			return gc.extendedClass()
 					.map( superclass -> superclass.methods()
-							.anyMatch( sm -> sm.isAbstract()
-									&& sm.isSubSignatureOf( method ) ) )
+							.anyMatch( sm -> sm.isAbstract() && sm.isSubSignatureOf( method ) ) )
 					.orElse( false );
 		}
 
 		/**
-		 * Phase 3: Checks compatibility constraints on the surviving candidate set.
-		 * <ul>
-		 *   <li>JLS 8.4.8.4 / 9.4.1.3: Among inherited override-equivalent methods,
-		 *       one must be return-type-substitutable for every other.</li>
-		 *   <li>JLS 8.1.5 / 8.4.3.1: A concrete class must implement all inherited
-		 *       abstract methods (unless satisfied by an inherited concrete method).</li>
-		 * </ul>
+		 * (JLS 8.4.8.4 / 9.4.1.3) Among override-equivalent inherited methods, one must be
+		 * return-type-substitutable for every other. (JLS 8.1.5 / 8.4.3.1) A concrete class
+		 * must implement every inherited abstract method.
 		 */
 		private void checkInheritedMethodCompatibility(
 				List< Member.HigherMethod > candidates,
@@ -867,7 +792,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 						&& !candidate.isAbstract()
 						&& candidate.isSubSignatureOf( abstractMethod )
 						&& candidate.isReturnTypeSubstitutableFor( abstractMethod ) ) {
-					return; // implementation found
+					return;
 				}
 			}
 			throw new StaticVerificationException( "'" + this + "' must either "
@@ -876,27 +801,14 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		/**
-		 * JLS 8.1.5 / 8.4.3.1: For concrete classes, checks whether the direct
-		 * superclass has abstract methods that are inaccessible from this class.
-		 * <p>
-		 * JLS 8.4.8.1 requires accessibility for overriding, so an inaccessible
-		 * abstract method (e.g., package-private in a different package) cannot be
-		 * overridden by any method in this class. If no declared or inherited method
-		 * satisfies it, this is an error.
+		 * (JLS 8.1.5 / 8.4.3.1) An inaccessible abstract superclass method can never be
+		 * overridden (JLS 8.4.8.1 requires accessibility), so any such method is always an
+		 * error for a concrete subclass.
 		 */
-		private void checkInaccessibleAbstractObligations(
-				GroundClass gc
-		) {
-			// JLS 8.1.5 / 8.4.3.1: A concrete class must implement every abstract
-			// method it inherits. If an abstract method from the direct superclass
-			// is inaccessible (package-private, from a different package), no method
-			// in the subclass can override it — the subclass can't see it to declare
-			// an override, and inherited methods can't override inaccessible methods.
-			// Therefore, any inaccessible abstract is always an error for concrete classes.
+		private void checkInaccessibleAbstractObligations( GroundClass gc ) {
 			gc.extendedClass().ifPresent( superclass ->
 					superclass.methods()
-							.filter( m -> m.isAbstract()
-									&& !m.isAccessibleFrom( this ) )
+							.filter( m -> m.isAbstract() && !m.isAccessibleFrom( this ) )
 							.forEach( m -> {
 								throw new StaticVerificationException(
 										"Implementation is not abstract and does not"
@@ -908,8 +820,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		/**
-		 * Checks whether two unrelated supertypes both inherited a default method
-		 * with the given signature from a common ancestor interface (diamond inheritance).
+		 * True if a common ancestor interface of {@code context1} and {@code context2}
+		 * declares a default method with {@code method}'s signature (diamond inheritance).
 		 */
 		private boolean shareCommonDefaultOrigin(
 				Member.HigherMethod method,
@@ -920,7 +832,6 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 					|| !( context2 instanceof GroundClassOrInterface c2 ) ) {
 				return false;
 			}
-			// Collect all super-interfaces of context2 (including itself)
 			Set< HigherClassOrInterface > context2Supers = new HashSet<>();
 			context2Supers.add( c2.typeConstructor() );
 			c2.allExtendedInterfaces().forEach( i -> context2Supers.add( i.typeConstructor() ) );
