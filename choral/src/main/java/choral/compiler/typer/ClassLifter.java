@@ -563,9 +563,9 @@ public class ClassLifter {
 
 
 	private void warn( String id, LiftException e ) {
-		opts.warningChannel().accept(
+		opts.info(
 				currentPosition,
-				"WARNING: Failed to lift " + id + " because " + e.getMessage() +
+				"ClassLifter failed to lift " + id + " because " + e.getMessage() +
 						" types are not supported"
 		);
 	}

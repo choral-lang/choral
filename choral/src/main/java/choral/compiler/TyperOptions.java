@@ -9,19 +9,19 @@ import java.util.function.BiConsumer;
  * Options for configuring {@link choral.compiler.Typer}.
  */
 public class TyperOptions {
-	private final VerbosityLevel verbosity;
-	private final boolean relaxed;
-	private final BiConsumer< Position, String > warningChannel;
+	private VerbosityLevel verbosity;
+	private boolean relaxed;
+	private BiConsumer< Position, String > infoChannel;
 
-	public TyperOptions( VerbosityLevel verbosity, BiConsumer< Position, String > warningChannel ) {
+	public TyperOptions( VerbosityLevel verbosity ) {
 		// Default to "normal" mode, where communications are written manually
-		this( verbosity, false, warningChannel );
+		this( verbosity, false, TyperOptions::stdInfo );
 	}
 
-	private TyperOptions( VerbosityLevel verbosity, boolean relaxed, BiConsumer< Position, String > warningChannel ) {
+	private TyperOptions( VerbosityLevel verbosity, boolean relaxed, BiConsumer< Position, String > infoChannel ) {
 		this.verbosity = verbosity;
 		this.relaxed = relaxed;
-		this.warningChannel = warningChannel;
+		this.infoChannel = infoChannel;
 	}
 
 	/** The verbosity level to use when debugging. */
@@ -32,23 +32,44 @@ public class TyperOptions {
 	 * inference. */
 	public boolean relaxed() { return relaxed; }
 
-	/** The channel where warning messages should be published.
-	 * The first argument is the position of the import or usage site that triggered the
-	 * warning (may be {@code null} if no position is available). */
-	public BiConsumer< Position, String > warningChannel() { return warningChannel; }
+	/**
+	 * Log an info message if verbosity is at least INFO.
+	 * @param position The position in the source code where the message is relevant (may be null)
+	 * @param msg The info message
+	 */
+	public void info( Position position, String msg ) {
+		if( verbosity.compareTo( VerbosityLevel.INFO ) >= 0 )
+			infoChannel.accept( position, msg );
+	}
+
+	/** The default info channel, which prints messages to standard error. */
+	private static void stdInfo( Position position, String msg ) {
+		if( position != null ) {
+			System.err.println( msg + " at " + position.formattedPosition() );
+		} else {
+			System.err.println( msg );
+		}
+	}
 
 	/**
 	 * @return A copy of TyperOptions with {@link #relaxed} mode enabled.
 	 */
 	public TyperOptions relaxedMode() {
-		return new TyperOptions( verbosity, true, warningChannel );
+		return new TyperOptions( verbosity, true, infoChannel );
 	}
 
 	/**
 	 * @return A copy of TyperOptions with {@link #relaxed} mode disabled.
 	 */
 	public TyperOptions normalMode() {
-		return new TyperOptions( verbosity, false, warningChannel );
+		return new TyperOptions( verbosity, false, infoChannel );
+	}
+
+	/**
+	 * @return A copy of TyperOptions with the given info channel.
+	 */
+	public TyperOptions withInfoChannel( BiConsumer< Position, String > infoChannel ) {
+		return new TyperOptions( verbosity, relaxed, infoChannel );
 	}
 
 }

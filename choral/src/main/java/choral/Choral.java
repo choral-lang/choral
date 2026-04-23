@@ -123,10 +123,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 										true, strictHeaderSearch )
 						)
 						.collect( Collectors.toList() );
-				TyperOptions typerOptions = new TyperOptions(
-						verbosityOptions.verbosity(),
-						verbosityOptions.warningChannel()
-				);
+				TyperOptions typerOptions = new TyperOptions( verbosityOptions.verbosity() );
 				Collection< CompilationUnit > annotatedUnits =
 						Typer.annotate( sourceUnits, headerUnits, typerOptions );
 				if( !skipProjectability ) {
@@ -217,10 +214,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 
 				AtomicReference< Collection< CompilationUnit > > annotatedUnits =
 						new AtomicReference<>( sourceUnits );
-				TyperOptions typerOptions = new TyperOptions(
-						verbosityOptions.verbosity(),
-						verbosityOptions.warningChannel()
-				);
+				TyperOptions typerOptions = new TyperOptions( verbosityOptions.verbosity() );
 
 				// If the user asks, we can insert missing communications by analyzing the
 				// source unit dataflow graphs.
@@ -328,10 +322,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 										true, strictHeaderSearch )
 						)
 						.collect( Collectors.toList() );
-				TyperOptions typerOptions = new TyperOptions(
-						verbosityOptions.verbosity(),
-						verbosityOptions.warningChannel()
-				);
+				TyperOptions typerOptions = new TyperOptions( verbosityOptions.verbosity() );
 				Collection< CompilationUnit > annotatedUnits =
 						Typer.annotate( sourceUnits, headerUnits, typerOptions );
 				annotatedUnits.parallelStream().map( HeaderCompiler::compile )
@@ -531,23 +522,14 @@ class VerbosityOptions {
 		}
 	}
 
-	@Option( names = { "--suppress-lifter-warnings" },
-			description = "Suppress warnings when a Java type cannot be lifted automatically." )
-	private boolean suppressLiftWarnings = false;
-
-	public BiConsumer< Position, String > warningChannel() {
-		if ( suppressLiftWarnings ) {
-			return ( position, message ) -> {};
-		} else {
-			return ( position, message ) -> {
-				if( position != null ) {
-					System.out.println( message + " at " + position.formattedPosition() );
-				} else {
-					System.out.println( message );
-				}
-			};
+	@Option( names = { "--info" },
+			description = "Enable info messages." )
+	private void setInfoLevel( boolean value ) {
+		if( value ) {
+			this.setVerbosity( VerbosityLevel.INFO );
 		}
 	}
+
 }
 
 @Command()
