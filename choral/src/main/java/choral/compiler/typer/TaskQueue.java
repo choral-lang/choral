@@ -15,8 +15,6 @@ import java.util.stream.Collectors;
 /**
  * A priority queue of typechecking tasks, sorted by @Typer.Phase. We use the queue to ensure
  * that tasks in phase N are all completed before those in phase N+1.
- * <p>
- * TODO What are "rounds"? When do we use the "status" of a task?
  */
 public class TaskQueue {
 
@@ -38,7 +36,7 @@ public class TaskQueue {
          */
         int rounds = 0;
 
-        @Override // overriden from Comparable
+        @Override
         public int compareTo(Task o) {
             int i = this.phase.compareTo(o.phase);
             if (i == 0) {
@@ -47,7 +45,7 @@ public class TaskQueue {
             return i;
         }
 
-        @Override // overriden from Runnable
+        @Override
         public void run() {
             if (status() == Task.Status.READY) {
                 status = Task.Status.PROCESSING;
@@ -56,7 +54,6 @@ public class TaskQueue {
             }
         }
 
-        // The isReady() check can fail when callling the isReady() method from memberTask
         public void prepare() {
             if (status() == Task.Status.WAITING) {
                 if (isReady()) {
@@ -67,7 +64,6 @@ public class TaskQueue {
             }
         }
 
-        // This method is actually necessary, it exists to be overriden in memberTask
         protected boolean isReady() {
             return true;
         }
@@ -128,21 +124,17 @@ public class TaskQueue {
             Comparator.naturalOrder());
 
     /**
-     * This method processes tasks in the priority queue up till the passed phase
-     *
-     * @param to the phase limiting how many tasks to be processed.
+     * This method processes tasks in the priority queue up til the given phase.
      */
     public void process(Phase to) {
         while (!tasks.isEmpty()) {
             // task at head of queue is of prior or same phase as "to"
             if (tasks.peek().phase.compareTo(to) < 1) {
                 Task task = tasks.poll();
-                // because TaskQueue.Task is used, this prepare() call will always set status to READY
-                // If the task isn't already PROCESSING or FINISHED
                 task.prepare();
                 switch (task.status()) {
                     case READY -> task.run();
-                    case WAITING -> enqueue(task); // so this case should never happen
+                    case WAITING -> enqueue(task);
                 }
             } else {
                 // no more tasks for this and prior phases
@@ -151,13 +143,9 @@ public class TaskQueue {
         }
     }
 
-    /**
-     * This method processes all tasks in the task queue
-     */
     public void process() {
         while (!tasks.isEmpty()) {
             Task task = tasks.poll();
-            // The issue mentioned in above method also occurs here
             task.prepare();
             switch (task.status()) {
                 case READY -> task.run();
@@ -167,10 +155,8 @@ public class TaskQueue {
     }
 
     /**
-     * Enqueues the passed task to the priority queue, if the status of the task is
-     * WAITING or READY
-     *
-     * @param t
+     * Enqueues the given task, silently dropping it if the status of the task is not
+     * WAITING or READY.
      */
     public void enqueue(Task t) {
         if (t.status() == Task.Status.WAITING || t.status() == Task.Status.READY) {
@@ -179,9 +165,7 @@ public class TaskQueue {
     }
 
     /**
-     * Enqueues the passed runnable to the priority queue as a task,
-     * with the passed phase as the phase the task should be run during.
-     *
+     * Enqueues the given runnable to the priority queue as a task.
      * @param p The phase during which the runnable should be run
      * @param t The runnable enqueued as a task.
      */
