@@ -383,7 +383,6 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 			}
 		} else {
 			System.err.println( "Internal compiler error." );
-			System.err.println( e instanceof MergeException );
 			e.printStackTrace();
 			System.err.println( "Please submit a bug report at " +
 					"https://github.com/choral-lang/choral/issues" );
