@@ -8,7 +8,9 @@ import choral.choralUnit.testUtils.TestUtils_A;
 import choral.examples.VitalsStreaming.VitalsStreaming_Device;
 import choral.channels.SymChannel_A;
 
-@Choreography( role = "Device", name = "VitalsStreamingTest" )
+@Choreography(
+		role = "Device",
+		name = "VitalsStreamingTest" )
 public class VitalsStreamingTest_Device {
 	@Test
 	public static void test1() {

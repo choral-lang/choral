@@ -69,7 +69,8 @@ public final class World extends TypeBase implements Comparable< World > {
 	public void setDeclarationContext( WorldParameterDeclarationContext declarationContext ) {
 		if( this.declarationContext != null ) {
 			throw new UnsupportedOperationException(
-					"world parameter '" + identifier + "' is already associated with a declaration context" );
+					"world parameter '" + identifier
+							+ "' is already associated with a declaration context" );
 		}
 		this.declarationContext = declarationContext;
 	}

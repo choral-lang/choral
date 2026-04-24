@@ -99,12 +99,13 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 	public Node visit( SwitchStatement n ) {
 		return new SwitchStatement(
 				safeVisit( n.guard() ),
-				n.cases().entrySet().stream().map( e ->
-						new AbstractMap.SimpleEntry< SwitchArgument< ? >, Statement >(
+				n.cases().entrySet().stream()
+						.map( e -> new AbstractMap.SimpleEntry< SwitchArgument< ? >, Statement >(
 								safeVisit( e.getKey() ), safeVisit( e.getValue() )
 						) {
-						} ).collect( Streams.toLinkedHashMap( Map.Entry::getKey, Map.Entry::getValue )
-				),
+						} )
+						.collect( Streams.toLinkedHashMap( Map.Entry::getKey, Map.Entry::getValue )
+						),
 				safeVisit( n.continuation() ),
 				n.position()
 		);
@@ -130,9 +131,10 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 	public Node visit( TryCatchStatement n ) {
 		return new TryCatchStatement(
 				safeVisit( n.body() ),
-				n.catches().stream().map( c ->
-						new Pair<>( safeVisit( c.left() ), safeVisit( c.right() ) )
-				).collect( Collectors.toList() ), safeVisit( n.continuation() ),
+				n.catches().stream()
+						.map( c -> new Pair<>( safeVisit( c.left() ), safeVisit( c.right() ) )
+						).collect( Collectors.toList() ),
+				safeVisit( n.continuation() ),
 				n.position()
 		);
 	}

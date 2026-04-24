@@ -102,7 +102,8 @@ public final class HigherEnum extends HigherClass implements Enum {
 			return this;
 		} else {
 			throw new StaticVerificationException(
-					"illegal type instantiation: expected 0 type arguments but found " + typeArgs.size() );
+					"illegal type instantiation: expected 0 type arguments but found "
+							+ typeArgs.size() );
 		}
 	}
 
@@ -159,7 +160,8 @@ public final class HigherEnum extends HigherClass implements Enum {
 		public void addCase( String identifier ) {
 			if( cases.contains( identifier ) ) {
 				throw new StaticVerificationException( "duplicate case '" + identifier + "' in "
-						+ typeConstructor().variety().labelSingular + " '" + typeConstructor() + "'" );
+						+ typeConstructor().variety().labelSingular + " '" + typeConstructor()
+						+ "'" );
 			}
 			if( declaredFields().anyMatch( x -> x.identifier().equals( identifier ) ) ) {
 				throw new StaticVerificationException( "duplicate variable '" + identifier + "', "
@@ -177,7 +179,8 @@ public final class HigherEnum extends HigherClass implements Enum {
 			if( cases.contains( field.identifier() ) ) {
 				throw new StaticVerificationException(
 						"duplicate variable '" + field.identifier() + "', "
-								+ typeConstructor().variety().labelSingular + " '" + typeConstructor()
+								+ typeConstructor().variety().labelSingular + " '"
+								+ typeConstructor()
 								+ "'  contains a case with the same identifier" );
 			}
 			super.addField( field );

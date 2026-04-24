@@ -13,65 +13,64 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class ChoralLanguageServer implements LanguageServer, LanguageClientAware {
-    private final ChoralTextDocumentService textDocumentService;
-    private final ChoralWorkspaceService workspaceService;
-    private LanguageClient client;
-    private boolean shutdownReceived = false;
-    
-    public ChoralLanguageServer() {
-        textDocumentService = new ChoralTextDocumentService();
-        workspaceService = new ChoralWorkspaceService();
-    }
+	private final ChoralTextDocumentService textDocumentService;
+	private final ChoralWorkspaceService workspaceService;
+	private LanguageClient client;
+	private boolean shutdownReceived = false;
 
-    @Override
-    public TextDocumentService getTextDocumentService(){
-        return textDocumentService;
-    }
+	public ChoralLanguageServer() {
+		textDocumentService = new ChoralTextDocumentService();
+		workspaceService = new ChoralWorkspaceService();
+	}
 
-    @Override
-    public WorkspaceService getWorkspaceService(){
-        return workspaceService;
-    }
+	@Override
+	public TextDocumentService getTextDocumentService() {
+		return textDocumentService;
+	}
 
-    /**
-     * When the client wants the server to shut down, it calls this method, waits for a response,
-     * and then calls {@link #exit()}.
-     */
-    @Override
-    public CompletableFuture<Object> shutdown(){
-        shutdownReceived = true;
-        return CompletableFuture.completedFuture(null);
-    }
+	@Override
+	public WorkspaceService getWorkspaceService() {
+		return workspaceService;
+	}
 
-    /** This method is invoked after {@link #shutdown()}. */
-    @Override
-    public void exit(){
-        if (shutdownReceived) {
-            System.exit(0);
-        }
-        else {
-            System.exit(1);
-        }
-    }
+	/**
+	 * When the client wants the server to shut down, it calls this method, waits for a response,
+	 * and then calls {@link #exit()}.
+	 */
+	@Override
+	public CompletableFuture< Object > shutdown() {
+		shutdownReceived = true;
+		return CompletableFuture.completedFuture( null );
+	}
 
-    @Override
-    public CompletableFuture<InitializeResult> initialize(InitializeParams params){
-        ServerCapabilities capabilities = new ServerCapabilities();
-        // Ask the client to send the full content of documents on each change
-        capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
+	/** This method is invoked after {@link #shutdown()}. */
+	@Override
+	public void exit() {
+		if( shutdownReceived ) {
+			System.exit( 0 );
+		} else {
+			System.exit( 1 );
+		}
+	}
 
-        return CompletableFuture.completedFuture(new InitializeResult(capabilities));
-    }
+	@Override
+	public CompletableFuture< InitializeResult > initialize( InitializeParams params ) {
+		ServerCapabilities capabilities = new ServerCapabilities();
+		// Ask the client to send the full content of documents on each change
+		capabilities.setTextDocumentSync( TextDocumentSyncKind.Full );
 
-    @Override
-    public void connect(LanguageClient client){
-        System.err.println("Client connected in Language Server");
-        this.client = client;
-        textDocumentService.setClient(client);
+		return CompletableFuture.completedFuture( new InitializeResult( capabilities ) );
+	}
+
+	@Override
+	public void connect( LanguageClient client ) {
+		System.err.println( "Client connected in Language Server" );
+		this.client = client;
+		textDocumentService.setClient( client );
 		workspaceService.setClient( client );
-    }
+	}
 
-    public LanguageClient getClient(){
-        return client;
-    }
+	public LanguageClient getClient() {
+		return client;
+	}
 }

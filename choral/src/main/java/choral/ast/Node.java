@@ -42,7 +42,9 @@ public abstract class Node {
 		return this.position;
 	}
 
-	public boolean hasPosition() { return position() != null; }
+	public boolean hasPosition() {
+		return position() != null;
+	}
 
 	public void setPosition( Position position ) {
 		this.position = position;

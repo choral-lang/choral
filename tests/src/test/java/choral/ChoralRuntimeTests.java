@@ -9,17 +9,18 @@ import choral.choralUnit.ChoralUnit;
 
 public class ChoralRuntimeTests {
 
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "VitalsStreamingTest",
-            "MergesortTest",
-            "QuicksortTest",
-            "KaratsubaTest"
-    })
-    public void unitTests(String name) {
-        assertDoesNotThrow(() -> {
-            ChoralUnit.main(new String[] { name });
-        });
-    }
+	@ParameterizedTest
+	@ValueSource(
+			strings = {
+					"VitalsStreamingTest",
+					"MergesortTest",
+					"QuicksortTest",
+					"KaratsubaTest"
+			} )
+	public void unitTests( String name ) {
+		assertDoesNotThrow( () -> {
+			ChoralUnit.main( new String[] { name } );
+		} );
+	}
 
 }

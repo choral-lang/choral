@@ -6,10 +6,13 @@ import choral.examples.VitalsStreamingUtils.Vitals;
 import choral.annotations.Choreography;
 import choral.examples.VitalsStreamingUtils.PatientsRegistry;
 
-@Choreography( role = "A", name = "VitalsStreamingHelper" )
+@Choreography(
+		role = "A",
+		name = "VitalsStreamingHelper" )
 class VitalsStreamingHelper {
 	static Vitals pseudonymise( Vitals vitals ) {
-		return new Vitals( PatientsRegistry.getPseudoID( vitals.id() ), vitals.heartRate(), vitals.temperature(), vitals.motion() );
+		return new Vitals( PatientsRegistry.getPseudoID( vitals.id() ), vitals.heartRate(),
+				vitals.temperature(), vitals.motion() );
 	}
 
 	static Boolean checkSignature( Signature signature ) {

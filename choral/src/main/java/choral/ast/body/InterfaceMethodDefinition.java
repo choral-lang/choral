@@ -58,15 +58,15 @@ public class InterfaceMethodDefinition extends MethodDefinition {
 	}
 
 	public boolean isAbstract() {
-		return modifiers.contains(InterfaceMethodModifier.ABSTRACT);
+		return modifiers.contains( InterfaceMethodModifier.ABSTRACT );
 	}
 
 	public boolean isDefault() {
-		return modifiers.contains(InterfaceMethodModifier.DEFAULT);
+		return modifiers.contains( InterfaceMethodModifier.DEFAULT );
 	}
 
 	public boolean isStatic() {
-		return modifiers.contains(InterfaceMethodModifier.STATIC);
+		return modifiers.contains( InterfaceMethodModifier.STATIC );
 	}
 
 	@Override

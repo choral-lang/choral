@@ -19,7 +19,8 @@ public final class CallableScope
 
 	final Member.HigherCallable callable;
 	private final ClassOrInterfaceScope parent;
-	private final Map< HigherTypeParameter, TypeParameterScope > typeParameterScopes = new HashMap<>();
+	private final Map< HigherTypeParameter, TypeParameterScope > typeParameterScopes =
+			new HashMap<>();
 	private CallableBodyScope bodyScope;
 
 	public CallableScope( ClassOrInterfaceScope parent, Member.HigherCallable callable ) {

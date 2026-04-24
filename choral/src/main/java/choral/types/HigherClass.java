@@ -143,13 +143,16 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 			if( type.typeConstructor() == universe().specialType( Universe.SpecialTypeTag.ENUM )
 					&& variety() != Variety.ENUM ) {
 				throw new StaticVerificationException(
-						"illegal inheritance, only enum types can inherit from '" + universe().specialType(
-								Universe.SpecialTypeTag.ENUM ) + "'" );
+						"illegal inheritance, only enum types can inherit from '"
+								+ universe().specialType(
+										Universe.SpecialTypeTag.ENUM )
+								+ "'" );
 			}
 			if( type.worldArguments().size() != worldArguments().size() ||
 					!type.worldArguments().containsAll( worldParameters ) ) {
 				throw new StaticVerificationException(
-						"illegal inheritance, '" + type + "' and '" + this + "' must have the same roles" );
+						"illegal inheritance, '" + type + "' and '" + this
+								+ "' must have the same roles" );
 			}
 			extendedClass = type;
 		}
@@ -172,15 +175,16 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo( type ) )
 					|| ( extendedClass().isPresent() && extendedClass().get().isSubtypeOf( type,
-					false ) )
+							false ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) );
 		}
 
 		@Override
 		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo_relaxed( type ) )
-					|| ( extendedClass().isPresent() && extendedClass().get().isSubtypeOf_relaxed( type,
-					false ) )
+					|| ( extendedClass().isPresent()
+							&& extendedClass().get().isSubtypeOf_relaxed( type,
+									false ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) );
 		}
 
@@ -190,9 +194,11 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 			if( constructors.isEmpty() ) {
 				if( extendedClass != null
 						&& extendedClass.constructors().filter( x -> x.isAccessibleFrom( this ) )
-						.noneMatch( x -> x.typeParameters().size() == 0 && x.arity() == 0 ) ) {
+								.noneMatch(
+										x -> x.typeParameters().size() == 0 && x.arity() == 0 ) ) {
 					throw new StaticVerificationException(
-							"there is no default constructor available in '" + extendedClass + "'" );
+							"there is no default constructor available in '" + extendedClass
+									+ "'" );
 				} else {
 					Member.HigherConstructor c = new Member.HigherConstructor(
 							this,
@@ -263,15 +269,16 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo( type ) )
 					|| ( extendedClass().isPresent() && extendedClass().get().isSubtypeOf( type,
-					false ) )
+							false ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) );
 		}
 
 		@Override
 		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo_relaxed( type ) )
-					|| ( extendedClass().isPresent() && extendedClass().get().isSubtypeOf_relaxed( type,
-					false ) )
+					|| ( extendedClass().isPresent()
+							&& extendedClass().get().isSubtypeOf_relaxed( type,
+									false ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) );
 		}
 

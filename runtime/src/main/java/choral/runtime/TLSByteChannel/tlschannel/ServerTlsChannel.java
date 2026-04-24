@@ -118,7 +118,8 @@ public class ServerTlsChannel implements TlsChannel {
 	public static class Builder extends TlsChannelBuilder< Builder > {
 
 		private final SslContextStrategy internalSslContextFactory;
-		private Function< SSLContext, SSLEngine > sslEngineFactory = ServerTlsChannel::defaultSSLEngineFactory;
+		private Function< SSLContext, SSLEngine > sslEngineFactory =
+				ServerTlsChannel::defaultSSLEngineFactory;
 
 		private Builder( ByteChannel underlying, SSLContext sslContext ) {
 			super( underlying );
@@ -382,7 +383,8 @@ public class ServerTlsChannel implements TlsChannel {
 		}
 	}
 
-	private Optional< SNIServerName > getServerNameIndication() throws IOException, TlsChannelImpl.EofException {
+	private Optional< SNIServerName > getServerNameIndication()
+			throws IOException, TlsChannelImpl.EofException {
 		inEncrypted.prepare();
 		try {
 			int recordHeaderSize = readRecordHeaderSize();

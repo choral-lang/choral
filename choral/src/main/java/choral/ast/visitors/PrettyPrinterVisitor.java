@@ -60,11 +60,13 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( CompilationUnit n ) {
-		return ( n.packageDeclaration().isPresent() ? PACKAGE + " " + n.packageDeclaration().get() + SEMICOLON + _2NEWLINE : "" )
-				+ visitAndCollect( n.imports(), SEMICOLON + NEWLINE, SEMICOLON + _2NEWLINE )
-				+ visitAndCollect( n.interfaces(), NEWLINE, NEWLINE )
-				+ visitAndCollect( n.enums(), NEWLINE, NEWLINE )
-				+ visitAndCollect( n.classes(), NEWLINE, NEWLINE );
+		return ( n.packageDeclaration().isPresent() ?
+				PACKAGE + " " + n.packageDeclaration().get() + SEMICOLON + _2NEWLINE :
+				"" ) + visitAndCollect( n.imports(), SEMICOLON + NEWLINE,
+						SEMICOLON + _2NEWLINE ) + visitAndCollect( n.interfaces(), NEWLINE,
+								NEWLINE ) + visitAndCollect( n.enums(), NEWLINE,
+										NEWLINE ) + visitAndCollect( n.classes(), NEWLINE,
+												NEWLINE );
 	}
 
 	@Override
@@ -220,10 +222,10 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 				"$body" + NEWLINE +
 				"}" + NEWLINE + "$catches";
 		m.put( "body", indent( visit( n.body() ) ) );
-		String catches = n.catches().stream().map( e ->
-				"catch ( " + visit( e.left(), " " ) + " ) { " + NEWLINE +
+		String catches = n.catches().stream()
+				.map( e -> "catch ( " + visit( e.left(), " " ) + " ) { " + NEWLINE +
 						indent( visit( e.right() ) ) + NEWLINE + "}"
-		).collect( Collectors.joining( NEWLINE ) );
+				).collect( Collectors.joining( NEWLINE ) );
 		m.put( "catches", catches );
 
 		return Utils.createVelocityTemplate( template )
@@ -261,11 +263,10 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( ClassInstantiationExpression n ) {
-		return
-				"new " + ( n.typeArguments().isEmpty() ? "" : "< " + visitAndCollect(
-						n.typeArguments(), SPACED_COMMA ) + " >" ) + visit( n.typeExpression() ) +
-						( n.arguments().isEmpty() ? "()" : "( " + visitAndCollect( n.arguments(),
-								SPACED_COMMA ) + " )" );
+		return "new " + ( n.typeArguments().isEmpty() ? "" : "< " + visitAndCollect(
+				n.typeArguments(), SPACED_COMMA ) + " >" ) + visit( n.typeExpression() ) +
+				( n.arguments().isEmpty() ? "()" : "( " + visitAndCollect( n.arguments(),
+						SPACED_COMMA ) + " )" );
 	}
 
 	@Override
@@ -290,12 +291,11 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( MethodCallExpression n ) {
-		return
-				( n.typeArguments().isEmpty() ? "" : "< " + visitAndCollect( n.typeArguments(),
-						SPACED_COMMA ) + " >" )
-						+ visit( n.name() )
-						+ ( n.arguments().isEmpty() ? "()" : "( " + visitAndCollect( n.arguments(),
-						SPACED_COMMA ) + " )" );
+		return ( n.typeArguments().isEmpty() ? "" : "< " + visitAndCollect( n.typeArguments(),
+				SPACED_COMMA ) + " >" ) + visit(
+						n.name() ) + ( n.arguments().isEmpty() ? "()" :
+								"( " + visitAndCollect( n.arguments(),
+										SPACED_COMMA ) + " )" );
 	}
 
 	@Override
@@ -371,11 +371,11 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		} else {
 			String pattern = null;
 
-			if ( n instanceof SwitchArgument.SwitchArgumentLiteral l ) {
+			if( n instanceof SwitchArgument.SwitchArgumentLiteral l ) {
 				pattern = l.argument().content().toString();
-			} else if ( n instanceof SwitchArgument.SwitchArgumentLabel l ) {
+			} else if( n instanceof SwitchArgument.SwitchArgumentLabel l ) {
 				pattern = l.argument().identifier();
-			} else if ( n instanceof SwitchArgument.SwitchArgumentClassLabel l ) {
+			} else if( n instanceof SwitchArgument.SwitchArgumentClassLabel l ) {
 				Pair< Name, Name > arg = l.argument();
 				pattern = arg.left().identifier() + " " + arg.right().identifier();
 			}
@@ -469,12 +469,11 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( MethodSignature n ) {
-		return
-				( n.typeParameters().isEmpty() ? "" : "< " + visitAndCollect( n.typeParameters(),
-						SPACED_COMMA ) + " > " )
-						+ visit( n.returnType() )
-						+ " " + n.name()
-						+ ( n.parameters().isEmpty() ? "()" : "( " + visitAndCollect(
+		return ( n.typeParameters().isEmpty() ? "" : "< " + visitAndCollect( n.typeParameters(),
+				SPACED_COMMA ) + " > " )
+				+ visit( n.returnType() )
+				+ " " + n.name()
+				+ ( n.parameters().isEmpty() ? "()" : "( " + visitAndCollect(
 						n.parameters(), SPACED_COMMA ) + " )" );
 	}
 
@@ -486,17 +485,18 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		m.put( "signature", visit( n.signature() ) );
 		m.put( "body", indent( visit( n.body() ) ) );
 
-		String template = "${annotations}$modifiers$signature {" + NEWLINE + "$body" + NEWLINE + "}";
+		String template =
+				"${annotations}$modifiers$signature {" + NEWLINE + "$body" + NEWLINE + "}";
 		return Utils.createVelocityTemplate( template ).render( m );
 	}
 
 	@Override
 	public String visit( ConstructorSignature n ) {
 		return ( n.typeParameters().isEmpty() ? "" : "< " + visitAndCollect( n.typeParameters(),
-				SPACED_COMMA ) + " > " ) +
-				n.name() +
-				( n.parameters().isEmpty() ? "()" : "( " + visitAndCollect( n.parameters(),
-						SPACED_COMMA ) + " )" );
+				SPACED_COMMA ) + " > " ) + n
+						.name() + ( n.parameters().isEmpty() ? "()" :
+								"( " + visitAndCollect( n.parameters(),
+										SPACED_COMMA ) + " )" );
 	}
 
 	@Override
@@ -511,11 +511,11 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( TypeExpression n ) {
-		return n.name() +
-				( n.worldArguments().isEmpty() ? "" : "@( " + visitAndCollect( n.worldArguments(),
-						SPACED_COMMA ) + " )" ) +
-				( n.typeArguments().isEmpty() ? "" : "< " + visitAndCollect( n.typeArguments(),
-						SPACED_COMMA ) + " >" );
+		return n.name() + ( n.worldArguments().isEmpty() ? "" :
+				"@( " + visitAndCollect( n.worldArguments(),
+						SPACED_COMMA ) + " )" ) + ( n.typeArguments().isEmpty() ? "" :
+								"< " + visitAndCollect( n.typeArguments(),
+										SPACED_COMMA ) + " >" );
 	}
 
 	@Override
@@ -530,14 +530,13 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( Annotation n ) {
-		return ANNOTATION
-				+ n.getName().identifier()
-				+ ( n.getValues().isEmpty() ? ""
-				: "( " + n.getValues().entrySet().stream()
-				.map( e -> e.getKey().identifier() + " " + AssignExpression.Operator.ASSIGN.symbol() + " " + visit(
-						e.getValue() ) )
-				.collect( Collectors.joining( SPACED_COMMA ) ) + " )"
-		);
+		return ANNOTATION + n.getName()
+				.identifier() + ( n.getValues().isEmpty() ? "" :
+						"( " + n.getValues().entrySet().stream()
+								.map( e -> e.getKey().identifier() + " "
+										+ AssignExpression.Operator.ASSIGN.symbol() + " " + visit(
+												e.getValue() ) )
+								.collect( Collectors.joining( SPACED_COMMA ) ) + " )" );
 	}
 
 	@Override

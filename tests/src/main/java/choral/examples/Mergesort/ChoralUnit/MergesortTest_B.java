@@ -9,7 +9,9 @@ import choral.channels.SymChannel_A;
 import choral.channels.SymChannel_B;
 import choral.choralUnit.testUtils.TestUtils_B;
 
-@Choreography( role = "B", name = "MergesortTest" )
+@Choreography(
+		role = "B",
+		name = "MergesortTest" )
 public class MergesortTest_B {
 	@Test
 	public static void test1() {

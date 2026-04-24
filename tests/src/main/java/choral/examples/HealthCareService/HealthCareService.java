@@ -33,15 +33,13 @@ public class HealthCareService {
 		TLSChannel_A< Object > toIP = HealthIdentityProvider.connect();
 		TLSChannel_A< Object > toStorage = Storage.connect();
 		AuthResult_A authResult = new DistAuth_Client( toIP ).authenticate( getCredentials() );
-		authResult.left().ifPresent( token ->
-				DeviceRegistry
-						.parallelStream()
-						.map( Device::connect )
-						.map( VitalsStreaming_Gatherer::new )
-						.forEach( vs ->
-								vs.gather( data -> toStorage.< StorageMsg >com(
-										new StorageMsg( token, data ) ) )
-						)
+		authResult.left().ifPresent( token -> DeviceRegistry
+				.parallelStream()
+				.map( Device::connect )
+				.map( VitalsStreaming_Gatherer::new )
+				.forEach( vs -> vs.gather( data -> toStorage.< StorageMsg >com(
+						new StorageMsg( token, data ) ) )
+				)
 		);
 		Storage.disconnect();
 	}

@@ -5,15 +5,19 @@ import choral.annotations.Choreography;
 import choral.lang.Unit;
 import choral.DistAuth.EnumBoolean;
 
-@Choreography( role = "S1", name = "DistAuth5" )
+@Choreography(
+		role = "S1",
+		name = "DistAuth5" )
 public class DistAuth5_S1 {
-	private TLSChannel_A < Object > ch_s1;
+	private TLSChannel_A< Object > ch_s1;
 
-	public DistAuth5_S1( Unit ch_Client_IP, Unit ch_Service_IP, TLSChannel_A < Object > ch_s1, Unit ch_s2 ) {
+	public DistAuth5_S1(
+			Unit ch_Client_IP, Unit ch_Service_IP, TLSChannel_A< Object > ch_s1, Unit ch_s2
+	) {
 		this( ch_s1 );
 	}
 
-	public DistAuth5_S1( TLSChannel_A < Object > ch_s1 ) {
+	public DistAuth5_S1( TLSChannel_A< Object > ch_s1 ) {
 		this.ch_s1 = ch_s1;
 	}
 
@@ -30,7 +34,7 @@ public class DistAuth5_S1 {
 	public Unit authenticate() {
 		calcHash( Unit.id, Unit.id );
 		{
-			switch( ch_s1.< EnumBoolean >select( Unit.id ) ){
+			switch( ch_s1.< EnumBoolean >select( Unit.id ) ) {
 				case True -> {
 					return Unit.id;
 				}

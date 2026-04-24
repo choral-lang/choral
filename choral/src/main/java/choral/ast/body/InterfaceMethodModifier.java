@@ -26,8 +26,8 @@ public enum InterfaceMethodModifier {
 	PUBLIC( "public" ),
 	// PRIVATE("private"),
 	ABSTRACT( "abstract" ),
-	STATIC("static"),
-	DEFAULT("default");
+	STATIC( "static" ),
+	DEFAULT( "default" );
 
 	public final String label;
 

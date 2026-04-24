@@ -66,12 +66,14 @@ public class MethodCallExpression extends InvocationExpression {
 	}
 
 	public boolean isSelect() {
-		return ( methodAnnotation != null ) && methodAnnotation.higherCallable().isSelectionMethod();
+		return ( methodAnnotation != null )
+				&& methodAnnotation.higherCallable().isSelectionMethod();
 	}
 
-    public boolean isTypeSelect() {
-        return ( methodAnnotation != null ) && methodAnnotation.higherCallable().isTypeSelectionMethod();
-    }
+	public boolean isTypeSelect() {
+		return ( methodAnnotation != null )
+				&& methodAnnotation.higherCallable().isTypeSelectionMethod();
+	}
 
 	private Member.GroundMethod methodAnnotation;
 
@@ -93,8 +95,9 @@ public class MethodCallExpression extends InvocationExpression {
 	}
 
 	@Override
-	public String toString(){
-		return name.toString() + arguments().stream().map( arg -> arg.toString() ).collect( Collectors.joining(", ", "(", ")") );
+	public String toString() {
+		return name.toString() + arguments().stream().map( arg -> arg.toString() )
+				.collect( Collectors.joining( ", ", "(", ")" ) );
 	}
 
 	@Override
@@ -111,7 +114,8 @@ public class MethodCallExpression extends InvocationExpression {
 					this.position().line() + ":"
 							+ this.position().column() + ":"
 							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-							this ) + "\n with " + n.getClass().getSimpleName() );
+									this )
+							+ "\n with " + n.getClass().getSimpleName() );
 		}
 	}
 }

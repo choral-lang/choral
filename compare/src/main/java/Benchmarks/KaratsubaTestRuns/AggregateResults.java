@@ -34,7 +34,7 @@ public class AggregateResults {
 				List< String > list = Arrays.stream( results.split( "," ) ).toList();
 				List< Double > list_double_raw = list.stream().mapToDouble(
 						Double::parseDouble ).boxed().sorted( Comparator.naturalOrder() ).collect(
-						Collectors.toList() );
+								Collectors.toList() );
 				double avg = list_double_raw.stream().mapToDouble( i -> i ).average().getAsDouble();
 //				double stdev = new StandardDeviation().evaluate( list_double_raw.stream().mapToDouble( i -> i ).toArray() );
 				System.out.println( "(" + map.get( tier ) + "," + avg + ")" );

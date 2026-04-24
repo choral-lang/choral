@@ -366,21 +366,21 @@ public class Compiler {
 					projectableTemplates.addAll(
 							new DependencyVisitor( targetCompilationUnits,
 									targetWorld ).collectTemplates(
-									targetSymbol )
+											targetSymbol )
 					);
 				}
 			}
 
 			// we project them into different lists
-			projectableTemplates.forEach( pt ->
-					compilableCUs.add( projectAndEncloseInCompilationUnit(
-									pt.packageDeclaration(),
-									pt.imports(),
-									pt.worldArgument(),
-									pt.node()
-							)
+			projectableTemplates
+					.forEach( pt -> compilableCUs.add( projectAndEncloseInCompilationUnit(
+							pt.packageDeclaration(),
+							pt.imports(),
+							pt.worldArgument(),
+							pt.node()
 					)
-			);
+					)
+					);
 		} else {
 			log( Level.INFO, "EndPoint Projection skipped." );
 		}
@@ -398,7 +398,7 @@ public class Compiler {
 		if( !isDryRun ) {
 			Collection< ? extends SourceObject > sources = compilableCUs.stream().map(
 					JavaCompiler::compile ).flatMap( Collection::stream ).collect(
-					Collectors.toList() );
+							Collectors.toList() );
 			for( SourceObject source : sources ) {
 				SourceWriter.writeSource( source, Paths.get( destinationFolder ) );
 			}
@@ -540,15 +540,15 @@ public class Compiler {
 		LOGGER.log( level, message );
 	}
 
-    /*public static void printInLispFormat(String src) {
-        // toStringTree modifies the shape of the tree
-        // and it cannot be used by other visitors!
-        System.out.println("\n\n* * * * * * LISP Format * * * * * *");
-        ChoralParser p = parseSource(src);
-        System.out.println(p.compilationUnit().toStringTree(p));
-        System.out.println("\n* * * * * * LISP Format * * * * * * \n");
-        //		System.out.println( PrettyTree.toPrettyTree( tree, Arrays.asList( parser.getRuleNames() ) ) );
-    }*/
+	/*public static void printInLispFormat(String src) {
+	    // toStringTree modifies the shape of the tree
+	    // and it cannot be used by other visitors!
+	    System.out.println("\n\n* * * * * * LISP Format * * * * * *");
+	    ChoralParser p = parseSource(src);
+	    System.out.println(p.compilationUnit().toStringTree(p));
+	    System.out.println("\n* * * * * * LISP Format * * * * * * \n");
+	    //		System.out.println( PrettyTree.toPrettyTree( tree, Arrays.asList( parser.getRuleNames() ) ) );
+	}*/
 
 	// = = = = = = = = = = = = = PROFILING = = = = = = = = = = = = = = = = = = = =
 

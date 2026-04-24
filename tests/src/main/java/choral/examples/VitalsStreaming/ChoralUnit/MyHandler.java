@@ -7,7 +7,9 @@ import java.util.function.Consumer;
 import choral.annotations.Choreography;
 import choral.choralUnit.Assert;
 
-@Choreography( role = "Role", name = "MyHandler" )
+@Choreography(
+		role = "Role",
+		name = "MyHandler" )
 class MyHandler implements Consumer< Vitals > {
 	@Override
 	public void accept( Vitals o ) {

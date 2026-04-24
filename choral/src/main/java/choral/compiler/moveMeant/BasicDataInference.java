@@ -56,20 +56,20 @@ public class BasicDataInference {
 	/** An object containing all selections to be inserted */
 	Selections selections;
 	/** A map mapping from a statement to a list of all dependencies within that statement */
-	Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
+	Map< Statement, List< Dependency > > amendedStatements = new HashMap<>();
 
-	public BasicDataInference( Selections selections ){
+	public BasicDataInference( Selections selections ) {
 		this.selections = selections;
 	}
 
-	public CompilationUnit inferComms( CompilationUnit cu ){
-		
+	public CompilationUnit inferComms( CompilationUnit cu ) {
+
 		// make the map containing all dependencies
-		buildAmendedStatements(cu);
-		
+		buildAmendedStatements( cu );
+
 		// Since everything in a CompilationUnit is final (in particular Statemetns and 
 		// Expressions) we need to create a new CompilationUnit
-		return createNewCompilationUnit( cu ); 
+		return createNewCompilationUnit( cu );
 	}
 
 	/**
@@ -77,49 +77,53 @@ public class BasicDataInference {
 	 * their dependencies, creates {@code Dependency} objects to store the dependencies 
 	 * and collects them in {@code amendedStatements}.
 	 */
-	private void buildAmendedStatements( CompilationUnit cu ){
-		for( HigherCallable method : Utils.getJustMethods(cu) ){
-			for( Entry<World, List<Pair<Expression, Statement>>> entryset : method.worldDependencies().entrySet() ){
-				
+	private void buildAmendedStatements( CompilationUnit cu ) {
+		for( HigherCallable method : Utils.getJustMethods( cu ) ) {
+			for( Entry< World, List< Pair< Expression, Statement > > > entryset : method
+					.worldDependencies().entrySet() ) {
+
 				World receiver = entryset.getKey();
-				
-				for( Pair<Expression, Statement> dependencyPair : entryset.getValue() ){
+
+				for( Pair< Expression, Statement > dependencyPair : entryset.getValue() ) {
 					Expression dependencyExpression = dependencyPair.left();
 					Statement dependencyStatement = dependencyPair.right();
 
-					Dependency newDependency = new Dependency(dependencyExpression);
+					Dependency newDependency = new Dependency( dependencyExpression );
 
 					// Extract sender from dependency (what world needs to send data)
-					World sender = getSender(dependencyExpression);
-					
+					World sender = getSender( dependencyExpression );
+
 					//System.out.println( "Role " + receiver + " needs " + dependencyExpression + " from role " + sender );
-					
+
 					// Find a viable communication method
-					Pair<Pair<String, GroundInterface>, HigherMethod> comPair = Utils.findComMethod(
-						receiver, 
-						sender, 
-						(GroundDataType)dependencyExpression.typeAnnotation().get(),
-						method.channels());
-					
-					if( comPair == null ){
+					Pair< Pair< String, GroundInterface >, HigherMethod > comPair =
+							Utils.findComMethod(
+									receiver,
+									sender,
+									(GroundDataType) dependencyExpression.typeAnnotation().get(),
+									method.channels() );
+
+					if( comPair == null ) {
 						// No viable communication method was found.
-						throw new CommunicationInferenceException( "No viable communication method was found for the dependency " + dependencyExpression );
+						throw new CommunicationInferenceException(
+								"No viable communication method was found for the dependency "
+										+ dependencyExpression );
 					}
 
 					// This pair consists of the channel's identifier and its type.
-					Pair<String, GroundInterface> comChannelPair = comPair.left();
-					
+					Pair< String, GroundInterface > comChannelPair = comPair.left();
+
 					newDependency.setChannel( comChannelPair.left(), comChannelPair.right() );
 					newDependency.setComMethod( comPair.right() );
 
 					// Put the dependency in a list to be accessible later
-					amendedStatements.putIfAbsent(dependencyStatement, new ArrayList<>());
-					amendedStatements.get(dependencyStatement).add( newDependency );
+					amendedStatements.putIfAbsent( dependencyStatement, new ArrayList<>() );
+					amendedStatements.get( dependencyStatement ).add( newDependency );
 				}
 			}
 			// clears the dependencies of the method so they won't accidentally considered twice
 			// (probably not needed) 
-			method.clearDependencies(); 
+			method.clearDependencies();
 		}
 	}
 
@@ -130,24 +134,28 @@ public class BasicDataInference {
 	 * If the dependency expression is a method call, the type-annotation is set to 
 	 * be equal to the method annotation.
 	 */
-	private World getSender( Expression dependencyExpression ){
+	private World getSender( Expression dependencyExpression ) {
 		// Extract senders from dependency (what world(s) needs to send data)
-		List<? extends World> senders;
-		if( dependencyExpression instanceof MethodCallExpression ){
+		List< ? extends World > senders;
+		if( dependencyExpression instanceof MethodCallExpression ) {
 			// MethodCallExpressions don't use typeAnnotation but instead use methodAnnotation
-			GroundDataType methodReturnType = (GroundDataType)((MethodCallExpression)dependencyExpression).methodAnnotation().get().returnType();
+			GroundDataType methodReturnType =
+					(GroundDataType) ( (MethodCallExpression) dependencyExpression )
+							.methodAnnotation().get().returnType();
 			// Set typeannotation = returntype here for more easy access to an expression's type
-			dependencyExpression.setTypeAnnotation(methodReturnType); 
+			dependencyExpression.setTypeAnnotation( methodReturnType );
 			senders = methodReturnType.worldArguments();
 		} else {
-			senders = ((GroundDataType)dependencyExpression.typeAnnotation().get()).worldArguments();
+			senders = ( (GroundDataType) dependencyExpression.typeAnnotation().get() )
+					.worldArguments();
 		}
-		
-		if( senders.size() != 1 ){
+
+		if( senders.size() != 1 ) {
 			// We don't accept dependencies with multiple sender worlds
-			throw new CommunicationInferenceException( "Found Dependency with " + senders.size() + " senders, expected 1" );
+			throw new CommunicationInferenceException(
+					"Found Dependency with " + senders.size() + " senders, expected 1" );
 		}
-		return senders.get(0);
+		return senders.get( 0 );
 	}
 
 	/**
@@ -158,62 +166,62 @@ public class BasicDataInference {
 	 * (in particular {@code Statements} and {@code Expressions}) are final, and can therefore not 
 	 * be modified.
 	 */
-	private CompilationUnit createNewCompilationUnit( CompilationUnit old ){
-		List<Class> newClasses = new ArrayList<>();
-		for( Class cls : old.classes() ){
-			List<ConstructorDefinition> newConstructors = new ArrayList<>();
-			for( ConstructorDefinition constructor : cls.constructors() ){
-				Statement newBody = new VisitStatement().visit(constructor.blockStatements());
+	private CompilationUnit createNewCompilationUnit( CompilationUnit old ) {
+		List< Class > newClasses = new ArrayList<>();
+		for( Class cls : old.classes() ) {
+			List< ConstructorDefinition > newConstructors = new ArrayList<>();
+			for( ConstructorDefinition constructor : cls.constructors() ) {
+				Statement newBody = new VisitStatement().visit( constructor.blockStatements() );
 
-				newConstructors.add(new ConstructorDefinition(
-					constructor.signature(), 
-					constructor.explicitConstructorInvocation().orElse( null ),
-					newBody, 
-					constructor.annotations(), 
-					constructor.modifiers(), 
-					constructor.position()));
+				newConstructors.add( new ConstructorDefinition(
+						constructor.signature(),
+						constructor.explicitConstructorInvocation().orElse( null ),
+						newBody,
+						constructor.annotations(),
+						constructor.modifiers(),
+						constructor.position() ) );
 			}
-			
-			List<ClassMethodDefinition> newMethods = new ArrayList<>();
-			for( ClassMethodDefinition method : cls.methods() ){
+
+			List< ClassMethodDefinition > newMethods = new ArrayList<>();
+			for( ClassMethodDefinition method : cls.methods() ) {
 				Statement newBody = null;
-				if( method.body().isPresent() ){
-					newBody = new VisitStatement().visit(method.body().get());
+				if( method.body().isPresent() ) {
+					newBody = new VisitStatement().visit( method.body().get() );
 				}
 
-				newMethods.add(new ClassMethodDefinition(
-					method.signature(), 
-					newBody, 
-					method.annotations(), 
-					method.modifiers(), 
-					method.position()));
+				newMethods.add( new ClassMethodDefinition(
+						method.signature(),
+						newBody,
+						method.annotations(),
+						method.modifiers(),
+						method.position() ) );
 			}
 
-			newClasses.add(new Class(
-				cls.name(), 
-				cls.worldParameters(), 
-				cls.typeParameters(), 
-				cls.extendsClass(), 
-				cls.implementsInterfaces(), 
-				cls.fields(), 
-				newMethods, 
-				newConstructors, 
-				cls.annotations(), 
-				cls.modifiers(), 
-				cls.position()));
+			newClasses.add( new Class(
+					cls.name(),
+					cls.worldParameters(),
+					cls.typeParameters(),
+					cls.extendsClass(),
+					cls.implementsInterfaces(),
+					cls.fields(),
+					newMethods,
+					newConstructors,
+					cls.annotations(),
+					cls.modifiers(),
+					cls.position() ) );
 		}
 
-		List<Enum> newEnums = old.enums();
-		if( selections.enumerator() != null ) 
+		List< Enum > newEnums = old.enums();
+		if( selections.enumerator() != null )
 			newEnums.add( selections.enumerator() ); // insert enum created by KOC inference 
 
 		return new CompilationUnit(
-			old.packageDeclaration(), 
-			old.imports(), 
-			old.interfaces(), 
-			newClasses, 
-			newEnums, 
-			old.position().sourceFile());
+				old.packageDeclaration(),
+				old.imports(),
+				old.interfaces(),
+				newClasses,
+				newEnums,
+				old.position().sourceFile() );
 	}
 
 	/**
@@ -223,10 +231,11 @@ public class BasicDataInference {
 	 * Statement} is in the {@code amendedStatements} map, the {@code Expression}s of that 
 	 * {@code Statement} are visited by {@code VisitExpression}
 	 */
-	private class VisitStatement extends AbstractChoralVisitor< Statement >{
-		
-		
-		public VisitStatement(){}
+	private class VisitStatement extends AbstractChoralVisitor< Statement > {
+
+
+		public VisitStatement() {
+		}
 
 		@Override
 		public Statement visit( Statement n ) {
@@ -235,29 +244,29 @@ public class BasicDataInference {
 
 		@Override
 		public Statement visit( ExpressionStatement n ) {
-			List<Dependency> dependencyList = amendedStatements.get(n);
+			List< Dependency > dependencyList = amendedStatements.get( n );
 			Expression newExpression;
-			if( dependencyList == null ){
+			if( dependencyList == null ) {
 				// If this statement has no dependencies, there is no reason to visit its expression
 				newExpression = n.expression();
-			} else{
-				newExpression = visitExpression(dependencyList, n.expression());
+			} else {
+				newExpression = visitExpression( dependencyList, n.expression() );
 			}
 
 			return new ExpressionStatement(
-				newExpression, 
-				visitContinutation(n.continuation()), 
-				n.position());
+					newExpression,
+					visitContinutation( n.continuation() ),
+					n.position() );
 		}
 
 		@Override
 		public Statement visit( VariableDeclarationStatement n ) {
-			List<Dependency> dependencyList = amendedStatements.get(n);
-			List<VariableDeclaration> newVariables = new ArrayList<>();
-			if( dependencyList == null ){
+			List< Dependency > dependencyList = amendedStatements.get( n );
+			List< VariableDeclaration > newVariables = new ArrayList<>();
+			if( dependencyList == null ) {
 				// If this statement has no dependencies, there is no reason to visit its expressions (n.variables())
 				newVariables = n.variables();
-			} else{
+			} else {
 				for( VariableDeclaration x : n.variables() ) {
 					// If there are dependencies, we visit each VariableDeclaration seperately 
 					newVariables.add( visitVariableDeclaration( dependencyList, x ) );
@@ -265,14 +274,14 @@ public class BasicDataInference {
 			}
 
 			return new VariableDeclarationStatement(
-				newVariables, 
-				visitContinutation(n.continuation()), 
-				n.position());
+					newVariables,
+					visitContinutation( n.continuation() ),
+					n.position() );
 		}
 
 		@Override
 		public Statement visit( NilStatement n ) {
-			return new NilStatement(n.position());
+			return new NilStatement( n.position() );
 		}
 
 		@Override
@@ -281,94 +290,97 @@ public class BasicDataInference {
 			// contain Statemetns that then might contain Expressions) and 
 			// thus do not need to be checked for dependencies 
 			return new BlockStatement(
-				visit(n.enclosedStatement()), 
-				visitContinutation(n.continuation()), 
-				n.position());
+					visit( n.enclosedStatement() ),
+					visitContinutation( n.continuation() ),
+					n.position() );
 		}
 
 		@Override
 		public Statement visit( IfStatement n ) {
-			List<Dependency> dependencyList = amendedStatements.get(n);
+			List< Dependency > dependencyList = amendedStatements.get( n );
 			Expression newCondition;
-			if( dependencyList == null ){
+			if( dependencyList == null ) {
 				// If this statement has no dependencies, there is no reason to visit its condition
 				newCondition = n.condition();
-			} else{
-				newCondition = visitExpression(dependencyList, n.condition());
+			} else {
+				newCondition = visitExpression( dependencyList, n.condition() );
 			}
 
 			// Insert selections if there are any
-			Statement newIfBranch = visitContinutation(n.ifBranch());
-			Statement newElseBranch = visitContinutation(n.elseBranch());
-			List<List<Expression>> selectionsToInsert = selections.selections().get( n );
-			if( selectionsToInsert != null ){
-				newIfBranch = Selections.chainSelections( newIfBranch , selectionsToInsert.get(0));
-				newElseBranch = Selections.chainSelections( newElseBranch , selectionsToInsert.get(1));
+			Statement newIfBranch = visitContinutation( n.ifBranch() );
+			Statement newElseBranch = visitContinutation( n.elseBranch() );
+			List< List< Expression > > selectionsToInsert = selections.selections().get( n );
+			if( selectionsToInsert != null ) {
+				newIfBranch =
+						Selections.chainSelections( newIfBranch, selectionsToInsert.get( 0 ) );
+				newElseBranch =
+						Selections.chainSelections( newElseBranch, selectionsToInsert.get( 1 ) );
 			}
 
 			return new IfStatement(
-				newCondition, 
-				newIfBranch,
-				newElseBranch, 
-				visitContinutation(n.continuation()), n.position());
+					newCondition,
+					newIfBranch,
+					newElseBranch,
+					visitContinutation( n.continuation() ), n.position() );
 		}
 
 		@Override // not supported
 		public Statement visit( SwitchStatement n ) {
-			throw new UnsupportedOperationException("SwitchStatement not supported\n\tStatement at " + n.position().toString());
+			throw new UnsupportedOperationException(
+					"SwitchStatement not supported\n\tStatement at " + n.position().toString() );
 		}
 
 		@Override
 		public Statement visit( TryCatchStatement n ) {
-			List<Dependency> dependencyList = amendedStatements.get(n);
+			List< Dependency > dependencyList = amendedStatements.get( n );
 			List< Pair< VariableDeclaration, Statement > > newCatches = new ArrayList<>();
-			if( dependencyList == null ){
+			if( dependencyList == null ) {
 				// If this statement has no dependencies, there is no reason to visit its expressions, 
 				// but the statements still need to be visited
-				for( Pair< VariableDeclaration, Statement > pair : n.catches() ){
-					newCatches.add( 
-						new Pair<>( 
-							pair.left(), 
-							visit(pair.right()) ) );
+				for( Pair< VariableDeclaration, Statement > pair : n.catches() ) {
+					newCatches.add(
+							new Pair<>(
+									pair.left(),
+									visit( pair.right() ) ) );
 				}
 			} else {
-				for( Pair< VariableDeclaration, Statement > pair : n.catches() ){
-					newCatches.add( 
-						new Pair<>( 
-							visitVariableDeclaration( dependencyList, pair.left() ), 
-							visit(pair.right()) ) );
+				for( Pair< VariableDeclaration, Statement > pair : n.catches() ) {
+					newCatches.add(
+							new Pair<>(
+									visitVariableDeclaration( dependencyList, pair.left() ),
+									visit( pair.right() ) ) );
 				}
 			}
-			
+
 			return new TryCatchStatement(
-				visit(n.body()), 
-				newCatches, 
-				visitContinutation(n.continuation()), 
-				n.position());
+					visit( n.body() ),
+					newCatches,
+					visitContinutation( n.continuation() ),
+					n.position() );
 		}
 
 		@Override
 		public Statement visit( ReturnStatement n ) {
-			List<Dependency> dependencyList = amendedStatements.get(n);
+			List< Dependency > dependencyList = amendedStatements.get( n );
 			Expression newReturnExpression;
-			if( dependencyList == null ){
+			if( dependencyList == null ) {
 				// If this statement has no dependencies, there is no reason to visit its expression
 				newReturnExpression = n.returnExpression();
-			} else{
-				newReturnExpression = visitExpression(dependencyList, n.returnExpression());
+			} else {
+				newReturnExpression = visitExpression( dependencyList, n.returnExpression() );
 			}
 
 			return new ReturnStatement(
-				newReturnExpression, 
-				visitContinutation(n.continuation()), 
-				n.position());
+					newReturnExpression,
+					visitContinutation( n.continuation() ),
+					n.position() );
 		}
 
 		/** 
 		 * Visits the continuation if there is one 
 		 */
-		private Statement visitContinutation( Statement continutation ){
-			return continutation == null ? null : visit(continutation);
+		private Statement visitContinutation( Statement continutation ) {
+			return continutation == null ? null : visit( continutation );
 		}
 
 		/**
@@ -376,13 +388,13 @@ public class BasicDataInference {
 		 * initial {@code Expression} with the dependency list.
 		 * @param dependencyList must not be empty
 		 */
-		private Expression visitExpression( List<Dependency> dependencyList, Expression first ){
-			
-			Expression newExpression = new VisitExpression(dependencyList).visit(first);
+		private Expression visitExpression( List< Dependency > dependencyList, Expression first ) {
 
-			if( !dependencyList.isEmpty() ){ 
+			Expression newExpression = new VisitExpression( dependencyList ).visit( first );
+
+			if( !dependencyList.isEmpty() ) {
 				System.err.println( "ERROR! Could not resolve the following dependencies" );
-				for( Dependency dependency  : dependencyList ){
+				for( Dependency dependency : dependencyList ) {
 					System.err.println( "\t" + dependency.originalExpression() );
 				}
 			}
@@ -394,16 +406,18 @@ public class BasicDataInference {
 		 * If there is no initializer, return the given {@code VaraibleDeclaration} without 
 		 * change, otherwise visit its initializer and return a new {@code VaraibleDeclaration}
 		 */
-		private VariableDeclaration visitVariableDeclaration( List<Dependency> dependencyList, VariableDeclaration vd ){
+		private VariableDeclaration visitVariableDeclaration(
+				List< Dependency > dependencyList, VariableDeclaration vd
+		) {
 			if( vd.initializer().isEmpty() )
 				return vd;
-			
+
 			return new VariableDeclaration(
-				vd.name(), 
-				vd.type(), 
-				vd.annotations(), 
-				(AssignExpression)visitExpression(dependencyList, vd.initializer().get()), 
-				vd.position());
+					vd.name(),
+					vd.type(),
+					vd.annotations(),
+					(AssignExpression) visitExpression( dependencyList, vd.initializer().get() ),
+					vd.position() );
 		}
 
 	}
@@ -415,15 +429,15 @@ public class BasicDataInference {
 	 * anything inside {@code dependencyList}. If an {@code Expression} is 
 	 * equal to a dependency it is replaced with a communication.
 	 */
-	private class VisitExpression extends AbstractChoralVisitor< Expression >{
+	private class VisitExpression extends AbstractChoralVisitor< Expression > {
 		// We should be able to return immediately when the dependencylist becomes empty
 		// Maybe its enough to insert a check in checkIfDependency?
 		// TODO implement this
 
 		/** A list of all the dependencies to check in this expression */
-		List<Dependency> dependencyList;
+		List< Dependency > dependencyList;
 
-		public VisitExpression(List<Dependency> dependencyList){
+		public VisitExpression( List< Dependency > dependencyList ) {
 			this.dependencyList = dependencyList;
 		}
 
@@ -434,22 +448,22 @@ public class BasicDataInference {
 
 		@Override
 		public Expression visit( ScopedExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
-			
-			Expression newscopedExpression = visit(n.scopedExpression());
+
+			Expression newscopedExpression = visit( n.scopedExpression() );
 
 			return new ScopedExpression(
-				n.scope(), // Dependencies cannot be in the scope, so no need to check
-				newscopedExpression, 
-				n.position());
+					n.scope(), // Dependencies cannot be in the scope, so no need to check
+					newscopedExpression,
+					n.position() );
 		}
 
 		@Override
 		public Expression visit( FieldAccessExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
@@ -458,26 +472,26 @@ public class BasicDataInference {
 
 		@Override
 		public Expression visit( MethodCallExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
 
-			List<Expression> newArgs = new ArrayList<>();
-			for(int i = 0; i < n.arguments().size(); i++){
-				Expression argument = n.arguments().get(i);
-				
+			List< Expression > newArgs = new ArrayList<>();
+			for( int i = 0; i < n.arguments().size(); i++ ) {
+				Expression argument = n.arguments().get( i );
+
 				// visit all of the arguments and add them to the new list of arguments
-				newArgs.add( visit(argument) );
+				newArgs.add( visit( argument ) );
 			}
 
 			return new MethodCallExpression(
-				n.name(), 
-				newArgs, 
-				n.typeArguments(), 
-				n.position());
+					n.name(),
+					newArgs,
+					n.typeArguments(),
+					n.position() );
 		}
-		
+
 		@Override
 		public Expression visit( AssignExpression n ) {
 			// an assignExpression cannot itself be a dependency, but its value() might
@@ -485,46 +499,46 @@ public class BasicDataInference {
 			Expression newValue = visit( n.value() );
 
 			return new AssignExpression(
-				newValue, 
-				n.target(), 
-				n.operator(),
-				n.position());
+					newValue,
+					n.target(),
+					n.operator(),
+					n.position() );
 		}
 
 		@Override
 		public Expression visit( BinaryExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
-			
+
 			Expression newLeft = visit( n.left() );
 			Expression newRight = visit( n.right() );
-			
+
 			return new BinaryExpression(
-				newLeft, 
-				newRight, 
-				n.operator(), 
-				n.position());
+					newLeft,
+					newRight,
+					n.operator(),
+					n.position() );
 		}
 
 		@Override
 		public Expression visit( EnclosedExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
 
 			Expression newNestedExpression = visit( n.nestedExpression() );
-			
+
 			return new EnclosedExpression(
-				newNestedExpression, 
-				n.position());
+					newNestedExpression,
+					n.position() );
 		}
-		
+
 		@Override
 		public Expression visit( StaticAccessExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
@@ -533,48 +547,50 @@ public class BasicDataInference {
 
 		@Override
 		public Expression visit( ClassInstantiationExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
 
-			List<Expression> newArgs = new ArrayList<>();
-			for(int i = 0; i < n.arguments().size(); i++){
-				Expression argument = n.arguments().get(i);
-				
+			List< Expression > newArgs = new ArrayList<>();
+			for( int i = 0; i < n.arguments().size(); i++ ) {
+				Expression argument = n.arguments().get( i );
+
 				// visit all of the arguments and add them to the new list of arguments
-				newArgs.add( visit(argument) );
+				newArgs.add( visit( argument ) );
 			}
 
 			return new ClassInstantiationExpression(
-				n.typeExpression(), 
-				newArgs, 
-				n.typeArguments(), 
-				n.position());
+					n.typeExpression(),
+					newArgs,
+					n.typeArguments(),
+					n.position() );
 		}
 
 		@Override
 		public Expression visit( NotExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
 
 			Expression newExpression = visit( n.expression() );
-			
+
 			return new NotExpression(
-				newExpression, 
-				n.position());
+					newExpression,
+					n.position() );
 		}
 
 		@Override // not supported
 		public Expression visit( ThisExpression n ) {
-			throw new UnsupportedOperationException("ThisExpression not supported\n\tExpression at " + n.position().toString());
+			throw new UnsupportedOperationException(
+					"ThisExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override // not supported
 		public Expression visit( SuperExpression n ) {
-			throw new UnsupportedOperationException("SuperExpression not supported\n\tExpression at " + n.position().toString());
+			throw new UnsupportedOperationException(
+					"SuperExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override
@@ -605,17 +621,21 @@ public class BasicDataInference {
 
 		@Override // not supported
 		public Expression visit( TypeExpression n ) {
-			throw new UnsupportedOperationException("TypeExpression not supported\n\tExpression at " + n.position().toString());
+			throw new UnsupportedOperationException(
+					"TypeExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override // not supported
-		public Expression visit( BlankExpression n ){
-			throw new UnsupportedOperationException("BlankExpression not supported\n\tExpression at " + n.position().toString());
+		public Expression visit( BlankExpression n ) {
+			throw new UnsupportedOperationException(
+					"BlankExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override // not supported
-		public Expression visit( EnumCaseInstantiationExpression n ){
-			throw new UnsupportedOperationException("EnumCaseInstantiationExpression not supported\n\tExpression at " + n.position().toString());
+		public Expression visit( EnumCaseInstantiationExpression n ) {
+			throw new UnsupportedOperationException(
+					"EnumCaseInstantiationExpression not supported\n\tExpression at "
+							+ n.position().toString() );
 		}
 
 		/**
@@ -623,11 +643,11 @@ public class BasicDataInference {
 		 * Expression} and returns the visited expression wrapped in a communication, specified 
 		 * by the {@code Dependency}. Otherwise returns null.
 		 */
-		private Expression checkIfDependency( Expression n ){
-			for( Dependency dependency : dependencyList ){
-				if( n.equals(dependency.originalExpression) ){
-					dependencyList.remove(dependency);
-					return dependency.createComExpression(visit(n));
+		private Expression checkIfDependency( Expression n ) {
+			for( Dependency dependency : dependencyList ) {
+				if( n.equals( dependency.originalExpression ) ) {
+					dependencyList.remove( dependency );
+					return dependency.createComExpression( visit( n ) );
 				}
 			}
 			return null;
@@ -647,40 +667,40 @@ public class BasicDataInference {
 		private String channelIdentifier;
 		private GroundInterface channel;
 
-		public Dependency( Expression originalExpression ){
+		public Dependency( Expression originalExpression ) {
 			this.originalExpression = originalExpression;
 		}
 
-		public Expression originalExpression(){
+		public Expression originalExpression() {
 			return originalExpression;
 		}
 
-		public HigherMethod comMethod(){
+		public HigherMethod comMethod() {
 			return comMethod;
 		}
 
-		public String channelIdentifier(){
+		public String channelIdentifier() {
 			return channelIdentifier;
 		}
 
-		public GroundInterface channel(){
+		public GroundInterface channel() {
 			return channel;
 		}
 
-		public void setChannel( GroundInterface channel ){
+		public void setChannel( GroundInterface channel ) {
 			this.channel = channel;
 		}
 
-		public void setChannel( String channelIdentifier, GroundInterface channel ){
+		public void setChannel( String channelIdentifier, GroundInterface channel ) {
 			this.channelIdentifier = channelIdentifier;
 			this.channel = channel;
 		}
 
-		public void setComMethod( HigherMethod comMethod ){
+		public void setComMethod( HigherMethod comMethod ) {
 			this.comMethod = comMethod;
 		}
 
-		public void setChannelIdentifier( String channelIdentifier ){
+		public void setChannelIdentifier( String channelIdentifier ) {
 			this.channelIdentifier = channelIdentifier;
 		}
 
@@ -713,52 +733,59 @@ public class BasicDataInference {
 		 * @param visitedDependency - Must be visited before calling this method, 
 		 * 		otherwise nested dependencies will not be caught.
 		 */
-		public Expression createComExpression( Expression visitedDependency ){
+		public Expression createComExpression( Expression visitedDependency ) {
 
 			TypeExpression typeExpression;
-			if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
-				typeExpression = getTypeExpression((GroundTypeParameter)originalExpression.typeAnnotation().get());
+			if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ) {
+				typeExpression = getTypeExpression(
+						(GroundTypeParameter) originalExpression.typeAnnotation().get() );
 			} else {
-				typeExpression = getTypeExpression((GroundClassOrInterface)originalExpression.typeAnnotation().get());
+				typeExpression = getTypeExpression(
+						(GroundClassOrInterface) originalExpression.typeAnnotation().get() );
 			}
-			
-			final List<Expression> arguments = List.of( visitedDependency );
-			final Name name = new Name(comMethod.identifier());
-			final List<TypeExpression> typeArguments = List.of( typeExpression );
-			
-			MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments, visitedDependency.position());
-			
+
+			final List< Expression > arguments = List.of( visitedDependency );
+			final Name name = new Name( comMethod.identifier() );
+			final List< TypeExpression > typeArguments = List.of( typeExpression );
+
+			MethodCallExpression scopedExpression = new MethodCallExpression( name, arguments,
+					typeArguments, visitedDependency.position() );
+
 			// The comMethod is a method inside a channel, so we need to make the channel its scope
-			FieldAccessExpression scope = new FieldAccessExpression(new Name(channelIdentifier), visitedDependency.position());
-			
+			FieldAccessExpression scope = new FieldAccessExpression( new Name( channelIdentifier ),
+					visitedDependency.position() );
+
 			// Something like channel.< Type >com( visitedDependency )
-			return new ScopedExpression(scope, scopedExpression);
+			return new ScopedExpression( scope, scopedExpression );
 		}
 
-		private TypeExpression getTypeExpression( GroundClassOrInterface type ){
+		private TypeExpression getTypeExpression( GroundClassOrInterface type ) {
 			return new TypeExpression(
-				new Name(type.typeConstructor().identifier()),
-				Collections.emptyList(), 
-				type.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
+					new Name( type.typeConstructor().identifier() ),
+					Collections.emptyList(),
+					type.typeArguments().stream().map( typeArg -> getTypeExpression(
+							typeArg.applyTo( type.worldArguments() ) ) ).toList() );
 		}
 
-		private TypeExpression getTypeExpression( GroundReferenceType type ){
-			if( type instanceof GroundClass ){ // I think this is only not true for primitive types, which cannot be communicated
-				GroundClass typeGC = (GroundClass)type;
+		private TypeExpression getTypeExpression( GroundReferenceType type ) {
+			if( type instanceof GroundClass ) { // I think this is only not true for primitive types, which cannot be communicated
+				GroundClass typeGC = (GroundClass) type;
 				return new TypeExpression(
-					new Name(typeGC.typeConstructor().identifier()),
-					Collections.emptyList(), 
-					typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
+						new Name( typeGC.typeConstructor().identifier() ),
+						Collections.emptyList(),
+						typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(
+								typeArg.applyTo( type.worldArguments() ) ) ).toList() );
 			}
-			if( type instanceof GroundTypeParameter ){
-				GroundTypeParameter typeGTP = (GroundTypeParameter)type;
+			if( type instanceof GroundTypeParameter ) {
+				GroundTypeParameter typeGTP = (GroundTypeParameter) type;
 				return new TypeExpression(
-					new Name(typeGTP.typeConstructor().identifier()),
-					Collections.emptyList(), 
-					Collections.emptyList());
+						new Name( typeGTP.typeConstructor().identifier() ),
+						Collections.emptyList(),
+						Collections.emptyList() );
 			}
-			
-			throw new CommunicationInferenceException( "ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() ); 
+
+			throw new CommunicationInferenceException(
+					"ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() );
 		}
 
 	}

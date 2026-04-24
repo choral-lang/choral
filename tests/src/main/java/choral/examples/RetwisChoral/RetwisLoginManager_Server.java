@@ -5,7 +5,9 @@ import choral.channels.SymChannel_B;
 import choral.channels.SymChannel_A;
 import choral.lang.Unit;
 
-@Choreography( role = "Server", name = "RetwisLoginManager" )
+@Choreography(
+		role = "Server",
+		name = "RetwisLoginManager" )
 public class RetwisLoginManager_Server {
 	private SymChannel_B< Object > chCS;
 	private SymChannel_A< Object > chSR;

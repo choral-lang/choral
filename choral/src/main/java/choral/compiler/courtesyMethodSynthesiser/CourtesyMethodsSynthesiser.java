@@ -141,10 +141,12 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 					n.modifiers(),
 					n.position()
 			) );
-			MethodCallExpression proxyMethod = new MethodCallExpression( n.signature().name(), parameterBypass, typeParameters );
-			Statement proxyStatement = n.signature().returnType().name().identifier().equals( "void" ) ?
-					new ExpressionStatement( proxyMethod, new NilStatement() )
-					: new ReturnStatement( proxyMethod, new NilStatement() );
+			MethodCallExpression proxyMethod = new MethodCallExpression( n.signature().name(),
+					parameterBypass, typeParameters );
+			Statement proxyStatement =
+					n.signature().returnType().name().identifier().equals( "void" ) ?
+							new ExpressionStatement( proxyMethod, new NilStatement() ) :
+							new ReturnStatement( proxyMethod, new NilStatement() );
 			return new ClassMethodDefinition(
 					visit( n.signature() ),
 					n.body().isPresent() ? proxyStatement : null,
@@ -196,10 +198,12 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 					n.modifiers(),
 					n.position()
 			) );
-			MethodCallExpression proxyMethod = new MethodCallExpression( n.signature().name(), parameterBypass, typeParameters );
-			Statement proxyStatement = n.signature().returnType().name().identifier().equals( "void" ) ?
-					new ExpressionStatement( proxyMethod, new NilStatement() )
-					: new ReturnStatement( proxyMethod, new NilStatement() );
+			MethodCallExpression proxyMethod = new MethodCallExpression( n.signature().name(),
+					parameterBypass, typeParameters );
+			Statement proxyStatement =
+					n.signature().returnType().name().identifier().equals( "void" ) ?
+							new ExpressionStatement( proxyMethod, new NilStatement() ) :
+							new ReturnStatement( proxyMethod, new NilStatement() );
 			return new InterfaceMethodDefinition(
 					visit( n.signature() ),
 					n.body().isPresent() ? proxyStatement : null,
@@ -251,9 +255,9 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 			List< Expression > parameterBypass = n.signature().parameters().stream()
 					.filter( p -> !unitParameters.contains( p.name() ) )
 					.map( p -> // unitParameters.contains( p.name() ) ?
-							//UnitRepresentation.UnitFD( new WorldArgument( new Name( "" ) ) )
-							//				:
-							new FieldAccessExpression( p.name() ) )
+																																						  //UnitRepresentation.UnitFD( new WorldArgument( new Name( "" ) ) )
+																																						  //				:
+					new FieldAccessExpression( p.name() ) )
 					.collect( Collectors.toList() );
 			MethodCallExpression proxyConstructor =
 					new MethodCallExpression( new Name( "this" ),

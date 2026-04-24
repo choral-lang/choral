@@ -146,8 +146,8 @@ public final class HigherPrimitiveDataType extends HigherDataType implements Pri
 
 		@Override
 		public String toString() {
-			return typeConstructor().toString() +
-					worldArguments().stream().map( World::toString ).collect(
+			return typeConstructor().toString() + worldArguments().stream().map( World::toString )
+					.collect(
 							Formatting.joining( ",", "@(", ")", "" ) );
 		}
 

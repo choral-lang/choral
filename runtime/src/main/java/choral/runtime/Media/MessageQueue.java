@@ -32,7 +32,7 @@ public class MessageQueue {
 
 	public void send( Object message ) {
 		synchronized( this ) {
-			if ( recvQueue.isEmpty() ){
+			if( recvQueue.isEmpty() ) {
 				sendQueue.add( message );
 			} else {
 				CompletableFuture< Object > future = recvQueue.removeFirst();
@@ -43,8 +43,8 @@ public class MessageQueue {
 
 	public < T > T recv() throws ExecutionException, InterruptedException {
 		CompletableFuture< Object > future = new CompletableFuture<>();
-		synchronized ( this ){
-			if( sendQueue.isEmpty() ){
+		synchronized( this ) {
+			if( sendQueue.isEmpty() ) {
 				recvQueue.add( future );
 			} else {
 				future.complete( sendQueue.removeFirst() );

@@ -9,7 +9,9 @@ import choral.annotations.Choreography;
 import choral.channels.SymChannel_A;
 import choral.channels.SymChannel_B;
 
-@Choreography( role = "C", name = "QuicksortTest" )
+@Choreography(
+		role = "C",
+		name = "QuicksortTest" )
 public class QuicksortTest_C {
 	@Test
 	public static void test1() {

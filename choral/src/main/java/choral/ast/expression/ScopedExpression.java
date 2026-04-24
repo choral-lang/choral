@@ -62,7 +62,7 @@ public class ScopedExpression extends Expression {
 	}
 
 	@Override
-	public String toString(){
+	public String toString() {
 		return scope + "." + scopedExpression;
 	}
 
@@ -80,7 +80,8 @@ public class ScopedExpression extends Expression {
 					this.position().line() + ":"
 							+ this.position().column() + ":"
 							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-							this ) + "\n with " + n.getClass().getSimpleName() );
+									this )
+							+ "\n with " + n.getClass().getSimpleName() );
 		}
 	}
 }

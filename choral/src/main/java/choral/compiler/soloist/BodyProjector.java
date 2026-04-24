@@ -69,12 +69,11 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 				TypesProjector.visitAndCollect( this.world(), n.typeParameters() ),
 				n.parameters().stream().map( this::unit ).collect( Collectors.toList() ),
 				Utils.ifPresent( TypesProjector.visit( world(), n.returnType() ) )
-						.getOrElse( () ->
-								new TypeExpression(
-										UnitRepresentation.UNIT,
-										Collections.singletonList( this.world() ),
-										Collections.emptyList()
-								)
+						.getOrElse( () -> new TypeExpression(
+								UnitRepresentation.UNIT,
+								Collections.singletonList( this.world() ),
+								Collections.emptyList()
+						)
 						),
 				n.position()
 		);
@@ -116,8 +115,8 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 				visit( n.signature() ),
 				n.body().isPresent() ?
 						StatementsUnitNormaliser.visitStatement(
-								StatementsProjector.visit( this.world(), n.body().get() ) )
-						: null,
+								StatementsProjector.visit( this.world(), n.body().get() ) ) :
+						null,
 				visitAndCollect( n.annotations() ),
 				n.modifiers(),
 				n.position()
@@ -130,8 +129,8 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 				visit( n.signature() ),
 				n.body().isPresent() ?
 						StatementsUnitNormaliser.visitStatement(
-								StatementsProjector.visit( this.world(), n.body().get() ) )
-						: null,
+								StatementsProjector.visit( this.world(), n.body().get() ) ) :
+						null,
 				visitAndCollect( n.annotations() ),
 				n.modifiers(),
 				n.position()
@@ -145,7 +144,8 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 				visit( n.signature() ),
 				n.explicitConstructorInvocation().map(
 						x -> (MethodCallExpression) ExpressionUnitNormaliser.visitExpression(
-								ExpressionProjector.visit( this.world(), x ) ) ).orElse( null ),
+								ExpressionProjector.visit( this.world(), x ) ) )
+						.orElse( null ),
 				StatementsUnitNormaliser.visitStatement(
 						StatementsProjector.visit( this.world(), n.blockStatements() ) ),
 				visitAndCollect( n.annotations() ),
@@ -164,8 +164,7 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 								Collections.emptyList() ),
 						visitAndCollect( p.annotations() ),
 						p.position()
-				)
-				: l.get( 0 );
+				) : l.get( 0 );
 	}
 
 	private < T extends Node > List< T > visitAndCollect( List< T > n ) {

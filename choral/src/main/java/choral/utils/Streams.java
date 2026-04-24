@@ -74,7 +74,8 @@ public class Streams {
 
 	public static < T, K, U > Collector< T, ?, Map< K, U > > toLinkedHashMap(
 			Function< ? super T, ? extends K > keyMapper,
-			Function< ? super T, ? extends U > valueMapper ) {
+			Function< ? super T, ? extends U > valueMapper
+	) {
 		return Collectors.toMap( keyMapper,
 				valueMapper,
 				( u, v ) -> {

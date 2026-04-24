@@ -4,7 +4,9 @@ import choral.annotations.Choreography;
 import choral.channels.SymChannel_B;
 import choral.lang.Unit;
 
-@Choreography( role = "Repository", name = "RetwisLoginManager" )
+@Choreography(
+		role = "Repository",
+		name = "RetwisLoginManager" )
 public class RetwisLoginManager_Repository {
 	private SymChannel_B< Object > chSR;
 	private DatabaseConnection db;

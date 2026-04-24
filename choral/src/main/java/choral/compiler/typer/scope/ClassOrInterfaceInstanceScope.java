@@ -19,7 +19,8 @@ public final class ClassOrInterfaceInstanceScope
 		implements ClassOrInterfaceScope, TypeParameterDeclarationScope {
 
 	private final ClassOrInterfaceStaticScope parent;
-	private final Map< HigherTypeParameter, TypeParameterScope > typeParameterScopes = new HashMap<>();
+	private final Map< HigherTypeParameter, TypeParameterScope > typeParameterScopes =
+			new HashMap<>();
 	private final Map< Member.HigherCallable, CallableScope > callableScopes = new HashMap<>();
 
 	public ClassOrInterfaceInstanceScope( ClassOrInterfaceStaticScope parent ) {

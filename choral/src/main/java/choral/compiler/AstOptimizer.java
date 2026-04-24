@@ -57,7 +57,7 @@ public class AstOptimizer implements ChoralVisitor {
 	private final List< Class > classes;
 	private final List< Enum > enums;
 	private String file = "";
-	private Optional<String> _package = Optional.empty();
+	private Optional< String > _package = Optional.empty();
 	private final Set< String > debugExcludeMethods = new HashSet<>();
 	private boolean debug;
 	private String lastMethod = "";
@@ -104,8 +104,7 @@ public class AstOptimizer implements ChoralVisitor {
 	public String visitQualifiedName( ChoralParser.QualifiedNameContext qn ) {
 		debugInfo();
 		return ifPresent( qn.qualifiedName() ).applyOrElse( q -> visitQualifiedName( q ) + ".",
-				String::new ) +
-				qn.Identifier().getText();
+				String::new ) + qn.Identifier().getText();
 	}
 
 	/* * * * * * WORLDS AND TYPES PARAMETERS * * * * * */
@@ -203,7 +202,8 @@ public class AstOptimizer implements ChoralVisitor {
 			ClassModifier m = visitClassModifier( ctx );
 			if( modifiers.contains( m ) ) {
 				throw new SyntaxException( getPosition( ctx ),
-						"Illegal combination of modifiers '" + m.label + "' and '" + m.label + "'." );
+						"Illegal combination of modifiers '" + m.label + "' and '" + m.label
+								+ "'." );
 			} else {
 				modifiers.add( m );
 			}
@@ -263,7 +263,8 @@ public class AstOptimizer implements ChoralVisitor {
 			InterfaceModifier m = visitInterfaceModifier( ctx );
 			if( modifiers.contains( m ) ) {
 				throw new SyntaxException( getPosition( ctx ),
-						"Illegal combination of modifiers '" + m.label + "' and '" + m.label + "'." );
+						"Illegal combination of modifiers '" + m.label + "' and '" + m.label
+								+ "'." );
 			} else {
 				modifiers.add( m );
 			}
@@ -313,7 +314,8 @@ public class AstOptimizer implements ChoralVisitor {
 			ClassModifier m = visitClassModifier( ctx );
 			if( modifiers.contains( m ) ) {
 				throw new SyntaxException( getPosition( ctx ),
-						"Illegal combination of modifiers '" + m.label + "' and '" + m.label + "'." );
+						"Illegal combination of modifiers '" + m.label + "' and '" + m.label
+								+ "'." );
 			} else {
 				modifiers.add( m );
 			}
@@ -503,7 +505,7 @@ public class AstOptimizer implements ChoralVisitor {
 
 		List< Node > bodyMembers = ifPresent( cb.classBodyDeclaration() ).applyOrElse(
 				el -> el.stream().flatMap(
-								e -> visitClassBodyDeclaration( e ).stream() )
+						e -> visitClassBodyDeclaration( e ).stream() )
 						.collect( Collectors.toList() ),
 				Collections::emptyList );
 		List< Field > fields = bodyMembers.stream()
@@ -540,7 +542,7 @@ public class AstOptimizer implements ChoralVisitor {
 		debugInfo();
 		if( cmd.fieldDeclaration() != null ) {
 			return visitFieldDeclaration( cmd.fieldDeclaration() );
-		} else if (cmd.methodDeclaration() != null ) {
+		} else if( cmd.methodDeclaration() != null ) {
 			return Collections.singletonList( visitMethodDeclaration( cmd.methodDeclaration() ) );
 		} else {
 			throw new SyntaxException( getPosition( cmd ),
@@ -558,7 +560,8 @@ public class AstOptimizer implements ChoralVisitor {
 			FieldModifier m = visitFieldModifier( ctx );
 			if( modifiers.contains( m ) ) {
 				throw new SyntaxException( getPosition( ctx ),
-						"Illegal combination of modifiers '" + m.label + "' and '" + m.label + "'." );
+						"Illegal combination of modifiers '" + m.label + "' and '" + m.label
+								+ "'." );
 			} else {
 				modifiers.add( m );
 			}
@@ -612,7 +615,8 @@ public class AstOptimizer implements ChoralVisitor {
 			ClassMethodModifier m = visitMethodModifier( ctx );
 			if( modifiers.contains( m ) ) {
 				throw new SyntaxException( getPosition( ctx ),
-						"Illegal combination of modifiers '" + m.label + "' and '" + m.label + "'." );
+						"Illegal combination of modifiers '" + m.label + "' and '" + m.label
+								+ "'." );
 			} else {
 				modifiers.add( m );
 			}
@@ -679,7 +683,8 @@ public class AstOptimizer implements ChoralVisitor {
 			ConstructorModifier m = visitConstructorModifier( ctx );
 			if( modifiers.contains( m ) ) {
 				throw new SyntaxException( getPosition( ctx ),
-						"Illegal combination of modifiers '" + m.label + "' and '" + m.label + "'." );
+						"Illegal combination of modifiers '" + m.label + "' and '" + m.label
+								+ "'." );
 			} else {
 				modifiers.add( m );
 			}
@@ -730,9 +735,8 @@ public class AstOptimizer implements ChoralVisitor {
 	) {
 		debugInfo();
 		return new Pair<>(
-				( ctx.explicitConstructorInvocation() == null )
-						? null
-						: visitExplicitConstructorInvocation( ctx.explicitConstructorInvocation() ),
+				( ctx.explicitConstructorInvocation() == null ) ? null :
+						visitExplicitConstructorInvocation( ctx.explicitConstructorInvocation() ),
 				visitBlockStatements( ctx.blockStatements() )
 		);
 	}
@@ -774,7 +778,8 @@ public class AstOptimizer implements ChoralVisitor {
 			InterfaceMethodModifier m = visitInterfaceMethodModifier( ctx );
 			if( modifiers.contains( m ) ) {
 				throw new SyntaxException( getPosition( ctx ),
-						"Illegal combination of modifiers '" + m.label + "' and '" + m.label + "'." );
+						"Illegal combination of modifiers '" + m.label + "' and '" + m.label
+								+ "'." );
 			} else {
 				modifiers.add( m );
 			}
@@ -971,9 +976,9 @@ public class AstOptimizer implements ChoralVisitor {
 		debugInfo();
 		return new ExpressionStatement(
 				isPresent( es.statementExpression() ) ?
-						visitStatementExpression( es.statementExpression() )
-						: visitChainedExpression( es.chainedExpression(),
-						visitExpression( es.expression() ) ),
+						visitStatementExpression( es.statementExpression() ) :
+						visitChainedExpression( es.chainedExpression(),
+								visitExpression( es.expression() ) ),
 				null,
 				getPosition( es ) );
 	}
@@ -1021,8 +1026,7 @@ public class AstOptimizer implements ChoralVisitor {
 			return ifPresent( fa.expressionName() ).applyOrElse(
 					e -> new ScopedExpression( visitExpressionName( e ), fieldAccessExpr,
 							fieldAccessExpr.position() ),
-					() -> fieldAccessExpr
-			);
+					() -> fieldAccessExpr );
 		}
 	}
 
@@ -1035,8 +1039,7 @@ public class AstOptimizer implements ChoralVisitor {
 		return ifPresent( fanp.expressionName() ).applyOrElse(
 				e -> new ScopedExpression( visitExpressionName( e ), fieldAccessExpr,
 						fieldAccessExpr.position() ),
-				() -> fieldAccessExpr
-		);
+				() -> fieldAccessExpr );
 	}
 
 	@Override
@@ -1051,8 +1054,7 @@ public class AstOptimizer implements ChoralVisitor {
 		return ifPresent( te.trailExpression() ).applyOrElse(
 				( t ) -> new ScopedExpression( e, visitTrailExpression( te.trailExpression() ),
 						e.position() ),
-				() -> e
-		);
+				() -> e );
 	}
 
 	@Override
@@ -1062,10 +1064,9 @@ public class AstOptimizer implements ChoralVisitor {
 		debugInfo();
 		Expression e = new ScopedExpression(
 				tosma.superSymbol != null ?
-						new SuperExpression( getPosition( tosma.superSymbol ) )
-						: new ThisExpression( getPosition( tosma.thisSymbol ) ),
-				visitMethodInvocation( tosma.methodInvocation() )
-		);
+						new SuperExpression( getPosition( tosma.superSymbol ) ) :
+						new ThisExpression( getPosition( tosma.thisSymbol ) ),
+				visitMethodInvocation( tosma.methodInvocation() ) );
 		e.setPosition( getPosition( tosma ) );
 		return e;
 	}
@@ -1092,8 +1093,7 @@ public class AstOptimizer implements ChoralVisitor {
 						( (MethodCallExpression) p.right() ).name(),
 						Collections.singletonList( expression ),
 						p.right().typeArguments(),
-						p.right().position()
-				);
+						p.right().position() );
 			}
 			if( p.left() != null ) {
 				expression = new ScopedExpression( p.left(), expression, p.left().position() );
@@ -1180,10 +1180,9 @@ public class AstOptimizer implements ChoralVisitor {
 		TypeExpression e = visitStaticGenericAccess( cic.staticGenericAccess() ).typeExpression();
 		return new ClassInstantiationExpression(
 				e, null,
-				ifPresent( cic.typeArguments() ).applyOrElse( this::visitTypeArguments,
-						Collections::emptyList ),
-				getPosition( cic )
-		);
+				ifPresent( cic.typeArguments() )
+						.applyOrElse( this::visitTypeArguments, Collections::emptyList ),
+				getPosition( cic ) );
 	}
 
 	@Override
@@ -1297,12 +1296,10 @@ public class AstOptimizer implements ChoralVisitor {
 	public ReturnStatement visitReturnStatement( ChoralParser.ReturnStatementContext rs ) {
 		debugInfo();
 		return new ReturnStatement(
-				isPresent( rs.chainedExpression() )
-						? visitChainedExpression( rs.chainedExpression(),
-						visitExpression( rs.expression() ) )
-						: isPresent( rs.expression() ) ? visitExpression( rs.expression() )
-						: null
-				,
+				isPresent( rs.chainedExpression() ) ?
+						visitChainedExpression( rs.chainedExpression(),
+								visitExpression( rs.expression() ) ) :
+						isPresent( rs.expression() ) ? visitExpression( rs.expression() ) : null,
 				null,
 				getPosition( rs ) );
 	}
@@ -1326,10 +1323,9 @@ public class AstOptimizer implements ChoralVisitor {
 	@Override
 	public Expression visitExpression( ChoralParser.ExpressionContext e ) {
 		debugInfo();
-		return ifPresent( e.shortCircuitOrExpression() ).applyOrElse(
-				this::visitShortCircuitOrExpression,
-				() -> visitAssignment( e.assignment() )
-		);
+		return ifPresent( e.shortCircuitOrExpression() )
+				.applyOrElse( this::visitShortCircuitOrExpression,
+						() -> visitAssignment( e.assignment() ) );
 	}
 
 	@Override
@@ -1543,9 +1539,11 @@ public class AstOptimizer implements ChoralVisitor {
 		return isPresent( scc.switchArgs() ) ?
 				visitSwitchArgs( scc.switchArgs() ).stream()
 						.map( a -> new AbstractMap.SimpleEntry<>( a, s ) )
-						.collect( Streams.toLinkedHashMap( Map.Entry::getKey, Map.Entry::getValue ) )
-				: Collections.singletonMap(
-				new SwitchArgument.SwitchArgumentDefault( getPosition( scc.getStop() ) ), s );
+						.collect( Streams
+								.toLinkedHashMap( Map.Entry::getKey, Map.Entry::getValue ) ) :
+				Collections.singletonMap(
+						new SwitchArgument.SwitchArgumentDefault( getPosition( scc.getStop() ) ),
+						s );
 	}
 
 	@Override
@@ -1564,7 +1562,6 @@ public class AstOptimizer implements ChoralVisitor {
 		ifPresent( sac.switchArgs() ).apply( s -> l.addAll( visitSwitchArgs( s ) ) );
 		return l;
 	}
-
 
 
 	/* * * * * * * * * * * * GENERIC VISITS * * * * * * * */

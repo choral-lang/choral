@@ -7,7 +7,9 @@ import choral.runtime.TLSChannel.TLSChannel_B;
 import choral.examples.DistAuth.DistAuth_IP;
 import choral.annotations.Choreography;
 
-@Choreography( role = "IP", name = "DistAuthTest" )
+@Choreography(
+		role = "IP",
+		name = "DistAuthTest" )
 public class DistAuthTest_IP {
 	@Test
 	public static void test1() {

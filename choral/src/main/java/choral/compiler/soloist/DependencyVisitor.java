@@ -130,11 +130,11 @@ public class DependencyVisitor implements ChoralVisitorInterface< Void > {
 				.stream()
 				.filter( p -> !visitedTemplates.contains( p ) )
 				.forEach( p -> new DependencyVisitor(
-								availableTemplates,
-								projectableTemplates,
-								visitedTemplates,
-								getWorldFromIndex( availableTemplates.get( p.left() ).node(), p.right() )
-						).collectProjectableTemplates( p.left() )
+						availableTemplates,
+						projectableTemplates,
+						visitedTemplates,
+						getWorldFromIndex( availableTemplates.get( p.left() ).node(), p.right() )
+				).collectProjectableTemplates( p.left() )
 				);
 		// if we have fewer visited templates than projectable, we re-iterate
 		if( visitedTemplates.size() < projectableTemplates.size() ) {
@@ -495,15 +495,13 @@ public class DependencyVisitor implements ChoralVisitorInterface< Void > {
 
 	@Override
 	public Void visit( FormalTypeParameter n ) {
-		n.worldParameters().forEach( w ->
-				n.upperBound().forEach( t ->
-						new DependencyVisitor(
-								this.availableTemplates,
-								this.projectableTemplates,
-								this.visitedTemplates,
-								w.toWorldArgument()
-						).visit( t )
-				)
+		n.worldParameters().forEach( w -> n.upperBound().forEach( t -> new DependencyVisitor(
+				this.availableTemplates,
+				this.projectableTemplates,
+				this.visitedTemplates,
+				w.toWorldArgument()
+		).visit( t )
+		)
 		);
 		return null;
 	}
@@ -569,13 +567,13 @@ public class DependencyVisitor implements ChoralVisitorInterface< Void > {
 	) {
 		List< WorldArgument > worlds =
 				Streams.concat(
-								compilationUnits.stream().map( CompilationUnit::interfaces ).flatMap(
-										List::stream ),
-								compilationUnits.stream().map( CompilationUnit::classes ).flatMap(
-										List::stream ),
-								compilationUnits.stream().map( CompilationUnit::enums ).flatMap(
-										List::stream )
-						).filter( t -> t.name().identifier().equals( template ) )
+						compilationUnits.stream().map( CompilationUnit::interfaces ).flatMap(
+								List::stream ),
+						compilationUnits.stream().map( CompilationUnit::classes ).flatMap(
+								List::stream ),
+						compilationUnits.stream().map( CompilationUnit::enums ).flatMap(
+								List::stream )
+				).filter( t -> t.name().identifier().equals( template ) )
 						.flatMap( t -> t.worldParameters().stream().map(
 								FormalWorldParameter::toWorldArgument ) )
 						.collect( Collectors.toList() );

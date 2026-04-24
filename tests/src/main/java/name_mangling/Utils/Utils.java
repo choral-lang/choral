@@ -45,8 +45,8 @@ public class Utils {
 		Set< Map< WorldArgument, Integer > > pies = getPies( worlds, permutations );
 		System.out.println(
 				pies.stream().map(
-						m -> m.entrySet().stream().map( ( e ) ->
-								e.getKey().name().identifier() + " -> " + e.getValue()
+						m -> m.entrySet().stream().map(
+								( e ) -> e.getKey().name().identifier() + " -> " + e.getValue()
 						).collect( Collectors.joining( ", " ) )
 				).collect( Collectors.joining( "\n" ) )
 		);
@@ -55,12 +55,11 @@ public class Utils {
 	private static Set< Map< WorldArgument, Integer > > getPies(
 			ArrayList< WorldArgument > worlds, Set< List< Integer > > permutations
 	) {
-		return permutations.stream().map( p ->
-				p.stream()
-						.map( n -> new AbstractMap.SimpleEntry< WorldArgument, Integer >(
-								worlds.get( p.indexOf( n ) ), n ) )
-						.collect( Collectors.toMap( AbstractMap.SimpleEntry::getKey,
-								AbstractMap.SimpleEntry::getValue ) )
+		return permutations.stream().map( p -> p.stream()
+				.map( n -> new AbstractMap.SimpleEntry< WorldArgument, Integer >(
+						worlds.get( p.indexOf( n ) ), n ) )
+				.collect( Collectors.toMap( AbstractMap.SimpleEntry::getKey,
+						AbstractMap.SimpleEntry::getValue ) )
 		).collect( Collectors.toSet() );
 	}
 

@@ -50,9 +50,9 @@ public class HeaderLoader {
 		List< String > files = new LinkedList<>();
 		String profilePath = "headers/" + profile + ".profile";
 		try(
-			InputStream in = cl.getResourceAsStream( profilePath );
-			BufferedReader br = new BufferedReader( new InputStreamReader( in ) ) ) {
-			
+			 InputStream in = cl.getResourceAsStream( profilePath ); BufferedReader br =
+					 new BufferedReader( new InputStreamReader( in ) ) ) {
+
 			String file;
 			while( ( file = br.readLine() ) != null ) {
 				files.add( file );
@@ -72,8 +72,8 @@ public class HeaderLoader {
 		return loadProfile( "standard" );
 	}
 
-	public static Stream<CompilationUnit> loadAlternateProfile() throws IOException {
-		return loadProfile("alternate");
+	public static Stream< CompilationUnit > loadAlternateProfile() throws IOException {
+		return loadProfile( "alternate" );
 	}
 
 	public static Stream< CompilationUnit > loadFromPath(
@@ -95,20 +95,19 @@ public class HeaderLoader {
 		Stream< Path > pathsFromHeaders = headersPaths.stream().flatMap(
 				wrapFunction( p -> Files.find( p, 999,
 						( q, a ) -> !a.isDirectory() && keepHeaderFile( q, sourceFiles,
-								ignoreIfSourcePresent )
-						, FileVisitOption.FOLLOW_LINKS ) ) );
+								ignoreIfSourcePresent ),
+						FileVisitOption.FOLLOW_LINKS ) ) );
 		Stream< Path > pathsFromSources;
 		if( strictHeaderSearch ) {
 			pathsFromSources = Stream.of();
 		} else {
 			pathsFromSources = sourceFiles.stream().map(
-							x -> Paths.get( ( x.isDirectory() )
-									? x.getPath()
-									: ( x.getParent() == null ? "" : x.getParent() ) ) )
+					x -> Paths.get( ( x.isDirectory() ) ? x.getPath() :
+							( x.getParent() == null ? "" : x.getParent() ) ) )
 					.flatMap( wrapFunction( p -> Files.find( p, 1,
 							( q, a ) -> !a.isDirectory() && keepHeaderFile( q, sourceFiles,
-									ignoreIfSourcePresent )
-							, FileVisitOption.FOLLOW_LINKS ) ) );
+									ignoreIfSourcePresent ),
+							FileVisitOption.FOLLOW_LINKS ) ) );
 		}
 		List< File > files = Stream.concat( pathsFromHeaders, pathsFromSources )
 				.map( Path::toFile )
@@ -128,8 +127,8 @@ public class HeaderLoader {
 		if( f.toLowerCase().endsWith( SourceObject.HeaderSourceObject.FILE_EXTENSION ) ) {
 			if( ignoreIfSourcePresent ) {
 				String s = f.substring(
-						f.length() - SourceObject.HeaderSourceObject.FILE_EXTENSION.length() )
-						+ SourceObject.ChoralSourceObject.FILE_EXTENSION;
+						f.length() - SourceObject.HeaderSourceObject.FILE_EXTENSION
+								.length() ) + SourceObject.ChoralSourceObject.FILE_EXTENSION;
 				for( File sf : sourceFiles ) {
 					if( Paths.get( s ).compareTo( sf.toPath() ) == 0 ) {
 						return false;

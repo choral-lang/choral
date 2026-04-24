@@ -35,7 +35,8 @@ public class PipedByteChannel implements BlockingByteChannel {
 	private final WritableByteChannel out;
 	private boolean isOpen = true;
 
-	public static Pair< PipedByteChannel, PipedByteChannel > getConnectedChannels() throws IOException {
+	public static Pair< PipedByteChannel, PipedByteChannel > getConnectedChannels()
+			throws IOException {
 		Pipe p1 = Pipe.open();
 		Pipe p2 = Pipe.open();
 		return new Pair<>(

@@ -88,8 +88,8 @@ public abstract class Member implements HasSource {
 		assertIllegalCombinationOfModifiers( modifiers, ABSTRACT, STATIC );
 		assertIllegalCombinationOfModifiers( modifiers, ABSTRACT, PRIVATE );
 		assertIllegalCombinationOfModifiers( modifiers, ABSTRACT, FINAL );
-		assertIllegalCombinationOfModifiers(modifiers, DEFAULT, ABSTRACT);
-		assertIllegalCombinationOfModifiers(modifiers, DEFAULT, STATIC);
+		assertIllegalCombinationOfModifiers( modifiers, DEFAULT, ABSTRACT );
+		assertIllegalCombinationOfModifiers( modifiers, DEFAULT, STATIC );
 	}
 
 	protected final EnumSet< Modifier > modifiers() {
@@ -97,7 +97,7 @@ public abstract class Member implements HasSource {
 	}
 
 	public final boolean isDefault() {
-		return modifiers.contains(DEFAULT);
+		return modifiers.contains( DEFAULT );
 	}
 
 	public final boolean isAbstract() {
@@ -142,15 +142,18 @@ public abstract class Member implements HasSource {
 		return this.declarationContext == context
 				|| this.isPublic()
 				|| this.isProtected()
-				|| ( this.isPackagePrivate() && this.declarationContext().declarationPackage() == context.declarationPackage() )
-				|| ( this.isPrivate() && this.declarationContext().typeConstructor() == context.typeConstructor() );
+				|| ( this.isPackagePrivate() && this.declarationContext()
+						.declarationPackage() == context.declarationPackage() )
+				|| ( this.isPrivate() && this.declarationContext().typeConstructor() == context
+						.typeConstructor() );
 	}
 
 	public final boolean isAccessibleFrom( GroundTypeParameter context ) {
 		return this.isPublic()
 				|| this.isProtected()
 				|| ( this.isPackagePrivate()
-				   && this.declarationContext().declarationPackage() == context.typeConstructor().declarationContext().declarationPackage() );
+						&& this.declarationContext().declarationPackage() == context
+								.typeConstructor().declarationContext().declarationPackage() );
 	}
 
 	private final GroundClassOrInterface declarationContext;
@@ -298,7 +301,8 @@ public abstract class Member implements HasSource {
 		) {
 			if( typeArgs.size() != typeParameters.size() ) {
 				throw new StaticVerificationException(
-						"illegal type instantiation: expected " + typeParameters.size() + " type arguments but found " + typeArgs.size() );
+						"illegal type instantiation: expected " + typeParameters.size()
+								+ " type arguments but found " + typeArgs.size() );
 			}
 			Substitution substitution = new Substitution() {
 				@Override
@@ -327,7 +331,7 @@ public abstract class Member implements HasSource {
 						t.identifier(),
 						t.worldParameters.stream().map(
 								x -> new World( universe, x.identifier() ) ).collect(
-								Collectors.toList() )
+										Collectors.toList() )
 				) );
 			}
 			for( int i = 0; i < typeParameters().size(); i++ ) {
@@ -341,17 +345,15 @@ public abstract class Member implements HasSource {
 					@Override
 					public World get( World placeHolder ) {
 						int i = oldTypeParam.worldParameters.indexOf( placeHolder );
-						return ( i == -1 )
-								? substitution.get( placeHolder )
-								: newWorldParams.get( i );
+						return ( i == -1 ) ? substitution.get( placeHolder ) :
+								newWorldParams.get( i );
 					}
 
 					@Override
 					public HigherReferenceType get( HigherTypeParameter placeHolder ) {
 						int i = typeParameters().indexOf( placeHolder );
-						return ( i == -1 )
-								? substitution.get( placeHolder )
-								: newTypeParams.get( i );
+						return ( i == -1 ) ? substitution.get( placeHolder ) :
+								newTypeParams.get( i );
 					}
 				};
 				oldTypeParam.innerType().upperBound().forEach(
@@ -379,7 +381,7 @@ public abstract class Member implements HasSource {
 		 * (JLS 8.4.4) Let M and N be methods or constructors with the same type parameters, by a substitution θ applied
 		 * to N. A type mentioned in N can be <b>adapted to the type parameters of M</b> by applying θ to the type.
 		 */
-		public boolean sameSignatureAs(HigherCallable other ) {
+		public boolean sameSignatureAs( HigherCallable other ) {
 			if( !this.identifier().equals( other.identifier() )
 					|| this.typeParameters.size() != other.typeParameters.size()
 					|| this.arity() != other.arity() ) {
@@ -389,18 +391,14 @@ public abstract class Member implements HasSource {
 				@Override
 				public HigherReferenceType get( HigherTypeParameter placeHolder ) {
 					int i = typeParameters.indexOf( placeHolder );
-					return ( i == -1 )
-							? placeHolder
-							: other.typeParameters.get( i );
+					return ( i == -1 ) ? placeHolder : other.typeParameters.get( i );
 				}
 			};
 			Substitution s2 = new Substitution() {
 				@Override
 				public HigherReferenceType get( HigherTypeParameter placeHolder ) {
 					int i = other.typeParameters().indexOf( placeHolder );
-					return ( i == -1 )
-							? placeHolder
-							: typeParameters.get( i );
+					return ( i == -1 ) ? placeHolder : typeParameters.get( i );
 				}
 			};
 			for( int i = 0; i < this.typeParameters.size(); i++ ) {
@@ -450,7 +448,7 @@ public abstract class Member implements HasSource {
 		 * Checks whether the signature of this method is equal to the erasure of the signature of the {@code other}
 		 * method.
 		 */
-		public boolean sameSignatureAsErasureOf(HigherCallable other ) {
+		public boolean sameSignatureAsErasureOf( HigherCallable other ) {
 			// If this method has a different name or takes a different number of arguments, then the signatures
 			// certainly don't match. Also note that the erasure of a type does not have type parameters.
 			// If this method has type parameters, it cannot have the same signature as the erasure of `other`.
@@ -469,7 +467,7 @@ public abstract class Member implements HasSource {
 		}
 
 		public boolean sameErasureAs( HigherCallable other ) {
-			if( !this.identifier().equals( other.identifier() ) || this.arity() != other.arity()  ) {
+			if( !this.identifier().equals( other.identifier() ) || this.arity() != other.arity() ) {
 				return false;
 			}
 			for( int i = 0; i < this.arity(); i++ ) {
@@ -526,28 +524,31 @@ public abstract class Member implements HasSource {
 		 * </pre>
 		 * The mapping for {@code B} would contain a reference to the statement {@code int@A i_A = 0@A}.
 		 */
-		private Map<World, List<Pair<Expression, Statement>>> worldDependencies =  new HashMap<>();
-		
-		public void addDependencies( List<? extends World> worlds, Expression expression, Statement statement ){
-			for( World world : worlds ){
-				addDependency(world, expression, statement);
+		private Map< World, List< Pair< Expression, Statement > > > worldDependencies =
+				new HashMap<>();
+
+		public void addDependencies(
+				List< ? extends World > worlds, Expression expression, Statement statement
+		) {
+			for( World world : worlds ) {
+				addDependency( world, expression, statement );
 			}
 		}
 
-		public void addDependency( World world, Expression expression, Statement statement ){
-			worldDependencies.putIfAbsent(world, new ArrayList<>());
-			worldDependencies.get(world).add(new Pair<>(expression, statement));
+		public void addDependency( World world, Expression expression, Statement statement ) {
+			worldDependencies.putIfAbsent( world, new ArrayList<>() );
+			worldDependencies.get( world ).add( new Pair<>( expression, statement ) );
 		}
 
-		public Map<World, List<Pair<Expression, Statement>>> worldDependencies(){
+		public Map< World, List< Pair< Expression, Statement > > > worldDependencies() {
 			return worldDependencies;
 		}
 
-		public List<Pair<Expression, Statement>> worldDependencies( World world ){
-			return worldDependencies.get(world);
+		public List< Pair< Expression, Statement > > worldDependencies( World world ) {
+			return worldDependencies.get( world );
 		}
 
-		public void clearDependencies(){
+		public void clearDependencies() {
 			worldDependencies.clear();
 		}
 
@@ -555,19 +556,19 @@ public abstract class Member implements HasSource {
 		 * A list of all the channels available to the method from either the 
 		 * enclosing class' fields or the method's arguments.
 		 */
-		private List<Pair<String, GroundInterface>> channels = new ArrayList<>();
+		private List< Pair< String, GroundInterface > > channels = new ArrayList<>();
 
-		public void addChannel( List<Pair<String, GroundInterface>> channelList ){
-			for( Pair<String, GroundInterface> channelPair : channelList ){
-				addChannel(channelPair);
+		public void addChannel( List< Pair< String, GroundInterface > > channelList ) {
+			for( Pair< String, GroundInterface > channelPair : channelList ) {
+				addChannel( channelPair );
 			}
 		}
 
-		public void addChannel( Pair<String, GroundInterface> channelPair ){
-			channels.add(channelPair);
+		public void addChannel( Pair< String, GroundInterface > channelPair ) {
+			channels.add( channelPair );
 		}
 
-		public List<Pair<String, GroundInterface>> channels(){
+		public List< Pair< String, GroundInterface > > channels() {
 			return channels;
 		}
 
@@ -676,29 +677,28 @@ public abstract class Member implements HasSource {
 		 * 	(b) R1 can be converted to a subtype of R2 by unchecked conversion (JLS 5.1.9).
 		 * 	(c) d1 does not have the same signature as d2 (JLS 8.4.2), and R1 is the same as the erasure of R2.
 		 */
-		public boolean isReturnTypeSubstitutableFor(HigherMethod other ) {
+		public boolean isReturnTypeSubstitutableFor( HigherMethod other ) {
 			HigherMethod d1 = this;
 			HigherMethod d2 = other;
 			GroundDataTypeOrVoid r1 = d1.innerCallable().returnType;
 			GroundDataTypeOrVoid r2 = d2.innerCallable().returnType;
-			if ( r1.isVoid() ) {
+			if( r1.isVoid() ) {
 				return r2.isVoid();
 			}
 			if( r1 instanceof GroundPrimitiveDataType rp1 ) {
 				return r2 instanceof GroundPrimitiveDataType rp2 && rp1.isEquivalentTo( rp2 );
 			}
-			if ( r1 instanceof GroundReferenceType rr1 ) {
+			if( r1 instanceof GroundReferenceType rr1 ) {
 				// (a) Adapt r1 to the type parameters of the other method and check if it's a subtype of r2
 				Substitution s1 = new Substitution() {
 					@Override
 					public HigherReferenceType get( HigherTypeParameter placeHolder ) {
 						int i = d1.typeParameters().indexOf( placeHolder );
-						return ( i == -1 )
-								? placeHolder
-								: d2.typeParameters().get( i );
+						return ( i == -1 ) ? placeHolder : d2.typeParameters().get( i );
 					}
 				};
-				if ( !r2.isVoid() && rr1.applySubstitution( s1 ).isSubtypeOf( (GroundDataType)r2 ) ) {
+				if( !r2.isVoid()
+						&& rr1.applySubstitution( s1 ).isSubtypeOf( (GroundDataType) r2 ) ) {
 					return true;
 				}
 
@@ -707,10 +707,10 @@ public abstract class Member implements HasSource {
 
 				// (c) Check if this method does not have the same signature as the other method and r1 is the same as
 				// the erasure of r2
-                return !this.sameSignatureAs( other ) &&
-                        r2 instanceof GroundReferenceType rr2 &&
-                        rr1.isEquivalentToErasureOf( rr2 );
-            }
+				return !this.sameSignatureAs( other ) &&
+						r2 instanceof GroundReferenceType rr2 &&
+						rr1.isEquivalentToErasureOf( rr2 );
+			}
 			return false;
 		}
 
@@ -724,15 +724,15 @@ public abstract class Member implements HasSource {
 			this.selectionMethod = true;
 		}
 
-        boolean typeSelectionMethod = false;
+		boolean typeSelectionMethod = false;
 
-        public boolean isTypeSelectionMethod() {
-            return typeSelectionMethod;
-        }
+		public boolean isTypeSelectionMethod() {
+			return typeSelectionMethod;
+		}
 
-        public void setTypeSelectionMethod() {
-            this.typeSelectionMethod = true;
-        }
+		public void setTypeSelectionMethod() {
+			this.typeSelectionMethod = true;
+		}
 
 		private final HashMap< Substitution, HigherMethod > alphaIndex = new HashMap<>();
 
@@ -751,9 +751,8 @@ public abstract class Member implements HasSource {
 					@Override
 					public HigherReferenceType get( HigherTypeParameter placeHolder ) {
 						int i = typeParameters().indexOf( placeHolder );
-						return ( i == -1 )
-								? substitution.get( placeHolder )
-								: newTypeParams.get( i );
+						return ( i == -1 ) ? substitution.get( placeHolder ) :
+								newTypeParams.get( i );
 					}
 				};
 				Signature signature = this.innerCallable.signature().applySubstitution(
@@ -771,9 +770,9 @@ public abstract class Member implements HasSource {
 				if( isSelectionMethod() ) {
 					result.setSelectionMethod();
 				}
-				if (isTypeSelectionMethod()) {
-                    result.setTypeSelectionMethod();
-                }
+				if( isTypeSelectionMethod() ) {
+					result.setTypeSelectionMethod();
+				}
 				result.innerCallable.finalise();
 				alphaIndex.put( substitution, result );
 			}
@@ -787,9 +786,7 @@ public abstract class Member implements HasSource {
 				@Override
 				public HigherReferenceType get( HigherTypeParameter placeHolder ) {
 					int i = typeParameters().indexOf( placeHolder );
-					return ( i == -1 )
-							? placeHolder
-							: newTypeParams.get( i );
+					return ( i == -1 ) ? placeHolder : newTypeParams.get( i );
 				}
 
 			};
@@ -808,14 +805,15 @@ public abstract class Member implements HasSource {
 			if( isSelectionMethod() ) {
 				result.setSelectionMethod();
 			}
-			if (isTypeSelectionMethod()) {
-                result.setTypeSelectionMethod();
-            }
+			if( isTypeSelectionMethod() ) {
+				result.setTypeSelectionMethod();
+			}
 			result.innerCallable.finalise();
 			return result;
 		}
 
-		private final HashMap< List< ? extends HigherReferenceType >, GroundMethod > instIndex = new HashMap<>();
+		private final HashMap< List< ? extends HigherReferenceType >, GroundMethod > instIndex =
+				new HashMap<>();
 
 		@Override
 		public GroundMethod applyTo( List< ? extends HigherReferenceType > typeArgs ) {
@@ -843,9 +841,7 @@ public abstract class Member implements HasSource {
 			@Override
 			public String toString() {
 				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
-						Formatting.joining( ",", "<", ">", "" ) )
-						+ identifier()
-						+ signature();
+						Formatting.joining( ",", "<", ">", "" ) ) + identifier() + signature();
 			}
 
 			private GroundDataTypeOrVoid returnType;
@@ -875,9 +871,7 @@ public abstract class Member implements HasSource {
 			@Override
 			public String toString() {
 				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
-						Formatting.joining( ",", "<", ">", "" ) )
-						+ identifier()
-						+ signature();
+						Formatting.joining( ",", "<", ">", "" ) ) + identifier() + signature();
 			}
 
 			@Override
@@ -930,7 +924,8 @@ public abstract class Member implements HasSource {
 
 		@Override
 		public String toString() {
-			return declarationContext().typeConstructor().identifier() + innerCallable().signature();
+			return declarationContext().typeConstructor().identifier() + innerCallable()
+					.signature();
 		}
 
 		public GroundClass declarationContext() {
@@ -954,9 +949,8 @@ public abstract class Member implements HasSource {
 					@Override
 					public HigherReferenceType get( HigherTypeParameter placeHolder ) {
 						int i = typeParameters().indexOf( placeHolder );
-						return ( i == -1 )
-								? substitution.get( placeHolder )
-								: newTypeParams.get( i );
+						return ( i == -1 ) ? substitution.get( placeHolder ) :
+								newTypeParams.get( i );
 					}
 				};
 				result = new HigherConstructor(
@@ -972,7 +966,8 @@ public abstract class Member implements HasSource {
 			return result;
 		}
 
-		private final HashMap< List< ? extends HigherReferenceType >, GroundConstructor > instIndex = new HashMap<>();
+		private final HashMap< List< ? extends HigherReferenceType >, GroundConstructor > instIndex =
+				new HashMap<>();
 
 		@Override
 		public GroundConstructor applyTo( List< ? extends HigherReferenceType > typeArgs ) {
@@ -1001,9 +996,8 @@ public abstract class Member implements HasSource {
 			@Override
 			public String toString() {
 				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
-						Formatting.joining( ",", "<", ">", "" ) )
-						+ declarationContext().typeConstructor().identifier()
-						+ signature();
+						Formatting.joining( ",", "<", ">", "" ) ) + declarationContext()
+								.typeConstructor().identifier() + signature();
 			}
 
 			@Override
@@ -1022,9 +1016,8 @@ public abstract class Member implements HasSource {
 			@Override
 			public String toString() {
 				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
-						Formatting.joining( ",", "<", ">", "" ) )
-						+ declarationContext().typeConstructor().identifier()
-						+ signature();
+						Formatting.joining( ",", "<", ">", "" ) ) + declarationContext()
+								.typeConstructor().identifier() + signature();
 			}
 
 			@Override

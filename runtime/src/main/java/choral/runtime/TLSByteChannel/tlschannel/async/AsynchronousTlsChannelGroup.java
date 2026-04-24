@@ -62,11 +62,11 @@ public class AsynchronousTlsChannelGroup {
 	private final AtomicBoolean loggedTaskWarning = new AtomicBoolean();
 	private final Selector selector;
 	private final ScheduledThreadPoolExecutor timeoutExecutor = new ScheduledThreadPoolExecutor( 1,
-			runnable ->
-					new Thread( runnable,
-							String.format( "async-channel-group-%d-timeout-thread", id ) )
+			runnable -> new Thread( runnable,
+					String.format( "async-channel-group-%d-timeout-thread", id ) )
 	);
-	private final ConcurrentLinkedQueue< RegisteredSocket > pendingRegistrations = new ConcurrentLinkedQueue<>();
+	private final ConcurrentLinkedQueue< RegisteredSocket > pendingRegistrations =
+			new ConcurrentLinkedQueue<>();
 	private volatile Shutdown shutdown = Shutdown.No;
 	private LongAdder selectionCount = new LongAdder();
 	private LongAdder startedReads = new LongAdder();
@@ -130,7 +130,8 @@ public class AsynchronousTlsChannelGroup {
 		socket.readLock.lock();
 		try {
 			// a null op means cancel any operation
-			if( op != null && socket.readOperation == op || op == null && socket.readOperation != null ) {
+			if( op != null && socket.readOperation == op
+					|| op == null && socket.readOperation != null ) {
 				socket.readOperation = null;
 				cancelledReads.increment();
 				currentReads.decrement();
@@ -147,7 +148,8 @@ public class AsynchronousTlsChannelGroup {
 		socket.writeLock.lock();
 		try {
 			// a null op means cancel any operation
-			if( op != null && socket.writeOperation == op || op == null && socket.writeOperation != null ) {
+			if( op != null && socket.writeOperation == op
+					|| op == null && socket.writeOperation != null ) {
 				socket.writeOperation = null;
 				cancelledWrites.increment();
 				currentWrites.decrement();
@@ -256,7 +258,8 @@ public class AsynchronousTlsChannelGroup {
 
 	private void loop() {
 		try {
-			while( shutdown == Shutdown.No || shutdown == Shutdown.Wait && currentRegistrations.intValue() > 0 ) {
+			while( shutdown == Shutdown.No
+					|| shutdown == Shutdown.Wait && currentRegistrations.intValue() > 0 ) {
 				int c = selector.select(); // block
 				selectionCount.increment();
 				// avoid unnecessary creation of iterator object
@@ -634,7 +637,9 @@ public class AsynchronousTlsChannelGroup {
 	}
 
 	private enum Shutdown {
-		No, Wait, Immediate
+		No,
+		Wait,
+		Immediate
 	}
 
 	private static abstract class Operation {

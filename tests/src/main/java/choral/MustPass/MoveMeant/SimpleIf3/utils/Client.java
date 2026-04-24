@@ -3,7 +3,9 @@ package choral.MustPass.MoveMeant.SimpleIf3.utils;
 import choral.annotations.Choreography;
 import java.lang.Object;
 
-@Choreography( role = "A", name = "Client" )
+@Choreography(
+		role = "A",
+		name = "Client" )
 public class Client {
 	Object obj;
 

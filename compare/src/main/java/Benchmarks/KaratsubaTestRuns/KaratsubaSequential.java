@@ -41,7 +41,8 @@ public class KaratsubaSequential {
 					times.add( System.nanoTime() - start );
 					if( thisResult != result ) {
 						throw new RuntimeException(
-								"The procedure returned an unexpected result, expected: " + result + ", computed: " + thisResult );
+								"The procedure returned an unexpected result, expected: " + result
+										+ ", computed: " + thisResult );
 					}
 				}
 				if( write ) {

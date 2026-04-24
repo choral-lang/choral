@@ -121,15 +121,14 @@ public class TlsChannelImpl implements ByteChannel {
 		this.readChannel = readChannel;
 		this.writeChannel = writeChannel;
 		this.engine = engine;
-		this.inEncrypted = inEncrypted.orElseGet( () ->
-				new BufferHolder(
-						"inEncrypted",
-						Optional.empty(),
-						encryptedBufAllocator,
-						buffersInitialSize,
-						maxTlsPacketSize,
-						false /* plainData */,
-						releaseBuffers ) );
+		this.inEncrypted = inEncrypted.orElseGet( () -> new BufferHolder(
+				"inEncrypted",
+				Optional.empty(),
+				encryptedBufAllocator,
+				buffersInitialSize,
+				maxTlsPacketSize,
+				false /* plainData */,
+				releaseBuffers ) );
 		this.initSessionCallback = initSessionCallback;
 		this.runTasks = runTasks;
 		this.plainBufAllocator = plainBufAllocator;

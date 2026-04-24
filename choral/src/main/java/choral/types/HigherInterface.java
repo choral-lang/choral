@@ -104,7 +104,8 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 	}
 
 	public void addImplicitMethodModifiers( EnumSet< Modifier > modifiers ) {
-		if (!modifiers.contains(DEFAULT) && !modifiers.contains(STATIC)) modifiers.add( ABSTRACT );
+		if( !modifiers.contains( DEFAULT ) && !modifiers.contains( STATIC ) )
+			modifiers.add( ABSTRACT );
 		modifiers.add( PUBLIC );
 	}
 
@@ -138,8 +139,9 @@ public final class HigherInterface extends HigherClassOrInterface implements Int
 
 		@Override
 		public void addMethod( Member.HigherMethod method ) {
-			assert ( method.isPublic() && method.isAbstract() || method.isDefault() || method.isStatic() )
-				: "'" + method.identifier() + "' modifiers : " + method.modifiers();
+			assert ( method.isPublic() && method.isAbstract() || method.isDefault()
+					|| method.isStatic() ) : "'" + method.identifier() + "' modifiers : "
+							+ method.modifiers();
 			super.addMethod( method );
 		}
 

@@ -44,7 +44,7 @@ public class AssignExpression extends Expression {
 		return m.merge( this, (AssignExpression) n );
 	}
 
-	public String toString(){
+	public String toString() {
 		return target + " " + operator.symbol + " " + value;
 	}
 

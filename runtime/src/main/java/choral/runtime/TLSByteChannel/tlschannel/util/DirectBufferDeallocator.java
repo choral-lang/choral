@@ -82,7 +82,8 @@ public class DirectBufferDeallocator {
 				theUnsafe.setAccessible( true );
 				unsafe = theUnsafe.get( null );
 				invokeCleaner = unsafeClass.getMethod( "invokeCleaner", ByteBuffer.class );
-			} catch( NoSuchMethodException | ClassNotFoundException | IllegalAccessException | NoSuchFieldException t ) {
+			} catch( NoSuchMethodException | ClassNotFoundException | IllegalAccessException
+					 | NoSuchFieldException t ) {
 				throw new RuntimeException( t );
 			}
 		}

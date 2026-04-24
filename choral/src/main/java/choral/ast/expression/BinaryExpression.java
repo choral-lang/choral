@@ -78,7 +78,7 @@ public class BinaryExpression extends Expression {
 		return operator;
 	}
 
-	public String toString(){
+	public String toString() {
 		return left + " " + operator.symbol + " " + right;
 	}
 

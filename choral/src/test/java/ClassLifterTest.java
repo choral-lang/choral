@@ -21,20 +21,20 @@ public class ClassLifterTest {
 
 		// Run the typer to initialize special types like java.lang.Object
 		Typer.annotate( List.of(), HeaderLoader.loadStandardProfile().toList(), universe, opts );
-		
-		ClassLifter classLifter = new ClassLifter(universe, taskQueue, opts);
 
-		classLifter.lookup("java.lang.System", null );
-		classLifter.lookup("java.lang.Object", null );
-		classLifter.lookup("java.lang.Enum", null );
-		classLifter.lookup("java.util.stream.BaseStream", null );
-		classLifter.lookup("java.io.PrintStream", null );
-		classLifter.lookup("java.io.Serializable", null );
-		classLifter.lookup("supplement.HelloWorld", null );
-		classLifter.lookup("java.util.HashMap", null );
-		classLifter.lookup("java.util.Deque", null );
-		classLifter.lookup("java.util.ArrayDeque", null );
-		classLifter.lookup("java.util.Random", null );
-		classLifter.lookup("java.time.chrono.AbstractChronology", null );
+		ClassLifter classLifter = new ClassLifter( universe, taskQueue, opts );
+
+		classLifter.lookup( "java.lang.System", null );
+		classLifter.lookup( "java.lang.Object", null );
+		classLifter.lookup( "java.lang.Enum", null );
+		classLifter.lookup( "java.util.stream.BaseStream", null );
+		classLifter.lookup( "java.io.PrintStream", null );
+		classLifter.lookup( "java.io.Serializable", null );
+		classLifter.lookup( "supplement.HelloWorld", null );
+		classLifter.lookup( "java.util.HashMap", null );
+		classLifter.lookup( "java.util.Deque", null );
+		classLifter.lookup( "java.util.ArrayDeque", null );
+		classLifter.lookup( "java.util.Random", null );
+		classLifter.lookup( "java.time.chrono.AbstractChronology", null );
 	}
 }

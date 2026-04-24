@@ -45,7 +45,8 @@ public class ChoralUnit {
 					"ChoralUnit must be launched with a target, e.g., 'ChoralUnit MyClass'" );
 		}
 
-		ScanResult scanResult = new ClassGraph().enableMethodInfo().enableClassInfo().enableAnnotationInfo().scan();
+		ScanResult scanResult =
+				new ClassGraph().enableMethodInfo().enableClassInfo().enableAnnotationInfo().scan();
 
 		ClassInfoList classes = scanResult.getClassesWithAnnotation( Choreography.class.getName() )
 				.filter( c -> c.getAnnotationInfo( Choreography.class.getName() )
@@ -61,7 +62,7 @@ public class ChoralUnit {
 		// Thread exceptions are collected in order to rethrow them from the main thread.
 		// This enabled automated unit tests, either directly from Java,
 		// or by inspecting the return code when running from the command line.
-		ArrayList<Throwable> threadExceptions = new ArrayList<>();
+		ArrayList< Throwable > threadExceptions = new ArrayList<>();
 
 		for( MethodInfo method : methods ) {
 			List< Thread > threadList = new ArrayList<>();
@@ -74,36 +75,37 @@ public class ChoralUnit {
 								if( Modifier.isStatic( classMethod.getModifiers() ) ) {
 									Class.forName( cls.getName() ).getMethod(
 											method.getName() ).invoke(
-											Class.forName( cls.getName() ) );
+													Class.forName( cls.getName() ) );
 								} else {
 									throw new ChoralUnitException( "Test method " + method.getName()
 											+ " in class " + cls.getName()
 											+ " is not static. ChoralUnit method tests must all be static." );
 								}
-							} catch( ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e ) {
+							} catch( ClassNotFoundException | NoSuchMethodException
+									 | IllegalAccessException | InvocationTargetException e ) {
 								e.printStackTrace();
-								threadExceptions.add(e);
+								threadExceptions.add( e );
 							}
 						} )
 				);
 			}
 
-			UncaughtExceptionHandler exceptionHandler = (thread, exception) -> {
-				threadExceptions.add(exception);
+			UncaughtExceptionHandler exceptionHandler = ( thread, exception ) -> {
+				threadExceptions.add( exception );
 			};
-			threadList.forEach(t -> t.setUncaughtExceptionHandler(exceptionHandler));
-	
-			threadList.forEach(Thread::start);
-			threadList.forEach(t -> {
+			threadList.forEach( t -> t.setUncaughtExceptionHandler( exceptionHandler ) );
+
+			threadList.forEach( Thread::start );
+			threadList.forEach( t -> {
 				try {
 					t.join();
-				} catch (InterruptedException e) {
+				} catch( InterruptedException e ) {
 					e.printStackTrace();
 				}
-			});
-	
-			if (!threadExceptions.isEmpty())
-				throw new RuntimeException(threadExceptions.get(0));
+			} );
+
+			if( !threadExceptions.isEmpty() )
+				throw new RuntimeException( threadExceptions.get( 0 ) );
 		}
 
 	}

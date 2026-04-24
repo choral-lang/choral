@@ -9,7 +9,9 @@ import choral.choralUnit.testUtils.TestUtils_A;
 import choral.choralUnit.testUtils.TestUtils_B;
 import choral.lang.Unit;
 
-@Choreography( role = "B", name = "KaratsubaTest" )
+@Choreography(
+		role = "B",
+		name = "KaratsubaTest" )
 public class KaratsubaTest_B {
 	@Test
 	public static void test1() {

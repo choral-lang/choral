@@ -36,12 +36,12 @@ import choral.grammar.ChoralLexer;
 
 public class Parser {
 
-	private static CompilationUnit parse( String fileName, CharStream content ){
-		ChoralLexer lexer = new ChoralLexer(content);
-		CommonTokenStream tokens = new CommonTokenStream(lexer);
-		choral.grammar.ChoralParser cp = new choral.grammar.ChoralParser(tokens);
+	private static CompilationUnit parse( String fileName, CharStream content ) {
+		ChoralLexer lexer = new ChoralLexer( content );
+		CommonTokenStream tokens = new CommonTokenStream( lexer );
+		choral.grammar.ChoralParser cp = new choral.grammar.ChoralParser( tokens );
 		cp.removeErrorListeners();
-		ParsingErrorListener errorListener = new ParsingErrorListener(fileName);
+		ParsingErrorListener errorListener = new ParsingErrorListener( fileName );
 		cp.addErrorListener( errorListener );
 		choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
 		if( errorListener.getErrors().isEmpty() ) {
@@ -54,18 +54,19 @@ public class Parser {
 	}
 
 	public static CompilationUnit parseString( String sourceCode ) {
-		CharStream content = CharStreams.fromString(sourceCode);
-		return parse(null, content);
+		CharStream content = CharStreams.fromString( sourceCode );
+		return parse( null, content );
 	}
 
 	public static CompilationUnit parseSourceFile( File file ) throws IOException {
 		String filename = file.getCanonicalPath();
-		CharStream input = CharStreams.fromFileName(filename);
-		return parse(filename, input);
+		CharStream input = CharStreams.fromFileName( filename );
+		return parse( filename, input );
 	}
 
-	public static CompilationUnit parseSourceFile( InputStream in, String filename ) throws IOException {
+	public static CompilationUnit parseSourceFile( InputStream in, String filename )
+			throws IOException {
 		ANTLRInputStream input = new ANTLRInputStream( in );
-		return parse(filename, input);
+		return parse( filename, input );
 	}
 }

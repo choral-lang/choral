@@ -9,7 +9,9 @@ import choral.choralUnit.testUtils.TestUtils_B;
 import choral.channels.SymChannel_A;
 import choral.choralUnit.testUtils.TestUtils_A;
 
-@Choreography( role = "C", name = "KaratsubaTest" )
+@Choreography(
+		role = "C",
+		name = "KaratsubaTest" )
 public class KaratsubaTest_C {
 	@Test
 	public static void test1() {

@@ -91,7 +91,8 @@ public class TryCatchStatement extends Statement {
 	public Statement cloneWithContinuation( Statement continuation ) {
 		return new TryCatchStatement( this.body, this.catches,
 				this.continuation() == null ? continuation : continuation().cloneWithContinuation(
-						continuation ), position() );
+						continuation ),
+				position() );
 	}
 
 }

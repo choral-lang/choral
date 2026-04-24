@@ -82,7 +82,7 @@ public class Class extends TemplateDeclaration {
 		return modifiers;
 	}
 
-    /* public boolean isStatic() {
+	/* public boolean isStatic() {
 		return modifiers.contains(STATIC);
 	} */
 

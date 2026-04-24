@@ -7,7 +7,9 @@ import choral.choralUnit.testUtils.TestUtils_B;
 import choral.channels.SymChannel_B;
 import choral.examples.VitalsStreaming.VitalsStreaming_Gatherer;
 
-@Choreography( role = "Gatherer", name = "VitalsStreamingTest" )
+@Choreography(
+		role = "Gatherer",
+		name = "VitalsStreamingTest" )
 public class VitalsStreamingTest_Gatherer {
 	@Test
 	public static void test1() {

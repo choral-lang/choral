@@ -29,8 +29,8 @@ public class DiagnosticsProvider {
 		List< Diagnostic > diagnostics = new ArrayList<>();
 
 		try { // choral compiler errors are reported through exceptions
-			// so try to parse and type program, then catch any exceptions
-			// to pass along error messages to language client
+			 // so try to parse and type program, then catch any exceptions
+			 // to pass along error messages to language client
 			CompilationUnit compUnit = Parser.parseString( content );
 
 			List< CompilationUnit > headerUnits = HeaderLoader.loadStandardProfile().toList();

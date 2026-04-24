@@ -118,7 +118,9 @@ public abstract class SwitchArgument< T > extends Node {
 	}
 
 	public static class SwitchArgumentMergeDefault extends SwitchArgument< Void > {
-		private final static SwitchArgumentMergeDefault instance = new SwitchArgumentMergeDefault( null );
+		private final static SwitchArgumentMergeDefault instance =
+				new SwitchArgumentMergeDefault( null );
+
 		private SwitchArgumentMergeDefault( Void argument ) {
 			super( argument );
 		}
@@ -132,7 +134,7 @@ public abstract class SwitchArgument< T > extends Node {
 			return v.visit( this );
 		}
 	}
-	
+
 	public static class SwitchArgumentDefault extends SwitchArgument< Void > {
 		public SwitchArgumentDefault() {
 			this( null );

@@ -5,7 +5,9 @@ import choral.channels.SymChannel_A;
 import choral.channels.SymChannel_B;
 import choral.lang.Unit;
 
-@Choreography( role = "A", name = "Karatsuba" )
+@Choreography(
+		role = "A",
+		name = "Karatsuba" )
 public class Karatsuba_A {
 	public static Long multiply(
 			Long n1, Long n2, SymChannel_A< Object > ch_AB, Unit ch_BC, SymChannel_B< Object > ch_CA

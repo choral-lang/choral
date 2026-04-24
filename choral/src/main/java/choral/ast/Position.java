@@ -51,7 +51,7 @@ public class Position {
 	}
 
 	public String prettyPath() {
-		if (sourceFile == null) {
+		if( sourceFile == null ) {
 			return "<unknown>";
 		}
 		return Paths.get( "." ).toAbsolutePath().relativize(

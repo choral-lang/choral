@@ -28,8 +28,8 @@ import choral.runtime.Media.BlockingByteChannel;
 import java.nio.ByteBuffer;
 
 public class WrapperByteChannel_A extends WrapperByteChannelImpl implements
-																 DiDataChannel_A< ByteBuffer >,
-																 DiDataChannel_B< ByteBuffer > {
+		DiDataChannel_A< ByteBuffer >,
+		DiDataChannel_B< ByteBuffer > {
 	public WrapperByteChannel_A( BlockingByteChannel channel ) {
 		super( channel );
 	}

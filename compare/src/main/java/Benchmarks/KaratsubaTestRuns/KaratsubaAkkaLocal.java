@@ -56,7 +56,8 @@ public class KaratsubaAkkaLocal {
 					if( !request.resultFuture().get().equals( result ) ) {
 //						System.out.println( "azz " + request.resultFuture().get() + " instead of " + result );
 						throw new RuntimeException(
-								"The procedure returned an unexpected result, expected: " + result + ", computed: " + request.resultFuture().get() );
+								"The procedure returned an unexpected result, expected: " + result
+										+ ", computed: " + request.resultFuture().get() );
 					} else {
 						System.out.println( "done " + i++ );
 					}

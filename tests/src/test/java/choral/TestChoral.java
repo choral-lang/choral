@@ -56,18 +56,23 @@ import org.junit.jupiter.api.function.Executable;
 
 public class TestChoral {
 
-	private static final String RUNTIME = Paths.get("..", "runtime", "src", "main", "choral").toString();
-	private static final String CHORALUNIT = Paths.get("..", "choral-unit", "src", "main", "choral").toString();
-	private static final String MUSTFAIL = Paths.get("src", "main", "choral", "MustFail").toString();
-	private static final String MUSTPASS = Paths.get("src", "main", "choral", "MustPass").toString();
-	private static final String BASE_PATH = Paths.get("base", "src", "main", "java").toString();
-	private static final String RUNTIME_PATH = Paths.get("runtime", "src", "main", "java").toString();
+	private static final String RUNTIME =
+			Paths.get( "..", "runtime", "src", "main", "choral" ).toString();
+	private static final String CHORALUNIT =
+			Paths.get( "..", "choral-unit", "src", "main", "choral" ).toString();
+	private static final String MUSTFAIL =
+			Paths.get( "src", "main", "choral", "MustFail" ).toString();
+	private static final String MUSTPASS =
+			Paths.get( "src", "main", "choral", "MustPass" ).toString();
+	private static final String BASE_PATH = Paths.get( "base", "src", "main", "java" ).toString();
+	private static final String RUNTIME_PATH =
+			Paths.get( "runtime", "src", "main", "java" ).toString();
 	/** Location of Java code produced by the Choral compiler. */
 	private static final String PROJECTED = "projectedOutput";
 	/** Location of Java code that we compare against projected code.  */
 	private static final String EXPECTED = "expectedOutput";
 	/** List of paths to search for Java sources when compiling projected code. */
-	private static final List<String> JAVA_SOURCES = List.of( BASE_PATH, RUNTIME_PATH, EXPECTED );
+	private static final List< String > JAVA_SOURCES = List.of( BASE_PATH, RUNTIME_PATH, EXPECTED );
 
 	// Formatting for terminal output
 	private static final String GREEN = "\u001B[32m";
@@ -127,7 +132,8 @@ public class TestChoral {
 									  List< String > javaSources,
 									  List< String > worlds,
 									  List< String > classPaths,
-									  List< String > flags) {}
+									  List< String > flags) {
+	}
 
 	private static Stream< DynamicTest > discoverTests( String categoryRoot, String... flags ) {
 		Path categoryPath = Path.of( categoryRoot );
@@ -135,9 +141,9 @@ public class TestChoral {
 		List< DynamicTest > requests = new ArrayList<>();
 
 		boolean isMustPass;
-		if ( categoryRoot.startsWith( MUSTPASS ) ) {
+		if( categoryRoot.startsWith( MUSTPASS ) ) {
 			isMustPass = true;
-		} else if ( categoryRoot.startsWith( MUSTFAIL ) ) {
+		} else if( categoryRoot.startsWith( MUSTFAIL ) ) {
 			isMustPass = false;
 		} else {
 			throw new IllegalArgumentException( "Invalid test directory " + categoryRoot +
@@ -150,7 +156,8 @@ public class TestChoral {
 			if( Files.isDirectory( sharedPath ) ) {
 				try( Stream< Path > sharedFiles = Files.walk( sharedPath ) ) {
 					List< Path > sharedChoralSources = sharedFiles
-							.filter( file -> Files.isRegularFile( file ) && file.toString().endsWith( ".ch" ) )
+							.filter( file -> Files.isRegularFile( file )
+									&& file.toString().endsWith( ".ch" ) )
 							.sorted()
 							.toList();
 					if( !sharedChoralSources.isEmpty() ) {
@@ -158,13 +165,15 @@ public class TestChoral {
 								"Shared directory '" + sharedPath + "' contains .ch files. "
 										+ "Move shared Choral sources into test-specific roots. Found:\n"
 										+ sharedChoralSources.stream().map( Path::toString )
-										.collect( Collectors.joining( "\n" ) )
+												.collect( Collectors.joining( "\n" ) )
 						);
 					}
 				}
 			}
 
-			for( Path test : entries.sorted( Comparator.comparing( path -> path.getFileName().toString() ) ).toList() ) {
+			for( Path test : entries
+					.sorted( Comparator.comparing( path -> path.getFileName().toString() ) )
+					.toList() ) {
 				String name = test.getFileName().toString();
 				if( name.equals( "shared" ) || name.equals( "xKnownBugs" ) ) {
 					continue;
@@ -181,7 +190,7 @@ public class TestChoral {
 					if( !Files.isRegularFile( mainFile ) ) {
 						throw new IllegalStateException(
 								"Malformed test directory '" + test
-								+ "': expected to find a file called '" + symbol + ".ch'"
+										+ "': expected to find a file called '" + symbol + ".ch'"
 						);
 					}
 					sourcePath = test.toString();
@@ -216,14 +225,16 @@ public class TestChoral {
 		return requests.stream();
 	}
 
-	private record CompilationResults(int exitCode, String stdout, String stderr) {}
+	private record CompilationResults(int exitCode, String stdout, String stderr) {
+	}
 
 	private record TestError(String path, int line, String message) {
 		/** Errors match if they occur on the same line and one message is a substring of the other. */
 		boolean matches( TestError that ) {
-			return this.path.equals(that.path) &&
+			return this.path.equals( that.path ) &&
 					this.line == that.line &&
-					( this.message.contains( that.message ) || that.message.contains( this.message ) );
+					( this.message.contains( that.message )
+							|| that.message.contains( this.message ) );
 		}
 	}
 
@@ -264,11 +275,12 @@ public class TestChoral {
 			return List.of( path );
 		}
 
-		throw new NoSuchFileException( "Choral source path not found (or not a .ch file): " + sourcePath );
+		throw new NoSuchFileException(
+				"Choral source path not found (or not a .ch file): " + sourcePath );
 	}
 
 	/** Tries to compile the test and returns the results produced by the Choral compiler. */
-	private static CompilationResults compile(CompilationRequest compilationRequest){
+	private static CompilationResults compile( CompilationRequest compilationRequest ) {
 		ArrayList< String > parameters = new ArrayList<>();
 		parameters.add( "epp" );
 		parameters.add( "--verbosity=WARNINGS" );
@@ -282,7 +294,7 @@ public class TestChoral {
 		parameters.add( compilationRequest.symbol() );
 		parameters.addAll( compilationRequest.worlds() );
 		parameters.add( "--annotate" );
-		for ( String flag : compilationRequest.flags() ) {
+		for( String flag : compilationRequest.flags() ) {
 			parameters.add( flag );
 		}
 
@@ -334,8 +346,8 @@ public class TestChoral {
 				.map( String::trim )
 				.filter( s -> !s.isEmpty() )
 				.collect( Collectors.toSet() );
-        return targets.contains("all") || targets.contains(req.symbol());
-    }
+		return targets.contains( "all" ) || targets.contains( req.symbol() );
+	}
 
 	/**
 	 * Replaces {@code expectedDir} with a fresh recursive copy of {@code projectedDir},
@@ -373,9 +385,10 @@ public class TestChoral {
 		ArrayList< String > errors = new ArrayList<>();
 		boolean update = shouldUpdate( compilationRequest );
 
-		CompilationResults results = compile(compilationRequest);
+		CompilationResults results = compile( compilationRequest );
 		if( results.exitCode != 0 )
-			errors.add( "Compiling Choral files failed unexpectedly with exit code " + results.exitCode +
+			errors.add( "Compiling Choral files failed unexpectedly with exit code "
+					+ results.exitCode +
 					"\n" + results.stderr );
 
 		try {
@@ -394,11 +407,11 @@ public class TestChoral {
 					// Find the package declared at the top of the file
 					int i = fileContent.indexOf( "package " );
 					int j = fileContent.indexOf( ";" );
-					if ( i == -1 || j == -1 ) {
+					if( i == -1 || j == -1 ) {
 						errors.add( "Missing package declaration in file: " + file );
 						continue;
 					}
-					String pathString = fileContent.substring(i + 7, j).trim(); // 'package' = 7 characters
+					String pathString = fileContent.substring( i + 7, j ).trim(); // 'package' = 7 characters
 					packages.add( pathString );
 				}
 			}
@@ -421,7 +434,7 @@ public class TestChoral {
 					projectedJavaFiles = Files.walk( projectFolder ).filter(
 							javaFile -> javaFile.toString().endsWith( ".java" )
 					).sorted().toList();
-				} catch ( NoSuchFileException e ) {
+				} catch( NoSuchFileException e ) {
 					projectedJavaFiles = List.of();
 					if( update ) {
 						deleteRecursively( expectedFolderPath );
@@ -441,24 +454,27 @@ public class TestChoral {
 					expectedFiles = Files.walk( expectedFolderPath ).filter(
 							expectedFile -> expectedFile.toString().endsWith( ".java" )
 					).sorted().toList();
-				} catch ( NoSuchFileException e ) {
+				} catch( NoSuchFileException e ) {
 					if( projectedJavaFiles.isEmpty() ) {
 						continue;
 					}
 					errors.add(
-							"No snapshot found for '" + compilationRequest.symbol() + "' in /tests/expectedOutput/.\n\n"
-							+ projectedJavaFiles.stream()
-									.map( p -> {
-										try {
-											return "=== " + p + " ===\n" + Files.readString( p );
-										} catch( IOException ex ) {
-											return "=== " + p + " === (could not read: " + ex.getMessage() + ")";
-										}
-									} )
-									.collect( Collectors.joining( "\n" ) )
-							+ "\n=============================================================================="
-							+ "\nTo accept the new snapshot, run: mvn test -Dchoral.updateExpected="
-							+ compilationRequest.symbol() );
+							"No snapshot found for '" + compilationRequest.symbol()
+									+ "' in /tests/expectedOutput/.\n\n"
+									+ projectedJavaFiles.stream()
+											.map( p -> {
+												try {
+													return "=== " + p + " ===\n"
+															+ Files.readString( p );
+												} catch( IOException ex ) {
+													return "=== " + p + " === (could not read: "
+															+ ex.getMessage() + ")";
+												}
+											} )
+											.collect( Collectors.joining( "\n" ) )
+									+ "\n=============================================================================="
+									+ "\nTo accept the new snapshot, run: mvn test -Dchoral.updateExpected="
+									+ compilationRequest.symbol() );
 					continue;
 				}
 
@@ -468,7 +484,7 @@ public class TestChoral {
 						Collectors.toMap(
 								p -> p.getFileName().toString(),
 								p -> p,
-								(a, b) -> a,
+								( a, b ) -> a,
 								TreeMap::new
 						)
 				);
@@ -476,7 +492,7 @@ public class TestChoral {
 						Collectors.toMap(
 								p -> p.getFileName().toString(),
 								p -> p,
-								(a, b) -> a,
+								( a, b ) -> a,
 								TreeMap::new
 						)
 				);
@@ -509,14 +525,14 @@ public class TestChoral {
 
 					Patch< String > patch = DiffUtils.diff( original, projected );
 
-					List<String> diffOutput = UnifiedDiffUtils.generateUnifiedDiff(
+					List< String > diffOutput = UnifiedDiffUtils.generateUnifiedDiff(
 							expectedFile.toString(),
 							projectedFile.toString(),
 							original,
 							patch,
 							3
 					);
-					if ( !diffOutput.isEmpty() ) {
+					if( !diffOutput.isEmpty() ) {
 						filesDiffer = true;
 						fileDiffs.add( String.join( "\n", diffOutput ) );
 					}
@@ -532,8 +548,9 @@ public class TestChoral {
 				DiagnosticCollector< JavaFileObject > diagnostics = new DiagnosticCollector<>();
 				StandardJavaFileManager fileManager = compiler.getStandardFileManager(
 						diagnostics, null, null );
-				Iterable< ? extends JavaFileObject > compilationUnits = fileManager.getJavaFileObjects(
-						expectedFiles.toArray( new Path[ 0 ] ) );
+				Iterable< ? extends JavaFileObject > compilationUnits =
+						fileManager.getJavaFileObjects(
+								expectedFiles.toArray( new Path[ 0 ] ) );
 
 				List< String > options = new ArrayList<>();
 
@@ -553,7 +570,8 @@ public class TestChoral {
 
 				if( !task.call() ) {
 					List< String > javaCompilationErrors = new ArrayList<>();
-					for( Diagnostic< ? extends JavaFileObject > diagnostic : diagnostics.getDiagnostics() ) {
+					for( Diagnostic< ? extends JavaFileObject > diagnostic : diagnostics
+							.getDiagnostics() ) {
 						javaCompilationErrors.add(
 								String.format( "Error on line %d in %s%n",
 										diagnostic.getLineNumber(),
@@ -576,14 +594,15 @@ public class TestChoral {
 				} catch( IOException e ) {
 					content = "(could not read: " + e.getMessage() + ")";
 				}
-				errors.add( "Unexpected projected file:\n=== " + newProjectedFile + " ===\n" + content );
+				errors.add( "Unexpected projected file:\n=== " + newProjectedFile + " ===\n"
+						+ content );
 			}
 
 			for( String diff : fileDiffs ) {
 				errors.add( "Projected output differs from expected output:\n" + diff + "\n" );
 			}
 
-			if ( filesDiffer ) {
+			if( filesDiffer ) {
 				errors.add( "Accept changes by running: mvn test -Dchoral.updateExpected="
 						+ compilationRequest.symbol() + "\n" );
 			}
@@ -593,35 +612,37 @@ public class TestChoral {
 		}
 
 		if( !errors.isEmpty() ) {
-			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
+			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol,
+					RED, RESET );
 			fail( compilationRequest.symbol, errors );
 		} else {
-			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET );
+			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol,
+					GREEN, RESET );
 		}
 	}
 
-    /**
-     * Finds all of the expected errors in the given file.
-     * An expected error is declared by a comment starting with '//!'
-     */
-	private static List<TestError> findExpectedErrors(String path, String[] fileContent){
-		List<TestError> testErrors = new ArrayList<>();
+	/**
+	 * Finds all of the expected errors in the given file.
+	 * An expected error is declared by a comment starting with '//!'
+	 */
+	private static List< TestError > findExpectedErrors( String path, String[] fileContent ) {
+		List< TestError > testErrors = new ArrayList<>();
 
 		for( int i = 0; i < fileContent.length; i++ ) {
-            int lineNumber = i + 1;
-            String line = fileContent[i];
-            String[] chunks = line.split("//!");
+			int lineNumber = i + 1;
+			String line = fileContent[ i ];
+			String[] chunks = line.split( "//!" );
 
-            for (int j = 1; j < chunks.length; j++) {
-                String message = chunks[j].trim();
-                testErrors.add(new TestError(path, lineNumber, message));
-            }
+			for( int j = 1; j < chunks.length; j++ ) {
+				String message = chunks[ j ].trim();
+				testErrors.add( new TestError( path, lineNumber, message ) );
+			}
 		}
 		return testErrors;
 	}
 
-    /** Searches the compiler output for actual errors produced during compilation. */
-	private static List<TestError> findActualErrors(String[] outputLines){
+	/** Searches the compiler output for actual errors produced during compilation. */
+	private static List< TestError > findActualErrors( String[] outputLines ) {
 		// Choral's error messages look like this:
 		// src/main/choral/MustFail/WrongType/WrongType.ch:7:14: error: Required type 'int@(A)', found 'java.lang.String@(A)'.
 		//
@@ -634,9 +655,9 @@ public class TestChoral {
 
 		// Use a regex to get the path to the Choral file, the line number, and the error message.
 		Pattern pattern = Pattern.compile( "(.*\\.ch):(\\d+):(\\d+): error: (.*)" );
-		List<TestError> actualErrors = new ArrayList<>();
+		List< TestError > actualErrors = new ArrayList<>();
 
-		for (String line : outputLines) {
+		for( String line : outputLines ) {
 			Matcher matcher = pattern.matcher( line );
 			if( !matcher.matches() )
 				continue;
@@ -645,7 +666,7 @@ public class TestChoral {
 			int lineNumber = Integer.parseInt( matcher.group( 2 ) );
 			String errorMessage = matcher.group( 4 );
 
-			actualErrors.add(new TestError(filePath, lineNumber, errorMessage));
+			actualErrors.add( new TestError( filePath, lineNumber, errorMessage ) );
 		}
 
 		return actualErrors;
@@ -653,22 +674,23 @@ public class TestChoral {
 
 	/** Compiles the test, expecting it to fail. */
 	private static void projectFail( CompilationRequest compilationRequest ) {
-		List<String> errors = new ArrayList<>();
-		CompilationResults results = compile(compilationRequest);
+		List< String > errors = new ArrayList<>();
+		CompilationResults results = compile( compilationRequest );
 
 		if( results.exitCode == 0 )
-			errors.add("Compilation succeeded unexpectedly. This test should have compilation errors." );
+			errors.add(
+					"Compilation succeeded unexpectedly. This test should have compilation errors." );
 
 		String[] outputLines = results.stderr.split( "\n" );
-		List<TestError> actualErrors = findActualErrors(outputLines);
+		List< TestError > actualErrors = findActualErrors( outputLines );
 
 		// Concatenate all the expected errors in all the files in the source folders
-		ArrayList<TestError> expectedErrors = new ArrayList<>();
+		ArrayList< TestError > expectedErrors = new ArrayList<>();
 		for( String sourcePath : compilationRequest.sourceFolder() ) {
 			List< Path > testFiles;
 			try {
 				testFiles = getChoralFiles( sourcePath );
-			} catch (IOException e) {
+			} catch( IOException e ) {
 				errors.add( "Source path not found: " + sourcePath );
 				continue;
 			}
@@ -685,31 +707,34 @@ public class TestChoral {
 
 		// Add an error for each expected error not found in actual errors, and vice versa.
 		// The expected error can be a substring of the actual error.
-		for (TestError expected : subtract(expectedErrors, actualErrors)) {
-			errors.add("Expected error on line " + expected.line() +
-				":\t" + expected.message());
+		for( TestError expected : subtract( expectedErrors, actualErrors ) ) {
+			errors.add( "Expected error on line " + expected.line() +
+					":\t" + expected.message() );
 		}
-		for (TestError actual : subtract(actualErrors, expectedErrors)) {
-			errors.add("Unexpected error on line " + actual.line() +
-				":\t" + actual.message());
+		for( TestError actual : subtract( actualErrors, expectedErrors ) ) {
+			errors.add( "Unexpected error on line " + actual.line() +
+					":\t" + actual.message() );
 		}
 
-		if (errors.isEmpty()){
-			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol, GREEN, RESET );
-		}
-		else {
-			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol, RED, RESET );
+		if( errors.isEmpty() ) {
+			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[OK]%s%n", compilationRequest.symbol,
+					GREEN, RESET );
+		} else {
+			System.out.printf( "%-" + COLUMN_WIDTH + "s %s[ERROR]%s%n", compilationRequest.symbol,
+					RED, RESET );
 			fail( compilationRequest.symbol, errors );
 		}
 	}
 
 	/** Returns a list of errors in xs that are not in ys. */
-	private static List<TestError> subtract(List<TestError> original, List<TestError> removed) {
-		ArrayList<TestError> result = new ArrayList<>();
+	private static List< TestError > subtract(
+			List< TestError > original, List< TestError > removed
+	) {
+		ArrayList< TestError > result = new ArrayList<>();
 		for( TestError x : original ) {
 			boolean found = false;
 			for( TestError y : removed ) {
-				if( x.matches(y) ) {
+				if( x.matches( y ) ) {
 					found = true;
 					break;
 				}

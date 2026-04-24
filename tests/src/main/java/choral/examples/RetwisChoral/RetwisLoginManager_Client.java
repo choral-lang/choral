@@ -7,7 +7,9 @@ import java.util.Optional;
 
 import choral.lang.Unit;
 
-@Choreography( role = "Client", name = "RetwisLoginManager" )
+@Choreography(
+		role = "Client",
+		name = "RetwisLoginManager" )
 public class RetwisLoginManager_Client {
 	private SymChannel_A< Object > chCS;
 	private CommandInterface commandInterface;

@@ -26,19 +26,19 @@ public class LSPTest {
 	@Test
 	public void wrongType() {
 		String code = """
-                package choral.examples.HelloRoles;
-                class WrongType@( A ) {
-                    public void sayHello() {
-                        String@A a = "Hello from A"@A;
-                        int@A lol = 5@A;
-                        int@A lul = "Hello"@A;
-                        a = "lol"@A;
-                    }
-                }
-                """; // int@A = 5.5@A; // a = "lol";
+				package choral.examples.HelloRoles;
+				class WrongType@( A ) {
+				    public void sayHello() {
+				        String@A a = "Hello from A"@A;
+				        int@A lol = 5@A;
+				        int@A lul = "Hello"@A;
+				        a = "lol"@A;
+				    }
+				}
+				"""; // int@A = 5.5@A; // a = "lol";
 
-		List<Diagnostic> diagnostics = diagProvider.analyze("", code);
+		List< Diagnostic > diagnostics = diagProvider.analyze( "", code );
 		assert diagnostics.size() == 1;
-		assert diagnostics.get(0).getMessage().contains("StaticVerificationException");
+		assert diagnostics.get( 0 ).getMessage().contains( "StaticVerificationException" );
 	}
 }

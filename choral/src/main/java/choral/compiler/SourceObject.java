@@ -35,7 +35,7 @@ public abstract class SourceObject {
 		this.sourcefile = sourceFile;
 	}
 
-	static String combineName( Optional<String> qualifier, String name ) {
+	static String combineName( Optional< String > qualifier, String name ) {
 		if( qualifier.isEmpty() ) {
 			return name;
 		} else {

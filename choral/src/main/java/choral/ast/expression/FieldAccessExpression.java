@@ -61,7 +61,7 @@ public class FieldAccessExpression extends Expression {
 	}
 
 	@Override
-	public String toString(){
+	public String toString() {
 		return name.toString();
 	}
 
@@ -80,7 +80,8 @@ public class FieldAccessExpression extends Expression {
 					this.position().line() + ":"
 							+ this.position().column() + ":"
 							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-							this ) + "\n with " + n.getClass().getSimpleName() );
+									this )
+							+ "\n with " + n.getClass().getSimpleName() );
 		}
 	}
 }

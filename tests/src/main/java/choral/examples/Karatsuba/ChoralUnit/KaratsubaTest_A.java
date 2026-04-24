@@ -11,7 +11,9 @@ import choral.choralUnit.testUtils.TestUtils_B;
 
 import choral.choralUnit.Assert;
 
-@Choreography( role = "A", name = "KaratsubaTest" )
+@Choreography(
+		role = "A",
+		name = "KaratsubaTest" )
 public class KaratsubaTest_A {
 	@Test
 	public static void test1() {

@@ -46,8 +46,8 @@ public final class KryoSerializer implements ChoralSerializer< Object, ByteBuffe
 				new DefaultInstantiatorStrategy(
 						// <-- the default initiator uses the empty-params constructor
 						new StdInstantiatorStrategy()
-						// <-- if the default fails, use JVM APIs to create
-						// an instance of a class without calling any constructor at all.
+				// <-- if the default fails, use JVM APIs to create
+				// an instance of a class without calling any constructor at all.
 				)
 		);
 	}

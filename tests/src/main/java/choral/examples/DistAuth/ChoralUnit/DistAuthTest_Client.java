@@ -9,7 +9,9 @@ import choral.choralUnit.testUtils.TestUtils_A;
 import choral.annotations.Choreography;
 import choral.examples.DistAuthUtils.Credentials;
 
-@Choreography( role = "Client", name = "DistAuthTest" )
+@Choreography(
+		role = "Client",
+		name = "DistAuthTest" )
 public class DistAuthTest_Client {
 	@Test
 	public static void test1() {

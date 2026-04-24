@@ -76,8 +76,7 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 										null
 								),
 								visit( p.right() ) ) ) // add exceptions to gamma here
-						.collect( Collectors.toList() )
-				,
+						.collect( Collectors.toList() ),
 				visit( n.continuation() )
 		).copyPosition( n );
 		// TODO: do we check that we do not project an empty try clause without catches?
@@ -111,8 +110,10 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 		return (GroundClass) type;
 	}
 
-	private ScopedExpression getTypeSelectionGuard( Expression scope,
-			MethodCallExpression method ) {
+	private ScopedExpression getTypeSelectionGuard(
+			Expression scope,
+			MethodCallExpression method
+	) {
 		Optional< ? extends Member.GroundMethod > ann = method.methodAnnotation();
 
 		if( !ann.isPresent() ) {
@@ -141,7 +142,8 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 	}
 
 	private Optional< Pair< ScopedExpression, GroundClass > > isTypeSelectionMethodAtWorld(
-			Expression e ) {
+			Expression e
+	) {
 		// A type-driven selection is a `ScopedExpression`, where the scope is an expression that
 		// evaluates to a channel, and the nested expression is a `MethodCallExpression` that
 		// invokes a channel's type selection method.
@@ -172,8 +174,10 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 		return Optional.empty();
 	}
 
-	private static SwitchStatement selectionSwitchStatement( Expression guard,
-			SwitchArgument< ? > argument, Statement statement ) {
+	private static SwitchStatement selectionSwitchStatement(
+			Expression guard,
+			SwitchArgument< ? > argument, Statement statement
+	) {
 		Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
 		cases.put( argument, statement );
 		// NOTE: When generating code, `JavaCompiler` will replace the body of a
@@ -220,8 +224,8 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 									v.name(),
 									tp,
 									v.annotations(),
-									v.initializer().isEmpty() ? null
-											: (AssignExpression) ExpressionProjector.visit(
+									v.initializer().isEmpty() ? null :
+											(AssignExpression) ExpressionProjector.visit(
 													this.world(), v.initializer().get() ) ) )
 							.collect( Collectors.toList() ),
 					visit( n.continuation() ) ).copyPosition( n );
@@ -245,9 +249,11 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 			MethodCallExpression methodCall = ( (MethodCallExpression) e );
 			return methodCall.isSelect()
 					&& ( (GroundDataType) methodCall.methodAnnotation().get().returnType() )
-					.worldArguments().stream().map(
-							w -> new WorldArgument( new Name( w.identifier() ) ) ).collect(
-							Collectors.toList() ).contains( this.world() );
+							.worldArguments().stream().map(
+									w -> new WorldArgument( new Name( w.identifier() ) ) )
+							.collect(
+									Collectors.toList() )
+							.contains( this.world() );
 		}
 		return false;
 	}
@@ -317,12 +323,12 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 		} else {
 			List< Statement > cases = List.of( visit( n.ifBranch() ), visit( n.elseBranch() ) );
 			return new ExpressionStatement(
-				ExpressionProjector.visit( this.world(), n.condition() ),
-				Continuation.continuationAfter(
-					StatementsMerger.merge( cases ),
-					visit( n.continuation() ).copyPosition( n ))
+					ExpressionProjector.visit( this.world(), n.condition() ),
+					Continuation.continuationAfter(
+							StatementsMerger.merge( cases ),
+							visit( n.continuation() ).copyPosition( n ) )
 			);
-			
+
 		}
 	}
 
@@ -331,9 +337,8 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 		if( ExpressionProjector.atWorld( n.guard(), this.world() ) ) {
 			return new SwitchStatement(
 					ExpressionProjector.visit( this.world, n.guard() ),
-					n.cases().entrySet().stream().map( e ->
-							new Pair<>( e.getKey(),
-									visit( e.getValue() ) )
+					n.cases().entrySet().stream().map( e -> new Pair<>( e.getKey(),
+							visit( e.getValue() ) )
 					).collect( Streams.toLinkedHashMap( Pair::left, Pair::right ) ),
 					visit( n.continuation() )
 			).copyPosition( n );

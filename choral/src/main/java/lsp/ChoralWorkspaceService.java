@@ -21,52 +21,50 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class ChoralWorkspaceService implements WorkspaceService {
-    private LanguageClient client;
+	private LanguageClient client;
 
-    public void setClient( LanguageClient client ) {
-        this.client = client;
-    }
+	public void setClient( LanguageClient client ) {
+		this.client = client;
+	}
 
-    @Override
-    public void didChangeWatchedFiles(DidChangeWatchedFilesParams params){
-        // missing implementation
-    }
+	@Override
+	public void didChangeWatchedFiles( DidChangeWatchedFilesParams params ) {
+		// missing implementation
+	}
 
-    @Override
-    public void didChangeConfiguration(DidChangeConfigurationParams params){
-        // missing implementation
-    }
+	@Override
+	public void didChangeConfiguration( DidChangeConfigurationParams params ) {
+		// missing implementation
+	}
 
-    @Override
-    public CompletableFuture<Object> executeCommand( ExecuteCommandParams params) {
-        System.err.println("=== EXECUTING COMMAND ===");
-        System.err.println(params);
-        if (params.getCommand().equals("choral.insertComms")) {
-            try {
-                // Get the file
-                var source = ((JsonPrimitive) params.getArguments().get( 0 )).getAsString();
+	@Override
+	public CompletableFuture< Object > executeCommand( ExecuteCommandParams params ) {
+		System.err.println( "=== EXECUTING COMMAND ===" );
+		System.err.println( params );
+		if( params.getCommand().equals( "choral.insertComms" ) ) {
+			try {
+				// Get the file
+				var source = ( (JsonPrimitive) params.getArguments().get( 0 ) ).getAsString();
 
-                // Parse it
-                CompilationUnit parsedUnit = Parser.parseString( source );
-                List<CompilationUnit> headerUnits = HeaderLoader.loadStandardProfile().toList();
+				// Parse it
+				CompilationUnit parsedUnit = Parser.parseString( source );
+				List< CompilationUnit > headerUnits = HeaderLoader.loadStandardProfile().toList();
 
-                // Collect data dependencies and infer communications
-                var opts = new TyperOptions( VerbosityLevel.WARNINGS ).relaxedMode();
-                var checkedUnit = Typer.annotate( List.of(parsedUnit), headerUnits, opts );
-                var fixedUnit = MoveMeant.infer( checkedUnit, headerUnits, opts );
+				// Collect data dependencies and infer communications
+				var opts = new TyperOptions( VerbosityLevel.WARNINGS ).relaxedMode();
+				var checkedUnit = Typer.annotate( List.of( parsedUnit ), headerUnits, opts );
+				var fixedUnit = MoveMeant.infer( checkedUnit, headerUnits, opts );
 
-                // Convert to string and overwrite the file
-                var fixedSource = new PrettyPrinterVisitor().visit( fixedUnit.get( 0 ) );
-                return CompletableFuture.completedFuture(fixedSource);
-            }
-            catch (Exception e) {
-                System.err.println("Error processing file: " + e.getMessage());
-            }
-            return CompletableFuture.completedFuture(null);
-        }
-        else {
-            System.err.println("Unknown command: " + params.getCommand());
-            return CompletableFuture.completedFuture(null);
-        }
-    }
+				// Convert to string and overwrite the file
+				var fixedSource = new PrettyPrinterVisitor().visit( fixedUnit.get( 0 ) );
+				return CompletableFuture.completedFuture( fixedSource );
+			} catch( Exception e ) {
+				System.err.println( "Error processing file: " + e.getMessage() );
+			}
+			return CompletableFuture.completedFuture( null );
+		} else {
+			System.err.println( "Unknown command: " + params.getCommand() );
+			return CompletableFuture.completedFuture( null );
+		}
+	}
 }

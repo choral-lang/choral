@@ -72,8 +72,8 @@ public interface VariableDeclarationScope extends Scope {
 		HigherClassOrInterface diSelectChannel = assertLookupClassOrInterface(
 				"choral.channels.DiSelectChannel" );
 
-		Predicate< GroundInterface > isChannel = ( type ) ->
-				type.allExtendedInterfaces().anyMatch( parent -> {
+		Predicate< GroundInterface > isChannel =
+				( type ) -> type.allExtendedInterfaces().anyMatch( parent -> {
 					var innerType = parent.typeConstructor().innerType();
 					return diDataChannel.innerType().isSubtypeOf( innerType ) ||
 							diSelectChannel.innerType().isSubtypeOf( innerType );

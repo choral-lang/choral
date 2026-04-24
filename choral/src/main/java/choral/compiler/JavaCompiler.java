@@ -63,29 +63,33 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 		List< JavaSourceObject > c = new LinkedList<>();
 		JavaCompiler jc = new JavaCompiler();
 		Path sourcePath = Paths.get( n.position().sourceFile() );
-		List<ImportDeclaration> sortedImports = new ArrayList<>(n.imports());
-		Collections.sort(sortedImports);
+		List< ImportDeclaration > sortedImports = new ArrayList<>( n.imports() );
+		Collections.sort( sortedImports );
 		String imports = jc.visitAndCollect( sortedImports, SEMICOLON + NEWLINE,
 				SEMICOLON + _2NEWLINE );
-		String packageDeclaration = n.packageDeclaration().isPresent() ? PACKAGE + " " + n.packageDeclaration().get() + SEMICOLON + _2NEWLINE : "";
+		String packageDeclaration = n.packageDeclaration().isPresent() ?
+				PACKAGE + " " + n.packageDeclaration().get() + SEMICOLON + _2NEWLINE : "";
 		n.interfaces().forEach( x -> c.add(
 				new JavaSourceObject( packageDeclaration + imports + jc.visit( x ),
 						JavaSourceObject.combineName( n.packageDeclaration(),
 								x.name().identifier() ),
 						sourcePath.resolveSibling(
-								x.name().identifier() + JavaSourceObject.FILE_EXTENSION ).toString() ) ) );
+								x.name().identifier() + JavaSourceObject.FILE_EXTENSION )
+								.toString() ) ) );
 		n.enums().forEach( x -> c.add(
 				new JavaSourceObject( packageDeclaration + imports + jc.visit( x ),
 						JavaSourceObject.combineName( n.packageDeclaration(),
 								x.name().identifier() ),
 						sourcePath.resolveSibling(
-								x.name().identifier() + JavaSourceObject.FILE_EXTENSION ).toString() ) ) );
+								x.name().identifier() + JavaSourceObject.FILE_EXTENSION )
+								.toString() ) ) );
 		n.classes().forEach( x -> c.add(
 				new JavaSourceObject( packageDeclaration + imports + jc.visit( x ),
 						JavaSourceObject.combineName( n.packageDeclaration(),
 								x.name().identifier() ),
 						sourcePath.resolveSibling(
-								x.name().identifier() + JavaSourceObject.FILE_EXTENSION ).toString() ) ) );
+								x.name().identifier() + JavaSourceObject.FILE_EXTENSION )
+								.toString() ) ) );
 		return c;
 	}
 
@@ -135,7 +139,8 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 		String cases = n.cases().entrySet().stream().map(
 				e -> {
 					String caseSwitch, body;
-					if( e.getKey().equals( SwitchArgument.SwitchArgumentMergeDefault.getInstance() )) {
+					if( e.getKey()
+							.equals( SwitchArgument.SwitchArgumentMergeDefault.getInstance() ) ) {
 						caseSwitch = "default -> ";
 						body = "throw new RuntimeException( \"Received unexpected label from select operation\" );";
 					} else {
@@ -156,11 +161,10 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 
 	@Override
 	public String visit( ClassInstantiationExpression n ) {
-		return
-				"new " + ( n.typeArguments().isEmpty() ? "" : "< " + visitAndCollect(
-						n.typeArguments(), SPACED_COMMA ) + " >" )
-						+ visit( n.typeExpression() )
-						+ ( n.arguments().isEmpty() ? "()" : "( " + visitAndCollect( n.arguments(),
+		return "new " + ( n.typeArguments().isEmpty() ? "" : "< " + visitAndCollect(
+				n.typeArguments(), SPACED_COMMA ) + " >" )
+				+ visit( n.typeExpression() )
+				+ ( n.arguments().isEmpty() ? "()" : "( " + visitAndCollect( n.arguments(),
 						SPACED_COMMA ) + " )" );
 	}
 
@@ -171,29 +175,27 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 
 	@Override
 	public String visit( MethodSignature n ) {
-		return
-				( n.typeParameters().isEmpty() ? "" : "< " + visitAndCollect( n.typeParameters(),
-						SPACED_COMMA ) + " > " )
-						+ visit( n.returnType() )
-						+ " " + n.name() +
-						( n.parameters().isEmpty() ? "()" : "( " + visitAndCollect( n.parameters(),
-								SPACED_COMMA ) + " )" );
+		return ( n.typeParameters().isEmpty() ? "" : "< " + visitAndCollect( n.typeParameters(),
+				SPACED_COMMA ) + " > " )
+				+ visit( n.returnType() )
+				+ " " + n.name() +
+				( n.parameters().isEmpty() ? "()" : "( " + visitAndCollect( n.parameters(),
+						SPACED_COMMA ) + " )" );
 	}
 
 	@Override
 	public String visit( ConstructorSignature n ) {
-		return
-				( n.typeParameters().isEmpty() ? "" : "< " + visitAndCollect( n.typeParameters(),
-						SPACED_COMMA ) + " > " ) +
-						n.name() +
-						( n.parameters().isEmpty() ? "()" : "( " + visitAndCollect( n.parameters(),
-								SPACED_COMMA ) + " )" );
+		return ( n.typeParameters().isEmpty() ? "" : "< " + visitAndCollect( n.typeParameters(),
+				SPACED_COMMA ) + " > " ) + n
+						.name() + ( n.parameters().isEmpty() ? "()" :
+								"( " + visitAndCollect( n.parameters(),
+										SPACED_COMMA ) + " )" );
 	}
 
 	@Override
 	public String visit( TypeExpression n ) {
-		return n.name() +
-				( n.typeArguments().isEmpty() ? "" : " < " + visitAndCollect( n.typeArguments(),
+		return n.name() + ( n.typeArguments().isEmpty() ? "" :
+				" < " + visitAndCollect( n.typeArguments(),
 						SPACED_COMMA ) + " >" );
 	}
 

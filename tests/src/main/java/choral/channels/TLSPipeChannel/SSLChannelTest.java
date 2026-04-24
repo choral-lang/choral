@@ -39,7 +39,8 @@ import java.security.cert.CertificateException;
 
 public class SSLChannelTest {
 
-	public static SSLContext getSSLContext() throws NoSuchAlgorithmException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException, IOException {
+	public static SSLContext getSSLContext() throws NoSuchAlgorithmException, KeyStoreException,
+			CertificateException, UnrecoverableKeyException, KeyManagementException, IOException {
 		KeyStore keyStore = KeyStore.getInstance( KeyStore.getDefaultType() );
 		KeyStore trustStore = KeyStore.getInstance( KeyStore.getDefaultType() );
 		String password = "password";
@@ -58,11 +59,13 @@ public class SSLChannelTest {
 
 	public static void main(
 			String[] args
-	) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+	) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException,
+			KeyStoreException, KeyManagementException, IOException {
 
 		SSLContext sslContext = getSSLContext();
 
-		choral.utils.Pair< PipedByteChannel, PipedByteChannel > channels = PipedByteChannel.getConnectedChannels();
+		choral.utils.Pair< PipedByteChannel, PipedByteChannel > channels =
+				PipedByteChannel.getConnectedChannels();
 
 		new Thread( () -> {
 			TSLByteChannel_A c = new TSLByteChannel_A( new WrapperByteChannel_A( channels.left() ),

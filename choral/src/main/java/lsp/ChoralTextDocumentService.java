@@ -15,71 +15,72 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import lsp.features.DiagnosticsProvider;
 
 public class ChoralTextDocumentService implements TextDocumentService {
-    private final DiagnosticsProvider diagnosticsProvider;
-    private LanguageClient client;
-    
-    public ChoralTextDocumentService() {
-        diagnosticsProvider = new DiagnosticsProvider();
-    }
+	private final DiagnosticsProvider diagnosticsProvider;
+	private LanguageClient client;
 
-    @Override
-    public void didOpen(DidOpenTextDocumentParams params){
-        String uri = params.getTextDocument().getUri();
-        String content = params.getTextDocument().getText();
-        
-        analyzeAndPublish(uri, content);
-    }
+	public ChoralTextDocumentService() {
+		diagnosticsProvider = new DiagnosticsProvider();
+	}
 
-    @Override
-    public void didClose(DidCloseTextDocumentParams params){
-        String uri = params.getTextDocument().getUri();
-        publishDiagnostics(uri, new ArrayList<>());
-    }
+	@Override
+	public void didOpen( DidOpenTextDocumentParams params ) {
+		String uri = params.getTextDocument().getUri();
+		String content = params.getTextDocument().getText();
 
-    @Override
-    public void didSave(DidSaveTextDocumentParams params){
-        // missing implementation
-    }
+		analyzeAndPublish( uri, content );
+	}
 
-    @Override
-    public void didChange(DidChangeTextDocumentParams params){
-        String uri = params.getTextDocument().getUri();
-        String content = params.getContentChanges().get(0).getText();
+	@Override
+	public void didClose( DidCloseTextDocumentParams params ) {
+		String uri = params.getTextDocument().getUri();
+		publishDiagnostics( uri, new ArrayList<>() );
+	}
 
-        analyzeAndPublish(uri, content);
-    }
+	@Override
+	public void didSave( DidSaveTextDocumentParams params ) {
+		// missing implementation
+	}
 
-    public void setClient(LanguageClient client){
-        System.err.println("Client connected in Text Document Service");
-        this.client = client;
+	@Override
+	public void didChange( DidChangeTextDocumentParams params ) {
+		String uri = params.getTextDocument().getUri();
+		String content = params.getContentChanges().get( 0 ).getText();
+
+		analyzeAndPublish( uri, content );
+	}
+
+	public void setClient( LanguageClient client ) {
+		System.err.println( "Client connected in Text Document Service" );
+		this.client = client;
 		diagnosticsProvider.setClient( client );
-    }
+	}
 
-    private void analyzeAndPublish(String uri, String content){
-        List<Diagnostic> diagnostics = diagnosticsProvider.analyze(uri, content);
+	private void analyzeAndPublish( String uri, String content ) {
+		List< Diagnostic > diagnostics = diagnosticsProvider.analyze( uri, content );
 
-        for (Diagnostic d : diagnostics) {
-            System.err.println("  - " + d.getMessage() + " at line " + d.getRange().getStart().getLine()
-                    + " and at column " + d.getRange().getStart().getCharacter());
-        }
+		for( Diagnostic d : diagnostics ) {
+			System.err.println(
+					"  - " + d.getMessage() + " at line " + d.getRange().getStart().getLine()
+							+ " and at column " + d.getRange().getStart().getCharacter() );
+		}
 
-        publishDiagnostics(uri, diagnostics);        
-    }
+		publishDiagnostics( uri, diagnostics );
+	}
 
-    private void publishDiagnostics(String uri, List<Diagnostic> diagnostics){
-        System.err.println("=== PUBLISHING DIAGNOSTICS ===");
-        System.err.println("URI: " + uri);
-        System.err.println("Count: " + diagnostics.size());
-        
-        if (client == null) {
-            System.err.println("ERROR: client is null!");
-            return;
-        }
+	private void publishDiagnostics( String uri, List< Diagnostic > diagnostics ) {
+		System.err.println( "=== PUBLISHING DIAGNOSTICS ===" );
+		System.err.println( "URI: " + uri );
+		System.err.println( "Count: " + diagnostics.size() );
 
-        PublishDiagnosticsParams params = new PublishDiagnosticsParams(uri, diagnostics);
+		if( client == null ) {
+			System.err.println( "ERROR: client is null!" );
+			return;
+		}
 
-        client.publishDiagnostics(params);
+		PublishDiagnosticsParams params = new PublishDiagnosticsParams( uri, diagnostics );
 
-        System.err.println("Diagnostics published successfully");
-    }
+		client.publishDiagnostics( params );
+
+		System.err.println( "Diagnostics published successfully" );
+	}
 }

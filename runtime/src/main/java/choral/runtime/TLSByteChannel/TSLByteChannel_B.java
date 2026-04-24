@@ -31,8 +31,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 
 public class TSLByteChannel_B extends TSLByteChannelImpl implements
-														 DiDataChannel_B< ByteBuffer >,
-														 DiDataChannel_A< ByteBuffer > {
+		DiDataChannel_B< ByteBuffer >,
+		DiDataChannel_A< ByteBuffer > {
 
 	public TSLByteChannel_B( SymByteChannelImpl channel, SSLContext sslContext ) {
 		this.channel = ServerTlsChannel

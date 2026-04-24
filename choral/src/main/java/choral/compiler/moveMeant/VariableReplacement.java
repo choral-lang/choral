@@ -54,82 +54,88 @@ import java.util.Map.Entry;
  * This expects that there are no dependencies on literals and that the resulting {@code CompilationUnit} 
  * will be typed again, since most or all typeannotations will be lost
  */
-public class VariableReplacement{
+public class VariableReplacement {
 
-    /** An object containing all selections to be inserted */
-    Selections selections;
-    /** A map mapping from a statement to a list of all dependencies within that statement */
-	Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
-    /** A map mapping from a dependency to the variable containing the communicated dependency */
-    Map<Dependency, Name> dependencyVariables = new HashMap<>();
+	/** An object containing all selections to be inserted */
+	Selections selections;
+	/** A map mapping from a statement to a list of all dependencies within that statement */
+	Map< Statement, List< Dependency > > amendedStatements = new HashMap<>();
+	/** A map mapping from a dependency to the variable containing the communicated dependency */
+	Map< Dependency, Name > dependencyVariables = new HashMap<>();
 	/** Sequence number for naming variables */
 	private int seqnum;
 
-    public VariableReplacement( Selections selections ){
+	public VariableReplacement( Selections selections ) {
 		this.selections = selections;
 	}
 
-	private int seqnum() { return seqnum++; }
-
-    public CompilationUnit inferComms( CompilationUnit cu ){
-		
-		// Make the map containing all dependencies
-		buildAmendedStatements(cu);
-		
-		// Since everything in a CompilationUnit is final (in particular Statemetns and 
-		// Expressions) we need to create a new CompilationUnit
-		return createNewCompilationUnit( cu ); 
+	private int seqnum() {
+		return seqnum++;
 	}
 
-    /**
+	public CompilationUnit inferComms( CompilationUnit cu ) {
+
+		// Make the map containing all dependencies
+		buildAmendedStatements( cu );
+
+		// Since everything in a CompilationUnit is final (in particular Statemetns and 
+		// Expressions) we need to create a new CompilationUnit
+		return createNewCompilationUnit( cu );
+	}
+
+	/**
 	 * Iterates through all the methods of {@code cu} (including constructors), extracts 
 	 * their dependencies, creates {@code Dependency} objects to store the dependencies 
 	 * and collects them in {@code amendedStatements}.
 	 */
-	private void buildAmendedStatements( CompilationUnit cu ){
-		for( HigherCallable method : Utils.getJustMethods(cu) ){
-			for( Entry<World, List<Pair<Expression, Statement>>> entryset : method.worldDependencies().entrySet() ){
-				
+	private void buildAmendedStatements( CompilationUnit cu ) {
+		for( HigherCallable method : Utils.getJustMethods( cu ) ) {
+			for( Entry< World, List< Pair< Expression, Statement > > > entryset : method
+					.worldDependencies().entrySet() ) {
+
 				World receiver = entryset.getKey();
-				
-				for( Pair<Expression, Statement> dependencyPair : entryset.getValue() ){
+
+				for( Pair< Expression, Statement > dependencyPair : entryset.getValue() ) {
 					Expression dependencyExpression = dependencyPair.left();
 					Statement dependencyStatement = dependencyPair.right();
 
-					Dependency newDependency = new Dependency(dependencyExpression);
-                    newDependency.setRecipient(receiver);
+					Dependency newDependency = new Dependency( dependencyExpression );
+					newDependency.setRecipient( receiver );
 
 					// Extract sender from dependency (what world needs to send data)
-					World sender = getSender(dependencyExpression);
-					
+					World sender = getSender( dependencyExpression );
+
 					// System.out.println( "Role " + receiver + " needs " + dependencyExpression + " from role " + sender );
 
 					// Find a viable communication method
-					Pair<Pair<String, GroundInterface>, HigherMethod> comPair = Utils.findComMethod(
-						receiver, 
-						sender, 
-						(GroundDataType)dependencyExpression.typeAnnotation().get(),
-						method.channels());
-					
-					if( comPair == null ){
+					Pair< Pair< String, GroundInterface >, HigherMethod > comPair =
+							Utils.findComMethod(
+									receiver,
+									sender,
+									(GroundDataType) dependencyExpression.typeAnnotation().get(),
+									method.channels() );
+
+					if( comPair == null ) {
 						// No viable communication method was found.
-						throw new CommunicationInferenceException( "No viable communication method was found for the dependency " + dependencyExpression );
+						throw new CommunicationInferenceException(
+								"No viable communication method was found for the dependency "
+										+ dependencyExpression );
 					}
 
 					// This pair consists of the channel's identifier and its type.
-					Pair<String, GroundInterface> comChannelPair = comPair.left();
-					
+					Pair< String, GroundInterface > comChannelPair = comPair.left();
+
 					newDependency.setChannel( comChannelPair.left(), comChannelPair.right() );
 					newDependency.setComMethod( comPair.right() );
 
 					// Put the dependency in a list to be accessible later
-					amendedStatements.putIfAbsent(dependencyStatement, new ArrayList<>());
-					amendedStatements.get(dependencyStatement).add( newDependency );
+					amendedStatements.putIfAbsent( dependencyStatement, new ArrayList<>() );
+					amendedStatements.get( dependencyStatement ).add( newDependency );
 				}
 			}
 			// clears the dependencies of the method so they won't accidentally considered twice
 			// (probably not needed) 
-			method.clearDependencies(); 
+			method.clearDependencies();
 		}
 	}
 
@@ -140,24 +146,28 @@ public class VariableReplacement{
 	 * If the dependency expression is a method call, the type-annotation is set to 
 	 * be equal to the method annotation.
 	 */
-	private World getSender( Expression dependencyExpression ){
+	private World getSender( Expression dependencyExpression ) {
 		// Extract senders from dependency (what world(s) needs to send data)
-		List<? extends World> senders;
-		if( dependencyExpression instanceof MethodCallExpression ){
+		List< ? extends World > senders;
+		if( dependencyExpression instanceof MethodCallExpression ) {
 			// MethodCallExpressions don't use typeAnnotation but instead use methodAnnotation
-			GroundDataType methodReturnType = (GroundDataType)((MethodCallExpression)dependencyExpression).methodAnnotation().get().returnType();
+			GroundDataType methodReturnType =
+					(GroundDataType) ( (MethodCallExpression) dependencyExpression )
+							.methodAnnotation().get().returnType();
 			// Set typeannotation = returntype here for more easy access to an expression's type
-			dependencyExpression.setTypeAnnotation(methodReturnType); 
+			dependencyExpression.setTypeAnnotation( methodReturnType );
 			senders = methodReturnType.worldArguments();
 		} else {
-			senders = ((GroundDataType)dependencyExpression.typeAnnotation().get()).worldArguments();
+			senders = ( (GroundDataType) dependencyExpression.typeAnnotation().get() )
+					.worldArguments();
 		}
-		
-		if( senders.size() != 1 ){
+
+		if( senders.size() != 1 ) {
 			// We don't accept dependencies with multiple sender worlds
-			throw new CommunicationInferenceException( "Found Dependency with " + senders.size() + " senders, expected 1" );
+			throw new CommunicationInferenceException(
+					"Found Dependency with " + senders.size() + " senders, expected 1" );
 		}
-		return senders.get(0);
+		return senders.get( 0 );
 	}
 
 	/**
@@ -168,75 +178,77 @@ public class VariableReplacement{
 	 * (in particular {@code Statements} and {@code Expressions}) are final, and can therefore not 
 	 * be modified.
 	 */
-	private CompilationUnit createNewCompilationUnit( CompilationUnit old ){
-		List<Class> newClasses = new ArrayList<>();
-		for( Class cls : old.classes() ){
-			List<ConstructorDefinition> newConstructors = new ArrayList<>();
-			for( ConstructorDefinition constructor : cls.constructors() ){
-				Statement newBody = new VisitStatement().visitContinutation(constructor.blockStatements());
+	private CompilationUnit createNewCompilationUnit( CompilationUnit old ) {
+		List< Class > newClasses = new ArrayList<>();
+		for( Class cls : old.classes() ) {
+			List< ConstructorDefinition > newConstructors = new ArrayList<>();
+			for( ConstructorDefinition constructor : cls.constructors() ) {
+				Statement newBody =
+						new VisitStatement().visitContinutation( constructor.blockStatements() );
 
-				newConstructors.add(new ConstructorDefinition(
-					constructor.signature(), 
-					constructor.explicitConstructorInvocation().orElse( null ),
-					newBody, 
-					constructor.annotations(), 
-					constructor.modifiers(), 
-					constructor.position()));
+				newConstructors.add( new ConstructorDefinition(
+						constructor.signature(),
+						constructor.explicitConstructorInvocation().orElse( null ),
+						newBody,
+						constructor.annotations(),
+						constructor.modifiers(),
+						constructor.position() ) );
 			}
-			
-			List<ClassMethodDefinition> newMethods = new ArrayList<>();
-			for( ClassMethodDefinition method : cls.methods() ){
+
+			List< ClassMethodDefinition > newMethods = new ArrayList<>();
+			for( ClassMethodDefinition method : cls.methods() ) {
 				Statement newBody = null;
-				if( method.body().isPresent() ){
-					newBody = new VisitStatement().visitContinutation(method.body().get());
+				if( method.body().isPresent() ) {
+					newBody = new VisitStatement().visitContinutation( method.body().get() );
 				}
 
-				newMethods.add(new ClassMethodDefinition(
-					method.signature(), 
-					newBody, 
-					method.annotations(), 
-					method.modifiers(), 
-					method.position()));
+				newMethods.add( new ClassMethodDefinition(
+						method.signature(),
+						newBody,
+						method.annotations(),
+						method.modifiers(),
+						method.position() ) );
 			}
 
-			newClasses.add(new Class(
-				cls.name(), 
-				cls.worldParameters(), 
-				cls.typeParameters(), 
-				cls.extendsClass(), 
-				cls.implementsInterfaces(), 
-				cls.fields(), 
-				newMethods, 
-				newConstructors, 
-				cls.annotations(), 
-				cls.modifiers(), 
-				cls.position()));
+			newClasses.add( new Class(
+					cls.name(),
+					cls.worldParameters(),
+					cls.typeParameters(),
+					cls.extendsClass(),
+					cls.implementsInterfaces(),
+					cls.fields(),
+					newMethods,
+					newConstructors,
+					cls.annotations(),
+					cls.modifiers(),
+					cls.position() ) );
 		}
 
-		List<Enum> newEnums = old.enums();
-		if( selections.enumerator() != null ) 
+		List< Enum > newEnums = old.enums();
+		if( selections.enumerator() != null )
 			newEnums.add( selections.enumerator() ); // insert enum created by KOC inference 
 
 		return new CompilationUnit(
-			old.packageDeclaration(), 
-			old.imports(), 
-			old.interfaces(), 
-			newClasses, 
-			newEnums, 
-			old.position().sourceFile());
+				old.packageDeclaration(),
+				old.imports(),
+				old.interfaces(),
+				newClasses,
+				newEnums,
+				old.position().sourceFile() );
 	}
 
-    /**
+	/**
 	 * Adds communications to {@code Statements}.
 	 * <p>
 	 * Iterates through {@code Statement}s and their continuations, and anytime a {@code 
 	 * Statement} is in the {@code amendedStatements} map, the {@code Expression}s of that 
 	 * {@code Statement} are visited by {@code VisitExpression}
 	 */
-	private class VisitStatement extends AbstractChoralVisitor< Statement >{
-		
-		
-		public VisitStatement(){}
+	private class VisitStatement extends AbstractChoralVisitor< Statement > {
+
+
+		public VisitStatement() {
+		}
 
 		@Override
 		public Statement visit( Statement n ) {
@@ -245,29 +257,29 @@ public class VariableReplacement{
 
 		@Override
 		public Statement visit( ExpressionStatement n ) {
-			List<Dependency> dependencyList = amendedStatements.get(n);
+			List< Dependency > dependencyList = amendedStatements.get( n );
 			Expression newExpression;
-			if( dependencyList == null ){
+			if( dependencyList == null ) {
 				// If this statement has no dependencies, there is no reason to visit its expression
 				newExpression = n.expression();
-			} else{
-				newExpression = visitExpression(dependencyList, n.expression());
+			} else {
+				newExpression = visitExpression( dependencyList, n.expression() );
 			}
 
 			return new ExpressionStatement(
-				newExpression, 
-				visitContinutation(n.continuation()), 
-				n.position());
+					newExpression,
+					visitContinutation( n.continuation() ),
+					n.position() );
 		}
 
 		@Override
 		public Statement visit( VariableDeclarationStatement n ) {
-			List<Dependency> dependencyList = amendedStatements.get(n);
-			List<VariableDeclaration> newVariables = new ArrayList<>();
-			if( dependencyList == null ){
+			List< Dependency > dependencyList = amendedStatements.get( n );
+			List< VariableDeclaration > newVariables = new ArrayList<>();
+			if( dependencyList == null ) {
 				// If this statement has no dependencies, there is no reason to visit its expressions (n.variables())
 				newVariables = n.variables();
-			} else{
+			} else {
 				for( VariableDeclaration x : n.variables() ) {
 					// If there are dependencies, we visit each VariableDeclaration seperately 
 					newVariables.add( visitVariableDeclaration( dependencyList, x ) );
@@ -275,14 +287,14 @@ public class VariableReplacement{
 			}
 
 			return new VariableDeclarationStatement(
-				newVariables, 
-				visitContinutation(n.continuation()), 
-				n.position());
+					newVariables,
+					visitContinutation( n.continuation() ),
+					n.position() );
 		}
 
 		@Override
 		public Statement visit( NilStatement n ) {
-			return new NilStatement(n.position());
+			return new NilStatement( n.position() );
 		}
 
 		@Override
@@ -291,186 +303,192 @@ public class VariableReplacement{
 			// contain Statemetns that then might contain Expressions) and 
 			// thus do not need to be checked for dependencies 
 			return new BlockStatement(
-				n.enclosedStatement(), 
-				visitContinutation(n.continuation()), 
-				n.position());
+					n.enclosedStatement(),
+					visitContinutation( n.continuation() ),
+					n.position() );
 		}
 
 		@Override
 		public Statement visit( IfStatement n ) {
-			List<Dependency> dependencyList = amendedStatements.get(n);
+			List< Dependency > dependencyList = amendedStatements.get( n );
 			Expression newCondition;
-			if( dependencyList == null ){
+			if( dependencyList == null ) {
 				// If this statement has no dependencies, there is no reason to visit its condition
 				newCondition = n.condition();
-			} else{
-				newCondition = visitExpression(dependencyList, n.condition());
+			} else {
+				newCondition = visitExpression( dependencyList, n.condition() );
 			}
 
 			// Insert selections if there are any
-			Statement newIfBranch = visitContinutation(n.ifBranch());
-			Statement newElseBranch = visitContinutation(n.elseBranch());
-			List<List<Expression>> selectionsToInsert = selections.selections().get( n );
-			if( selectionsToInsert != null ){
-				newIfBranch = Selections.chainSelections( newIfBranch , selectionsToInsert.get(0));
-				newElseBranch = Selections.chainSelections( newElseBranch , selectionsToInsert.get(1));
+			Statement newIfBranch = visitContinutation( n.ifBranch() );
+			Statement newElseBranch = visitContinutation( n.elseBranch() );
+			List< List< Expression > > selectionsToInsert = selections.selections().get( n );
+			if( selectionsToInsert != null ) {
+				newIfBranch =
+						Selections.chainSelections( newIfBranch, selectionsToInsert.get( 0 ) );
+				newElseBranch =
+						Selections.chainSelections( newElseBranch, selectionsToInsert.get( 1 ) );
 			}
 
 			return new IfStatement(
-				newCondition, 
-				newIfBranch,
-				newElseBranch, 
-				visitContinutation(n.continuation()), n.position());
+					newCondition,
+					newIfBranch,
+					newElseBranch,
+					visitContinutation( n.continuation() ), n.position() );
 		}
 
 		@Override // not supported
 		public Statement visit( SwitchStatement n ) {
-			throw new UnsupportedOperationException("SwitchStatement not supported\n\tStatement at " + n.position().toString());
+			throw new UnsupportedOperationException(
+					"SwitchStatement not supported\n\tStatement at " + n.position().toString() );
 		}
 
 		@Override
 		public Statement visit( TryCatchStatement n ) {
-			List<Dependency> dependencyList = amendedStatements.get(n);
+			List< Dependency > dependencyList = amendedStatements.get( n );
 			List< Pair< VariableDeclaration, Statement > > newCatches = new ArrayList<>();
-			if( dependencyList == null ){
+			if( dependencyList == null ) {
 				// If this statement has no dependencies, there is no reason to visit its expressions, 
 				// but the statements still need to be visited
-				for( Pair< VariableDeclaration, Statement > pair : n.catches() ){
-					newCatches.add( 
-						new Pair<>( 
-							pair.left(), 
-							visit(pair.right()) ) );
+				for( Pair< VariableDeclaration, Statement > pair : n.catches() ) {
+					newCatches.add(
+							new Pair<>(
+									pair.left(),
+									visit( pair.right() ) ) );
 				}
 			} else {
-				for( Pair< VariableDeclaration, Statement > pair : n.catches() ){
-					newCatches.add( 
-						new Pair<>( 
-							visitVariableDeclaration( dependencyList, pair.left() ), 
-							visit(pair.right()) ) );
+				for( Pair< VariableDeclaration, Statement > pair : n.catches() ) {
+					newCatches.add(
+							new Pair<>(
+									visitVariableDeclaration( dependencyList, pair.left() ),
+									visit( pair.right() ) ) );
 				}
 			}
-			
+
 			return new TryCatchStatement(
-				visit(n.body()), 
-				newCatches, 
-				visitContinutation(n.continuation()), 
-				n.position());
+					visit( n.body() ),
+					newCatches,
+					visitContinutation( n.continuation() ),
+					n.position() );
 		}
 
 		@Override
 		public Statement visit( ReturnStatement n ) {
-			List<Dependency> dependencyList = amendedStatements.get(n);
+			List< Dependency > dependencyList = amendedStatements.get( n );
 			Expression newReturnExpression;
-			if( dependencyList == null ){
+			if( dependencyList == null ) {
 				// If this statement has no dependencies, there is no reason to visit its expression
 				newReturnExpression = n.returnExpression();
-			} else{
-				newReturnExpression = visitExpression(dependencyList, n.returnExpression());
+			} else {
+				newReturnExpression = visitExpression( dependencyList, n.returnExpression() );
 			}
 
 			return new ReturnStatement(
-				newReturnExpression, 
-				visitContinutation(n.continuation()), 
-				n.position());
+					newReturnExpression,
+					visitContinutation( n.continuation() ),
+					n.position() );
 		}
 
 		/** 
 		 * Visits the continuation if there is one 
 		 */
-		private Statement visitContinutation( Statement continutation ){
-			
+		private Statement visitContinutation( Statement continutation ) {
+
 			if( continutation == null )
-                return null;
-            
-            List<Dependency> dependencyList = amendedStatements.get(continutation);
-            if( dependencyList == null ){
-				return visit(continutation);
-			} else{
-                // This continuation contains dependencies. This means we might need to create variables
+				return null;
+
+			List< Dependency > dependencyList = amendedStatements.get( continutation );
+			if( dependencyList == null ) {
+				return visit( continutation );
+			} else {
+				// This continuation contains dependencies. This means we might need to create variables
 				List< VariableDeclaration > variables = new ArrayList<>();
-                for( Dependency dependency : dependencyList ){
+				for( Dependency dependency : dependencyList ) {
 					// Create variable
-					createVariables(dependency, variables, continutation.position(), dependencyList);
-                }
-                if( variables.size() > 0 )
+					createVariables( dependency, variables, continutation.position(),
+							dependencyList );
+				}
+				if( variables.size() > 0 )
 					return chainVariables( variables, visit( continutation ) );
-                else
-                    return visit(continutation); 
+				else
+					return visit( continutation );
 			}
 		}
 
-        /**
-         * Checks if a dependency already has a variable associated with it.
-         */
-        private boolean hasVariable( Dependency dependency ){ 
-            // TODO implement better way to compare expressions/dependencies
-            String dependencyString = dependency.originalExpression().toString();
-            for( Dependency solvedDependency : dependencyVariables.keySet() ){
-                if( solvedDependency.originalExpression().toString().equals(dependencyString) )
-                    return true;
-            }
-            return false;
-        }
-
-		private Name getVariable( Dependency dependency ){
+		/**
+		 * Checks if a dependency already has a variable associated with it.
+		 */
+		private boolean hasVariable( Dependency dependency ) {
 			// TODO implement better way to compare expressions/dependencies
 			String dependencyString = dependency.originalExpression().toString();
-            for( Dependency solvedDependency : dependencyVariables.keySet() ){
-                if( solvedDependency.originalExpression().toString().equals(dependencyString) ){
-					if( dependency.recipient().equals(solvedDependency.recipient()) ){
-						return dependencyVariables.get(solvedDependency);
+			for( Dependency solvedDependency : dependencyVariables.keySet() ) {
+				if( solvedDependency.originalExpression().toString().equals( dependencyString ) )
+					return true;
+			}
+			return false;
+		}
+
+		private Name getVariable( Dependency dependency ) {
+			// TODO implement better way to compare expressions/dependencies
+			String dependencyString = dependency.originalExpression().toString();
+			for( Dependency solvedDependency : dependencyVariables.keySet() ) {
+				if( solvedDependency.originalExpression().toString().equals( dependencyString ) ) {
+					if( dependency.recipient().equals( solvedDependency.recipient() ) ) {
+						return dependencyVariables.get( solvedDependency );
 					}
 				}
-            }
-            return null;
+			}
+			return null;
 		}
 
 		/**
 		 * Creates a variable for the given dependency and all of its nested dependencies.
 		 */
-		private void createVariables( 
-			Dependency dependency, 
-			List< VariableDeclaration > variables,
-			Position position,
-			List<Dependency> dependencyList
-		){
-			Name solvedVariable = getVariable(dependency);
-			if( solvedVariable != null ){
-				dependencyVariables.put(dependency, solvedVariable);
+		private void createVariables(
+				Dependency dependency,
+				List< VariableDeclaration > variables,
+				Position position,
+				List< Dependency > dependencyList
+		) {
+			Name solvedVariable = getVariable( dependency );
+			if( solvedVariable != null ) {
+				dependencyVariables.put( dependency, solvedVariable );
 				return;
 			}
-				
+
 			// find nested dependencies
-			List< Dependency > nestedDependencies = new VisitDependency(dependencyList).getNestedDependencies(dependency);
-			for( Dependency nestedDependency : nestedDependencies ){
-				createVariables(nestedDependency, variables, position, dependencyList);
+			List< Dependency > nestedDependencies =
+					new VisitDependency( dependencyList ).getNestedDependencies( dependency );
+			for( Dependency nestedDependency : nestedDependencies ) {
+				createVariables( nestedDependency, variables, position, dependencyList );
 			}
-			
+
 			// the name of the new variable
 			Name variableName = new Name( "msg" + seqnum() );
-			
+
 			// visit the dependency to solve nested dependencies
-			Expression visitedDependencyExpression = new VisitExpression().visit(dependency.originalExpression());
-			
+			Expression visitedDependencyExpression =
+					new VisitExpression().visit( dependency.originalExpression() );
+
 			// create the AssignExpression
 			AssignExpression initializer = new AssignExpression(
-				dependency.createComExpression( visitedDependencyExpression ), 
-				new FieldAccessExpression(variableName), 
-				Operator.ASSIGN);
-			
+					dependency.createComExpression( visitedDependencyExpression ),
+					new FieldAccessExpression( variableName ),
+					Operator.ASSIGN );
+
 			// create the VariableDeclaration and add it to the list of variable declarations
 			variables.add( new VariableDeclaration(
-				variableName, 
-				dependency.getType(), 
-				Collections.emptyList(), 
-				initializer, 
-				position));
-			
+					variableName,
+					dependency.getType(),
+					Collections.emptyList(),
+					initializer,
+					position ) );
+
 			// System.out.println( "Dependency: Role " + dependency.recipient() + " needs " + dependency.originalExpression() );
 			// System.out.println( "Saved in variable: " + variableName );
 
 			// add the variable's name to the map of dependency variables
-			dependencyVariables.put(dependency, variableName);
+			dependencyVariables.put( dependency, variableName );
 		}
 
 		/**
@@ -478,16 +496,19 @@ public class VariableReplacement{
 		 * <p>
 		 * Puts the continuation as the continuation of the last VariableDeclaration in remainingVariables.
 		 */
-		private Statement chainVariables( List< VariableDeclaration > remainingVariables, Statement continuation ){
-			if( remainingVariables.size() == 0 ){
-                return continuation;
-            }
-            VariableDeclaration variable = remainingVariables.remove(remainingVariables.size()-1);
-            VariableDeclarationStatement variableStaement = new VariableDeclarationStatement(
-                List.of( variable ), 
-                continuation,
-                continuation.position());
-            return chainVariables(remainingVariables, variableStaement);
+		private Statement chainVariables(
+				List< VariableDeclaration > remainingVariables, Statement continuation
+		) {
+			if( remainingVariables.size() == 0 ) {
+				return continuation;
+			}
+			VariableDeclaration variable =
+					remainingVariables.remove( remainingVariables.size() - 1 );
+			VariableDeclarationStatement variableStaement = new VariableDeclarationStatement(
+					List.of( variable ),
+					continuation,
+					continuation.position() );
+			return chainVariables( remainingVariables, variableStaement );
 		}
 
 		/**
@@ -495,9 +516,9 @@ public class VariableReplacement{
 		 * initial {@code Expression} with the dependency list.
 		 * @param dependencyList must not be empty
 		 */
-		private Expression visitExpression( List<Dependency> dependencyList, Expression first ){
-			
-			Expression newExpression = new VisitExpression().visit(first);
+		private Expression visitExpression( List< Dependency > dependencyList, Expression first ) {
+
+			Expression newExpression = new VisitExpression().visit( first );
 
 			return newExpression;
 		}
@@ -506,15 +527,17 @@ public class VariableReplacement{
 		 * If there is no initializer, return the given {@code VaraibleDeclaration} without 
 		 * change, otherwise visit its initializer and return a new {@code VaraibleDeclaration}
 		 */
-		private VariableDeclaration visitVariableDeclaration( List<Dependency> dependencyList, VariableDeclaration vd ){
+		private VariableDeclaration visitVariableDeclaration(
+				List< Dependency > dependencyList, VariableDeclaration vd
+		) {
 			if( vd.initializer().isEmpty() )
 				return vd;
 			return new VariableDeclaration(
-				vd.name(), 
-				vd.type(), 
-				vd.annotations(), 
-				(AssignExpression)visitExpression(dependencyList, vd.initializer().get()), 
-				vd.position());
+					vd.name(),
+					vd.type(),
+					vd.annotations(),
+					(AssignExpression) visitExpression( dependencyList, vd.initializer().get() ),
+					vd.position() );
 		}
 
 	}
@@ -526,9 +549,10 @@ public class VariableReplacement{
 	 * anything inside {@code dependencyVariables}. If an {@code Expression} is 
 	 * equal to a dependency it is replaced with a variable.
 	 */
-	private class VisitExpression extends AbstractChoralVisitor< Expression >{
+	private class VisitExpression extends AbstractChoralVisitor< Expression > {
 
-		public VisitExpression(){}
+		public VisitExpression() {
+		}
 
 		@Override
 		public Expression visit( Expression n ) {
@@ -537,22 +561,22 @@ public class VariableReplacement{
 
 		@Override
 		public Expression visit( ScopedExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
-			
-			Expression newscopedExpression = visit(n.scopedExpression());
+
+			Expression newscopedExpression = visit( n.scopedExpression() );
 
 			return new ScopedExpression(
-				n.scope(), // Dependencies cannot be in the scope, so no need to check
-				newscopedExpression, 
-				n.position());
+					n.scope(), // Dependencies cannot be in the scope, so no need to check
+					newscopedExpression,
+					n.position() );
 		}
 
 		@Override
 		public Expression visit( FieldAccessExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
@@ -561,26 +585,26 @@ public class VariableReplacement{
 
 		@Override
 		public Expression visit( MethodCallExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
 
-			List<Expression> newArgs = new ArrayList<>();
-			for(int i = 0; i < n.arguments().size(); i++){
-				Expression argument = n.arguments().get(i);
-				
+			List< Expression > newArgs = new ArrayList<>();
+			for( int i = 0; i < n.arguments().size(); i++ ) {
+				Expression argument = n.arguments().get( i );
+
 				// visit all of the arguments and add them to the new list of arguments
-				newArgs.add( visit(argument) );
+				newArgs.add( visit( argument ) );
 			}
 
 			return new MethodCallExpression(
-				n.name(), 
-				newArgs, 
-				n.typeArguments(), 
-				n.position());
+					n.name(),
+					newArgs,
+					n.typeArguments(),
+					n.position() );
 		}
-		
+
 		@Override
 		public Expression visit( AssignExpression n ) {
 			// an assignExpression cannot itself be a dependency, but its value() might
@@ -588,46 +612,46 @@ public class VariableReplacement{
 			Expression newValue = visit( n.value() );
 
 			return new AssignExpression(
-				newValue, 
-				n.target(), 
-				n.operator(),
-				n.position());
+					newValue,
+					n.target(),
+					n.operator(),
+					n.position() );
 		}
 
 		@Override
 		public Expression visit( BinaryExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
-			
+
 			Expression newLeft = visit( n.left() );
 			Expression newRight = visit( n.right() );
-			
+
 			return new BinaryExpression(
-				newLeft, 
-				newRight, 
-				n.operator(), 
-				n.position());
+					newLeft,
+					newRight,
+					n.operator(),
+					n.position() );
 		}
 
 		@Override
 		public Expression visit( EnclosedExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
 
 			Expression newNestedExpression = visit( n.nestedExpression() );
-			
+
 			return new EnclosedExpression(
-				newNestedExpression, 
-				n.position());
+					newNestedExpression,
+					n.position() );
 		}
-		
+
 		@Override
 		public Expression visit( StaticAccessExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
@@ -636,48 +660,50 @@ public class VariableReplacement{
 
 		@Override
 		public Expression visit( ClassInstantiationExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
 
-			List<Expression> newArgs = new ArrayList<>();
-			for(int i = 0; i < n.arguments().size(); i++){
-				Expression argument = n.arguments().get(i);
-				
+			List< Expression > newArgs = new ArrayList<>();
+			for( int i = 0; i < n.arguments().size(); i++ ) {
+				Expression argument = n.arguments().get( i );
+
 				// visit all of the arguments and add them to the new list of arguments
-				newArgs.add( visit(argument) );
+				newArgs.add( visit( argument ) );
 			}
 
 			return new ClassInstantiationExpression(
-				n.typeExpression(), 
-				newArgs, 
-				n.typeArguments(), 
-				n.position());
+					n.typeExpression(),
+					newArgs,
+					n.typeArguments(),
+					n.position() );
 		}
 
 		@Override
 		public Expression visit( NotExpression n ) {
-			Expression dependencyCheck = checkIfDependency(n);
+			Expression dependencyCheck = checkIfDependency( n );
 			if( dependencyCheck != null ) {
 				return dependencyCheck;
 			}
 
 			Expression newExpression = visit( n.expression() );
-			
+
 			return new NotExpression(
-				newExpression, 
-				n.position());
+					newExpression,
+					n.position() );
 		}
 
 		@Override // not supported
 		public Expression visit( ThisExpression n ) {
-			throw new UnsupportedOperationException("ThisExpression not supported\n\tExpression at " + n.position().toString());
+			throw new UnsupportedOperationException(
+					"ThisExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override // not supported
 		public Expression visit( SuperExpression n ) {
-			throw new UnsupportedOperationException("SuperExpression not supported\n\tExpression at " + n.position().toString());
+			throw new UnsupportedOperationException(
+					"SuperExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override
@@ -708,17 +734,21 @@ public class VariableReplacement{
 
 		@Override // not supported
 		public Expression visit( TypeExpression n ) {
-			throw new UnsupportedOperationException("TypeExpression not supported\n\tExpression at " + n.position().toString());
+			throw new UnsupportedOperationException(
+					"TypeExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override // not supported
-		public Expression visit( BlankExpression n ){
-			throw new UnsupportedOperationException("BlankExpression not supported\n\tExpression at " + n.position().toString());
+		public Expression visit( BlankExpression n ) {
+			throw new UnsupportedOperationException(
+					"BlankExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override // not supported
-		public Expression visit( EnumCaseInstantiationExpression n ){
-			throw new UnsupportedOperationException("EnumCaseInstantiationExpression not supported\n\tExpression at " + n.position().toString());
+		public Expression visit( EnumCaseInstantiationExpression n ) {
+			throw new UnsupportedOperationException(
+					"EnumCaseInstantiationExpression not supported\n\tExpression at "
+							+ n.position().toString() );
 		}
 
 		/**
@@ -726,10 +756,10 @@ public class VariableReplacement{
 		 * Expression} and returns the visited expression wrapped in a communication, specified 
 		 * by the {@code Dependency}. Otherwise returns null.
 		 */
-		private Expression checkIfDependency( Expression n ){
-			for( Dependency dependency : dependencyVariables.keySet() ){
-				if( n.equals(dependency.originalExpression) ){
-					return new FieldAccessExpression( dependencyVariables.get(dependency) );
+		private Expression checkIfDependency( Expression n ) {
+			for( Dependency dependency : dependencyVariables.keySet() ) {
+				if( n.equals( dependency.originalExpression ) ) {
+					return new FieldAccessExpression( dependencyVariables.get( dependency ) );
 				}
 			}
 			return null;
@@ -737,16 +767,16 @@ public class VariableReplacement{
 	}
 
 	private class VisitDependency extends AbstractChoralVisitor< Void > {
-		
-		List<Dependency> nestedDependencies = new ArrayList<>();
-		List<Dependency> dependencyList;
 
-		public VisitDependency( List<Dependency> dependencyList ){
+		List< Dependency > nestedDependencies = new ArrayList<>();
+		List< Dependency > dependencyList;
+
+		public VisitDependency( List< Dependency > dependencyList ) {
 			this.dependencyList = dependencyList;
 		}
 
-		public List< Dependency > getNestedDependencies( Dependency n ){
-			visit(n.originalExpression());
+		public List< Dependency > getNestedDependencies( Dependency n ) {
+			visit( n.originalExpression() );
 			return nestedDependencies;
 		}
 
@@ -757,9 +787,9 @@ public class VariableReplacement{
 
 		@Override
 		public Void visit( ScopedExpression n ) {
-			checkIfDependency(n.scopedExpression());
+			checkIfDependency( n.scopedExpression() );
 
-			return visit(n.scopedExpression());
+			return visit( n.scopedExpression() );
 		}
 
 		@Override
@@ -771,41 +801,43 @@ public class VariableReplacement{
 		@Override
 		public Void visit( MethodCallExpression n ) {
 
-			for(int i = 0; i < n.arguments().size(); i++){
-				Expression argument = n.arguments().get(i);
-				
+			for( int i = 0; i < n.arguments().size(); i++ ) {
+				Expression argument = n.arguments().get( i );
+
 				// visit all of the arguments and check if they are a dependency
-				checkIfDependency(argument);
-				visit(argument);
+				checkIfDependency( argument );
+				visit( argument );
 			}
 
 			return null;
 		}
-		
+
 		@Override
 		public Void visit( AssignExpression n ) {
 			// AsignExpressions should not be able to be dependencies, and thus should never be visited by this.
-			throw new UnsupportedOperationException("AssignExpression found as dependency\n\tExpression at " + n.position().toString());
+			throw new UnsupportedOperationException(
+					"AssignExpression found as dependency\n\tExpression at "
+							+ n.position().toString() );
 		}
 
 		@Override
 		public Void visit( BinaryExpression n ) {
-			
+
 			checkIfDependency( n.left() );
 			checkIfDependency( n.right() );
 			visit( n.left() );
 			visit( n.right() );
-			
+
 			return null;
 		}
 
 		@Override
 		public Void visit( EnclosedExpression n ) {
-			
+
 			checkIfDependency( n.nestedExpression() );
 			return visit( n.nestedExpression() );
 		}
-		
+
 		@Override
 		public Void visit( StaticAccessExpression n ) {
 			// has no sub expressions to visit/check
@@ -816,12 +848,12 @@ public class VariableReplacement{
 		@Override
 		public Void visit( ClassInstantiationExpression n ) {
 
-			for(int i = 0; i < n.arguments().size(); i++){
-				Expression argument = n.arguments().get(i);
-				
+			for( int i = 0; i < n.arguments().size(); i++ ) {
+				Expression argument = n.arguments().get( i );
+
 				// visit all of the arguments and check if they are a dependency
-				checkIfDependency(argument);
-				visit(argument);
+				checkIfDependency( argument );
+				visit( argument );
 			}
 
 			return null;
@@ -829,20 +861,22 @@ public class VariableReplacement{
 
 		@Override
 		public Void visit( NotExpression n ) {
-			
+
 			checkIfDependency( n.expression() );
-			
+
 			return visit( n.expression() );
 		}
 
 		@Override // not supported
 		public Void visit( ThisExpression n ) {
-			throw new UnsupportedOperationException("ThisExpression not supported\n\tExpression at " + n.position().toString());
+			throw new UnsupportedOperationException(
+					"ThisExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override // not supported
 		public Void visit( SuperExpression n ) {
-			throw new UnsupportedOperationException("SuperExpression not supported\n\tExpression at " + n.position().toString());
+			throw new UnsupportedOperationException(
+					"SuperExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override
@@ -873,17 +907,21 @@ public class VariableReplacement{
 
 		@Override // not supported
 		public Void visit( TypeExpression n ) {
-			throw new UnsupportedOperationException("TypeExpression not supported\n\tExpression at " + n.position().toString());
+			throw new UnsupportedOperationException(
+					"TypeExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override // not supported
-		public Void visit( BlankExpression n ){
-			throw new UnsupportedOperationException("BlankExpression not supported\n\tExpression at " + n.position().toString());
+		public Void visit( BlankExpression n ) {
+			throw new UnsupportedOperationException(
+					"BlankExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override // not supported
-		public Void visit( EnumCaseInstantiationExpression n ){
-			throw new UnsupportedOperationException("EnumCaseInstantiationExpression not supported\n\tExpression at " + n.position().toString());
+		public Void visit( EnumCaseInstantiationExpression n ) {
+			throw new UnsupportedOperationException(
+					"EnumCaseInstantiationExpression not supported\n\tExpression at "
+							+ n.position().toString() );
 		}
 
 		/**
@@ -891,16 +929,16 @@ public class VariableReplacement{
 		 * Expression} and returns the visited expression wrapped in a communication, specified 
 		 * by the {@code Dependency}. Otherwise returns null.
 		 */
-		private void checkIfDependency( Expression n ){
-			for( Dependency dependency : dependencyList ){
-				if( n.equals(dependency.originalExpression()) ){
-					nestedDependencies.add(dependency);
+		private void checkIfDependency( Expression n ) {
+			for( Dependency dependency : dependencyList ) {
+				if( n.equals( dependency.originalExpression() ) ) {
+					nestedDependencies.add( dependency );
 				}
 			}
 		}
 	}
 
-    /**
+	/**
 	 * A class for represent a dependency, consisting of the original dependency expression
 	 * and a communication (both channel and method) for satisfying this dependency.
 	 * <p>
@@ -912,52 +950,52 @@ public class VariableReplacement{
 		private HigherMethod comMethod;
 		private String channelIdentifier;
 		private GroundInterface channel;
-        private World recipient;
+		private World recipient;
 
-		public Dependency( Expression originalExpression ){
+		public Dependency( Expression originalExpression ) {
 			this.originalExpression = originalExpression;
 		}
 
-		public Expression originalExpression(){
+		public Expression originalExpression() {
 			return originalExpression;
 		}
 
-		public HigherMethod comMethod(){
+		public HigherMethod comMethod() {
 			return comMethod;
 		}
 
-		public String channelIdentifier(){
+		public String channelIdentifier() {
 			return channelIdentifier;
 		}
 
-		public GroundInterface channel(){
+		public GroundInterface channel() {
 			return channel;
 		}
 
-        public World recipient(){
+		public World recipient() {
 			return recipient;
 		}
 
-		public void setChannel( GroundInterface channel ){
+		public void setChannel( GroundInterface channel ) {
 			this.channel = channel;
 		}
 
-		public void setChannel( String channelIdentifier, GroundInterface channel ){
+		public void setChannel( String channelIdentifier, GroundInterface channel ) {
 			this.channelIdentifier = channelIdentifier;
 			this.channel = channel;
 		}
 
-		public void setComMethod( HigherMethod comMethod ){
+		public void setComMethod( HigherMethod comMethod ) {
 			this.comMethod = comMethod;
 		}
 
-		public void setChannelIdentifier( String channelIdentifier ){
+		public void setChannelIdentifier( String channelIdentifier ) {
 			this.channelIdentifier = channelIdentifier;
 		}
 
-        public void setRecipient( World recipient ){
-            this.recipient = recipient;
-        }
+		public void setRecipient( World recipient ) {
+			this.recipient = recipient;
+		}
 
 		/**
 		 * Creates the {@code Expression} containing the communiction of the dependency. Note
@@ -988,92 +1026,103 @@ public class VariableReplacement{
 		 * @param visitedDependency - Must be visited before calling this method, 
 		 * 		otherwise nested dependencies will not be caught.
 		 */
-		public Expression createComExpression( Expression visitedDependency ){
+		public Expression createComExpression( Expression visitedDependency ) {
 
 			TypeExpression typeExpression;
-            if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
-				typeExpression = getTypeExpression((GroundTypeParameter)originalExpression.typeAnnotation().get());
-            } else{ 
-				typeExpression = getTypeExpression((GroundClassOrInterface)originalExpression.typeAnnotation().get());
+			if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ) {
+				typeExpression = getTypeExpression(
+						(GroundTypeParameter) originalExpression.typeAnnotation().get() );
+			} else {
+				typeExpression = getTypeExpression(
+						(GroundClassOrInterface) originalExpression.typeAnnotation().get() );
 			}
 
-			final List<Expression> arguments = List.of( visitedDependency );
-			final Name name = new Name(comMethod.identifier());
-			final List<TypeExpression> typeArguments = List.of( typeExpression );
-			
-			MethodCallExpression scopedExpression = new MethodCallExpression(name, arguments, typeArguments, visitedDependency.position());
-			
+			final List< Expression > arguments = List.of( visitedDependency );
+			final Name name = new Name( comMethod.identifier() );
+			final List< TypeExpression > typeArguments = List.of( typeExpression );
+
+			MethodCallExpression scopedExpression = new MethodCallExpression( name, arguments,
+					typeArguments, visitedDependency.position() );
+
 			// The comMethod is a method inside a channel, so we need to make the channel its scope
-			FieldAccessExpression scope = new FieldAccessExpression(new Name(channelIdentifier), visitedDependency.position());
-			
+			FieldAccessExpression scope = new FieldAccessExpression( new Name( channelIdentifier ),
+					visitedDependency.position() );
+
 			// Something like channel.< Type >com( visitedDependency )
-			return new ScopedExpression(scope, scopedExpression);
+			return new ScopedExpression( scope, scopedExpression );
 		}
 
-		private TypeExpression getTypeExpression( GroundClassOrInterface type ){
+		private TypeExpression getTypeExpression( GroundClassOrInterface type ) {
 			return new TypeExpression(
-				new Name(type.typeConstructor().identifier()),
-				Collections.emptyList(), 
-				type.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
+					new Name( type.typeConstructor().identifier() ),
+					Collections.emptyList(),
+					type.typeArguments().stream().map( typeArg -> getTypeExpression(
+							typeArg.applyTo( type.worldArguments() ) ) ).toList() );
 		}
 
-		private TypeExpression getTypeExpression( GroundReferenceType type ){
-			if( type instanceof GroundClass ){ // I think this is only not true for primitive types, which cannot be communicated
-				GroundClass typeGC = (GroundClass)type;
+		private TypeExpression getTypeExpression( GroundReferenceType type ) {
+			if( type instanceof GroundClass ) { // I think this is only not true for primitive types, which cannot be communicated
+				GroundClass typeGC = (GroundClass) type;
 				return new TypeExpression(
-					new Name(typeGC.typeConstructor().identifier()),
-					Collections.emptyList(), 
-					typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
+						new Name( typeGC.typeConstructor().identifier() ),
+						Collections.emptyList(),
+						typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(
+								typeArg.applyTo( type.worldArguments() ) ) ).toList() );
 			}
-			if( type instanceof GroundTypeParameter ){
-				GroundTypeParameter typeGTP = (GroundTypeParameter)type;
+			if( type instanceof GroundTypeParameter ) {
+				GroundTypeParameter typeGTP = (GroundTypeParameter) type;
 				return new TypeExpression(
-					new Name(typeGTP.typeConstructor().identifier()),
-					Collections.emptyList(), 
-					Collections.emptyList());
+						new Name( typeGTP.typeConstructor().identifier() ),
+						Collections.emptyList(),
+						Collections.emptyList() );
 			}
-			
-			throw new CommunicationInferenceException( "ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() ); 
+
+			throw new CommunicationInferenceException(
+					"ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() );
 		}
 
-        /**
-         * returns the type of the dependency's original expression as a TypeExpression
-         * @return
-         */
-        public TypeExpression getType(){
-            if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ){
-				return getType((GroundTypeParameter)originalExpression.typeAnnotation().get());
-            } else{ 
-				return getType((GroundClassOrInterface)originalExpression.typeAnnotation().get());
+		/**
+		 * returns the type of the dependency's original expression as a TypeExpression
+		 * @return
+		 */
+		public TypeExpression getType() {
+			if( originalExpression.typeAnnotation().get() instanceof GroundTypeParameter ) {
+				return getType( (GroundTypeParameter) originalExpression.typeAnnotation().get() );
+			} else {
+				return getType(
+						(GroundClassOrInterface) originalExpression.typeAnnotation().get() );
 			}
-        }
-
-        private TypeExpression getType( GroundClassOrInterface type ){
-
-            return new TypeExpression(
-				new Name(type.typeConstructor().identifier()),
-				List.of( new WorldArgument(new Name(recipient.identifier()), null) ), 
-				type.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
 		}
 
-		private TypeExpression getType( GroundReferenceType type ){
-            
-            if( type instanceof GroundClass ){ // I think this is only not true for primitive types, which cannot be communicated
-				GroundClass typeGC = (GroundClass)type;
+		private TypeExpression getType( GroundClassOrInterface type ) {
+
+			return new TypeExpression(
+					new Name( type.typeConstructor().identifier() ),
+					List.of( new WorldArgument( new Name( recipient.identifier() ), null ) ),
+					type.typeArguments().stream().map( typeArg -> getTypeExpression(
+							typeArg.applyTo( type.worldArguments() ) ) ).toList() );
+		}
+
+		private TypeExpression getType( GroundReferenceType type ) {
+
+			if( type instanceof GroundClass ) { // I think this is only not true for primitive types, which cannot be communicated
+				GroundClass typeGC = (GroundClass) type;
 				return new TypeExpression(
-					new Name(typeGC.typeConstructor().identifier()),
-					List.of( new WorldArgument(new Name(recipient.identifier()), null) ), 
-					typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(typeArg.applyTo(type.worldArguments())) ).toList());
+						new Name( typeGC.typeConstructor().identifier() ),
+						List.of( new WorldArgument( new Name( recipient.identifier() ), null ) ),
+						typeGC.typeArguments().stream().map( typeArg -> getTypeExpression(
+								typeArg.applyTo( type.worldArguments() ) ) ).toList() );
 			}
-			if( type instanceof GroundTypeParameter ){
-				GroundTypeParameter typeGTP = (GroundTypeParameter)type;
+			if( type instanceof GroundTypeParameter ) {
+				GroundTypeParameter typeGTP = (GroundTypeParameter) type;
 				return new TypeExpression(
-					new Name(typeGTP.typeConstructor().identifier()),
-					List.of( new WorldArgument(new Name(recipient.identifier()), null) ), 
-					Collections.emptyList());
+						new Name( typeGTP.typeConstructor().identifier() ),
+						List.of( new WorldArgument( new Name( recipient.identifier() ), null ) ),
+						Collections.emptyList() );
 			}
-			
-			throw new CommunicationInferenceException( "ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() ); 
+
+			throw new CommunicationInferenceException(
+					"ERROR! Not a GroundClass or GroundTypeParameter. Found " + type.getClass() );
 		}
 
 	}

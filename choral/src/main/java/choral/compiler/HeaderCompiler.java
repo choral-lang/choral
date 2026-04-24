@@ -43,7 +43,8 @@ public class HeaderCompiler {
 		String name = Paths.get( choralFile ).getFileName().toString();
 		name = name.substring( 0, name.length() - ChoralSourceObject.FILE_EXTENSION.length() );
 		String headerFile = choralFile.substring( 0,
-				choralFile.length() - ChoralSourceObject.FILE_EXTENSION.length() ) + HeaderSourceObject.FILE_EXTENSION;
+				choralFile.length() - ChoralSourceObject.FILE_EXTENSION
+						.length() ) + HeaderSourceObject.FILE_EXTENSION;
 
 		return new HeaderSourceObject(
 				new Compiler().visit( n ),

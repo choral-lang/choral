@@ -26,8 +26,8 @@ public class StaticMethodTest< S > {
 	static < S, R > R conv1(
 			String i, S j
 	) {    // <-- when m is static, there are no bindings between
-		// the class-generics and the method generics.
-		// TODO: this should be the same also for worlds, hence we cannot have them as parameters
+											  // the class-generics and the method generics.
+											  // TODO: this should be the same also for worlds, hence we cannot have them as parameters
 		return null;
 	}
 

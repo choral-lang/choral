@@ -69,7 +69,8 @@ public class DiffieHellmanDataChannel implements SymDataChannelImpl< String > {
 //
 //		System.out.println( message );
 
-		Pair< PipedByteChannel, PipedByteChannel > channel = PipedByteChannel.getConnectedChannels();
+		Pair< PipedByteChannel, PipedByteChannel > channel =
+				PipedByteChannel.getConnectedChannels();
 		WrapperByteChannelImpl channel1 = new WrapperByteChannel_A( channel.left() );
 		WrapperByteChannelImpl channel2 = new WrapperByteChannel_B( channel.right() );
 		DiffieHellmanDataChannel aliceDHChannel = new DiffieHellmanDataChannel( channel1 );

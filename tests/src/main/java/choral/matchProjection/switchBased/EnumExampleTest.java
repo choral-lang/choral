@@ -52,11 +52,13 @@ public class EnumExampleTest {
 		{
 			Object t_exp1Eval = c;
 			if( t_exp1Eval instanceof EnumExample.EnumOption1 ) {
-				EnumExample.EnumOption1< String > x = (EnumExample.EnumOption1< String >) t_exp1Eval;
+				EnumExample.EnumOption1< String > x =
+						(EnumExample.EnumOption1< String >) t_exp1Eval;
 				return x.msg + " " + outer;
 			}
 			if( t_exp1Eval instanceof EnumExample.EnumOption3 ) {
-				EnumExample.EnumOption3< String > x = (EnumExample.EnumOption3< String >) t_exp1Eval;
+				EnumExample.EnumOption3< String > x =
+						(EnumExample.EnumOption3< String >) t_exp1Eval;
 				return "Found error: " + x.error;
 			}
 		}

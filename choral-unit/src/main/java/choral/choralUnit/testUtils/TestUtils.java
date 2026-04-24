@@ -53,8 +53,10 @@ import java.util.concurrent.*;
 
 public class TestUtils {
 
-	private final static Map< String, Pair< SymChannel_A< Object >, SymChannel_B< Object > > > channels = new HashMap<>();
-	private final static Map< String, Pair< TLSChannel_A< Object >, TLSChannel_B< Object > > > tlsChannels = new HashMap<>();
+	private final static Map< String, Pair< SymChannel_A< Object >, SymChannel_B< Object > > > channels =
+			new HashMap<>();
+	private final static Map< String, Pair< TLSChannel_A< Object >, TLSChannel_B< Object > > > tlsChannels =
+			new HashMap<>();
 
 	public static synchronized Pair< SymChannel_A< Object >, SymChannel_B< Object > > newLocalChannel(
 			String id
@@ -116,7 +118,8 @@ public class TestUtils {
 	) {
 		if( !tlsChannels.containsKey( id ) ) {
 			try {
-				Pair< PipedByteChannel, PipedByteChannel > localChannels = PipedByteChannel.getConnectedChannels();
+				Pair< PipedByteChannel, PipedByteChannel > localChannels =
+						PipedByteChannel.getConnectedChannels();
 				WrapperByteChannel_A localChannel1 = new WrapperByteChannel_A(
 						localChannels.left() );
 				WrapperByteChannel_B localChannel2 = new WrapperByteChannel_B(
@@ -129,7 +132,7 @@ public class TestUtils {
 								KryoSerializer.getInstance() )
 				) );
 			} catch( IOException | CertificateException | NoSuchAlgorithmException
-					| UnrecoverableKeyException | KeyStoreException | KeyManagementException e ) {
+					 | UnrecoverableKeyException | KeyStoreException | KeyManagementException e ) {
 				e.printStackTrace();
 			}
 			return tlsChannels.get( id );
@@ -138,8 +141,8 @@ public class TestUtils {
 		}
 	}
 
-	private static SSLContext getSSLContext() throws
-			NoSuchAlgorithmException, KeyStoreException, CertificateException,
+	private static SSLContext getSSLContext()
+			throws NoSuchAlgorithmException, KeyStoreException, CertificateException,
 			UnrecoverableKeyException, KeyManagementException, IOException {
 		KeyStore ks = KeyStore.getInstance( "JKS" );
 		KeyStore ts = KeyStore.getInstance( "JKS" );

@@ -73,7 +73,7 @@ public class ThisExpression extends Expression {
 	}
 
 	@Override
-	public String toString(){
+	public String toString() {
 		return "this";
 	}
 
@@ -91,7 +91,8 @@ public class ThisExpression extends Expression {
 					this.position().line() + ":"
 							+ this.position().column() + ":"
 							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-							this ) + "\n with " + n.getClass().getSimpleName() );
+									this )
+							+ "\n with " + n.getClass().getSimpleName() );
 		}
 	}
 

@@ -105,7 +105,8 @@ public abstract class LiteralExpression< T > extends Expression {
 						this.position().line() + ":"
 								+ this.position().column() + ":"
 								+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-								this ) + "\n with " + n.getClass().getSimpleName() );
+										this )
+								+ "\n with " + n.getClass().getSimpleName() );
 			}
 		}
 
@@ -150,7 +151,8 @@ public abstract class LiteralExpression< T > extends Expression {
 						this.position().line() + ":"
 								+ this.position().column() + ":"
 								+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-								this ) + "\n with " + n.getClass().getSimpleName() );
+										this )
+								+ "\n with " + n.getClass().getSimpleName() );
 			}
 		}
 
@@ -195,7 +197,8 @@ public abstract class LiteralExpression< T > extends Expression {
 						this.position().line() + ":"
 								+ this.position().column() + ":"
 								+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-								this ) + "\n with " + n.getClass().getSimpleName() );
+										this )
+								+ "\n with " + n.getClass().getSimpleName() );
 			}
 		}
 
@@ -240,7 +243,8 @@ public abstract class LiteralExpression< T > extends Expression {
 						this.position().line() + ":"
 								+ this.position().column() + ":"
 								+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-								this ) + "\n with " + n.getClass().getSimpleName() );
+										this )
+								+ "\n with " + n.getClass().getSimpleName() );
 			}
 		}
 

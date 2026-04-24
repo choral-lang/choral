@@ -264,7 +264,8 @@ public final class TlsExplorer {
 	}
 
 	private static int getInt24( ByteBuffer input ) {
-		return ( ( input.get() & 0xFF ) << 16 ) | ( ( input.get() & 0xFF ) << 8 ) | ( input.get() & 0xFF );
+		return ( ( input.get() & 0xFF ) << 16 ) | ( ( input.get() & 0xFF ) << 8 ) | ( input
+				.get() & 0xFF );
 	}
 
 	private static void ignoreByteVector8( ByteBuffer input ) {

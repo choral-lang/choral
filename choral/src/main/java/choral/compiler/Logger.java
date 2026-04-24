@@ -49,17 +49,17 @@ public class Logger {
 		return message + "\n\t see " + position;
 	}
 
-/*    public static String getFormattedPosition(String file, Node node){
-        return getFormattedPosition(file, node.line(), node.column());
-    }
-
-    public String getFormattedPosition(int line, int column){
-        return getFormattedPosition(this.file(), line, column);
-    }
-
-    public String getFormattedPosition(Node node){
-        return getFormattedPosition(this.file(), node.line(), node.column());
-    }*/
+	/*    public static String getFormattedPosition(String file, Node node){
+	    return getFormattedPosition(file, node.line(), node.column());
+	}
+	
+	public String getFormattedPosition(int line, int column){
+	    return getFormattedPosition(this.file(), line, column);
+	}
+	
+	public String getFormattedPosition(Node node){
+	    return getFormattedPosition(this.file(), node.line(), node.column());
+	}*/
 
 	public final EnumSet< Level > filterLevels = EnumSet.of( Level.ERROR, Level.WARNING );
 

@@ -88,7 +88,8 @@ public abstract class HigherDataType extends TypeBase
 		} else {
 			// default implementation, only classes and interfaces have type parameters.
 			throw new StaticVerificationException(
-					"illegal type instantiation: expected 0 type arguments but found " + typeArgs.size() );
+					"illegal type instantiation: expected 0 type arguments but found "
+							+ typeArgs.size() );
 		}
 	}
 
@@ -98,21 +99,24 @@ public abstract class HigherDataType extends TypeBase
 		} else {
 			// default implementation, only classes and interfaces have type parameters.
 			throw new StaticVerificationException(
-					"illegal type instantiation: expected 0 type arguments but found " + typeArgs.size() );
+					"illegal type instantiation: expected 0 type arguments but found "
+							+ typeArgs.size() );
 		}
 	}
 
 	protected void checkApplicationArguments( List< ? extends World > worldArgs ) {
 		if( worldArgs.size() != worldParameters.size() ) {
 			throw new StaticVerificationException(
-					"illegal type instantiation: expected " + worldParameters.size() + " role arguments but found " + worldArgs.size() );
+					"illegal type instantiation: expected " + worldParameters.size()
+							+ " role arguments but found " + worldArgs.size() );
 		}
 		for( int i = 0; i < worldArgs.size(); i++ ) {
 			World w = worldArgs.get( i );
 			for( int j = 0; j < i; j++ ) {
 				if( w == worldArgs.get( j ) ) {
 					throw new StaticVerificationException(
-							"illegal type instantiation: role '" + w + "' must play exactly one role in '" + this + "'" );
+							"illegal type instantiation: role '" + w
+									+ "' must play exactly one role in '" + this + "'" );
 				}
 			}
 		}
@@ -159,7 +163,8 @@ public abstract class HigherDataType extends TypeBase
 	public boolean isEquivalentTo_relaxed( Type type ) {
 		if( type instanceof HigherDataType ) {
 			HigherDataType t = (HigherDataType) type;
-			return applyTo( worldParameters ).isEquivalentTo_relaxed( t.applyTo( worldParameters ) );
+			return applyTo( worldParameters )
+					.isEquivalentTo_relaxed( t.applyTo( worldParameters ) );
 		}
 		return false;
 	}

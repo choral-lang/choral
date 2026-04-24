@@ -18,19 +18,25 @@ public class TyperOptions {
 		this( verbosity, false, TyperOptions::stdInfo );
 	}
 
-	private TyperOptions( VerbosityLevel verbosity, boolean relaxed, BiConsumer< Position, String > infoChannel ) {
+	private TyperOptions(
+			VerbosityLevel verbosity, boolean relaxed, BiConsumer< Position, String > infoChannel
+	) {
 		this.verbosity = verbosity;
 		this.relaxed = relaxed;
 		this.infoChannel = infoChannel;
 	}
 
 	/** The verbosity level to use when debugging. */
-	public VerbosityLevel verbosity() { return verbosity; }
+	public VerbosityLevel verbosity() {
+		return verbosity;
+	}
 
 	/** Whether the typer should run in "relaxed mode", allowing programs where the roles
 	 * don't match like {@code int@A x = 1@A; int@B y = x + 1@B}. Used for communication
 	 * inference. */
-	public boolean relaxed() { return relaxed; }
+	public boolean relaxed() {
+		return relaxed;
+	}
 
 	/**
 	 * Log an info message if verbosity is at least INFO.

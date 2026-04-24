@@ -61,14 +61,14 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 	@Override
 	public Expression visit( AssignExpression n ) {
 		return assignable( n.target() ) ?
-				new AssignExpression( visit( n.value() ), visit( n.target() ), n.operator() )
-				: new ScopedExpression( visit( n.target() ),
-				new MethodCallExpression(
-						UnitRepresentation.UID,
-						Collections.singletonList( visit( n.value() ) ),
-						Collections.emptyList()
-				)
-		);
+				new AssignExpression( visit( n.value() ), visit( n.target() ), n.operator() ) :
+				new ScopedExpression( visit( n.target() ),
+						new MethodCallExpression(
+								UnitRepresentation.UID,
+								Collections.singletonList( visit( n.value() ) ),
+								Collections.emptyList()
+						)
+				);
 	}
 
 	private boolean assignable( Expression e ) {
@@ -88,9 +88,9 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 	public Expression visit( BinaryExpression n ) {
 		// check for multi-world objects on the RHS of the short-cicuited expression
 		if(
-				( n.operator().equals( BinaryExpression.Operator.SHORT_CIRCUITED_AND )
-						|| n.operator().equals( BinaryExpression.Operator.SHORT_CIRCUITED_OR ) )
-						&& collectAllWorlds( n.right() ).size() > 1
+			( n.operator().equals( BinaryExpression.Operator.SHORT_CIRCUITED_AND )
+					|| n.operator().equals( BinaryExpression.Operator.SHORT_CIRCUITED_OR ) )
+					&& collectAllWorlds( n.right() ).size() > 1
 		) {
 			throw new ChoralException(
 					"Found unprojectable expression. Right-hand side of short-circuited " +
@@ -115,8 +115,7 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 		if( scopedExpression.isEmpty() ) {
 			Expression h = visit( ht.left() );
 			return h instanceof ThisExpression ?
-					UnitRepresentation.UnitFD( this.world() )
-					: h;
+					UnitRepresentation.UnitFD( this.world() ) : h;
 		} else {
 			return new ScopedExpression( visit( ht.left() ), scopedExpression.get() );
 		}
@@ -131,7 +130,8 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 			return _visitScoped( (ScopedExpression) e, atWorld );
 		} else {
 			throw new ChoralException(
-					"Found unexpected kind of expression in scoped visit: " + e.getClass().getCanonicalName() );
+					"Found unexpected kind of expression in scoped visit: "
+							+ e.getClass().getCanonicalName() );
 		}
 	}
 
@@ -156,10 +156,9 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 				worlds( ht.left() ) ) );
 		Optional< Expression > scope = visitScoped( ht.left(), atWorld );
 		return scope.isEmpty() ?
-				scopedExpression
-				: scopedExpression.isEmpty() ?
-				scope
-				: Optional.of( new ScopedExpression( scope.get(), scopedExpression.get() ) );
+				scopedExpression : scopedExpression.isEmpty() ?
+						scope :
+						Optional.of( new ScopedExpression( scope.get(), scopedExpression.get() ) );
 	}
 
 	@Override
@@ -186,8 +185,8 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 	public Expression visit( StaticAccessExpression n ) {
 		return atWorld( n.typeExpression().worldArguments() ) ?
 				new StaticAccessExpression(
-						TypesProjector.visit( this.world(), n.typeExpression() ).get( 0 ) )
-				: UnitRepresentation.UnitFD( this.world() );
+						TypesProjector.visit( this.world(), n.typeExpression() ).get( 0 ) ) :
+				UnitRepresentation.UnitFD( this.world() );
 	}
 
 	@Override
@@ -212,7 +211,8 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 									n.typeExpression().worldArguments(),
 									dataType.typeConstructor().worldParameters()
 											.stream().map(
-													w -> new WorldArgument( new Name( w.identifier() ) ) )
+													w -> new WorldArgument(
+															new Name( w.identifier() ) ) )
 											.collect( Collectors.toList() )
 							) ),
 							Collections.singletonList( this.world() ),
@@ -241,9 +241,9 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 	@Override
 	public Expression visit( NotExpression n ) {
 		return atWorld( worlds( n.expression() ) ) ? // similar to binary expressions
-				new NotExpression( visit( n.expression() ) )
-				: UnitRepresentation.unitMC( Collections.singletonList( visit( n.expression() ) ),
-				this.world() );
+				new NotExpression( visit( n.expression() ) ) :
+				UnitRepresentation.unitMC( Collections.singletonList( visit( n.expression() ) ),
+						this.world() );
 	}
 
 	@Override
@@ -264,26 +264,26 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 
 	@Override
 	public Expression visit( LiteralExpression.BooleanLiteralExpression n ) {
-		return atWorld( Collections.singletonList( n.world() ) ) ? n
-				: UnitRepresentation.UnitFD( this.world() );
+		return atWorld( Collections.singletonList( n.world() ) ) ? n :
+				UnitRepresentation.UnitFD( this.world() );
 	}
 
 	@Override
 	public Expression visit( LiteralExpression.DoubleLiteralExpression n ) {
-		return atWorld( Collections.singletonList( n.world() ) ) ? n
-				: UnitRepresentation.UnitFD( this.world() );
+		return atWorld( Collections.singletonList( n.world() ) ) ? n :
+				UnitRepresentation.UnitFD( this.world() );
 	}
 
 	@Override
 	public Expression visit( LiteralExpression.IntegerLiteralExpression n ) {
-		return atWorld( Collections.singletonList( n.world() ) ) ? n
-				: UnitRepresentation.UnitFD( this.world() );
+		return atWorld( Collections.singletonList( n.world() ) ) ? n :
+				UnitRepresentation.UnitFD( this.world() );
 	}
 
 	@Override
 	public Expression visit( LiteralExpression.StringLiteralExpression n ) {
-		return atWorld( Collections.singletonList( n.world() ) ) ? n
-				: UnitRepresentation.UnitFD( this.world() );
+		return atWorld( Collections.singletonList( n.world() ) ) ? n :
+				UnitRepresentation.UnitFD( this.world() );
 	}
 
 	@Override
@@ -294,8 +294,8 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 	@Override
 	public Expression visit( NullExpression n ) {
 		return atWorld( n.worlds() ) ? new NullExpression(
-				Collections.singletonList( this.world() ) )
-				: UnitRepresentation.UnitFD( this.world() );
+				Collections.singletonList( this.world() ) ) :
+				UnitRepresentation.UnitFD( this.world() );
 	}
 
 	/* / / / / / / / / / / / / / / / / UTILITIES / / / / / / / / / / / / / / / / */
@@ -320,7 +320,7 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 			return Collections.singletonList( ( (EnumCaseInstantiationExpression) e ).world() );
 		} else if( e instanceof FieldAccessExpression ) {
 			List< WorldArgument > worlds = worldsFromAnnotation( e ).map(
-							w -> new WorldArgument( new Name( w.identifier() ) ) )
+					w -> new WorldArgument( new Name( w.identifier() ) ) )
 					.collect( Collectors.toList() );
 //			System.out.println( new PrettyPrinterVisitor().visit( e ) + " has worlds " +
 //					worlds.stream().map( w -> w.name().identifier() ).collect( Collectors.joining( ", " ) ) ); // TODO: remove this
@@ -329,10 +329,11 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 			return Collections.singletonList( ( (LiteralExpression) e ).world() );
 		} else if( e instanceof MethodCallExpression ) {
 			if( !( (MethodCallExpression) e ).methodAnnotation().get().returnType().isVoid() ) {
-				GroundDataTypeOrVoid t = ( (MethodCallExpression) e ).methodAnnotation().get().returnType();
+				GroundDataTypeOrVoid t =
+						( (MethodCallExpression) e ).methodAnnotation().get().returnType();
 				if( !t.isVoid() ) {
 					return ( (GroundDataType) t ).worldArguments().stream().map(
-									w -> new WorldArgument( new Name( w.identifier() ) ) )
+							w -> new WorldArgument( new Name( w.identifier() ) ) )
 							.collect( Collectors.toList() );
 				} else {
 					return List.of();
@@ -384,17 +385,18 @@ public class ExpressionProjector extends AbstractSoloistProjector< Expression > 
 			return Collections.singletonList( ( (EnumCaseInstantiationExpression) e ).world() );
 		} else if( e instanceof FieldAccessExpression ) {
 			List< WorldArgument > worlds = worldsFromAnnotation( e ).map(
-							w -> new WorldArgument( new Name( w.identifier() ) ) )
+					w -> new WorldArgument( new Name( w.identifier() ) ) )
 					.collect( Collectors.toList() );
 			return worlds;
 		} else if( e instanceof LiteralExpression ) {
 			return Collections.singletonList( ( (LiteralExpression) e ).world() );
 		} else if( e instanceof MethodCallExpression ) {
 			if( !( (MethodCallExpression) e ).methodAnnotation().get().returnType().isVoid() ) {
-				GroundDataTypeOrVoid t = ( (MethodCallExpression) e ).methodAnnotation().get().returnType();
+				GroundDataTypeOrVoid t =
+						( (MethodCallExpression) e ).methodAnnotation().get().returnType();
 				if( !t.isVoid() ) {
 					return ( (GroundDataType) t ).worldArguments().stream().map(
-									w -> new WorldArgument( new Name( w.identifier() ) ) )
+							w -> new WorldArgument( new Name( w.identifier() ) ) )
 							.collect( Collectors.toList() );
 				} else {
 					return List.of();

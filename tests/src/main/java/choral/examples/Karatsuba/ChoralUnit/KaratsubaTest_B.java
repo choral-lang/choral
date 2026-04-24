@@ -9,7 +9,9 @@ import choral.choralUnit.annotations.Test;
 import choral.examples.Karatsuba.Karatsuba_B;
 import choral.annotations.Choreography;
 
-@Choreography( role = "B", name = "KaratsubaTest" )
+@Choreography(
+		role = "B",
+		name = "KaratsubaTest" )
 public class KaratsubaTest_B {
 	@Test
 	public static void test1() {

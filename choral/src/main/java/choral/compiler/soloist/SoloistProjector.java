@@ -107,8 +107,7 @@ public class SoloistProjector extends ChoralVisitor {
 				TypesProjector.visitAndCollect( w, n.typeParameters() ),
 				n.superClass().isPresent() ?
 						TypesProjector.visit( w, n.superClass().get() ).get( 0 ) // this is always 1
-						: null
-				,
+						: null,
 				TypesProjector.visitAndCollect( w, n.implementsInterfaces() ),
 				BodyProjector.visitAndCollect( w, n.fields() ), // create
 				BodyProjector.visitAndCollect( w, n.methods() ),

@@ -47,7 +47,7 @@ public class Universe {
 	}
 
 	private static final HashMap< String, SpecialTypeTag > specialClassesConversionMap =
-		new HashMap<>( 11 );
+			new HashMap<>( 11 );
 
 	public enum SpecialTypeTag {
 		OBJECT( "java.lang.Object", HigherClassOrInterface.Variety.CLASS ),
@@ -79,8 +79,9 @@ public class Universe {
 		}
 	}
 
-	private static final HashMap< String, PrimitiveTypeTag > primitiveTypesConversionMap = new HashMap<>(
-			8 );
+	private static final HashMap< String, PrimitiveTypeTag > primitiveTypesConversionMap =
+			new HashMap<>(
+					8 );
 	private static final Map< SpecialTypeTag, PrimitiveTypeTag > unboxingMap = new EnumMap<>(
 			SpecialTypeTag.class );
 
@@ -172,14 +173,15 @@ public class Universe {
 				specialClasses.put( key, type );
 			} else {
 				throw new StaticVerificationException(
-						"Invalid special type '" + type.identifier() + "', expected " + key.variety.labelSingular + " found " + type.variety() );
+						"Invalid special type '" + type.identifier() + "', expected "
+								+ key.variety.labelSingular + " found " + type.variety() );
 			}
 		}
 		return key;
 	}
 
-	public Optional<SpecialTypeTag> specialTypeTag(String qualifiedName) {
-		return Optional.ofNullable(specialClassesConversionMap.get(qualifiedName));
+	public Optional< SpecialTypeTag > specialTypeTag( String qualifiedName ) {
+		return Optional.ofNullable( specialClassesConversionMap.get( qualifiedName ) );
 	}
 
 	public HigherClassOrInterface specialType( SpecialTypeTag key ) {
@@ -254,7 +256,7 @@ public class Universe {
 					Formatting.joining( ",", "@(", ")->(", "" ) )
 					+ "Null"
 					+ this.worldParameters.stream().map( World::toString ).collect(
-					Formatting.joining( ",", "@(", ")", "" ) )
+							Formatting.joining( ",", "@(", ")", "" ) )
 					+ ")";
 		}
 
