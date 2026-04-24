@@ -22,11 +22,10 @@
 package choral.types;
 
 import choral.ast.Node;
-
 import java.util.Optional;
 
 public interface HasSource {
-	Optional< Node > sourceCode();
+  Optional<Node> sourceCode();
 
-	void setSourceCode( Node source );
+  void setSourceCode(Node source);
 }

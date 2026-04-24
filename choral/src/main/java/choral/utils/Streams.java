@@ -29,57 +29,54 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class Streams {
-	@FunctionalInterface
-	public interface CheckedFunction< T, R > {
-		R apply( T t ) throws Exception;
-	}
+  @FunctionalInterface
+  public interface CheckedFunction<T, R> {
+    R apply(T t) throws Exception;
+  }
 
-	@FunctionalInterface
-	public interface CheckedConsumer< T > {
-		void apply( T t ) throws Exception;
-	}
+  @FunctionalInterface
+  public interface CheckedConsumer<T> {
+    void apply(T t) throws Exception;
+  }
 
-	public static class WrappedException extends RuntimeException {
-		public WrappedException( Throwable cause ) {
-			super( cause );
-		}
-	}
+  public static class WrappedException extends RuntimeException {
+    public WrappedException(Throwable cause) {
+      super(cause);
+    }
+  }
 
-	public static < T, R > Function< T, R > wrapFunction(
-			CheckedFunction< T, R > checkedFunction
-	) {
-		return t -> {
-			try {
-				return checkedFunction.apply( t );
-			} catch( Exception e ) {
-				throw new WrappedException( e );
-			}
-		};
-	}
+  public static <T, R> Function<T, R> wrapFunction(CheckedFunction<T, R> checkedFunction) {
+    return t -> {
+      try {
+        return checkedFunction.apply(t);
+      } catch (Exception e) {
+        throw new WrappedException(e);
+      }
+    };
+  }
 
-	public static < T > Consumer< T > wrapConsumer( CheckedConsumer< T > checkedConsumer ) {
-		return t -> {
-			try {
-				checkedConsumer.apply( t );
-			} catch( Exception e ) {
-				throw new WrappedException( e );
-			}
-		};
-	}
+  public static <T> Consumer<T> wrapConsumer(CheckedConsumer<T> checkedConsumer) {
+    return t -> {
+      try {
+        checkedConsumer.apply(t);
+      } catch (Exception e) {
+        throw new WrappedException(e);
+      }
+    };
+  }
 
-	public static < T > Consumer< T > skip() {
-		return x -> {
-		};
-	}
+  public static <T> Consumer<T> skip() {
+    return x -> {};
+  }
 
-	public static < T, K, U > Collector< T, ?, Map< K, U > > toLinkedHashMap(
-			Function< ? super T, ? extends K > keyMapper,
-			Function< ? super T, ? extends U > valueMapper ) {
-		return Collectors.toMap( keyMapper,
-				valueMapper,
-				( u, v ) -> {
-					throw new IllegalStateException( String.format( "Duplicate key %s", u ) );
-				},
-				LinkedHashMap::new );
-	}
+  public static <T, K, U> Collector<T, ?, Map<K, U>> toLinkedHashMap(
+      Function<? super T, ? extends K> keyMapper, Function<? super T, ? extends U> valueMapper) {
+    return Collectors.toMap(
+        keyMapper,
+        valueMapper,
+        (u, v) -> {
+          throw new IllegalStateException(String.format("Duplicate key %s", u));
+        },
+        LinkedHashMap::new);
+  }
 }

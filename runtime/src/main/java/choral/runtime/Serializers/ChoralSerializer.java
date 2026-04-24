@@ -21,8 +21,8 @@
 
 package choral.runtime.Serializers;
 
-public interface ChoralSerializer< T, F > {
-	< M extends T > F fromObject( M o );
+public interface ChoralSerializer<T, F> {
+  <M extends T> F fromObject(M o);
 
-	< M extends T > M toObject( F f );
+  <M extends T> M toObject(F f);
 }

@@ -24,60 +24,63 @@ package choral.types;
 import java.util.List;
 import java.util.stream.Stream;
 
-/** @see choral.types.GroundDataType */
+/**
+ * @see choral.types.GroundDataType
+ */
 public interface GroundClassOrInterface extends ClassOrInterface, GroundReferenceType {
 
-	HigherClassOrInterface typeConstructor();
+  HigherClassOrInterface typeConstructor();
 
-	@Override
-	default Variety variety() {
-		return typeConstructor().variety();
-	}
+  @Override
+  default Variety variety() {
+    return typeConstructor().variety();
+  }
 
-	@Override
-	default Package declarationPackage() {
-		return typeConstructor().declarationPackage();
-	}
+  @Override
+  default Package declarationPackage() {
+    return typeConstructor().declarationPackage();
+  }
 
-	List< ? extends HigherReferenceType > typeArguments();
+  List<? extends HigherReferenceType> typeArguments();
 
-	GroundClassOrInterface applySubstitution( Substitution substitution );
+  GroundClassOrInterface applySubstitution(Substitution substitution);
 
-	boolean isInheritanceFinalised();
+  boolean isInheritanceFinalised();
 
-	/**
-	 * Returns the type's direct superinterfaces (i.e. the interfaces listed after the 'implements' clause)
-	 * and, if it exists, the type's direct superclass (i.e. the class listed after the 'extends' clause)
-	 */
-	default Stream< ? extends GroundClassOrInterface > extendedClassesOrInterfaces() {
-		return extendedInterfaces();
-	}
+  /**
+   * Returns the type's direct superinterfaces (i.e. the interfaces listed after the 'implements'
+   * clause) and, if it exists, the type's direct superclass (i.e. the class listed after the
+   * 'extends' clause)
+   */
+  default Stream<? extends GroundClassOrInterface> extendedClassesOrInterfaces() {
+    return extendedInterfaces();
+  }
 
-	Stream< ? extends GroundInterface > extendedInterfaces();
+  Stream<? extends GroundInterface> extendedInterfaces();
 
-	Stream< GroundInterface > allExtendedInterfaces();
+  Stream<GroundInterface> allExtendedInterfaces();
 
-	Stream< Member.Field > declaredFields();
+  Stream<Member.Field> declaredFields();
 
-	Stream< Member.HigherMethod > declaredMethods();
+  Stream<Member.HigherMethod> declaredMethods();
 
-	@Override
-	default boolean isEquivalentToErasureOf( GroundDataType type ) {
-		// revise when adding RAW types
-		if( type.isClass() || type.isInterface() ) {
-			return typeArguments().isEmpty() && isEquivalentTo( type );
-		}
-		if( type.isTypeParameter() ) {
-			GroundTypeParameter other = (GroundTypeParameter) type;
-			if( isInterface() && !( other.isUpperClassImplicit() && other.isSubtypeOf( this ) ) ) {
-				return false;
-			}
-			if( isClass() && !isEquivalentToErasureOf( other.upperClass() ) ) {
-				return false;
-			}
-			return other.upperInterfaces().allMatch( this::isSubtypeOf ) &&
-					this.extendedInterfaces().allMatch( other::isSubtypeOf );
-		}
-		return false;
-	}
+  @Override
+  default boolean isEquivalentToErasureOf(GroundDataType type) {
+    // revise when adding RAW types
+    if (type.isClass() || type.isInterface()) {
+      return typeArguments().isEmpty() && isEquivalentTo(type);
+    }
+    if (type.isTypeParameter()) {
+      GroundTypeParameter other = (GroundTypeParameter) type;
+      if (isInterface() && !(other.isUpperClassImplicit() && other.isSubtypeOf(this))) {
+        return false;
+      }
+      if (isClass() && !isEquivalentToErasureOf(other.upperClass())) {
+        return false;
+      }
+      return other.upperInterfaces().allMatch(this::isSubtypeOf)
+          && this.extendedInterfaces().allMatch(other::isSubtypeOf);
+    }
+    return false;
+  }
 }

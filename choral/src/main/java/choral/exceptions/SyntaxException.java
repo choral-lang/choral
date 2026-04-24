@@ -24,8 +24,8 @@ package choral.exceptions;
 import choral.ast.Position;
 
 public class SyntaxException extends AstPositionedException {
-	public SyntaxException( Position position, String message ) {
-		super( position, new ChoralException( message ) );
-		super.innerException = this;
-	}
+  public SyntaxException(Position position, String message) {
+    super(position, new ChoralException(message));
+    super.innerException = this;
+  }
 }

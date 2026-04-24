@@ -22,7 +22,7 @@
 package choral.types;
 
 public interface Interface extends ClassOrInterface {
-	default boolean isInterface() {
-		return true;
-	}
+  default boolean isInterface() {
+    return true;
+  }
 }

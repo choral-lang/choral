@@ -21,46 +21,44 @@
 
 package generic;
 
+import choral.ast.Name;
+import choral.ast.expression.FieldAccessExpression;
+import java.io.StringReader;
+import java.io.StringWriter;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.RuntimeSingleton;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.node.SimpleNode;
-import choral.ast.expression.FieldAccessExpression;
-import choral.ast.Name;
-
-import java.io.StringReader;
-import java.io.StringWriter;
 
 public class TestVelocity {
 
-	public static void main( String[] args ) throws ParseException {
-		FieldAccessExpression e = new FieldAccessExpression( new Name( "myMethod" ) );
+  public static void main(String[] args) throws ParseException {
+    FieldAccessExpression e = new FieldAccessExpression(new Name("myMethod"));
 
-		VelocityContext vc = new VelocityContext();
-		vc.put( "name", e );
-		vc.put( "qualifiers", e );
+    VelocityContext vc = new VelocityContext();
+    vc.put("name", e);
+    vc.put("qualifiers", e);
 
-		StringWriter sw = new StringWriter();
-		String template = "Username is $f";
-		getVelocityTemplate( template ).merge( vc, sw );
+    StringWriter sw = new StringWriter();
+    String template = "Username is $f";
+    getVelocityTemplate(template).merge(vc, sw);
 
-		System.out.println( sw.toString() );
-	}
+    System.out.println(sw.toString());
+  }
 
-	public static Template getVelocityTemplate( String template ) throws ParseException {
-		RuntimeServices rs = RuntimeSingleton.getRuntimeServices();
+  public static Template getVelocityTemplate(String template) throws ParseException {
+    RuntimeServices rs = RuntimeSingleton.getRuntimeServices();
 
-		StringReader sr = new StringReader( template );
-		SimpleNode sn = rs.parse( sr, "" );
+    StringReader sr = new StringReader(template);
+    SimpleNode sn = rs.parse(sr, "");
 
-		Template t = new Template();
-		t.setRuntimeServices( rs );
-		t.setData( sn );
-		t.initDocument();
+    Template t = new Template();
+    t.setRuntimeServices(rs);
+    t.setData(sn);
+    t.initDocument();
 
-		return t;
-	}
-
+    return t;
+  }
 }

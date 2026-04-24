@@ -25,40 +25,39 @@ import choral.ast.Node;
 import choral.ast.Position;
 
 public class AstPositionedException extends ChoralException {
-	protected ChoralException innerException;
-	protected String innerMessage;
-	private Position position;
+  protected ChoralException innerException;
+  protected String innerMessage;
+  private Position position;
 
-	public AstPositionedException( Position position, ChoralException innerException ) {
-		super( innerException );
-		this.innerMessage = innerException.getMessage();
-		this.innerException = innerException;
-		this.position = position; //new Position[]{position} ;
-	}
+  public AstPositionedException(Position position, ChoralException innerException) {
+    super(innerException);
+    this.innerMessage = innerException.getMessage();
+    this.innerException = innerException;
+    this.position = position; // new Position[]{position} ;
+  }
 
-	public AstPositionedException( Node node, ChoralException innerException ) {
-		this( node.position(), innerException );
-	}
+  public AstPositionedException(Node node, ChoralException innerException) {
+    this(node.position(), innerException);
+  }
 
-//    public AstPositionedException(Position[] positions, ChoralException innerException) {
-//        super(innerException);
-//        this.innerMessage = innerException.getMessage();
-//        this.innerException = innerException;
-//        this.positions = positions ;
-//    }
+  //    public AstPositionedException(Position[] positions, ChoralException innerException) {
+  //        super(innerException);
+  //        this.innerMessage = innerException.getMessage();
+  //        this.innerException = innerException;
+  //        this.positions = positions ;
+  //    }
 
-//    protected AstPositionedException(Position position, String message) {
-//        super(message + "\n" + position.formattedPosition() );
-//        this.innerMessage = message;
-//        this.position = new Position[]{ position } ;
-//    }
+  //    protected AstPositionedException(Position position, String message) {
+  //        super(message + "\n" + position.formattedPosition() );
+  //        this.innerMessage = message;
+  //        this.position = new Position[]{ position } ;
+  //    }
 
-	public String getInnerMessage() {
-		return this.innerMessage;
-	}
+  public String getInnerMessage() {
+    return this.innerMessage;
+  }
 
-	public Position position() {
-		return position;
-	}
-
+  public Position position() {
+    return position;
+  }
 }

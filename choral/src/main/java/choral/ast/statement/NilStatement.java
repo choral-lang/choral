@@ -25,45 +25,40 @@ import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
-import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 
-/**
- * The terminal statement. Used to close continuations
- */
-
+/** The terminal statement. Used to close continuations */
 public class NilStatement extends Statement {
 
+  public NilStatement() {
+    super(null);
+  }
 
-	public NilStatement() {
-		super( null );
-	}
+  public NilStatement(final Position position) {
+    super(null, position);
+  }
 
-	public NilStatement( final Position position ) {
-		super( null, position );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public Statement cloneWithContinuation(Statement continuation) {
+    return this;
+  }
 
-	@Override
-	public Statement cloneWithContinuation( Statement continuation ) {
-		return this;
-	}
-
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try {
-			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ) {
-			String position = "";
-			if( this.position() != null ) {
-				position = this.position().line() + ":" + this.position().column() + ":";
-			}
-			throw new ChoralException(
-					"Could not merge NilStatement with " + n.getClass().getSimpleName() );
-		}
-	}
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    try {
+      return m.merge(this, (this.getClass().cast(n)));
+    } catch (ClassCastException e) {
+      String position = "";
+      if (this.position() != null) {
+        position = this.position().line() + ":" + this.position().column() + ":";
+      }
+      throw new ChoralException(
+          "Could not merge NilStatement with " + n.getClass().getSimpleName());
+    }
+  }
 }

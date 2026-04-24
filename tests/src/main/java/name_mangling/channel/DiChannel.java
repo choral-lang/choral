@@ -29,12 +29,11 @@ public interface DiChannel@( A, B )< T@X >{
 
 public interface DiChannel {
 
-	public interface _1_2< T > {
-		< M extends T > M com$1( M m );
-	}
+  public interface _1_2<T> {
+    <M extends T> M com$1(M m);
+  }
 
-	public interface _2_1< T > {
-		< M extends T > M com$2( M m );
-	}
-
+  public interface _2_1<T> {
+    <M extends T> M com$2(M m);
+  }
 }

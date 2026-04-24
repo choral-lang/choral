@@ -23,8 +23,8 @@ package choral.ast;
 
 import java.util.Optional;
 
-public interface WithTypeAnnotation< T > {
-	Optional< ? extends T > typeAnnotation();
+public interface WithTypeAnnotation<T> {
+  Optional<? extends T> typeAnnotation();
 
-	void setTypeAnnotation( T typeAnnotation );
+  void setTypeAnnotation(T typeAnnotation);
 }

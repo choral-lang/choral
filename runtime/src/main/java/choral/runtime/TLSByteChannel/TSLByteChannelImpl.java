@@ -24,45 +24,44 @@ package choral.runtime.TLSByteChannel;
 import choral.lang.Unit;
 import choral.runtime.ChoralByteChannel.SymByteChannelImpl;
 import choral.runtime.TLSByteChannel.tlschannel.TlsChannel;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 
 public abstract class TSLByteChannelImpl implements SymByteChannelImpl {
-	protected TlsChannel channel;
+  protected TlsChannel channel;
 
-	@Override
-	public < T extends ByteBuffer > T com( Unit u ) {
-		return this.com();
-	}
+  @Override
+  public <T extends ByteBuffer> T com(Unit u) {
+    return this.com();
+  }
 
-	private ByteBuffer recvLoop( ByteBuffer recv ) throws IOException {
-		return channel.read( recv ) != -1 ? recv : recvLoop( recv );
-	}
+  private ByteBuffer recvLoop(ByteBuffer recv) throws IOException {
+    return channel.read(recv) != -1 ? recv : recvLoop(recv);
+  }
 
-	@Override
-	public < T extends ByteBuffer > Unit com( T m ) {
-		try {
-			channel.write( m );
-		} catch( IOException e ) {
-			e.printStackTrace();
-		}
-		return Unit.id;
-	}
+  @Override
+  public <T extends ByteBuffer> Unit com(T m) {
+    try {
+      channel.write(m);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return Unit.id;
+  }
 
-	@Override
-	public ByteChannel byteChannel() {
-		return this.channel;
-	}
+  @Override
+  public ByteChannel byteChannel() {
+    return this.channel;
+  }
 
-	@Override
-	public < T extends ByteBuffer > T com() {
-		try {
-			int BUFFER_SIZE = 4096;
-			return (T) recvLoop( ByteBuffer.allocate( BUFFER_SIZE ) );
-		} catch( IOException e ) {
-			throw new RuntimeException( e.getMessage() );
-		}
-	}
+  @Override
+  public <T extends ByteBuffer> T com() {
+    try {
+      int BUFFER_SIZE = 4096;
+      return (T) recvLoop(ByteBuffer.allocate(BUFFER_SIZE));
+    } catch (IOException e) {
+      throw new RuntimeException(e.getMessage());
+    }
+  }
 }

@@ -29,71 +29,74 @@ import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 
-/**
- * if( expression ) { statement } else { statement }; continuation
- */
-
+/** if( expression ) { statement } else { statement }; continuation */
 public class IfStatement extends Statement {
 
-	private final Expression condition;
-	private final Statement ifBranch, elseBranch;
+  private final Expression condition;
+  private final Statement ifBranch, elseBranch;
 
-	public IfStatement(
-			final Expression condition, final Statement ifBranch, final Statement elseBranch,
-			final Statement continuation
-	) {
-		super( continuation );
-		this.condition = condition;
-		this.ifBranch = ifBranch;
-		this.elseBranch = elseBranch;
-	}
+  public IfStatement(
+      final Expression condition,
+      final Statement ifBranch,
+      final Statement elseBranch,
+      final Statement continuation) {
+    super(continuation);
+    this.condition = condition;
+    this.ifBranch = ifBranch;
+    this.elseBranch = elseBranch;
+  }
 
-	public IfStatement(
-			final Expression condition, final Statement ifBranch, final Statement elseBranch,
-			final Statement continuation, final Position position
-	) {
-		super( continuation, position );
-		this.condition = condition;
-		this.ifBranch = ifBranch;
-		this.elseBranch = elseBranch;
-	}
+  public IfStatement(
+      final Expression condition,
+      final Statement ifBranch,
+      final Statement elseBranch,
+      final Statement continuation,
+      final Position position) {
+    super(continuation, position);
+    this.condition = condition;
+    this.ifBranch = ifBranch;
+    this.elseBranch = elseBranch;
+  }
 
-	public Expression condition() {
-		return condition;
-	}
+  public Expression condition() {
+    return condition;
+  }
 
-	public Statement ifBranch() {
-		return ifBranch;
-	}
+  public Statement ifBranch() {
+    return ifBranch;
+  }
 
-	public Statement elseBranch() {
-		return elseBranch;
-	}
+  public Statement elseBranch() {
+    return elseBranch;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try {
-			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ) {
-			throw new ChoralException(
-					"Could not merge \n" + new PrettyPrinterVisitor().visit( this ) +
-							"\nwith " + n.getClass().getSimpleName() );
-		}
-	}
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    try {
+      return m.merge(this, (this.getClass().cast(n)));
+    } catch (ClassCastException e) {
+      throw new ChoralException(
+          "Could not merge \n"
+              + new PrettyPrinterVisitor().visit(this)
+              + "\nwith "
+              + n.getClass().getSimpleName());
+    }
+  }
 
-	@Override
-	public Statement cloneWithContinuation( Statement continuation ) {
-		return new IfStatement(
-				this.condition(),
-				this.ifBranch(),
-				this.elseBranch(),
-				this.continuation() == null ? continuation : continuation().cloneWithContinuation(
-						continuation ),
-				this.position() );
-	}
+  @Override
+  public Statement cloneWithContinuation(Statement continuation) {
+    return new IfStatement(
+        this.condition(),
+        this.ifBranch(),
+        this.elseBranch(),
+        this.continuation() == null
+            ? continuation
+            : continuation().cloneWithContinuation(continuation),
+        this.position());
+  }
 }

@@ -23,95 +23,92 @@ package choral.types;
 
 import choral.ast.Node;
 import choral.types.kinds.Kind;
-
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A role parameter. In a definition like {@code class Foo@(A,B) {...}}, A and B are worlds.
- */
-public final class World extends TypeBase implements Comparable< World > {
+/** A role parameter. In a definition like {@code class Foo@(A,B) {...}}, A and B are worlds. */
+public final class World extends TypeBase implements Comparable<World> {
 
-	static final String DEFAULT_NAME = "A";
+  static final String DEFAULT_NAME = "A";
 
-	public World( Universe universe, String identifier ) {
-		super( universe );
-		this.identifier = identifier;
-	}
+  public World(Universe universe, String identifier) {
+    super(universe);
+    this.identifier = identifier;
+  }
 
-	public World( Universe universe, String identifier, Node sourceCode ) {
-		this( universe, identifier );
-		setSourceCode( sourceCode );
-	}
+  public World(Universe universe, String identifier, Node sourceCode) {
+    this(universe, identifier);
+    setSourceCode(sourceCode);
+  }
 
-	@Override
-	public Kind kind() {
-		return Kind.getStar();
-	}
+  @Override
+  public Kind kind() {
+    return Kind.getStar();
+  }
 
-	private final String identifier;
+  private final String identifier;
 
-	public String identifier() {
-		return identifier;
-	}
+  public String identifier() {
+    return identifier;
+  }
 
-	@Override
-	public String toString() {
-		return identifier() /* + "#[" + declarationContext.toString() + "]#" */;
-	}
+  @Override
+  public String toString() {
+    return identifier() /* + "#[" + declarationContext.toString() + "]#" */;
+  }
 
-	private WorldParameterDeclarationContext declarationContext;
+  private WorldParameterDeclarationContext declarationContext;
 
-	WorldParameterDeclarationContext declarationContext() {
-		return declarationContext;
-	}
+  WorldParameterDeclarationContext declarationContext() {
+    return declarationContext;
+  }
 
-	public void setDeclarationContext( WorldParameterDeclarationContext declarationContext ) {
-		if( this.declarationContext != null ) {
-			throw new UnsupportedOperationException(
-					"world parameter '" + identifier + "' is already associated with a declaration context" );
-		}
-		this.declarationContext = declarationContext;
-	}
+  public void setDeclarationContext(WorldParameterDeclarationContext declarationContext) {
+    if (this.declarationContext != null) {
+      throw new UnsupportedOperationException(
+          "world parameter '" + identifier + "' is already associated with a declaration context");
+    }
+    this.declarationContext = declarationContext;
+  }
 
-	@Override
-	public boolean isEquivalentTo( Type type ) {
-		return this.equals( type );
-	}
+  @Override
+  public boolean isEquivalentTo(Type type) {
+    return this.equals(type);
+  }
 
-	@Override
-	public boolean isEquivalentTo_relaxed( Type type ) {
-		return true;
-	}
+  @Override
+  public boolean isEquivalentTo_relaxed(Type type) {
+    return true;
+  }
 
-	@Override
-	public boolean isSubtypeOf( Type type, boolean strict ) {
-		return ( !strict && this.isEquivalentTo( type ) );
-	}
+  @Override
+  public boolean isSubtypeOf(Type type, boolean strict) {
+    return (!strict && this.isEquivalentTo(type));
+  }
 
-	@Override
-	public boolean isSubtypeOf_relaxed( Type type, boolean strict ) {
-		return ( !strict && this.isEquivalentTo_relaxed( type ) );
-	}
+  @Override
+  public boolean isSubtypeOf_relaxed(Type type, boolean strict) {
+    return (!strict && this.isEquivalentTo_relaxed(type));
+  }
 
-	public static List< World > freshWorlds( Universe universe, int size ) {
-		return freshWorlds( universe, size, DEFAULT_NAME );
-	}
+  public static List<World> freshWorlds(Universe universe, int size) {
+    return freshWorlds(universe, size, DEFAULT_NAME);
+  }
 
-	public static List< World > freshWorlds( Universe universe, int size, String basename ) {
-		List< World > ws = new ArrayList<>( size );
-		if( size == 1 ) {
-			ws.add( new World( universe, basename ) );
-		} else {
-			for( int i = 1; i <= size; i++ ) {
-				ws.add( new World( universe, basename + i ) );
-			}
-		}
-		return ws;
-	}
+  public static List<World> freshWorlds(Universe universe, int size, String basename) {
+    List<World> ws = new ArrayList<>(size);
+    if (size == 1) {
+      ws.add(new World(universe, basename));
+    } else {
+      for (int i = 1; i <= size; i++) {
+        ws.add(new World(universe, basename + i));
+      }
+    }
+    return ws;
+  }
 
-	@Override
-	public int compareTo( World other ) {
-		return this.identifier.compareTo( other.identifier );
-	}
+  @Override
+  public int compareTo(World other) {
+    return this.identifier.compareTo(other.identifier);
+  }
 }

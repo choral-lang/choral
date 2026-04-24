@@ -25,32 +25,29 @@ import choral.exceptions.ChoralException;
 
 public class KindApplicationException extends ChoralException {
 
-	private final Kind subject;
-	private final Kind object;
+  private final Kind subject;
+  private final Kind object;
 
-	public KindApplicationException( Kind subject, Kind object ) {
-		super( "" );
-		this.subject = subject;
-		this.object = object;
-	}
+  public KindApplicationException(Kind subject, Kind object) {
+    super("");
+    this.subject = subject;
+    this.object = object;
+  }
 
-	public Kind getSubject() {
-		return subject;
-	}
+  public Kind getSubject() {
+    return subject;
+  }
 
-	public Kind getObject() {
-		return object;
-	}
+  public Kind getObject() {
+    return object;
+  }
 
-	public String message() {
-		return "ill-formed kind application " + subject + object + ".";
-	}
+  public String message() {
+    return "ill-formed kind application " + subject + object + ".";
+  }
 
-	@Override
-	public String toString() {
-		return "KindApplicationException{" +
-				"subject=" + subject +
-				", object=" + object +
-				'}';
-	}
+  @Override
+  public String toString() {
+    return "KindApplicationException{" + "subject=" + subject + ", object=" + object + '}';
+  }
 }

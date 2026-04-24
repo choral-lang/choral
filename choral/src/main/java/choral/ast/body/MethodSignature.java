@@ -28,60 +28,56 @@ import choral.ast.type.FormalTypeParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.types.Member;
-
 import java.util.List;
 import java.util.Optional;
 
 public class MethodSignature extends Node {
-	private final Name name;
-	private final List< FormalTypeParameter > typeParameters;
-	private final List< FormalMethodParameter > parameters;
-	private final TypeExpression returnType;
+  private final Name name;
+  private final List<FormalTypeParameter> typeParameters;
+  private final List<FormalMethodParameter> parameters;
+  private final TypeExpression returnType;
 
-	public MethodSignature(
-			final Name name,
-			final List< FormalTypeParameter > typeParameters,
-			final List< FormalMethodParameter > parameters,
-			final TypeExpression returnType,
-			final Position position
-	) {
-		super( position );
-		this.name = name;
-		this.typeParameters = typeParameters;
-		this.parameters = parameters;
-		this.returnType = returnType;
-	}
+  public MethodSignature(
+      final Name name,
+      final List<FormalTypeParameter> typeParameters,
+      final List<FormalMethodParameter> parameters,
+      final TypeExpression returnType,
+      final Position position) {
+    super(position);
+    this.name = name;
+    this.typeParameters = typeParameters;
+    this.parameters = parameters;
+    this.returnType = returnType;
+  }
 
-	public Name name() {
-		return this.name;
-	}
+  public Name name() {
+    return this.name;
+  }
 
-	public List< FormalMethodParameter > parameters() {
-		return this.parameters;
-	}
+  public List<FormalMethodParameter> parameters() {
+    return this.parameters;
+  }
 
-	public List< FormalTypeParameter > typeParameters() {
-		return this.typeParameters;
-	}
+  public List<FormalTypeParameter> typeParameters() {
+    return this.typeParameters;
+  }
 
-	public TypeExpression returnType() {
-		return returnType;
-	}
+  public TypeExpression returnType() {
+    return returnType;
+  }
 
+  private Member.HigherMethod typeAnnotation;
 
-	private Member.HigherMethod typeAnnotation;
+  public Optional<Member.HigherMethod> typeAnnotation() {
+    return Optional.ofNullable(typeAnnotation);
+  }
 
-	public Optional< Member.HigherMethod > typeAnnotation() {
-		return Optional.ofNullable( typeAnnotation );
-	}
+  public void setTypeAnnotation(Member.HigherMethod typeAnnotation) {
+    this.typeAnnotation = typeAnnotation;
+  }
 
-	public void setTypeAnnotation( Member.HigherMethod typeAnnotation ) {
-		this.typeAnnotation = typeAnnotation;
-	}
-
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

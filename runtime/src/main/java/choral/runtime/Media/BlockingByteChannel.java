@@ -5,8 +5,7 @@ import java.nio.channels.ByteChannel;
 
 public interface BlockingByteChannel extends ByteChannel {
 
-	int recvTransmissionLength() throws IOException;
+  int recvTransmissionLength() throws IOException;
 
-	void sendTransmissionLength( int length ) throws IOException;
-
+  void sendTransmissionLength(int length) throws IOException;
 }

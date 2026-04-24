@@ -22,29 +22,29 @@
 package choral.ast;
 
 public interface WithReturnAnnotation {
-	enum ReturnAnnotation {
-		Returns,
-		DoesNotReturn,
-		NotSet
-	}
+  enum ReturnAnnotation {
+    Returns,
+    DoesNotReturn,
+    NotSet
+  }
 
-	ReturnAnnotation returnAnnotation();
+  ReturnAnnotation returnAnnotation();
 
-	void setReturnAnnotation( ReturnAnnotation a );
+  void setReturnAnnotation(ReturnAnnotation a);
 
-	default boolean returns() {
-		return returnAnnotation() == ReturnAnnotation.Returns;
-	}
+  default boolean returns() {
+    return returnAnnotation() == ReturnAnnotation.Returns;
+  }
 
-	default void setReturns() {
-		setReturnAnnotation( ReturnAnnotation.Returns );
-	}
+  default void setReturns() {
+    setReturnAnnotation(ReturnAnnotation.Returns);
+  }
 
-	default void setDoesNotReturns() {
-		setReturnAnnotation( ReturnAnnotation.DoesNotReturn );
-	}
+  default void setDoesNotReturns() {
+    setReturnAnnotation(ReturnAnnotation.DoesNotReturn);
+  }
 
-	default void setReturnAnnotation( boolean returns ) {
-		setReturnAnnotation( returns ? ReturnAnnotation.Returns : ReturnAnnotation.DoesNotReturn );
-	}
+  default void setReturnAnnotation(boolean returns) {
+    setReturnAnnotation(returns ? ReturnAnnotation.Returns : ReturnAnnotation.DoesNotReturn);
+  }
 }

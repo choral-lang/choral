@@ -5,222 +5,218 @@ import choral.examples.RetwisChoral.Token;
 
 public interface Emitter {
 
-	Emitter emit( Action action );
+  Emitter emit(Action action);
 
-	interface Action {
-		RetwisAction action();
+  interface Action {
+    RetwisAction action();
 
-		default String postsUsername() {
-			throw new UnsupportedOperationException();
-		}
+    default String postsUsername() {
+      throw new UnsupportedOperationException();
+    }
 
-		default Integer postsPage() {
-			throw new UnsupportedOperationException();
-		}
+    default Integer postsPage() {
+      throw new UnsupportedOperationException();
+    }
 
-		default String post() {
-			throw new UnsupportedOperationException();
-		}
+    default String post() {
+      throw new UnsupportedOperationException();
+    }
 
-		default Token sessionToken() {
-			throw new UnsupportedOperationException();
-		}
+    default Token sessionToken() {
+      throw new UnsupportedOperationException();
+    }
 
-		default String followTarget() {
-			throw new UnsupportedOperationException();
-		}
+    default String followTarget() {
+      throw new UnsupportedOperationException();
+    }
 
-		default String stopFollowTarget() {
-			throw new UnsupportedOperationException();
-		}
+    default String stopFollowTarget() {
+      throw new UnsupportedOperationException();
+    }
 
-		default String username() {
-			throw new UnsupportedOperationException();
-		}
+    default String username() {
+      throw new UnsupportedOperationException();
+    }
 
-		default String mentionsUsername() {
-			throw new UnsupportedOperationException();
-		}
+    default String mentionsUsername() {
+      throw new UnsupportedOperationException();
+    }
 
-		default String statusPostID() {
-			throw new UnsupportedOperationException();
-		}
+    default String statusPostID() {
+      throw new UnsupportedOperationException();
+    }
 
-		enum Fields {
-			postsUsername,
-			postsPage,
-			post,
-			sessionToken,
-			followTarget,
-			stopFollowTarget,
-			username,
-			mentionsUsername,
-			statusPostID
-		}
+    enum Fields {
+      postsUsername,
+      postsPage,
+      post,
+      sessionToken,
+      followTarget,
+      stopFollowTarget,
+      username,
+      mentionsUsername,
+      statusPostID
+    }
+  }
 
-	}
+  class Posts implements Action {
+    private final String postsUsername;
+    private final Integer postsPage;
+    private final RetwisAction action = RetwisAction.POSTS;
 
-	class Posts implements Action {
-		private final String postsUsername;
-		private final Integer postsPage;
-		private final RetwisAction action = RetwisAction.POSTS;
+    public Posts(String postsUsername, Integer postsPage) {
+      this.postsUsername = postsUsername;
+      this.postsPage = postsPage;
+    }
 
-		public Posts( String postsUsername, Integer postsPage ) {
-			this.postsUsername = postsUsername;
-			this.postsPage = postsPage;
-		}
+    public String postsUsername() {
+      return postsUsername;
+    }
 
-		public String postsUsername() {
-			return postsUsername;
-		}
+    public Integer postsPage() {
+      return postsPage;
+    }
 
-		public Integer postsPage() {
-			return postsPage;
-		}
+    public RetwisAction action() {
+      return action;
+    }
+  }
 
-		public RetwisAction action() {
-			return action;
-		}
-	}
+  class Post implements Action {
+    private final Token sessionToken;
+    private final String post;
+    private final RetwisAction action = RetwisAction.POST;
 
-	class Post implements Action {
-		private final Token sessionToken;
-		private final String post;
-		private final RetwisAction action = RetwisAction.POST;
+    public Post(Token sessionToken, String post) {
+      this.sessionToken = sessionToken;
+      this.post = post;
+    }
 
-		public Post( Token sessionToken, String post ) {
-			this.sessionToken = sessionToken;
-			this.post = post;
-		}
+    public Token sessionToken() {
+      return sessionToken;
+    }
 
-		public Token sessionToken() {
-			return sessionToken;
-		}
+    public String post() {
+      return post;
+    }
 
-		public String post() {
-			return post;
-		}
+    @Override
+    public RetwisAction action() {
+      return action;
+    }
+  }
 
-		@Override
-		public RetwisAction action() {
-			return action;
-		}
-	}
+  class Follow implements Action {
+    private final Token sessionToken;
+    private final String followTarget;
+    private final String username;
+    private final RetwisAction action = RetwisAction.FOLLOW;
 
-	class Follow implements Action {
-		private final Token sessionToken;
-		private final String followTarget;
-		private final String username;
-		private final RetwisAction action = RetwisAction.FOLLOW;
+    public Follow(Token sessionToken, String followTarget, String username) {
+      this.sessionToken = sessionToken;
+      this.followTarget = followTarget;
+      this.username = username;
+    }
 
-		public Follow( Token sessionToken, String followTarget, String username ) {
-			this.sessionToken = sessionToken;
-			this.followTarget = followTarget;
-			this.username = username;
-		}
+    public Token sessionToken() {
+      return sessionToken;
+    }
 
-		public Token sessionToken() {
-			return sessionToken;
-		}
+    public String followTarget() {
+      return followTarget;
+    }
 
-		public String followTarget() {
-			return followTarget;
-		}
+    public String username() {
+      return username;
+    }
 
-		public String username() {
-			return username;
-		}
+    @Override
+    public RetwisAction action() {
+      return action;
+    }
+  }
 
-		@Override
-		public RetwisAction action() {
-			return action;
-		}
-	}
+  class StopFollow implements Action {
 
-	class StopFollow implements Action {
+    private final Token sessionToken;
+    private final String stopFollowTarget;
+    private final String username;
+    private final RetwisAction action = RetwisAction.STOPFOLLOW;
 
-		private final Token sessionToken;
-		private final String stopFollowTarget;
-		private final String username;
-		private final RetwisAction action = RetwisAction.STOPFOLLOW;
+    public StopFollow(Token sessionToken, String stopFollowTarget, String username) {
+      this.sessionToken = sessionToken;
+      this.stopFollowTarget = stopFollowTarget;
+      this.username = username;
+    }
 
-		public StopFollow( Token sessionToken, String stopFollowTarget, String username ) {
-			this.sessionToken = sessionToken;
-			this.stopFollowTarget = stopFollowTarget;
-			this.username = username;
-		}
+    public Token sessionToken() {
+      return sessionToken;
+    }
 
-		public Token sessionToken() {
-			return sessionToken;
-		}
+    public String stopFollowTarget() {
+      return stopFollowTarget;
+    }
 
-		public String stopFollowTarget() {
-			return stopFollowTarget;
-		}
+    public String username() {
+      return username;
+    }
 
-		public String username() {
-			return username;
-		}
+    @Override
+    public RetwisAction action() {
+      return action;
+    }
+  }
 
-		@Override
-		public RetwisAction action() {
-			return action;
-		}
-	}
+  class Mentions implements Action {
+    private final Token sessionToken;
+    private final String mentionsUsername;
+    private final RetwisAction action = RetwisAction.MENTIONS;
 
-	class Mentions implements Action {
-		private final Token sessionToken;
-		private final String mentionsUsername;
-		private final RetwisAction action = RetwisAction.MENTIONS;
+    public Mentions(Token sessionToken, String mentionsUsername) {
+      this.sessionToken = sessionToken;
+      this.mentionsUsername = mentionsUsername;
+    }
 
+    public Token sessionToken() {
+      return sessionToken;
+    }
 
-		public Mentions( Token sessionToken, String mentionsUsername ) {
-			this.sessionToken = sessionToken;
-			this.mentionsUsername = mentionsUsername;
-		}
+    public String mentionsUsername() {
+      return mentionsUsername;
+    }
 
-		public Token sessionToken() {
-			return sessionToken;
-		}
+    @Override
+    public RetwisAction action() {
+      return action;
+    }
+  }
 
-		public String mentionsUsername() {
-			return mentionsUsername;
-		}
+  class Status implements Action {
+    private final String statusPostID;
+    private final RetwisAction action = RetwisAction.STATUS;
 
-		@Override
-		public RetwisAction action() {
-			return action;
-		}
-	}
+    public Status(String statusPostID) {
+      this.statusPostID = statusPostID;
+    }
 
-	class Status implements Action {
-		private final String statusPostID;
-		private final RetwisAction action = RetwisAction.STATUS;
+    public String statusPostID() {
+      return statusPostID;
+    }
 
-		public Status( String statusPostID ) {
-			this.statusPostID = statusPostID;
-		}
+    @Override
+    public RetwisAction action() {
+      return action;
+    }
+  }
 
-		public String statusPostID() {
-			return statusPostID;
-		}
+  class Logout implements Action {
+    private final RetwisAction action = RetwisAction.LOGOUT;
 
-		@Override
-		public RetwisAction action() {
-			return action;
-		}
-	}
+    public Logout() {}
 
-	class Logout implements Action {
-		private final RetwisAction action = RetwisAction.LOGOUT;
-
-		public Logout() {
-		}
-
-		@Override
-		public RetwisAction action() {
-			return action;
-		}
-	}
-
+    @Override
+    public RetwisAction action() {
+      return action;
+    }
+  }
 }

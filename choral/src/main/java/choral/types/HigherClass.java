@@ -21,265 +21,268 @@
 
 package choral.types;
 
+import static choral.types.Modifier.PUBLIC;
+
 import choral.ast.Node;
 import choral.exceptions.StaticVerificationException;
 import choral.types.Member.HigherConstructor;
-
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static choral.types.Modifier.PUBLIC;
-
-/** @see HigherDataType */
+/**
+ * @see HigherDataType
+ */
 public class HigherClass extends HigherClassOrInterface implements Class {
 
-	public HigherClass(
-			Package declarationContext,
-			EnumSet< Modifier > modifiers,
-			String identifier,
-			List< World > worldsParameters,
-			List< HigherTypeParameter > typeParameters
-	) {
-		super( declarationContext, modifiers, identifier, worldsParameters, typeParameters );
-	}
+  public HigherClass(
+      Package declarationContext,
+      EnumSet<Modifier> modifiers,
+      String identifier,
+      List<World> worldsParameters,
+      List<HigherTypeParameter> typeParameters) {
+    super(declarationContext, modifiers, identifier, worldsParameters, typeParameters);
+  }
 
-	public HigherClass(
-			Package declarationContext,
-			EnumSet< Modifier > modifiers,
-			String identifier,
-			List< World > worldsParameters,
-			List< HigherTypeParameter > typeParameters,
-			Node sourceCode
-	) {
-		super( declarationContext, modifiers, identifier, worldsParameters, typeParameters,
-				sourceCode );
-	}
+  public HigherClass(
+      Package declarationContext,
+      EnumSet<Modifier> modifiers,
+      String identifier,
+      List<World> worldsParameters,
+      List<HigherTypeParameter> typeParameters,
+      Node sourceCode) {
+    super(declarationContext, modifiers, identifier, worldsParameters, typeParameters, sourceCode);
+  }
 
-	HigherClass(
-			Package declarationContext,
-			EnumSet< Modifier > modifiers,
-			String identifier,
-			List< World > worldsParameters,
-			List< HigherTypeParameter > typeParameters,
-			boolean registerWithDeclarationContext
-	) {
-		super( declarationContext, modifiers, identifier, worldsParameters, typeParameters, null,
-				registerWithDeclarationContext );
-	}
+  HigherClass(
+      Package declarationContext,
+      EnumSet<Modifier> modifiers,
+      String identifier,
+      List<World> worldsParameters,
+      List<HigherTypeParameter> typeParameters,
+      boolean registerWithDeclarationContext) {
+    super(
+        declarationContext,
+        modifiers,
+        identifier,
+        worldsParameters,
+        typeParameters,
+        null,
+        registerWithDeclarationContext);
+  }
 
-	@Override
-	public Variety variety() {
-		return Variety.CLASS;
-	}
+  @Override
+  public Variety variety() {
+    return Variety.CLASS;
+  }
 
-	@Override
-	public boolean isBoxedType() {
-		return universe().isBoxedType( this );
-	}
+  @Override
+  public boolean isBoxedType() {
+    return universe().isBoxedType(this);
+  }
 
-	@Override
-	public HigherPrimitiveDataType unboxedType() {
-		return universe().unboxedType( this );
-	}
+  @Override
+  public HigherPrimitiveDataType unboxedType() {
+    return universe().unboxedType(this);
+  }
 
-	@Override
-	public GroundClass applyTo( List< ? extends World > args ) {
-		return applyTo( args,
-				typeParameters.stream().map( HigherTypeParameter::getRawType ).collect(
-						Collectors.toList() ) );
-	}
+  @Override
+  public GroundClass applyTo(List<? extends World> args) {
+    return applyTo(
+        args,
+        typeParameters.stream().map(HigherTypeParameter::getRawType).collect(Collectors.toList()));
+  }
 
-	@Override
-	public GroundClass applyTo(
-			List< ? extends World > worldArgs, List< ? extends HigherReferenceType > typeArgs
-	) {
-		return innerType().applySubstitution( getApplicationSubstitution( worldArgs, typeArgs ) );
-	}
+  @Override
+  public GroundClass applyTo(
+      List<? extends World> worldArgs, List<? extends HigherReferenceType> typeArgs) {
+    return innerType().applySubstitution(getApplicationSubstitution(worldArgs, typeArgs));
+  }
 
-	private final Definition innerType = new Definition();
+  private final Definition innerType = new Definition();
 
-	@Override
-	public Definition innerType() {
-		return innerType;
-	}
+  @Override
+  public Definition innerType() {
+    return innerType;
+  }
 
-	public class Definition extends HigherClassOrInterface.Definition implements GroundClass {
+  public class Definition extends HigherClassOrInterface.Definition implements GroundClass {
 
-		Definition() {
-		}
+    Definition() {}
 
-		@Override
-		public HigherClass typeConstructor() {
-			return HigherClass.this;
-		}
+    @Override
+    public HigherClass typeConstructor() {
+      return HigherClass.this;
+    }
 
-		private final HashMap< Substitution, GroundClass > alphaIndex = new HashMap<>();
+    private final HashMap<Substitution, GroundClass> alphaIndex = new HashMap<>();
 
-		@Override
-		public GroundClass applySubstitution( Substitution substitution ) {
-			GroundClass result = alphaIndex.get( substitution );
-			if( result == null ) {
-				result = new Proxy( substitution );
-				alphaIndex.put( substitution, result );
-			}
-			return result;
-		}
+    @Override
+    public GroundClass applySubstitution(Substitution substitution) {
+      GroundClass result = alphaIndex.get(substitution);
+      if (result == null) {
+        result = new Proxy(substitution);
+        alphaIndex.put(substitution, result);
+      }
+      return result;
+    }
 
-		protected GroundClass extendedClass = null;
+    protected GroundClass extendedClass = null;
 
-		public void setExtendedClass() {
-			HigherClass c = universe().topReferenceType( worldArguments().size() );
-			if( c != typeConstructor() ) {
-				setExtendedClass( c.applyTo( worldArguments() ) );
-			} // else no extended class for Object and Any
-		}
+    public void setExtendedClass() {
+      HigherClass c = universe().topReferenceType(worldArguments().size());
+      if (c != typeConstructor()) {
+        setExtendedClass(c.applyTo(worldArguments()));
+      } // else no extended class for Object and Any
+    }
 
-		public final void setExtendedClass( GroundClass type ) {
-			if( type.typeConstructor().isFinal() ) {
-				throw new StaticVerificationException(
-						"illegal inheritance, cannot inherit from final '" + type + "'" );
-			}
-			if( type.typeConstructor() == universe().specialType( Universe.SpecialTypeTag.ENUM )
-					&& variety() != Variety.ENUM ) {
-				throw new StaticVerificationException(
-						"illegal inheritance, only enum types can inherit from '" + universe().specialType(
-								Universe.SpecialTypeTag.ENUM ) + "'" );
-			}
-			if( type.worldArguments().size() != worldArguments().size() ||
-					!type.worldArguments().containsAll( worldParameters ) ) {
-				throw new StaticVerificationException(
-						"illegal inheritance, '" + type + "' and '" + this + "' must have the same roles" );
-			}
-			extendedClass = type;
-		}
+    public final void setExtendedClass(GroundClass type) {
+      if (type.typeConstructor().isFinal()) {
+        throw new StaticVerificationException(
+            "illegal inheritance, cannot inherit from final '" + type + "'");
+      }
+      if (type.typeConstructor() == universe().specialType(Universe.SpecialTypeTag.ENUM)
+          && variety() != Variety.ENUM) {
+        throw new StaticVerificationException(
+            "illegal inheritance, only enum types can inherit from '"
+                + universe().specialType(Universe.SpecialTypeTag.ENUM)
+                + "'");
+      }
+      if (type.worldArguments().size() != worldArguments().size()
+          || !type.worldArguments().containsAll(worldParameters)) {
+        throw new StaticVerificationException(
+            "illegal inheritance, '" + type + "' and '" + this + "' must have the same roles");
+      }
+      extendedClass = type;
+    }
 
-		@Override
-		public final Optional< ? extends GroundClass > extendedClass() {
-			return Optional.ofNullable( extendedClass );
-		}
+    @Override
+    public final Optional<? extends GroundClass> extendedClass() {
+      return Optional.ofNullable(extendedClass);
+    }
 
-		@Override
-		public final Stream< ? extends GroundClassOrInterface > extendedClassesOrInterfaces() {
-			if( extendedClass == null ) {
-				return super.extendedInterfaces();
-			} else {
-				return Stream.concat( Stream.of( extendedClass ), super.extendedInterfaces() );
-			}
-		}
+    @Override
+    public final Stream<? extends GroundClassOrInterface> extendedClassesOrInterfaces() {
+      if (extendedClass == null) {
+        return super.extendedInterfaces();
+      } else {
+        return Stream.concat(Stream.of(extendedClass), super.extendedInterfaces());
+      }
+    }
 
-		@Override
-		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
-			return ( !strict && isEquivalentTo( type ) )
-					|| ( extendedClass().isPresent() && extendedClass().get().isSubtypeOf( type,
-					false ) )
-					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) );
-		}
+    @Override
+    protected boolean isSubtypeOf(GroundDataType type, boolean strict) {
+      return (!strict && isEquivalentTo(type))
+          || (extendedClass().isPresent() && extendedClass().get().isSubtypeOf(type, false))
+          || extendedInterfaces().anyMatch(x -> x.isSubtypeOf(type, false));
+    }
 
-		@Override
-		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
-			return ( !strict && isEquivalentTo_relaxed( type ) )
-					|| ( extendedClass().isPresent() && extendedClass().get().isSubtypeOf_relaxed( type,
-					false ) )
-					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) );
-		}
+    @Override
+    protected boolean isSubtypeOf_relaxed(GroundDataType type, boolean strict) {
+      return (!strict && isEquivalentTo_relaxed(type))
+          || (extendedClass().isPresent() && extendedClass().get().isSubtypeOf_relaxed(type, false))
+          || extendedInterfaces().anyMatch(x -> x.isSubtypeOf_relaxed(type, false));
+    }
 
-		@Override
-		public void finaliseInterface() {
-			// default empty constructor
-			if( constructors.isEmpty() ) {
-				if( extendedClass != null
-						&& extendedClass.constructors().filter( x -> x.isAccessibleFrom( this ) )
-						.noneMatch( x -> x.typeParameters().size() == 0 && x.arity() == 0 ) ) {
-					throw new StaticVerificationException(
-							"there is no default constructor available in '" + extendedClass + "'" );
-				} else {
-					Member.HigherConstructor c = new Member.HigherConstructor(
-							this,
-							EnumSet.of( PUBLIC ),
-							List.of()
-					);
-					c.innerCallable().finalise();
-					addConstructor( c );
-				}
-			}
-			super.finaliseInterface();
-		}
+    @Override
+    public void finaliseInterface() {
+      // default empty constructor
+      if (constructors.isEmpty()) {
+        if (extendedClass != null
+            && extendedClass
+                .constructors()
+                .filter(x -> x.isAccessibleFrom(this))
+                .noneMatch(x -> x.typeParameters().size() == 0 && x.arity() == 0)) {
+          throw new StaticVerificationException(
+              "there is no default constructor available in '" + extendedClass + "'");
+        } else {
+          Member.HigherConstructor c =
+              new Member.HigherConstructor(this, EnumSet.of(PUBLIC), List.of());
+          c.innerCallable().finalise();
+          addConstructor(c);
+        }
+      }
+      super.finaliseInterface();
+    }
 
-		private final List< Member.HigherConstructor > constructors = new LinkedList<>();
+    private final List<Member.HigherConstructor> constructors = new LinkedList<>();
 
-		@Override
-		public final Stream< ? extends Member.HigherConstructor > constructors() {
-			return constructors.stream();
-		}
+    @Override
+    public final Stream<? extends Member.HigherConstructor> constructors() {
+      return constructors.stream();
+    }
 
-		public void addConstructor( HigherConstructor constructor ) {
-			assert ( !isInterfaceFinalised() );
-			assert ( constructor.declarationContext() == this );
-			for( HigherConstructor x : constructors ) {
-				if( x.sameErasureAs( constructor ) ) {
-					if( x.sameSignatureAs( constructor ) ) {
-						throw new StaticVerificationException( "constructor '" + constructor
-								+ "' is already defined in '" + typeConstructor() + "'" );
-					} else {
-						throw new StaticVerificationException( "constructor '" + constructor
-								+ "' clashes with '"
-								+ x + "', both constructors have the same erasure" );
-					}
-				}
-			}
-			constructors.add( constructor );
-		}
+    public void addConstructor(HigherConstructor constructor) {
+      assert (!isInterfaceFinalised());
+      assert (constructor.declarationContext() == this);
+      for (HigherConstructor x : constructors) {
+        if (x.sameErasureAs(constructor)) {
+          if (x.sameSignatureAs(constructor)) {
+            throw new StaticVerificationException(
+                "constructor '"
+                    + constructor
+                    + "' is already defined in '"
+                    + typeConstructor()
+                    + "'");
+          } else {
+            throw new StaticVerificationException(
+                "constructor '"
+                    + constructor
+                    + "' clashes with '"
+                    + x
+                    + "', both constructors have the same erasure");
+          }
+        }
+      }
+      constructors.add(constructor);
+    }
+  }
 
-	}
+  /**
+   * @see HigherDataType.Proxy
+   */
+  protected class Proxy extends HigherClassOrInterface.Proxy implements GroundClass {
 
-	/** @see HigherDataType.Proxy */
-	protected class Proxy extends HigherClassOrInterface.Proxy implements GroundClass {
+    Proxy(Substitution substitution) {
+      super(substitution);
+    }
 
-		Proxy( Substitution substitution ) {
-			super( substitution );
-		}
+    @Override
+    public HigherClass typeConstructor() {
+      return HigherClass.this;
+    }
 
-		@Override
-		public HigherClass typeConstructor() {
-			return HigherClass.this;
-		}
+    @Override
+    protected Definition definition() {
+      return typeConstructor().innerType();
+    }
 
-		@Override
-		protected Definition definition() {
-			return typeConstructor().innerType();
-		}
+    @Override
+    public GroundClass applySubstitution(Substitution substitution) {
+      return definition().applySubstitution(substitution().andThen(substitution));
+    }
 
-		@Override
-		public GroundClass applySubstitution( Substitution substitution ) {
-			return definition().applySubstitution( substitution().andThen( substitution ) );
-		}
+    public final Optional<? extends GroundClass> extendedClass() {
+      return definition().extendedClass().map(x -> x.applySubstitution(substitution()));
+    }
 
-		public final Optional< ? extends GroundClass > extendedClass() {
-			return definition().extendedClass().map( x -> x.applySubstitution( substitution() ) );
-		}
+    @Override
+    protected boolean isSubtypeOf(GroundDataType type, boolean strict) {
+      return (!strict && isEquivalentTo(type))
+          || (extendedClass().isPresent() && extendedClass().get().isSubtypeOf(type, false))
+          || extendedInterfaces().anyMatch(x -> x.isSubtypeOf(type, false));
+    }
 
-		@Override
-		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
-			return ( !strict && isEquivalentTo( type ) )
-					|| ( extendedClass().isPresent() && extendedClass().get().isSubtypeOf( type,
-					false ) )
-					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) );
-		}
+    @Override
+    protected boolean isSubtypeOf_relaxed(GroundDataType type, boolean strict) {
+      return (!strict && isEquivalentTo_relaxed(type))
+          || (extendedClass().isPresent() && extendedClass().get().isSubtypeOf_relaxed(type, false))
+          || extendedInterfaces().anyMatch(x -> x.isSubtypeOf_relaxed(type, false));
+    }
 
-		@Override
-		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
-			return ( !strict && isEquivalentTo_relaxed( type ) )
-					|| ( extendedClass().isPresent() && extendedClass().get().isSubtypeOf_relaxed( type,
-					false ) )
-					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) );
-		}
-
-		@Override
-		public final Stream< ? extends Member.HigherConstructor > constructors() {
-			return definition().constructors().map( x -> x.applySubstitution( substitution() ) );
-		}
-
-	}
-
+    @Override
+    public final Stream<? extends Member.HigherConstructor> constructors() {
+      return definition().constructors().map(x -> x.applySubstitution(substitution()));
+    }
+  }
 }

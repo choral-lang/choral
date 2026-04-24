@@ -21,36 +21,30 @@
 
 package choral.matchProjection.switchBased;
 
-public abstract class EnumExample< T > {
+public abstract class EnumExample<T> {
 
-	private EnumExample() {
-	}
+  private EnumExample() {}
 
-	public static final class EnumOption1< T > extends EnumExample< T > {
+  public static final class EnumOption1<T> extends EnumExample<T> {
 
-		public final T msg;
+    public final T msg;
 
-		public EnumOption1( T msg ) {
-			this.msg = msg;
-		}
+    public EnumOption1(T msg) {
+      this.msg = msg;
+    }
+  }
 
-	}
+  public static final class EnumOption2<T> extends EnumExample<T> {
 
-	public static final class EnumOption2< T > extends EnumExample< T > {
+    public EnumOption2() {}
+  }
 
-		public EnumOption2() {
-		}
+  public static final class EnumOption3<T> extends EnumExample<T> {
 
-	}
+    final int error;
 
-	public static final class EnumOption3< T > extends EnumExample< T > {
-
-		final int error;
-
-		public EnumOption3( int error ) {
-			this.error = error;
-		}
-
-	}
-
+    public EnumOption3(int error) {
+      this.error = error;
+    }
+  }
 }

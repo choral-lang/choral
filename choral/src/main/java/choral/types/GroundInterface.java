@@ -21,13 +21,14 @@
 
 package choral.types;
 
-/** @see choral.types.GroundDataType */
+/**
+ * @see choral.types.GroundDataType
+ */
 public interface GroundInterface extends GroundClassOrInterface, Interface {
 
-	@Override
-	HigherInterface typeConstructor();
+  @Override
+  HigherInterface typeConstructor();
 
-	@Override
-	GroundInterface applySubstitution( Substitution substitution );
-
+  @Override
+  GroundInterface applySubstitution(Substitution substitution);
 }

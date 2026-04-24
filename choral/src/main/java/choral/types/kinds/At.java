@@ -22,21 +22,20 @@
 package choral.types.kinds;
 
 public class At extends Kind {
-	At() {
-	}
+  At() {}
 
-	@Override
-	public String toString() {
-		return "@";
-	}
+  @Override
+  public String toString() {
+    return "@";
+  }
 
-	@Override
-	public boolean equals( Object o ) {
-		return ( o == this ) || ( o instanceof At );
-	}
+  @Override
+  public boolean equals(Object o) {
+    return (o == this) || (o instanceof At);
+  }
 
-	@Override
-	public int hashCode() {
-		return System.identityHashCode( Kind.getAt() );
-	}
+  @Override
+  public int hashCode() {
+    return System.identityHashCode(Kind.getAt());
+  }
 }

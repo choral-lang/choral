@@ -21,92 +21,89 @@
 
 package choral.ast.body;
 
+import static choral.ast.body.FieldModifier.*;
+
 import choral.ast.Name;
 import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.type.TypeExpression;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.types.Member;
-
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
-import static choral.ast.body.FieldModifier.*;
-
 public class Field extends Node {
-	private final Name name;
-	private final TypeExpression type;
-	private final List< Annotation > annotations;
-	private final EnumSet< FieldModifier > modifiers;
+  private final Name name;
+  private final TypeExpression type;
+  private final List<Annotation> annotations;
+  private final EnumSet<FieldModifier> modifiers;
 
-	public Field(
-			final Name name,
-			final TypeExpression type,
-			final List< Annotation > annotations,
-			final EnumSet< FieldModifier > modifiers,
-			final Position position
-	) {
-		super( position );
-		this.name = name;
-		this.type = type;
-		this.annotations = annotations;
-		this.modifiers = EnumSet.copyOf( modifiers );
-	}
+  public Field(
+      final Name name,
+      final TypeExpression type,
+      final List<Annotation> annotations,
+      final EnumSet<FieldModifier> modifiers,
+      final Position position) {
+    super(position);
+    this.name = name;
+    this.type = type;
+    this.annotations = annotations;
+    this.modifiers = EnumSet.copyOf(modifiers);
+  }
 
-	private Member.Field typeAnnotation;
+  private Member.Field typeAnnotation;
 
-	public Optional< ? extends Member.Field > typeAnnotation() {
-		return Optional.ofNullable( typeAnnotation );
-	}
+  public Optional<? extends Member.Field> typeAnnotation() {
+    return Optional.ofNullable(typeAnnotation);
+  }
 
-	public void setTypeAnnotation( Member.Field typeAnnotation ) {
-		this.typeAnnotation = typeAnnotation;
-	}
+  public void setTypeAnnotation(Member.Field typeAnnotation) {
+    this.typeAnnotation = typeAnnotation;
+  }
 
-	public List< Annotation > annotations() {
-		return annotations;
-	}
+  public List<Annotation> annotations() {
+    return annotations;
+  }
 
-	public EnumSet< FieldModifier > modifiers() {
-		return modifiers;
-	}
+  public EnumSet<FieldModifier> modifiers() {
+    return modifiers;
+  }
 
-	public boolean isStatic() {
-		return modifiers.contains( STATIC );
-	}
+  public boolean isStatic() {
+    return modifiers.contains(STATIC);
+  }
 
-	public boolean isPublic() {
-		return modifiers.contains( PUBLIC );
-	}
+  public boolean isPublic() {
+    return modifiers.contains(PUBLIC);
+  }
 
-	public boolean isProtected() {
-		return modifiers.contains( PROTECTED );
-	}
+  public boolean isProtected() {
+    return modifiers.contains(PROTECTED);
+  }
 
-	public boolean isPrivate() {
-		return modifiers.contains( PRIVATE );
-	}
+  public boolean isPrivate() {
+    return modifiers.contains(PRIVATE);
+  }
 
-	public boolean isFinal() {
-		return modifiers.contains( FINAL );
-	}
+  public boolean isFinal() {
+    return modifiers.contains(FINAL);
+  }
 
-	public boolean isPackagePrivate() {
-		return !( isPrivate() || isProtected() || isPublic() );
-	}
+  public boolean isPackagePrivate() {
+    return !(isPrivate() || isProtected() || isPublic());
+  }
 
-	public Name name() {
-		return name;
-	}
+  public Name name() {
+    return name;
+  }
 
-	public TypeExpression typeExpression() {
-		return type;
-	}
+  public TypeExpression typeExpression() {
+    return type;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

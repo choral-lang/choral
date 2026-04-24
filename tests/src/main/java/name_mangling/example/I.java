@@ -29,13 +29,11 @@ interface I@( A, B ) {
 
 public interface I {
 
-	public interface _1_2 {
-		String m$1( Object x );
-	}
+  public interface _1_2 {
+    String m$1(Object x);
+  }
 
-	public interface _2_1 {
-		String m$2( Object x );
-	}
-
-
+  public interface _2_1 {
+    String m$2(Object x);
+  }
 }

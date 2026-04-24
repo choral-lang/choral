@@ -24,14 +24,11 @@ package choral.runtime.WrapperByteChannel;
 import choral.channels.DiDataChannel_A;
 import choral.channels.DiDataChannel_B;
 import choral.runtime.Media.BlockingByteChannel;
-
 import java.nio.ByteBuffer;
 
-public class WrapperByteChannel_B extends WrapperByteChannelImpl implements
-																 DiDataChannel_A< ByteBuffer >,
-																 DiDataChannel_B< ByteBuffer > {
-	public WrapperByteChannel_B( BlockingByteChannel channel ) {
-		super( channel );
-	}
-
+public class WrapperByteChannel_B extends WrapperByteChannelImpl
+    implements DiDataChannel_A<ByteBuffer>, DiDataChannel_B<ByteBuffer> {
+  public WrapperByteChannel_B(BlockingByteChannel channel) {
+    super(channel);
+  }
 }

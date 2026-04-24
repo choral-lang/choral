@@ -21,152 +21,148 @@
 
 package choral.types;
 
-import choral.ast.Node;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import static choral.types.Modifier.*;
 import static choral.types.ModifierUtils.assertLegalModifiers;
 
-/** @see HigherDataType */
+import choral.ast.Node;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * @see HigherDataType
+ */
 public final class HigherInterface extends HigherClassOrInterface implements Interface {
 
-	public HigherInterface(
-			Package declarationContext,
-			EnumSet< Modifier > modifiers,
-			String identifier,
-			List< World > worldsParameters,
-			List< HigherTypeParameter > typeParameters
-	) {
-		super( declarationContext,
-				setImplicitModifiers( modifiers ),
-				identifier,
-				worldsParameters,
-				typeParameters );
-	}
+  public HigherInterface(
+      Package declarationContext,
+      EnumSet<Modifier> modifiers,
+      String identifier,
+      List<World> worldsParameters,
+      List<HigherTypeParameter> typeParameters) {
+    super(
+        declarationContext,
+        setImplicitModifiers(modifiers),
+        identifier,
+        worldsParameters,
+        typeParameters);
+  }
 
-	public HigherInterface(
-			Package declarationContext,
-			EnumSet< Modifier > modifiers,
-			String identifier,
-			List< World > worldsParameters,
-			List< HigherTypeParameter > typeParameters,
-			Node sourceCode
-	) {
-		super( declarationContext,
-				setImplicitModifiers( modifiers ),
-				identifier,
-				worldsParameters,
-				typeParameters,
-				sourceCode );
-	}
+  public HigherInterface(
+      Package declarationContext,
+      EnumSet<Modifier> modifiers,
+      String identifier,
+      List<World> worldsParameters,
+      List<HigherTypeParameter> typeParameters,
+      Node sourceCode) {
+    super(
+        declarationContext,
+        setImplicitModifiers(modifiers),
+        identifier,
+        worldsParameters,
+        typeParameters,
+        sourceCode);
+  }
 
-	@Override
-	public Variety variety() {
-		return Variety.INTERFACE;
-	}
+  @Override
+  public Variety variety() {
+    return Variety.INTERFACE;
+  }
 
-	private static final EnumSet< Modifier > legalModifiers = EnumSet.of( PUBLIC, ABSTRACT,
-			STATIC );
+  private static final EnumSet<Modifier> legalModifiers = EnumSet.of(PUBLIC, ABSTRACT, STATIC);
 
-	@Override
-	protected void assertModifiers( EnumSet< Modifier > modifiers ) {
-		assertLegalModifiers( legalModifiers, modifiers, "for interfaces" );
-		super.assertModifiers( modifiers );
-	}
+  @Override
+  protected void assertModifiers(EnumSet<Modifier> modifiers) {
+    assertLegalModifiers(legalModifiers, modifiers, "for interfaces");
+    super.assertModifiers(modifiers);
+  }
 
-	private static EnumSet< Modifier > setImplicitModifiers( EnumSet< Modifier > modifiers ) {
-		modifiers.add( ABSTRACT );
-		return modifiers;
-	}
+  private static EnumSet<Modifier> setImplicitModifiers(EnumSet<Modifier> modifiers) {
+    modifiers.add(ABSTRACT);
+    return modifiers;
+  }
 
-	@Override
-	public GroundInterface applyTo( List< ? extends World > args ) {
-		return applyTo( args,
-				typeParameters.stream().map( HigherTypeParameter::getRawType ).collect(
-						Collectors.toList() ) );
-	}
+  @Override
+  public GroundInterface applyTo(List<? extends World> args) {
+    return applyTo(
+        args,
+        typeParameters.stream().map(HigherTypeParameter::getRawType).collect(Collectors.toList()));
+  }
 
-	@Override
-	public GroundInterface applyTo(
-			List< ? extends World > worldArgs, List< ? extends HigherReferenceType > typeArgs
-	) {
-		return innerType().applySubstitution( getApplicationSubstitution( worldArgs, typeArgs ) );
-	}
+  @Override
+  public GroundInterface applyTo(
+      List<? extends World> worldArgs, List<? extends HigherReferenceType> typeArgs) {
+    return innerType().applySubstitution(getApplicationSubstitution(worldArgs, typeArgs));
+  }
 
-	private final Definition innerType = new Definition();
+  private final Definition innerType = new Definition();
 
-	@Override
-	public Definition innerType() {
-		return innerType;
-	}
+  @Override
+  public Definition innerType() {
+    return innerType;
+  }
 
-	public void addImplicitMethodModifiers( EnumSet< Modifier > modifiers ) {
-		if (!modifiers.contains(DEFAULT) && !modifiers.contains(STATIC)) modifiers.add( ABSTRACT );
-		modifiers.add( PUBLIC );
-	}
+  public void addImplicitMethodModifiers(EnumSet<Modifier> modifiers) {
+    if (!modifiers.contains(DEFAULT) && !modifiers.contains(STATIC)) modifiers.add(ABSTRACT);
+    modifiers.add(PUBLIC);
+  }
 
-	public final class Definition extends HigherClassOrInterface.Definition
-			implements GroundInterface {
+  public final class Definition extends HigherClassOrInterface.Definition
+      implements GroundInterface {
 
-		private Definition() {
-		}
+    private Definition() {}
 
-		@Override
-		public HigherInterface typeConstructor() {
-			return HigherInterface.this;
-		}
+    @Override
+    public HigherInterface typeConstructor() {
+      return HigherInterface.this;
+    }
 
-		private final HashMap< Substitution, GroundInterface > alphaIndex = new HashMap<>();
+    private final HashMap<Substitution, GroundInterface> alphaIndex = new HashMap<>();
 
-		@Override
-		public GroundInterface applySubstitution( Substitution substitution ) {
-			GroundInterface result = alphaIndex.get( substitution );
-			if( result == null ) {
-				result = new Proxy( substitution );
-				alphaIndex.put( substitution, result );
-			}
-			return result;
-		}
+    @Override
+    public GroundInterface applySubstitution(Substitution substitution) {
+      GroundInterface result = alphaIndex.get(substitution);
+      if (result == null) {
+        result = new Proxy(substitution);
+        alphaIndex.put(substitution, result);
+      }
+      return result;
+    }
 
-		@Override
-		public void addField( Member.Field field ) {
-			throw new UnsupportedOperationException( "interfaces cannot have fields" );
-		}
+    @Override
+    public void addField(Member.Field field) {
+      throw new UnsupportedOperationException("interfaces cannot have fields");
+    }
 
-		@Override
-		public void addMethod( Member.HigherMethod method ) {
-			assert ( method.isPublic() && method.isAbstract() || method.isDefault() || method.isStatic() )
-				: "'" + method.identifier() + "' modifiers : " + method.modifiers();
-			super.addMethod( method );
-		}
+    @Override
+    public void addMethod(Member.HigherMethod method) {
+      assert (method.isPublic() && method.isAbstract() || method.isDefault() || method.isStatic())
+          : "'" + method.identifier() + "' modifiers : " + method.modifiers();
+      super.addMethod(method);
+    }
+  }
 
-	}
+  /**
+   * @see HigherDataType.Proxy
+   */
+  private final class Proxy extends HigherClassOrInterface.Proxy implements GroundInterface {
 
-	/** @see HigherDataType.Proxy */
-	private final class Proxy extends HigherClassOrInterface.Proxy implements GroundInterface {
+    private Proxy(Substitution substitution) {
+      super(substitution);
+    }
 
-		private Proxy( Substitution substitution ) {
-			super( substitution );
-		}
+    @Override
+    public HigherInterface typeConstructor() {
+      return HigherInterface.this;
+    }
 
-		@Override
-		public HigherInterface typeConstructor() {
-			return HigherInterface.this;
-		}
+    @Override
+    protected Definition definition() {
+      return typeConstructor().innerType();
+    }
 
-		@Override
-		protected Definition definition() {
-			return typeConstructor().innerType();
-		}
-
-		@Override
-		public GroundInterface applySubstitution( Substitution substitution ) {
-			return definition().applySubstitution( substitution().andThen( substitution ) );
-		}
-
-	}
-
+    @Override
+    public GroundInterface applySubstitution(Substitution substitution) {
+      return definition().applySubstitution(substitution().andThen(substitution));
+    }
+  }
 }

@@ -24,48 +24,44 @@ package choral.ast;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.exceptions.ChoralException;
 
-/**
- * A name that may consist of multiple identifiers (a.b.c).
- */
-
+/** A name that may consist of multiple identifiers (a.b.c). */
 public class Name extends Node {
 
-	private final String identifier;
+  private final String identifier;
 
-	public Name( final String identifier ) {
-		this.identifier = identifier;
-	}
+  public Name(final String identifier) {
+    this.identifier = identifier;
+  }
 
-	public Name( final String identifier, final Position position ) {
-		super( position );
-		this.identifier = identifier;
-	}
+  public Name(final String identifier, final Position position) {
+    super(position);
+    this.identifier = identifier;
+  }
 
-	public String identifier() {
-		return identifier;
-	}
+  public String identifier() {
+    return identifier;
+  }
 
-	@Override
-	public boolean equals( Object n ) {
-		if( n == null ) {
-			throw new ChoralException( "Undefined name comparison" );
-		}
-		return this.identifier().equals( ( (Name) n ).identifier() );
-	}
+  @Override
+  public boolean equals(Object n) {
+    if (n == null) {
+      throw new ChoralException("Undefined name comparison");
+    }
+    return this.identifier().equals(((Name) n).identifier());
+  }
 
-	@Override
-	public int hashCode() {
-		return this.identifier().hashCode();
-	}
+  @Override
+  public int hashCode() {
+    return this.identifier().hashCode();
+  }
 
-	@Override
-	public String toString() {
-		return this.identifier();
-	}
+  @Override
+  public String toString() {
+    return this.identifier();
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

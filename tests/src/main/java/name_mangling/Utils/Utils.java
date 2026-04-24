@@ -23,62 +23,65 @@ package name_mangling.Utils;
 
 import choral.ast.Name;
 import choral.ast.type.WorldArgument;
-
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class Utils {
 
-	public static void main( String[] args ) {
-		ArrayList< WorldArgument > worlds = new ArrayList<>();
-		worlds.add( new WorldArgument( new Name( "A" ) ) );
-		worlds.add( new WorldArgument( new Name( "B" ) ) );
-		worlds.add( new WorldArgument( new Name( "C" ) ) );
-//		worlds.add( new WorldArgument( new Name( "D" ) ) );
-//		worlds.add( new WorldArgument( new Name( "E" ) ) );
+  public static void main(String[] args) {
+    ArrayList<WorldArgument> worlds = new ArrayList<>();
+    worlds.add(new WorldArgument(new Name("A")));
+    worlds.add(new WorldArgument(new Name("B")));
+    worlds.add(new WorldArgument(new Name("C")));
+    //		worlds.add( new WorldArgument( new Name( "D" ) ) );
+    //		worlds.add( new WorldArgument( new Name( "E" ) ) );
 
-		ArrayList< Integer > positions = new ArrayList<>();
-		AtomicInteger i = new AtomicInteger( 0 );
-		worlds.forEach( w -> positions.add( i.addAndGet( 1 ) ) );
-		Set< List< Integer > > permutations = getPermutations( positions );
-		Set< Map< WorldArgument, Integer > > pies = getPies( worlds, permutations );
-		System.out.println(
-				pies.stream().map(
-						m -> m.entrySet().stream().map( ( e ) ->
-								e.getKey().name().identifier() + " -> " + e.getValue()
-						).collect( Collectors.joining( ", " ) )
-				).collect( Collectors.joining( "\n" ) )
-		);
-	}
+    ArrayList<Integer> positions = new ArrayList<>();
+    AtomicInteger i = new AtomicInteger(0);
+    worlds.forEach(w -> positions.add(i.addAndGet(1)));
+    Set<List<Integer>> permutations = getPermutations(positions);
+    Set<Map<WorldArgument, Integer>> pies = getPies(worlds, permutations);
+    System.out.println(
+        pies.stream()
+            .map(
+                m ->
+                    m.entrySet().stream()
+                        .map((e) -> e.getKey().name().identifier() + " -> " + e.getValue())
+                        .collect(Collectors.joining(", ")))
+            .collect(Collectors.joining("\n")));
+  }
 
-	private static Set< Map< WorldArgument, Integer > > getPies(
-			ArrayList< WorldArgument > worlds, Set< List< Integer > > permutations
-	) {
-		return permutations.stream().map( p ->
-				p.stream()
-						.map( n -> new AbstractMap.SimpleEntry< WorldArgument, Integer >(
-								worlds.get( p.indexOf( n ) ), n ) )
-						.collect( Collectors.toMap( AbstractMap.SimpleEntry::getKey,
-								AbstractMap.SimpleEntry::getValue ) )
-		).collect( Collectors.toSet() );
-	}
+  private static Set<Map<WorldArgument, Integer>> getPies(
+      ArrayList<WorldArgument> worlds, Set<List<Integer>> permutations) {
+    return permutations.stream()
+        .map(
+            p ->
+                p.stream()
+                    .map(
+                        n ->
+                            new AbstractMap.SimpleEntry<WorldArgument, Integer>(
+                                worlds.get(p.indexOf(n)), n))
+                    .collect(
+                        Collectors.toMap(
+                            AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)))
+        .collect(Collectors.toSet());
+  }
 
-	public static Set< List< Integer > > getPermutations( List< Integer > l ) {
-		if( l.size() == 0 ) {
-			HashSet< List< Integer > > s = new HashSet<>();
-			s.add( new ArrayList<>() );
-			return s;
-		} else {
-			return l.stream().flatMap( e -> {
-				ArrayList< Integer > _l = new ArrayList< Integer >( l );
-				_l.remove( e );
-				return getPermutations( _l ).stream()
-						.peek( cl -> cl.add( 0, e ) );
-			} ).collect( Collectors.toSet() );
-		}
-
-	}
-
-
+  public static Set<List<Integer>> getPermutations(List<Integer> l) {
+    if (l.size() == 0) {
+      HashSet<List<Integer>> s = new HashSet<>();
+      s.add(new ArrayList<>());
+      return s;
+    } else {
+      return l.stream()
+          .flatMap(
+              e -> {
+                ArrayList<Integer> _l = new ArrayList<Integer>(l);
+                _l.remove(e);
+                return getPermutations(_l).stream().peek(cl -> cl.add(0, e));
+              })
+          .collect(Collectors.toSet());
+    }
+  }
 }

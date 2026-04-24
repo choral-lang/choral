@@ -22,22 +22,19 @@
 package choral.exceptions;
 
 import choral.ast.Node;
-import choral.ast.Position;
-
 import java.util.Optional;
 
 public class StaticVerificationException extends ChoralException {
-	public StaticVerificationException( String message ) {
-		super( message );
-	}
+  public StaticVerificationException(String message) {
+    super(message);
+  }
 
-	public static ChoralException of( String message, Optional< ? extends Node > p ) {
-		StaticVerificationException e = new StaticVerificationException( message );
-		if( p.isPresent() && p.get().hasPosition() ) {
-			return new AstPositionedException( p.get(), e );
-		} else {
-			return e;
-		}
-	}
-
+  public static ChoralException of(String message, Optional<? extends Node> p) {
+    StaticVerificationException e = new StaticVerificationException(message);
+    if (p.isPresent() && p.get().hasPosition()) {
+      return new AstPositionedException(p.get(), e);
+    } else {
+      return e;
+    }
+  }
 }

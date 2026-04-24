@@ -23,6 +23,6 @@ package choral.channels;
 
 import choral.lang.Unit;
 
-public interface DiDataChannel_A< T > {
-	< S extends T > Unit com( S m );
+public interface DiDataChannel_A<T> {
+  <S extends T> Unit com(S m);
 }

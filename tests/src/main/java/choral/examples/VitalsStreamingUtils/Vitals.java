@@ -26,31 +26,31 @@ import choral.runtime.Serializers.KryoSerializable;
 @KryoSerializable
 public class Vitals {
 
-	private final String id;
-	private final String heartRate;
-	private final String temperature;
-	private final String motion;
+  private final String id;
+  private final String heartRate;
+  private final String temperature;
+  private final String motion;
 
-	public Vitals( String id, String heartRate, String temperature, String motion ) {
-		this.id = id;
-		this.heartRate = heartRate;
-		this.temperature = temperature;
-		this.motion = motion;
-	}
+  public Vitals(String id, String heartRate, String temperature, String motion) {
+    this.id = id;
+    this.heartRate = heartRate;
+    this.temperature = temperature;
+    this.motion = motion;
+  }
 
-	public String id() {
-		return id;
-	}
+  public String id() {
+    return id;
+  }
 
-	public String heartRate() {
-		return heartRate;
-	}
+  public String heartRate() {
+    return heartRate;
+  }
 
-	public String temperature() {
-		return temperature;
-	}
+  public String temperature() {
+    return temperature;
+  }
 
-	public String motion() {
-		return motion;
-	}
+  public String motion() {
+    return motion;
+  }
 }

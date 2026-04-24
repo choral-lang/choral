@@ -21,21 +21,20 @@
 
 package choral.examples.HealthCareService;
 
-import choral.examples.VitalsStreaming.VitalsStreaming_Device;
-import choral.examples.VitalsStreamingUtils.Sensor;
 import choral.channels.SymChannel_A;
 import choral.channels.SymChannel_B;
 import choral.choralUnit.testUtils.TestUtils;
+import choral.examples.VitalsStreaming.VitalsStreaming_Device;
+import choral.examples.VitalsStreamingUtils.Sensor;
 import choral.utils.Pair;
-
 import java.util.UUID;
 
 public class Device {
 
-	public SymChannel_B< Object > connect() {
-		Pair< SymChannel_A< Object >, SymChannel_B< Object > > p = TestUtils.newLocalChannel(
-				UUID.randomUUID().toString() );
-		new Thread( () -> new VitalsStreaming_Device( p.left(), new Sensor() ).gather() ).start();
-		return p.right();
-	}
+  public SymChannel_B<Object> connect() {
+    Pair<SymChannel_A<Object>, SymChannel_B<Object>> p =
+        TestUtils.newLocalChannel(UUID.randomUUID().toString());
+    new Thread(() -> new VitalsStreaming_Device(p.left(), new Sensor()).gather()).start();
+    return p.right();
+  }
 }

@@ -26,36 +26,32 @@ import choral.ast.Position;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 
-/**
- * An expression with shape (a+b)</code>
- */
-
+/** An expression with shape (a+b)</code> */
 public class EnclosedExpression extends Expression {
 
-	private final Expression nestedExpression;
+  private final Expression nestedExpression;
 
-	public EnclosedExpression( final Expression nestedExpression ) {
-		this.nestedExpression = nestedExpression;
-	}
+  public EnclosedExpression(final Expression nestedExpression) {
+    this.nestedExpression = nestedExpression;
+  }
 
-	public EnclosedExpression( final Expression nestedExpression, final Position position ) {
-		super( position );
-		this.nestedExpression = nestedExpression;
-	}
+  public EnclosedExpression(final Expression nestedExpression, final Position position) {
+    super(position);
+    this.nestedExpression = nestedExpression;
+  }
 
-	public Expression nestedExpression() {
-		return nestedExpression;
-	}
+  public Expression nestedExpression() {
+    return nestedExpression;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		assert n instanceof EnclosedExpression;
-		return m.merge( this, (EnclosedExpression) n );
-	}
-
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    assert n instanceof EnclosedExpression;
+    return m.merge(this, (EnclosedExpression) n);
+  }
 }

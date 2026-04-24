@@ -25,45 +25,39 @@ import choral.ast.Name;
 import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.visitors.ChoralVisitorInterface;
-
 import java.util.List;
 
 /**
- * enum E (W1,...)<T1(W1,...),T2,...> {
- * case C1( T1 x );     	<----\  C1, C2, C3 are the name of the cases,
- * case C2( T2 y );				<------ T1, T2 are types (in cases, types
- * case C3( T1 x, T2 y ); <----/  and worlds are bound)
- * }
+ * enum E (W1,...)<T1(W1,...),T2,...> { case C1( T1 x ); <----\ C1, C2, C3 are the name of the
+ * cases, case C2( T2 y ); <------ T1, T2 are types (in cases, types case C3( T1 x, T2 y ); <----/
+ * and worlds are bound) }
  */
-
 public class CaseSignature extends Node {
-	private final Name name;
-	private final List< FormalMethodParameter > parameters;
+  private final Name name;
+  private final List<FormalMethodParameter> parameters;
 
-	public CaseSignature( final Name name, final List< FormalMethodParameter > parameters ) {
-		this.name = name;
-		this.parameters = parameters;
-	}
+  public CaseSignature(final Name name, final List<FormalMethodParameter> parameters) {
+    this.name = name;
+    this.parameters = parameters;
+  }
 
-	public CaseSignature(
-			final Name name, final List< FormalMethodParameter > parameters, final Position position
-	) {
-		super( position );
-		this.name = name;
-		this.parameters = parameters;
-	}
+  public CaseSignature(
+      final Name name, final List<FormalMethodParameter> parameters, final Position position) {
+    super(position);
+    this.name = name;
+    this.parameters = parameters;
+  }
 
-	public Name name() {
-		return name;
-	}
+  public Name name() {
+    return name;
+  }
 
-	public List< FormalMethodParameter > parameters() {
-		return parameters;
-	}
+  public List<FormalMethodParameter> parameters() {
+    return parameters;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

@@ -25,152 +25,146 @@ import choral.channels.SymDataChannelImpl;
 import choral.lang.Unit;
 import choral.runtime.ChoralByteChannel.SymByteChannelImpl;
 import choral.runtime.Media.PipedByteChannel;
+import choral.runtime.WrapperByteChannel.WrapperByteChannelImpl;
 import choral.runtime.WrapperByteChannel.WrapperByteChannel_A;
 import choral.runtime.WrapperByteChannel.WrapperByteChannel_B;
-import choral.runtime.WrapperByteChannel.WrapperByteChannelImpl;
 import choral.utils.Pair;
-
-import javax.crypto.Cipher;
-import javax.crypto.KeyAgreement;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
+import javax.crypto.Cipher;
+import javax.crypto.KeyAgreement;
+import javax.crypto.spec.SecretKeySpec;
 
-public class DiffieHellmanDataChannel implements SymDataChannelImpl< String > {
+public class DiffieHellmanDataChannel implements SymDataChannelImpl<String> {
 
-	private final SymByteChannelImpl channel;
+  private final SymByteChannelImpl channel;
 
-	public DiffieHellmanDataChannel(
-			SymByteChannelImpl channel
-	) {
-		this.channel = channel;
-	}
+  public DiffieHellmanDataChannel(SymByteChannelImpl channel) {
+    this.channel = channel;
+  }
 
+  public static void main(final String[] args) throws IOException {
 
-	public static void main( final String[] args ) throws IOException {
+    //		DiffieHellmanDataChannel aliceDH = new DiffieHellmanDataChannel( null );
+    //		DiffieHellmanDataChannel bobDH = new DiffieHellmanDataChannel( null );
+    //
+    //		KeyPair aliceKeys = aliceDH.generateKeys();
+    //		KeyPair bobKeys = bobDH.generateKeys();
+    //
+    //		ByteBuffer aliceCommonSecret =
+    //				aliceDH.generateCommonSecret( aliceKeys.getPrivate(), bobKeys.getPublic() ); // this is a
+    // com
+    //		ByteBuffer bobCommonSecret =
+    //				bobDH.generateCommonSecret( bobKeys.getPrivate(), aliceKeys.getPublic() );  // this is a
+    // com
+    //
+    //		ByteBuffer encryptedMessage = aliceDH.encryptMessage( aliceCommonSecret, "Bob, guess who I
+    // am!" );
+    //		String message = bobDH.decryptMessage( bobCommonSecret, encryptedMessage );
+    //
+    //		System.out.println( message );
 
-//		DiffieHellmanDataChannel aliceDH = new DiffieHellmanDataChannel( null );
-//		DiffieHellmanDataChannel bobDH = new DiffieHellmanDataChannel( null );
-//
-//		KeyPair aliceKeys = aliceDH.generateKeys();
-//		KeyPair bobKeys = bobDH.generateKeys();
-//
-//		ByteBuffer aliceCommonSecret =
-//				aliceDH.generateCommonSecret( aliceKeys.getPrivate(), bobKeys.getPublic() ); // this is a com
-//		ByteBuffer bobCommonSecret =
-//				bobDH.generateCommonSecret( bobKeys.getPrivate(), aliceKeys.getPublic() );  // this is a com
-//
-//		ByteBuffer encryptedMessage = aliceDH.encryptMessage( aliceCommonSecret, "Bob, guess who I am!" );
-//		String message = bobDH.decryptMessage( bobCommonSecret, encryptedMessage );
-//
-//		System.out.println( message );
+    Pair<PipedByteChannel, PipedByteChannel> channel = PipedByteChannel.getConnectedChannels();
+    WrapperByteChannelImpl channel1 = new WrapperByteChannel_A(channel.left());
+    WrapperByteChannelImpl channel2 = new WrapperByteChannel_B(channel.right());
+    DiffieHellmanDataChannel aliceDHChannel = new DiffieHellmanDataChannel(channel1);
+    DiffieHellmanDataChannel bobDHChannel = new DiffieHellmanDataChannel(channel2);
 
-		Pair< PipedByteChannel, PipedByteChannel > channel = PipedByteChannel.getConnectedChannels();
-		WrapperByteChannelImpl channel1 = new WrapperByteChannel_A( channel.left() );
-		WrapperByteChannelImpl channel2 = new WrapperByteChannel_B( channel.right() );
-		DiffieHellmanDataChannel aliceDHChannel = new DiffieHellmanDataChannel( channel1 );
-		DiffieHellmanDataChannel bobDHChannel = new DiffieHellmanDataChannel( channel2 );
+    new Thread(() -> aliceDHChannel.com("This is a secret message")).start();
+    new Thread(() -> System.out.println(bobDHChannel.com())).start();
+  }
 
-		new Thread( () -> aliceDHChannel.com( "This is a secret message" ) ).start();
-		new Thread( () -> System.out.println( bobDHChannel.com() ) ).start();
+  private KeyPair generateKeys() {
+    KeyPair keys = null;
+    try {
+      KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("DH");
+      keyPairGenerator.initialize(1024);
+      keys = keyPairGenerator.generateKeyPair();
+    } catch (NoSuchAlgorithmException e) {
+      e.printStackTrace();
+    }
+    return keys;
+  }
 
-	}
+  private ByteBuffer generateCommonSecret(PrivateKey privateKey, PublicKey publicKey) {
+    ByteBuffer commonSecretKey = null;
+    try {
+      KeyAgreement keyAgreement = KeyAgreement.getInstance("DH");
+      keyAgreement.init(privateKey);
+      keyAgreement.doPhase(publicKey, true);
+      commonSecretKey = ByteBuffer.wrap(Arrays.copyOf(keyAgreement.generateSecret(), 8));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return commonSecretKey;
+  }
 
-	private KeyPair generateKeys() {
-		KeyPair keys = null;
-		try {
-			KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance( "DH" );
-			keyPairGenerator.initialize( 1024 );
-			keys = keyPairGenerator.generateKeyPair();
-		} catch( NoSuchAlgorithmException e ) {
-			e.printStackTrace();
-		}
-		return keys;
-	}
+  private ByteBuffer encryptMessage(ByteBuffer secretKey, String message) {
+    ByteBuffer encryptedMessage = null;
+    try {
+      SecretKeySpec keySpec = new SecretKeySpec(secretKey.array(), "DES");
+      Cipher cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+      cipher.init(Cipher.ENCRYPT_MODE, keySpec);
+      encryptedMessage = ByteBuffer.wrap(cipher.doFinal(message.getBytes()));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return encryptedMessage;
+  }
 
-	private ByteBuffer generateCommonSecret( PrivateKey privateKey, PublicKey publicKey ) {
-		ByteBuffer commonSecretKey = null;
-		try {
-			KeyAgreement keyAgreement = KeyAgreement.getInstance( "DH" );
-			keyAgreement.init( privateKey );
-			keyAgreement.doPhase( publicKey, true );
-			commonSecretKey = ByteBuffer.wrap( Arrays.copyOf( keyAgreement.generateSecret(), 8 ) );
-		} catch( Exception e ) {
-			e.printStackTrace();
-		}
-		return commonSecretKey;
-	}
+  private <S extends String> S decryptMessage(ByteBuffer secretKey, ByteBuffer encMessage) {
+    String message = null;
+    try {
+      SecretKeySpec keySpec = new SecretKeySpec(secretKey.array(), "DES");
+      Cipher cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+      cipher.init(Cipher.DECRYPT_MODE, keySpec);
+      message = new String(cipher.doFinal(encMessage.array()));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return (S) message;
+  }
 
-	private ByteBuffer encryptMessage( ByteBuffer secretKey, String message ) {
-		ByteBuffer encryptedMessage = null;
-		try {
-			SecretKeySpec keySpec = new SecretKeySpec( secretKey.array(), "DES" );
-			Cipher cipher = Cipher.getInstance( "DES/ECB/PKCS5Padding" );
-			cipher.init( Cipher.ENCRYPT_MODE, keySpec );
-			encryptedMessage = ByteBuffer.wrap( cipher.doFinal( message.getBytes() ) );
-		} catch( Exception e ) {
-			e.printStackTrace();
-		}
-		return encryptedMessage;
-	}
+  private PublicKey buildPublicKey(ByteBuffer bytePublicKey) {
+    X509EncodedKeySpec ks = new X509EncodedKeySpec(bytePublicKey.array());
+    KeyFactory keyFactory = null;
+    PublicKey publicKey = null;
+    try {
+      keyFactory = KeyFactory.getInstance("DSA");
+      publicKey = keyFactory.generatePublic(ks);
+    } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+      e.printStackTrace();
+    }
+    return publicKey;
+  }
 
-	private < S extends String > S decryptMessage( ByteBuffer secretKey, ByteBuffer encMessage ) {
-		String message = null;
-		try {
-			SecretKeySpec keySpec = new SecretKeySpec( secretKey.array(), "DES" );
-			Cipher cipher = Cipher.getInstance( "DES/ECB/PKCS5Padding" );
-			cipher.init( Cipher.DECRYPT_MODE, keySpec );
-			message = new String( cipher.doFinal( encMessage.array() ) );
-		} catch( Exception e ) {
-			e.printStackTrace();
-		}
-		return (S) message;
-	}
+  @Override
+  public <S extends String> Unit com(S message) {
+    KeyPair senderKeys = generateKeys();
+    channel.com(ByteBuffer.wrap(senderKeys.getPublic().getEncoded()));
+    ByteBuffer receiverBytePublicKey = channel.com();
+    PublicKey receiverPublicKey = buildPublicKey(receiverBytePublicKey);
+    ByteBuffer encryptedMessage =
+        encryptMessage(generateCommonSecret(senderKeys.getPrivate(), receiverPublicKey), message);
+    return channel.com(encryptedMessage);
+  }
 
-	private PublicKey buildPublicKey( ByteBuffer bytePublicKey ) {
-		X509EncodedKeySpec ks = new X509EncodedKeySpec( bytePublicKey.array() );
-		KeyFactory keyFactory = null;
-		PublicKey publicKey = null;
-		try {
-			keyFactory = KeyFactory.getInstance( "DSA" );
-			publicKey = keyFactory.generatePublic( ks );
-		} catch( NoSuchAlgorithmException | InvalidKeySpecException e ) {
-			e.printStackTrace();
-		}
-		return publicKey;
-	}
+  @Override
+  public <S extends String> S com(Unit m) {
+    return com();
+  }
 
-	@Override
-	public < S extends String > Unit com( S message ) {
-		KeyPair senderKeys = generateKeys();
-		channel.com( ByteBuffer.wrap( senderKeys.getPublic().getEncoded() ) );
-		ByteBuffer receiverBytePublicKey = channel.com();
-		PublicKey receiverPublicKey = buildPublicKey( receiverBytePublicKey );
-		ByteBuffer encryptedMessage = encryptMessage(
-				generateCommonSecret( senderKeys.getPrivate(), receiverPublicKey ),
-				message
-		);
-		return channel.com( encryptedMessage );
-	}
-
-	@Override
-	public < S extends String > S com( Unit m ) {
-		return com();
-	}
-
-	@Override
-	public < S extends String > S com() {
-		KeyPair receiverKeys = generateKeys();
-		ByteBuffer senderBytePublicKey = channel.com();
-		channel.com( ByteBuffer.wrap( receiverKeys.getPublic().getEncoded() ) );
-		PublicKey senderPublicKey = buildPublicKey( senderBytePublicKey );
-		return decryptMessage(
-				generateCommonSecret( receiverKeys.getPrivate(), senderPublicKey ),
-				channel.com()
-		);
-	}
+  @Override
+  public <S extends String> S com() {
+    KeyPair receiverKeys = generateKeys();
+    ByteBuffer senderBytePublicKey = channel.com();
+    channel.com(ByteBuffer.wrap(receiverKeys.getPublic().getEncoded()));
+    PublicKey senderPublicKey = buildPublicKey(senderBytePublicKey);
+    return decryptMessage(
+        generateCommonSecret(receiverKeys.getPrivate(), senderPublicKey), channel.com());
+  }
 }

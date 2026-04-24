@@ -21,25 +21,28 @@
 
 package choral.types;
 
-/** @see choral.types.GroundDataType */
+/**
+ * @see choral.types.GroundDataType
+ */
 public interface GroundDataTypeOrVoid extends DataTypeOrVoid {
 
-	GroundDataTypeOrVoid applySubstitution( Substitution substitution );
+  GroundDataTypeOrVoid applySubstitution(Substitution substitution);
 
-	boolean isAssignableTo( GroundDataTypeOrVoid type );
+  boolean isAssignableTo(GroundDataTypeOrVoid type);
 
-	/**
-	 * A version of {@link #isAssignableTo} that doesn't check world correspondence.
-	 * As an example, consider the following:
-	 * <pre><code>
-	 * int@B b = 0@B;
-	 * int@A a = b;
-	 * </code></pre>
-	 * When type checking {@code int@A a = b;}, {@link #isAssignableTo} returns {@code false}
-	 * because the two variables are at different roles. In contrast,
-	 * {@link #isAssignableTo_relaxed} doesn't check the roles; it just checks if the
-	 * underlying Java types are compatible. In the example above, {@link #isAssignableTo_relaxed}
-	 * returns {@code true}.
-	 */
-	boolean isAssignableTo_relaxed( GroundDataTypeOrVoid type );
+  /**
+   * A version of {@link #isAssignableTo} that doesn't check world correspondence. As an example,
+   * consider the following:
+   *
+   * <pre><code>
+   * int@B b = 0@B;
+   * int@A a = b;
+   * </code></pre>
+   *
+   * When type checking {@code int@A a = b;}, {@link #isAssignableTo} returns {@code false} because
+   * the two variables are at different roles. In contrast, {@link #isAssignableTo_relaxed} doesn't
+   * check the roles; it just checks if the underlying Java types are compatible. In the example
+   * above, {@link #isAssignableTo_relaxed} returns {@code true}.
+   */
+  boolean isAssignableTo_relaxed(GroundDataTypeOrVoid type);
 }

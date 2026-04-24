@@ -30,37 +30,37 @@ import java.util.Optional;
 
 public class ClientRegistry {
 
-	private static final String username_seed = "3dc24197-e783-4e16-8156-8ee47ec6de8f";
-	private static final Map< String, Profile > profiles = new HashMap<>();
+  private static final String username_seed = "3dc24197-e783-4e16-8156-8ee47ec6de8f";
+  private static final Map<String, Profile> profiles = new HashMap<>();
 
-	static {
-		profiles.put( "m1/iyOJP/zBM7F4FuBJxBfDqCc+K1iI1UzJjjATkk9c=",
-				new Profile( "uuid_" + getSalt( "JohnDoe" ) ) );
-	}
+  static {
+    profiles.put(
+        "m1/iyOJP/zBM7F4FuBJxBfDqCc+K1iI1UzJjjATkk9c=", new Profile("uuid_" + getSalt("JohnDoe")));
+  }
 
-	public static String getSalt( String username ) {
-		return getSalt( username, username_seed );
-	}
+  public static String getSalt(String username) {
+    return getSalt(username, username_seed);
+  }
 
-	private static String getHash( String text ) {
-		return getSalt( text, "" );
-	}
+  private static String getHash(String text) {
+    return getSalt(text, "");
+  }
 
-	private static String getSalt( String text, String seed ) {
-		try {
-			return Base64.getEncoder().encodeToString(
-					MessageDigest.getInstance( "SHA3-256" ).digest( ( text + seed ).getBytes() ) );
-		} catch( NoSuchAlgorithmException e ) {
-			e.printStackTrace();
-			return "";
-		}
-	}
+  private static String getSalt(String text, String seed) {
+    try {
+      return Base64.getEncoder()
+          .encodeToString(MessageDigest.getInstance("SHA3-256").digest((text + seed).getBytes()));
+    } catch (NoSuchAlgorithmException e) {
+      e.printStackTrace();
+      return "";
+    }
+  }
 
-	public static Optional< Profile > getProfile( String hash ) {
-		return Optional.ofNullable( profiles.get( hash ) );
-	}
+  public static Optional<Profile> getProfile(String hash) {
+    return Optional.ofNullable(profiles.get(hash));
+  }
 
-	public static Boolean check( String hash ) {
-		return profiles.get( hash ) != null;
-	}
+  public static Boolean check(String hash) {
+    return profiles.get(hash) != null;
+  }
 }

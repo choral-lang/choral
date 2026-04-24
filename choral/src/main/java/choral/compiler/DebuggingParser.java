@@ -23,27 +23,26 @@ package choral.compiler;
 
 import choral.grammar.ChoralLexer;
 import choral.grammar.ChoralParser;
+import java.io.IOException;
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import java.io.IOException;
-
 public class DebuggingParser {
-	public static void main( String[] args ) throws IOException {
-		String src = args[ 0 ];
-		//		String sourceFile = Files.readString( Paths.get( src ) );
-		System.out.println( "Parsing " + src );
-		ANTLRFileStream input = null;
-		try {
-			input = new ANTLRFileStream( src );
-		} catch( IOException e ) {
-			e.printStackTrace();
-		}
-		ChoralLexer lexer = new ChoralLexer( input );
-		CommonTokenStream tokens = new CommonTokenStream( lexer );
-		ChoralParser p = new ChoralParser( tokens );
-		p.removeErrorListeners();
-		p.addErrorListener( new ParsingErrorListener( src ) );
-		p.compilationUnit();
-	}
+  public static void main(String[] args) throws IOException {
+    String src = args[0];
+    //		String sourceFile = Files.readString( Paths.get( src ) );
+    System.out.println("Parsing " + src);
+    ANTLRFileStream input = null;
+    try {
+      input = new ANTLRFileStream(src);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    ChoralLexer lexer = new ChoralLexer(input);
+    CommonTokenStream tokens = new CommonTokenStream(lexer);
+    ChoralParser p = new ChoralParser(tokens);
+    p.removeErrorListeners();
+    p.addErrorListener(new ParsingErrorListener(src));
+    p.compilationUnit();
+  }
 }

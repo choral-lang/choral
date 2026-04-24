@@ -27,16 +27,15 @@ import java.util.Base64;
 
 public class PatientsRegistry {
 
-	private static final String seed = "29ea6d11-2dff-42f9-84f0-9322f6db7f14";
+  private static final String seed = "29ea6d11-2dff-42f9-84f0-9322f6db7f14";
 
-	public static String getPseudoID( String name ) {
-		try {
-			return Base64.getEncoder().encodeToString(
-					MessageDigest.getInstance( "SHA3-256" ).digest( ( name + seed ).getBytes() ) );
-		} catch( NoSuchAlgorithmException e ) {
-			e.printStackTrace();
-		}
-		return "";
-	}
-
+  public static String getPseudoID(String name) {
+    try {
+      return Base64.getEncoder()
+          .encodeToString(MessageDigest.getInstance("SHA3-256").digest((name + seed).getBytes()));
+    } catch (NoSuchAlgorithmException e) {
+      e.printStackTrace();
+    }
+    return "";
+  }
 }

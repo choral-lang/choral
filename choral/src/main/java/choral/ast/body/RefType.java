@@ -28,48 +28,47 @@ import choral.ast.type.FormalTypeParameter;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.types.HigherReferenceType;
-
 import java.util.List;
 import java.util.Optional;
 
 public abstract class RefType extends Node {
-	private final Name name;
-	private final List< FormalWorldParameter > worldparameters;
-	private final List< FormalTypeParameter > typeparameters;
+  private final Name name;
+  private final List<FormalWorldParameter> worldparameters;
+  private final List<FormalTypeParameter> typeparameters;
 
-	protected RefType(
-			final Name name, final List< FormalWorldParameter > worldparameters,
-			final List< FormalTypeParameter > typeparameters, final Position position
-	) {
-		super( position );
-		this.name = name;
-		this.worldparameters = worldparameters;
-		this.typeparameters = typeparameters;
-	}
+  protected RefType(
+      final Name name,
+      final List<FormalWorldParameter> worldparameters,
+      final List<FormalTypeParameter> typeparameters,
+      final Position position) {
+    super(position);
+    this.name = name;
+    this.worldparameters = worldparameters;
+    this.typeparameters = typeparameters;
+  }
 
-	private HigherReferenceType typeAnnotation;
+  private HigherReferenceType typeAnnotation;
 
-	public Optional< ? extends HigherReferenceType > typeAnnotation() {
-		return Optional.ofNullable( typeAnnotation );
-	}
+  public Optional<? extends HigherReferenceType> typeAnnotation() {
+    return Optional.ofNullable(typeAnnotation);
+  }
 
-	public void setTypeAnnotation( HigherReferenceType typeAnnotation ) {
-		this.typeAnnotation = typeAnnotation;
-	}
+  public void setTypeAnnotation(HigherReferenceType typeAnnotation) {
+    this.typeAnnotation = typeAnnotation;
+  }
 
-	public Name name() {
-		return name;
-	}
+  public Name name() {
+    return name;
+  }
 
-	public List< FormalWorldParameter > worldParameters() {
-		return worldparameters;
-	}
+  public List<FormalWorldParameter> worldParameters() {
+    return worldparameters;
+  }
 
-	public List< FormalTypeParameter > typeParameters() {
-		return typeparameters;
-	}
+  public List<FormalTypeParameter> typeParameters() {
+    return typeparameters;
+  }
 
-	@Override
-	public abstract < R > R accept( ChoralVisitorInterface< R > v );
-
+  @Override
+  public abstract <R> R accept(ChoralVisitorInterface<R> v);
 }

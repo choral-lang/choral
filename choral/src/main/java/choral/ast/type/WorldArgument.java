@@ -27,27 +27,26 @@ import choral.ast.visitors.ChoralVisitorInterface;
 
 public class WorldArgument extends World {
 
-	public WorldArgument( final Name name ) {
-		super( name );
-	}
+  public WorldArgument(final Name name) {
+    super(name);
+  }
 
-	public WorldArgument( final Name name, final Position position ) {
-		super( name, position );
-	}
+  public WorldArgument(final Name name, final Position position) {
+    super(name, position);
+  }
 
-	@Override
-	public boolean equals( final Object o ) {
-		return ( o instanceof WorldArgument ) && this.name.equals( ( (WorldArgument) o ).name() );
-	}
+  @Override
+  public boolean equals(final Object o) {
+    return (o instanceof WorldArgument) && this.name.equals(((WorldArgument) o).name());
+  }
 
-	@Override
-	public int hashCode() {
-		return name.hashCode();
-	}
+  @Override
+  public int hashCode() {
+    return name.hashCode();
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

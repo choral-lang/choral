@@ -36,40 +36,39 @@ class BiPair@( A, B )< T >{
 
 public class BiPair {
 
-	public static class _1_2< T > {
-		private T left;
-		private T right;
+  public static class _1_2<T> {
+    private T left;
+    private T right;
 
-		public _1_2( T left, T right ) {
-			this.left = left;
-			this.right = right;
-		}
+    public _1_2(T left, T right) {
+      this.left = left;
+      this.right = right;
+    }
 
-		T left() {
-			return left;
-		}
+    T left() {
+      return left;
+    }
 
-		T right() {
-			return right;
-		}
-	}
+    T right() {
+      return right;
+    }
+  }
 
-	public static class _2_1< T > {
-		private T left;
-		private T right;
+  public static class _2_1<T> {
+    private T left;
+    private T right;
 
-		public _2_1( T left, T right ) {
-			this.left = left;
-			this.right = right;
-		}
+    public _2_1(T left, T right) {
+      this.left = left;
+      this.right = right;
+    }
 
-		T left() {
-			return left;
-		}
+    T left() {
+      return left;
+    }
 
-		T right() {
-			return right;
-		}
-	}
-
+    T right() {
+      return right;
+    }
+  }
 }

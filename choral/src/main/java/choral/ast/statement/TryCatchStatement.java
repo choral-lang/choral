@@ -29,69 +29,71 @@ import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 import choral.utils.Pair;
-
 import java.util.List;
 
 /**
- * try {
- * statements
- * } catch ( Exception( A ) e ){ statements }
- * catch ( Exception( B ) e ){ statements }
+ * try { statements } catch ( Exception( A ) e ){ statements } catch ( Exception( B ) e ){
+ * statements }
  */
-
 public class TryCatchStatement extends Statement {
 
-	// each pair corresponds to a exception catch and it's statement body. 
-	private final List< Pair< VariableDeclaration, Statement > > catches;
-	private final Statement body;
+  // each pair corresponds to a exception catch and it's statement body.
+  private final List<Pair<VariableDeclaration, Statement>> catches;
+  private final Statement body;
 
-	public TryCatchStatement(
-			final Statement body, final List< Pair< VariableDeclaration, Statement > > catches,
-			final Statement continuation
-	) {
-		super( continuation );
-		this.catches = catches;
-		this.body = body;
-	}
+  public TryCatchStatement(
+      final Statement body,
+      final List<Pair<VariableDeclaration, Statement>> catches,
+      final Statement continuation) {
+    super(continuation);
+    this.catches = catches;
+    this.body = body;
+  }
 
-	public TryCatchStatement(
-			final Statement body, final List< Pair< VariableDeclaration, Statement > > catches,
-			final Statement continuation, final Position position
-	) {
-		super( continuation, position );
-		this.catches = catches;
-		this.body = body;
-	}
+  public TryCatchStatement(
+      final Statement body,
+      final List<Pair<VariableDeclaration, Statement>> catches,
+      final Statement continuation,
+      final Position position) {
+    super(continuation, position);
+    this.catches = catches;
+    this.body = body;
+  }
 
-	public List< Pair< VariableDeclaration, Statement > > catches() {
-		return catches;
-	}
+  public List<Pair<VariableDeclaration, Statement>> catches() {
+    return catches;
+  }
 
-	public Statement body() {
-		return body;
-	}
+  public Statement body() {
+    return body;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try {
-			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ) {
-			throw new ChoralException(
-					"Could not merge \n" + new PrettyPrinterVisitor().visit( this ) +
-							"\nwith " + n.getClass().getSimpleName() );
-		}
-	}
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    try {
+      return m.merge(this, (this.getClass().cast(n)));
+    } catch (ClassCastException e) {
+      throw new ChoralException(
+          "Could not merge \n"
+              + new PrettyPrinterVisitor().visit(this)
+              + "\nwith "
+              + n.getClass().getSimpleName());
+    }
+  }
 
-	@Override
-	public Statement cloneWithContinuation( Statement continuation ) {
-		return new TryCatchStatement( this.body, this.catches,
-				this.continuation() == null ? continuation : continuation().cloneWithContinuation(
-						continuation ), position() );
-	}
-
+  @Override
+  public Statement cloneWithContinuation(Statement continuation) {
+    return new TryCatchStatement(
+        this.body,
+        this.catches,
+        this.continuation() == null
+            ? continuation
+            : continuation().cloneWithContinuation(continuation),
+        position());
+  }
 }

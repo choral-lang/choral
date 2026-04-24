@@ -26,37 +26,35 @@ import choral.ast.statement.Statement;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.SourceObject.ChoralSourceObject;
 import choral.compiler.SourceObject.HeaderSourceObject;
-
 import java.nio.file.Paths;
 
 public class HeaderCompiler {
 
-	private HeaderCompiler() {
-	}
+  private HeaderCompiler() {}
 
-	public static HeaderSourceObject compile( CompilationUnit n ) {
-		if( n.position().sourceFile() == null ) {
-			// Trying to generate a header file for a compilation unit without a source file
-			throw new UnsupportedOperationException( "Headers can be generated only for " );
-		}
-		String choralFile = n.position().sourceFile();
-		String name = Paths.get( choralFile ).getFileName().toString();
-		name = name.substring( 0, name.length() - ChoralSourceObject.FILE_EXTENSION.length() );
-		String headerFile = choralFile.substring( 0,
-				choralFile.length() - ChoralSourceObject.FILE_EXTENSION.length() ) + HeaderSourceObject.FILE_EXTENSION;
+  public static HeaderSourceObject compile(CompilationUnit n) {
+    if (n.position().sourceFile() == null) {
+      // Trying to generate a header file for a compilation unit without a source file
+      throw new UnsupportedOperationException("Headers can be generated only for ");
+    }
+    String choralFile = n.position().sourceFile();
+    String name = Paths.get(choralFile).getFileName().toString();
+    name = name.substring(0, name.length() - ChoralSourceObject.FILE_EXTENSION.length());
+    String headerFile =
+        choralFile.substring(0, choralFile.length() - ChoralSourceObject.FILE_EXTENSION.length())
+            + HeaderSourceObject.FILE_EXTENSION;
 
-		return new HeaderSourceObject(
-				new Compiler().visit( n ),
-				HeaderSourceObject.combineName( n.packageDeclaration(), name ),
-				headerFile
-		);
-	}
+    return new HeaderSourceObject(
+        new Compiler().visit(n),
+        HeaderSourceObject.combineName(n.packageDeclaration(), name),
+        headerFile);
+  }
 
-	private static class Compiler extends PrettyPrinterVisitor {
+  private static class Compiler extends PrettyPrinterVisitor {
 
-		@Override
-		public String visit( Statement n ) {
-			return "/* NOTHING TO SEE HERE... */";
-		}
-	}
+    @Override
+    public String visit(Statement n) {
+      return "/* NOTHING TO SEE HERE... */";
+    }
+  }
 }

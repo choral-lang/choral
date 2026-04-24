@@ -26,8 +26,7 @@ import java.util.stream.Stream;
 
 public class DeviceRegistry {
 
-	public static Stream< Device > parallelStream() {
-		return Collections.singletonList( new Device() ).parallelStream();
-	}
-
+  public static Stream<Device> parallelStream() {
+    return Collections.singletonList(new Device()).parallelStream();
+  }
 }

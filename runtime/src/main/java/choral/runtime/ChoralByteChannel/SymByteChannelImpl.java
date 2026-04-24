@@ -22,10 +22,9 @@
 package choral.runtime.ChoralByteChannel;
 
 import choral.channels.SymDataChannelImpl;
-
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 
-public interface SymByteChannelImpl extends SymDataChannelImpl< ByteBuffer > {
-	ByteChannel byteChannel();
+public interface SymByteChannelImpl extends SymDataChannelImpl<ByteBuffer> {
+  ByteChannel byteChannel();
 }

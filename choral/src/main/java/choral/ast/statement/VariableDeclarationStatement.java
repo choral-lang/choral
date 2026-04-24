@@ -28,59 +28,54 @@ import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
-
 import java.util.List;
 
-/**
- * Expressions of the shape `int x, y`
- */
-
+/** Expressions of the shape `int x, y` */
 public class VariableDeclarationStatement extends Statement {
 
-	private final List< VariableDeclaration > variables;
+  private final List<VariableDeclaration> variables;
 
-	public VariableDeclarationStatement(
-			final List< VariableDeclaration > variables, Statement continuation
-	) {
-		super( continuation );
-		this.variables = variables;
-	}
+  public VariableDeclarationStatement(
+      final List<VariableDeclaration> variables, Statement continuation) {
+    super(continuation);
+    this.variables = variables;
+  }
 
-	public VariableDeclarationStatement(
-			final List< VariableDeclaration > variables, Statement continuation,
-			final Position position
-	) {
-		super( continuation, position );
-		this.variables = variables;
-	}
+  public VariableDeclarationStatement(
+      final List<VariableDeclaration> variables, Statement continuation, final Position position) {
+    super(continuation, position);
+    this.variables = variables;
+  }
 
-	public List< VariableDeclaration > variables() {
-		return variables;
-	}
+  public List<VariableDeclaration> variables() {
+    return variables;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public VariableDeclarationStatement cloneWithContinuation( Statement continuation ) {
-		return new VariableDeclarationStatement(
-				this.variables(),
-				this.continuation() == null ? continuation : continuation().cloneWithContinuation(
-						continuation ),
-				this.position() );
-	}
+  @Override
+  public VariableDeclarationStatement cloneWithContinuation(Statement continuation) {
+    return new VariableDeclarationStatement(
+        this.variables(),
+        this.continuation() == null
+            ? continuation
+            : continuation().cloneWithContinuation(continuation),
+        this.position());
+  }
 
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try {
-			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ) {
-			throw new ChoralException(
-					"Could not merge \n" + new PrettyPrinterVisitor().visit( this ) +
-							"\nwith " + n.getClass().getSimpleName() );
-		}
-	}
-
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    try {
+      return m.merge(this, (this.getClass().cast(n)));
+    } catch (ClassCastException e) {
+      throw new ChoralException(
+          "Could not merge \n"
+              + new PrettyPrinterVisitor().visit(this)
+              + "\nwith "
+              + n.getClass().getSimpleName());
+    }
+  }
 }

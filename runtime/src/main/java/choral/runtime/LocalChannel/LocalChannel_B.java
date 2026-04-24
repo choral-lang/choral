@@ -24,9 +24,8 @@ package choral.runtime.LocalChannel;
 import choral.channels.SymChannel_B;
 import choral.runtime.Media.MessageQueue;
 
-public class LocalChannel_B extends LocalChannelImpl implements SymChannel_B< Object > {
-	public LocalChannel_B( MessageQueue queueOut, MessageQueue queueIn ) {
-		super( queueOut, queueIn );
-	}
-
+public class LocalChannel_B extends LocalChannelImpl implements SymChannel_B<Object> {
+  public LocalChannel_B(MessageQueue queueOut, MessageQueue queueIn) {
+    super(queueOut, queueIn);
+  }
 }

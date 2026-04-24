@@ -30,7 +30,6 @@ import choral.ast.expression.ScopedExpression;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.WorldArgument;
 import choral.utils.Pair;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -38,79 +37,76 @@ import java.util.stream.Collectors;
 
 public class Utils {
 
-	public static Pair< Expression, Expression > headAndTail( ScopedExpression e ) {
-		if( e.scope() instanceof ScopedExpression ) {
-			Pair< Expression, Expression > head = headAndTail( (ScopedExpression) e.scope() );
-			return new Pair<>( head.left(),
-					new ScopedExpression( head.right(), e.scopedExpression() ) );
-		} else {
-			return new Pair<>( e.scope(), e.scopedExpression() );
-		}
-	}
+  public static Pair<Expression, Expression> headAndTail(ScopedExpression e) {
+    if (e.scope() instanceof ScopedExpression) {
+      Pair<Expression, Expression> head = headAndTail((ScopedExpression) e.scope());
+      return new Pair<>(head.left(), new ScopedExpression(head.right(), e.scopedExpression()));
+    } else {
+      return new Pair<>(e.scope(), e.scopedExpression());
+    }
+  }
 
-	static String getProjectionName(
-			String name, WorldArgument world, List< WorldArgument > worlds
-	) {
-		return name + ( worlds.size() > 1 ? "_" + world.name().identifier() : "" );
-	}
+  static String getProjectionName(String name, WorldArgument world, List<WorldArgument> worlds) {
+    return name + (worlds.size() > 1 ? "_" + world.name().identifier() : "");
+  }
 
-	static String getProjectionName(
-			String name, WorldArgument world, List< WorldArgument > worlds,
-			List< WorldArgument > referenceWorlds
-	) {
-		int worldIndex = worlds.indexOf( world );
-		WorldArgument referenceWorld = referenceWorlds.get( worldIndex );
-		return name + ( worlds.size() > 1 ? "_" + referenceWorld.name().identifier() : "" );
-	}
+  static String getProjectionName(
+      String name,
+      WorldArgument world,
+      List<WorldArgument> worlds,
+      List<WorldArgument> referenceWorlds) {
+    int worldIndex = worlds.indexOf(world);
+    WorldArgument referenceWorld = referenceWorlds.get(worldIndex);
+    return name + (worlds.size() > 1 ? "_" + referenceWorld.name().identifier() : "");
+  }
 
-	public static void warnIfWorldNotPresent(
-			List< FormalWorldParameter > worlds, WorldArgument world, Node n
-	) {
-		String templateName;
-		if( n instanceof Interface ) {
-			templateName = "Interface " + ( (Interface) n ).name();
-		} else if( n instanceof Class ) {
-			templateName = "Class " + ( (Class) n ).name();
-		} else if( n instanceof Enum ) {
-			templateName = "Enum " + ( (Enum) n ).name();
-		} else {
-			throw new SoloistProjectorException(
-					"method warnIfWorldNotPresent called on a node different from an Inteface, a Class, or an Enum" );
-		}
-		if( !worlds.stream().map( FormalWorldParameter::toWorldArgument ).collect(
-				Collectors.toList() ).contains( world ) ) {
-			System.err.println(
-					"WARNING: compilation launched on world: '" + world + "' "
-							+ "but missing in " + templateName
+  public static void warnIfWorldNotPresent(
+      List<FormalWorldParameter> worlds, WorldArgument world, Node n) {
+    String templateName;
+    if (n instanceof Interface) {
+      templateName = "Interface " + ((Interface) n).name();
+    } else if (n instanceof Class) {
+      templateName = "Class " + ((Class) n).name();
+    } else if (n instanceof Enum) {
+      templateName = "Enum " + ((Enum) n).name();
+    } else {
+      throw new SoloistProjectorException(
+          "method warnIfWorldNotPresent called on a node different from an Inteface, a Class, or an Enum");
+    }
+    if (!worlds.stream()
+        .map(FormalWorldParameter::toWorldArgument)
+        .collect(Collectors.toList())
+        .contains(world)) {
+      System.err.println(
+          "WARNING: compilation launched on world: '"
+              + world
+              + "' "
+              + "but missing in "
+              + templateName);
+    }
+  }
 
-			);
-		}
-	}
+  static <T> IfPresent<T> ifPresent(List<T> o) {
+    return new IfPresent<>(o);
+  }
 
-	static < T > IfPresent< T > ifPresent( List< T > o ) {
-		return new IfPresent<>( o );
-	}
+  public static class IfPresent<T> {
 
-	public static class IfPresent< T > {
+    private final Optional<T> o;
 
-		private final Optional< T > o;
+    private IfPresent(List<T> o) {
+      if (o == null || o.isEmpty()) {
+        this.o = Optional.empty();
+      } else {
+        this.o = Optional.of(o.get(0));
+      }
+    }
 
-		private IfPresent( List< T > o ) {
-			if( o == null || o.isEmpty() ) {
-				this.o = Optional.empty();
-			} else {
-				this.o = Optional.of( o.get( 0 ) );
-			}
-		}
-
-		T getOrElse( Supplier< T > e ) {
-			if( e == null ) {
-				throw new RuntimeException(
-						"Both application and alternative functions must be not null" );
-			}
-			return o.orElseGet( e );
-		}
-
-	}
-
+    T getOrElse(Supplier<T> e) {
+      if (e == null) {
+        throw new RuntimeException("Both application and alternative functions must be not null");
+      }
+      return o.orElseGet(e);
+    }
+  }
 }

@@ -25,34 +25,35 @@ import choral.ast.visitors.ChoralVisitorInterface;
 
 public abstract class Node {
 
-	// position in the original choral source file
-	private Position position;
+  // position in the original choral source file
+  private Position position;
 
-	// ToDo: remove this, make position mandatory
-	@Deprecated
-	protected Node() {
-		this( null );
-	}
+  // ToDo: remove this, make position mandatory
+  @Deprecated
+  protected Node() {
+    this(null);
+  }
 
-	protected Node( Position position ) {
-		this.position = position;
-	}
+  protected Node(Position position) {
+    this.position = position;
+  }
 
-	public Position position() {
-		return this.position;
-	}
+  public Position position() {
+    return this.position;
+  }
 
-	public boolean hasPosition() { return position() != null; }
+  public boolean hasPosition() {
+    return position() != null;
+  }
 
-	public void setPosition( Position position ) {
-		this.position = position;
-	}
+  public void setPosition(Position position) {
+    this.position = position;
+  }
 
-	public < R extends Node > R copyPosition( Node n ) {
-		this.position = n.position;
-		return (R) this;
-	}
+  public <R extends Node> R copyPosition(Node n) {
+    this.position = n.position;
+    return (R) this;
+  }
 
-	public abstract < R > R accept( ChoralVisitorInterface< R > v );
-
+  public abstract <R> R accept(ChoralVisitorInterface<R> v);
 }

@@ -25,40 +25,39 @@ import choral.channels.SymChannelImpl;
 import choral.lang.Unit;
 import choral.runtime.Serializers.ChoralSerializer;
 import choral.runtime.TLSByteChannel.TSLByteChannelImpl;
-
 import java.nio.ByteBuffer;
 
-public abstract class TLSChannelImpl< T > implements SymChannelImpl< T > {
-	protected TSLByteChannelImpl channel;
-	protected ChoralSerializer< Object, ByteBuffer > serializer;
+public abstract class TLSChannelImpl<T> implements SymChannelImpl<T> {
+  protected TSLByteChannelImpl channel;
+  protected ChoralSerializer<Object, ByteBuffer> serializer;
 
-	@Override
-	public < M extends T > M com( Unit u ) {
-		return this.com();
-	}
+  @Override
+  public <M extends T> M com(Unit u) {
+    return this.com();
+  }
 
-	@Override
-	public < M extends T > Unit com( M m ) {
-		return channel.com( serializer.fromObject( m ) );
-	}
+  @Override
+  public <M extends T> Unit com(M m) {
+    return channel.com(serializer.fromObject(m));
+  }
 
-	@Override
-	public < M extends Enum< M > > Unit select( M m ) {
-		return channel.com( serializer.fromObject( m ) );
-	}
+  @Override
+  public <M extends Enum<M>> Unit select(M m) {
+    return channel.com(serializer.fromObject(m));
+  }
 
-	@Override
-	public < M extends Enum< M > > M select( Unit u ) {
-		return this.select();
-	}
+  @Override
+  public <M extends Enum<M>> M select(Unit u) {
+    return this.select();
+  }
 
-	@Override
-	public < S extends T > S com() {
-		return serializer.toObject( channel.com() );
-	}
+  @Override
+  public <S extends T> S com() {
+    return serializer.toObject(channel.com());
+  }
 
-	@Override
-	public < T extends Enum< T > > T select() {
-		return serializer.toObject( channel.com() );
-	}
+  @Override
+  public <T extends Enum<T>> T select() {
+    return serializer.toObject(channel.com());
+  }
 }

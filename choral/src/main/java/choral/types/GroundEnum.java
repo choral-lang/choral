@@ -21,13 +21,14 @@
 
 package choral.types;
 
-/** @see choral.types.GroundDataType */
+/**
+ * @see choral.types.GroundDataType
+ */
 public interface GroundEnum extends GroundClass, Enum {
 
-	@Override
-	HigherEnum typeConstructor();
+  @Override
+  HigherEnum typeConstructor();
 
-	@Override
-	GroundEnum applySubstitution( Substitution substitution );
-
+  @Override
+  GroundEnum applySubstitution(Substitution substitution);
 }

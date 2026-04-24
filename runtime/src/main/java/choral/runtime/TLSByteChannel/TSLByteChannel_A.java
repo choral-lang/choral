@@ -25,25 +25,18 @@ import choral.channels.DiDataChannel_A;
 import choral.channels.DiDataChannel_B;
 import choral.runtime.ChoralByteChannel.SymByteChannelImpl;
 import choral.runtime.TLSByteChannel.tlschannel.ClientTlsChannel;
-
-import javax.net.ssl.SSLContext;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
+import javax.net.ssl.SSLContext;
 
-public class TSLByteChannel_A extends TSLByteChannelImpl implements
-														 DiDataChannel_A< ByteBuffer >,
-														 DiDataChannel_B< ByteBuffer > {
+public class TSLByteChannel_A extends TSLByteChannelImpl
+    implements DiDataChannel_A<ByteBuffer>, DiDataChannel_B<ByteBuffer> {
 
-	public TSLByteChannel_A( SymByteChannelImpl channel, SSLContext sslContext ) {
-		this.channel = ClientTlsChannel
-				.newBuilder( channel.byteChannel(), sslContext )
-				.build();
-	}
+  public TSLByteChannel_A(SymByteChannelImpl channel, SSLContext sslContext) {
+    this.channel = ClientTlsChannel.newBuilder(channel.byteChannel(), sslContext).build();
+  }
 
-	public TSLByteChannel_A( ByteChannel channel, SSLContext sslContext ) {
-		this.channel = ClientTlsChannel
-				.newBuilder( channel, sslContext )
-				.build();
-	}
-
+  public TSLByteChannel_A(ByteChannel channel, SSLContext sslContext) {
+    this.channel = ClientTlsChannel.newBuilder(channel, sslContext).build();
+  }
 }

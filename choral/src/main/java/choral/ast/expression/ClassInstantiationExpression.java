@@ -27,52 +27,50 @@ import choral.ast.type.TypeExpression;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 import choral.types.Member;
-
 import java.util.List;
 import java.util.Optional;
 
 public class ClassInstantiationExpression extends InvocationExpression {
 
-	private final TypeExpression type;
+  private final TypeExpression type;
 
-	public ClassInstantiationExpression(
-			TypeExpression type, List< Expression > arguments, List< TypeExpression > typeArguments
-	) {
-		super( arguments, typeArguments );
-		this.type = type;
-	}
+  public ClassInstantiationExpression(
+      TypeExpression type, List<Expression> arguments, List<TypeExpression> typeArguments) {
+    super(arguments, typeArguments);
+    this.type = type;
+  }
 
-	public ClassInstantiationExpression(
-			TypeExpression type, List< Expression > arguments, List< TypeExpression > typeArguments,
-			final Position position
-	) {
-		super( arguments, typeArguments, position );
-		this.type = type;
-	}
+  public ClassInstantiationExpression(
+      TypeExpression type,
+      List<Expression> arguments,
+      List<TypeExpression> typeArguments,
+      final Position position) {
+    super(arguments, typeArguments, position);
+    this.type = type;
+  }
 
-	public TypeExpression typeExpression() {
-		return type;
-	}
+  public TypeExpression typeExpression() {
+    return type;
+  }
 
-	private Member.GroundConstructor constructorAnnotation;
+  private Member.GroundConstructor constructorAnnotation;
 
-	public Optional< ? extends Member.GroundConstructor > constructorAnnotation() {
-		return Optional.ofNullable( constructorAnnotation );
-	}
+  public Optional<? extends Member.GroundConstructor> constructorAnnotation() {
+    return Optional.ofNullable(constructorAnnotation);
+  }
 
-	public void setConstructorAnnotation( Member.GroundConstructor methodAnnotation ) {
-		this.constructorAnnotation = methodAnnotation;
-	}
+  public void setConstructorAnnotation(Member.GroundConstructor methodAnnotation) {
+    this.constructorAnnotation = methodAnnotation;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		assert n instanceof ClassInstantiationExpression;
-		return m.merge( this, (ClassInstantiationExpression) n );
-	}
-
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    assert n instanceof ClassInstantiationExpression;
+    return m.merge(this, (ClassInstantiationExpression) n);
+  }
 }

@@ -24,54 +24,52 @@ package choral.runtime.WrapperByteChannel;
 import choral.lang.Unit;
 import choral.runtime.ChoralByteChannel.SymByteChannelImpl;
 import choral.runtime.Media.BlockingByteChannel;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 
 public class WrapperByteChannelImpl implements SymByteChannelImpl {
 
-	private final BlockingByteChannel channel;
+  private final BlockingByteChannel channel;
 
-	public WrapperByteChannelImpl( BlockingByteChannel channel ) {
-		this.channel = channel;
-	}
+  public WrapperByteChannelImpl(BlockingByteChannel channel) {
+    this.channel = channel;
+  }
 
-	@Override
-	public < T extends ByteBuffer > T com( Unit u ) {
-		return this.com();
-	}
+  @Override
+  public <T extends ByteBuffer> T com(Unit u) {
+    return this.com();
+  }
 
-	@Override
-	public < T extends ByteBuffer > T com() {
-		try {
-			synchronized( channel ) {
-				int transmissionLength = channel.recvTransmissionLength();
-				ByteBuffer recv = ByteBuffer.allocate( transmissionLength );
-				channel.read( recv );
-				return (T) recv;
-			}
-		} catch( IOException e ) {
-			throw new RuntimeException( e.getMessage() );
-		}
-	}
+  @Override
+  public <T extends ByteBuffer> T com() {
+    try {
+      synchronized (channel) {
+        int transmissionLength = channel.recvTransmissionLength();
+        ByteBuffer recv = ByteBuffer.allocate(transmissionLength);
+        channel.read(recv);
+        return (T) recv;
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e.getMessage());
+    }
+  }
 
-	@Override
-	public < T extends ByteBuffer > Unit com( T m ) {
-		try {
-			synchronized( channel ) {
-				channel.sendTransmissionLength( m.limit() );
-				channel.write( m );
-			}
-		} catch( IOException e ) {
-			e.printStackTrace();
-		}
-		return Unit.id;
-	}
+  @Override
+  public <T extends ByteBuffer> Unit com(T m) {
+    try {
+      synchronized (channel) {
+        channel.sendTransmissionLength(m.limit());
+        channel.write(m);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return Unit.id;
+  }
 
-	@Override
-	public ByteChannel byteChannel() {
-		return channel;
-	}
-
+  @Override
+  public ByteChannel byteChannel() {
+    return channel;
+  }
 }

@@ -25,50 +25,46 @@ import choral.channels.SymChannelImpl;
 import choral.channels.SymDataChannelImpl;
 import choral.lang.Unit;
 import choral.runtime.Serializers.ChoralSerializer;
-
 import java.nio.ByteBuffer;
 
-public class SerializerChannelImpl implements SymChannelImpl< Object > {
-	private final ChoralSerializer< Object, ByteBuffer > serializer;
-	private final SymDataChannelImpl< ByteBuffer > channel;
+public class SerializerChannelImpl implements SymChannelImpl<Object> {
+  private final ChoralSerializer<Object, ByteBuffer> serializer;
+  private final SymDataChannelImpl<ByteBuffer> channel;
 
-	public SerializerChannelImpl(
-			ChoralSerializer< Object, ByteBuffer > serializer,
-			SymDataChannelImpl< ByteBuffer > channel
-	) {
-		this.serializer = serializer;
-		this.channel = channel;
-	}
+  public SerializerChannelImpl(
+      ChoralSerializer<Object, ByteBuffer> serializer, SymDataChannelImpl<ByteBuffer> channel) {
+    this.serializer = serializer;
+    this.channel = channel;
+  }
 
-	@Override
-	public < M > Unit com( M m ) {
-		channel.com( serializer.fromObject( m ) );
-		return Unit.id;
-	}
+  @Override
+  public <M> Unit com(M m) {
+    channel.com(serializer.fromObject(m));
+    return Unit.id;
+  }
 
-	@Override
-	public < M > M com( Unit u ) {
-		return com();
-	}
+  @Override
+  public <M> M com(Unit u) {
+    return com();
+  }
 
-	@Override
-	public < S > S com() {
-		return serializer.toObject( channel.com( Unit.id ) );
-	}
+  @Override
+  public <S> S com() {
+    return serializer.toObject(channel.com(Unit.id));
+  }
 
-	@Override
-	public < T extends Enum< T > > Unit select( T m ) {
-		return this.com( m );
-	}
+  @Override
+  public <T extends Enum<T>> Unit select(T m) {
+    return this.com(m);
+  }
 
-	@Override
-	public < T extends Enum< T > > T select( Unit m ) {
-		return select();
-	}
+  @Override
+  public <T extends Enum<T>> T select(Unit m) {
+    return select();
+  }
 
-	@Override
-	public < T extends Enum< T > > T select() {
-		return this.com();
-	}
-
+  @Override
+  public <T extends Enum<T>> T select() {
+    return this.com();
+  }
 }

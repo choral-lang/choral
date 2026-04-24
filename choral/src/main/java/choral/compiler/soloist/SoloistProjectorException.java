@@ -22,7 +22,7 @@
 package choral.compiler.soloist;
 
 public class SoloistProjectorException extends RuntimeException {
-	public SoloistProjectorException( String s ) {
-		super( s );
-	}
+  public SoloistProjectorException(String s) {
+    super(s);
+  }
 }

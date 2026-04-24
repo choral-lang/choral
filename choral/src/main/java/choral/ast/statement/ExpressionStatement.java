@@ -30,52 +30,54 @@ import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 
 /**
- * A statement wrapping an expression. <p> 
- * expressionStatement; continuation
+ * A statement wrapping an expression.
+ *
+ * <p>expressionStatement; continuation
  */
-
 public class ExpressionStatement extends Statement {
 
-	private final Expression expression;
+  private final Expression expression;
 
-	public ExpressionStatement( final Expression expression, final Statement continuation ) {
-		super( continuation );
-		this.expression = expression;
-	}
+  public ExpressionStatement(final Expression expression, final Statement continuation) {
+    super(continuation);
+    this.expression = expression;
+  }
 
-	public ExpressionStatement(
-			final Expression expression, final Statement continuation, final Position position
-	) {
-		super( continuation, position );
-		this.expression = expression;
-	}
+  public ExpressionStatement(
+      final Expression expression, final Statement continuation, final Position position) {
+    super(continuation, position);
+    this.expression = expression;
+  }
 
-	public Expression expression() {
-		return expression;
-	}
+  public Expression expression() {
+    return expression;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try {
-			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ) {
-			throw new ChoralException(
-							"Could not merge \n" + new PrettyPrinterVisitor().visit( this ) +
-									"\nwith " + n.getClass().getSimpleName() );
-		}
-	}
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    try {
+      return m.merge(this, (this.getClass().cast(n)));
+    } catch (ClassCastException e) {
+      throw new ChoralException(
+          "Could not merge \n"
+              + new PrettyPrinterVisitor().visit(this)
+              + "\nwith "
+              + n.getClass().getSimpleName());
+    }
+  }
 
-	@Override
-	public Statement cloneWithContinuation( Statement continuation ) {
-		return new ExpressionStatement(
-				this.expression(),
-				this.continuation() == null ? continuation : continuation().cloneWithContinuation(
-						continuation ),
-				this.position() );
-	}
+  @Override
+  public Statement cloneWithContinuation(Statement continuation) {
+    return new ExpressionStatement(
+        this.expression(),
+        this.continuation() == null
+            ? continuation
+            : continuation().cloneWithContinuation(continuation),
+        this.position());
+  }
 }

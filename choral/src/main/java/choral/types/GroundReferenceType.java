@@ -24,27 +24,28 @@ package choral.types;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-/** @see choral.types.GroundDataType */
+/**
+ * @see choral.types.GroundDataType
+ */
 public interface GroundReferenceType extends GroundDataType {
 
-	@Override
-	HigherReferenceType typeConstructor();
+  @Override
+  HigherReferenceType typeConstructor();
 
-	@Override
-	GroundReferenceType applySubstitution( Substitution substitution );
+  @Override
+  GroundReferenceType applySubstitution(Substitution substitution);
 
-	Stream< ? extends Member.Field > fields();
+  Stream<? extends Member.Field> fields();
 
-	Optional< ? extends Member.Field > field( String name );
+  Optional<? extends Member.Field> field(String name);
 
-	/**
-	 * Returns this type's <i>member methods</i>, i.e. the methods this type declares and the methods
-	 * it inherits from superclasses and superinterfaces. See the Java Language Spec for details.
-	 */
-	Stream< ? extends Member.HigherMethod > methods();
+  /**
+   * Returns this type's <i>member methods</i>, i.e. the methods this type declares and the methods
+   * it inherits from superclasses and superinterfaces. See the Java Language Spec for details.
+   */
+  Stream<? extends Member.HigherMethod> methods();
 
-	Stream< ? extends Member.HigherMethod > methods( String name );
+  Stream<? extends Member.HigherMethod> methods(String name);
 
-	boolean isInterfaceFinalised();
-
+  boolean isInterfaceFinalised();
 }

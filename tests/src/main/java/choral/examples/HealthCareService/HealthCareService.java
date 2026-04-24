@@ -21,7 +21,6 @@
 
 package choral.examples.HealthCareService;
 
-
 import choral.examples.AuthResult.AuthResult_A;
 import choral.examples.DistAuth.DistAuth_Client;
 import choral.examples.DistAuthUtils.Credentials;
@@ -29,24 +28,25 @@ import choral.examples.VitalsStreaming.VitalsStreaming_Gatherer;
 import choral.runtime.TLSChannel.TLSChannel_A;
 
 public class HealthCareService {
-	public static void main( String[] args ) {
-		TLSChannel_A< Object > toIP = HealthIdentityProvider.connect();
-		TLSChannel_A< Object > toStorage = Storage.connect();
-		AuthResult_A authResult = new DistAuth_Client( toIP ).authenticate( getCredentials() );
-		authResult.left().ifPresent( token ->
-				DeviceRegistry
-						.parallelStream()
-						.map( Device::connect )
-						.map( VitalsStreaming_Gatherer::new )
-						.forEach( vs ->
-								vs.gather( data -> toStorage.< StorageMsg >com(
-										new StorageMsg( token, data ) ) )
-						)
-		);
-		Storage.disconnect();
-	}
+  public static void main(String[] args) {
+    TLSChannel_A<Object> toIP = HealthIdentityProvider.connect();
+    TLSChannel_A<Object> toStorage = Storage.connect();
+    AuthResult_A authResult = new DistAuth_Client(toIP).authenticate(getCredentials());
+    authResult
+        .left()
+        .ifPresent(
+            token ->
+                DeviceRegistry.parallelStream()
+                    .map(Device::connect)
+                    .map(VitalsStreaming_Gatherer::new)
+                    .forEach(
+                        vs ->
+                            vs.gather(
+                                data -> toStorage.<StorageMsg>com(new StorageMsg(token, data)))));
+    Storage.disconnect();
+  }
 
-	private static Credentials getCredentials() {
-		return new Credentials( "john", "doe" );
-	}
+  private static Credentials getCredentials() {
+    return new Credentials("john", "doe");
+  }
 }

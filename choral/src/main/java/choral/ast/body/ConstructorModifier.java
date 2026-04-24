@@ -22,18 +22,18 @@
 package choral.ast.body;
 
 public enum ConstructorModifier {
-	PUBLIC( "public" ),
-	PROTECTED( "protected" ),
-	PRIVATE( "private" );
+  PUBLIC("public"),
+  PROTECTED("protected"),
+  PRIVATE("private");
 
-	public final String label;
+  public final String label;
 
-	@Override
-	public String toString() {
-		return this.label;
-	}
+  @Override
+  public String toString() {
+    return this.label;
+  }
 
-	ConstructorModifier( String label ) {
-		this.label = label;
-	}
+  ConstructorModifier(String label) {
+    this.label = label;
+  }
 }

@@ -28,84 +28,78 @@ import choral.ast.WithTypeAnnotation;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.types.DataType;
 import choral.types.Type;
-
 import java.util.List;
 import java.util.Optional;
 
-/**
- * HashMap( World1, World2 )< String( World1 ), List( World2 )< Integer > >
- */
+/** HashMap( World1, World2 )< String( World1 ), List( World2 )< Integer > > */
+public class TypeExpression extends Node implements WithTypeAnnotation<DataType> {
+  private final Name name;
+  private final List<WorldArgument> worlds;
+  private final List<TypeExpression> parameters;
+  private Type type;
 
-public class TypeExpression extends Node implements WithTypeAnnotation< DataType > {
-	private final Name name;
-	private final List< WorldArgument > worlds;
-	private final List< TypeExpression > parameters;
-	private Type type;
+  public TypeExpression(
+      final Name name, final List<WorldArgument> worlds, final List<TypeExpression> parameters) {
+    this.name = name;
+    this.worlds = worlds;
+    this.parameters = parameters;
+  }
 
-	public TypeExpression(
-			final Name name, final List< WorldArgument > worlds,
-			final List< TypeExpression > parameters
-	) {
-		this.name = name;
-		this.worlds = worlds;
-		this.parameters = parameters;
-	}
+  public TypeExpression(
+      final Name name,
+      final List<WorldArgument> worlds,
+      final List<TypeExpression> parameters,
+      final Position position) {
+    super(position);
+    this.name = name;
+    this.worlds = worlds;
+    this.parameters = parameters;
+  }
 
-	public TypeExpression(
-			final Name name, final List< WorldArgument > worlds,
-			final List< TypeExpression > parameters, final Position position
-	) {
-		super( position );
-		this.name = name;
-		this.worlds = worlds;
-		this.parameters = parameters;
-	}
+  private DataType typeAnnotation;
 
-	private DataType typeAnnotation;
+  public Optional<? extends DataType> typeAnnotation() {
+    return Optional.ofNullable(typeAnnotation);
+  }
 
-	public Optional< ? extends DataType > typeAnnotation() {
-		return Optional.ofNullable( typeAnnotation );
-	}
+  public void setTypeAnnotation(DataType typeAnnotation) {
+    this.typeAnnotation = typeAnnotation;
+  }
 
-	public void setTypeAnnotation( DataType typeAnnotation ) {
-		this.typeAnnotation = typeAnnotation;
-	}
+  public Name name() {
+    return name;
+  }
 
-	public Name name() {
-		return name;
-	}
+  public List<WorldArgument> worldArguments() {
+    return worlds;
+  }
 
-	public List< WorldArgument > worldArguments() {
-		return worlds;
-	}
+  public List<TypeExpression> typeArguments() {
+    return parameters;
+  }
 
-	public List< TypeExpression > typeArguments() {
-		return parameters;
-	}
+  @Override
+  // WARNING: used in the merge, does not check world correspondence
+  public boolean equals(Object n) {
+    if (n instanceof TypeExpression
+        && ((TypeExpression) n).typeArguments().size() == this.typeArguments().size()) {
+      if (!this.name().equals(((TypeExpression) n).name())) {
+        return false;
+      }
 
-	@Override
-	// WARNING: used in the merge, does not check world correspondence
-	public boolean equals( Object n ) {
-		if( n instanceof TypeExpression && ( (TypeExpression) n ).typeArguments().size() == this.typeArguments().size() ) {
-			if( !this.name().equals( ( (TypeExpression) n ).name() ) ) {
-				return false;
-			}
+      for (int i = 0; i < this.typeArguments().size(); i++) {
+        if (((TypeExpression) n).typeArguments().get(i).equals(this.typeArguments().get(i))) {
+          return false;
+        }
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
 
-			for( int i = 0; i < this.typeArguments().size(); i++ ) {
-				if( ( (TypeExpression) n ).typeArguments().get( i ).equals(
-						this.typeArguments().get( i ) ) ) {
-					return false;
-				}
-			}
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

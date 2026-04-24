@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface WorldParameterDeclarationContext {
-	List< ? extends World > worldParameters();
+  List<? extends World> worldParameters();
 
-	Optional< ? extends World > worldParameter( int index );
+  Optional<? extends World> worldParameter(int index);
 
-	Optional< ? extends World > worldParameter( String name );
+  Optional<? extends World> worldParameter(String name);
 }

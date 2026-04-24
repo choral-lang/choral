@@ -21,44 +21,46 @@
 
 package choral.types;
 
-/** @see choral.types.GroundDataType */
+/**
+ * @see choral.types.GroundDataType
+ */
 public interface GroundPrimitiveDataType extends GroundDataType, PrimitiveDataType {
 
-	@Override
-	HigherPrimitiveDataType typeConstructor();
+  @Override
+  HigherPrimitiveDataType typeConstructor();
 
-	@Override
-	GroundPrimitiveDataType applySubstitution( Substitution substitution );
+  @Override
+  GroundPrimitiveDataType applySubstitution(Substitution substitution);
 
-	@Override
-	default GroundClass boxedType() {
-		return typeConstructor().boxedType().applyTo( worldArguments() );
-	}
+  @Override
+  default GroundClass boxedType() {
+    return typeConstructor().boxedType().applyTo(worldArguments());
+  }
 
-	@Override
-	default boolean isAssignableTo( GroundDataTypeOrVoid type ) {
-		if( type instanceof GroundDataType ) {
-			GroundDataType t = (GroundDataType) type;
-			return this.worldArguments().equals( t.worldArguments() )
-					&& ( this.primitiveTypeTag().isAssignableTo( t.primitiveTypeTag() )
-					|| this.boxedType().isEquivalentTo( t ) );
-		} else {
-			return false;
-		}
-	}
+  @Override
+  default boolean isAssignableTo(GroundDataTypeOrVoid type) {
+    if (type instanceof GroundDataType) {
+      GroundDataType t = (GroundDataType) type;
+      return this.worldArguments().equals(t.worldArguments())
+          && (this.primitiveTypeTag().isAssignableTo(t.primitiveTypeTag())
+              || this.boxedType().isEquivalentTo(t));
+    } else {
+      return false;
+    }
+  }
 
-	default boolean isAssignableTo_relaxed( GroundDataTypeOrVoid type ) {
-		if( type instanceof GroundDataType ) {
-			GroundDataType t = (GroundDataType) type;
-			return this.primitiveTypeTag().isAssignableTo( t.primitiveTypeTag() )
-					|| this.boxedType().isEquivalentTo_relaxed( t ) ;
-		} else {
-			return false;
-		}
-	}
+  default boolean isAssignableTo_relaxed(GroundDataTypeOrVoid type) {
+    if (type instanceof GroundDataType) {
+      GroundDataType t = (GroundDataType) type;
+      return this.primitiveTypeTag().isAssignableTo(t.primitiveTypeTag())
+          || this.boxedType().isEquivalentTo_relaxed(t);
+    } else {
+      return false;
+    }
+  }
 
-	@Override
-	default boolean isEquivalentToErasureOf( GroundDataType type ) {
-		return isEquivalentTo( type );
-	}
+  @Override
+  default boolean isEquivalentToErasureOf(GroundDataType type) {
+    return isEquivalentTo(type);
+  }
 }

@@ -26,39 +26,31 @@ import choral.ast.Name;
 import choral.ast.expression.*;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
-
 import java.util.Collections;
 import java.util.List;
 
 public final class UnitRepresentation {
 
-	public static final Name UNIT = new Name( "Unit" );
-	public static final Name UID = new Name( "id" );
-	public static final ImportDeclaration UNIT_IMPORT_DECLARATION = new ImportDeclaration(
-			"choral.lang.Unit", null );
+  public static final Name UNIT = new Name("Unit");
+  public static final Name UID = new Name("id");
+  public static final ImportDeclaration UNIT_IMPORT_DECLARATION =
+      new ImportDeclaration("choral.lang.Unit", null);
 
-	public static ScopedExpression UnitFD( WorldArgument world ) {
-		return new ScopedExpression(
-				new StaticAccessExpression( new TypeExpression(
-						UNIT,
-						Collections.singletonList( world ),
-						Collections.emptyList()
-				) ), new FieldAccessExpression( UID ) );
-	}
+  public static ScopedExpression UnitFD(WorldArgument world) {
+    return new ScopedExpression(
+        new StaticAccessExpression(
+            new TypeExpression(UNIT, Collections.singletonList(world), Collections.emptyList())),
+        new FieldAccessExpression(UID));
+  }
 
-	public static Expression unitMC( List< Expression > a, WorldArgument world ) {
-		return new ScopedExpression(
-				new StaticAccessExpression( new TypeExpression(
-						UNIT,
-						Collections.singletonList( world ),
-						Collections.emptyList()
-				) ),
-				new MethodCallExpression( UnitRepresentation.UID, a, Collections.emptyList() ) );
-	}
+  public static Expression unitMC(List<Expression> a, WorldArgument world) {
+    return new ScopedExpression(
+        new StaticAccessExpression(
+            new TypeExpression(UNIT, Collections.singletonList(world), Collections.emptyList())),
+        new MethodCallExpression(UnitRepresentation.UID, a, Collections.emptyList()));
+  }
 
-	public static TypeExpression getType( WorldArgument world ) {
-		return new TypeExpression( UNIT, Collections.singletonList( world ),
-				Collections.emptyList() );
-	}
-
+  public static TypeExpression getType(WorldArgument world) {
+    return new TypeExpression(UNIT, Collections.singletonList(world), Collections.emptyList());
+  }
 }

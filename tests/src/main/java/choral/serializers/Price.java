@@ -26,19 +26,19 @@ import choral.runtime.Serializers.KryoSerializable;
 @KryoSerializable
 public class Price {
 
-	private final String name;
-	private final Integer price;
+  private final String name;
+  private final Integer price;
 
-	public Price( String name, Integer price ) {
-		this.name = name;
-		this.price = price;
-	}
+  public Price(String name, Integer price) {
+    this.name = name;
+    this.price = price;
+  }
 
-	public String name() {
-		return name;
-	}
+  public String name() {
+    return name;
+  }
 
-	public Integer price() {
-		return price;
-	}
+  public Integer price() {
+    return price;
+  }
 }

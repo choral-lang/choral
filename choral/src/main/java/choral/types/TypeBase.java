@@ -23,7 +23,6 @@ package choral.types;
 
 import choral.ast.Node;
 import choral.utils.Formatting;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,58 +30,59 @@ import java.util.stream.Stream;
 
 abstract class TypeBase implements Type {
 
-	public TypeBase( Universe universe ) {
-		this.universe = universe;
-	}
+  public TypeBase(Universe universe) {
+    this.universe = universe;
+  }
 
-	protected final boolean isSameKind( Type type ) {
-		return ( type != null )
-				&& ( this.universe() == type.universe() )
-				&& ( this.kind() != null )
-				&& ( this.kind().equals( type.kind() ) );
-	}
+  protected final boolean isSameKind(Type type) {
+    return (type != null)
+        && (this.universe() == type.universe())
+        && (this.kind() != null)
+        && (this.kind().equals(type.kind()));
+  }
 
-	@Override
-	public final boolean isStrictSubtypeOf( Type type ) {
-		return isSubtypeOf( type, true );
-	}
+  @Override
+  public final boolean isStrictSubtypeOf(Type type) {
+    return isSubtypeOf(type, true);
+  }
 
-	@Override
-	public final boolean isSubtypeOf( Type type ) {
-		return isSubtypeOf( type, false );
-	}
+  @Override
+  public final boolean isSubtypeOf(Type type) {
+    return isSubtypeOf(type, false);
+  }
 
-	// source code position for error reporting
-	private Node source;
+  // source code position for error reporting
+  private Node source;
 
-	@Override
-	public final Optional< Node > sourceCode() {
-		return Optional.ofNullable( source );
-	}
+  @Override
+  public final Optional<Node> sourceCode() {
+    return Optional.ofNullable(source);
+  }
 
-	@Override
-	public final void setSourceCode( Node source ) {
-		this.source = source;
-	}
+  @Override
+  public final void setSourceCode(Node source) {
+    this.source = source;
+  }
 
-	private final Universe universe;
+  private final Universe universe;
 
-	@Override
-	public Universe universe() {
-		return universe;
-	}
+  @Override
+  public Universe universe() {
+    return universe;
+  }
 
-	static String prettyTypeList( List< ? extends Type > types ) {
-		return prettyTypeList( types.stream() );
-	}
+  static String prettyTypeList(List<? extends Type> types) {
+    return prettyTypeList(types.stream());
+  }
 
-	static String prettyTypeList( Stream< ? extends Type > types ) {
-		return prettyQuotedList( types );
-	}
+  static String prettyTypeList(Stream<? extends Type> types) {
+    return prettyQuotedList(types);
+  }
 
-	static String prettyQuotedList( Stream< ? > elements ) {
-		return elements.map( x -> "'" + x + "'" )
-				.collect( Collectors.collectingAndThen( Collectors.toList(),
-						Formatting.joiningOxfordComma() ) );
-	}
+  static String prettyQuotedList(Stream<?> elements) {
+    return elements
+        .map(x -> "'" + x + "'")
+        .collect(
+            Collectors.collectingAndThen(Collectors.toList(), Formatting.joiningOxfordComma()));
+  }
 }

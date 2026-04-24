@@ -23,44 +23,43 @@ package choral.ast;
 
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.types.HigherClassOrInterface;
-
 import java.util.Optional;
 
 public class ImportDeclaration extends Node
-		implements WithTypeAnnotation< HigherClassOrInterface >, Comparable<ImportDeclaration> {
+    implements WithTypeAnnotation<HigherClassOrInterface>, Comparable<ImportDeclaration> {
 
-	private final String name;
+  private final String name;
 
-	public ImportDeclaration( final String name, final Position position ) {
-		super( position );
-		this.name = name;
-	}
+  public ImportDeclaration(final String name, final Position position) {
+    super(position);
+    this.name = name;
+  }
 
-	public String name() {
-		return name;
-	}
+  public String name() {
+    return name;
+  }
 
-	private HigherClassOrInterface typeAnnotation;
+  private HigherClassOrInterface typeAnnotation;
 
-	public Optional< ? extends HigherClassOrInterface > typeAnnotation() {
-		return Optional.ofNullable( typeAnnotation );
-	}
+  public Optional<? extends HigherClassOrInterface> typeAnnotation() {
+    return Optional.ofNullable(typeAnnotation);
+  }
 
-	public void setTypeAnnotation( HigherClassOrInterface typeAnnotation ) {
-		this.typeAnnotation = typeAnnotation;
-	}
+  public void setTypeAnnotation(HigherClassOrInterface typeAnnotation) {
+    this.typeAnnotation = typeAnnotation;
+  }
 
-	public boolean isOnDemand() {
-		return name.endsWith( "*" );
-	}
+  public boolean isOnDemand() {
+    return name.endsWith("*");
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public int compareTo(ImportDeclaration iD){
-		return this.name.compareTo(iD.name);
-	}
+  @Override
+  public int compareTo(ImportDeclaration iD) {
+    return this.name.compareTo(iD.name);
+  }
 }

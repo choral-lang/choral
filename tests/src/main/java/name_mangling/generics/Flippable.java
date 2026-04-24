@@ -30,11 +30,11 @@ public interface Flippable@( A, B ){
 */
 
 public interface Flippable {
-	public interface _1_2 {
-		_2_1 flip();
-	}
+  public interface _1_2 {
+    _2_1 flip();
+  }
 
-	public interface _2_1 {
-		_1_2 flip();
-	}
+  public interface _2_1 {
+    _1_2 flip();
+  }
 }

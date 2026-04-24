@@ -27,32 +27,31 @@ import choral.ast.visitors.ChoralVisitorInterface;
 
 public class FormalWorldParameter extends World {
 
-	public FormalWorldParameter( final Name name ) {
-		super( name );
-	}
+  public FormalWorldParameter(final Name name) {
+    super(name);
+  }
 
-	public FormalWorldParameter( final Name name, final Position position ) {
-		super( name, position );
-	}
+  public FormalWorldParameter(final Name name, final Position position) {
+    super(name, position);
+  }
 
-	@Override
-	public boolean equals( final Object o ) {
-		return ( o instanceof FormalWorldParameter ) && this.name.equals(
-				( (FormalWorldParameter) o ).name() );
-	}
+  @Override
+  public boolean equals(final Object o) {
+    return (o instanceof FormalWorldParameter)
+        && this.name.equals(((FormalWorldParameter) o).name());
+  }
 
-	public WorldArgument toWorldArgument() {
-		return new WorldArgument( this.name(), this.position() );
-	}
+  public WorldArgument toWorldArgument() {
+    return new WorldArgument(this.name(), this.position());
+  }
 
-	@Override
-	public int hashCode() {
-		return name.hashCode();
-	}
+  @Override
+  public int hashCode() {
+    return name.hashCode();
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

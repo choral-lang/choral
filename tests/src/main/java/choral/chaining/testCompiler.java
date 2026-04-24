@@ -21,43 +21,39 @@
 
 package choral.chaining;
 
-import org.antlr.v4.runtime.ANTLRFileStream;
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CommonTokenStream;
 import choral.ast.CompilationUnit;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.*;
 import choral.grammar.ChoralLexer;
 import choral.grammar.ChoralParser;
-
 import java.io.IOException;
+import org.antlr.v4.runtime.ANTLRFileStream;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 public class testCompiler {
 
-	public static void main( String[] args ) throws IOException {
+  public static void main(String[] args) throws IOException {
 
-		String file = "src/tests/java/ChainingTests/ChainingOperator.ch";
+    String file = "src/tests/java/ChainingTests/ChainingOperator.ch";
 
-		ANTLRInputStream input = new ANTLRFileStream( file );
-		ChoralLexer lexer = new ChoralLexer( input );
-		CommonTokenStream tokens = new CommonTokenStream( lexer );
-		ChoralParser cp = new ChoralParser( tokens );
-		cp.removeErrorListeners();
-		cp.addErrorListener( new ParsingErrorListener( file ) );
-		ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
-		CompilationUnit cu = AstOptimizer
-				.loadParameters()
-				.optimise( ctx, file );
-//		cu = AstDesugarer.desugar( cu );
+    ANTLRInputStream input = new ANTLRFileStream(file);
+    ChoralLexer lexer = new ChoralLexer(input);
+    CommonTokenStream tokens = new CommonTokenStream(lexer);
+    ChoralParser cp = new ChoralParser(tokens);
+    cp.removeErrorListeners();
+    cp.addErrorListener(new ParsingErrorListener(file));
+    ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
+    CompilationUnit cu = AstOptimizer.loadParameters().optimise(ctx, file);
+    //		cu = AstDesugarer.desugar( cu );
 
-		System.out.println( new PrettyPrinterVisitor().visit( cu ) );
+    System.out.println(new PrettyPrinterVisitor().visit(cu));
 
-//		JavaSourceWriter.writeSources(
-//			Paths.get( "src/tests/java/ChainingTests/ChainingOperator" ),
-//			"ChainingTests.ChainingOperator",
-//			JavaCompiler.compile( cu )
-//		);
+    //		JavaSourceWriter.writeSources(
+    //			Paths.get( "src/tests/java/ChainingTests/ChainingOperator" ),
+    //			"ChainingTests.ChainingOperator",
+    //			JavaCompiler.compile( cu )
+    //		);
 
-	}
-
+  }
 }

@@ -21,8 +21,9 @@
 
 package choral.compiler;
 
-import choral.ast.CompilationUnit;
+import static choral.utils.Streams.wrapFunction;
 
+import choral.ast.CompilationUnit;
 import java.io.*;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
@@ -35,110 +36,120 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static choral.utils.Streams.wrapFunction;
-
 public class HeaderLoader {
 
-	public static void test() throws IOException {
-		loadStandardProfile();
-	}
+  public static void test() throws IOException {
+    loadStandardProfile();
+  }
 
-	public static Stream< CompilationUnit > loadProfile(
-			String profile
-	) throws IOException {
-		ClassLoader cl = Thread.currentThread().getContextClassLoader();
-		List< String > files = new LinkedList<>();
-		String profilePath = "headers/" + profile + ".profile";
-		try(
-			InputStream in = cl.getResourceAsStream( profilePath );
-			BufferedReader br = new BufferedReader( new InputStreamReader( in ) ) ) {
-			
-			String file;
-			while( ( file = br.readLine() ) != null ) {
-				files.add( file );
-			}
-		}
-		List< CompilationUnit > headers = new ArrayList<>( files.size() );
-		for( String file : files ) {
-			try( InputStream in = cl.getResourceAsStream( "headers/" + file ) ) {
-				headers.add( Parser.parseSourceFile( in,
-						"headers/" + file ) );
-			}
-		}
-		return headers.stream();
-	}
+  public static Stream<CompilationUnit> loadProfile(String profile) throws IOException {
+    ClassLoader cl = Thread.currentThread().getContextClassLoader();
+    List<String> files = new LinkedList<>();
+    String profilePath = "headers/" + profile + ".profile";
+    try (InputStream in = cl.getResourceAsStream(profilePath);
+        BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
 
-	public static Stream< CompilationUnit > loadStandardProfile() throws IOException {
-		return loadProfile( "standard" );
-	}
+      String file;
+      while ((file = br.readLine()) != null) {
+        files.add(file);
+      }
+    }
+    List<CompilationUnit> headers = new ArrayList<>(files.size());
+    for (String file : files) {
+      try (InputStream in = cl.getResourceAsStream("headers/" + file)) {
+        headers.add(Parser.parseSourceFile(in, "headers/" + file));
+      }
+    }
+    return headers.stream();
+  }
 
-	public static Stream<CompilationUnit> loadAlternateProfile() throws IOException {
-		return loadProfile("alternate");
-	}
+  public static Stream<CompilationUnit> loadStandardProfile() throws IOException {
+    return loadProfile("standard");
+  }
 
-	public static Stream< CompilationUnit > loadFromPath(
-			Collection< Path > folders
-	) throws IOException {
-		return loadFromPath( folders, true );
-	}
+  public static Stream<CompilationUnit> loadAlternateProfile() throws IOException {
+    return loadProfile("alternate");
+  }
 
-	public static Stream< CompilationUnit > loadFromPath(
-			Collection< Path > folders, boolean ignoreIfSourcePresent
-	) throws IOException {
-		return loadFromPath( folders, List.of(), ignoreIfSourcePresent, true );
-	}
+  public static Stream<CompilationUnit> loadFromPath(Collection<Path> folders) throws IOException {
+    return loadFromPath(folders, true);
+  }
 
-	public static Stream< CompilationUnit > loadFromPath(
-			Collection< Path > headersPaths, Collection< File > sourceFiles,
-			boolean ignoreIfSourcePresent, boolean strictHeaderSearch
-	) throws IOException {
-		Stream< Path > pathsFromHeaders = headersPaths.stream().flatMap(
-				wrapFunction( p -> Files.find( p, 999,
-						( q, a ) -> !a.isDirectory() && keepHeaderFile( q, sourceFiles,
-								ignoreIfSourcePresent )
-						, FileVisitOption.FOLLOW_LINKS ) ) );
-		Stream< Path > pathsFromSources;
-		if( strictHeaderSearch ) {
-			pathsFromSources = Stream.of();
-		} else {
-			pathsFromSources = sourceFiles.stream().map(
-							x -> Paths.get( ( x.isDirectory() )
-									? x.getPath()
-									: ( x.getParent() == null ? "" : x.getParent() ) ) )
-					.flatMap( wrapFunction( p -> Files.find( p, 1,
-							( q, a ) -> !a.isDirectory() && keepHeaderFile( q, sourceFiles,
-									ignoreIfSourcePresent )
-							, FileVisitOption.FOLLOW_LINKS ) ) );
-		}
-		List< File > files = Stream.concat( pathsFromHeaders, pathsFromSources )
-				.map( Path::toFile )
-				.distinct()
-				.collect( Collectors.toList() );
-		ArrayList< CompilationUnit > headers = new ArrayList<>( files.size() );
-		for( File file : files ) {
-			headers.add( Parser.parseSourceFile( file ) );
-		}
-		return headers.stream();
-	}
+  public static Stream<CompilationUnit> loadFromPath(
+      Collection<Path> folders, boolean ignoreIfSourcePresent) throws IOException {
+    return loadFromPath(folders, List.of(), ignoreIfSourcePresent, true);
+  }
 
-	private static boolean keepHeaderFile(
-			Path file, Collection< File > sourceFiles, boolean ignoreIfSourcePresent
-	) {
-		String f = file.toString();
-		if( f.toLowerCase().endsWith( SourceObject.HeaderSourceObject.FILE_EXTENSION ) ) {
-			if( ignoreIfSourcePresent ) {
-				String s = f.substring(
-						f.length() - SourceObject.HeaderSourceObject.FILE_EXTENSION.length() )
-						+ SourceObject.ChoralSourceObject.FILE_EXTENSION;
-				for( File sf : sourceFiles ) {
-					if( Paths.get( s ).compareTo( sf.toPath() ) == 0 ) {
-						return false;
-					}
-				}
-			}
-			return true;
-		} else {
-			return false;
-		}
-	}
+  public static Stream<CompilationUnit> loadFromPath(
+      Collection<Path> headersPaths,
+      Collection<File> sourceFiles,
+      boolean ignoreIfSourcePresent,
+      boolean strictHeaderSearch)
+      throws IOException {
+    Stream<Path> pathsFromHeaders =
+        headersPaths.stream()
+            .flatMap(
+                wrapFunction(
+                    p ->
+                        Files.find(
+                            p,
+                            999,
+                            (q, a) ->
+                                !a.isDirectory()
+                                    && keepHeaderFile(q, sourceFiles, ignoreIfSourcePresent),
+                            FileVisitOption.FOLLOW_LINKS)));
+    Stream<Path> pathsFromSources;
+    if (strictHeaderSearch) {
+      pathsFromSources = Stream.of();
+    } else {
+      pathsFromSources =
+          sourceFiles.stream()
+              .map(
+                  x ->
+                      Paths.get(
+                          (x.isDirectory())
+                              ? x.getPath()
+                              : (x.getParent() == null ? "" : x.getParent())))
+              .flatMap(
+                  wrapFunction(
+                      p ->
+                          Files.find(
+                              p,
+                              1,
+                              (q, a) ->
+                                  !a.isDirectory()
+                                      && keepHeaderFile(q, sourceFiles, ignoreIfSourcePresent),
+                              FileVisitOption.FOLLOW_LINKS)));
+    }
+    List<File> files =
+        Stream.concat(pathsFromHeaders, pathsFromSources)
+            .map(Path::toFile)
+            .distinct()
+            .collect(Collectors.toList());
+    ArrayList<CompilationUnit> headers = new ArrayList<>(files.size());
+    for (File file : files) {
+      headers.add(Parser.parseSourceFile(file));
+    }
+    return headers.stream();
+  }
+
+  private static boolean keepHeaderFile(
+      Path file, Collection<File> sourceFiles, boolean ignoreIfSourcePresent) {
+    String f = file.toString();
+    if (f.toLowerCase().endsWith(SourceObject.HeaderSourceObject.FILE_EXTENSION)) {
+      if (ignoreIfSourcePresent) {
+        String s =
+            f.substring(f.length() - SourceObject.HeaderSourceObject.FILE_EXTENSION.length())
+                + SourceObject.ChoralSourceObject.FILE_EXTENSION;
+        for (File sf : sourceFiles) {
+          if (Paths.get(s).compareTo(sf.toPath()) == 0) {
+            return false;
+          }
+        }
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
 }

@@ -25,50 +25,49 @@ import choral.ast.Name;
 import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.WithTypeAnnotation;
-
 import java.util.Optional;
 
 /**
- * An AST node representing a world, i.e. a role parameter. In a definition like
- * {@code class Foo@(A,B) {...}}, A and B are worlds.
+ * An AST node representing a world, i.e. a role parameter. In a definition like {@code class
+ * Foo@(A,B) {...}}, A and B are worlds.
  */
-public abstract class World extends Node implements WithTypeAnnotation< choral.types.World > {
-	protected final Name name;
+public abstract class World extends Node implements WithTypeAnnotation<choral.types.World> {
+  protected final Name name;
 
-	protected World( final Name name ) {
-		this.name = name;
-	}
+  protected World(final Name name) {
+    this.name = name;
+  }
 
-	protected World( final Name name, final Position position ) {
-		super( position );
-		this.name = name;
-	}
+  protected World(final Name name, final Position position) {
+    super(position);
+    this.name = name;
+  }
 
-	private choral.types.World typeAnnotation;
+  private choral.types.World typeAnnotation;
 
-	public Optional< ? extends choral.types.World > typeAnnotation() {
-		return Optional.ofNullable( typeAnnotation );
-	}
+  public Optional<? extends choral.types.World> typeAnnotation() {
+    return Optional.ofNullable(typeAnnotation);
+  }
 
-	public void setTypeAnnotation( choral.types.World typeAnnotation ) {
-		this.typeAnnotation = typeAnnotation;
-	}
+  public void setTypeAnnotation(choral.types.World typeAnnotation) {
+    this.typeAnnotation = typeAnnotation;
+  }
 
-	public Name name() {
-		return name;
-	}
+  public Name name() {
+    return name;
+  }
 
-	@Override
-	public boolean equals( final Object o ) {
-		if( o instanceof World ) {
-			return this.name.equals( ( (World) o ).name() );
-		} else {
-			return false;
-		}
-	}
+  @Override
+  public boolean equals(final Object o) {
+    if (o instanceof World) {
+      return this.name.equals(((World) o).name());
+    } else {
+      return false;
+    }
+  }
 
-	@Override
-	public int hashCode() {
-		return name.hashCode();
-	}
+  @Override
+  public int hashCode() {
+    return name.hashCode();
+  }
 }

@@ -25,14 +25,19 @@ import choral.examples.VitalsStreamingUtils.Vitals;
 
 public class Database {
 
-	public static void store( String id, Vitals data ) {
-		System.out.println( "Storing "
-				+ "id: " + id
-				+ "|"
-				+ " id: " + data.id()
-				+ " tmp: " + data.temperature()
-				+ " bpm: " + data.heartRate()
-				+ " mtn: " + data.motion()
-		);
-	}
+  public static void store(String id, Vitals data) {
+    System.out.println(
+        "Storing "
+            + "id: "
+            + id
+            + "|"
+            + " id: "
+            + data.id()
+            + " tmp: "
+            + data.temperature()
+            + " bpm: "
+            + data.heartRate()
+            + " mtn: "
+            + data.motion());
+  }
 }

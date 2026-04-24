@@ -28,46 +28,45 @@ import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
-
 import java.util.List;
 
-/**
- * A wrapper for the invocation of `null`
- */
-
+/** A wrapper for the invocation of `null` */
 public class NullExpression extends Expression {
 
-	private final List< WorldArgument > worlds;
+  private final List<WorldArgument> worlds;
 
-	public NullExpression( List< WorldArgument > worlds ) {
-		this.worlds = worlds;
-	}
+  public NullExpression(List<WorldArgument> worlds) {
+    this.worlds = worlds;
+  }
 
-	public NullExpression( List< WorldArgument > worlds, final Position position ) {
-		super( position );
-		this.worlds = worlds;
-	}
+  public NullExpression(List<WorldArgument> worlds, final Position position) {
+    super(position);
+    this.worlds = worlds;
+  }
 
-	public List< WorldArgument > worlds() {
-		return worlds;
-	}
+  public List<WorldArgument> worlds() {
+    return worlds;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try {
-			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ) {
-			throw new ChoralException(
-					this.position().line() + ":"
-							+ this.position().column() + ":"
-							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-							this ) + "\n with " + n.getClass().getSimpleName() );
-		}
-	}
-
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    try {
+      return m.merge(this, (this.getClass().cast(n)));
+    } catch (ClassCastException e) {
+      throw new ChoralException(
+          this.position().line()
+              + ":"
+              + this.position().column()
+              + ":"
+              + "error: Could not merge \n"
+              + new PrettyPrinterVisitor().visit(this)
+              + "\n with "
+              + n.getClass().getSimpleName());
+    }
+  }
 }

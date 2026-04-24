@@ -26,45 +26,43 @@ package choral.utils;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class Pair< L, R > {
+public class Pair<L, R> {
 
-	private final L left;
-	private final R right;
+  private final L left;
+  private final R right;
 
-	public Pair( L left, R right ) {
-		this.left = left;
-		this.right = right;
-	}
+  public Pair(L left, R right) {
+    this.left = left;
+    this.right = right;
+  }
 
-	public static < L, R > Pair< L, R > of( L left, R right ) {
-		return new Pair( left, right );
-	}
+  public static <L, R> Pair<L, R> of(L left, R right) {
+    return new Pair(left, right);
+  }
 
-	public static < L1, L2, R1, R2 > Function< Pair< L1, R1 >, Pair< L2, R2 > > lift(
-			Function< L1, L2 > left, Function< R1, R2 > right
-	) {
-		return ( x ) -> Pair.of( left.apply( x.left ), right.apply( x.right ) );
-	}
+  public static <L1, L2, R1, R2> Function<Pair<L1, R1>, Pair<L2, R2>> lift(
+      Function<L1, L2> left, Function<R1, R2> right) {
+    return (x) -> Pair.of(left.apply(x.left), right.apply(x.right));
+  }
 
-	@Override
-	public boolean equals( Object o ) {
-		if( this == o ) return true;
-		if( o == null || getClass() != o.getClass() ) return false;
-		Pair< ?, ? > pair = (Pair< ?, ? >) o;
-		return Objects.equals( left, pair.left ) &&
-				Objects.equals( right, pair.right );
-	}
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Pair<?, ?> pair = (Pair<?, ?>) o;
+    return Objects.equals(left, pair.left) && Objects.equals(right, pair.right);
+  }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash( left, right );
-	}
+  @Override
+  public int hashCode() {
+    return Objects.hash(left, right);
+  }
 
-	public L left() {
-		return left;
-	}
+  public L left() {
+    return left;
+  }
 
-	public R right() {
-		return right;
-	}
+  public R right() {
+    return right;
+  }
 }

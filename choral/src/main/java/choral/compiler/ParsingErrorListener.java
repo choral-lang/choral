@@ -24,43 +24,42 @@ package choral.compiler;
 import choral.ast.Position;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.SyntaxException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 public class ParsingErrorListener extends BaseErrorListener {
 
-	private final String file;
-	private final List< AstPositionedException > errors;
+  private final String file;
+  private final List<AstPositionedException> errors;
 
-	public ParsingErrorListener( String file ) {
-		this.file = file;
-		this.errors = new ArrayList<>();
-	}
+  public ParsingErrorListener(String file) {
+    this.file = file;
+    this.errors = new ArrayList<>();
+  }
 
-	public List< ? extends AstPositionedException > getErrors() {
-		return this.errors;
-	}
+  public List<? extends AstPositionedException> getErrors() {
+    return this.errors;
+  }
 
-	@Override
-	public void syntaxError(
-			Recognizer< ?, ? > recognizer,
-			Object offendingSymbol,
-			int line,
-			int charPositionInLine,
-			String msg,
-			RecognitionException e
-	) {
-		List< String > stack = ( (Parser) recognizer ).getRuleInvocationStack();
-		Collections.reverse( stack );
-		String file = recognizer.getInputStream().getSourceName().equals( "<unknown>" )
-				? this.file
-				: recognizer.getInputStream().getSourceName();
-		errors.add( new SyntaxException( new Position( file, line, charPositionInLine ), msg ) );
-	}
+  @Override
+  public void syntaxError(
+      Recognizer<?, ?> recognizer,
+      Object offendingSymbol,
+      int line,
+      int charPositionInLine,
+      String msg,
+      RecognitionException e) {
+    List<String> stack = ((Parser) recognizer).getRuleInvocationStack();
+    Collections.reverse(stack);
+    String file =
+        recognizer.getInputStream().getSourceName().equals("<unknown>")
+            ? this.file
+            : recognizer.getInputStream().getSourceName();
+    errors.add(new SyntaxException(new Position(file, line, charPositionInLine), msg));
+  }
 }

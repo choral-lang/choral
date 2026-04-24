@@ -24,8 +24,8 @@ package choral.types;
 /** A datatype is any type that isn't a {@link World}. */
 public interface DataType extends Type, DataTypeOrVoid {
 
-	@Override
-	default boolean isVoid() {
-		return false;
-	}
+  @Override
+  default boolean isVoid() {
+    return false;
+  }
 }

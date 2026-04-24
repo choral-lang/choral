@@ -27,11 +27,11 @@ import choral.runtime.Serializers.KryoSerializable;
 
 @KryoSerializable
 public class StorageMsg {
-	AuthToken token;
-	Vitals data;
+  AuthToken token;
+  Vitals data;
 
-	public StorageMsg( AuthToken token, Vitals data ) {
-		this.token = token;
-		this.data = data;
-	}
+  public StorageMsg(AuthToken token, Vitals data) {
+    this.token = token;
+    this.data = data;
+  }
 }

@@ -22,21 +22,21 @@
 package choral.ast.body;
 
 public enum InterfaceMethodModifier {
-	// The Java Language Specification recommends listing modifiers in the following order
-	PUBLIC( "public" ),
-	// PRIVATE("private"),
-	ABSTRACT( "abstract" ),
-	STATIC("static"),
-	DEFAULT("default");
+  // The Java Language Specification recommends listing modifiers in the following order
+  PUBLIC("public"),
+  // PRIVATE("private"),
+  ABSTRACT("abstract"),
+  STATIC("static"),
+  DEFAULT("default");
 
-	public final String label;
+  public final String label;
 
-	@Override
-	public String toString() {
-		return this.label;
-	}
+  @Override
+  public String toString() {
+    return this.label;
+  }
 
-	InterfaceMethodModifier( String label ) {
-		this.label = label;
-	}
+  InterfaceMethodModifier(String label) {
+    this.label = label;
+  }
 }

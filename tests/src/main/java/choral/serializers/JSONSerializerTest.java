@@ -22,16 +22,14 @@
 package choral.serializers;
 
 import choral.runtime.Serializers.JSONSerializer;
-
 import java.nio.ByteBuffer;
 
 public class JSONSerializerTest {
 
-	public static void main( String[] args ) {
-		Price p = new Price( "Kim", 100 );
-		ByteBuffer b = JSONSerializer.getInstance().fromObject( p );
-		Price _p = JSONSerializer.getInstance().toObject( b );
-		System.out.println( "_p is " + _p.name() + " " + _p.price() );
-	}
-
+  public static void main(String[] args) {
+    Price p = new Price("Kim", 100);
+    ByteBuffer b = JSONSerializer.getInstance().fromObject(p);
+    Price _p = JSONSerializer.getInstance().toObject(b);
+    System.out.println("_p is " + _p.name() + " " + _p.price());
+  }
 }

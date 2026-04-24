@@ -24,11 +24,10 @@ package choral.types;
 /** An unboxed type like {@code int}, {@code char}, etc. */
 public interface PrimitiveDataType extends DataType {
 
-	@Override
-	default boolean isPrimitive() {
-		return true;
-	}
+  @Override
+  default boolean isPrimitive() {
+    return true;
+  }
 
-	Class boxedType();
-
+  Class boxedType();
 }

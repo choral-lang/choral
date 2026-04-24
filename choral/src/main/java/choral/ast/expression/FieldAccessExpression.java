@@ -29,58 +29,59 @@ import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
-
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Access of a field of an object or a class with shape: a.b.
- * In a.b, "b" is the name of the field and "a" is the scope.
+ * Access of a field of an object or a class with shape: a.b. In a.b, "b" is the name of the field
+ * and "a" is the scope.
  */
-
 public class FieldAccessExpression extends Expression {
 
-	private final Name name;
-	private final Set< WorldArgument > epp_worlds = new HashSet<>();
+  private final Name name;
+  private final Set<WorldArgument> epp_worlds = new HashSet<>();
 
-	public FieldAccessExpression( final Name name ) {
-		this.name = name;
-	}
+  public FieldAccessExpression(final Name name) {
+    this.name = name;
+  }
 
-	public FieldAccessExpression( final Name name, final Position position ) {
-		super( position );
-		this.name = name;
-	}
+  public FieldAccessExpression(final Name name, final Position position) {
+    super(position);
+    this.name = name;
+  }
 
-	public Name name() {
-		return name;
-	}
+  public Name name() {
+    return name;
+  }
 
-	public Set< WorldArgument > epp_worlds() {
-		return epp_worlds;
-	}
+  public Set<WorldArgument> epp_worlds() {
+    return epp_worlds;
+  }
 
-	@Override
-	public String toString(){
-		return name.toString();
-	}
+  @Override
+  public String toString() {
+    return name.toString();
+  }
 
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try {
-			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ) {
-			throw new ChoralException(
-					this.position().line() + ":"
-							+ this.position().column() + ":"
-							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-							this ) + "\n with " + n.getClass().getSimpleName() );
-		}
-	}
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    try {
+      return m.merge(this, (this.getClass().cast(n)));
+    } catch (ClassCastException e) {
+      throw new ChoralException(
+          this.position().line()
+              + ":"
+              + this.position().column()
+              + ":"
+              + "error: Could not merge \n"
+              + new PrettyPrinterVisitor().visit(this)
+              + "\n with "
+              + n.getClass().getSimpleName());
+    }
+  }
 }

@@ -23,43 +23,44 @@ package choral.types;
 
 import java.util.stream.Stream;
 
-/** @see choral.types.GroundDataType */
+/**
+ * @see choral.types.GroundDataType
+ */
 public interface GroundTypeParameter extends GroundReferenceType, TypeParameter {
 
-	@Override
-	HigherTypeParameter typeConstructor();
+  @Override
+  HigherTypeParameter typeConstructor();
 
-	boolean isBoundFinalised();
+  boolean isBoundFinalised();
 
-	Stream< ? extends GroundReferenceType > upperBound();
+  Stream<? extends GroundReferenceType> upperBound();
 
-	GroundReferenceType upperClass();
+  GroundReferenceType upperClass();
 
-	Stream< ? extends GroundInterface > upperInterfaces();
+  Stream<? extends GroundInterface> upperInterfaces();
 
-	boolean isUpperClassImplicit();
+  boolean isUpperClassImplicit();
 
-	@Override
-	default boolean isEquivalentToErasureOf( GroundDataType type ) {
-		// revise when adding RAW types
-		if( type.isTypeParameter() ) {
-			GroundTypeParameter other = (GroundTypeParameter) type;
-			return ( this.isUpperClassImplicit() == other.isUpperClassImplicit() )
-					&& this.upperBound().allMatch( other::isSubtypeOf )
-					&& other.upperBound().allMatch( this::isSubtypeOf );
-		}
-		if( type.isClass() || type.isInterface() ) {
-			GroundClassOrInterface other = (GroundClassOrInterface) type;
-			if( other.isInterface() && !( isUpperClassImplicit() && isSubtypeOf( other ) ) ) {
-				return false;
-			}
-			if( other.isClass() && !other.isEquivalentToErasureOf( upperClass() ) ) {
-				return false;
-			}
-			return upperInterfaces().allMatch( other::isSubtypeOf ) &&
-					other.extendedInterfaces().allMatch( this::isSubtypeOf );
-		}
-		return false;
-	}
-
+  @Override
+  default boolean isEquivalentToErasureOf(GroundDataType type) {
+    // revise when adding RAW types
+    if (type.isTypeParameter()) {
+      GroundTypeParameter other = (GroundTypeParameter) type;
+      return (this.isUpperClassImplicit() == other.isUpperClassImplicit())
+          && this.upperBound().allMatch(other::isSubtypeOf)
+          && other.upperBound().allMatch(this::isSubtypeOf);
+    }
+    if (type.isClass() || type.isInterface()) {
+      GroundClassOrInterface other = (GroundClassOrInterface) type;
+      if (other.isInterface() && !(isUpperClassImplicit() && isSubtypeOf(other))) {
+        return false;
+      }
+      if (other.isClass() && !other.isEquivalentToErasureOf(upperClass())) {
+        return false;
+      }
+      return upperInterfaces().allMatch(other::isSubtypeOf)
+          && other.extendedInterfaces().allMatch(this::isSubtypeOf);
+    }
+    return false;
+  }
 }

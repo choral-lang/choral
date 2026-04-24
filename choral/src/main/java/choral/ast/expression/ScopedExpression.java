@@ -32,55 +32,58 @@ import choral.exceptions.ChoralException;
  * A qualified access expression like {@code a.b.c}. For example, {@code System.out.println} is a
  * {@link ScopedExpression} where {@code out.println} is its "scoped expression" and {@code System}
  * is its "scope". Likewise, {@code out.println} is a {@link ScopedExpression} where {@code out} is
- * its "scope", {@code println} is its "scoped expression". In that case, {@code println} would be
- * a {@link MethodCallExpression}. (If {@code println} were a field instead of a method, it would be
- * a {@link FieldAccessExpression} instead).
+ * its "scope", {@code println} is its "scoped expression". In that case, {@code println} would be a
+ * {@link MethodCallExpression}. (If {@code println} were a field instead of a method, it would be a
+ * {@link FieldAccessExpression} instead).
  */
 public class ScopedExpression extends Expression {
 
-	final private Expression scope, scopedExpression;
+  private final Expression scope, scopedExpression;
 
-	public ScopedExpression( final Expression scope, final Expression scopedExpression ) {
-		this.scope = scope;
-		this.scopedExpression = scopedExpression;
-	}
+  public ScopedExpression(final Expression scope, final Expression scopedExpression) {
+    this.scope = scope;
+    this.scopedExpression = scopedExpression;
+  }
 
-	public ScopedExpression(
-			final Expression scope, final Expression scopedExpression, final Position position
-	) {
-		super( position );
-		this.scope = scope;
-		this.scopedExpression = scopedExpression;
-	}
+  public ScopedExpression(
+      final Expression scope, final Expression scopedExpression, final Position position) {
+    super(position);
+    this.scope = scope;
+    this.scopedExpression = scopedExpression;
+  }
 
-	public Expression scope() {
-		return scope;
-	}
+  public Expression scope() {
+    return scope;
+  }
 
-	public Expression scopedExpression() {
-		return scopedExpression;
-	}
+  public Expression scopedExpression() {
+    return scopedExpression;
+  }
 
-	@Override
-	public String toString(){
-		return scope + "." + scopedExpression;
-	}
+  @Override
+  public String toString() {
+    return scope + "." + scopedExpression;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try {
-			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ) {
-			throw new ChoralException(
-					this.position().line() + ":"
-							+ this.position().column() + ":"
-							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-							this ) + "\n with " + n.getClass().getSimpleName() );
-		}
-	}
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    try {
+      return m.merge(this, (this.getClass().cast(n)));
+    } catch (ClassCastException e) {
+      throw new ChoralException(
+          this.position().line()
+              + ":"
+              + this.position().column()
+              + ":"
+              + "error: Could not merge \n"
+              + new PrettyPrinterVisitor().visit(this)
+              + "\n with "
+              + n.getClass().getSimpleName());
+    }
+  }
 }

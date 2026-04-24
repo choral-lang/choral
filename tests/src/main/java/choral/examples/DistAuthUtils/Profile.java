@@ -23,13 +23,13 @@ package choral.examples.DistAuthUtils;
 
 public class Profile {
 
-	private final String id;
+  private final String id;
 
-	public Profile( String id ) {
-		this.id = id;
-	}
+  public Profile(String id) {
+    this.id = id;
+  }
 
-	public String id() {
-		return id;
-	}
+  public String id() {
+    return id;
+  }
 }

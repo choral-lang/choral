@@ -24,15 +24,11 @@ package choral.runtime.SerializerChannel;
 import choral.channels.SymChannel_B;
 import choral.channels.SymDataChannelImpl;
 import choral.runtime.Serializers.ChoralSerializer;
-
 import java.nio.ByteBuffer;
 
-public class SerializerChannel_B extends SerializerChannelImpl implements SymChannel_B< Object > {
-	public SerializerChannel_B(
-			ChoralSerializer< Object, ByteBuffer > serializer,
-			SymDataChannelImpl< ByteBuffer > channel
-	) {
-		super( serializer, channel );
-	}
-
+public class SerializerChannel_B extends SerializerChannelImpl implements SymChannel_B<Object> {
+  public SerializerChannel_B(
+      ChoralSerializer<Object, ByteBuffer> serializer, SymDataChannelImpl<ByteBuffer> channel) {
+    super(serializer, channel);
+  }
 }

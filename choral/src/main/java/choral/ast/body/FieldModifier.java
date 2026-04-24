@@ -22,21 +22,21 @@
 package choral.ast.body;
 
 public enum FieldModifier {
-	// The Java Language Specification recommends listing modifiers in the following order
-	PUBLIC( "public" ),
-	PROTECTED( "protected" ),
-	PRIVATE( "private" ),
-	STATIC( "static" ),
-	FINAL( "final" );
+  // The Java Language Specification recommends listing modifiers in the following order
+  PUBLIC("public"),
+  PROTECTED("protected"),
+  PRIVATE("private"),
+  STATIC("static"),
+  FINAL("final");
 
-	public final String label;
+  public final String label;
 
-	@Override
-	public String toString() {
-		return this.label;
-	}
+  @Override
+  public String toString() {
+    return this.label;
+  }
 
-	FieldModifier( String label ) {
-		this.label = label;
-	}
+  FieldModifier(String label) {
+    this.label = label;
+  }
 }

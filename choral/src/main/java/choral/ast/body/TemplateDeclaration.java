@@ -26,32 +26,32 @@ import choral.ast.Position;
 import choral.ast.type.FormalTypeParameter;
 import choral.ast.type.FormalWorldParameter;
 import choral.types.HigherClassOrInterface;
-
 import java.util.List;
 import java.util.Optional;
 
 public abstract class TemplateDeclaration extends RefType {
 
-	protected TemplateDeclaration(
-			Name name, List< FormalWorldParameter > worldparameters,
-			List< FormalTypeParameter > typeparameters, Position position
-	) {
-		super( name, worldparameters, typeparameters, position );
-	}
+  protected TemplateDeclaration(
+      Name name,
+      List<FormalWorldParameter> worldparameters,
+      List<FormalTypeParameter> typeparameters,
+      Position position) {
+    super(name, worldparameters, typeparameters, position);
+  }
 
-	public abstract Optional< ? extends HigherClassOrInterface > typeAnnotation();
+  public abstract Optional<? extends HigherClassOrInterface> typeAnnotation();
 
-	public abstract boolean isPublic();
+  public abstract boolean isPublic();
 
-	public abstract boolean isProtected();
+  public abstract boolean isProtected();
 
-	public abstract boolean isPrivate();
+  public abstract boolean isPrivate();
 
-	public abstract boolean isFinal();
+  public abstract boolean isFinal();
 
-	public abstract boolean isAbstract();
+  public abstract boolean isAbstract();
 
-	public final boolean isPackagePrivate() {
-		return !( isPrivate() || isProtected() || isPublic() );
-	}
+  public final boolean isPackagePrivate() {
+    return !(isPrivate() || isProtected() || isPublic());
+  }
 }

@@ -24,53 +24,51 @@ package choral.runtime.LocalChannel;
 import choral.channels.SymChannelImpl;
 import choral.lang.Unit;
 import choral.runtime.Media.MessageQueue;
-
 import java.util.concurrent.ExecutionException;
 
-public class LocalChannelImpl implements SymChannelImpl< Object > {
+public class LocalChannelImpl implements SymChannelImpl<Object> {
 
-	private final MessageQueue queueOut;
-	private final MessageQueue queueIn;
+  private final MessageQueue queueOut;
+  private final MessageQueue queueIn;
 
-	public LocalChannelImpl( MessageQueue queueOut, MessageQueue queueIn ) {
-		this.queueOut = queueOut;
-		this.queueIn = queueIn;
-	}
+  public LocalChannelImpl(MessageQueue queueOut, MessageQueue queueIn) {
+    this.queueOut = queueOut;
+    this.queueIn = queueIn;
+  }
 
-	@Override
-	public < M > M com( Unit x ) {
-		return this.com();
-	}
+  @Override
+  public <M> M com(Unit x) {
+    return this.com();
+  }
 
-	@Override
-	public < S > S com() {
-		try {
-			return queueIn.recv();
-		} catch( ExecutionException | InterruptedException e ) {
-			e.printStackTrace();
-		}
-		return null; // it should never happen
-	}
+  @Override
+  public <S> S com() {
+    try {
+      return queueIn.recv();
+    } catch (ExecutionException | InterruptedException e) {
+      e.printStackTrace();
+    }
+    return null; // it should never happen
+  }
 
-	@Override
-	public < M > Unit com( M m ) {
-		queueOut.send( m );
-		return Unit.id;
-	}
+  @Override
+  public <M> Unit com(M m) {
+    queueOut.send(m);
+    return Unit.id;
+  }
 
-	@Override
-	public < M extends Enum< M > > Unit select( M m ) {
-		return this.com( m );
-	}
+  @Override
+  public <M extends Enum<M>> Unit select(M m) {
+    return this.com(m);
+  }
 
-	@Override
-	public < M extends Enum< M > > M select( Unit m ) {
-		return this.select();
-	}
+  @Override
+  public <M extends Enum<M>> M select(Unit m) {
+    return this.select();
+  }
 
-	@Override
-	public < T extends Enum< T > > T select() {
-		return this.com();
-	}
-
+  @Override
+  public <T extends Enum<T>> T select() {
+    return this.com();
+  }
 }

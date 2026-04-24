@@ -23,28 +23,27 @@ package generic;
 
 public class Karatsuba {
 
-	public static Long multiply( Long n1, Long n2 ) {
-		if( n1 < 10 || n2 < 10 ) {
-			return n1 * n2;
-		} else {
-			Double m = Math.max( Math.log10( n1 ), Math.log10( n2 ) ) + 1;
-			Integer m2 = Double.valueOf( m / 2 ).intValue();
-			Integer splitter = Double.valueOf( Math.pow( 10, m2 ) ).intValue();
-			Long h1 = n1 / splitter;
-			Long l1 = n1 % splitter;
-			Long h2 = n2 / splitter;
-			Long l2 = n2 % splitter;
-			Long z0 = Karatsuba.multiply( l1, l2 );
-			Long z2 = Karatsuba.multiply( h1, h2 );
-			Long z1 = Karatsuba.multiply( l1 + h1, l2 + h2 ) - z2 - z0;
-			return z2 * splitter * splitter + z1 * splitter + z0;
-		}
-	}
+  public static Long multiply(Long n1, Long n2) {
+    if (n1 < 10 || n2 < 10) {
+      return n1 * n2;
+    } else {
+      Double m = Math.max(Math.log10(n1), Math.log10(n2)) + 1;
+      Integer m2 = Double.valueOf(m / 2).intValue();
+      Integer splitter = Double.valueOf(Math.pow(10, m2)).intValue();
+      Long h1 = n1 / splitter;
+      Long l1 = n1 % splitter;
+      Long h2 = n2 / splitter;
+      Long l2 = n2 % splitter;
+      Long z0 = Karatsuba.multiply(l1, l2);
+      Long z2 = Karatsuba.multiply(h1, h2);
+      Long z1 = Karatsuba.multiply(l1 + h1, l2 + h2) - z2 - z0;
+      return z2 * splitter * splitter + z1 * splitter + z0;
+    }
+  }
 
-	public static void main( String[] args ) {
-		System.out.println( Karatsuba.multiply( 1000L, 1000L ) + ":" + 1000 * 1000 );
-		System.out.println( Karatsuba.multiply( 12345L, 6789L ) + ":" + 12345 * 6789 );
-		System.out.println( Karatsuba.multiply( 2358925L, 1259174L ) + ":" + 2358925L * 1259174L );
-	}
-
+  public static void main(String[] args) {
+    System.out.println(Karatsuba.multiply(1000L, 1000L) + ":" + 1000 * 1000);
+    System.out.println(Karatsuba.multiply(12345L, 6789L) + ":" + 12345 * 6789);
+    System.out.println(Karatsuba.multiply(2358925L, 1259174L) + ":" + 2358925L * 1259174L);
+  }
 }

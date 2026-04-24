@@ -1,4 +1,3 @@
 package choral.ast;
 
-public interface Definition {
-}
+public interface Definition {}

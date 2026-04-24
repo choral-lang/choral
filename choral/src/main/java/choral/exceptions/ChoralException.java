@@ -23,18 +23,17 @@ package choral.exceptions;
 
 public class ChoralException extends RuntimeException {
 
-	public ChoralException() {
-	}
+  public ChoralException() {}
 
-	public ChoralException( String message ) {
-		super( message );
-	}
+  public ChoralException(String message) {
+    super(message);
+  }
 
-	public ChoralException( Throwable cause ) {
-		super( cause );
-	}
+  public ChoralException(Throwable cause) {
+    super(cause);
+  }
 
-	public ChoralException( String message, Throwable cause ) {
-		super( message, cause );
-	}
+  public ChoralException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

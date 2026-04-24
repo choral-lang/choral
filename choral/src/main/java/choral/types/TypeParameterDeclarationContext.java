@@ -25,11 +25,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TypeParameterDeclarationContext {
-	List< ? extends HigherTypeParameter > typeParameters();
+  List<? extends HigherTypeParameter> typeParameters();
 
-	Optional< ? extends HigherTypeParameter > typeParameter( int index );
+  Optional<? extends HigherTypeParameter> typeParameter(int index);
 
-	Optional< ? extends HigherTypeParameter > typeParameter( String name );
+  Optional<? extends HigherTypeParameter> typeParameter(String name);
 
-	Package declarationPackage();
+  Package declarationPackage();
 }

@@ -28,234 +28,232 @@ import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
-
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * A literal of the shape.
- * Boolean: true
- * Integer: 1
- * Double: 3.14
- * String: "Hello World!"
- */
+/** A literal of the shape. Boolean: true Integer: 1 Double: 3.14 String: "Hello World!" */
+public abstract class LiteralExpression<T> extends Expression {
 
-public abstract class LiteralExpression< T > extends Expression {
+  private final T content;
+  private WorldArgument world;
 
-	private final T content;
-	private WorldArgument world;
+  protected LiteralExpression(final T content, final WorldArgument world) {
+    this.content = content;
+    this.world = world;
+  }
 
-	protected LiteralExpression( final T content, final WorldArgument world ) {
-		this.content = content;
-		this.world = world;
-	}
+  protected LiteralExpression(final T content, final WorldArgument world, final Position position) {
+    super(position);
+    this.content = content;
+    this.world = world;
+  }
 
-	protected LiteralExpression(
-			final T content, final WorldArgument world, final Position position
-	) {
-		super( position );
-		this.content = content;
-		this.world = world;
-	}
+  public T content() {
+    return content;
+  }
 
-	public T content() {
-		return content;
-	}
+  public final WorldArgument world() {
+    return world;
+  }
 
-	public final WorldArgument world() {
-		return world;
-	}
+  public void setWorldArgument(final WorldArgument w) {
+    this.world = w;
+  }
 
-	public void setWorldArgument( final WorldArgument w ) {
-		this.world = w;
-	}
+  public final Set<WorldArgument> epp_worlds() {
+    return world != null ? Set.of(world()) : Collections.emptySet();
+  }
 
-	public final Set< WorldArgument > epp_worlds() {
-		return world != null ? Set.of( world() ) : Collections.emptySet();
-	}
+  @Override
+  public String toString() {
+    return content + "@" + world.name();
+  }
 
-	@Override
-	public String toString() {
-		return content + "@" + world.name();
-	}
+  public static class BooleanLiteralExpression extends LiteralExpression<Boolean> {
 
-	public static class BooleanLiteralExpression extends LiteralExpression< Boolean > {
+    public BooleanLiteralExpression(final Boolean content, final WorldArgument world) {
+      super(content, world);
+    }
 
-		public BooleanLiteralExpression( final Boolean content, final WorldArgument world ) {
-			super( content, world );
-		}
+    public BooleanLiteralExpression(
+        final Boolean content, final WorldArgument world, final Position position) {
+      super(content, world, position);
+    }
 
-		public BooleanLiteralExpression(
-				final Boolean content, final WorldArgument world, final Position position
-		) {
-			super( content, world, position );
-		}
+    @Override
+    public <R> R accept(ChoralVisitorInterface<R> v) {
+      return v.visit(this);
+    }
 
-		@Override
-		public < R > R accept( ChoralVisitorInterface< R > v ) {
-			return v.visit( this );
-		}
+    @Override
+    public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+      try {
+        return m.merge(this, (this.getClass().cast(n)));
+      } catch (ClassCastException e) {
+        throw new ChoralException(
+            this.position().line()
+                + ":"
+                + this.position().column()
+                + ":"
+                + "error: Could not merge \n"
+                + new PrettyPrinterVisitor().visit(this)
+                + "\n with "
+                + n.getClass().getSimpleName());
+      }
+    }
 
-		@Override
-		public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-			try {
-				return m.merge( this, ( this.getClass().cast( n ) ) );
-			} catch( ClassCastException e ) {
-				throw new ChoralException(
-						this.position().line() + ":"
-								+ this.position().column() + ":"
-								+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-								this ) + "\n with " + n.getClass().getSimpleName() );
-			}
-		}
+    @Override
+    public int hashCode() {
+      return this.content().hashCode();
+    }
 
-		@Override
-		public int hashCode() {
-			return this.content().hashCode();
-		}
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof BooleanLiteralExpression) {
+        return ((BooleanLiteralExpression) obj).content().equals(this.content());
+      }
+      return false;
+    }
+  }
 
-		@Override
-		public boolean equals( Object obj ) {
-			if( obj instanceof BooleanLiteralExpression ) {
-				return ( (BooleanLiteralExpression) obj ).content().equals( this.content() );
-			}
-			return false;
-		}
+  public static class IntegerLiteralExpression extends LiteralExpression<Integer> {
 
-	}
+    public IntegerLiteralExpression(final Integer content, final WorldArgument world) {
+      super(content, world);
+    }
 
-	public static class IntegerLiteralExpression extends LiteralExpression< Integer > {
+    public IntegerLiteralExpression(
+        final Integer content, final WorldArgument world, final Position position) {
+      super(content, world, position);
+    }
 
-		public IntegerLiteralExpression( final Integer content, final WorldArgument world ) {
-			super( content, world );
-		}
+    @Override
+    public <R> R accept(ChoralVisitorInterface<R> v) {
+      return v.visit(this);
+    }
 
-		public IntegerLiteralExpression(
-				final Integer content, final WorldArgument world, final Position position
-		) {
-			super( content, world, position );
-		}
+    @Override
+    public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+      try {
+        return m.merge(this, (this.getClass().cast(n)));
+      } catch (ClassCastException e) {
+        throw new ChoralException(
+            this.position().line()
+                + ":"
+                + this.position().column()
+                + ":"
+                + "error: Could not merge \n"
+                + new PrettyPrinterVisitor().visit(this)
+                + "\n with "
+                + n.getClass().getSimpleName());
+      }
+    }
 
-		@Override
-		public < R > R accept( ChoralVisitorInterface< R > v ) {
-			return v.visit( this );
-		}
+    @Override
+    public int hashCode() {
+      return this.content().hashCode();
+    }
 
-		@Override
-		public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-			try {
-				return m.merge( this, ( this.getClass().cast( n ) ) );
-			} catch( ClassCastException e ) {
-				throw new ChoralException(
-						this.position().line() + ":"
-								+ this.position().column() + ":"
-								+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-								this ) + "\n with " + n.getClass().getSimpleName() );
-			}
-		}
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof IntegerLiteralExpression) {
+        return ((IntegerLiteralExpression) obj).content().equals(this.content());
+      }
+      return false;
+    }
+  }
 
-		@Override
-		public int hashCode() {
-			return this.content().hashCode();
-		}
+  public static class DoubleLiteralExpression extends LiteralExpression<Double> {
 
-		@Override
-		public boolean equals( Object obj ) {
-			if( obj instanceof IntegerLiteralExpression ) {
-				return ( (IntegerLiteralExpression) obj ).content().equals( this.content() );
-			}
-			return false;
-		}
+    public DoubleLiteralExpression(final Double content, final WorldArgument world) {
+      super(content, world);
+    }
 
-	}
+    public DoubleLiteralExpression(
+        final Double content, final WorldArgument world, final Position position) {
+      super(content, world, position);
+    }
 
-	public static class DoubleLiteralExpression extends LiteralExpression< Double > {
+    @Override
+    public <R> R accept(ChoralVisitorInterface<R> v) {
+      return v.visit(this);
+    }
 
-		public DoubleLiteralExpression( final Double content, final WorldArgument world ) {
-			super( content, world );
-		}
+    @Override
+    public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+      try {
+        return m.merge(this, (this.getClass().cast(n)));
+      } catch (ClassCastException e) {
+        throw new ChoralException(
+            this.position().line()
+                + ":"
+                + this.position().column()
+                + ":"
+                + "error: Could not merge \n"
+                + new PrettyPrinterVisitor().visit(this)
+                + "\n with "
+                + n.getClass().getSimpleName());
+      }
+    }
 
-		public DoubleLiteralExpression(
-				final Double content, final WorldArgument world, final Position position
-		) {
-			super( content, world, position );
-		}
+    @Override
+    public int hashCode() {
+      return this.content().hashCode();
+    }
 
-		@Override
-		public < R > R accept( ChoralVisitorInterface< R > v ) {
-			return v.visit( this );
-		}
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof DoubleLiteralExpression) {
+        return ((DoubleLiteralExpression) obj).content().equals(this.content());
+      }
+      return false;
+    }
+  }
 
-		@Override
-		public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-			try {
-				return m.merge( this, ( this.getClass().cast( n ) ) );
-			} catch( ClassCastException e ) {
-				throw new ChoralException(
-						this.position().line() + ":"
-								+ this.position().column() + ":"
-								+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-								this ) + "\n with " + n.getClass().getSimpleName() );
-			}
-		}
+  public static class StringLiteralExpression extends LiteralExpression<String> {
 
-		@Override
-		public int hashCode() {
-			return this.content().hashCode();
-		}
+    public StringLiteralExpression(final String content, final WorldArgument world) {
+      super(content, world);
+    }
 
-		@Override
-		public boolean equals( Object obj ) {
-			if( obj instanceof DoubleLiteralExpression ) {
-				return ( (DoubleLiteralExpression) obj ).content().equals( this.content() );
-			}
-			return false;
-		}
+    public StringLiteralExpression(
+        final String content, final WorldArgument world, final Position position) {
+      super(content, world, position);
+    }
 
-	}
+    @Override
+    public <R> R accept(ChoralVisitorInterface<R> v) {
+      return v.visit(this);
+    }
 
-	public static class StringLiteralExpression extends LiteralExpression< String > {
+    @Override
+    public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+      try {
+        return m.merge(this, (this.getClass().cast(n)));
+      } catch (ClassCastException e) {
+        throw new ChoralException(
+            this.position().line()
+                + ":"
+                + this.position().column()
+                + ":"
+                + "error: Could not merge \n"
+                + new PrettyPrinterVisitor().visit(this)
+                + "\n with "
+                + n.getClass().getSimpleName());
+      }
+    }
 
-		public StringLiteralExpression( final String content, final WorldArgument world ) {
-			super( content, world );
-		}
+    @Override
+    public int hashCode() {
+      return this.content().hashCode();
+    }
 
-		public StringLiteralExpression(
-				final String content, final WorldArgument world, final Position position
-		) {
-			super( content, world, position );
-		}
-
-		@Override
-		public < R > R accept( ChoralVisitorInterface< R > v ) {
-			return v.visit( this );
-		}
-
-		@Override
-		public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-			try {
-				return m.merge( this, ( this.getClass().cast( n ) ) );
-			} catch( ClassCastException e ) {
-				throw new ChoralException(
-						this.position().line() + ":"
-								+ this.position().column() + ":"
-								+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-								this ) + "\n with " + n.getClass().getSimpleName() );
-			}
-		}
-
-		@Override
-		public int hashCode() {
-			return this.content().hashCode();
-		}
-
-		@Override
-		public boolean equals( Object obj ) {
-			if( obj instanceof StringLiteralExpression ) {
-				return ( (StringLiteralExpression) obj ).content().equals( this.content() );
-			}
-			return false;
-		}
-	}
-
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof StringLiteralExpression) {
+        return ((StringLiteralExpression) obj).content().equals(this.content());
+      }
+      return false;
+    }
+  }
 }

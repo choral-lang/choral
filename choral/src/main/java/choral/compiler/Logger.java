@@ -26,108 +26,107 @@ import java.util.EnumSet;
 
 public class Logger {
 
-	private String file = "";
-	private boolean errors = false;
+  private String file = "";
+  private boolean errors = false;
 
-	public String file() {
-		return file;
-	}
+  public String file() {
+    return file;
+  }
 
-	public void setFile( String file ) {
-		this.file = ( file == null ) ? "" : file;
-	}
+  public void setFile(String file) {
+    this.file = (file == null) ? "" : file;
+  }
 
-	public static String getFormattedPosition( String file, int line, int column ) {
-		if( file == null || file.isBlank() ) {
-			return String.format( "line %d column %d", line, column );
-		} else {
-			return String.format( "'%s' line %d column %d", file, line, column );
-		}
-	}
-
-	public static String addFormattedPosition( String position, String message ) {
-		return message + "\n\t see " + position;
-	}
-
-/*    public static String getFormattedPosition(String file, Node node){
-        return getFormattedPosition(file, node.line(), node.column());
+  public static String getFormattedPosition(String file, int line, int column) {
+    if (file == null || file.isBlank()) {
+      return String.format("line %d column %d", line, column);
+    } else {
+      return String.format("'%s' line %d column %d", file, line, column);
     }
+  }
 
-    public String getFormattedPosition(int line, int column){
-        return getFormattedPosition(this.file(), line, column);
+  public static String addFormattedPosition(String position, String message) {
+    return message + "\n\t see " + position;
+  }
+
+  /*    public static String getFormattedPosition(String file, Node node){
+      return getFormattedPosition(file, node.line(), node.column());
+  }
+
+  public String getFormattedPosition(int line, int column){
+      return getFormattedPosition(this.file(), line, column);
+  }
+
+  public String getFormattedPosition(Node node){
+      return getFormattedPosition(this.file(), node.line(), node.column());
+  }*/
+
+  public final EnumSet<Level> filterLevels = EnumSet.of(Level.ERROR, Level.WARNING);
+
+  public enum Level {
+    ERROR(-1),
+    WARNING(0),
+    INFO(1),
+    DEBUG(2);
+
+    final int value;
+
+    Level(int value) {
+      this.value = value;
     }
+  }
 
-    public String getFormattedPosition(Node node){
-        return getFormattedPosition(this.file(), node.line(), node.column());
-    }*/
+  public Logger(Logger logger) {
+    this.filterLevels.clear();
+    this.filterLevels.addAll(logger.filterLevels);
+    setFile(logger.file);
+  }
 
-	public final EnumSet< Level > filterLevels = EnumSet.of( Level.ERROR, Level.WARNING );
+  public Logger(Logger logger, String file) {
+    this(logger);
+    setFile(file);
+  }
 
-	public enum Level {
-		ERROR( -1 ),
-		WARNING( 0 ),
-		INFO( 1 ),
-		DEBUG( 2 );
+  public Logger(Level... filterLevels) {
+    this.filterLevels.clear();
+    Collections.addAll(this.filterLevels, filterLevels);
+  }
 
-		final int value;
+  public boolean hasErrors() {
+    return errors;
+  }
 
-		Level( int value ) {
-			this.value = value;
-		}
-	}
+  public void flagErrors() {
+    errors = true;
+  }
 
-	public Logger( Logger logger ) {
-		this.filterLevels.clear();
-		this.filterLevels.addAll( logger.filterLevels );
-		setFile( logger.file );
-	}
+  public void logf(Level level, String format, Object... args) {
+    log(level, String.format(format, args));
+  }
 
-	public Logger( Logger logger, String file ) {
-		this( logger );
-		setFile( file );
-	}
+  public void logfWithPosition(Level level, int line, int column, String format, Object... args) {
+    logfWithPosition(level, file(), line, column, format, args);
+  }
 
-	public Logger( Level... filterLevels ) {
-		this.filterLevels.clear();
-		Collections.addAll( this.filterLevels, filterLevels );
-	}
+  public void logfWithPosition(
+      Level level, String file, int line, int column, String format, Object... args) {
+    log(
+        level,
+        addFormattedPosition(
+            getFormattedPosition(file, line, column), String.format(format, args)));
+  }
 
-	public boolean hasErrors() {
-		return errors;
-	}
-
-	public void flagErrors() {
-		errors = true;
-	}
-
-	public void logf( Level level, String format, Object... args ) {
-		log( level, String.format( format, args ) );
-	}
-
-	public void logfWithPosition(
-			Level level, int line, int column, String format, Object... args
-	) {
-		logfWithPosition( level, file(), line, column, format, args );
-	}
-
-	public void logfWithPosition(
-			Level level, String file, int line, int column, String format, Object... args
-	) {
-		log( level, addFormattedPosition( getFormattedPosition( file, line, column ),
-				String.format( format, args ) ) );
-	}
-
-	public void log( Level level, String message ) {
-		if( filterLevels.contains( level ) ) {
-			switch( level ) {
-				case ERROR -> {
-					this.errors = true;
-					System.err.println( "[ERROR] " + message );
-				}
-				case WARNING -> System.err.println( "[WARNING] " + message );
-				case INFO -> System.err.println( "[INFO] " + message );
-				case DEBUG -> System.err.println( "[DEBUG] " + message );
-			}
-		}
-	}
+  public void log(Level level, String message) {
+    if (filterLevels.contains(level)) {
+      switch (level) {
+        case ERROR -> {
+          this.errors = true;
+          System.err.println("[ERROR] " + message);
+        }
+        case WARNING -> System.err.println("[WARNING] " + message);
+        case INFO -> System.err.println("[INFO] " + message);
+        case DEBUG -> System.err.println("[DEBUG] " + message);
+      }
+    }
+  }
 }

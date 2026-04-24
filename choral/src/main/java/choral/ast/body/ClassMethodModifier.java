@@ -22,22 +22,22 @@
 package choral.ast.body;
 
 public enum ClassMethodModifier {
-	// The Java Language Specification recommends listing modifiers in the following order
-	PUBLIC( "public" ),
-	PROTECTED( "protected" ),
-	PRIVATE( "private" ),
-	ABSTRACT( "abstract" ),
-	STATIC( "static" ),
-	FINAL( "final" );
+  // The Java Language Specification recommends listing modifiers in the following order
+  PUBLIC("public"),
+  PROTECTED("protected"),
+  PRIVATE("private"),
+  ABSTRACT("abstract"),
+  STATIC("static"),
+  FINAL("final");
 
-	public final String label;
+  public final String label;
 
-	@Override
-	public String toString() {
-		return this.label;
-	}
+  @Override
+  public String toString() {
+    return this.label;
+  }
 
-	ClassMethodModifier( String label ) {
-		this.label = label;
-	}
+  ClassMethodModifier(String label) {
+    this.label = label;
+  }
 }

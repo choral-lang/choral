@@ -24,7 +24,6 @@ package choral.types;
 import choral.ast.Node;
 import choral.exceptions.StaticVerificationException;
 import choral.utils.Formatting;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -32,425 +31,434 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/** @see HigherDataType */
+/**
+ * @see HigherDataType
+ */
 public final class HigherTypeParameter extends HigherReferenceType implements TypeParameter {
 
-	public HigherTypeParameter(
-			Universe universe,
-			String identifier,
-			List< World > worldParameters
-	) {
-		super( universe, worldParameters );
-		this.identifier = identifier;
-	}
+  public HigherTypeParameter(Universe universe, String identifier, List<World> worldParameters) {
+    super(universe, worldParameters);
+    this.identifier = identifier;
+  }
 
-	public HigherTypeParameter(
-			Universe universe,
-			String identifier,
-			List< World > worldParameters,
-			Node sourceCode
-	) {
-		this( universe, identifier, worldParameters );
-		setSourceCode( sourceCode );
-	}
+  public HigherTypeParameter(
+      Universe universe, String identifier, List<World> worldParameters, Node sourceCode) {
+    this(universe, identifier, worldParameters);
+    setSourceCode(sourceCode);
+  }
 
-	private final String identifier;
+  private final String identifier;
 
-	public String identifier() {
-		return identifier;
-	}
+  public String identifier() {
+    return identifier;
+  }
 
-	@Override
-	public String toString() {
-		return identifier;
-	}
+  @Override
+  public String toString() {
+    return identifier;
+  }
 
-	private TypeParameterDeclarationContext declarationContext;
+  private TypeParameterDeclarationContext declarationContext;
 
-	public TypeParameterDeclarationContext declarationContext() {
-		return declarationContext;
-	}
+  public TypeParameterDeclarationContext declarationContext() {
+    return declarationContext;
+  }
 
-	public void setDeclarationContext( TypeParameterDeclarationContext declarationContext ) {
-		assert ( this.declarationContext == null );
-		this.declarationContext = declarationContext;
-	}
+  public void setDeclarationContext(TypeParameterDeclarationContext declarationContext) {
+    assert (this.declarationContext == null);
+    this.declarationContext = declarationContext;
+  }
 
-	HigherReferenceType getRawType() {
-		if( innerType().isBoundFinalised() ) {
-			return new HigherReferenceType( universe(),
-					this.worldParameters.stream()
-							.map( x -> new World( universe(), x.identifier() ) ).collect(
-									Collectors.toList() ) ) {
-				@Override
-				public GroundReferenceType applyTo( List< ? extends World > args ) {
-					return HigherTypeParameter.this.applyTo( args );
-				}
-			};
-		} else {
-			return this;
-		}
-	}
+  HigherReferenceType getRawType() {
+    if (innerType().isBoundFinalised()) {
+      return new HigherReferenceType(
+          universe(),
+          this.worldParameters.stream()
+              .map(x -> new World(universe(), x.identifier()))
+              .collect(Collectors.toList())) {
+        @Override
+        public GroundReferenceType applyTo(List<? extends World> args) {
+          return HigherTypeParameter.this.applyTo(args);
+        }
+      };
+    } else {
+      return this;
+    }
+  }
 
-	public boolean checkWithinBounds( Substitution substitution ) {
-		HigherReferenceType typeArg = substitution.get( this );
-		return isSameKind( typeArg ) && innerType.upperBound()
-				.allMatch( u -> typeArg.applyTo( worldParameters ).isSubtypeOf(
-						u.applySubstitution( substitution ) ) );
-	}
+  public boolean checkWithinBounds(Substitution substitution) {
+    HigherReferenceType typeArg = substitution.get(this);
+    return isSameKind(typeArg)
+        && innerType
+            .upperBound()
+            .allMatch(
+                u ->
+                    typeArg
+                        .applyTo(worldParameters)
+                        .isSubtypeOf(u.applySubstitution(substitution)));
+  }
 
-	public void assertWithinBounds( Substitution substitution ) {
-		if( !checkWithinBounds( substitution ) ) {
-			HigherReferenceType typeArg = substitution.get( this );
-			List< World > worldArgs = World.freshWorlds( universe(), worldParameters.size(), "X" );
-			Substitution s2 = new Substitution() {
-				@Override
-				public World get( World placeHolder ) {
-					int i = worldParameters.indexOf( placeHolder );
-					return ( i < 0 )
-							? substitution.get( placeHolder )
-							: worldArgs.get( i );
-				}
+  public void assertWithinBounds(Substitution substitution) {
+    if (!checkWithinBounds(substitution)) {
+      HigherReferenceType typeArg = substitution.get(this);
+      List<World> worldArgs = World.freshWorlds(universe(), worldParameters.size(), "X");
+      Substitution s2 =
+          new Substitution() {
+            @Override
+            public World get(World placeHolder) {
+              int i = worldParameters.indexOf(placeHolder);
+              return (i < 0) ? substitution.get(placeHolder) : worldArgs.get(i);
+            }
 
-				@Override
-				public HigherReferenceType get( HigherTypeParameter placeHolder ) {
-					return substitution.get( placeHolder );
-				}
-			};
-			throw new StaticVerificationException( "type argument '"
-					+ typeArg
-					+ "' is not within bounds, '" + typeArg.applyTo( worldArgs ) + "' must extend "
-					+ prettyTypeList( innerType.upperBound().map( x -> x.applySubstitution( s2 ) ) )
-					+ " for any role "
-					+ prettyTypeList( worldArgs ) );
-		}
-	}
+            @Override
+            public HigherReferenceType get(HigherTypeParameter placeHolder) {
+              return substitution.get(placeHolder);
+            }
+          };
+      throw new StaticVerificationException(
+          "type argument '"
+              + typeArg
+              + "' is not within bounds, '"
+              + typeArg.applyTo(worldArgs)
+              + "' must extend "
+              + prettyTypeList(innerType.upperBound().map(x -> x.applySubstitution(s2)))
+              + " for any role "
+              + prettyTypeList(worldArgs));
+    }
+  }
 
-	private Definition innerType = new Definition();
+  private Definition innerType = new Definition();
 
-	public Definition innerType() {
-		return innerType;
-	}
+  public Definition innerType() {
+    return innerType;
+  }
 
-	@Override
-	public GroundReferenceType applyTo( List< ? extends World > args ) {
-		return innerType().applySubstitution( getApplicationSubstitution( args ) );
-	}
+  @Override
+  public GroundReferenceType applyTo(List<? extends World> args) {
+    return innerType().applySubstitution(getApplicationSubstitution(args));
+  }
 
-	public final class Definition extends HigherReferenceType.Definition
-			implements GroundTypeParameter {
+  public final class Definition extends HigherReferenceType.Definition
+      implements GroundTypeParameter {
 
-		private Definition() {
-		}
+    private Definition() {}
 
-		public String toString() {
-			return typeConstructor().toString() +
-					worldArguments().stream().map( World::toString ).collect(
-							Formatting.joining( ",", "@(", ")", "" ) );
-		}
+    public String toString() {
+      return typeConstructor().toString()
+          + worldArguments().stream()
+              .map(World::toString)
+              .collect(Formatting.joining(",", "@(", ")", ""));
+    }
 
-		@Override
-		public HigherTypeParameter typeConstructor() {
-			return HigherTypeParameter.this;
-		}
+    @Override
+    public HigherTypeParameter typeConstructor() {
+      return HigherTypeParameter.this;
+    }
 
-		private final HashMap< Substitution, GroundReferenceType > alphaIndex = new HashMap<>();
+    private final HashMap<Substitution, GroundReferenceType> alphaIndex = new HashMap<>();
 
-		@Override
-		public GroundReferenceType applySubstitution( Substitution substitution ) {
-			GroundReferenceType result = alphaIndex.get( substitution );
-			if( result == null ) {
-				HigherReferenceType t = substitution.get( this.typeConstructor() );
-				if( t == typeConstructor() ) {
-					result = new Proxy( substitution );
-				} else {
-					result = t.applyTo( worldArguments().stream()
-							.map( substitution::get )
-							.collect( Collectors.toCollection(
-									() -> new ArrayList<>( worldArguments().size() ) ) )
-					);
-				}
-				alphaIndex.put( substitution, result );
-			}
-			return result;
-		}
+    @Override
+    public GroundReferenceType applySubstitution(Substitution substitution) {
+      GroundReferenceType result = alphaIndex.get(substitution);
+      if (result == null) {
+        HigherReferenceType t = substitution.get(this.typeConstructor());
+        if (t == typeConstructor()) {
+          result = new Proxy(substitution);
+        } else {
+          result =
+              t.applyTo(
+                  worldArguments().stream()
+                      .map(substitution::get)
+                      .collect(
+                          Collectors.toCollection(() -> new ArrayList<>(worldArguments().size()))));
+        }
+        alphaIndex.put(substitution, result);
+      }
+      return result;
+    }
 
-		private boolean boundFinalised = false;
+    private boolean boundFinalised = false;
 
-		@Override
-		public boolean isBoundFinalised() {
-			return boundFinalised;
-		}
+    @Override
+    public boolean isBoundFinalised() {
+      return boundFinalised;
+    }
 
-		public void finaliseBound() {
-			if( upperClass == null ) {
-				setUpperClass();
-			}
-			this.boundFinalised = true;
-		}
+    public void finaliseBound() {
+      if (upperClass == null) {
+        setUpperClass();
+      }
+      this.boundFinalised = true;
+    }
 
-		private GroundReferenceType upperClass = null;
+    private GroundReferenceType upperClass = null;
 
-		private boolean upperClassImplicit = true;
+    private boolean upperClassImplicit = true;
 
-		private void setUpperClass() {
-			assert ( !isBoundFinalised() );
-			upperClass = universe().topReferenceType( worldArguments() );
-		}
+    private void setUpperClass() {
+      assert (!isBoundFinalised());
+      upperClass = universe().topReferenceType(worldArguments());
+    }
 
-		@Override
-		public GroundReferenceType upperClass() {
-			return upperClass;
-		}
+    @Override
+    public GroundReferenceType upperClass() {
+      return upperClass;
+    }
 
-		@Override
-		public boolean isUpperClassImplicit() {
-			return upperClassImplicit;
-		}
+    @Override
+    public boolean isUpperClassImplicit() {
+      return upperClassImplicit;
+    }
 
-		private final List< GroundInterface > upperInterfaces = new ArrayList<>( 10 );
+    private final List<GroundInterface> upperInterfaces = new ArrayList<>(10);
 
-		@Override
-		public Stream< ? extends GroundInterface > upperInterfaces() {
-			return upperInterfaces.stream();
-		}
+    @Override
+    public Stream<? extends GroundInterface> upperInterfaces() {
+      return upperInterfaces.stream();
+    }
 
-		public void addUpperBound( GroundReferenceType type ) {
-			assert ( !isBoundFinalised() );
-			if( type.worldArguments().size() != worldArguments().size() ||
-					!type.worldArguments().containsAll( worldParameters ) ) {
-				throw new StaticVerificationException(
-						"illegal bound, '" + type + "' and '" + this + "' must have the same roles" );
-			}
-			if( type instanceof GroundInterface ) {
-				if( upperClass == null ) {
-					setUpperClass();
-				}
-				if( upperInterfaces().anyMatch( x -> x.isEquivalentTo( type ) ) ) {
-					throw new StaticVerificationException(
-							"duplicate parameter bound, '" + type + "' is repeated" );
-				}
-				upperInterfaces.add( (GroundInterface) type );
-			} else {
-				if( upperClass == null ) {
-					upperClass = type;
-					upperClassImplicit = false;
-				} else {
-					String s;
-					if( type instanceof GroundEnum ) {
-						s = " an enum";
-					} else if( type instanceof GroundClass ) {
-						s = " a class";
-					} else {
-						s = " a type parameter";
-					}
-					throw new StaticVerificationException(
-							"interface expected, '" + type + "' is " + s );
-				}
-			}
-		}
+    public void addUpperBound(GroundReferenceType type) {
+      assert (!isBoundFinalised());
+      if (type.worldArguments().size() != worldArguments().size()
+          || !type.worldArguments().containsAll(worldParameters)) {
+        throw new StaticVerificationException(
+            "illegal bound, '" + type + "' and '" + this + "' must have the same roles");
+      }
+      if (type instanceof GroundInterface) {
+        if (upperClass == null) {
+          setUpperClass();
+        }
+        if (upperInterfaces().anyMatch(x -> x.isEquivalentTo(type))) {
+          throw new StaticVerificationException(
+              "duplicate parameter bound, '" + type + "' is repeated");
+        }
+        upperInterfaces.add((GroundInterface) type);
+      } else {
+        if (upperClass == null) {
+          upperClass = type;
+          upperClassImplicit = false;
+        } else {
+          String s;
+          if (type instanceof GroundEnum) {
+            s = " an enum";
+          } else if (type instanceof GroundClass) {
+            s = " a class";
+          } else {
+            s = " a type parameter";
+          }
+          throw new StaticVerificationException("interface expected, '" + type + "' is " + s);
+        }
+      }
+    }
 
-		@Override
-		public Stream< ? extends GroundReferenceType > upperBound() {
-			return Stream.concat( Stream.of( upperClass ), upperInterfaces() );
-		}
+    @Override
+    public Stream<? extends GroundReferenceType> upperBound() {
+      return Stream.concat(Stream.of(upperClass), upperInterfaces());
+    }
 
-		@Override
-		protected boolean isEquivalentTo( GroundDataType type ) {
-			if( type == this ) {
-				return true;
-			} else if( type instanceof Proxy ) {
-				Proxy other = (Proxy) type;
-				return ( other.definition() == this ) &&
-						worldArguments().equals( other.worldArguments() );
-			} else {
-				return false;
-			}
-		}
+    @Override
+    protected boolean isEquivalentTo(GroundDataType type) {
+      if (type == this) {
+        return true;
+      } else if (type instanceof Proxy) {
+        Proxy other = (Proxy) type;
+        return (other.definition() == this) && worldArguments().equals(other.worldArguments());
+      } else {
+        return false;
+      }
+    }
 
-		@Override
-		protected boolean isEquivalentTo_relaxed( GroundDataType type ) {
-			if( type == this ) {
-				return true;
-			} else if( type instanceof Proxy ) {
-				Proxy other = (Proxy) type;
-				return ( other.definition() == this );
-			} else {
-				return false;
-			}
-		}
+    @Override
+    protected boolean isEquivalentTo_relaxed(GroundDataType type) {
+      if (type == this) {
+        return true;
+      } else if (type instanceof Proxy) {
+        Proxy other = (Proxy) type;
+        return (other.definition() == this);
+      } else {
+        return false;
+      }
+    }
 
-		@Override
-		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
-			return ( !strict && isEquivalentTo( type ) )
-					|| upperClass().isSubtypeOf( type, false )
-					|| upperInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) );
-		}
+    @Override
+    protected boolean isSubtypeOf(GroundDataType type, boolean strict) {
+      return (!strict && isEquivalentTo(type))
+          || upperClass().isSubtypeOf(type, false)
+          || upperInterfaces().anyMatch(x -> x.isSubtypeOf(type, false));
+    }
 
-		@Override
-		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
-			return ( !strict && isEquivalentTo_relaxed( type ) )
-					|| upperClass().isSubtypeOf_relaxed( type, false )
-					|| upperInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) );
-		}
+    @Override
+    protected boolean isSubtypeOf_relaxed(GroundDataType type, boolean strict) {
+      return (!strict && isEquivalentTo_relaxed(type))
+          || upperClass().isSubtypeOf_relaxed(type, false)
+          || upperInterfaces().anyMatch(x -> x.isSubtypeOf_relaxed(type, false));
+    }
 
-		private boolean interfaceFinalised = false;
+    private boolean interfaceFinalised = false;
 
-		@Override
-		public boolean isInterfaceFinalised() {
-			return interfaceFinalised;
-		}
+    @Override
+    public boolean isInterfaceFinalised() {
+      return interfaceFinalised;
+    }
 
-		public void finaliseInterface() {
-			assert ( isBoundFinalised() && upperBound().allMatch(
-					GroundReferenceType::isInterfaceFinalised ) );
-			if( interfaceFinalised ) {
-				return;
-			}
-			// inherited fields
-			upperBound().flatMap( GroundReferenceType::fields )
-					.filter( x -> x.isAccessibleFrom( this ) )
-					.forEach( inheritedFields::add );
-			// inherited methods (sec. 8.4.8)
-			upperBound().flatMap( GroundReferenceType::methods )
-					.filter( x -> x.isAccessibleFrom( this ) )
-					.forEach( x -> {
-						boolean inherited = true;
-						for( Member.HigherMethod z : inheritedMethods ) {
-							if( z.isSubSignatureOf( x ) ) {
-								// check assignable return type;
-								if( !z.isReturnTypeSubstitutableFor( x ) ) {
-									throw new StaticVerificationException( "method '" + z
-											+ "' in '" + z.declarationContext()
-											+ "' clashes with method '" + x
-											+ "' in '" + x.declarationContext()
-											+ "', attempting to use incompatible return type" );
-								}
-								inherited = false;
-								break;
-							}
-						}
-						if( inherited ) {
-							inheritedMethods.add( x );
-						}
-					} );
-			interfaceFinalised = true;
-		}
+    public void finaliseInterface() {
+      assert (isBoundFinalised()
+          && upperBound().allMatch(GroundReferenceType::isInterfaceFinalised));
+      if (interfaceFinalised) {
+        return;
+      }
+      // inherited fields
+      upperBound()
+          .flatMap(GroundReferenceType::fields)
+          .filter(x -> x.isAccessibleFrom(this))
+          .forEach(inheritedFields::add);
+      // inherited methods (sec. 8.4.8)
+      upperBound()
+          .flatMap(GroundReferenceType::methods)
+          .filter(x -> x.isAccessibleFrom(this))
+          .forEach(
+              x -> {
+                boolean inherited = true;
+                for (Member.HigherMethod z : inheritedMethods) {
+                  if (z.isSubSignatureOf(x)) {
+                    // check assignable return type;
+                    if (!z.isReturnTypeSubstitutableFor(x)) {
+                      throw new StaticVerificationException(
+                          "method '"
+                              + z
+                              + "' in '"
+                              + z.declarationContext()
+                              + "' clashes with method '"
+                              + x
+                              + "' in '"
+                              + x.declarationContext()
+                              + "', attempting to use incompatible return type");
+                    }
+                    inherited = false;
+                    break;
+                  }
+                }
+                if (inherited) {
+                  inheritedMethods.add(x);
+                }
+              });
+      interfaceFinalised = true;
+    }
 
-		protected final List< Member.Field > inheritedFields = new LinkedList<>();
+    protected final List<Member.Field> inheritedFields = new LinkedList<>();
 
-		@Override
-		public Stream< ? extends Member.Field > fields() {
-			return inheritedFields.stream();
-		}
+    @Override
+    public Stream<? extends Member.Field> fields() {
+      return inheritedFields.stream();
+    }
 
-		protected final List< Member.HigherMethod > inheritedMethods = new LinkedList<>();
+    protected final List<Member.HigherMethod> inheritedMethods = new LinkedList<>();
 
-		@Override
-		public Stream< ? extends Member.HigherMethod > methods() {
-			return inheritedMethods.stream();
-		}
+    @Override
+    public Stream<? extends Member.HigherMethod> methods() {
+      return inheritedMethods.stream();
+    }
+  }
 
-	}
+  /**
+   * @see HigherDataType.Proxy
+   */
+  private final class Proxy extends HigherReferenceType.Proxy implements GroundTypeParameter {
 
-	/** @see HigherDataType.Proxy */
-	private final class Proxy extends HigherReferenceType.Proxy implements GroundTypeParameter {
+    private Proxy(Substitution substitution) {
+      super(substitution);
+    }
 
-		private Proxy( Substitution substitution ) {
-			super( substitution );
-		}
+    @Override
+    public String toString() {
+      return typeConstructor().toString()
+          + worldArguments().stream()
+              .map(World::toString)
+              .collect(Formatting.joining(",", "@(", ")", ""));
+    }
 
-		@Override
-		public String toString() {
-			return typeConstructor().toString() +
-					worldArguments().stream().map( World::toString ).collect(
-							Formatting.joining( ",", "@(", ")", "" ) );
-		}
+    @Override
+    public HigherTypeParameter typeConstructor() {
+      return HigherTypeParameter.this;
+    }
 
-		@Override
-		public HigherTypeParameter typeConstructor() {
-			return HigherTypeParameter.this;
-		}
+    @Override
+    protected Definition definition() {
+      return typeConstructor().innerType();
+    }
 
-		@Override
-		protected Definition definition() {
-			return typeConstructor().innerType();
-		}
+    @Override
+    public boolean isBoundFinalised() {
+      return definition().isBoundFinalised();
+    }
 
-		@Override
-		public boolean isBoundFinalised() {
-			return definition().isBoundFinalised();
-		}
+    @Override
+    public boolean isUpperClassImplicit() {
+      return definition().isUpperClassImplicit();
+    }
 
-		@Override
-		public boolean isUpperClassImplicit() {
-			return definition().isUpperClassImplicit();
-		}
+    @Override
+    public GroundReferenceType upperClass() {
+      return definition().upperClass().applySubstitution(substitution());
+    }
 
-		@Override
-		public GroundReferenceType upperClass() {
-			return definition().upperClass().applySubstitution( substitution() );
-		}
+    @Override
+    public Stream<? extends GroundInterface> upperInterfaces() {
+      return definition().upperInterfaces().map(x -> x.applySubstitution(substitution()));
+    }
 
-		@Override
-		public Stream< ? extends GroundInterface > upperInterfaces() {
-			return definition().upperInterfaces().map( x -> x.applySubstitution( substitution() ) );
-		}
+    @Override
+    public Stream<? extends GroundReferenceType> upperBound() {
+      return definition().upperBound().map(x -> x.applySubstitution(substitution()));
+    }
 
-		@Override
-		public Stream< ? extends GroundReferenceType > upperBound() {
-			return definition().upperBound().map( x -> x.applySubstitution( substitution() ) );
-		}
+    @Override
+    public GroundReferenceType applySubstitution(Substitution substitution) {
+      return definition().applySubstitution(substitution().andThen(substitution));
+    }
 
-		@Override
-		public GroundReferenceType applySubstitution( Substitution substitution ) {
-			return definition().applySubstitution( substitution().andThen( substitution ) );
-		}
+    @Override
+    protected boolean isEquivalentTo(GroundDataType type) {
+      if (type instanceof Definition) {
+        return type.isEquivalentTo(this);
+      } else if (type instanceof Proxy) {
+        Proxy other = (Proxy) type;
+        return (this.definition() == other.definition())
+            && worldArguments().equals(other.worldArguments());
+      } else {
+        return false;
+      }
+    }
 
-		@Override
-		protected boolean isEquivalentTo( GroundDataType type ) {
-			if( type instanceof Definition ) {
-				return type.isEquivalentTo( this );
-			} else if( type instanceof Proxy ) {
-				Proxy other = (Proxy) type;
-				return ( this.definition() == other.definition() ) &&
-						worldArguments().equals( other.worldArguments() );
-			} else {
-				return false;
-			}
-		}
+    @Override
+    protected boolean isEquivalentTo_relaxed(GroundDataType type) {
+      if (type instanceof Definition) {
+        return type.isEquivalentTo_relaxed(this);
+      } else if (type instanceof Proxy) {
+        Proxy other = (Proxy) type;
+        return (this.definition() == other.definition());
+      } else {
+        return false;
+      }
+    }
 
-		@Override
-		protected boolean isEquivalentTo_relaxed( GroundDataType type ) {
-			if( type instanceof Definition ) {
-				return type.isEquivalentTo_relaxed( this );
-			} else if( type instanceof Proxy ) {
-				Proxy other = (Proxy) type;
-				return ( this.definition() == other.definition() );
-			} else {
-				return false;
-			}
-		}
+    @Override
+    protected boolean isSubtypeOf(GroundDataType type, boolean strict) {
+      return (!strict && isEquivalentTo(type))
+          || upperClass().isSubtypeOf(type, false)
+          || upperInterfaces().anyMatch(x -> x.isSubtypeOf(type, false));
+    }
 
-		@Override
-		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
-			return ( !strict && isEquivalentTo( type ) )
-					|| upperClass().isSubtypeOf( type, false )
-					|| upperInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) );
-		}
+    @Override
+    protected boolean isSubtypeOf_relaxed(GroundDataType type, boolean strict) {
+      return (!strict && isEquivalentTo_relaxed(type))
+          || upperClass().isSubtypeOf_relaxed(type, false)
+          || upperInterfaces().anyMatch(x -> x.isSubtypeOf_relaxed(type, false));
+    }
 
-		@Override
-		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
-			return ( !strict && isEquivalentTo_relaxed( type ) )
-					|| upperClass().isSubtypeOf_relaxed( type, false )
-					|| upperInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) );
-		}
-
-		@Override
-		public boolean isInterfaceFinalised() {
-			return definition().isInterfaceFinalised();
-		}
-
-	}
-
+    @Override
+    public boolean isInterfaceFinalised() {
+      return definition().isInterfaceFinalised();
+    }
+  }
 }

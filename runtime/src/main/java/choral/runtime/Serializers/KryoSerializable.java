@@ -23,8 +23,7 @@ package choral.runtime.Serializers;
 
 import java.lang.annotation.*;
 
-@Retention( RetentionPolicy.RUNTIME )
-@Target( ElementType.TYPE )
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
 @Inherited
-public @interface KryoSerializable {
-}
+public @interface KryoSerializable {}

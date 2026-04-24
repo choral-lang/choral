@@ -22,9 +22,8 @@
 package choral.types;
 
 public interface TypeParameter extends ReferenceType {
-	@Override
-	default boolean isTypeParameter() {
-		return true;
-	}
-
+  @Override
+  default boolean isTypeParameter() {
+    return true;
+  }
 }

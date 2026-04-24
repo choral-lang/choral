@@ -23,16 +23,15 @@ package choral.ast.visitors;
 
 import choral.ast.type.WorldArgument;
 
-public abstract class AbstractSoloistProjector< T > extends AbstractChoralVisitor< T > {
+public abstract class AbstractSoloistProjector<T> extends AbstractChoralVisitor<T> {
 
-	final protected WorldArgument world;
+  protected final WorldArgument world;
 
-	protected AbstractSoloistProjector( WorldArgument w ) {
-		this.world = w;
-	}
+  protected AbstractSoloistProjector(WorldArgument w) {
+    this.world = w;
+  }
 
-	protected WorldArgument world() {
-		return this.world;
-	}
-
+  protected WorldArgument world() {
+    return this.world;
+  }
 }

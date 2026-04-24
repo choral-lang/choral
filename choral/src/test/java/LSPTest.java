@@ -1,14 +1,15 @@
-import org.junit.jupiter.api.Test;
 import java.util.List;
-import org.eclipse.lsp4j.Diagnostic;
 import lsp.features.*;
+import org.eclipse.lsp4j.Diagnostic;
+import org.junit.jupiter.api.Test;
 
 public class LSPTest {
-	DiagnosticsProvider diagProvider = new DiagnosticsProvider();
+  DiagnosticsProvider diagProvider = new DiagnosticsProvider();
 
-	@Test
-	public void sayHello() {
-		String code = """
+  @Test
+  public void sayHello() {
+    String code =
+        """
 				package choral.MustPass.HelloRoles;
 				class HelloRoles@(A, B){
 				    public void sayHello(){
@@ -19,13 +20,14 @@ public class LSPTest {
 				    }
 				}""";
 
-		List< Diagnostic > diagnostics = diagProvider.analyze( "", code );
-		assert diagnostics.isEmpty() : diagnostics;
-	}
+    List<Diagnostic> diagnostics = diagProvider.analyze("", code);
+    assert diagnostics.isEmpty() : diagnostics;
+  }
 
-	@Test
-	public void wrongType() {
-		String code = """
+  @Test
+  public void wrongType() {
+    String code =
+        """
                 package choral.examples.HelloRoles;
                 class WrongType@( A ) {
                     public void sayHello() {
@@ -37,8 +39,8 @@ public class LSPTest {
                 }
                 """; // int@A = 5.5@A; // a = "lol";
 
-		List<Diagnostic> diagnostics = diagProvider.analyze("", code);
-		assert diagnostics.size() == 1;
-		assert diagnostics.get(0).getMessage().contains("StaticVerificationException");
-	}
+    List<Diagnostic> diagnostics = diagProvider.analyze("", code);
+    assert diagnostics.size() == 1;
+    assert diagnostics.get(0).getMessage().contains("StaticVerificationException");
+  }
 }

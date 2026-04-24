@@ -24,54 +24,51 @@ package choral.ast.body;
 import choral.ast.Position;
 import choral.ast.statement.Statement;
 import choral.ast.visitors.ChoralVisitorInterface;
-
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
 public class InterfaceMethodDefinition extends MethodDefinition {
-	private final Statement body;
-	private final EnumSet< InterfaceMethodModifier > modifiers;
+  private final Statement body;
+  private final EnumSet<InterfaceMethodModifier> modifiers;
 
-	public InterfaceMethodDefinition(
-			final MethodSignature signature,
-			final Statement body,
-			final List< Annotation > annotations,
-			final EnumSet< InterfaceMethodModifier > modifiers,
-			final Position position
-	) {
-		super( signature, annotations, position );
-		this.body = body;
-		this.modifiers = modifiers;
-	}
+  public InterfaceMethodDefinition(
+      final MethodSignature signature,
+      final Statement body,
+      final List<Annotation> annotations,
+      final EnumSet<InterfaceMethodModifier> modifiers,
+      final Position position) {
+    super(signature, annotations, position);
+    this.body = body;
+    this.modifiers = modifiers;
+  }
 
-	public Optional< Statement > body() {
-		return Optional.ofNullable( body );
-	}
+  public Optional<Statement> body() {
+    return Optional.ofNullable(body);
+  }
 
-	public EnumSet< InterfaceMethodModifier > modifiers() {
-		return modifiers;
-	}
+  public EnumSet<InterfaceMethodModifier> modifiers() {
+    return modifiers;
+  }
 
-	public boolean isPublic() {
-		return true; //modifiers.contains(PUBLIC);
-	}
+  public boolean isPublic() {
+    return true; // modifiers.contains(PUBLIC);
+  }
 
-	public boolean isAbstract() {
-		return modifiers.contains(InterfaceMethodModifier.ABSTRACT);
-	}
+  public boolean isAbstract() {
+    return modifiers.contains(InterfaceMethodModifier.ABSTRACT);
+  }
 
-	public boolean isDefault() {
-		return modifiers.contains(InterfaceMethodModifier.DEFAULT);
-	}
+  public boolean isDefault() {
+    return modifiers.contains(InterfaceMethodModifier.DEFAULT);
+  }
 
-	public boolean isStatic() {
-		return modifiers.contains(InterfaceMethodModifier.STATIC);
-	}
+  public boolean isStatic() {
+    return modifiers.contains(InterfaceMethodModifier.STATIC);
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

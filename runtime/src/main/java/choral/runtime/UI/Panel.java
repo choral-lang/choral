@@ -25,20 +25,18 @@ import javax.swing.*;
 
 public class Panel {
 
-	private Panel() {
-	}
+  private Panel() {}
 
-	public static String prompt( String world, String prompt ) {
-		JFrame jf = new JFrame( world );
-		String text = JOptionPane.showInputDialog( jf, prompt, world, JOptionPane.PLAIN_MESSAGE );
-		jf.dispose();
-		return text;
-	}
+  public static String prompt(String world, String prompt) {
+    JFrame jf = new JFrame(world);
+    String text = JOptionPane.showInputDialog(jf, prompt, world, JOptionPane.PLAIN_MESSAGE);
+    jf.dispose();
+    return text;
+  }
 
-	public static void show( String world, Object text ) {
-		JFrame jf = new JFrame( world );
-		JOptionPane.showMessageDialog( jf, text.toString(), world, JOptionPane.PLAIN_MESSAGE );
-		jf.dispose();
-	}
-
+  public static void show(String world, Object text) {
+    JFrame jf = new JFrame(world);
+    JOptionPane.showMessageDialog(jf, text.toString(), world, JOptionPane.PLAIN_MESSAGE);
+    jf.dispose();
+  }
 }

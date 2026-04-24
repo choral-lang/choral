@@ -21,6 +21,8 @@
 
 package choral.ast.body;
 
+import static choral.ast.body.ConstructorModifier.*;
+
 import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.expression.MethodCallExpression;
@@ -28,95 +30,90 @@ import choral.ast.statement.ExpressionStatement;
 import choral.ast.statement.Statement;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.types.Member;
-
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
-import static choral.ast.body.ConstructorModifier.*;
-
 public class ConstructorDefinition extends Node {
-	private final ConstructorSignature signature;
-	private final MethodCallExpression explicitConstructorInvocation;
-	private final Statement blockStatements;
-	private final List< Annotation > annotations;
-	private final EnumSet< ConstructorModifier > modifiers;
+  private final ConstructorSignature signature;
+  private final MethodCallExpression explicitConstructorInvocation;
+  private final Statement blockStatements;
+  private final List<Annotation> annotations;
+  private final EnumSet<ConstructorModifier> modifiers;
 
-	public ConstructorDefinition(
-			final ConstructorSignature signature,
-			final MethodCallExpression explicitConstructorInvocation,
-			final Statement blockStatements,
-			final List< Annotation > annotations,
-			final EnumSet< ConstructorModifier > modifiers,
-			final Position position
-	) {
-		super( position );
-		this.signature = signature;
-		this.explicitConstructorInvocation = explicitConstructorInvocation;
-		this.blockStatements = blockStatements;
-		this.annotations = annotations;
-		this.modifiers = modifiers;
-	}
+  public ConstructorDefinition(
+      final ConstructorSignature signature,
+      final MethodCallExpression explicitConstructorInvocation,
+      final Statement blockStatements,
+      final List<Annotation> annotations,
+      final EnumSet<ConstructorModifier> modifiers,
+      final Position position) {
+    super(position);
+    this.signature = signature;
+    this.explicitConstructorInvocation = explicitConstructorInvocation;
+    this.blockStatements = blockStatements;
+    this.annotations = annotations;
+    this.modifiers = modifiers;
+  }
 
-	private Member.HigherConstructor typeAnnotation;
+  private Member.HigherConstructor typeAnnotation;
 
-	public Optional< ? extends Member.HigherConstructor > typeAnnotation() {
-		return Optional.ofNullable( typeAnnotation );
-	}
+  public Optional<? extends Member.HigherConstructor> typeAnnotation() {
+    return Optional.ofNullable(typeAnnotation);
+  }
 
-	public void setTypeAnnotation( Member.HigherConstructor typeAnnotation ) {
-		this.typeAnnotation = typeAnnotation;
-		this.signature.setTypeAnnotation( typeAnnotation );
-	}
+  public void setTypeAnnotation(Member.HigherConstructor typeAnnotation) {
+    this.typeAnnotation = typeAnnotation;
+    this.signature.setTypeAnnotation(typeAnnotation);
+  }
 
-	public List< Annotation > annotations() {
-		return annotations;
-	}
+  public List<Annotation> annotations() {
+    return annotations;
+  }
 
-	public EnumSet< ConstructorModifier > modifiers() {
-		return modifiers;
-	}
+  public EnumSet<ConstructorModifier> modifiers() {
+    return modifiers;
+  }
 
-	public boolean isPublic() {
-		return modifiers.contains( PUBLIC );
-	}
+  public boolean isPublic() {
+    return modifiers.contains(PUBLIC);
+  }
 
-	public boolean isProtected() {
-		return modifiers.contains( PROTECTED );
-	}
+  public boolean isProtected() {
+    return modifiers.contains(PROTECTED);
+  }
 
-	public boolean isPrivate() {
-		return modifiers.contains( PRIVATE );
-	}
+  public boolean isPrivate() {
+    return modifiers.contains(PRIVATE);
+  }
 
-	public boolean isPackagePrivate() {
-		return !( isPrivate() || isProtected() || isPublic() );
-	}
+  public boolean isPackagePrivate() {
+    return !(isPrivate() || isProtected() || isPublic());
+  }
 
-	public ConstructorSignature signature() {
-		return signature;
-	}
+  public ConstructorSignature signature() {
+    return signature;
+  }
 
-	public Optional< MethodCallExpression > explicitConstructorInvocation() {
-		return Optional.ofNullable( explicitConstructorInvocation );
-	}
+  public Optional<MethodCallExpression> explicitConstructorInvocation() {
+    return Optional.ofNullable(explicitConstructorInvocation);
+  }
 
-	public Statement blockStatements() {
-		return blockStatements;
-	}
+  public Statement blockStatements() {
+    return blockStatements;
+  }
 
-	public Statement body() {
-		if( explicitConstructorInvocation == null ) {
-			return blockStatements;
-		} else {
-			return new ExpressionStatement( explicitConstructorInvocation, blockStatements,
-					explicitConstructorInvocation.position() );
-		}
-	}
+  public Statement body() {
+    if (explicitConstructorInvocation == null) {
+      return blockStatements;
+    } else {
+      return new ExpressionStatement(
+          explicitConstructorInvocation, blockStatements, explicitConstructorInvocation.position());
+    }
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

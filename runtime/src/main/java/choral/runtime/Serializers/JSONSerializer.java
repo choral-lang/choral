@@ -23,15 +23,14 @@ package choral.runtime.Serializers;
 
 import java.nio.ByteBuffer;
 
-public class JSONSerializer extends ChainedSerializer< Object, String, ByteBuffer > {
-	private final static JSONSerializer INSTANCE = new JSONSerializer();
+public class JSONSerializer extends ChainedSerializer<Object, String, ByteBuffer> {
+  private static final JSONSerializer INSTANCE = new JSONSerializer();
 
-	private JSONSerializer() {
-		super( ObjectToJSONSerializer.getInstance(), StringByteSerializer.getInstance() );
-	}
+  private JSONSerializer() {
+    super(ObjectToJSONSerializer.getInstance(), StringByteSerializer.getInstance());
+  }
 
-	public static JSONSerializer getInstance() {
-		return INSTANCE;
-	}
-
+  public static JSONSerializer getInstance() {
+    return INSTANCE;
+  }
 }

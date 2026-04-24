@@ -31,7 +31,6 @@ import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 import choral.types.Member;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -39,79 +38,82 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * A method call on an object of the shape a( b ) where
- * a is the method name
- * b is the list of arguments
+ * A method call on an object of the shape a( b ) where a is the method name b is the list of
+ * arguments
  */
-
 public class MethodCallExpression extends InvocationExpression {
 
-	private final Name name;
-	private final Set< WorldArgument > epp_worlds = new HashSet<>();
+  private final Name name;
+  private final Set<WorldArgument> epp_worlds = new HashSet<>();
 
-	public MethodCallExpression(
-			final Name name, final List< Expression > arguments,
-			List< TypeExpression > typeArguments
-	) {
-		super( arguments, typeArguments );
-		this.name = name;
-	}
+  public MethodCallExpression(
+      final Name name, final List<Expression> arguments, List<TypeExpression> typeArguments) {
+    super(arguments, typeArguments);
+    this.name = name;
+  }
 
-	public MethodCallExpression(
-			final Name name, final List< Expression > arguments,
-			List< TypeExpression > typeArguments, final Position position
-	) {
-		super( arguments, typeArguments, position );
-		this.name = name;
-	}
+  public MethodCallExpression(
+      final Name name,
+      final List<Expression> arguments,
+      List<TypeExpression> typeArguments,
+      final Position position) {
+    super(arguments, typeArguments, position);
+    this.name = name;
+  }
 
-	public boolean isSelect() {
-		return ( methodAnnotation != null ) && methodAnnotation.higherCallable().isSelectionMethod();
-	}
+  public boolean isSelect() {
+    return (methodAnnotation != null) && methodAnnotation.higherCallable().isSelectionMethod();
+  }
 
-    public boolean isTypeSelect() {
-        return ( methodAnnotation != null ) && methodAnnotation.higherCallable().isTypeSelectionMethod();
+  public boolean isTypeSelect() {
+    return (methodAnnotation != null) && methodAnnotation.higherCallable().isTypeSelectionMethod();
+  }
+
+  private Member.GroundMethod methodAnnotation;
+
+  public Optional<? extends Member.GroundMethod> methodAnnotation() {
+    return Optional.ofNullable(methodAnnotation);
+  }
+
+  public void setMethodAnnotation(Member.GroundMethod methodAnnotation) {
+    this.methodAnnotation = methodAnnotation;
+  }
+
+  public Set<WorldArgument> epp_worlds() {
+    return epp_worlds;
+  }
+
+  public Name name() {
+    return name;
+  }
+
+  @Override
+  public String toString() {
+    return name.toString()
+        + arguments().stream()
+            .map(arg -> arg.toString())
+            .collect(Collectors.joining(", ", "(", ")"));
+  }
+
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
+
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    try {
+      return m.merge(this, (this.getClass().cast(n)));
+    } catch (ClassCastException e) {
+      throw new ChoralException(
+          this.position().line()
+              + ":"
+              + this.position().column()
+              + ":"
+              + "error: Could not merge \n"
+              + new PrettyPrinterVisitor().visit(this)
+              + "\n with "
+              + n.getClass().getSimpleName());
     }
-
-	private Member.GroundMethod methodAnnotation;
-
-	public Optional< ? extends Member.GroundMethod > methodAnnotation() {
-		return Optional.ofNullable( methodAnnotation );
-	}
-
-	public void setMethodAnnotation( Member.GroundMethod methodAnnotation ) {
-		this.methodAnnotation = methodAnnotation;
-	}
-
-
-	public Set< WorldArgument > epp_worlds() {
-		return epp_worlds;
-	}
-
-	public Name name() {
-		return name;
-	}
-
-	@Override
-	public String toString(){
-		return name.toString() + arguments().stream().map( arg -> arg.toString() ).collect( Collectors.joining(", ", "(", ")") );
-	}
-
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try {
-			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ) {
-			throw new ChoralException(
-					this.position().line() + ":"
-							+ this.position().column() + ":"
-							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-							this ) + "\n with " + n.getClass().getSimpleName() );
-		}
-	}
+  }
 }

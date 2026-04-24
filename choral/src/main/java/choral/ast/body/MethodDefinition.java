@@ -24,41 +24,37 @@ package choral.ast.body;
 import choral.ast.Node;
 import choral.ast.Position;
 import choral.types.Member;
-
 import java.util.List;
 import java.util.Optional;
 
 public abstract class MethodDefinition extends Node {
-	private final MethodSignature signature;
+  private final MethodSignature signature;
 
-	private final List< Annotation > annotations;
+  private final List<Annotation> annotations;
 
-	public MethodDefinition(
-			final MethodSignature signature,
-			final List< Annotation > annotations,
-			Position position
-	) {
-		super( position );
-		this.signature = signature;
-		this.annotations = annotations;
-	}
+  public MethodDefinition(
+      final MethodSignature signature, final List<Annotation> annotations, Position position) {
+    super(position);
+    this.signature = signature;
+    this.annotations = annotations;
+  }
 
-	private Member.HigherMethod typeAnnotation;
+  private Member.HigherMethod typeAnnotation;
 
-	public Optional< ? extends Member.HigherMethod > typeAnnotation() {
-		return Optional.ofNullable( typeAnnotation );
-	}
+  public Optional<? extends Member.HigherMethod> typeAnnotation() {
+    return Optional.ofNullable(typeAnnotation);
+  }
 
-	public void setTypeAnnotation( Member.HigherMethod typeAnnotation ) {
-		this.typeAnnotation = typeAnnotation;
-		this.signature.setTypeAnnotation( typeAnnotation );
-	}
+  public void setTypeAnnotation(Member.HigherMethod typeAnnotation) {
+    this.typeAnnotation = typeAnnotation;
+    this.signature.setTypeAnnotation(typeAnnotation);
+  }
 
-	public MethodSignature signature() {
-		return signature;
-	}
+  public MethodSignature signature() {
+    return signature;
+  }
 
-	public List< Annotation > annotations() {
-		return annotations;
-	}
+  public List<Annotation> annotations() {
+    return annotations;
+  }
 }

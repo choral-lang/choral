@@ -25,60 +25,60 @@ import java.util.Objects;
 
 public class Arrow extends Kind {
 
-	private final Kind domain;
-	private final Kind codomain;
+  private final Kind domain;
+  private final Kind codomain;
 
-	Arrow( Kind domain, Kind codomain ) {
-		assert domain != null;
-		assert codomain != null;
-		this.domain = domain;
-		this.codomain = codomain;
-	}
+  Arrow(Kind domain, Kind codomain) {
+    assert domain != null;
+    assert codomain != null;
+    this.domain = domain;
+    this.codomain = codomain;
+  }
 
-	public Kind domain() {
-		return domain;
-	}
+  public Kind domain() {
+    return domain;
+  }
 
-	public Kind codomain() {
-		return codomain;
-	}
+  public Kind codomain() {
+    return codomain;
+  }
 
-	@Override
-	public Kind apply( Kind argument ) {
-		if( argument == this.domain ) {
-			return this.codomain;
-		} else {
-			throw new KindApplicationException( this, argument );
-		}
-	}
+  @Override
+  public Kind apply(Kind argument) {
+    if (argument == this.domain) {
+      return this.codomain;
+    } else {
+      throw new KindApplicationException(this, argument);
+    }
+  }
 
-	@Override
-	protected boolean isArrow() {
-		return true;
-	}
+  @Override
+  protected boolean isArrow() {
+    return true;
+  }
 
-	@Override
-	public String toString() {
-		if( domain.isArrow() ) {
-			return "(" + domain + ") => " + codomain;
-		} else {
-			return domain + " => " + codomain;
-		}
-	}
+  @Override
+  public String toString() {
+    if (domain.isArrow()) {
+      return "(" + domain + ") => " + codomain;
+    } else {
+      return domain + " => " + codomain;
+    }
+  }
 
-	@Override
-	public boolean equals( Object o ) {
-		if( o == this ) {
-			return true;
-		} else if( o instanceof Arrow ) {
-			Arrow a = (Arrow) o;
-			return this.domain.equals( a.domain ) && this.codomain.equals( a.codomain );
-		} else {
-			return false;
-		}
-	}
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    } else if (o instanceof Arrow) {
+      Arrow a = (Arrow) o;
+      return this.domain.equals(a.domain) && this.codomain.equals(a.codomain);
+    } else {
+      return false;
+    }
+  }
 
-	public int hashCode() {
-		return Objects.hash( domain, codomain );
-	}
+  public int hashCode() {
+    return Objects.hash(domain, codomain);
+  }
 }

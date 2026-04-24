@@ -28,18 +28,17 @@ abstract class B@( S, T ) implements I@( S, T ) {
 }
  */
 
-abstract public class B {
+public abstract class B {
 
-	static abstract public class _1_2 implements I._1_2 {
-		abstract public String m$2( Object x );
+  public abstract static class _1_2 implements I._1_2 {
+    public abstract String m$2(Object x);
 
-		abstract public String m$2( CharSequence x );
-	}
+    public abstract String m$2(CharSequence x);
+  }
 
-	static abstract public class _2_1 implements I._2_1 {
-		abstract public String m$1( Object x );
+  public abstract static class _2_1 implements I._2_1 {
+    public abstract String m$1(Object x);
 
-		abstract public String m$1( CharSequence x );
-	}
-
+    public abstract String m$1(CharSequence x);
+  }
 }

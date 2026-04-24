@@ -23,39 +23,38 @@ package choral.types;
 
 public abstract class Substitution {
 
-//    public abstract Collection<? extends World> worldParameters();
-//
-//    public abstract Collection<? extends HigherTypeParameter> typeParameters();
+  //    public abstract Collection<? extends World> worldParameters();
+  //
+  //    public abstract Collection<? extends HigherTypeParameter> typeParameters();
 
-	public World get( World placeHolder ) {
-		return placeHolder;
-	}
+  public World get(World placeHolder) {
+    return placeHolder;
+  }
 
-	public HigherReferenceType get( HigherTypeParameter placeHolder ) {
-		return placeHolder;
-	}
+  public HigherReferenceType get(HigherTypeParameter placeHolder) {
+    return placeHolder;
+  }
 
-	public static Substitution ID = new Substitution() {
-	};
+  public static Substitution ID = new Substitution() {};
 
-	Substitution andThen( Substitution s ) {
-		return new Substitution() {
-			private final Substitution s1 = Substitution.this;
-			private final Substitution s2 = s;
+  Substitution andThen(Substitution s) {
+    return new Substitution() {
+      private final Substitution s1 = Substitution.this;
+      private final Substitution s2 = s;
 
-			@Override
-			public World get( World placeHolder ) {
-				return s2.get( s1.get( placeHolder ) );
-			}
+      @Override
+      public World get(World placeHolder) {
+        return s2.get(s1.get(placeHolder));
+      }
 
-			@Override
-			public HigherReferenceType get( HigherTypeParameter placeHolder ) {
-				HigherReferenceType x = s1.get( placeHolder );
-				if( x instanceof HigherTypeParameter ) {
-					x = s2.get( (HigherTypeParameter) x );
-				}
-				return x;
-			}
-		};
-	}
+      @Override
+      public HigherReferenceType get(HigherTypeParameter placeHolder) {
+        HigherReferenceType x = s1.get(placeHolder);
+        if (x instanceof HigherTypeParameter) {
+          x = s2.get((HigherTypeParameter) x);
+        }
+        return x;
+      }
+    };
+  }
 }

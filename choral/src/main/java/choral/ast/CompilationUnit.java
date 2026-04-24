@@ -25,59 +25,59 @@ import choral.ast.body.Class;
 import choral.ast.body.Enum;
 import choral.ast.body.Interface;
 import choral.ast.visitors.ChoralVisitorInterface;
-
-import java.io.File;
 import java.util.List;
 import java.util.Optional;
 
 public class CompilationUnit extends Node {
 
-	private final Optional<String> packageDeclaration;
-	private final List< ImportDeclaration > imports;
-	private final List< Interface > interfaces;
-	private final List< Class > classes;
-	private final List< Enum > enums;
+  private final Optional<String> packageDeclaration;
+  private final List<ImportDeclaration> imports;
+  private final List<Interface> interfaces;
+  private final List<Class> classes;
+  private final List<Enum> enums;
 
-	/**
-	 * Default constructor for a CompilationUnit.
-	 * @param sourceFile The path to the source file, or null if no file exists.
-	 */
-	public CompilationUnit(
-			final Optional<String> packageDeclaration, final List< ImportDeclaration > imports,
-			final List< Interface > interfaces, final List< Class > classes,
-			final List< Enum > enums, final String sourceFile
-	) {
-		super( new Position( sourceFile, 0, 0 ) );
-		this.packageDeclaration = packageDeclaration;
-		this.imports = imports;
-		this.interfaces = interfaces;
-		this.classes = classes;
-		this.enums = enums;
-	}
+  /**
+   * Default constructor for a CompilationUnit.
+   *
+   * @param sourceFile The path to the source file, or null if no file exists.
+   */
+  public CompilationUnit(
+      final Optional<String> packageDeclaration,
+      final List<ImportDeclaration> imports,
+      final List<Interface> interfaces,
+      final List<Class> classes,
+      final List<Enum> enums,
+      final String sourceFile) {
+    super(new Position(sourceFile, 0, 0));
+    this.packageDeclaration = packageDeclaration;
+    this.imports = imports;
+    this.interfaces = interfaces;
+    this.classes = classes;
+    this.enums = enums;
+  }
 
-	public List< ImportDeclaration > imports() {
-		return imports;
-	}
+  public List<ImportDeclaration> imports() {
+    return imports;
+  }
 
-	public List< Interface > interfaces() {
-		return interfaces;
-	}
+  public List<Interface> interfaces() {
+    return interfaces;
+  }
 
-	public List< Class > classes() {
-		return classes;
-	}
+  public List<Class> classes() {
+    return classes;
+  }
 
-	public List< Enum > enums() {
-		return enums;
-	}
+  public List<Enum> enums() {
+    return enums;
+  }
 
-	public Optional<String> packageDeclaration() {
-		return packageDeclaration;
-	}
+  public Optional<String> packageDeclaration() {
+    return packageDeclaration;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

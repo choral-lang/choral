@@ -27,52 +27,49 @@ import choral.ast.Position;
 import choral.ast.type.FormalTypeParameter;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.types.Member;
-
 import java.util.List;
 import java.util.Optional;
 
 public class ConstructorSignature extends Node {
-	private final Name name;
-	private final List< FormalTypeParameter > typeParameters;
-	private final List< FormalMethodParameter > parameters;
+  private final Name name;
+  private final List<FormalTypeParameter> typeParameters;
+  private final List<FormalMethodParameter> parameters;
 
-	public ConstructorSignature(
-			final Name name,
-			final List< FormalTypeParameter > typeParameters,
-			final List< FormalMethodParameter > parameters,
-			final Position position
-	) {
-		super( position );
-		this.name = name;
-		this.typeParameters = typeParameters;
-		this.parameters = parameters;
-	}
+  public ConstructorSignature(
+      final Name name,
+      final List<FormalTypeParameter> typeParameters,
+      final List<FormalMethodParameter> parameters,
+      final Position position) {
+    super(position);
+    this.name = name;
+    this.typeParameters = typeParameters;
+    this.parameters = parameters;
+  }
 
-	public Name name() {
-		return name;
-	}
+  public Name name() {
+    return name;
+  }
 
-	public List< FormalTypeParameter > typeParameters() {
-		return this.typeParameters;
-	}
+  public List<FormalTypeParameter> typeParameters() {
+    return this.typeParameters;
+  }
 
-	public List< FormalMethodParameter > parameters() {
-		return parameters;
-	}
+  public List<FormalMethodParameter> parameters() {
+    return parameters;
+  }
 
-	private Member.HigherConstructor typeAnnotation;
+  private Member.HigherConstructor typeAnnotation;
 
-	public Optional< ? extends Member.HigherConstructor > typeAnnotation() {
-		return Optional.ofNullable( typeAnnotation );
-	}
+  public Optional<? extends Member.HigherConstructor> typeAnnotation() {
+    return Optional.ofNullable(typeAnnotation);
+  }
 
-	public void setTypeAnnotation( Member.HigherConstructor typeAnnotation ) {
-		this.typeAnnotation = typeAnnotation;
-	}
+  public void setTypeAnnotation(Member.HigherConstructor typeAnnotation) {
+    this.typeAnnotation = typeAnnotation;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

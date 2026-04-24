@@ -25,33 +25,29 @@ import choral.ast.Name;
 import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.visitors.ChoralVisitorInterface;
-
 import java.util.List;
 
-
 public class EnumConstant extends Node {
-	private final Name name;
-	private final List< Annotation > annotations;
+  private final Name name;
+  private final List<Annotation> annotations;
 
-	public EnumConstant(
-			final Name name, final List< Annotation > annotations, final Position position
-	) {
-		super( position );
-		this.name = name;
-		this.annotations = annotations;
-	}
+  public EnumConstant(
+      final Name name, final List<Annotation> annotations, final Position position) {
+    super(position);
+    this.name = name;
+    this.annotations = annotations;
+  }
 
-	public List< Annotation > annotations() {
-		return annotations;
-	}
+  public List<Annotation> annotations() {
+    return annotations;
+  }
 
-	public Name name() {
-		return name;
-	}
+  public Name name() {
+    return name;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

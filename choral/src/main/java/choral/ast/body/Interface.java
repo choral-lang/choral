@@ -21,6 +21,8 @@
 
 package choral.ast.body;
 
+import static choral.ast.body.InterfaceModifier.*;
+
 import choral.ast.Name;
 import choral.ast.Position;
 import choral.ast.type.FormalTypeParameter;
@@ -28,90 +30,85 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.types.HigherInterface;
-
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
-import static choral.ast.body.InterfaceModifier.*;
-
 public class Interface extends TemplateDeclaration {
-	private final List< InterfaceMethodDefinition > methods;
-	private final List< TypeExpression > extendsInterfaces;
-	private final List< Annotation > annotations;
-	private final EnumSet< InterfaceModifier > modifiers;
+  private final List<InterfaceMethodDefinition> methods;
+  private final List<TypeExpression> extendsInterfaces;
+  private final List<Annotation> annotations;
+  private final EnumSet<InterfaceModifier> modifiers;
 
-	public Interface(
-			final Name name,
-			final List< FormalWorldParameter > worldParameters,
-			final List< FormalTypeParameter > typeParameters,
-			final List< TypeExpression > extendsInterfaces,
-			final List< InterfaceMethodDefinition > methods,
-			final List< Annotation > annotations,
-			final EnumSet< InterfaceModifier > modifiers,
-			final Position position
-	) {
-		super( name, worldParameters, typeParameters, position );
-		this.methods = methods;
-		this.extendsInterfaces = extendsInterfaces;
-		this.annotations = annotations;
-		this.modifiers = EnumSet.copyOf( modifiers );
-	}
+  public Interface(
+      final Name name,
+      final List<FormalWorldParameter> worldParameters,
+      final List<FormalTypeParameter> typeParameters,
+      final List<TypeExpression> extendsInterfaces,
+      final List<InterfaceMethodDefinition> methods,
+      final List<Annotation> annotations,
+      final EnumSet<InterfaceModifier> modifiers,
+      final Position position) {
+    super(name, worldParameters, typeParameters, position);
+    this.methods = methods;
+    this.extendsInterfaces = extendsInterfaces;
+    this.annotations = annotations;
+    this.modifiers = EnumSet.copyOf(modifiers);
+  }
 
-	private HigherInterface typeAnnotation;
+  private HigherInterface typeAnnotation;
 
-	public Optional< ? extends HigherInterface > typeAnnotation() {
-		return Optional.ofNullable( typeAnnotation );
-	}
+  public Optional<? extends HigherInterface> typeAnnotation() {
+    return Optional.ofNullable(typeAnnotation);
+  }
 
-	public void setTypeAnnotation( HigherInterface typeAnnotation ) {
-		this.typeAnnotation = typeAnnotation;
-	}
+  public void setTypeAnnotation(HigherInterface typeAnnotation) {
+    this.typeAnnotation = typeAnnotation;
+  }
 
-	public EnumSet< InterfaceModifier > modifiers() {
-		return modifiers;
-	}
+  public EnumSet<InterfaceModifier> modifiers() {
+    return modifiers;
+  }
 
-	@Override
-	public boolean isPublic() {
-		return modifiers.contains( PUBLIC );
-	}
+  @Override
+  public boolean isPublic() {
+    return modifiers.contains(PUBLIC);
+  }
 
-	@Override
-	public boolean isProtected() {
-		return modifiers.contains( PROTECTED );
-	}
+  @Override
+  public boolean isProtected() {
+    return modifiers.contains(PROTECTED);
+  }
 
-	@Override
-	public boolean isPrivate() {
-		return modifiers.contains( PRIVATE );
-	}
+  @Override
+  public boolean isPrivate() {
+    return modifiers.contains(PRIVATE);
+  }
 
-	@Override
-	public boolean isFinal() {
-		return false;
-	}
+  @Override
+  public boolean isFinal() {
+    return false;
+  }
 
-	@Override
-	public boolean isAbstract() {
-		return true; // modifiers.contains(ABSTRACT);
-	}
+  @Override
+  public boolean isAbstract() {
+    return true; // modifiers.contains(ABSTRACT);
+  }
 
-	public List< TypeExpression > extendsInterfaces() {
-		return extendsInterfaces;
-	}
+  public List<TypeExpression> extendsInterfaces() {
+    return extendsInterfaces;
+  }
 
-	public List< InterfaceMethodDefinition > methods() {
-		return methods;
-	}
+  public List<InterfaceMethodDefinition> methods() {
+    return methods;
+  }
 
-	public List< Annotation > annotations() {
-		return annotations;
-	}
+  public List<Annotation> annotations() {
+    return annotations;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

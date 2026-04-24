@@ -21,6 +21,10 @@
 
 package choral;
 
+import static choral.utils.Streams.skip;
+import static choral.utils.Streams.wrapConsumer;
+import static choral.utils.Streams.wrapFunction;
+
 import choral.ast.CompilationUnit;
 import choral.ast.Position;
 import choral.ast.visitors.PrettyPrinterVisitor;
@@ -28,14 +32,11 @@ import choral.compiler.*;
 import choral.compiler.Compiler;
 import choral.compiler.merge.MergeException;
 import choral.compiler.moveMeant.MoveMeant;
-import choral.utils.Streams.WrappedException;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.ChoralException;
+import choral.utils.Streams.WrappedException;
 import choral.utils.VerbosityLevel;
-import picocli.AutoComplete;
-import picocli.CommandLine;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,18 +44,14 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static choral.utils.Streams.wrapFunction;
-import static choral.utils.Streams.wrapConsumer;
-import static choral.utils.Streams.skip;
-
 import lsp.ChoralLanguageServer;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
+import picocli.AutoComplete;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IVersionProvider;
 import picocli.CommandLine.Mixin;
@@ -62,632 +59,676 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @Command(
-		name = "choral",
-		description = "A compiler for the Choral programming language.%nhttps://choral-lang.org/",
-		subcommands = {
-				Choral.Checker.class,
-				Choral.Projector.class,
-				Choral.HeaderGenerator.class,
-				AutoComplete.GenerateCompletion.class,
-				Choral.LSPCommand.class
-		}
-)
-public class Choral extends ChoralCommand implements Callable< Integer > {
+    name = "choral",
+    description = "A compiler for the Choral programming language.%nhttps://choral-lang.org/",
+    subcommands = {
+      Choral.Checker.class,
+      Choral.Projector.class,
+      Choral.HeaderGenerator.class,
+      AutoComplete.GenerateCompletion.class,
+      Choral.LSPCommand.class
+    })
+public class Choral extends ChoralCommand implements Callable<Integer> {
 
-	public static void main( String[] args) {
-		System.exit( compile(args) );
-	}
+  public static void main(String[] args) {
+    System.exit(compile(args));
+  }
 
-	public static int compile( String[] args) {
-		CommandLine cl = new CommandLine( new Choral() );
-		cl.setToggleBooleanFlags( true );
-		cl.setCaseInsensitiveEnumValuesAllowed( true );
-		return cl.execute(args);
-	}
+  public static int compile(String[] args) {
+    CommandLine cl = new CommandLine(new Choral());
+    cl.setToggleBooleanFlags(true);
+    cl.setCaseInsensitiveEnumValuesAllowed(true);
+    return cl.execute(args);
+  }
 
-	@Override
-	public Integer call() throws Exception {
-		new CommandLine( this ).usage( System.err );
-		return 1;
-	}
+  @Override
+  public Integer call() throws Exception {
+    new CommandLine(this).usage(System.err);
+    return 1;
+  }
 
-	@Command( name = "check", aliases = { "c" },
-			description = "Check correctness and projectability."
-	)
-	static class Checker extends ChoralCommand implements Callable< Integer > {
+  @Command(
+      name = "check",
+      aliases = {"c"},
+      description = "Check correctness and projectability.")
+  static class Checker extends ChoralCommand implements Callable<Integer> {
 
-		@Mixin
-		PathOption.HeadersPathOption headersPathOption;
+    @Mixin PathOption.HeadersPathOption headersPathOption;
 
-		@Option( names = { "--strict-header-search" },
-				description = "ignore headers in the same folder of the source files, unless specified by -l/--headers." )
-		boolean strictHeaderSearch = false;
+    @Option(
+        names = {"--strict-header-search"},
+        description =
+            "ignore headers in the same folder of the source files, unless specified by -l/--headers.")
+    boolean strictHeaderSearch = false;
 
-		@Option( names = { "--no-projectability" },
-				description = "skip projectability checks." )
-		boolean skipProjectability = false;
+    @Option(
+        names = {"--no-projectability"},
+        description = "skip projectability checks.")
+    boolean skipProjectability = false;
 
-		@Parameters( arity = "1..*" )
-		Collection< File > sourceFiles;
+    @Parameters(arity = "1..*")
+    Collection<File> sourceFiles;
 
-		@Override
-		public Integer call() {
-			try {
-				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
-						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
-				Collection< CompilationUnit > headerUnits = Stream.concat(
-								HeaderLoader.loadStandardProfile(),
-								HeaderLoader.loadFromPath(
-										headersPathOption.getPaths(),
-										sourceFiles,
-										true, strictHeaderSearch )
-						)
-						.collect( Collectors.toList() );
-				TyperOptions typerOptions = new TyperOptions( verbosityOptions.verbosity() );
-				Collection< CompilationUnit > annotatedUnits =
-						Typer.annotate( sourceUnits, headerUnits, typerOptions );
-				if( !skipProjectability ) {
-					Compiler.checkProjectiability( annotatedUnits );
-				}
-			} catch( Exception e ) {
-				printNiceErrorMessage( e, verbosityOptions.verbosity() );
-				System.err.println( "compilation failed." );
-				return 1;
-			}
-			return 0;
-		}
-	}
+    @Override
+    public Integer call() {
+      try {
+        Collection<CompilationUnit> sourceUnits =
+            sourceFiles.stream()
+                .map(wrapFunction(Parser::parseSourceFile))
+                .collect(Collectors.toList());
+        Collection<CompilationUnit> headerUnits =
+            Stream.concat(
+                    HeaderLoader.loadStandardProfile(),
+                    HeaderLoader.loadFromPath(
+                        headersPathOption.getPaths(), sourceFiles, true, strictHeaderSearch))
+                .collect(Collectors.toList());
+        TyperOptions typerOptions = new TyperOptions(verbosityOptions.verbosity());
+        Collection<CompilationUnit> annotatedUnits =
+            Typer.annotate(sourceUnits, headerUnits, typerOptions);
+        if (!skipProjectability) {
+          Compiler.checkProjectiability(annotatedUnits);
+        }
+      } catch (Exception e) {
+        printNiceErrorMessage(e, verbosityOptions.verbosity());
+        System.err.println("compilation failed.");
+        return 1;
+      }
+      return 0;
+    }
+  }
 
-	@Command( name = "language-server-protocol", aliases = { "lsp" },
-			description = "Run choral as an LSP server for IDE integration.")
-	static class LSPCommand extends ChoralCommand implements Callable< Integer > {
-		@Override
-		public Integer call() {
-			// Create the server, get a handle to the client (the "remote proxy"), and
-			// pass that handle to the server.
-			ChoralLanguageServer server = new ChoralLanguageServer();
-			Launcher< LanguageClient > launcher = LSPLauncher.createServerLauncher(server, System.in, System.out);
-			LanguageClient client = launcher.getRemoteProxy();
-			server.connect(client);
+  @Command(
+      name = "language-server-protocol",
+      aliases = {"lsp"},
+      description = "Run choral as an LSP server for IDE integration.")
+  static class LSPCommand extends ChoralCommand implements Callable<Integer> {
+    @Override
+    public Integer call() {
+      // Create the server, get a handle to the client (the "remote proxy"), and
+      // pass that handle to the server.
+      ChoralLanguageServer server = new ChoralLanguageServer();
+      Launcher<LanguageClient> launcher =
+          LSPLauncher.createServerLauncher(server, System.in, System.out);
+      LanguageClient client = launcher.getRemoteProxy();
+      server.connect(client);
 
-			try {
-				System.err.println("Starting listening");
-				launcher.startListening().get();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			return 0;
-		}
-	}
+      try {
+        System.err.println("Starting listening");
+        launcher.startListening().get();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      return 0;
+    }
+  }
 
-	@Command( name = "endpoint-projection", aliases = { "epp" },
-			description = "Generate local code by projecting a choreography at a set of roles."
-	)
-	static class Projector extends ChoralCommand implements Callable< Integer > {
+  @Command(
+      name = "endpoint-projection",
+      aliases = {"epp"},
+      description = "Generate local code by projecting a choreography at a set of roles.")
+  static class Projector extends ChoralCommand implements Callable<Integer> {
 
-		@Mixin
-		EmissionOptions emissionOptions;
+    @Mixin EmissionOptions emissionOptions;
 
-		@Mixin
-		PathOption.HeadersPathOption headersPathOption;
+    @Mixin PathOption.HeadersPathOption headersPathOption;
 
-		@Mixin
-		PathOption.SourcePathOption sourcesPathOption;
+    @Mixin PathOption.SourcePathOption sourcesPathOption;
 
-		@Parameters( index = "0", arity = "1" )
-		String symbol;
+    @Parameters(index = "0", arity = "1")
+    String symbol;
 
-		@Parameters( index = "1..*", arity = "0..*" )
-		List< String > worlds;
+    @Parameters(index = "1..*", arity = "0..*")
+    List<String> worlds;
 
-		@Override
-		public Integer call() {
-			try {
-				Collection< File > sourceFiles = sourcesPathOption.getPaths( true ).stream()
-						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
-							if( Files.isDirectory( q ) ) return false;
-							String x = q.toString();
-							x = x.substring(
-									x.length() - SourceObject.ChoralSourceObject.FILE_EXTENSION.length() ).toLowerCase();
-							return x.equals( SourceObject.ChoralSourceObject.FILE_EXTENSION );
-						}, FileVisitOption.FOLLOW_LINKS ) ) )
-						.map( Path::toFile )
-						.collect( Collectors.toList() );
-				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
-						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
+    @Override
+    public Integer call() {
+      try {
+        Collection<File> sourceFiles =
+            sourcesPathOption.getPaths(true).stream()
+                .flatMap(
+                    wrapFunction(
+                        p ->
+                            Files.find(
+                                p,
+                                999,
+                                (q, a) -> {
+                                  if (Files.isDirectory(q)) return false;
+                                  String x = q.toString();
+                                  x =
+                                      x.substring(
+                                              x.length()
+                                                  - SourceObject.ChoralSourceObject.FILE_EXTENSION
+                                                      .length())
+                                          .toLowerCase();
+                                  return x.equals(SourceObject.ChoralSourceObject.FILE_EXTENSION);
+                                },
+                                FileVisitOption.FOLLOW_LINKS)))
+                .map(Path::toFile)
+                .collect(Collectors.toList());
+        Collection<CompilationUnit> sourceUnits =
+            sourceFiles.stream()
+                .map(wrapFunction(Parser::parseSourceFile))
+                .collect(Collectors.toList());
 
-				// TODO The following feature seems useful, but it breaks a bunch of tests.
-				// // Instead of typechecking *all* choral files in the directories, we filter away
-				// // the files that aren't relevant. This allows us to compile some files even when
-				// // others have errors.
-				// Collection< CompilationUnit > sourceUnits =
-				// 		FilterSourceUnits.filterSourceUnits(allSourceUnits, symbol);
+        // TODO The following feature seems useful, but it breaks a bunch of tests.
+        // // Instead of typechecking *all* choral files in the directories, we filter away
+        // // the files that aren't relevant. This allows us to compile some files even when
+        // // others have errors.
+        // Collection< CompilationUnit > sourceUnits =
+        // 		FilterSourceUnits.filterSourceUnits(allSourceUnits, symbol);
 
-				Collection< CompilationUnit > headerUnits = Stream.concat(
-								HeaderLoader.loadStandardProfile(),
-								HeaderLoader.loadFromPath(
-										headersPathOption.getPaths(),
-										sourceFiles,
-										true, true ) // TODO: keep this or introduce parameter also in EPP?
-						)
-						.collect( Collectors.toList() );
+        Collection<CompilationUnit> headerUnits =
+            Stream.concat(
+                    HeaderLoader.loadStandardProfile(),
+                    HeaderLoader.loadFromPath(
+                        headersPathOption.getPaths(),
+                        sourceFiles,
+                        true,
+                        true) // TODO: keep this or introduce parameter also in EPP?
+                    )
+                .collect(Collectors.toList());
 
-				AtomicReference< Collection< CompilationUnit > > annotatedUnits =
-						new AtomicReference<>( sourceUnits );
-				TyperOptions typerOptions = new TyperOptions( verbosityOptions.verbosity() );
+        AtomicReference<Collection<CompilationUnit>> annotatedUnits =
+            new AtomicReference<>(sourceUnits);
+        TyperOptions typerOptions = new TyperOptions(verbosityOptions.verbosity());
 
-				// If the user asks, we can insert missing communications by analyzing the
-				// source unit dataflow graphs.
-				if ( emissionOptions.inferComms() ) {
-					profilerLog( "relaxed typechecking", () -> {
-						var units = Typer.annotate(
-								annotatedUnits.get(), headerUnits, typerOptions.relaxedMode()
-						);
-						annotatedUnits.set( units );
-					});
+        // If the user asks, we can insert missing communications by analyzing the
+        // source unit dataflow graphs.
+        if (emissionOptions.inferComms()) {
+          profilerLog(
+              "relaxed typechecking",
+              () -> {
+                var units =
+                    Typer.annotate(annotatedUnits.get(), headerUnits, typerOptions.relaxedMode());
+                annotatedUnits.set(units);
+              });
 
-					profilerLog( "communication inference", () -> {
-						var units = MoveMeant.infer( annotatedUnits.get(), headerUnits, typerOptions );
-						annotatedUnits.set( units );
-					});
-				}
+          profilerLog(
+              "communication inference",
+              () -> {
+                var units = MoveMeant.infer(annotatedUnits.get(), headerUnits, typerOptions);
+                annotatedUnits.set(units);
+              });
+        }
 
-				profilerLog( "typechecking", () ->
-						annotatedUnits.set(
-								Typer.annotate( annotatedUnits.get(), headerUnits, typerOptions )
-						) );
+        profilerLog(
+            "typechecking",
+            () ->
+                annotatedUnits.set(
+                    Typer.annotate(annotatedUnits.get(), headerUnits, typerOptions)));
 
-				profilerLog( "projectability check", () ->
-					Compiler.checkProjectiability( annotatedUnits.get() ) );
+        profilerLog(
+            "projectability check", () -> Compiler.checkProjectiability(annotatedUnits.get()));
 
-				if( worlds == null ) {
-					worlds = Collections.emptyList();
-				}
-				profilerLog( "compilation", () ->
-						{
-							try {
-								Compiler.project(
-										emissionOptions.isDryRun(),
-										emissionOptions.isAnnotated(),
-										//						emissionOptions.useCanonicalPaths() TODO: implement this
-										//						emissionOptions.isOverwritingAllowed() TODO: implement this
-										annotatedUnits.get(),
-										symbol,
-										worlds.stream().map( String::trim ).filter(
-												w -> !( w.isBlank() || w.isEmpty() ) ).collect(
-												Collectors.toList() ),
-										emissionOptions.targetpath()
-								);
-							} catch( IOException e ) {
-								throw new RuntimeException( e );
-							}
-						}
-				);
+        if (worlds == null) {
+          worlds = Collections.emptyList();
+        }
+        profilerLog(
+            "compilation",
+            () -> {
+              try {
+                Compiler.project(
+                    emissionOptions.isDryRun(),
+                    emissionOptions.isAnnotated(),
+                    //						emissionOptions.useCanonicalPaths() TODO: implement this
+                    //						emissionOptions.isOverwritingAllowed() TODO: implement this
+                    annotatedUnits.get(),
+                    symbol,
+                    worlds.stream()
+                        .map(String::trim)
+                        .filter(w -> !(w.isBlank() || w.isEmpty()))
+                        .collect(Collectors.toList()),
+                    emissionOptions.targetpath());
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+            });
 
-				if( emissionOptions.canOverwriteSourceCode() ){
-					// User wants us to overwrite their old file with the amended sources.
-					var printer = new PrettyPrinterVisitor();
-					for ( CompilationUnit cu : annotatedUnits.get() ) {
-						var defs = Stream.concat( Stream.concat(
-								cu.enums().stream(),
-									cu.classes().stream() ),
-										cu.interfaces().stream() );
-						if( defs.noneMatch( x -> x.name().identifier().equals( symbol ) ) )
-							continue;
+        if (emissionOptions.canOverwriteSourceCode()) {
+          // User wants us to overwrite their old file with the amended sources.
+          var printer = new PrettyPrinterVisitor();
+          for (CompilationUnit cu : annotatedUnits.get()) {
+            var defs =
+                Stream.concat(
+                    Stream.concat(cu.enums().stream(), cu.classes().stream()),
+                    cu.interfaces().stream());
+            if (defs.noneMatch(x -> x.name().identifier().equals(symbol))) continue;
 
-						var sourceCode = printer.visit( cu );
-						Path pathToFile = Paths.get( cu.position().sourceFile() );
-						Files.write( pathToFile, sourceCode.getBytes(), StandardOpenOption.CREATE,
-								StandardOpenOption.TRUNCATE_EXISTING );
-					}
-				}
+            var sourceCode = printer.visit(cu);
+            Path pathToFile = Paths.get(cu.position().sourceFile());
+            Files.write(
+                pathToFile,
+                sourceCode.getBytes(),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING);
+          }
+        }
 
-			} catch( Exception e ) {
-				printNiceErrorMessage( e, verbosityOptions.verbosity() );
-				System.err.println( "compilation failed." );
-				return 1;
-			}
-			return 0;
-		}
-	}
+      } catch (Exception e) {
+        printNiceErrorMessage(e, verbosityOptions.verbosity());
+        System.err.println("compilation failed.");
+        return 1;
+      }
+      return 0;
+    }
+  }
 
-	@Command( name = "headers", aliases = { "chh" },
-			description = "Generate choral header files (" + Compiler.HEADER_FILE_EXTENSION + ")."
-	)
-	static class HeaderGenerator extends ChoralCommand implements Callable< Integer > {
+  @Command(
+      name = "headers",
+      aliases = {"chh"},
+      description = "Generate choral header files (" + Compiler.HEADER_FILE_EXTENSION + ").")
+  static class HeaderGenerator extends ChoralCommand implements Callable<Integer> {
 
-		@Mixin
-		HeaderCompilerOptions emissionOptions;
+    @Mixin HeaderCompilerOptions emissionOptions;
 
-		@Mixin
-		PathOption.HeadersPathOption headersPathOption;
+    @Mixin PathOption.HeadersPathOption headersPathOption;
 
-		@Option( names = { "--strict-header-search" },
-				description = "ignore headers in the same folder of the source files, unless specified by -l/--headers." )
-		boolean strictHeaderSearch = false;
+    @Option(
+        names = {"--strict-header-search"},
+        description =
+            "ignore headers in the same folder of the source files, unless specified by -l/--headers.")
+    boolean strictHeaderSearch = false;
 
-		@Parameters( arity = "1..*" )
-		List< File > sourceFiles;
+    @Parameters(arity = "1..*")
+    List<File> sourceFiles;
 
-		@Override
-		public Integer call() {
-			try {
-				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
-						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
-				Collection< CompilationUnit > headerUnits = Stream.concat(
-								HeaderLoader.loadStandardProfile(),
-								HeaderLoader.loadFromPath(
-										headersPathOption.getPaths(),
-										sourceFiles,
-										true, strictHeaderSearch )
-						)
-						.collect( Collectors.toList() );
-				TyperOptions typerOptions = new TyperOptions( verbosityOptions.verbosity() );
-				Collection< CompilationUnit > annotatedUnits =
-						Typer.annotate( sourceUnits, headerUnits, typerOptions );
-				annotatedUnits.parallelStream().map( HeaderCompiler::compile )
-						.forEach( emissionOptions.isDryRun()
-								? skip()
-								: wrapConsumer( s -> SourceWriter.writeSource( s, emissionOptions.targetpath(),
-										emissionOptions.useCanonicalPaths(),
-										emissionOptions.isOverwritingAllowed() ) ) );
-			} catch( Exception e ) {
-				printNiceErrorMessage( e, verbosityOptions.verbosity() );
-				System.err.println( "compilation failed." );
-				return 1;
-			}
-			return 0;
-		}
-	}
+    @Override
+    public Integer call() {
+      try {
+        Collection<CompilationUnit> sourceUnits =
+            sourceFiles.stream()
+                .map(wrapFunction(Parser::parseSourceFile))
+                .collect(Collectors.toList());
+        Collection<CompilationUnit> headerUnits =
+            Stream.concat(
+                    HeaderLoader.loadStandardProfile(),
+                    HeaderLoader.loadFromPath(
+                        headersPathOption.getPaths(), sourceFiles, true, strictHeaderSearch))
+                .collect(Collectors.toList());
+        TyperOptions typerOptions = new TyperOptions(verbosityOptions.verbosity());
+        Collection<CompilationUnit> annotatedUnits =
+            Typer.annotate(sourceUnits, headerUnits, typerOptions);
+        annotatedUnits.parallelStream()
+            .map(HeaderCompiler::compile)
+            .forEach(
+                emissionOptions.isDryRun()
+                    ? skip()
+                    : wrapConsumer(
+                        s ->
+                            SourceWriter.writeSource(
+                                s,
+                                emissionOptions.targetpath(),
+                                emissionOptions.useCanonicalPaths(),
+                                emissionOptions.isOverwritingAllowed())));
+      } catch (Exception e) {
+        printNiceErrorMessage(e, verbosityOptions.verbosity());
+        System.err.println("compilation failed.");
+        return 1;
+      }
+      return 0;
+    }
+  }
 
-	private static void printNiceErrorMessage(
-			Throwable e, VerbosityLevel verbosity
-	) {
-		if( e instanceof AstPositionedException pe ) {
-			Position p = pe.position();
-			System.err.printf(
-					"%1$s:%2$d:%3$d: error: %4$s.\n\n%5$s\n",
-					relativizePath( p.sourceFile() ),
-					p.line(),
-					p.column(),
-					capitalizeFirst( pe.getInnerMessage() ),
-					formattedSnippet( pe.position() )
-			);
-			if( verbosity == VerbosityLevel.DEBUG ) {
-				e.printStackTrace();
-			}
-		} else if( e instanceof MergeException me ) {
-			Position p1 = me.n1().position(), p2 = me.n2().position();
-			String sourceFile = p1.sourceFile();
-			System.err.printf(
-					"%1$s: error: %2$s.\n\n%3$s%4$s\n%5$s\n",
-					relativizePath( sourceFile ),
-					capitalizeFirst( me.getMessage() ),
-					formattedSnippet( p1 ),
-					"   ····\n   ····",
-					formattedSnippet( p2 )
-			);
-			if( verbosity == VerbosityLevel.DEBUG ) {
-				e.printStackTrace();
-			}
-		} else if( e instanceof ChoralCompoundException ) {
-			for( ChoralException c : ( (ChoralCompoundException) e ).getCauses() ) {
-				printNiceErrorMessage( c, verbosity );
-			}
-		} else if( e instanceof WrappedException ) {
-			printNiceErrorMessage( e.getCause(), verbosity );
-		} else if( e instanceof IOException ) {
-			System.err.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
-			if( verbosity == VerbosityLevel.DEBUG ) {
-				e.printStackTrace();
-			}
-		} else {
-			System.err.println( "Internal compiler error." );
-			e.printStackTrace();
-			System.err.println( "Please submit a bug report at " +
-					"https://github.com/choral-lang/choral/issues" );
-		}
-	}
+  private static void printNiceErrorMessage(Throwable e, VerbosityLevel verbosity) {
+    if (e instanceof AstPositionedException pe) {
+      Position p = pe.position();
+      System.err.printf(
+          "%1$s:%2$d:%3$d: error: %4$s.\n\n%5$s\n",
+          relativizePath(p.sourceFile()),
+          p.line(),
+          p.column(),
+          capitalizeFirst(pe.getInnerMessage()),
+          formattedSnippet(pe.position()));
+      if (verbosity == VerbosityLevel.DEBUG) {
+        e.printStackTrace();
+      }
+    } else if (e instanceof MergeException me) {
+      Position p1 = me.n1().position(), p2 = me.n2().position();
+      String sourceFile = p1.sourceFile();
+      System.err.printf(
+          "%1$s: error: %2$s.\n\n%3$s%4$s\n%5$s\n",
+          relativizePath(sourceFile),
+          capitalizeFirst(me.getMessage()),
+          formattedSnippet(p1),
+          "   ····\n   ····",
+          formattedSnippet(p2));
+      if (verbosity == VerbosityLevel.DEBUG) {
+        e.printStackTrace();
+      }
+    } else if (e instanceof ChoralCompoundException) {
+      for (ChoralException c : ((ChoralCompoundException) e).getCauses()) {
+        printNiceErrorMessage(c, verbosity);
+      }
+    } else if (e instanceof WrappedException) {
+      printNiceErrorMessage(e.getCause(), verbosity);
+    } else if (e instanceof IOException) {
+      System.err.println("error: " + capitalizeFirst(e.getMessage()) + ".");
+      if (verbosity == VerbosityLevel.DEBUG) {
+        e.printStackTrace();
+      }
+    } else {
+      System.err.println("Internal compiler error.");
+      e.printStackTrace();
+      System.err.println(
+          "Please submit a bug report at " + "https://github.com/choral-lang/choral/issues");
+    }
+  }
 
-	/**
-	 * Produces a pretty-printed code snippet of the error line and its surrounding context, with a
-	 * marker pointing to the error column.
-	 * @param p the location of the error
-	 */
-	private static String formattedSnippet( Position p ) {
-		if ( p == null || p.sourceFile() == null ) {
-			return "";
-		}
-		// -- parameters ---------------
-		int tabSize = 2;       // size of soft tabs
-		int contextLines = 1;  // number lines to display before and after the error line
-		// -----------------------------
-		StringBuilder formattedSnippet = new StringBuilder();
-		try( Stream< String > allLines = Files.lines( Paths.get( p.sourceFile() ) ) ) {
-			int lineDigits = (int) Math.ceil( Math.log10( p.line() ) ) + 1;
-			String format = "  %" + lineDigits + "d | %s\n";
-			int errorLine = Math.min( p.line() - 1, contextLines ) + 1;
-			int baseLine = p.line() - errorLine;
-			List< String > snippetLines = allLines
-					.skip( p.line() - errorLine )
-					.limit( errorLine + contextLines )
-					.collect( Collectors.toList() );
-			for( int i = 1; i <= snippetLines.size(); i++ ) {
-				String line = snippetLines.get( i - 1 );
-				formattedSnippet.append( String.format( format, baseLine + i,
-						line.replace( "\t", " ".repeat( tabSize ) ) ) );
-				if( i == errorLine ) {
-					// get the column with tabs (2 spaces)
-					int length = p.column();
-					for( char c : line.substring( 0, p.column() ).toCharArray() ) {
-						if( "\t".equals( "" + c ) ) {
-							length += tabSize - 1;
-						}
-					}
-					formattedSnippet.append( " ".repeat( lineDigits + 2 ) ).append( " | " )
-							.append( "-".repeat( length ) ).append( "^\n" );
-				}
-			}
-		} catch( IOException ex ) {
-			// give up printing the code snippet
-		}
-		return formattedSnippet.toString();
-	}
+  /**
+   * Produces a pretty-printed code snippet of the error line and its surrounding context, with a
+   * marker pointing to the error column.
+   *
+   * @param p the location of the error
+   */
+  private static String formattedSnippet(Position p) {
+    if (p == null || p.sourceFile() == null) {
+      return "";
+    }
+    // -- parameters ---------------
+    int tabSize = 2; // size of soft tabs
+    int contextLines = 1; // number lines to display before and after the error line
+    // -----------------------------
+    StringBuilder formattedSnippet = new StringBuilder();
+    try (Stream<String> allLines = Files.lines(Paths.get(p.sourceFile()))) {
+      int lineDigits = (int) Math.ceil(Math.log10(p.line())) + 1;
+      String format = "  %" + lineDigits + "d | %s\n";
+      int errorLine = Math.min(p.line() - 1, contextLines) + 1;
+      int baseLine = p.line() - errorLine;
+      List<String> snippetLines =
+          allLines
+              .skip(p.line() - errorLine)
+              .limit(errorLine + contextLines)
+              .collect(Collectors.toList());
+      for (int i = 1; i <= snippetLines.size(); i++) {
+        String line = snippetLines.get(i - 1);
+        formattedSnippet.append(
+            String.format(format, baseLine + i, line.replace("\t", " ".repeat(tabSize))));
+        if (i == errorLine) {
+          // get the column with tabs (2 spaces)
+          int length = p.column();
+          for (char c : line.substring(0, p.column()).toCharArray()) {
+            if ("\t".equals("" + c)) {
+              length += tabSize - 1;
+            }
+          }
+          formattedSnippet
+              .append(" ".repeat(lineDigits + 2))
+              .append(" | ")
+              .append("-".repeat(length))
+              .append("^\n");
+        }
+      }
+    } catch (IOException ex) {
+      // give up printing the code snippet
+    }
+    return formattedSnippet.toString();
+  }
 
-	public static String relativizePath( String path ) {
-		return Paths.get( "." ).toAbsolutePath().relativize(
-				Paths.get( path ).toAbsolutePath() ).toString();
-	}
+  public static String relativizePath(String path) {
+    return Paths.get(".").toAbsolutePath().relativize(Paths.get(path).toAbsolutePath()).toString();
+  }
 
-	static String capitalizeFirst( String str ) {
-		if( str == null || str.isEmpty() ) {
-			return str;
-		}
+  static String capitalizeFirst(String str) {
+    if (str == null || str.isEmpty()) {
+      return str;
+    }
 
-		return str.substring( 0, 1 ).toUpperCase() + str.substring( 1 );
-	}
+    return str.substring(0, 1).toUpperCase() + str.substring(1);
+  }
 
-	// - - - - - - PROFILING VARIABLES, METHODS, AND UTILITIES
+  // - - - - - - PROFILING VARIABLES, METHODS, AND UTILITIES
 
-	private static Map< String, ArrayList< Long > > profilingLog;
+  private static Map<String, ArrayList<Long>> profilingLog;
 
-	public static void mainProfiler(
-			String[] args, Map< String, ArrayList< Long > > profilingLog
-	) {
-		Choral c = new Choral();
-		c.profilingLog = profilingLog;
-		CommandLine cl = new CommandLine( c );
-		cl.setToggleBooleanFlags( true );
-		cl.setCaseInsensitiveEnumValuesAllowed( true );
-		cl.execute( args );
-	}
+  public static void mainProfiler(String[] args, Map<String, ArrayList<Long>> profilingLog) {
+    Choral c = new Choral();
+    c.profilingLog = profilingLog;
+    CommandLine cl = new CommandLine(c);
+    cl.setToggleBooleanFlags(true);
+    cl.setCaseInsensitiveEnumValuesAllowed(true);
+    cl.execute(args);
+  }
 
-	protected static void profilerLog( String action, Runnable r ) throws Exception {
-		if( profilingLog != null ) {
-			Long start = System.nanoTime();
-			try {
-				r.run();
-			} catch( RuntimeException e ) {
-				throw new Exception( e );
-			}
-			Long finish = System.nanoTime();
-			profilingLog.putIfAbsent( action, new ArrayList<>() );
-			profilingLog.get( action ).add( finish - start );
-		} else {
-			r.run();
-		}
-	}
-
+  protected static void profilerLog(String action, Runnable r) throws Exception {
+    if (profilingLog != null) {
+      Long start = System.nanoTime();
+      try {
+        r.run();
+      } catch (RuntimeException e) {
+        throw new Exception(e);
+      }
+      Long finish = System.nanoTime();
+      profilingLog.putIfAbsent(action, new ArrayList<>());
+      profilingLog.get(action).add(finish - start);
+    } else {
+      r.run();
+    }
+  }
 }
 
 @Command()
 class VerbosityOptions {
 
-	private VerbosityLevel verbosity = VerbosityLevel.WARNINGS;
+  private VerbosityLevel verbosity = VerbosityLevel.WARNINGS;
 
-	public VerbosityLevel verbosity() {
-		return this.verbosity;
-	}
+  public VerbosityLevel verbosity() {
+    return this.verbosity;
+  }
 
-	@Option( names = { "--verbosity" },
-			description = "Verbosity level: ${COMPLETION-CANDIDATES}.",
-			paramLabel = "<LEVEL>"
-	)
-	private void setVerbosity( VerbosityLevel value ) {
-		this.verbosity = value;
-	}
+  @Option(
+      names = {"--verbosity"},
+      description = "Verbosity level: ${COMPLETION-CANDIDATES}.",
+      paramLabel = "<LEVEL>")
+  private void setVerbosity(VerbosityLevel value) {
+    this.verbosity = value;
+  }
 
-	@Option( names = { "-v", "--verbose" },
-			description = "Enable information messages." )
-	private void setVerboseLevel( boolean value ) {
-		if( value ) {
-			this.setVerbosity( VerbosityLevel.INFO );
-		}
-	}
+  @Option(
+      names = {"-v", "--verbose"},
+      description = "Enable information messages.")
+  private void setVerboseLevel(boolean value) {
+    if (value) {
+      this.setVerbosity(VerbosityLevel.INFO);
+    }
+  }
 
-	@Option( names = { "-q", "--quiet" },
-			description = "Disable all messages except errors." )
-	private void setQuietLevel( boolean value ) {
-		if( value ) {
-			this.setVerbosity( VerbosityLevel.ERRORS );
-		}
-	}
+  @Option(
+      names = {"-q", "--quiet"},
+      description = "Disable all messages except errors.")
+  private void setQuietLevel(boolean value) {
+    if (value) {
+      this.setVerbosity(VerbosityLevel.ERRORS);
+    }
+  }
 
-	@Option( names = { "--debug" },
-			description = "Enable debug messages." )
-	private void setDebugLevel( boolean value ) {
-		if( value ) {
-			this.setVerbosity( VerbosityLevel.DEBUG );
-		}
-	}
+  @Option(
+      names = {"--debug"},
+      description = "Enable debug messages.")
+  private void setDebugLevel(boolean value) {
+    if (value) {
+      this.setVerbosity(VerbosityLevel.DEBUG);
+    }
+  }
 
-	@Option( names = { "--info" },
-			description = "Enable info messages." )
-	private void setInfoLevel( boolean value ) {
-		if( value ) {
-			this.setVerbosity( VerbosityLevel.INFO );
-		}
-	}
-
+  @Option(
+      names = {"--info"},
+      description = "Enable info messages.")
+  private void setInfoLevel(boolean value) {
+    if (value) {
+      this.setVerbosity(VerbosityLevel.INFO);
+    }
+  }
 }
 
 @Command()
 abstract class PathOption {
-	private String value;
+  private String value;
 
-	private List< Path > paths;
+  private List<Path> paths;
 
-	protected void setValue( String value ) {
-		this.value = value;
-	}
+  protected void setValue(String value) {
+    this.value = value;
+  }
 
-	public final String value() {
-		return value;
-	}
+  public final String value() {
+    return value;
+  }
 
-	public final List< Path > getPaths() {
-		return getPaths( false );
-	}
+  public final List<Path> getPaths() {
+    return getPaths(false);
+  }
 
-	public final List< Path > getPaths( boolean cwdIfEmpty ) {
-		if( paths == null ) {
-			paths = new LinkedList<>();
-			if( value != null ) {
-				for( String p : value().split( File.pathSeparator ) ) {
-					paths.add( Paths.get( p ) );
-				}
-			}
-		}
-		if( cwdIfEmpty && paths.isEmpty() ) {
-			paths.add( Paths.get( "" ) );
-		}
-		return paths;
-	}
+  public final List<Path> getPaths(boolean cwdIfEmpty) {
+    if (paths == null) {
+      paths = new LinkedList<>();
+      if (value != null) {
+        for (String p : value().split(File.pathSeparator)) {
+          paths.add(Paths.get(p));
+        }
+      }
+    }
+    if (cwdIfEmpty && paths.isEmpty()) {
+      paths.add(Paths.get(""));
+    }
+    return paths;
+  }
 
-	public final static class SourcePathOption extends PathOption {
-		@Option( names = { "-s", "--sources" },
-				paramLabel = "<PATH>",
-				description = "Specify where to find choral source files (" + choral.compiler.Compiler.SOURCE_FILE_EXTENSION + ")." )
-		@Override
-		protected void setValue( String value ) {
-			super.setValue( value );
-		}
-	}
+  public static final class SourcePathOption extends PathOption {
+    @Option(
+        names = {"-s", "--sources"},
+        paramLabel = "<PATH>",
+        description =
+            "Specify where to find choral source files ("
+                + choral.compiler.Compiler.SOURCE_FILE_EXTENSION
+                + ").")
+    @Override
+    protected void setValue(String value) {
+      super.setValue(value);
+    }
+  }
 
-	public final static class HeadersPathOption extends PathOption {
-		@Option( names = { "-l", "--headers" },
-				paramLabel = "<PATH>",
-				description = "Specify where to find choral header files (" + Compiler.HEADER_FILE_EXTENSION + ")." )
-		@Override
-		protected void setValue( String value ) {
-			super.setValue( value );
-		}
-	}
+  public static final class HeadersPathOption extends PathOption {
+    @Option(
+        names = {"-l", "--headers"},
+        paramLabel = "<PATH>",
+        description =
+            "Specify where to find choral header files (" + Compiler.HEADER_FILE_EXTENSION + ").")
+    @Override
+    protected void setValue(String value) {
+      super.setValue(value);
+    }
+  }
 }
 
 @Command()
 class EmissionOptions {
 
-	@Option( names = { "--dry-run" },
-			description = "Disable any write on disk." )
-	private boolean dryRun = false;
+  @Option(
+      names = {"--dry-run"},
+      description = "Disable any write on disk.")
+  private boolean dryRun = false;
 
-	@Option( names = { "--annotate" },
-			description = "Annotate the projected artefacts with the @Choreography annotation." )
-	private boolean isAnnotated = false;
+  @Option(
+      names = {"--annotate"},
+      description = "Annotate the projected artefacts with the @Choreography annotation.")
+  private boolean isAnnotated = false;
 
-	@Option( names = { "--infer-comms" },
-			description = "Infer missing communications and selections." )
-	private boolean inferComms = false;
+  @Option(
+      names = {"--infer-comms"},
+      description = "Infer missing communications and selections.")
+  private boolean inferComms = false;
 
-	@Option( names = { "--overwrite-source" },
-			description = "After static analysis, overwrite source files with the compiler's elaborated AST." )
-	private boolean canOverwrite = false;
+  @Option(
+      names = {"--overwrite-source"},
+      description =
+          "After static analysis, overwrite source files with the compiler's elaborated AST.")
+  private boolean canOverwrite = false;
 
-	@Option( names = { "-t", "--target" },
-			paramLabel = "<PATHS>",
-			description = "Specify where to save compiled files." )
-	private Path targetpath;
+  @Option(
+      names = {"-t", "--target"},
+      paramLabel = "<PATHS>",
+      description = "Specify where to save compiled files.")
+  private Path targetpath;
 
-	public boolean isDryRun() {
-		return dryRun;
-	}
+  public boolean isDryRun() {
+    return dryRun;
+  }
 
-	public boolean isAnnotated() {
-		return isAnnotated;
-	}
+  public boolean isAnnotated() {
+    return isAnnotated;
+  }
 
-	public boolean inferComms() {
-		return inferComms;
-	}
+  public boolean inferComms() {
+    return inferComms;
+  }
 
-	public boolean canOverwriteSourceCode() {
-		return canOverwrite;
-	}
+  public boolean canOverwriteSourceCode() {
+    return canOverwrite;
+  }
 
-	public Optional< Path > targetpath() {
-		return Optional.ofNullable( targetpath );
-	}
+  public Optional<Path> targetpath() {
+    return Optional.ofNullable(targetpath);
+  }
 }
 
 @Command()
 class HeaderCompilerOptions {
 
-	@Option( names = { "--no-overwrite" },
-			description = "Never overwrites existing files." )
-	private boolean overwrite = true;
+  @Option(
+      names = {"--no-overwrite"},
+      description = "Never overwrites existing files.")
+  private boolean overwrite = true;
 
-	@Option( names = { "--dry-run" },
-			description = "Disable any write on disk." )
-	private boolean dryRun = false;
+  @Option(
+      names = {"--dry-run"},
+      description = "Disable any write on disk.")
+  private boolean dryRun = false;
 
-	@Option( names = { "-p", "--canonical-paths" },
-			description = "Use folders for packages." )
-	boolean useCanonicalPaths;
+  @Option(
+      names = {"-p", "--canonical-paths"},
+      description = "Use folders for packages.")
+  boolean useCanonicalPaths;
 
-	@Option( names = { "-t", "--target" },
-			paramLabel = "<PATHS>",
-			description = "Specify where to save compiled files." )
-	private Path targetpath;
+  @Option(
+      names = {"-t", "--target"},
+      paramLabel = "<PATHS>",
+      description = "Specify where to save compiled files.")
+  private Path targetpath;
 
-	public boolean isDryRun() {
-		return dryRun;
-	}
+  public boolean isDryRun() {
+    return dryRun;
+  }
 
-	public boolean isOverwritingAllowed() {
-		return overwrite;
-	}
+  public boolean isOverwritingAllowed() {
+    return overwrite;
+  }
 
-	public boolean useCanonicalPaths() {
-		return useCanonicalPaths;
-	}
+  public boolean useCanonicalPaths() {
+    return useCanonicalPaths;
+  }
 
-	public Optional< Path > targetpath() {
-		return Optional.ofNullable( targetpath );
-	}
+  public Optional<Path> targetpath() {
+    return Optional.ofNullable(targetpath);
+  }
 }
 
 @Command(
-		versionProvider = ChoralVersionProvider.class,
-		sortOptions = false,
-		descriptionHeading = "%nDescription:%n",
-		parameterListHeading = "%nParameters:%n",
-		optionListHeading = "%nOptions:%n",
-		commandListHeading = "%nCommands:%n",
-		mixinStandardHelpOptions = true
-)
+    versionProvider = ChoralVersionProvider.class,
+    sortOptions = false,
+    descriptionHeading = "%nDescription:%n",
+    parameterListHeading = "%nParameters:%n",
+    optionListHeading = "%nOptions:%n",
+    commandListHeading = "%nCommands:%n",
+    mixinStandardHelpOptions = true)
 abstract class ChoralCommand {
-	@Mixin
-	VerbosityOptions verbosityOptions;
+  @Mixin VerbosityOptions verbosityOptions;
 }
 
 class ChoralVersionProvider implements IVersionProvider {
-	public String[] getVersion() throws Exception {
-		Properties properties = new Properties();
-		InputStream is = getClass().getClassLoader().getResourceAsStream( "version.properties" );
-		properties.load( is );
-		return new String[] {
-				"${COMMAND-FULL-NAME} " + properties.getProperty( "choral.version" )
-		};
-	}
+  public String[] getVersion() throws Exception {
+    Properties properties = new Properties();
+    InputStream is = getClass().getClassLoader().getResourceAsStream("version.properties");
+    properties.load(is);
+    return new String[] {"${COMMAND-FULL-NAME} " + properties.getProperty("choral.version")};
+  }
 }

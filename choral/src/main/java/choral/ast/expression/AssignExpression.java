@@ -1,4 +1,3 @@
-
 /*
  *   Copyright (C) 2019 by Saverio Giallorenzo <saverio.giallorenzo@gmail.com>
  *
@@ -29,121 +28,113 @@ import choral.ast.visitors.MergerInterface;
 
 public class AssignExpression extends Expression {
 
-	private final Expression target, value;
-	private final Operator operator;
+  private final Expression target, value;
+  private final Operator operator;
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    assert n instanceof AssignExpression;
+    return m.merge(this, (AssignExpression) n);
+  }
 
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		assert n instanceof AssignExpression;
-		return m.merge( this, (AssignExpression) n );
-	}
+  public String toString() {
+    return target + " " + operator.symbol + " " + value;
+  }
 
-	public String toString(){
-		return target + " " + operator.symbol + " " + value;
-	}
+  public enum Operator {
+    ASSIGN("=", null),
+    ADD_ASSIGN("+=", BinaryExpression.Operator.PLUS),
+    SUB_ASSIGN("-=", BinaryExpression.Operator.MINUS),
+    MUL_ASSIGN("*=", BinaryExpression.Operator.MULTIPLY),
+    DIV_ASSIGN("/=", BinaryExpression.Operator.DIVIDE),
+    AND_ASSIGN("&=", BinaryExpression.Operator.AND),
+    OR_ASSIGN("|=", BinaryExpression.Operator.OR),
+    MOD_ASSIGN("%=", BinaryExpression.Operator.REMAINDER);
 
-	public enum Operator {
+    private final String symbol;
 
-		ASSIGN( "=", null ),
-		ADD_ASSIGN( "+=", BinaryExpression.Operator.PLUS ),
-		SUB_ASSIGN( "-=", BinaryExpression.Operator.MINUS ),
-		MUL_ASSIGN( "*=", BinaryExpression.Operator.MULTIPLY ),
-		DIV_ASSIGN( "/=", BinaryExpression.Operator.DIVIDE ),
-		AND_ASSIGN( "&=", BinaryExpression.Operator.AND ),
-		OR_ASSIGN( "|=", BinaryExpression.Operator.OR ),
-		MOD_ASSIGN( "%=", BinaryExpression.Operator.REMAINDER );
+    private final BinaryExpression.Operator op;
 
-		private final String symbol;
+    public boolean isLogical() {
+      return switch (this) {
+        case AND_ASSIGN, OR_ASSIGN -> true;
+        default -> false;
+      };
+    }
 
-		private final BinaryExpression.Operator op;
+    public boolean isArithmetic() {
+      return switch (this) {
+        case ADD_ASSIGN, SUB_ASSIGN, MUL_ASSIGN, DIV_ASSIGN, MOD_ASSIGN -> true;
+        default -> false;
+      };
+    }
 
-		public boolean isLogical() {
-			return switch( this ) {
-				case AND_ASSIGN, OR_ASSIGN -> true;
-				default -> false;
-			};
-		}
+    public String symbol() {
+      return symbol;
+    }
 
-		public boolean isArithmetic() {
-			return switch( this ) {
-				case ADD_ASSIGN, SUB_ASSIGN, MUL_ASSIGN, DIV_ASSIGN, MOD_ASSIGN -> true;
-				default -> false;
-			};
-		}
+    public boolean hasOperation() {
+      return this != ASSIGN;
+    }
 
-		public String symbol() {
-			return symbol;
-		}
+    public BinaryExpression.Operator operation() {
+      return op;
+    }
 
-		public boolean hasOperation() {
-			return this != ASSIGN;
-		}
+    Operator(final String symbol, final BinaryExpression.Operator op) {
+      this.symbol = symbol;
+      this.op = op;
+    }
 
-		public BinaryExpression.Operator operation() {
-			return op;
-		}
+    public static Operator getIfPresent(String name) {
+      return switch (name) {
+        case "=" -> ASSIGN;
+        case "+=" -> ADD_ASSIGN;
+        case "-=" -> SUB_ASSIGN;
+        case "*=" -> MUL_ASSIGN;
+        case "/=" -> DIV_ASSIGN;
+        case "&=" -> AND_ASSIGN;
+        case "|=" -> OR_ASSIGN;
+        case "%=" -> MOD_ASSIGN;
+        default -> throw new RuntimeException("Unexpected operator " + name);
+      };
+    }
+  }
 
-		Operator( final String symbol, final BinaryExpression.Operator op ) {
-			this.symbol = symbol;
-			this.op = op;
-		}
+  /** Expression of the type: value = target, e.g., -> a.b = 5 -> ( ( ( a ) ) ) = 5 + 1 */
+  public AssignExpression(
+      final Expression value, final Expression target, final Operator operator) {
+    super();
+    this.target = target;
+    this.value = value;
+    this.operator = operator;
+  }
 
-		public static Operator getIfPresent( String name ) {
-			return switch( name ) {
-				case "=" -> ASSIGN;
-				case "+=" -> ADD_ASSIGN;
-				case "-=" -> SUB_ASSIGN;
-				case "*=" -> MUL_ASSIGN;
-				case "/=" -> DIV_ASSIGN;
-				case "&=" -> AND_ASSIGN;
-				case "|=" -> OR_ASSIGN;
-				case "%=" -> MOD_ASSIGN;
-				default -> throw new RuntimeException( "Unexpected operator " + name );
-			};
-		}
+  public AssignExpression(
+      final Expression value,
+      final Expression target,
+      final Operator operator,
+      final Position position) {
+    super(position);
+    this.target = target;
+    this.value = value;
+    this.operator = operator;
+  }
 
-	}
+  public Expression target() {
+    return target;
+  }
 
-	/**
-	 * Expression of the type: value = target, e.g.,
-	 * -> a.b = 5
-	 * -> ( ( ( a ) ) ) = 5 + 1
-	 */
+  public Expression value() {
+    return value;
+  }
 
-	public AssignExpression(
-			final Expression value, final Expression target, final Operator operator
-	) {
-		super();
-		this.target = target;
-		this.value = value;
-		this.operator = operator;
-	}
-
-	public AssignExpression(
-			final Expression value, final Expression target, final Operator operator,
-			final Position position
-	) {
-		super( position );
-		this.target = target;
-		this.value = value;
-		this.operator = operator;
-	}
-
-	public Expression target() {
-		return target;
-	}
-
-	public Expression value() {
-		return value;
-	}
-
-	public Operator operator() {
-		return operator;
-	}
+  public Operator operator() {
+    return operator;
+  }
 }

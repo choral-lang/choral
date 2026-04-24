@@ -23,38 +23,37 @@ package choral.types;
 
 public interface DataTypeOrVoid {
 
-	default Universe.SpecialTypeTag specialTypeTag() {
-		return null;
-	}
+  default Universe.SpecialTypeTag specialTypeTag() {
+    return null;
+  }
 
-	default Universe.PrimitiveTypeTag primitiveTypeTag() {
-		return null;
-	}
+  default Universe.PrimitiveTypeTag primitiveTypeTag() {
+    return null;
+  }
 
-	default boolean isVoid() {
-		return false;
-	}
+  default boolean isVoid() {
+    return false;
+  }
 
-	default boolean isPrimitive() {
-		return false;
-	}
+  default boolean isPrimitive() {
+    return false;
+  }
 
-	default boolean isTypeParameter() {
-		return false;
-	}
+  default boolean isTypeParameter() {
+    return false;
+  }
 
-	default boolean isClass() {
-		return false;
-	}
+  default boolean isClass() {
+    return false;
+  }
 
-	default boolean isInterface() {
-		return false;
-	}
+  default boolean isInterface() {
+    return false;
+  }
 
-	default boolean isEnum() {
-		return false;
-	}
+  default boolean isEnum() {
+    return false;
+  }
 
-	boolean isHigherType();
-
+  boolean isHigherType();
 }

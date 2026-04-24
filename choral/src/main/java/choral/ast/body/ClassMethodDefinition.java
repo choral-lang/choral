@@ -21,71 +21,68 @@
 
 package choral.ast.body;
 
+import static choral.ast.body.ClassMethodModifier.*;
+
 import choral.ast.Position;
 import choral.ast.statement.Statement;
 import choral.ast.visitors.ChoralVisitorInterface;
-
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
-import static choral.ast.body.ClassMethodModifier.*;
-
 public class ClassMethodDefinition extends MethodDefinition {
-	private final Statement body;
-	private final EnumSet< ClassMethodModifier > modifiers;
+  private final Statement body;
+  private final EnumSet<ClassMethodModifier> modifiers;
 
-	public ClassMethodDefinition(
-			final MethodSignature signature,
-			final Statement body,
-			final List< Annotation > annotations,
-			final EnumSet< ClassMethodModifier > modifiers,
-			final Position position
-	) {
-		super( signature, annotations, position );
-		this.body = body;
-		this.modifiers = modifiers;
-	}
+  public ClassMethodDefinition(
+      final MethodSignature signature,
+      final Statement body,
+      final List<Annotation> annotations,
+      final EnumSet<ClassMethodModifier> modifiers,
+      final Position position) {
+    super(signature, annotations, position);
+    this.body = body;
+    this.modifiers = modifiers;
+  }
 
-	public Optional< Statement > body() {
-		return Optional.ofNullable( body );
-	}
+  public Optional<Statement> body() {
+    return Optional.ofNullable(body);
+  }
 
-	public EnumSet< ClassMethodModifier > modifiers() {
-		return modifiers;
-	}
+  public EnumSet<ClassMethodModifier> modifiers() {
+    return modifiers;
+  }
 
-	public boolean isStatic() {
-		return modifiers.contains( STATIC );
-	}
+  public boolean isStatic() {
+    return modifiers.contains(STATIC);
+  }
 
-	public boolean isPublic() {
-		return modifiers.contains( PUBLIC );
-	}
+  public boolean isPublic() {
+    return modifiers.contains(PUBLIC);
+  }
 
-	public boolean isProtected() {
-		return modifiers.contains( PROTECTED );
-	}
+  public boolean isProtected() {
+    return modifiers.contains(PROTECTED);
+  }
 
-	public boolean isPrivate() {
-		return modifiers.contains( PRIVATE );
-	}
+  public boolean isPrivate() {
+    return modifiers.contains(PRIVATE);
+  }
 
-	public boolean isFinal() {
-		return modifiers.contains( FINAL );
-	}
+  public boolean isFinal() {
+    return modifiers.contains(FINAL);
+  }
 
-	public boolean isAbstract() {
-		return modifiers.contains( ABSTRACT );
-	}
+  public boolean isAbstract() {
+    return modifiers.contains(ABSTRACT);
+  }
 
-	public boolean isPackagePrivate() {
-		return !( isPrivate() || isProtected() || isPublic() );
-	}
+  public boolean isPackagePrivate() {
+    return !(isPrivate() || isProtected() || isPublic());
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

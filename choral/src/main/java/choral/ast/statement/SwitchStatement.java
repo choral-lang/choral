@@ -28,76 +28,81 @@ import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
-
 import java.util.Map;
 
 /**
- * switch ( Expression ) { <p>
- * case Identifier | Literal at World ( Identifier | Literal at World )* -> { block } <p>
- * case Identifier | Literal at World ( Identifier | Literal at World )* -> { block } <p>
- * default -> { block } <p>
- * }
+ * switch ( Expression ) {
+ *
+ * <p>case Identifier | Literal at World ( Identifier | Literal at World )* -> { block }
+ *
+ * <p>case Identifier | Literal at World ( Identifier | Literal at World )* -> { block }
+ *
+ * <p>default -> { block }
+ *
+ * <p>}
  */
-
 public class SwitchStatement extends Statement {
 
-	private final Map< SwitchArgument< ? >, Statement > cases;
-	private final Expression guard;
+  private final Map<SwitchArgument<?>, Statement> cases;
+  private final Expression guard;
 
-	public SwitchStatement(
-			final Expression guard, final Map< SwitchArgument< ? >, Statement > cases,
-			final Statement continuation
-	) {
-		super( continuation );
-		this.guard = guard;
-		this.cases = cases;
-	}
+  public SwitchStatement(
+      final Expression guard,
+      final Map<SwitchArgument<?>, Statement> cases,
+      final Statement continuation) {
+    super(continuation);
+    this.guard = guard;
+    this.cases = cases;
+  }
 
-	public SwitchStatement(
-			final Expression guard, final Map< SwitchArgument< ? >, Statement > cases,
-			final Statement continuation, final Position position
-	) {
-		super( continuation, position );
-		this.guard = guard;
-		this.cases = cases;
-	}
+  public SwitchStatement(
+      final Expression guard,
+      final Map<SwitchArgument<?>, Statement> cases,
+      final Statement continuation,
+      final Position position) {
+    super(continuation, position);
+    this.guard = guard;
+    this.cases = cases;
+  }
 
-	public Map< SwitchArgument< ? >, Statement > cases() {
-		return cases;
-	}
+  public Map<SwitchArgument<?>, Statement> cases() {
+    return cases;
+  }
 
-	public Expression guard() {
-		return guard;
-	}
+  public Expression guard() {
+    return guard;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try {
-			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ) {
-			String position = "";
-			if( this.position() != null ) {
-				position = this.position().line() + ":" + this.position().column() + ":";
-			}
-			throw new ChoralException(
-					"Could not merge \n" + new PrettyPrinterVisitor().visit( this ) +
-							"\nwith " + n.getClass().getSimpleName() );
-		}
-	}
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    try {
+      return m.merge(this, (this.getClass().cast(n)));
+    } catch (ClassCastException e) {
+      String position = "";
+      if (this.position() != null) {
+        position = this.position().line() + ":" + this.position().column() + ":";
+      }
+      throw new ChoralException(
+          "Could not merge \n"
+              + new PrettyPrinterVisitor().visit(this)
+              + "\nwith "
+              + n.getClass().getSimpleName());
+    }
+  }
 
-	@Override
-	public Statement cloneWithContinuation( Statement continuation ) {
-		return new SwitchStatement(
-				this.guard,
-				this.cases,
-				this.continuation() == null ? continuation : continuation().cloneWithContinuation(
-						continuation ),
-				this.position() );
-	}
-
+  @Override
+  public Statement cloneWithContinuation(Statement continuation) {
+    return new SwitchStatement(
+        this.guard,
+        this.cases,
+        this.continuation() == null
+            ? continuation
+            : continuation().cloneWithContinuation(continuation),
+        this.position());
+  }
 }

@@ -25,17 +25,17 @@ import java.util.UUID;
 
 public class AuthToken {
 
-	private final String id;
+  private final String id;
 
-	public AuthToken( String id ) {
-		this.id = id;
-	}
+  public AuthToken(String id) {
+    this.id = id;
+  }
 
-	public String id() {
-		return id;
-	}
+  public String id() {
+    return id;
+  }
 
-	public static AuthToken create() {
-		return new AuthToken( UUID.randomUUID().toString() );
-	}
+  public static AuthToken create() {
+    return new AuthToken(UUID.randomUUID().toString());
+  }
 }

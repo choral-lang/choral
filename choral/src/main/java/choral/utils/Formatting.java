@@ -29,35 +29,30 @@ import java.util.stream.Collectors;
 
 public final class Formatting {
 
-	public static Function< List< String >, String > joiningOxfordComma() {
-		return Formatting::joiningOxfordComma;
-	}
+  public static Function<List<String>, String> joiningOxfordComma() {
+    return Formatting::joiningOxfordComma;
+  }
 
-	public static String joiningOxfordComma( List< String > list ) {
-		int last = list.size() - 1;
-		if( last < 1 ) return String.join( "", list );
-		if( last == 1 ) return String.join( " and ", list );
-		return String.join( ", and ",
-				String.join( ", ", list.subList( 0, last ) ),
-				list.get( last ) );
-	}
+  public static String joiningOxfordComma(List<String> list) {
+    int last = list.size() - 1;
+    if (last < 1) return String.join("", list);
+    if (last == 1) return String.join(" and ", list);
+    return String.join(", and ", String.join(", ", list.subList(0, last)), list.get(last));
+  }
 
-	public static Collector< CharSequence, ?, String > joining(
-			CharSequence delimiter,
-			CharSequence prefix,
-			CharSequence suffix,
-			String emptyValue
-	) {
-		return Collector.of(
-				() -> new StringJoiner( delimiter, prefix, suffix ).setEmptyValue( emptyValue ),
-				StringJoiner::add, StringJoiner::merge,
-				StringJoiner::toString );
-	}
+  public static Collector<CharSequence, ?, String> joining(
+      CharSequence delimiter, CharSequence prefix, CharSequence suffix, String emptyValue) {
+    return Collector.of(
+        () -> new StringJoiner(delimiter, prefix, suffix).setEmptyValue(emptyValue),
+        StringJoiner::add,
+        StringJoiner::merge,
+        StringJoiner::toString);
+  }
 
-	public static String joiningQuotedAndOxfordComma( List< ? > list ) {
-		return list.stream().map( x -> "'" + x + "'" )
-				.collect( Collectors.collectingAndThen( Collectors.toList(),
-						Formatting.joiningOxfordComma() ) );
-	}
-
+  public static String joiningQuotedAndOxfordComma(List<?> list) {
+    return list.stream()
+        .map(x -> "'" + x + "'")
+        .collect(
+            Collectors.collectingAndThen(Collectors.toList(), Formatting.joiningOxfordComma()));
+  }
 }

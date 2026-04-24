@@ -27,41 +27,44 @@ import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
-/**
- * NotExpression refers to applying the {@code !} operator to an expression. 
- */
+
+/** NotExpression refers to applying the {@code !} operator to an expression. */
 public class NotExpression extends Expression {
 
-	private final Expression expression;
+  private final Expression expression;
 
-	public NotExpression( final Expression expression, final Position position ) {
-		super( position );
-		this.expression = expression;
-	}
+  public NotExpression(final Expression expression, final Position position) {
+    super(position);
+    this.expression = expression;
+  }
 
-	public NotExpression( final Expression expression ) {
-		this.expression = expression;
-	}
+  public NotExpression(final Expression expression) {
+    this.expression = expression;
+  }
 
-	public Expression expression() {
-		return expression;
-	}
+  public Expression expression() {
+    return expression;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try {
-			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ) {
-			throw new ChoralException(
-					this.position().line() + ":"
-							+ this.position().column() + ":"
-							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-							this ) + "\n with " + n.getClass().getSimpleName() );
-		}
-	}
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    try {
+      return m.merge(this, (this.getClass().cast(n)));
+    } catch (ClassCastException e) {
+      throw new ChoralException(
+          this.position().line()
+              + ":"
+              + this.position().column()
+              + ":"
+              + "error: Could not merge \n"
+              + new PrettyPrinterVisitor().visit(this)
+              + "\n with "
+              + n.getClass().getSimpleName());
+    }
+  }
 }

@@ -21,47 +21,43 @@
 
 package choral.utils;
 
+import java.util.List;
 import org.antlr.v4.runtime.tree.Tree;
 import org.antlr.v4.runtime.tree.Trees;
 
-import java.util.List;
-
 public class PrettyTree {
 
-	public static final String Eol = System.lineSeparator();
+  public static final String Eol = System.lineSeparator();
 
+  public static String toPrettyTree(final Tree t, final List<String> ruleNames) {
+    return process(t, ruleNames, 0);
+  }
 
-	public static String toPrettyTree( final Tree t, final List< String > ruleNames ) {
-		return process( t, ruleNames, 0 );
-	}
+  private static String process(final Tree t, final List<String> ruleNames, int level) {
+    if (t.getChildCount() == 0) return Trees.getNodeText(t, ruleNames);
+    StringBuilder sb = new StringBuilder();
+    sb.append(lead(level));
+    level++;
+    String s = Trees.getNodeText(t, ruleNames);
+    sb.append(s).append(' ');
+    for (int i = 0; i < t.getChildCount(); i++) {
+      sb.append(process(t.getChild(i), ruleNames, level));
+    }
+    level--;
+    sb.append(lead(level));
+    return sb.toString();
+  }
 
-	private static String process( final Tree t, final List< String > ruleNames, int level ) {
-		if( t.getChildCount() == 0 ) return Trees.getNodeText( t, ruleNames );
-		StringBuilder sb = new StringBuilder();
-		sb.append( lead( level ) );
-		level++;
-		String s = Trees.getNodeText( t, ruleNames );
-		sb.append( s ).append( ' ' );
-		for( int i = 0; i < t.getChildCount(); i++ ) {
-			sb.append( process( t.getChild( i ), ruleNames, level ) );
-		}
-		level--;
-		sb.append( lead( level ) );
-		return sb.toString();
-	}
+  private static String getIndents() {
+    return " ";
+  }
 
-	private static String getIndents() {
-		return " ";
-	}
-
-	private static String lead( int level ) {
-		StringBuilder sb = new StringBuilder();
-		if( level > 0 ) {
-			sb.append( Eol );
-			sb.append( getIndents().repeat( level ) );
-		}
-		return sb.toString();
-	}
-
-
+  private static String lead(int level) {
+    StringBuilder sb = new StringBuilder();
+    if (level > 0) {
+      sb.append(Eol);
+      sb.append(getIndents().repeat(level));
+    }
+    return sb.toString();
+  }
 }

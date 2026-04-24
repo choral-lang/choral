@@ -32,102 +32,107 @@ import java.util.Optional;
 
 public class SourceWriter {
 
-	public static void writeSource( SourceObject source ) throws IOException {
-		writeSource( source, Optional.empty() );
-	}
+  public static void writeSource(SourceObject source) throws IOException {
+    writeSource(source, Optional.empty());
+  }
 
-	public static void writeSource( SourceObject source, Path targetFolder ) throws IOException {
-		writeSource( source, Optional.ofNullable( targetFolder ), true );
-	}
+  public static void writeSource(SourceObject source, Path targetFolder) throws IOException {
+    writeSource(source, Optional.ofNullable(targetFolder), true);
+  }
 
-	public static void writeSource(
-			SourceObject source, Optional< Path > targetFolder
-	) throws IOException {
-		writeSource( source, targetFolder, true );
-	}
+  public static void writeSource(SourceObject source, Optional<Path> targetFolder)
+      throws IOException {
+    writeSource(source, targetFolder, true);
+  }
 
-	public static void writeSource(
-			SourceObject source, Optional< Path > targetFolder, boolean allowOverwriting
-	) throws IOException {
-		writeSource( source, targetFolder, true, true );
-	}
+  public static void writeSource(
+      SourceObject source, Optional<Path> targetFolder, boolean allowOverwriting)
+      throws IOException {
+    writeSource(source, targetFolder, true, true);
+  }
 
-	public static void writeSource(
-			SourceObject source, Optional< Path > targetFolder, boolean useCanonicalPath,
-			boolean allowOverwriting
-	) throws IOException {
-		Path pathToFile = targetFolder
-				.map( t -> Paths.get( t.toString(), source.getCanonicalPath() ) )
-				.orElseGet( ( useCanonicalPath )
-						? () -> Paths.get( source.getCanonicalPath() )
-						: () -> Paths.get( source.sourceFile() ) );
-		if( pathToFile.getParent() != null ) {
-			// files in the cwd may not have a parent if the path is relative.
-			Files.createDirectories( pathToFile.getParent() );
-		}
-		if( allowOverwriting ) {
-			Files.write( pathToFile, source.sourceCode().getBytes(), StandardOpenOption.CREATE,
-					StandardOpenOption.TRUNCATE_EXISTING );
-		} else {
-			Files.write( pathToFile, source.sourceCode().getBytes(),
-					StandardOpenOption.CREATE_NEW );
-		}
-	}
+  public static void writeSource(
+      SourceObject source,
+      Optional<Path> targetFolder,
+      boolean useCanonicalPath,
+      boolean allowOverwriting)
+      throws IOException {
+    Path pathToFile =
+        targetFolder
+            .map(t -> Paths.get(t.toString(), source.getCanonicalPath()))
+            .orElseGet(
+                (useCanonicalPath)
+                    ? () -> Paths.get(source.getCanonicalPath())
+                    : () -> Paths.get(source.sourceFile()));
+    if (pathToFile.getParent() != null) {
+      // files in the cwd may not have a parent if the path is relative.
+      Files.createDirectories(pathToFile.getParent());
+    }
+    if (allowOverwriting) {
+      Files.write(
+          pathToFile,
+          source.sourceCode().getBytes(),
+          StandardOpenOption.CREATE,
+          StandardOpenOption.TRUNCATE_EXISTING);
+    } else {
+      Files.write(pathToFile, source.sourceCode().getBytes(), StandardOpenOption.CREATE_NEW);
+    }
+  }
 
-	/*
-	public static void writeSources ( Path folder, Map< String, String > units ){
-		try {
-			createEmptyDirectory( folder );
-			units.forEach( ( name, code ) -> writeSources( folder, name, code ) );
-		} catch ( CancelException e ) {
-			System.err.println( "Compilation cancelled by user" );
-		}
-	}
+  /*
+  public static void writeSources ( Path folder, Map< String, String > units ){
+  	try {
+  		createEmptyDirectory( folder );
+  		units.forEach( ( name, code ) -> writeSources( folder, name, code ) );
+  	} catch ( CancelException e ) {
+  		System.err.println( "Compilation cancelled by user" );
+  	}
+  }
 
-	private static void writeSources( Path folder, String name, String code ){
-		try {
-			FileWriter writer = new FileWriter( folder.resolve( name ).toFile() );
-			writer.write( code );
-			writer.flush();
-			writer.close();
-		} catch ( IOException e ) {
-			System.err.format( "IOException: %s%n", e );
-		}
-	}
+  private static void writeSources( Path folder, String name, String code ){
+  	try {
+  		FileWriter writer = new FileWriter( folder.resolve( name ).toFile() );
+  		writer.write( code );
+  		writer.flush();
+  		writer.close();
+  	} catch ( IOException e ) {
+  		System.err.format( "IOException: %s%n", e );
+  	}
+  }
 
-	private static void createEmptyDirectory( Path path ) throws CancelException {
-		int selection = JOptionPane.YES_OPTION;
-		if( Files.exists( path ) ) {
-			JFrame jf = new JFrame( "Choral Compiler" );
-			selection = JOptionPane.showConfirmDialog(
-				jf ,
-				"WARNING: Folder \"" + path.toAbsolutePath() + "\" is not empty, delete all its content?\n" +
-				"Select \"Cancel\" to stop the compilation process; \"No\" continues the compilation overwriting existing files."
-				,
-				"Choral Compiler",
-				JOptionPane.YES_NO_CANCEL_OPTION );
-			jf.dispose();
-		}
-		switch ( selection ){
-			case JOptionPane.YES_OPTION :
-				try {
-					if( Files.exists( path ) ){
-						Files.walk( path )
-							.map( Path::toFile )
-							.forEach( File::delete );
-						Files.deleteIfExists( path );
-					}
-					Files.createDirectory( path );
-				} catch ( IOException e ) {
-					e.printStackTrace();
-				}
-				break;
-			case JOptionPane.CANCEL_OPTION :
-				throw new CancelException();
-		}
-	}
+  private static void createEmptyDirectory( Path path ) throws CancelException {
+  	int selection = JOptionPane.YES_OPTION;
+  	if( Files.exists( path ) ) {
+  		JFrame jf = new JFrame( "Choral Compiler" );
+  		selection = JOptionPane.showConfirmDialog(
+  			jf ,
+  			"WARNING: Folder \"" + path.toAbsolutePath() + "\" is not empty, delete all its content?\n" +
+  			"Select \"Cancel\" to stop the compilation process; \"No\" continues the compilation overwriting existing files."
+  			,
+  			"Choral Compiler",
+  			JOptionPane.YES_NO_CANCEL_OPTION );
+  		jf.dispose();
+  	}
+  	switch ( selection ){
+  		case JOptionPane.YES_OPTION :
+  			try {
+  				if( Files.exists( path ) ){
+  					Files.walk( path )
+  						.map( Path::toFile )
+  						.forEach( File::delete );
+  					Files.deleteIfExists( path );
+  				}
+  				Files.createDirectory( path );
+  			} catch ( IOException e ) {
+  				e.printStackTrace();
+  			}
+  			break;
+  		case JOptionPane.CANCEL_OPTION :
+  			throw new CancelException();
+  	}
+  }
 
-	private static class CancelException extends Exception {}
-	*/
+  private static class CancelException extends Exception {}
+  */
 
 }

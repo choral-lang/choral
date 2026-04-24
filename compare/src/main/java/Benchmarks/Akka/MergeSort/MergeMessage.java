@@ -4,29 +4,28 @@ import java.util.List;
 
 public class MergeMessage implements Message {
 
-	static class MergeLeftMessage extends MergeMessage {
+  static class MergeLeftMessage extends MergeMessage {
 
-		public MergeLeftMessage( List< Integer > list ) {
-			super( list );
-		}
-	}
+    public MergeLeftMessage(List<Integer> list) {
+      super(list);
+    }
+  }
 
-	static class MergeRightMessage extends MergeMessage {
+  static class MergeRightMessage extends MergeMessage {
 
-		public MergeRightMessage( List< Integer > list ) {
-			super( list );
-		}
-	}
+    public MergeRightMessage(List<Integer> list) {
+      super(list);
+    }
+  }
 
-	private final List< Integer > list;
+  private final List<Integer> list;
 
-	public MergeMessage( List< Integer > list ) {
-		this.list = list;
-	}
+  public MergeMessage(List<Integer> list) {
+    this.list = list;
+  }
 
-	@Override
-	public List< Integer > list() {
-		return list;
-	}
-
+  @Override
+  public List<Integer> list() {
+    return list;
+  }
 }

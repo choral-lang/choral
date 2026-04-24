@@ -26,30 +26,29 @@ import choral.exceptions.ChoralException;
 
 public class MergeException extends ChoralException {
 
-	private final Node n1, n2;
+  private final Node n1, n2;
 
-	public MergeException( final String message, final Node n1, final Node n2 ) {
-		super( message );
-		this.n1 = n1;
-		this.n2 = n2;
-	}
+  public MergeException(final String message, final Node n1, final Node n2) {
+    super(message);
+    this.n1 = n1;
+    this.n2 = n2;
+  }
 
-	public Node n1() {
-		return n1;
-	}
+  public Node n1() {
+    return n1;
+  }
 
-	public Node n2() {
-		return n2;
-	}
+  public Node n2() {
+    return n2;
+  }
 
-	public static void _assert( boolean check, String errorMessage, Node n1, Node n2 ) {
-		check( !check, errorMessage, n1, n2 );
-	}
+  public static void _assert(boolean check, String errorMessage, Node n1, Node n2) {
+    check(!check, errorMessage, n1, n2);
+  }
 
-	public static void check( boolean check, String errorMessage, Node n1, Node n2 ) {
-		if( check ) {
-			throw new MergeException( errorMessage, n1, n2 );
-		}
-	}
-
+  public static void check(boolean check, String errorMessage, Node n1, Node n2) {
+    if (check) {
+      throw new MergeException(errorMessage, n1, n2);
+    }
+  }
 }

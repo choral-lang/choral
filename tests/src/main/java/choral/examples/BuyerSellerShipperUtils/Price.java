@@ -26,12 +26,11 @@ import choral.runtime.Serializers.KryoSerializable;
 @KryoSerializable
 public class Price {
 
-	public final int amount;
-	public final String currency;
+  public final int amount;
+  public final String currency;
 
-	public Price( int amount, String currency ) {
-		this.amount = amount;
-		this.currency = currency;
-	}
-
+  public Price(int amount, String currency) {
+    this.amount = amount;
+    this.currency = currency;
+  }
 }

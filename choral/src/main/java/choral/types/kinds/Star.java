@@ -22,21 +22,20 @@
 package choral.types.kinds;
 
 public class Star extends Kind {
-	Star() {
-	}
+  Star() {}
 
-	@Override
-	public java.lang.String toString() {
-		return "*";
-	}
+  @Override
+  public java.lang.String toString() {
+    return "*";
+  }
 
-	@Override
-	public boolean equals( Object o ) {
-		return ( o == this ) || ( o instanceof Star );
-	}
+  @Override
+  public boolean equals(Object o) {
+    return (o == this) || (o instanceof Star);
+  }
 
-	@Override
-	public int hashCode() {
-		return System.identityHashCode( Kind.getStar() );
-	}
+  @Override
+  public int hashCode() {
+    return System.identityHashCode(Kind.getStar());
+  }
 }

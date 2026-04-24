@@ -23,35 +23,30 @@ package choral.ast.expression;
 
 import choral.ast.Position;
 import choral.ast.type.TypeExpression;
-
 import java.util.List;
 
 public abstract class InvocationExpression extends Expression {
-	private final List< Expression > arguments;
-	private final List< TypeExpression > typeArguments;
+  private final List<Expression> arguments;
+  private final List<TypeExpression> typeArguments;
 
-	public InvocationExpression(
-			final List< Expression > arguments, List< TypeExpression > typeArguments
-	) {
-		this.arguments = arguments;
-		this.typeArguments = typeArguments;
-	}
+  public InvocationExpression(
+      final List<Expression> arguments, List<TypeExpression> typeArguments) {
+    this.arguments = arguments;
+    this.typeArguments = typeArguments;
+  }
 
-	public InvocationExpression(
-			final List< Expression > arguments, List< TypeExpression > typeArguments,
-			Position position
-	) {
-		super( position );
-		this.arguments = arguments;
-		this.typeArguments = typeArguments;
-	}
+  public InvocationExpression(
+      final List<Expression> arguments, List<TypeExpression> typeArguments, Position position) {
+    super(position);
+    this.arguments = arguments;
+    this.typeArguments = typeArguments;
+  }
 
-	public List< TypeExpression > typeArguments() {
-		return typeArguments;
-	}
+  public List<TypeExpression> typeArguments() {
+    return typeArguments;
+  }
 
-	public List< Expression > arguments() {
-		return arguments;
-	}
-
+  public List<Expression> arguments() {
+    return arguments;
+  }
 }

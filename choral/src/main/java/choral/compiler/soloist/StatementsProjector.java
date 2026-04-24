@@ -41,325 +41,315 @@ import choral.types.Member;
 import choral.utils.Continuation;
 import choral.utils.Pair;
 import choral.utils.Streams;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class StatementsProjector extends AbstractSoloistProjector< Statement > {
+public class StatementsProjector extends AbstractSoloistProjector<Statement> {
 
-	private StatementsProjector( WorldArgument w ) {
-		super( w );
-	}
+  private StatementsProjector(WorldArgument w) {
+    super(w);
+  }
 
-	public static Statement visit( WorldArgument w, Statement n ) {
-		return ( n == null ) ? null : new StatementsProjector( w ).visit( n );
-	}
+  public static Statement visit(WorldArgument w, Statement n) {
+    return (n == null) ? null : new StatementsProjector(w).visit(n);
+  }
 
-	@Override
-	public Statement visit( Statement n ) {
-		return n.accept( this );
-	}
+  @Override
+  public Statement visit(Statement n) {
+    return n.accept(this);
+  }
 
-	@Override
-	public TryCatchStatement visit( TryCatchStatement n ) {
-		return new TryCatchStatement(
-				visit( n.body() ),
-				n.catches().stream()
-						.filter( p -> p.left().type().worldArguments().contains( this.world ) )
-						.map( p -> new Pair<>(
-								new VariableDeclaration(
-										p.left().name(),
-										TypesProjector.visit(
-												this.world(), p.left().type()
-										).get( 0 ),
-										p.left().annotations(),
-										null
-								),
-								visit( p.right() ) ) ) // add exceptions to gamma here
-						.collect( Collectors.toList() )
-				,
-				visit( n.continuation() )
-		).copyPosition( n );
-		// TODO: do we check that we do not project an empty try clause without catches?
-	}
+  @Override
+  public TryCatchStatement visit(TryCatchStatement n) {
+    return new TryCatchStatement(
+            visit(n.body()),
+            n.catches().stream()
+                .filter(p -> p.left().type().worldArguments().contains(this.world))
+                .map(
+                    p ->
+                        new Pair<>(
+                            new VariableDeclaration(
+                                p.left().name(),
+                                TypesProjector.visit(this.world(), p.left().type()).get(0),
+                                p.left().annotations(),
+                                null),
+                            visit(p.right()))) // add exceptions to gamma here
+                .collect(Collectors.toList()),
+            visit(n.continuation()))
+        .copyPosition(n);
+    // TODO: do we check that we do not project an empty try clause without catches?
+  }
 
-	@Override
-	public Statement visit( BlockStatement n ) {
-		return new BlockStatement(
-				visit( n.enclosedStatement() ),
-				visit( n.continuation() )
-		).copyPosition( n );
-	}
+  @Override
+  public Statement visit(BlockStatement n) {
+    return new BlockStatement(visit(n.enclosedStatement()), visit(n.continuation()))
+        .copyPosition(n);
+  }
 
-	private GroundClass getTypeSelectionPattern( MethodCallExpression method ) {
-		Optional< ? extends Member.GroundMethod > ann = method.methodAnnotation();
+  private GroundClass getTypeSelectionPattern(MethodCallExpression method) {
+    Optional<? extends Member.GroundMethod> ann = method.methodAnnotation();
 
-		if( !ann.isPresent() ) {
-			throw new SoloistProjectorException(
-					"The selection method's method annotation is missing: "
-							+ new PrettyPrinterVisitor().visit( method ) );
-		}
+    if (!ann.isPresent()) {
+      throw new SoloistProjectorException(
+          "The selection method's method annotation is missing: "
+              + new PrettyPrinterVisitor().visit(method));
+    }
 
-		GroundDataTypeOrVoid type = ann.get().returnType();
+    GroundDataTypeOrVoid type = ann.get().returnType();
 
-		if( !type.isClass() ) {
-			throw new SoloistProjectorException(
-					"The return type of a type selection method must be a class type: "
-							+ new PrettyPrinterVisitor().visit( method ) );
-		}
+    if (!type.isClass()) {
+      throw new SoloistProjectorException(
+          "The return type of a type selection method must be a class type: "
+              + new PrettyPrinterVisitor().visit(method));
+    }
 
-		return (GroundClass) type;
-	}
+    return (GroundClass) type;
+  }
 
-	private ScopedExpression getTypeSelectionGuard( Expression scope,
-			MethodCallExpression method ) {
-		Optional< ? extends Member.GroundMethod > ann = method.methodAnnotation();
+  private ScopedExpression getTypeSelectionGuard(Expression scope, MethodCallExpression method) {
+    Optional<? extends Member.GroundMethod> ann = method.methodAnnotation();
 
-		if( !ann.isPresent() ) {
-			throw new SoloistProjectorException(
-					"The selection method's method annotation is missing: "
-							+ new PrettyPrinterVisitor().visit( method ) );
-		}
+    if (!ann.isPresent()) {
+      throw new SoloistProjectorException(
+          "The selection method's method annotation is missing: "
+              + new PrettyPrinterVisitor().visit(method));
+    }
 
-		List< ? extends HigherTypeParameter > params = ann.get().higherCallable().typeParameters();
+    List<? extends HigherTypeParameter> params = ann.get().higherCallable().typeParameters();
 
-		if( params.size() != 1 ) {
-			throw new SoloistProjectorException(
-					"Expected the selection method to have a single type parameter: "
-							+ new PrettyPrinterVisitor().visit( method ) );
-		}
+    if (params.size() != 1) {
+      throw new SoloistProjectorException(
+          "Expected the selection method to have a single type parameter: "
+              + new PrettyPrinterVisitor().visit(method));
+    }
 
-		HigherReferenceType upper = params.get( 0 ).innerType().upperClass().typeConstructor();
+    HigherReferenceType upper = params.get(0).innerType().upperClass().typeConstructor();
 
-		TypeExpression te =
-				new TypeExpression( new Name( ( (HigherClassOrInterface) upper ).identifier() ),
-						List.of(), List.of() );
-		te.setTypeAnnotation( upper );
+    TypeExpression te =
+        new TypeExpression(
+            new Name(((HigherClassOrInterface) upper).identifier()), List.of(), List.of());
+    te.setTypeAnnotation(upper);
 
-		return new ScopedExpression( scope,
-				new MethodCallExpression( method.name(), method.arguments(), List.of( te ) ) );
-	}
+    return new ScopedExpression(
+        scope, new MethodCallExpression(method.name(), method.arguments(), List.of(te)));
+  }
 
-	private Optional< Pair< ScopedExpression, GroundClass > > isTypeSelectionMethodAtWorld(
-			Expression e ) {
-		// A type-driven selection is a `ScopedExpression`, where the scope is an expression that
-		// evaluates to a channel, and the nested expression is a `MethodCallExpression` that
-		// invokes a channel's type selection method.
-		//
-		// We assume that the type selection method is a generic method whose first (and only) type
-		// argument is the type of the method's first (and only) argument and its return type.
-		//
-		// The upper bound, if any (and Object otherwise), of the single type argument is used as
-		// the type argument in the rewritten selection method call that serves as the switch guard
-		// at the receiver.
-		if( e instanceof ScopedExpression s ) {
-			if( s.scopedExpression() instanceof MethodCallExpression method ) {
-				if( !method.isTypeSelect() ) {
-					return Optional.empty();
-				}
+  private Optional<Pair<ScopedExpression, GroundClass>> isTypeSelectionMethodAtWorld(Expression e) {
+    // A type-driven selection is a `ScopedExpression`, where the scope is an expression that
+    // evaluates to a channel, and the nested expression is a `MethodCallExpression` that
+    // invokes a channel's type selection method.
+    //
+    // We assume that the type selection method is a generic method whose first (and only) type
+    // argument is the type of the method's first (and only) argument and its return type.
+    //
+    // The upper bound, if any (and Object otherwise), of the single type argument is used as
+    // the type argument in the rewritten selection method call that serves as the switch guard
+    // at the receiver.
+    if (e instanceof ScopedExpression s) {
+      if (s.scopedExpression() instanceof MethodCallExpression method) {
+        if (!method.isTypeSelect()) {
+          return Optional.empty();
+        }
 
-				GroundClass c = getTypeSelectionPattern( method );
-				if( !c.worldArguments().stream().anyMatch(
-						w -> this.world()
-								.equals( new WorldArgument( new Name( w.identifier() ) ) ) ) ) {
-					return Optional.empty();
-				}
+        GroundClass c = getTypeSelectionPattern(method);
+        if (!c.worldArguments().stream()
+            .anyMatch(w -> this.world().equals(new WorldArgument(new Name(w.identifier()))))) {
+          return Optional.empty();
+        }
 
-				return Optional.of( new Pair<>( getTypeSelectionGuard( s.scope(), method ), c ) );
-			}
-		}
+        return Optional.of(new Pair<>(getTypeSelectionGuard(s.scope(), method), c));
+      }
+    }
 
-		return Optional.empty();
-	}
+    return Optional.empty();
+  }
 
-	private static SwitchStatement selectionSwitchStatement( Expression guard,
-			SwitchArgument< ? > argument, Statement statement ) {
-		Map< SwitchArgument< ? >, Statement > cases = new HashMap<>();
-		cases.put( argument, statement );
-		// NOTE: When generating code, `JavaCompiler` will replace the body of a
-		// `SwitchArgumentMergeDefault` case with a throw statement, so we just use a dummy
-		// `NilStatement` for its body.
-		cases.put( SwitchArgument.SwitchArgumentMergeDefault.getInstance(),
-				new NilStatement() );
-		return new SwitchStatement( guard, cases, new NilStatement() );
-	}
+  private static SwitchStatement selectionSwitchStatement(
+      Expression guard, SwitchArgument<?> argument, Statement statement) {
+    Map<SwitchArgument<?>, Statement> cases = new HashMap<>();
+    cases.put(argument, statement);
+    // NOTE: When generating code, `JavaCompiler` will replace the body of a
+    // `SwitchArgumentMergeDefault` case with a throw statement, so we just use a dummy
+    // `NilStatement` for its body.
+    cases.put(SwitchArgument.SwitchArgumentMergeDefault.getInstance(), new NilStatement());
+    return new SwitchStatement(guard, cases, new NilStatement());
+  }
 
-	@Override
-	public Statement visit( VariableDeclarationStatement n ) {
-		List< VariableDeclaration > vars = n.variables();
-		if( vars.size() == 1 ) {
-			VariableDeclaration var = vars.get( 0 );
-			Optional< AssignExpression > init = var.initializer();
+  @Override
+  public Statement visit(VariableDeclarationStatement n) {
+    List<VariableDeclaration> vars = n.variables();
+    if (vars.size() == 1) {
+      VariableDeclaration var = vars.get(0);
+      Optional<AssignExpression> init = var.initializer();
 
-			if( init.isPresent() ) {
-				Expression e = init.get().value();
+      if (init.isPresent()) {
+        Expression e = init.get().value();
 
-				Optional< Pair< ScopedExpression, GroundClass > > ssm =
-						isTypeSelectionMethodAtWorld( e );
-				if( ssm.isPresent() ) {
-					return selectionSwitchStatement(
-							ExpressionProjector.visit( this.world(), ssm.get().left() ),
-							new SwitchArgument.SwitchArgumentClassLabel(
-									new Pair< Name, Name >( new Name(
-											ssm.get().right().typeConstructor()
-													.identifier(),
-											n.position() ),
-											var.name() ),
-									n.position() ),
-							visit( n.continuation() ) );
-				}
-			}
-		}
+        Optional<Pair<ScopedExpression, GroundClass>> ssm = isTypeSelectionMethodAtWorld(e);
+        if (ssm.isPresent()) {
+          return selectionSwitchStatement(
+              ExpressionProjector.visit(this.world(), ssm.get().left()),
+              new SwitchArgument.SwitchArgumentClassLabel(
+                  new Pair<Name, Name>(
+                      new Name(ssm.get().right().typeConstructor().identifier(), n.position()),
+                      var.name()),
+                  n.position()),
+              visit(n.continuation()));
+        }
+      }
+    }
 
-		TypeExpression t = n.variables().get( 0 ).type();
-		TypeExpression tp = TypesProjector.visit( this.world(), t ).get( 0 );
-		if( t.worldArguments().contains( this.world() ) ) {
-			return new VariableDeclarationStatement(
-					n.variables().stream().map(
-							v -> new VariableDeclaration(
-									v.name(),
-									tp,
-									v.annotations(),
-									v.initializer().isEmpty() ? null
-											: (AssignExpression) ExpressionProjector.visit(
-													this.world(), v.initializer().get() ) ) )
-							.collect( Collectors.toList() ),
-					visit( n.continuation() ) ).copyPosition( n );
-		}
+    TypeExpression t = n.variables().get(0).type();
+    TypeExpression tp = TypesProjector.visit(this.world(), t).get(0);
+    if (t.worldArguments().contains(this.world())) {
+      return new VariableDeclarationStatement(
+              n.variables().stream()
+                  .map(
+                      v ->
+                          new VariableDeclaration(
+                              v.name(),
+                              tp,
+                              v.annotations(),
+                              v.initializer().isEmpty()
+                                  ? null
+                                  : (AssignExpression)
+                                      ExpressionProjector.visit(
+                                          this.world(), v.initializer().get())))
+                  .collect(Collectors.toList()),
+              visit(n.continuation()))
+          .copyPosition(n);
+    }
 
-		return new ExpressionStatement( UnitRepresentation.unitMC(
-				n.variables().stream()
-						.filter( v -> v.initializer().isPresent() )
-						.map( v -> ExpressionProjector.visit( this.world(),
-								v.initializer().get() ) )
-						.collect( Collectors.toList() ),
-				this.world() ), visit( n.continuation() ), n.position() );
-	}
+    return new ExpressionStatement(
+        UnitRepresentation.unitMC(
+            n.variables().stream()
+                .filter(v -> v.initializer().isPresent())
+                .map(v -> ExpressionProjector.visit(this.world(), v.initializer().get()))
+                .collect(Collectors.toList()),
+            this.world()),
+        visit(n.continuation()),
+        n.position());
+  }
 
-	private boolean isSelectionMethodAtWorld( Expression e ) {
-		if( e instanceof ScopedExpression ) {
-			Pair< Expression, Expression > ht = Utils.headAndTail( (ScopedExpression) e );
-			return isSelectionMethodAtWorld( ht.right() );
-		}
-		if( e instanceof MethodCallExpression ) {
-			MethodCallExpression methodCall = ( (MethodCallExpression) e );
-			return methodCall.isSelect()
-					&& ( (GroundDataType) methodCall.methodAnnotation().get().returnType() )
-					.worldArguments().stream().map(
-							w -> new WorldArgument( new Name( w.identifier() ) ) ).collect(
-							Collectors.toList() ).contains( this.world() );
-		}
-		return false;
-	}
+  private boolean isSelectionMethodAtWorld(Expression e) {
+    if (e instanceof ScopedExpression) {
+      Pair<Expression, Expression> ht = Utils.headAndTail((ScopedExpression) e);
+      return isSelectionMethodAtWorld(ht.right());
+    }
+    if (e instanceof MethodCallExpression) {
+      MethodCallExpression methodCall = ((MethodCallExpression) e);
+      return methodCall.isSelect()
+          && ((GroundDataType) methodCall.methodAnnotation().get().returnType())
+              .worldArguments().stream()
+                  .map(w -> new WorldArgument(new Name(w.identifier())))
+                  .collect(Collectors.toList())
+                  .contains(this.world());
+    }
+    return false;
+  }
 
-	private Name getSelectionMethodEnum( Expression e ) {
-		if( e instanceof ScopedExpression ) {
-			Pair< Expression, Expression > ht = Utils.headAndTail( (ScopedExpression) e );
-			return getSelectionMethodEnum( ht.right() );
-		}
-		if( e instanceof MethodCallExpression ) {
-			if( ( (MethodCallExpression) e ).arguments().size() > 1 ) {
-				throw new SoloistProjectorException(
-						"Found improper expression " + new PrettyPrinterVisitor().visit(
-								e ) + " as selection method" );
-			}
-			return getSelectionMethodEnum( ( (MethodCallExpression) e ).arguments().get( 0 ) );
-		}
-		if( e instanceof EnumCaseInstantiationExpression ) {
-			return ( (EnumCaseInstantiationExpression) e )._case();
-		}
-		if( e instanceof FieldAccessExpression ) {
-			return ( (FieldAccessExpression) e ).name();
-		}
-		throw new SoloistProjectorException(
-				"Found improper expression " + new PrettyPrinterVisitor().visit(
-						e ) + " as selection method " );
-	}
+  private Name getSelectionMethodEnum(Expression e) {
+    if (e instanceof ScopedExpression) {
+      Pair<Expression, Expression> ht = Utils.headAndTail((ScopedExpression) e);
+      return getSelectionMethodEnum(ht.right());
+    }
+    if (e instanceof MethodCallExpression) {
+      if (((MethodCallExpression) e).arguments().size() > 1) {
+        throw new SoloistProjectorException(
+            "Found improper expression "
+                + new PrettyPrinterVisitor().visit(e)
+                + " as selection method");
+      }
+      return getSelectionMethodEnum(((MethodCallExpression) e).arguments().get(0));
+    }
+    if (e instanceof EnumCaseInstantiationExpression) {
+      return ((EnumCaseInstantiationExpression) e)._case();
+    }
+    if (e instanceof FieldAccessExpression) {
+      return ((FieldAccessExpression) e).name();
+    }
+    throw new SoloistProjectorException(
+        "Found improper expression "
+            + new PrettyPrinterVisitor().visit(e)
+            + " as selection method ");
+  }
 
-	@Override
-	public Statement visit( ExpressionStatement n ) {
-		if( isSelectionMethodAtWorld( n.expression() ) ) {
-			return selectionSwitchStatement(
-					ExpressionProjector.visit( this.world(), n.expression() ),
-					new SwitchArgument.SwitchArgumentLabel(
-							getSelectionMethodEnum( n.expression() ) ),
-					visit( n.continuation() ) );
-		}
+  @Override
+  public Statement visit(ExpressionStatement n) {
+    if (isSelectionMethodAtWorld(n.expression())) {
+      return selectionSwitchStatement(
+          ExpressionProjector.visit(this.world(), n.expression()),
+          new SwitchArgument.SwitchArgumentLabel(getSelectionMethodEnum(n.expression())),
+          visit(n.continuation()));
+    }
 
-		Optional< Pair< ScopedExpression, GroundClass > > ssm =
-				isTypeSelectionMethodAtWorld( n.expression() );
-		if( ssm.isPresent() ) {
-			return selectionSwitchStatement(
-					ExpressionProjector.visit( this.world(), ssm.get().left() ),
-					new SwitchArgument.SwitchArgumentClassLabel(
-							new Pair< Name, Name >( new Name(
-									ssm.get().right().typeConstructor().identifier(),
-									n.position() ),
-									new Name( "$choral$unused", n.position() ) ),
-							n.position() ),
-					visit( n.continuation() ) );
-		}
+    Optional<Pair<ScopedExpression, GroundClass>> ssm =
+        isTypeSelectionMethodAtWorld(n.expression());
+    if (ssm.isPresent()) {
+      return selectionSwitchStatement(
+          ExpressionProjector.visit(this.world(), ssm.get().left()),
+          new SwitchArgument.SwitchArgumentClassLabel(
+              new Pair<Name, Name>(
+                  new Name(ssm.get().right().typeConstructor().identifier(), n.position()),
+                  new Name("$choral$unused", n.position())),
+              n.position()),
+          visit(n.continuation()));
+    }
 
-		return new ExpressionStatement(
-				ExpressionProjector.visit( this.world(), n.expression() ),
-				visit( n.continuation() ) ).copyPosition( n );
-	}
+    return new ExpressionStatement(
+            ExpressionProjector.visit(this.world(), n.expression()), visit(n.continuation()))
+        .copyPosition(n);
+  }
 
-	@Override
-	public Statement visit( IfStatement n ) {
-		if( ExpressionProjector.atWorld( n.condition(), this.world() ) ) {
-			return new IfStatement(
-					ExpressionProjector.visit( this.world, n.condition() ),
-					visit( n.ifBranch() ),
-					visit( n.elseBranch() ),
-					visit( n.continuation() )
-			).copyPosition( n );
-		} else {
-			List< Statement > cases = List.of( visit( n.ifBranch() ), visit( n.elseBranch() ) );
-			return new ExpressionStatement(
-				ExpressionProjector.visit( this.world(), n.condition() ),
-				Continuation.continuationAfter(
-					StatementsMerger.merge( cases ),
-					visit( n.continuation() ).copyPosition( n ))
-			);
-			
-		}
-	}
+  @Override
+  public Statement visit(IfStatement n) {
+    if (ExpressionProjector.atWorld(n.condition(), this.world())) {
+      return new IfStatement(
+              ExpressionProjector.visit(this.world, n.condition()),
+              visit(n.ifBranch()),
+              visit(n.elseBranch()),
+              visit(n.continuation()))
+          .copyPosition(n);
+    } else {
+      List<Statement> cases = List.of(visit(n.ifBranch()), visit(n.elseBranch()));
+      return new ExpressionStatement(
+          ExpressionProjector.visit(this.world(), n.condition()),
+          Continuation.continuationAfter(
+              StatementsMerger.merge(cases), visit(n.continuation()).copyPosition(n)));
+    }
+  }
 
-	@Override
-	public Statement visit( SwitchStatement n ) {
-		if( ExpressionProjector.atWorld( n.guard(), this.world() ) ) {
-			return new SwitchStatement(
-					ExpressionProjector.visit( this.world, n.guard() ),
-					n.cases().entrySet().stream().map( e ->
-							new Pair<>( e.getKey(),
-									visit( e.getValue() ) )
-					).collect( Streams.toLinkedHashMap( Pair::left, Pair::right ) ),
-					visit( n.continuation() )
-			).copyPosition( n );
-		} else {
-			List< Statement > cases = n.cases().values().stream()
-					.map( this::visit ).collect( Collectors.toList() );
-			return new BlockStatement(
-					new ExpressionStatement(
-							ExpressionProjector.visit( this.world(), n.guard() ),
-							StatementsMerger.merge( cases )
-					),
-					visit( n.continuation() )
-			).copyPosition( n );
-		}
-	}
+  @Override
+  public Statement visit(SwitchStatement n) {
+    if (ExpressionProjector.atWorld(n.guard(), this.world())) {
+      return new SwitchStatement(
+              ExpressionProjector.visit(this.world, n.guard()),
+              n.cases().entrySet().stream()
+                  .map(e -> new Pair<>(e.getKey(), visit(e.getValue())))
+                  .collect(Streams.toLinkedHashMap(Pair::left, Pair::right)),
+              visit(n.continuation()))
+          .copyPosition(n);
+    } else {
+      List<Statement> cases =
+          n.cases().values().stream().map(this::visit).collect(Collectors.toList());
+      return new BlockStatement(
+              new ExpressionStatement(
+                  ExpressionProjector.visit(this.world(), n.guard()),
+                  StatementsMerger.merge(cases)),
+              visit(n.continuation()))
+          .copyPosition(n);
+    }
+  }
 
-	@Override
-	public Statement visit( NilStatement n ) {
-		return n;
-	}
+  @Override
+  public Statement visit(NilStatement n) {
+    return n;
+  }
 
-	@Override
-	public Statement visit( ReturnStatement n ) {
-		return new ReturnStatement(
-				ExpressionProjector.visit( this.world(), n.returnExpression() ),
-				visit( n.continuation() )
-		).copyPosition( n );
-	}
+  @Override
+  public Statement visit(ReturnStatement n) {
+    return new ReturnStatement(
+            ExpressionProjector.visit(this.world(), n.returnExpression()), visit(n.continuation()))
+        .copyPosition(n);
+  }
 }

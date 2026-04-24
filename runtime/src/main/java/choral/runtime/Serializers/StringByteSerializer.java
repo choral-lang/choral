@@ -25,26 +25,24 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class StringByteSerializer implements ChoralSerializer< String, ByteBuffer > {
+public class StringByteSerializer implements ChoralSerializer<String, ByteBuffer> {
 
-	private final Charset CHARSET = StandardCharsets.UTF_8;
-	private static final StringByteSerializer INSTANCE = new StringByteSerializer();
+  private final Charset CHARSET = StandardCharsets.UTF_8;
+  private static final StringByteSerializer INSTANCE = new StringByteSerializer();
 
-	private StringByteSerializer() {
-	}
+  private StringByteSerializer() {}
 
-	public static StringByteSerializer getInstance() {
-		return INSTANCE;
-	}
+  public static StringByteSerializer getInstance() {
+    return INSTANCE;
+  }
 
-	@Override
-	public < M extends String > ByteBuffer fromObject( M o ) {
-		return ByteBuffer.wrap( o.getBytes( CHARSET ) );
-	}
+  @Override
+  public <M extends String> ByteBuffer fromObject(M o) {
+    return ByteBuffer.wrap(o.getBytes(CHARSET));
+  }
 
-	@Override
-	public < M extends String > M toObject( ByteBuffer byteBuffer ) {
-		return (M) new String( byteBuffer.array(), CHARSET );
-	}
-
+  @Override
+  public <M extends String> M toObject(ByteBuffer byteBuffer) {
+    return (M) new String(byteBuffer.array(), CHARSET);
+  }
 }

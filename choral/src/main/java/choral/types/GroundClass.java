@@ -22,68 +22,73 @@
 package choral.types;
 
 import com.google.common.collect.Streams;
-
 import java.util.Optional;
 import java.util.stream.Stream;
 
-/** @see choral.types.GroundDataType */
+/**
+ * @see choral.types.GroundDataType
+ */
 public interface GroundClass extends GroundClassOrInterface, Class {
 
-	@Override
-	default boolean isHigherType() {
-		return false;
-	}
+  @Override
+  default boolean isHigherType() {
+    return false;
+  }
 
-	@Override
-	default boolean isBoxedType() {
-		return typeConstructor().isBoxedType();
-	}
+  @Override
+  default boolean isBoxedType() {
+    return typeConstructor().isBoxedType();
+  }
 
-	@Override
-	default GroundPrimitiveDataType unboxedType() {
-		if( isBoxedType() ) {
-			return typeConstructor().unboxedType().applyTo( worldArguments() );
-		} else {
-			return null;
-		}
-	}
+  @Override
+  default GroundPrimitiveDataType unboxedType() {
+    if (isBoxedType()) {
+      return typeConstructor().unboxedType().applyTo(worldArguments());
+    } else {
+      return null;
+    }
+  }
 
-	@Override
-	HigherClass typeConstructor();
+  @Override
+  HigherClass typeConstructor();
 
-	@Override
-	GroundClass applySubstitution( Substitution substitution );
+  @Override
+  GroundClass applySubstitution(Substitution substitution);
 
-	@Override
-	default boolean isAssignableTo( GroundDataTypeOrVoid type ) {
-		if( isBoxedType() && type instanceof GroundPrimitiveDataType ) {
-			return unboxedType().isAssignableTo( type );
-		} else {
-			return !type.isVoid() && ( type instanceof GroundDataType )
-					&& isSubtypeOf( (GroundDataType) type );
-		}
-	}
+  @Override
+  default boolean isAssignableTo(GroundDataTypeOrVoid type) {
+    if (isBoxedType() && type instanceof GroundPrimitiveDataType) {
+      return unboxedType().isAssignableTo(type);
+    } else {
+      return !type.isVoid()
+          && (type instanceof GroundDataType)
+          && isSubtypeOf((GroundDataType) type);
+    }
+  }
 
-	@Override
-	default boolean isAssignableTo_relaxed( GroundDataTypeOrVoid type ) {
-		if( isBoxedType() && type instanceof GroundPrimitiveDataType ) {
-			return unboxedType().isAssignableTo_relaxed( type );
-		} else {
-			return !type.isVoid() && ( type instanceof GroundDataType )
-					&& isSubtypeOf_relaxed( (GroundDataType) type );
-		}
-	}
+  @Override
+  default boolean isAssignableTo_relaxed(GroundDataTypeOrVoid type) {
+    if (isBoxedType() && type instanceof GroundPrimitiveDataType) {
+      return unboxedType().isAssignableTo_relaxed(type);
+    } else {
+      return !type.isVoid()
+          && (type instanceof GroundDataType)
+          && isSubtypeOf_relaxed((GroundDataType) type);
+    }
+  }
 
-	/** @see choral.types.GroundClassOrInterface#extendedClassesOrInterfaces */
-	default Stream< ? extends GroundClassOrInterface > extendedClassesOrInterfaces() {
-		if( extendedClass().isPresent() ) {
-			return Streams.concat( Stream.of( extendedClass().get() ), extendedInterfaces() );
-		} else {
-			return extendedInterfaces();
-		}
-	}
+  /**
+   * @see choral.types.GroundClassOrInterface#extendedClassesOrInterfaces
+   */
+  default Stream<? extends GroundClassOrInterface> extendedClassesOrInterfaces() {
+    if (extendedClass().isPresent()) {
+      return Streams.concat(Stream.of(extendedClass().get()), extendedInterfaces());
+    } else {
+      return extendedInterfaces();
+    }
+  }
 
-	Optional< ? extends GroundClass > extendedClass();
+  Optional<? extends GroundClass> extendedClass();
 
-	Stream< ? extends Member.HigherConstructor > constructors();
+  Stream<? extends Member.HigherConstructor> constructors();
 }

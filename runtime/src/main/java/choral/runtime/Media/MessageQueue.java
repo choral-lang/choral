@@ -27,29 +27,29 @@ import java.util.concurrent.ExecutionException;
 
 public class MessageQueue {
 
-	private final LinkedList< Object > sendQueue = new LinkedList<>();
-	private final LinkedList< CompletableFuture< Object > > recvQueue = new LinkedList<>();
+  private final LinkedList<Object> sendQueue = new LinkedList<>();
+  private final LinkedList<CompletableFuture<Object>> recvQueue = new LinkedList<>();
 
-	public void send( Object message ) {
-		synchronized( this ) {
-			if ( recvQueue.isEmpty() ){
-				sendQueue.add( message );
-			} else {
-				CompletableFuture< Object > future = recvQueue.removeFirst();
-				future.complete( message );
-			}
-		}
-	}
+  public void send(Object message) {
+    synchronized (this) {
+      if (recvQueue.isEmpty()) {
+        sendQueue.add(message);
+      } else {
+        CompletableFuture<Object> future = recvQueue.removeFirst();
+        future.complete(message);
+      }
+    }
+  }
 
-	public < T > T recv() throws ExecutionException, InterruptedException {
-		CompletableFuture< Object > future = new CompletableFuture<>();
-		synchronized ( this ){
-			if( sendQueue.isEmpty() ){
-				recvQueue.add( future );
-			} else {
-				future.complete( sendQueue.removeFirst() );
-			}
-		}
-		return (T) future.get();
-	}
+  public <T> T recv() throws ExecutionException, InterruptedException {
+    CompletableFuture<Object> future = new CompletableFuture<>();
+    synchronized (this) {
+      if (sendQueue.isEmpty()) {
+        recvQueue.add(future);
+      } else {
+        future.complete(sendQueue.removeFirst());
+      }
+    }
+    return (T) future.get();
+  }
 }

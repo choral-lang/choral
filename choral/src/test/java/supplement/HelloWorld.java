@@ -2,46 +2,46 @@ package supplement;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 interface testInterface {
-    final int a = 10;
+  final int a = 10;
 
-    void display();
+  void display();
 }
 
 interface testInterface2 extends testInterface {
-    final int a = 10;
+  final int a = 10;
 
-    void display();
+  void display();
 }
 
 enum Day {
-    MONDAY,
-    TUESDAY,
-    WEDNESDAY
+  MONDAY,
+  TUESDAY,
+  WEDNESDAY
 }
 
 public class HelloWorld implements Serializable {
-    private String message = "World";
-    private int count = 0;
-    private List<String> listTest;
-    // private Map<String, Integer> mapTest;
+  private String message = "World";
+  private int count = 0;
+  private List<String> listTest;
 
-    public HelloWorld() {
-       this.message = "Hello";
-       this.count = 0;
-    }
+  // private Map<String, Integer> mapTest;
 
-    public void setMessage(String message) {
-        this.message = message;
-    }
+  public HelloWorld() {
+    this.message = "Hello";
+    this.count = 0;
+  }
 
-    public String getMessage() {
-        return message;
-    }
+  public void setMessage(String message) {
+    this.message = message;
+  }
 
-    public void incrementCount() {
-       count++;
-    }
+  public String getMessage() {
+    return message;
+  }
+
+  public void incrementCount() {
+    count++;
+  }
 }

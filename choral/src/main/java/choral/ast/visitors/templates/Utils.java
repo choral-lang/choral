@@ -21,6 +21,9 @@
 
 package choral.ast.visitors.templates;
 
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.HashMap;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.runtime.RuntimeServices;
@@ -28,50 +31,44 @@ import org.apache.velocity.runtime.RuntimeSingleton;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.node.SimpleNode;
 
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.HashMap;
-
 public class Utils {
 
-	private Utils() {
-	}
+  private Utils() {}
 
-	public class _Template {
-		Template t;
+  public class _Template {
+    Template t;
 
-		private _Template( Template t ) {
-			this.t = t;
-		}
+    private _Template(Template t) {
+      this.t = t;
+    }
 
-		public String render( HashMap< String, Object > m ) {
-			VelocityContext vc = new VelocityContext( m );
-			StringWriter sw = new StringWriter();
-			t.merge( vc, sw );
-			return sw.toString();
-		}
+    public String render(HashMap<String, Object> m) {
+      VelocityContext vc = new VelocityContext(m);
+      StringWriter sw = new StringWriter();
+      t.merge(vc, sw);
+      return sw.toString();
+    }
+  }
 
-	}
+  private static _Template getTemplate(Template t) {
+    return new Utils().new _Template(t);
+  }
 
-	private static _Template getTemplate( Template t ) {
-		return new Utils().new _Template( t );
-	}
+  public static _Template createVelocityTemplate(String template) {
+    RuntimeServices rs = RuntimeSingleton.getRuntimeServices();
+    StringReader sr = new StringReader(template);
+    SimpleNode sn = null;
+    try {
+      sn = rs.parse(sr, "");
+    } catch (ParseException e) {
+      e.printStackTrace();
+    }
 
-	public static _Template createVelocityTemplate( String template ) {
-		RuntimeServices rs = RuntimeSingleton.getRuntimeServices();
-		StringReader sr = new StringReader( template );
-		SimpleNode sn = null;
-		try {
-			sn = rs.parse( sr, "" );
-		} catch( ParseException e ) {
-			e.printStackTrace();
-		}
+    Template t = new Template();
+    t.setRuntimeServices(rs);
+    t.setData(sn);
+    t.initDocument();
 
-		Template t = new Template();
-		t.setRuntimeServices( rs );
-		t.setData( sn );
-		t.initDocument();
-
-		return getTemplate( t );
-	}
+    return getTemplate(t);
+  }
 }

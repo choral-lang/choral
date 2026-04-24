@@ -30,46 +30,44 @@ import choral.ast.visitors.MergerInterface;
 
 public class EnumCaseInstantiationExpression extends Expression {
 
-	private final WorldArgument world;
-	private final Name name;
-	private final Name _case;
+  private final WorldArgument world;
+  private final Name name;
+  private final Name _case;
 
-	public EnumCaseInstantiationExpression( Name name, Name _case, WorldArgument world ) {
-		this.name = name;
-		this._case = _case;
-		this.world = world;
-	}
+  public EnumCaseInstantiationExpression(Name name, Name _case, WorldArgument world) {
+    this.name = name;
+    this._case = _case;
+    this.world = world;
+  }
 
-	public EnumCaseInstantiationExpression(
-			Name name, Name _case, WorldArgument world, final Position position
-	) {
-		super( position );
-		this.name = name;
-		this._case = _case;
-		this.world = world;
-	}
+  public EnumCaseInstantiationExpression(
+      Name name, Name _case, WorldArgument world, final Position position) {
+    super(position);
+    this.name = name;
+    this._case = _case;
+    this.world = world;
+  }
 
-	public Name name() {
-		return name;
-	}
+  public Name name() {
+    return name;
+  }
 
-	public Name _case() {
-		return _case;
-	}
+  public Name _case() {
+    return _case;
+  }
 
-	public WorldArgument world() {
-		return world;
-	}
+  public WorldArgument world() {
+    return world;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		assert n instanceof EnumCaseInstantiationExpression;
-		return m.merge( this, (EnumCaseInstantiationExpression) n );
-	}
-
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    assert n instanceof EnumCaseInstantiationExpression;
+    return m.merge(this, (EnumCaseInstantiationExpression) n);
+  }
 }

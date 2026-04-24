@@ -21,49 +21,44 @@
 
 package generic;
 
-public class StaticMethodTest< S > {
+public class StaticMethodTest<S> {
 
-	static < S, R > R conv1(
-			String i, S j
-	) {    // <-- when m is static, there are no bindings between
-		// the class-generics and the method generics.
-		// TODO: this should be the same also for worlds, hence we cannot have them as parameters
-		return null;
-	}
+  static <S, R> R conv1(String i, S j) { // <-- when m is static, there are no bindings between
+    // the class-generics and the method generics.
+    // TODO: this should be the same also for worlds, hence we cannot have them as parameters
+    return null;
+  }
 
-	< R > R conv2( String i, S j ) {
-		return null;
-	}
+  <R> R conv2(String i, S j) {
+    return null;
+  }
 
-//	static class MyTest< S >{
-//
-//		< R > R conv( String i, S j ){ // <-- this is instance-bound, so we can use the class-generics.
-//			return null;
-//		}
-//
-//	}
-//
-//	class MyTest2< S >{
-//
-//		< R > R conv( String i, S j ){ // <-- this is instance-bound, so we can use the class-generics
-//			return null;
-//		}
-//
-//	}
+  //	static class MyTest< S >{
+  //
+  //		< R > R conv( String i, S j ){ // <-- this is instance-bound, so we can use the
+  // class-generics.
+  //			return null;
+  //		}
+  //
+  //	}
+  //
+  //	class MyTest2< S >{
+  //
+  //		< R > R conv( String i, S j ){ // <-- this is instance-bound, so we can use the class-generics
+  //			return null;
+  //		}
+  //
+  //	}
 
-	interface Pair< T1, T2 > {
-	}
+  interface Pair<T1, T2> {}
 
-	interface MyPair< T1 extends Integer, T2 > extends Pair< T2, T1 > {
-	}
+  interface MyPair<T1 extends Integer, T2> extends Pair<T2, T1> {}
 
-	public static void main( String[] args ) {
-//		Test.< Integer, String >conv1( "ciao", 12 );
-//		new Test< Integer >().< String >conv2( "ciao", 12 );
+  public static void main(String[] args) {
+    //		Test.< Integer, String >conv1( "ciao", 12 );
+    //		new Test< Integer >().< String >conv2( "ciao", 12 );
 
-
-//		String s2 = new Test.MyTest< Integer >().< String >conv( "ciao", 12 );
-//		String s3 = new Test< String >().new MyTest2< Integer >().< String >conv( "ciao", 12 );
-	}
-
+    //		String s2 = new Test.MyTest< Integer >().< String >conv( "ciao", 12 );
+    //		String s3 = new Test< String >().new MyTest2< Integer >().< String >conv( "ciao", 12 );
+  }
 }

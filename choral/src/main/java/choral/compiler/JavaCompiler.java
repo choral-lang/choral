@@ -21,16 +21,6 @@
 
 package choral.compiler;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import choral.ast.CompilationUnit;
 import choral.ast.ImportDeclaration;
 import choral.ast.body.ConstructorSignature;
@@ -47,186 +37,209 @@ import choral.ast.type.TypeExpression;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.ast.visitors.templates.Utils;
 import choral.compiler.SourceObject.JavaSourceObject;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class JavaCompiler extends PrettyPrinterVisitor {
 
-	private static final String NEWLINE = "\n";
-	private static final String _2NEWLINE = NEWLINE + NEWLINE;
-	private static final String COMMA = ",";
-	private static final String SPACED_COMMA = COMMA + " ";
-	private static final String SEMICOLON = ";";
-	private static final String AMPERSAND = " & ";
-	private static final String EXTENDS = "extends";
-	private static final String PACKAGE = "package";
+  private static final String NEWLINE = "\n";
+  private static final String _2NEWLINE = NEWLINE + NEWLINE;
+  private static final String COMMA = ",";
+  private static final String SPACED_COMMA = COMMA + " ";
+  private static final String SEMICOLON = ";";
+  private static final String AMPERSAND = " & ";
+  private static final String EXTENDS = "extends";
+  private static final String PACKAGE = "package";
 
-	public static Collection< JavaSourceObject > compile( CompilationUnit n ) {
-		List< JavaSourceObject > c = new LinkedList<>();
-		JavaCompiler jc = new JavaCompiler();
-		Path sourcePath = Paths.get( n.position().sourceFile() );
-		List<ImportDeclaration> sortedImports = new ArrayList<>(n.imports());
-		Collections.sort(sortedImports);
-		String imports = jc.visitAndCollect( sortedImports, SEMICOLON + NEWLINE,
-				SEMICOLON + _2NEWLINE );
-		String packageDeclaration = n.packageDeclaration().isPresent() ? PACKAGE + " " + n.packageDeclaration().get() + SEMICOLON + _2NEWLINE : "";
-		n.interfaces().forEach( x -> c.add(
-				new JavaSourceObject( packageDeclaration + imports + jc.visit( x ),
-						JavaSourceObject.combineName( n.packageDeclaration(),
-								x.name().identifier() ),
-						sourcePath.resolveSibling(
-								x.name().identifier() + JavaSourceObject.FILE_EXTENSION ).toString() ) ) );
-		n.enums().forEach( x -> c.add(
-				new JavaSourceObject( packageDeclaration + imports + jc.visit( x ),
-						JavaSourceObject.combineName( n.packageDeclaration(),
-								x.name().identifier() ),
-						sourcePath.resolveSibling(
-								x.name().identifier() + JavaSourceObject.FILE_EXTENSION ).toString() ) ) );
-		n.classes().forEach( x -> c.add(
-				new JavaSourceObject( packageDeclaration + imports + jc.visit( x ),
-						JavaSourceObject.combineName( n.packageDeclaration(),
-								x.name().identifier() ),
-						sourcePath.resolveSibling(
-								x.name().identifier() + JavaSourceObject.FILE_EXTENSION ).toString() ) ) );
-		return c;
-	}
+  public static Collection<JavaSourceObject> compile(CompilationUnit n) {
+    List<JavaSourceObject> c = new LinkedList<>();
+    JavaCompiler jc = new JavaCompiler();
+    Path sourcePath = Paths.get(n.position().sourceFile());
+    List<ImportDeclaration> sortedImports = new ArrayList<>(n.imports());
+    Collections.sort(sortedImports);
+    String imports = jc.visitAndCollect(sortedImports, SEMICOLON + NEWLINE, SEMICOLON + _2NEWLINE);
+    String packageDeclaration =
+        n.packageDeclaration().isPresent()
+            ? PACKAGE + " " + n.packageDeclaration().get() + SEMICOLON + _2NEWLINE
+            : "";
+    n.interfaces()
+        .forEach(
+            x ->
+                c.add(
+                    new JavaSourceObject(
+                        packageDeclaration + imports + jc.visit(x),
+                        JavaSourceObject.combineName(n.packageDeclaration(), x.name().identifier()),
+                        sourcePath
+                            .resolveSibling(x.name().identifier() + JavaSourceObject.FILE_EXTENSION)
+                            .toString())));
+    n.enums()
+        .forEach(
+            x ->
+                c.add(
+                    new JavaSourceObject(
+                        packageDeclaration + imports + jc.visit(x),
+                        JavaSourceObject.combineName(n.packageDeclaration(), x.name().identifier()),
+                        sourcePath
+                            .resolveSibling(x.name().identifier() + JavaSourceObject.FILE_EXTENSION)
+                            .toString())));
+    n.classes()
+        .forEach(
+            x ->
+                c.add(
+                    new JavaSourceObject(
+                        packageDeclaration + imports + jc.visit(x),
+                        JavaSourceObject.combineName(n.packageDeclaration(), x.name().identifier()),
+                        sourcePath
+                            .resolveSibling(x.name().identifier() + JavaSourceObject.FILE_EXTENSION)
+                            .toString())));
+    return c;
+  }
 
+  @Override
+  public String visit(CompilationUnit n) {
+    throw new UnsupportedOperationException(
+        "The Java compiler must be called only via the 'compile' method");
+  }
 
-	@Override
-	public String visit( CompilationUnit n ) {
-		throw new UnsupportedOperationException(
-				"The Java compiler must be called only via the 'compile' method" );
-	}
+  @Override
+  protected String visitTypeDeclaration(RefType n) {
+    StringBuilder s = new StringBuilder();
+    s.append(n.name());
+    if (!n.typeParameters().isEmpty()) {
+      s.append("< ");
+      s.append(visitAndCollect(n.typeParameters(), SPACED_COMMA));
+      s.append(" >");
+    }
+    return s.toString();
+  }
 
-	@Override
-	protected String visitTypeDeclaration( RefType n ) {
-		StringBuilder s = new StringBuilder();
-		s.append( n.name() );
-		if( !n.typeParameters().isEmpty() ) {
-			s.append( "< " );
-			s.append( visitAndCollect( n.typeParameters(), SPACED_COMMA ) );
-			s.append( " >" );
-		}
-		return s.toString();
-	}
+  @Override
+  public String visit(TryCatchStatement n) {
+    if (n.catches().isEmpty()) {
+      String body = visit(n.body());
+      if (body.trim().length() < 1) {
+        return "";
+      }
+      HashMap<String, Object> m = new HashMap<>();
+      String template = "{" + NEWLINE + "$body" + NEWLINE + "}";
+      m.put("body", indent(visit(n.body())));
+      return Utils.createVelocityTemplate(template).render(m) + getContinuation(n, "");
+    } else {
+      return super.visit(n);
+    }
+  }
 
-	@Override
-	public String visit( TryCatchStatement n ) {
-		if( n.catches().isEmpty() ) {
-			String body = visit( n.body() );
-			if( body.trim().length() < 1 ) {
-				return "";
-			}
-			HashMap< String, Object > m = new HashMap<>();
-			String template = "{" + NEWLINE +
-					"$body" + NEWLINE +
-					"}";
-			m.put( "body", indent( visit( n.body() ) ) );
-			return Utils.createVelocityTemplate( template )
-					.render( m ) + getContinuation( n, "" );
-		} else {
-			return super.visit( n );
-		}
-	}
+  @Override
+  public String visit(SwitchStatement n) {
+    HashMap<String, Object> m = new HashMap<>();
 
-	@Override
-	public String visit( SwitchStatement n ) {
-		HashMap< String, Object > m = new HashMap<>();
+    m.put("guard", visit(n.guard()));
+    String cases =
+        n.cases().entrySet().stream()
+            .map(
+                e -> {
+                  String caseSwitch, body;
+                  if (e.getKey().equals(SwitchArgument.SwitchArgumentMergeDefault.getInstance())) {
+                    caseSwitch = "default -> ";
+                    body =
+                        "throw new RuntimeException( \"Received unexpected label from select operation\" );";
+                  } else {
+                    caseSwitch = visit(e.getKey());
+                    body = visit(e.getValue());
+                  }
+                  return caseSwitch + "{" + NEWLINE + indent(body) + NEWLINE + "}";
+                })
+            .collect(Collectors.joining(NEWLINE));
+    m.put("cases", indent(cases));
 
-		m.put( "guard", visit( n.guard() ) );
-		String cases = n.cases().entrySet().stream().map(
-				e -> {
-					String caseSwitch, body;
-					if( e.getKey().equals( SwitchArgument.SwitchArgumentMergeDefault.getInstance() )) {
-						caseSwitch = "default -> ";
-						body = "throw new RuntimeException( \"Received unexpected label from select operation\" );";
-					} else {
-						caseSwitch = visit( e.getKey() );
-						body = visit( e.getValue() );
-					}
-					return caseSwitch + "{" + NEWLINE + indent( body ) + NEWLINE + "}";
-				}
-		).collect( Collectors.joining( NEWLINE ) );
-		m.put( "cases", indent( cases ) );
+    String template = "switch( $guard ){" + NEWLINE + "$cases" + NEWLINE + "}";
+    return Utils.createVelocityTemplate(template).render(m) + getContinuation(n, "");
+  }
 
-		String template = "switch( $guard ){" + NEWLINE +
-				"$cases" + NEWLINE +
-				"}";
-		return Utils.createVelocityTemplate( template )
-				.render( m ) + getContinuation( n, "" );
-	}
+  @Override
+  public String visit(ClassInstantiationExpression n) {
+    return "new "
+        + (n.typeArguments().isEmpty()
+            ? ""
+            : "< " + visitAndCollect(n.typeArguments(), SPACED_COMMA) + " >")
+        + visit(n.typeExpression())
+        + (n.arguments().isEmpty()
+            ? "()"
+            : "( " + visitAndCollect(n.arguments(), SPACED_COMMA) + " )");
+  }
 
-	@Override
-	public String visit( ClassInstantiationExpression n ) {
-		return
-				"new " + ( n.typeArguments().isEmpty() ? "" : "< " + visitAndCollect(
-						n.typeArguments(), SPACED_COMMA ) + " >" )
-						+ visit( n.typeExpression() )
-						+ ( n.arguments().isEmpty() ? "()" : "( " + visitAndCollect( n.arguments(),
-						SPACED_COMMA ) + " )" );
-	}
+  @Override
+  public String visit(EnumCaseInstantiationExpression n) {
+    return n.name().identifier() + "." + n._case();
+  }
 
-	@Override
-	public String visit( EnumCaseInstantiationExpression n ) {
-		return n.name().identifier() + "." + n._case();
-	}
+  @Override
+  public String visit(MethodSignature n) {
+    return (n.typeParameters().isEmpty()
+            ? ""
+            : "< " + visitAndCollect(n.typeParameters(), SPACED_COMMA) + " > ")
+        + visit(n.returnType())
+        + " "
+        + n.name()
+        + (n.parameters().isEmpty()
+            ? "()"
+            : "( " + visitAndCollect(n.parameters(), SPACED_COMMA) + " )");
+  }
 
-	@Override
-	public String visit( MethodSignature n ) {
-		return
-				( n.typeParameters().isEmpty() ? "" : "< " + visitAndCollect( n.typeParameters(),
-						SPACED_COMMA ) + " > " )
-						+ visit( n.returnType() )
-						+ " " + n.name() +
-						( n.parameters().isEmpty() ? "()" : "( " + visitAndCollect( n.parameters(),
-								SPACED_COMMA ) + " )" );
-	}
+  @Override
+  public String visit(ConstructorSignature n) {
+    return (n.typeParameters().isEmpty()
+            ? ""
+            : "< " + visitAndCollect(n.typeParameters(), SPACED_COMMA) + " > ")
+        + n.name()
+        + (n.parameters().isEmpty()
+            ? "()"
+            : "( " + visitAndCollect(n.parameters(), SPACED_COMMA) + " )");
+  }
 
-	@Override
-	public String visit( ConstructorSignature n ) {
-		return
-				( n.typeParameters().isEmpty() ? "" : "< " + visitAndCollect( n.typeParameters(),
-						SPACED_COMMA ) + " > " ) +
-						n.name() +
-						( n.parameters().isEmpty() ? "()" : "( " + visitAndCollect( n.parameters(),
-								SPACED_COMMA ) + " )" );
-	}
+  @Override
+  public String visit(TypeExpression n) {
+    return n.name()
+        + (n.typeArguments().isEmpty()
+            ? ""
+            : " < " + visitAndCollect(n.typeArguments(), SPACED_COMMA) + " >");
+  }
 
-	@Override
-	public String visit( TypeExpression n ) {
-		return n.name() +
-				( n.typeArguments().isEmpty() ? "" : " < " + visitAndCollect( n.typeArguments(),
-						SPACED_COMMA ) + " >" );
-	}
+  @Override
+  public String visit(FormalTypeParameter n) {
+    StringBuilder s = new StringBuilder();
+    s.append(visitAndCollect(n.annotations(), " ", " "));
+    s.append(n.name());
+    if (!n.upperBound().isEmpty()) {
+      s.append(' ').append(EXTENDS).append(' ').append(visitAndCollect(n.upperBound(), AMPERSAND));
+    }
+    return s.toString();
+  }
 
-	@Override
-	public String visit( FormalTypeParameter n ) {
-		StringBuilder s = new StringBuilder();
-		s.append( visitAndCollect( n.annotations(), " ", " " ) );
-		s.append( n.name() );
-		if( !n.upperBound().isEmpty() ) {
-			s.append( ' ' ).append( EXTENDS ).append( ' ' ).append(
-					visitAndCollect( n.upperBound(), AMPERSAND )
-			);
-		}
-		return s.toString();
-	}
+  @Override
+  public String visit(LiteralExpression.BooleanLiteralExpression n) {
+    return n.content().toString();
+  }
 
-	@Override
-	public String visit( LiteralExpression.BooleanLiteralExpression n ) {
-		return n.content().toString();
-	}
+  @Override
+  public String visit(LiteralExpression.DoubleLiteralExpression n) {
+    return n.content().toString();
+  }
 
-	@Override
-	public String visit( LiteralExpression.DoubleLiteralExpression n ) {
-		return n.content().toString();
-	}
+  @Override
+  public String visit(LiteralExpression.IntegerLiteralExpression n) {
+    return n.content().toString();
+  }
 
-	@Override
-	public String visit( LiteralExpression.IntegerLiteralExpression n ) {
-		return n.content().toString();
-	}
-
-	@Override
-	public String visit( LiteralExpression.StringLiteralExpression n ) {
-		return n.content();
-	}
+  @Override
+  public String visit(LiteralExpression.StringLiteralExpression n) {
+    return n.content();
+  }
 }

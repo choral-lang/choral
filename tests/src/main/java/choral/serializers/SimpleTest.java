@@ -24,57 +24,53 @@ package choral.serializers;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-
 import java.io.FileNotFoundException;
 
 public class SimpleTest {
 
-	public static void main( String[] args ) throws FileNotFoundException {
+  public static void main(String[] args) throws FileNotFoundException {
 
-		A o = new B();
-		o.x = 12;
-		Output out = new SimpleTest().send( o );
-		new SimpleTest().recv( out );
+    A o = new B();
+    o.x = 12;
+    Output out = new SimpleTest().send(o);
+    new SimpleTest().recv(out);
+  }
 
-	}
+  Output send(A x) throws FileNotFoundException {
+    // SENDER
+    Kryo k = new Kryo();
+    k.register(A.class);
+    k.register(x.getClass(), k.getSerializer(A.class));
+    //		Output output = new Output( new FileOutputStream( "file.bin" ) );
+    Output output = new Output(4096);
+    k.writeObject(output, x);
+    output.close();
+    return output;
+  }
 
-	Output send( A x ) throws FileNotFoundException {
-		// SENDER
-		Kryo k = new Kryo();
-		k.register( A.class );
-		k.register( x.getClass(), k.getSerializer( A.class ) );
-//		Output output = new Output( new FileOutputStream( "file.bin" ) );
-		Output output = new Output( 4096 );
-		k.writeObject( output, x );
-		output.close();
-		return output;
-	}
+  void recv(Output out) throws FileNotFoundException {
+    // RECEIVER
+    Kryo k = new Kryo();
+    k.register(A.class);
+    //		Input input = new Input( new FileInputStream( "file.bin" ) );
+    Input input = new Input(out.toBytes());
+    A recvObject = k.readObject(input, A.class);
+    recvObject.m();
+  }
 
-	void recv( Output out ) throws FileNotFoundException {
-		// RECEIVER
-		Kryo k = new Kryo();
-		k.register( A.class );
-//		Input input = new Input( new FileInputStream( "file.bin" ) );
-		Input input = new Input( out.toBytes() );
-		A recvObject = k.readObject( input, A.class );
-		recvObject.m();
-	}
+  private static class A {
+    int x; // = 256;
 
+    void m() {
+      System.out.println("This is A and x is " + this.x);
+    }
+  }
 
-	private static class A {
-		int x;// = 256;
+  private static class B extends A {
+    String x = "HELLO!";
 
-		void m() {
-			System.out.println( "This is A and x is " + this.x );
-		}
-	}
-
-	private static class B extends A {
-		String x = "HELLO!";
-
-		public void m() {
-			System.out.println( "This is B and x is " + x );
-		}
-	}
-
+    public void m() {
+      System.out.println("This is B and x is " + x);
+    }
+  }
 }

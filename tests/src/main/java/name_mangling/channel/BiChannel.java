@@ -28,12 +28,7 @@ public interface BiChannel@( A, B )< T@X, R@Y > extends DiChannel@( A, B )< T >,
 
 public interface BiChannel {
 
-	public interface _1_2< T, R > extends DiChannel._1_2< T >, DiChannel._2_1< R > {
+  public interface _1_2<T, R> extends DiChannel._1_2<T>, DiChannel._2_1<R> {}
 
-	}
-
-	public interface _2_1< T, R > extends DiChannel._2_1< T >, DiChannel._1_2< R > {
-
-	}
-
+  public interface _2_1<T, R> extends DiChannel._2_1<T>, DiChannel._1_2<R> {}
 }

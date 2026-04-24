@@ -37,35 +37,33 @@ public class BiPair@( A, B )< T@( X, Y ) > implements Flippable( A, B ){
 */
 
 public class BiPair implements Flippable {
-	public static class _1_2< T > implements Flippable._1_2 {
-		private T left;
-		private T right;
+  public static class _1_2<T> implements Flippable._1_2 {
+    private T left;
+    private T right;
 
-		public _1_2( T left, T right ) {
-			this.left = left;
-			this.right = right;
-		}
+    public _1_2(T left, T right) {
+      this.left = left;
+      this.right = right;
+    }
 
-		@Override
-		public _2_1< T > flip() {
-			return new _2_1< T >( right, left );
-		}
+    @Override
+    public _2_1<T> flip() {
+      return new _2_1<T>(right, left);
+    }
+  }
 
-	}
+  public static class _2_1<T> implements Flippable._2_1 {
+    private T left;
+    private T right;
 
-	public static class _2_1< T > implements Flippable._2_1 {
-		private T left;
-		private T right;
+    public _2_1(T left, T right) {
+      this.left = left;
+      this.right = right;
+    }
 
-		public _2_1( T left, T right ) {
-			this.left = left;
-			this.right = right;
-		}
-
-		@Override
-		public _1_2< T > flip() {
-			return new _1_2< T >( right, left );
-		}
-	}
-
+    @Override
+    public _1_2<T> flip() {
+      return new _1_2<T>(right, left);
+    }
+  }
 }

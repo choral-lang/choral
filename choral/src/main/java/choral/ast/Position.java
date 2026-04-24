@@ -24,46 +24,48 @@ package choral.ast;
 import java.nio.file.Paths;
 
 public class Position {
-	private final int line;
-	private final int column;
-	private final String sourceFile;
+  private final int line;
+  private final int column;
+  private final String sourceFile;
 
-	/**
-	 * Constructor for Position.
-	 * @param sourceFile Path to the source file, or null if unknown.
-	 */
-	public Position( String sourceFile, int line, int column ) {
-		this.line = line;
-		this.column = column;
-		this.sourceFile = sourceFile;
-	}
+  /**
+   * Constructor for Position.
+   *
+   * @param sourceFile Path to the source file, or null if unknown.
+   */
+  public Position(String sourceFile, int line, int column) {
+    this.line = line;
+    this.column = column;
+    this.sourceFile = sourceFile;
+  }
 
-	public int line() {
-		return line;
-	}
+  public int line() {
+    return line;
+  }
 
-	public int column() {
-		return column;
-	}
+  public int column() {
+    return column;
+  }
 
-	public String sourceFile() {
-		return sourceFile;
-	}
+  public String sourceFile() {
+    return sourceFile;
+  }
 
-	public String prettyPath() {
-		if (sourceFile == null) {
-			return "<unknown>";
-		}
-		return Paths.get( "." ).toAbsolutePath().relativize(
-				Paths.get( sourceFile ).toAbsolutePath() ).toString();
-	}
+  public String prettyPath() {
+    if (sourceFile == null) {
+      return "<unknown>";
+    }
+    return Paths.get(".")
+        .toAbsolutePath()
+        .relativize(Paths.get(sourceFile).toAbsolutePath())
+        .toString();
+  }
 
-	public String formattedPosition() {
-		return String.format( "file '%s' line %d column %d", prettyPath(), line, column );
-	}
+  public String formattedPosition() {
+    return String.format("file '%s' line %d column %d", prettyPath(), line, column);
+  }
 
-	public String toString() {
-		return formattedPosition();
-	}
-
+  public String toString() {
+    return formattedPosition();
+  }
 }

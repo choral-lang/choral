@@ -26,30 +26,27 @@ import choral.ast.Position;
 import choral.ast.WithTypeAnnotation;
 import choral.ast.visitors.MergerInterface;
 import choral.types.GroundDataTypeOrVoid;
-
 import java.util.Optional;
 
-public abstract class Expression extends Node
-		implements WithTypeAnnotation< GroundDataTypeOrVoid > {
+public abstract class Expression extends Node implements WithTypeAnnotation<GroundDataTypeOrVoid> {
 
-	protected Expression() {
-		super();
-	}
+  protected Expression() {
+    super();
+  }
 
-	protected Expression( Position position ) {
-		super( position );
-	}
+  protected Expression(Position position) {
+    super(position);
+  }
 
-	private GroundDataTypeOrVoid typeAnnotation;
+  private GroundDataTypeOrVoid typeAnnotation;
 
-	public Optional< ? extends GroundDataTypeOrVoid > typeAnnotation() {
-		return Optional.ofNullable( typeAnnotation );
-	}
+  public Optional<? extends GroundDataTypeOrVoid> typeAnnotation() {
+    return Optional.ofNullable(typeAnnotation);
+  }
 
-	public void setTypeAnnotation( GroundDataTypeOrVoid typeAnnotation ) {
-		this.typeAnnotation = typeAnnotation;
-	}
+  public void setTypeAnnotation(GroundDataTypeOrVoid typeAnnotation) {
+    this.typeAnnotation = typeAnnotation;
+  }
 
-	public abstract < R, T extends Node > R merge( MergerInterface< R > m, T n );
-
+  public abstract <R, T extends Node> R merge(MergerInterface<R> m, T n);
 }

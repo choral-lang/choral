@@ -22,185 +22,186 @@
 package choral.types;
 
 import choral.utils.Formatting;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** @see HigherDataType */
+/**
+ * @see HigherDataType
+ */
 public final class HigherPrimitiveDataType extends HigherDataType implements PrimitiveDataType {
 
-	HigherPrimitiveDataType( Universe universe, Universe.PrimitiveTypeTag tag ) {
-		super( universe, List.of( new World( universe, World.DEFAULT_NAME ) ) );
-		this.tag = tag;
-	}
+  HigherPrimitiveDataType(Universe universe, Universe.PrimitiveTypeTag tag) {
+    super(universe, List.of(new World(universe, World.DEFAULT_NAME)));
+    this.tag = tag;
+  }
 
-	private final Universe.PrimitiveTypeTag tag;
+  private final Universe.PrimitiveTypeTag tag;
 
-	@Override
-	public Universe.PrimitiveTypeTag primitiveTypeTag() {
-		return tag;
-	}
+  @Override
+  public Universe.PrimitiveTypeTag primitiveTypeTag() {
+    return tag;
+  }
 
-	public String identifier() {
-		return tag.identifier;
-	}
+  public String identifier() {
+    return tag.identifier;
+  }
 
-	public String toString() {
-		return identifier();
-	}
+  public String toString() {
+    return identifier();
+  }
 
-	@Override
-	public HigherClass boxedType() {
-		return (HigherClass) universe().specialType( tag.boxedType );
-	}
+  @Override
+  public HigherClass boxedType() {
+    return (HigherClass) universe().specialType(tag.boxedType);
+  }
 
-	private final Definition innerType = new Definition();
+  private final Definition innerType = new Definition();
 
-	protected Definition innerType() {
-		return innerType;
-	}
+  protected Definition innerType() {
+    return innerType;
+  }
 
-	@Override
-	public GroundPrimitiveDataType applyTo( List< ? extends World > args ) {
-		return innerType().applySubstitution( getApplicationSubstitution( args ) );
-	}
+  @Override
+  public GroundPrimitiveDataType applyTo(List<? extends World> args) {
+    return innerType().applySubstitution(getApplicationSubstitution(args));
+  }
 
-	public GroundPrimitiveDataType applyTo( World arg ) {
-		return applyTo( List.of( arg ) );
-	}
+  public GroundPrimitiveDataType applyTo(World arg) {
+    return applyTo(List.of(arg));
+  }
 
-	private final class Definition extends HigherDataType.Definition
-			implements GroundPrimitiveDataType {
+  private final class Definition extends HigherDataType.Definition
+      implements GroundPrimitiveDataType {
 
-		private Definition() {
-		}
+    private Definition() {}
 
-		@Override
-		public final String toString() {
-			return typeConstructor().toString() + worldArguments().stream().map( World::toString )
-					.collect( Formatting.joining( ",", "@(", ")", "" ) );
-		}
+    @Override
+    public final String toString() {
+      return typeConstructor().toString()
+          + worldArguments().stream()
+              .map(World::toString)
+              .collect(Formatting.joining(",", "@(", ")", ""));
+    }
 
-		@Override
-		public HigherPrimitiveDataType typeConstructor() {
-			return HigherPrimitiveDataType.this;
-		}
+    @Override
+    public HigherPrimitiveDataType typeConstructor() {
+      return HigherPrimitiveDataType.this;
+    }
 
-		private final Map< World, Proxy > alphaIndex = new HashMap<>();
+    private final Map<World, Proxy> alphaIndex = new HashMap<>();
 
-		@Override
-		public GroundPrimitiveDataType applySubstitution( Substitution substitution ) {
-			World w = substitution.get( worldParameters.get( 0 ) );
-			Proxy result = alphaIndex.get( w );
-			if( result == null ) {
-				result = new Proxy( substitution );
-				alphaIndex.put( w, result );
-			}
-			return result;
-		}
+    @Override
+    public GroundPrimitiveDataType applySubstitution(Substitution substitution) {
+      World w = substitution.get(worldParameters.get(0));
+      Proxy result = alphaIndex.get(w);
+      if (result == null) {
+        result = new Proxy(substitution);
+        alphaIndex.put(w, result);
+      }
+      return result;
+    }
 
-		@Override
-		protected boolean isEquivalentTo( GroundDataType type ) {
-			if( type == this ) {
-				return true;
-			} else if( type instanceof Proxy ) {
-				Proxy other = (Proxy) type;
-				return ( other.definition() == this ) &&
-						worldArguments().equals( other.worldArguments() );
-			} else {
-				return false;
-			}
-		}
+    @Override
+    protected boolean isEquivalentTo(GroundDataType type) {
+      if (type == this) {
+        return true;
+      } else if (type instanceof Proxy) {
+        Proxy other = (Proxy) type;
+        return (other.definition() == this) && worldArguments().equals(other.worldArguments());
+      } else {
+        return false;
+      }
+    }
 
-		@Override
-		protected boolean isEquivalentTo_relaxed( GroundDataType type ) {
-			if( type == this ) {
-				return true;
-			} else if( type instanceof Proxy ) {
-				Proxy other = (Proxy) type;
-				return ( other.definition() == this );
-			} else {
-				return false;
-			}
-		}
+    @Override
+    protected boolean isEquivalentTo_relaxed(GroundDataType type) {
+      if (type == this) {
+        return true;
+      } else if (type instanceof Proxy) {
+        Proxy other = (Proxy) type;
+        return (other.definition() == this);
+      } else {
+        return false;
+      }
+    }
 
-		@Override
-		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
-			return ( !strict && isEquivalentTo( type ) );
-		}
+    @Override
+    protected boolean isSubtypeOf(GroundDataType type, boolean strict) {
+      return (!strict && isEquivalentTo(type));
+    }
 
-		@Override
-		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
-			return ( !strict && isEquivalentTo_relaxed( type ) );
-		}
+    @Override
+    protected boolean isSubtypeOf_relaxed(GroundDataType type, boolean strict) {
+      return (!strict && isEquivalentTo_relaxed(type));
+    }
+  }
 
-	}
+  /**
+   * @see HigherDataType.Proxy
+   */
+  private final class Proxy extends HigherDataType.Proxy implements GroundPrimitiveDataType {
 
-	/** @see HigherDataType.Proxy */
-	private final class Proxy extends HigherDataType.Proxy implements GroundPrimitiveDataType {
+    private Proxy(Substitution substitution) {
+      super(substitution);
+    }
 
-		private Proxy( Substitution substitution ) {
-			super( substitution );
-		}
+    @Override
+    public String toString() {
+      return typeConstructor().toString()
+          + worldArguments().stream()
+              .map(World::toString)
+              .collect(Formatting.joining(",", "@(", ")", ""));
+    }
 
-		@Override
-		public String toString() {
-			return typeConstructor().toString() +
-					worldArguments().stream().map( World::toString ).collect(
-							Formatting.joining( ",", "@(", ")", "" ) );
-		}
+    @Override
+    public HigherPrimitiveDataType typeConstructor() {
+      return HigherPrimitiveDataType.this;
+    }
 
-		@Override
-		public HigherPrimitiveDataType typeConstructor() {
-			return HigherPrimitiveDataType.this;
-		}
+    @Override
+    protected Definition definition() {
+      return typeConstructor().innerType();
+    }
 
-		@Override
-		protected Definition definition() {
-			return typeConstructor().innerType();
-		}
+    @Override
+    public GroundPrimitiveDataType applySubstitution(Substitution substitution) {
+      return new Proxy(substitution().andThen(substitution));
+    }
 
-		@Override
-		public GroundPrimitiveDataType applySubstitution( Substitution substitution ) {
-			return new Proxy( substitution().andThen( substitution ) );
-		}
+    @Override
+    protected boolean isEquivalentTo(GroundDataType type) {
+      if (type instanceof Definition) {
+        return type.isEquivalentTo(this);
+      } else if (type instanceof Proxy) {
+        Proxy other = (Proxy) type;
+        return (this.definition() == other.definition())
+            && worldArguments().equals(other.worldArguments());
+      } else {
+        return false;
+      }
+    }
 
-		@Override
-		protected boolean isEquivalentTo( GroundDataType type ) {
-			if( type instanceof Definition ) {
-				return type.isEquivalentTo( this );
-			} else if( type instanceof Proxy ) {
-				Proxy other = (Proxy) type;
-				return ( this.definition() == other.definition() ) &&
-						worldArguments().equals( other.worldArguments() );
-			} else {
-				return false;
-			}
-		}
+    @Override
+    protected boolean isEquivalentTo_relaxed(GroundDataType type) {
+      if (type instanceof Definition) {
+        return type.isEquivalentTo_relaxed(this);
+      } else if (type instanceof Proxy) {
+        Proxy other = (Proxy) type;
+        return (this.definition() == other.definition());
+      } else {
+        return false;
+      }
+    }
 
-		@Override
-		protected boolean isEquivalentTo_relaxed( GroundDataType type ) {
-			if( type instanceof Definition ) {
-				return type.isEquivalentTo_relaxed( this );
-			} else if( type instanceof Proxy ) {
-				Proxy other = (Proxy) type;
-				return ( this.definition() == other.definition() );
-			} else {
-				return false;
-			}
-		}
+    @Override
+    protected boolean isSubtypeOf(GroundDataType type, boolean strict) {
+      return (!strict && isEquivalentTo(type));
+    }
 
-		@Override
-		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
-			return ( !strict && isEquivalentTo( type ) );
-		}
-
-		@Override
-		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
-			return ( !strict && isEquivalentTo_relaxed( type ) );
-		}
-
-	}
-
+    @Override
+    protected boolean isSubtypeOf_relaxed(GroundDataType type, boolean strict) {
+      return (!strict && isEquivalentTo_relaxed(type));
+    }
+  }
 }

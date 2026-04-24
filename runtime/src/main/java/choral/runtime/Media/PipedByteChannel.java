@@ -22,7 +22,6 @@
 package choral.runtime.Media;
 
 import choral.utils.Pair;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Pipe;
@@ -31,55 +30,53 @@ import java.nio.channels.WritableByteChannel;
 
 public class PipedByteChannel implements BlockingByteChannel {
 
-	private final ReadableByteChannel in;
-	private final WritableByteChannel out;
-	private boolean isOpen = true;
+  private final ReadableByteChannel in;
+  private final WritableByteChannel out;
+  private boolean isOpen = true;
 
-	public static Pair< PipedByteChannel, PipedByteChannel > getConnectedChannels() throws IOException {
-		Pipe p1 = Pipe.open();
-		Pipe p2 = Pipe.open();
-		return new Pair<>(
-				new PipedByteChannel( p1.source(), p2.sink() ),
-				new PipedByteChannel( p2.source(), p1.sink() )
-		);
-	}
+  public static Pair<PipedByteChannel, PipedByteChannel> getConnectedChannels() throws IOException {
+    Pipe p1 = Pipe.open();
+    Pipe p2 = Pipe.open();
+    return new Pair<>(
+        new PipedByteChannel(p1.source(), p2.sink()), new PipedByteChannel(p2.source(), p1.sink()));
+  }
 
-	private PipedByteChannel( ReadableByteChannel in, WritableByteChannel out ) {
-		this.in = in;
-		this.out = out;
-	}
+  private PipedByteChannel(ReadableByteChannel in, WritableByteChannel out) {
+    this.in = in;
+    this.out = out;
+  }
 
-	@Override
-	public int read( ByteBuffer dst ) throws IOException {
-		return in.read( dst );
-	}
+  @Override
+  public int read(ByteBuffer dst) throws IOException {
+    return in.read(dst);
+  }
 
-	@Override
-	public int write( ByteBuffer src ) throws IOException {
-		return out.write( src );
-	}
+  @Override
+  public int write(ByteBuffer src) throws IOException {
+    return out.write(src);
+  }
 
-	@Override
-	public boolean isOpen() {
-		return isOpen;
-	}
+  @Override
+  public boolean isOpen() {
+    return isOpen;
+  }
 
-	@Override
-	public void close() throws IOException {
-		out.close();
-		isOpen = false;
-	}
+  @Override
+  public void close() throws IOException {
+    out.close();
+    isOpen = false;
+  }
 
-	@Override
-	public int recvTransmissionLength() throws IOException {
-		ByteBuffer recv = ByteBuffer.allocate( 4 );
-		in.read( recv );
-		return recv.asIntBuffer().get();
-	}
+  @Override
+  public int recvTransmissionLength() throws IOException {
+    ByteBuffer recv = ByteBuffer.allocate(4);
+    in.read(recv);
+    return recv.asIntBuffer().get();
+  }
 
-	@Override
-	public void sendTransmissionLength( int length ) throws IOException {
-		ByteBuffer snd = ByteBuffer.allocate( 4 ).putInt( length );
-		out.write( snd );
-	}
+  @Override
+  public void sendTransmissionLength(int length) throws IOException {
+    ByteBuffer snd = ByteBuffer.allocate(4).putInt(length);
+    out.write(snd);
+  }
 }

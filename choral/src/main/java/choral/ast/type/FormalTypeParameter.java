@@ -27,78 +27,74 @@ import choral.ast.Position;
 import choral.ast.body.Annotation;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.types.HigherTypeParameter;
-
 import java.util.List;
 import java.util.Optional;
 
 public class FormalTypeParameter extends Node {
-	private final Name name;
-	private final List< FormalWorldParameter > worlds;
-	private final List< TypeExpression > upperBound;
-	private final List< Annotation > annotations;
+  private final Name name;
+  private final List<FormalWorldParameter> worlds;
+  private final List<TypeExpression> upperBound;
+  private final List<Annotation> annotations;
 
-	public FormalTypeParameter(
-			final Name name,
-			final List< FormalWorldParameter > worlds,
-			final List< TypeExpression > upperBound,
-			final List< Annotation > annotations
-	) {
-		this.name = name;
-		this.worlds = worlds;
-		this.upperBound = upperBound;
-		this.annotations = annotations;
-	}
+  public FormalTypeParameter(
+      final Name name,
+      final List<FormalWorldParameter> worlds,
+      final List<TypeExpression> upperBound,
+      final List<Annotation> annotations) {
+    this.name = name;
+    this.worlds = worlds;
+    this.upperBound = upperBound;
+    this.annotations = annotations;
+  }
 
-	public FormalTypeParameter(
-			final Name name,
-			final List< FormalWorldParameter > worlds,
-			final List< TypeExpression > upperBound,
-			final List< Annotation > annotations,
-			final Position position
-	) {
-		super( position );
-		this.name = name;
-		this.worlds = worlds;
-		this.upperBound = upperBound;
-		this.annotations = annotations;
-	}
+  public FormalTypeParameter(
+      final Name name,
+      final List<FormalWorldParameter> worlds,
+      final List<TypeExpression> upperBound,
+      final List<Annotation> annotations,
+      final Position position) {
+    super(position);
+    this.name = name;
+    this.worlds = worlds;
+    this.upperBound = upperBound;
+    this.annotations = annotations;
+  }
 
-	private HigherTypeParameter typeAnnotation;
+  private HigherTypeParameter typeAnnotation;
 
-	public Optional< ? extends HigherTypeParameter > typeAnnotation() {
-		return Optional.ofNullable( typeAnnotation );
-	}
+  public Optional<? extends HigherTypeParameter> typeAnnotation() {
+    return Optional.ofNullable(typeAnnotation);
+  }
 
-	public void setTypeAnnotation( HigherTypeParameter typeAnnotation ) {
-		this.typeAnnotation = typeAnnotation;
-	}
+  public void setTypeAnnotation(HigherTypeParameter typeAnnotation) {
+    this.typeAnnotation = typeAnnotation;
+  }
 
-	public List< FormalWorldParameter > worldParameters() {
-		return worlds;
-	}
+  public List<FormalWorldParameter> worldParameters() {
+    return worlds;
+  }
 
-	public List< TypeExpression > upperBound() {
-		return upperBound;
-	}
+  public List<TypeExpression> upperBound() {
+    return upperBound;
+  }
 
-	/*public TypeExpression toTypeExpression(){
-		return new TypeExpression(
-						name, this.worlds.stream().map( FormalWorldParameter::toWorld ).collect( Collectors.toList() ),
-						Collections.emptyList()
-		);
-	}*/
+  /*public TypeExpression toTypeExpression(){
+  	return new TypeExpression(
+  					name, this.worlds.stream().map( FormalWorldParameter::toWorld ).collect( Collectors.toList() ),
+  					Collections.emptyList()
+  	);
+  }*/
 
-	public Name name() {
-		return name;
-	}
+  public Name name() {
+    return name;
+  }
 
-	public List< Annotation > annotations() {
-		return annotations;
-	}
+  public List<Annotation> annotations() {
+    return annotations;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

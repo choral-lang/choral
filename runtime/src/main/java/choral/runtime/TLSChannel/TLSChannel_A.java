@@ -24,16 +24,12 @@ package choral.runtime.TLSChannel;
 import choral.channels.SymChannel_A;
 import choral.runtime.Serializers.ChoralSerializer;
 import choral.runtime.TLSByteChannel.TSLByteChannelImpl;
-
 import java.nio.ByteBuffer;
 
-public class TLSChannel_A< T > extends TLSChannelImpl< T > implements SymChannel_A< T > {
+public class TLSChannel_A<T> extends TLSChannelImpl<T> implements SymChannel_A<T> {
 
-	public TLSChannel_A(
-			TSLByteChannelImpl channel, ChoralSerializer< Object, ByteBuffer > serializer
-	) {
-		this.channel = channel;
-		this.serializer = serializer;
-	}
-
+  public TLSChannel_A(TSLByteChannelImpl channel, ChoralSerializer<Object, ByteBuffer> serializer) {
+    this.channel = channel;
+    this.serializer = serializer;
+  }
 }

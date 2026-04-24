@@ -26,46 +26,43 @@ import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.type.TypeExpression;
 import choral.ast.visitors.ChoralVisitorInterface;
-
 import java.util.List;
 
 public class FormalMethodParameter extends Node {
-	private final Name name;
-	private final TypeExpression type;
-	private final List< Annotation > annotations;
+  private final Name name;
+  private final TypeExpression type;
+  private final List<Annotation> annotations;
 
-//    public FormalMethodParameter( final String name, final TypeExpression type) {
-////        this.name = new Name( name );
-////        this.type = type;
-////    }
+  //    public FormalMethodParameter( final String name, final TypeExpression type) {
+  ////        this.name = new Name( name );
+  ////        this.type = type;
+  ////    }
 
-	public FormalMethodParameter(
-			final Name name,
-			final TypeExpression type,
-			final List< Annotation > annotations,
-			final Position position
-	) {
-		super( position );
-		this.name = name;
-		this.type = type;
-		this.annotations = annotations;
-	}
+  public FormalMethodParameter(
+      final Name name,
+      final TypeExpression type,
+      final List<Annotation> annotations,
+      final Position position) {
+    super(position);
+    this.name = name;
+    this.type = type;
+    this.annotations = annotations;
+  }
 
-	public Name name() {
-		return name;
-	}
+  public Name name() {
+    return name;
+  }
 
-	public TypeExpression type() {
-		return type;
-	}
+  public TypeExpression type() {
+    return type;
+  }
 
-	public List< Annotation > annotations() {
-		return annotations;
-	}
+  public List<Annotation> annotations() {
+    return annotations;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

@@ -23,12 +23,11 @@ package choral.types;
 
 public interface Class extends ClassOrInterface {
 
-	default boolean isClass() {
-		return true;
-	}
+  default boolean isClass() {
+    return true;
+  }
 
-	boolean isBoxedType();
+  boolean isBoxedType();
 
-	PrimitiveDataType unboxedType();
-
+  PrimitiveDataType unboxedType();
 }

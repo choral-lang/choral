@@ -21,25 +21,24 @@
 
 package choral.runtime.Serializers;
 
-public class ChainedSerializer< S, M, D > implements ChoralSerializer< S, D > {
+public class ChainedSerializer<S, M, D> implements ChoralSerializer<S, D> {
 
-	private final ChoralSerializer< M, D > dstSerializer;
-	private final ChoralSerializer< S, M > srcSerializer;
+  private final ChoralSerializer<M, D> dstSerializer;
+  private final ChoralSerializer<S, M> srcSerializer;
 
-	public ChainedSerializer(
-			ChoralSerializer< S, M > srcSerializer, ChoralSerializer< M, D > dstSerializer
-	) {
-		this.srcSerializer = srcSerializer;
-		this.dstSerializer = dstSerializer;
-	}
+  public ChainedSerializer(
+      ChoralSerializer<S, M> srcSerializer, ChoralSerializer<M, D> dstSerializer) {
+    this.srcSerializer = srcSerializer;
+    this.dstSerializer = dstSerializer;
+  }
 
-	@Override
-	public < T extends S > D fromObject( T o ) {
-		return dstSerializer.fromObject( srcSerializer.fromObject( o ) );
-	}
+  @Override
+  public <T extends S> D fromObject(T o) {
+    return dstSerializer.fromObject(srcSerializer.fromObject(o));
+  }
 
-	@Override
-	public < T extends S > T toObject( D d ) {
-		return srcSerializer.toObject( dstSerializer.toObject( d ) );
-	}
+  @Override
+  public <T extends S> T toObject(D d) {
+    return srcSerializer.toObject(dstSerializer.toObject(d));
+  }
 }

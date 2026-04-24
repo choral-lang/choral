@@ -22,17 +22,15 @@
 package choral.serializers;
 
 import choral.runtime.Serializers.KryoSerializer;
-
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
 public class KryoSerializerTest {
 
-	public static void main( String[] args ) {
-		Optional< Price > p = Optional.of( new Price( "Kim", 100 ) );
-		ByteBuffer b = KryoSerializer.getInstance().fromObject( p );
-		Optional< Price > _p = KryoSerializer.getInstance().toObject( b );
-		System.out.println( "_p is " + _p.get().name() + " " + _p.get().price() );
-	}
-
+  public static void main(String[] args) {
+    Optional<Price> p = Optional.of(new Price("Kim", 100));
+    ByteBuffer b = KryoSerializer.getInstance().fromObject(p);
+    Optional<Price> _p = KryoSerializer.getInstance().toObject(b);
+    System.out.println("_p is " + _p.get().name() + " " + _p.get().price());
+  }
 }

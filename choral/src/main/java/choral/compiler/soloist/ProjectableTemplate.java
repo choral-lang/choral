@@ -24,39 +24,39 @@ package choral.compiler.soloist;
 import choral.ast.ImportDeclaration;
 import choral.ast.Node;
 import choral.ast.type.WorldArgument;
-
 import java.util.List;
 import java.util.Optional;
 
 public class ProjectableTemplate {
-	private final WorldArgument worldArgument;
-	private final Optional< String > packageDeclaration;
-	private final List< ImportDeclaration > imports;
-	private final Node node;
+  private final WorldArgument worldArgument;
+  private final Optional<String> packageDeclaration;
+  private final List<ImportDeclaration> imports;
+  private final Node node;
 
-	public ProjectableTemplate(
-			Optional< String > packageDeclaration, List< ImportDeclaration > imports, Node node,
-			WorldArgument worldArgument
-	) {
-		this.worldArgument = worldArgument;
-		this.packageDeclaration = packageDeclaration;
-		this.imports = imports;
-		this.node = node;
-	}
+  public ProjectableTemplate(
+      Optional<String> packageDeclaration,
+      List<ImportDeclaration> imports,
+      Node node,
+      WorldArgument worldArgument) {
+    this.worldArgument = worldArgument;
+    this.packageDeclaration = packageDeclaration;
+    this.imports = imports;
+    this.node = node;
+  }
 
-	public WorldArgument worldArgument() {
-		return worldArgument;
-	}
+  public WorldArgument worldArgument() {
+    return worldArgument;
+  }
 
-	public Optional< String > packageDeclaration() {
-		return packageDeclaration;
-	}
+  public Optional<String> packageDeclaration() {
+    return packageDeclaration;
+  }
 
-	public List< ImportDeclaration > imports() {
-		return imports;
-	}
+  public List<ImportDeclaration> imports() {
+    return imports;
+  }
 
-	public Node node() {
-		return node;
-	}
+  public Node node() {
+    return node;
+  }
 }

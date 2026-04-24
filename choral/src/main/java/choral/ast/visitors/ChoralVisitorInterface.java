@@ -32,105 +32,105 @@ import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 
-public interface ChoralVisitorInterface< R > {
+public interface ChoralVisitorInterface<R> {
 
-	R visit( CompilationUnit n );
+  R visit(CompilationUnit n);
 
-	R visit( ImportDeclaration n );
+  R visit(ImportDeclaration n);
 
-	R visit( choral.ast.body.Class n );
+  R visit(choral.ast.body.Class n);
 
-	R visit( choral.ast.body.Enum n );
+  R visit(choral.ast.body.Enum n);
 
-	R visit( EnumConstant n );
+  R visit(EnumConstant n);
 
-	R visit( Interface n );
+  R visit(Interface n);
 
-	R visit( Statement n );
+  R visit(Statement n);
 
-	R visit( BlockStatement n );
+  R visit(BlockStatement n);
 
-	R visit( ScopedExpression n );
+  R visit(ScopedExpression n);
 
-	R visit( ExpressionStatement n );
+  R visit(ExpressionStatement n);
 
-	R visit( IfStatement n );
+  R visit(IfStatement n);
 
-	R visit( SwitchStatement n );
+  R visit(SwitchStatement n);
 
-	R visit( TryCatchStatement n );
+  R visit(TryCatchStatement n);
 
-	R visit( NilStatement n );
+  R visit(NilStatement n);
 
-	R visit( ReturnStatement n );
+  R visit(ReturnStatement n);
 
-	R visit( Expression n );
+  R visit(Expression n);
 
-	R visit( AssignExpression n );
+  R visit(AssignExpression n);
 
-	R visit( BinaryExpression n );
+  R visit(BinaryExpression n);
 
-	R visit( EnumCaseInstantiationExpression n );
+  R visit(EnumCaseInstantiationExpression n);
 
-	R visit( EnclosedExpression n );
+  R visit(EnclosedExpression n);
 
-	R visit( FieldAccessExpression n );
+  R visit(FieldAccessExpression n);
 
-	R visit( StaticAccessExpression n );
+  R visit(StaticAccessExpression n);
 
-	R visit( MethodCallExpression n );
+  R visit(MethodCallExpression n);
 
-	R visit( ClassInstantiationExpression n );
+  R visit(ClassInstantiationExpression n);
 
-	R visit( Name n );
+  R visit(Name n);
 
-	R visit( NotExpression n );
+  R visit(NotExpression n);
 
-	R visit( ThisExpression n );
+  R visit(ThisExpression n);
 
-	R visit( SuperExpression n );
+  R visit(SuperExpression n);
 
-	R visit( NullExpression n );
+  R visit(NullExpression n);
 
-	R visit( VariableDeclarationStatement n );
+  R visit(VariableDeclarationStatement n);
 
-	R visit( BlankExpression n );
+  R visit(BlankExpression n);
 
-	R visit( LiteralExpression.BooleanLiteralExpression n );
+  R visit(LiteralExpression.BooleanLiteralExpression n);
 
-	R visit( LiteralExpression.DoubleLiteralExpression n );
+  R visit(LiteralExpression.DoubleLiteralExpression n);
 
-	R visit( LiteralExpression.IntegerLiteralExpression n );
+  R visit(LiteralExpression.IntegerLiteralExpression n);
 
-	R visit( LiteralExpression.StringLiteralExpression n );
+  R visit(LiteralExpression.StringLiteralExpression n);
 
-	R visit( SwitchArgument< ? > n );
+  R visit(SwitchArgument<?> n);
 
-	R visit( CaseSignature n );
+  R visit(CaseSignature n);
 
-	R visit( Field n );
+  R visit(Field n);
 
-	R visit( FormalMethodParameter n );
+  R visit(FormalMethodParameter n);
 
-	R visit( ClassMethodDefinition n );
+  R visit(ClassMethodDefinition n);
 
-	R visit( InterfaceMethodDefinition n );
+  R visit(InterfaceMethodDefinition n);
 
-	R visit( MethodSignature n );
+  R visit(MethodSignature n);
 
-	R visit( ConstructorDefinition n );
+  R visit(ConstructorDefinition n);
 
-	R visit( ConstructorSignature n );
+  R visit(ConstructorSignature n);
 
-	R visit( VariableDeclaration n );
+  R visit(VariableDeclaration n);
 
-	R visit( TypeExpression n );
+  R visit(TypeExpression n);
 
-	R visit( WorldArgument n );
+  R visit(WorldArgument n);
 
-	R visit( FormalTypeParameter n );
+  R visit(FormalTypeParameter n);
 
-	R visit( FormalWorldParameter n );
+  R visit(FormalWorldParameter n);
 
-	R visit( Annotation n );
+  R visit(Annotation n);
 }

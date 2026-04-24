@@ -23,7 +23,6 @@ package choral.types;
 
 import choral.exceptions.StaticVerificationException;
 import choral.utils.Formatting;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,116 +31,119 @@ import java.util.stream.Collectors;
 
 public class Signature {
 
-	public Signature() {
-		parameters = new ArrayList<>();
-	}
+  public Signature() {
+    parameters = new ArrayList<>();
+  }
 
-	public Signature( List< Parameter > parameters ) {
-		this( parameters, true );
-	}
+  public Signature(List<Parameter> parameters) {
+    this(parameters, true);
+  }
 
-	Signature( List< Parameter > parameters, boolean performChecks ) {
-		if( performChecks ) {
-			this.parameters = new ArrayList<>( parameters );
-			String[] names = new String[ parameters.size() ];
-			int i = 0;
-			for( Parameter x : parameters ) {
-				for( int j = 0; j < i; j++ ) {
-					if( names[ j ].equals( x.identifier() ) ) {
-						throw new StaticVerificationException(
-								"duplicate signature parameter '" + names[ j ] + "'" );
-					}
-				}
-				names[ i++ ] = x.identifier();
-			}
-		} else {
-			this.parameters = parameters;
-		}
-		finalise();
-	}
+  Signature(List<Parameter> parameters, boolean performChecks) {
+    if (performChecks) {
+      this.parameters = new ArrayList<>(parameters);
+      String[] names = new String[parameters.size()];
+      int i = 0;
+      for (Parameter x : parameters) {
+        for (int j = 0; j < i; j++) {
+          if (names[j].equals(x.identifier())) {
+            throw new StaticVerificationException(
+                "duplicate signature parameter '" + names[j] + "'");
+          }
+        }
+        names[i++] = x.identifier();
+      }
+    } else {
+      this.parameters = parameters;
+    }
+    finalise();
+  }
 
-	private final List< Parameter > parameters;
+  private final List<Parameter> parameters;
 
-	public List< ? extends Parameter > parameters() {
-		return Collections.unmodifiableList( parameters );
-	}
+  public List<? extends Parameter> parameters() {
+    return Collections.unmodifiableList(parameters);
+  }
 
-	public Optional< ? extends Parameter > parameter( int index ) {
-		if( 0 <= index && index < parameters.size() ) {
-			return Optional.of( parameters.get( index ) );
-		} else {
-			return Optional.empty();
-		}
-	}
+  public Optional<? extends Parameter> parameter(int index) {
+    if (0 <= index && index < parameters.size()) {
+      return Optional.of(parameters.get(index));
+    } else {
+      return Optional.empty();
+    }
+  }
 
-	public Optional< ? extends Parameter > parameter( String identifier ) {
-		return parameters.stream().filter( x -> x.identifier().equals( identifier ) ).findAny();
-	}
+  public Optional<? extends Parameter> parameter(String identifier) {
+    return parameters.stream().filter(x -> x.identifier().equals(identifier)).findAny();
+  }
 
-	public int arity() {
-		return parameters.size();
-	}
+  public int arity() {
+    return parameters.size();
+  }
 
-	private boolean finalised = false;
+  private boolean finalised = false;
 
-	public boolean isFinalised() {
-		return finalised;
-	}
+  public boolean isFinalised() {
+    return finalised;
+  }
 
-	public void finalise() {
-		this.finalised = true;
-	}
+  public void finalise() {
+    this.finalised = true;
+  }
 
-	public void addParameter( String identifier, GroundDataType type ) {
-		assert ( !finalised );
-		for( Parameter x : parameters ) {
-			if( identifier.equals( x.identifier() ) ) {
-				throw new StaticVerificationException(
-						"duplicate signature parameter '" + identifier + "'" );
-			}
-		}
-		parameters.add( new Parameter( identifier, type ) );
-	}
+  public void addParameter(String identifier, GroundDataType type) {
+    assert (!finalised);
+    for (Parameter x : parameters) {
+      if (identifier.equals(x.identifier())) {
+        throw new StaticVerificationException("duplicate signature parameter '" + identifier + "'");
+      }
+    }
+    parameters.add(new Parameter(identifier, type));
+  }
 
-	Signature applySubstitution( Substitution substitution ) {
-		return new Signature(
-				parameters.stream().map( x -> x.applySubstitution( substitution ) ).collect(
-						Collectors.toList() ),
-				false );
-	}
+  Signature applySubstitution(Substitution substitution) {
+    return new Signature(
+        parameters.stream()
+            .map(x -> x.applySubstitution(substitution))
+            .collect(Collectors.toList()),
+        false);
+  }
 
-	@Override
-	public String toString() {
-		return parameters.stream().map( Parameter::type ).map( GroundDataType::toString )
-				.collect( Formatting.joining( ",", "(", ")", "()" ) );
-	}
+  @Override
+  public String toString() {
+    return parameters.stream()
+        .map(Parameter::type)
+        .map(GroundDataType::toString)
+        .collect(Formatting.joining(",", "(", ")", "()"));
+  }
 
-	public static final class Parameter {
+  public static final class Parameter {
 
-		private final String identifier;
-		private final GroundDataType type;
-		// private final boolean isFinal;
+    private final String identifier;
+    private final GroundDataType type;
 
-		public Parameter( String identifier, GroundDataType type ) {
-			this.identifier = identifier;
-			this.type = type;
-		}
+    // private final boolean isFinal;
 
-		public String identifier() {
-			return identifier;
-		}
+    public Parameter(String identifier, GroundDataType type) {
+      this.identifier = identifier;
+      this.type = type;
+    }
 
-		public GroundDataType type() {
-			return type;
-		}
+    public String identifier() {
+      return identifier;
+    }
 
-		Parameter applySubstitution( Substitution substitution ) {
-			return new Parameter( identifier, type.applySubstitution( substitution ) );
-		}
+    public GroundDataType type() {
+      return type;
+    }
 
-		@Override
-		public String toString() {
-			return type + " " + identifier;
-		}
-	}
+    Parameter applySubstitution(Substitution substitution) {
+      return new Parameter(identifier, type.applySubstitution(substitution));
+    }
+
+    @Override
+    public String toString() {
+      return type + " " + identifier;
+    }
+  }
 }

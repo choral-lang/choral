@@ -31,42 +31,43 @@ import choral.exceptions.ChoralException;
 
 public class ReturnStatement extends Statement {
 
-	private final Expression returnExpression;
+  private final Expression returnExpression;
 
-	public ReturnStatement( final Expression returnExpression, final Statement continuation ) {
-		super( continuation == null ? new NilStatement() : continuation );
-		this.returnExpression = returnExpression;
-	}
+  public ReturnStatement(final Expression returnExpression, final Statement continuation) {
+    super(continuation == null ? new NilStatement() : continuation);
+    this.returnExpression = returnExpression;
+  }
 
-	public ReturnStatement(
-			final Expression returnExpression, final Statement continuation, final Position position
-	) {
-		super( continuation == null ? new NilStatement( position ) : continuation, position );
-		this.returnExpression = returnExpression;
-	}
+  public ReturnStatement(
+      final Expression returnExpression, final Statement continuation, final Position position) {
+    super(continuation == null ? new NilStatement(position) : continuation, position);
+    this.returnExpression = returnExpression;
+  }
 
-	public Expression returnExpression() {
-		return returnExpression;
-	}
+  public Expression returnExpression() {
+    return returnExpression;
+  }
 
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 
-	@Override
-	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
-		try {
-			return m.merge( this, ( this.getClass().cast( n ) ) );
-		} catch( ClassCastException e ) {
-			throw new ChoralException(
-					"Could not merge \n" + new PrettyPrinterVisitor().visit( this ) +
-							"\nwith " + n.getClass().getSimpleName() );
-		}
-	}
+  @Override
+  public <R, T extends Node> R merge(MergerInterface<R> m, T n) {
+    try {
+      return m.merge(this, (this.getClass().cast(n)));
+    } catch (ClassCastException e) {
+      throw new ChoralException(
+          "Could not merge \n"
+              + new PrettyPrinterVisitor().visit(this)
+              + "\nwith "
+              + n.getClass().getSimpleName());
+    }
+  }
 
-	@Override
-	public Statement cloneWithContinuation( Statement continuation ) {
-		return this;
-	}
+  @Override
+  public Statement cloneWithContinuation(Statement continuation) {
+    return this;
+  }
 }

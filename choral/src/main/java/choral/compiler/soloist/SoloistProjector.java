@@ -28,7 +28,6 @@ import choral.ast.body.Interface;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.ChoralVisitor;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -36,87 +35,89 @@ import java.util.stream.Collectors;
 
 public class SoloistProjector extends ChoralVisitor {
 
-	private final WorldArgument w;
+  private final WorldArgument w;
 
-	public SoloistProjector( WorldArgument w ) {
-		this.w = w;
-	}
+  public SoloistProjector(WorldArgument w) {
+    this.w = w;
+  }
 
-//	@Override
-//	public CompilationUnit visit ( CompilationUnit n ) {
-//		List< ImportDeclaration > importDeclarations = new ArrayList<>();
-//		List< Interface > interfaces = new ArrayList<>();
-//		List< Class > classes = new ArrayList<>();
-//		List< Enum > enums = new ArrayList<>();
-//		for ( ImportDeclaration i : n.imports() ) {
-//			importDeclarations.add( ( ImportDeclaration ) visit( i ) );
-//		}
-//		for ( Interface i : n.interfaces() ) {
-//			interfaces.add( visit( i ) );
-//		}
-//		for ( Enum e : n.enums() ) {
-//			enums.add( visit( e ) );
-//		}
-//		for ( Class c : n.classes() ) {
-//			classes.add( visit( c ) );
-//		}
-//		return new CompilationUnit( importDeclarations, interfaces, classes, enums );
-//	}
+  //	@Override
+  //	public CompilationUnit visit ( CompilationUnit n ) {
+  //		List< ImportDeclaration > importDeclarations = new ArrayList<>();
+  //		List< Interface > interfaces = new ArrayList<>();
+  //		List< Class > classes = new ArrayList<>();
+  //		List< Enum > enums = new ArrayList<>();
+  //		for ( ImportDeclaration i : n.imports() ) {
+  //			importDeclarations.add( ( ImportDeclaration ) visit( i ) );
+  //		}
+  //		for ( Interface i : n.interfaces() ) {
+  //			interfaces.add( visit( i ) );
+  //		}
+  //		for ( Enum e : n.enums() ) {
+  //			enums.add( visit( e ) );
+  //		}
+  //		for ( Class c : n.classes() ) {
+  //			classes.add( visit( c ) );
+  //		}
+  //		return new CompilationUnit( importDeclarations, interfaces, classes, enums );
+  //	}
 
-	@Override
-	public Interface visit( Interface n ) {
-		Utils.warnIfWorldNotPresent( n.worldParameters(), w, n );
-		return new Interface(
-				new Name( Utils.getProjectionName( n.name().identifier(), w,
-						n.worldParameters().stream()
-								.map( FormalWorldParameter::toWorldArgument )
-								.collect( Collectors.toList() ) ) ),
-				Collections.emptyList(),
-				TypesProjector.visitAndCollect( w, n.typeParameters() ),
-				TypesProjector.visitAndCollect( w, n.extendsInterfaces() ),
-				BodyProjector.visitAndCollect( w, n.methods() ),
-				BodyProjector.visitAndCollect( w, n.annotations() ),
-				n.modifiers(),
-				n.position()
-		);
-	}
+  @Override
+  public Interface visit(Interface n) {
+    Utils.warnIfWorldNotPresent(n.worldParameters(), w, n);
+    return new Interface(
+        new Name(
+            Utils.getProjectionName(
+                n.name().identifier(),
+                w,
+                n.worldParameters().stream()
+                    .map(FormalWorldParameter::toWorldArgument)
+                    .collect(Collectors.toList()))),
+        Collections.emptyList(),
+        TypesProjector.visitAndCollect(w, n.typeParameters()),
+        TypesProjector.visitAndCollect(w, n.extendsInterfaces()),
+        BodyProjector.visitAndCollect(w, n.methods()),
+        BodyProjector.visitAndCollect(w, n.annotations()),
+        n.modifiers(),
+        n.position());
+  }
 
-	@Override
-	public Enum visit( Enum n ) {
-		Utils.warnIfWorldNotPresent( n.worldParameters(), w, n );
-		return new Enum(
-				new Name( n.name().identifier() ),
-				n.worldParameters().get( 0 ),
-				new ArrayList<>( n.cases() ),
-				new ArrayList<>( n.annotations() ),
-				EnumSet.copyOf( n.modifiers() ),
-				n.position()
-		);
-	}
+  @Override
+  public Enum visit(Enum n) {
+    Utils.warnIfWorldNotPresent(n.worldParameters(), w, n);
+    return new Enum(
+        new Name(n.name().identifier()),
+        n.worldParameters().get(0),
+        new ArrayList<>(n.cases()),
+        new ArrayList<>(n.annotations()),
+        EnumSet.copyOf(n.modifiers()),
+        n.position());
+  }
 
-	@Override
-	public Class visit( Class n ) {
-		Utils.warnIfWorldNotPresent( n.worldParameters(), w, n );
-		Name name = new Name( Utils.getProjectionName( n.name().identifier(), w,
-				n.worldParameters().stream()
-						.map( FormalWorldParameter::toWorldArgument )
-						.collect( Collectors.toList() ) ) );
-		return new Class(
-				name,
-				Collections.emptyList(),
-				TypesProjector.visitAndCollect( w, n.typeParameters() ),
-				n.superClass().isPresent() ?
-						TypesProjector.visit( w, n.superClass().get() ).get( 0 ) // this is always 1
-						: null
-				,
-				TypesProjector.visitAndCollect( w, n.implementsInterfaces() ),
-				BodyProjector.visitAndCollect( w, n.fields() ), // create
-				BodyProjector.visitAndCollect( w, n.methods() ),
-				BodyProjector.visitAndCollect( w, n.constructors() ),
-				BodyProjector.visitAndCollect( w, n.annotations() ),
-				n.modifiers(),
-				n.position()
-		);
-	}
-
+  @Override
+  public Class visit(Class n) {
+    Utils.warnIfWorldNotPresent(n.worldParameters(), w, n);
+    Name name =
+        new Name(
+            Utils.getProjectionName(
+                n.name().identifier(),
+                w,
+                n.worldParameters().stream()
+                    .map(FormalWorldParameter::toWorldArgument)
+                    .collect(Collectors.toList())));
+    return new Class(
+        name,
+        Collections.emptyList(),
+        TypesProjector.visitAndCollect(w, n.typeParameters()),
+        n.superClass().isPresent()
+            ? TypesProjector.visit(w, n.superClass().get()).get(0) // this is always 1
+            : null,
+        TypesProjector.visitAndCollect(w, n.implementsInterfaces()),
+        BodyProjector.visitAndCollect(w, n.fields()), // create
+        BodyProjector.visitAndCollect(w, n.methods()),
+        BodyProjector.visitAndCollect(w, n.constructors()),
+        BodyProjector.visitAndCollect(w, n.annotations()),
+        n.modifiers(),
+        n.position());
+  }
 }

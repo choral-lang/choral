@@ -28,132 +28,132 @@ import choral.ast.expression.LiteralExpression;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.utils.Pair;
 
-public abstract class SwitchArgument< T > extends Node {
-	final T argument;
+public abstract class SwitchArgument<T> extends Node {
+  final T argument;
 
-	SwitchArgument( T argument ) {
-		this.argument = argument;
-	}
+  SwitchArgument(T argument) {
+    this.argument = argument;
+  }
 
-	SwitchArgument( T argument, final Position position ) {
-		super( position );
-		this.argument = argument;
-	}
+  SwitchArgument(T argument, final Position position) {
+    super(position);
+    this.argument = argument;
+  }
 
-	public T argument() {
-		return this.argument;
-	}
+  public T argument() {
+    return this.argument;
+  }
 
-	public static class SwitchArgumentLiteral extends SwitchArgument< LiteralExpression > {
-		public SwitchArgumentLiteral( LiteralExpression argument ) {
-			super( argument, argument.position() );
-		}
+  public static class SwitchArgumentLiteral extends SwitchArgument<LiteralExpression> {
+    public SwitchArgumentLiteral(LiteralExpression argument) {
+      super(argument, argument.position());
+    }
 
-		@Override
-		public < R > R accept( ChoralVisitorInterface< R > v ) {
-			return v.visit( this );
-		}
+    @Override
+    public <R> R accept(ChoralVisitorInterface<R> v) {
+      return v.visit(this);
+    }
 
-		@Override
-		public int hashCode() {
-			return argument().hashCode();
-		}
+    @Override
+    public int hashCode() {
+      return argument().hashCode();
+    }
 
-		@Override
-		public boolean equals( Object obj ) {
-			if( obj instanceof SwitchArgumentLiteral ) {
-				return this.argument().equals( ( (SwitchArgumentLiteral) obj ).argument() );
-			}
-			return false;
-		}
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof SwitchArgumentLiteral) {
+        return this.argument().equals(((SwitchArgumentLiteral) obj).argument());
+      }
+      return false;
+    }
+  }
 
-	}
+  public static class SwitchArgumentLabel extends SwitchArgument<Name> {
+    public SwitchArgumentLabel(Name argument) {
+      super(argument, argument.position());
+    }
 
-	public static class SwitchArgumentLabel extends SwitchArgument< Name > {
-		public SwitchArgumentLabel( Name argument ) {
-			super( argument, argument.position() );
-		}
+    @Override
+    public <R> R accept(ChoralVisitorInterface<R> v) {
+      return v.visit(this);
+    }
 
-		@Override
-		public < R > R accept( ChoralVisitorInterface< R > v ) {
-			return v.visit( this );
-		}
+    @Override
+    public int hashCode() {
+      return argument().hashCode();
+    }
 
-		@Override
-		public int hashCode() {
-			return argument().hashCode();
-		}
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof SwitchArgumentLabel) {
+        return this.argument().equals(((SwitchArgumentLabel) obj).argument());
+      }
+      return false;
+    }
+  }
 
-		@Override
-		public boolean equals( Object obj ) {
-			if( obj instanceof SwitchArgumentLabel ) {
-				return this.argument().equals( ( (SwitchArgumentLabel) obj ).argument() );
-			}
-			return false;
-		}
-	}
+  public static class SwitchArgumentClassLabel extends SwitchArgument<Pair<Name, Name>> {
+    public SwitchArgumentClassLabel(Pair<Name, Name> argument, Position position) {
+      super(argument, position);
+    }
 
-	public static class SwitchArgumentClassLabel extends SwitchArgument< Pair< Name, Name > > {
-		public SwitchArgumentClassLabel( Pair< Name, Name > argument, Position position ) {
-			super( argument, position );
-		}
+    @Override
+    public <R> R accept(ChoralVisitorInterface<R> v) {
+      return v.visit(this);
+    }
 
-		@Override
-		public < R > R accept( ChoralVisitorInterface< R > v ) {
-			return v.visit( this );
-		}
+    @Override
+    public int hashCode() {
+      return argument().hashCode();
+    }
 
-		@Override
-		public int hashCode() {
-			return argument().hashCode();
-		}
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof SwitchArgumentClassLabel) {
+        return this.argument().equals(((SwitchArgumentClassLabel) obj).argument());
+      }
+      return false;
+    }
+  }
 
-		@Override
-		public boolean equals( Object obj ) {
-			if( obj instanceof SwitchArgumentClassLabel ) {
-				return this.argument().equals( ( (SwitchArgumentClassLabel) obj ).argument() );
-			}
-			return false;
-		}
-	}
+  public static class SwitchArgumentMergeDefault extends SwitchArgument<Void> {
+    private static final SwitchArgumentMergeDefault instance = new SwitchArgumentMergeDefault(null);
 
-	public static class SwitchArgumentMergeDefault extends SwitchArgument< Void > {
-		private final static SwitchArgumentMergeDefault instance = new SwitchArgumentMergeDefault( null );
-		private SwitchArgumentMergeDefault( Void argument ) {
-			super( argument );
-		}
+    private SwitchArgumentMergeDefault(Void argument) {
+      super(argument);
+    }
 
-		static public SwitchArgumentMergeDefault getInstance() {
-			return instance;
-		}
+    public static SwitchArgumentMergeDefault getInstance() {
+      return instance;
+    }
 
-		@Override
-		public < R > R accept( ChoralVisitorInterface< R > v ) {
-			return v.visit( this );
-		}
-	}
-	
-	public static class SwitchArgumentDefault extends SwitchArgument< Void > {
-		public SwitchArgumentDefault() {
-			this( null );
-		}
+    @Override
+    public <R> R accept(ChoralVisitorInterface<R> v) {
+      return v.visit(this);
+    }
+  }
 
-		public SwitchArgumentDefault( final Position position ) {
-			this( null, position );
-		}
+  public static class SwitchArgumentDefault extends SwitchArgument<Void> {
+    public SwitchArgumentDefault() {
+      this(null);
+    }
 
-		private SwitchArgumentDefault( Void argument, final Position position ) {
-			super( null, position );
-		}
+    public SwitchArgumentDefault(final Position position) {
+      this(null, position);
+    }
 
-		@Override
-		public < R > R accept( ChoralVisitorInterface< R > v ) {
-			return v.visit( this );
-		}
+    private SwitchArgumentDefault(Void argument, final Position position) {
+      super(null, position);
+    }
 
-		@Override
-		public boolean equals( Object obj ) {
-			return obj instanceof SwitchArgumentDefault;
-		}
-	}
+    @Override
+    public <R> R accept(ChoralVisitorInterface<R> v) {
+      return v.visit(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof SwitchArgumentDefault;
+    }
+  }
 }

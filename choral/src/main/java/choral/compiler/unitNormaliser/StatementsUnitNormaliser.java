@@ -28,108 +28,106 @@ import choral.ast.statement.*;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.utils.Pair;
 import choral.utils.Streams;
-
 import java.util.AbstractMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement > {
+public class StatementsUnitNormaliser extends AbstractChoralVisitor<Statement> {
 
-	public static Statement visitStatement( Statement n ) {
-		return new StatementsUnitNormaliser().visit( n );
-	}
+  public static Statement visitStatement(Statement n) {
+    return new StatementsUnitNormaliser().visit(n);
+  }
 
-	@Override
-	public Statement visit( Statement n ) {
-		return n.accept( this );
-	}
+  @Override
+  public Statement visit(Statement n) {
+    return n.accept(this);
+  }
 
-	@Override
-	public TryCatchStatement visit( TryCatchStatement n ) {
-		return new TryCatchStatement(
-				visit( n.body() ),
-				n.catches().stream()
-						.map( p -> new Pair<>(
-								new VariableDeclaration(
-										p.left().name(),
-										p.left().type(),
-										p.left().annotations(),
-										p.left().initializer().orElse( null )
-								),
-								visit( p.right() ) ) )
-						.collect( Collectors.toList() ),
-				visit( n.continuation() )
-		).copyPosition( n );
-	}
+  @Override
+  public TryCatchStatement visit(TryCatchStatement n) {
+    return new TryCatchStatement(
+            visit(n.body()),
+            n.catches().stream()
+                .map(
+                    p ->
+                        new Pair<>(
+                            new VariableDeclaration(
+                                p.left().name(),
+                                p.left().type(),
+                                p.left().annotations(),
+                                p.left().initializer().orElse(null)),
+                            visit(p.right())))
+                .collect(Collectors.toList()),
+            visit(n.continuation()))
+        .copyPosition(n);
+  }
 
-	@Override
-	public Statement visit( BlockStatement n ) {
-		return new BlockStatement(
-				visit( n.enclosedStatement() ),
-				visit( n.continuation() )
-		).copyPosition( n );
-	}
+  @Override
+  public Statement visit(BlockStatement n) {
+    return new BlockStatement(visit(n.enclosedStatement()), visit(n.continuation()))
+        .copyPosition(n);
+  }
 
-	@Override
-	public Statement visit( VariableDeclarationStatement n ) {
-		return new VariableDeclarationStatement(
-				n.variables().stream().map(
-						v -> new VariableDeclaration(
-								v.name(),
-								v.type(),
-								v.annotations(),
-								v.initializer().isPresent() ?
-										(AssignExpression) ExpressionUnitNormaliser.visitExpression(
-												v.initializer().get() ) : null
-						)
-				).collect( Collectors.toList() ),
-				visit( n.continuation() )
-		).copyPosition( n );
-	}
+  @Override
+  public Statement visit(VariableDeclarationStatement n) {
+    return new VariableDeclarationStatement(
+            n.variables().stream()
+                .map(
+                    v ->
+                        new VariableDeclaration(
+                            v.name(),
+                            v.type(),
+                            v.annotations(),
+                            v.initializer().isPresent()
+                                ? (AssignExpression)
+                                    ExpressionUnitNormaliser.visitExpression(v.initializer().get())
+                                : null))
+                .collect(Collectors.toList()),
+            visit(n.continuation()))
+        .copyPosition(n);
+  }
 
-	@Override
-	public Statement visit( ExpressionStatement n ) {
-		Expression e = ExpressionUnitNormaliser.visitExpression( n.expression() );
-		if( ExpressionUnitNormaliser.isNoop( e ) ) {
-			return visit( n.continuation() );
-		} else {
-			return new ExpressionStatement( e, visit( n.continuation() ) ).copyPosition( n );
-		}
-	}
+  @Override
+  public Statement visit(ExpressionStatement n) {
+    Expression e = ExpressionUnitNormaliser.visitExpression(n.expression());
+    if (ExpressionUnitNormaliser.isNoop(e)) {
+      return visit(n.continuation());
+    } else {
+      return new ExpressionStatement(e, visit(n.continuation())).copyPosition(n);
+    }
+  }
 
-	@Override
-	public Statement visit( IfStatement n ) {
-		return new IfStatement(
-				ExpressionUnitNormaliser.visitExpression( n.condition() ),
-				visit( n.ifBranch() ),
-				visit( n.elseBranch() ),
-				visit( n.continuation() )
-		).copyPosition( n );
-	}
+  @Override
+  public Statement visit(IfStatement n) {
+    return new IfStatement(
+            ExpressionUnitNormaliser.visitExpression(n.condition()),
+            visit(n.ifBranch()),
+            visit(n.elseBranch()),
+            visit(n.continuation()))
+        .copyPosition(n);
+  }
 
-	@Override
-	public Statement visit( SwitchStatement n ) {
-		return new SwitchStatement(
-				ExpressionUnitNormaliser.visitExpression( n.guard() ),
-				// this should be always present
-				n.cases().entrySet().stream().map( e ->
-						new AbstractMap.SimpleEntry<>( e.getKey(), visit( e.getValue() ) )
-				).collect( Streams.toLinkedHashMap( Map.Entry::getKey, Map.Entry::getValue ) ),
-				visit( n.continuation() )
-		).copyPosition( n );
-	}
+  @Override
+  public Statement visit(SwitchStatement n) {
+    return new SwitchStatement(
+            ExpressionUnitNormaliser.visitExpression(n.guard()),
+            // this should be always present
+            n.cases().entrySet().stream()
+                .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), visit(e.getValue())))
+                .collect(Streams.toLinkedHashMap(Map.Entry::getKey, Map.Entry::getValue)),
+            visit(n.continuation()))
+        .copyPosition(n);
+  }
 
-	@Override
-	public Statement visit( NilStatement n ) {
-		return n;
-	}
+  @Override
+  public Statement visit(NilStatement n) {
+    return n;
+  }
 
-	@Override
-	public Statement visit( ReturnStatement n ) {
-		return new ReturnStatement(
-				ExpressionUnitNormaliser.visitExpression( n.returnExpression() ),
-				visit( n.continuation() )
-		).copyPosition( n );
-	}
-
+  @Override
+  public Statement visit(ReturnStatement n) {
+    return new ReturnStatement(
+            ExpressionUnitNormaliser.visitExpression(n.returnExpression()), visit(n.continuation()))
+        .copyPosition(n);
+  }
 }

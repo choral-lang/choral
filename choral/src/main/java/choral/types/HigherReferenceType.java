@@ -25,63 +25,59 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-/** @see HigherDataType */
+/**
+ * @see HigherDataType
+ */
 public abstract class HigherReferenceType extends HigherDataType implements ReferenceType {
 
-	HigherReferenceType(
-			Universe universe,
-			List< World > worldParameters
-	) {
-		super( universe, worldParameters );
-	}
+  HigherReferenceType(Universe universe, List<World> worldParameters) {
+    super(universe, worldParameters);
+  }
 
-//	public abstract HigherReferenceType.Definition innerType();
+  //	public abstract HigherReferenceType.Definition innerType();
 
-	public abstract GroundReferenceType applyTo( List< ? extends World > args );
+  public abstract GroundReferenceType applyTo(List<? extends World> args);
 
-	protected abstract class Definition extends HigherDataType.Definition
-			implements GroundReferenceType {
+  protected abstract class Definition extends HigherDataType.Definition
+      implements GroundReferenceType {
 
-		Definition() {
-		}
+    Definition() {}
 
-		public final Optional< ? extends Member.Field > field( String name ) {
-			return fields()
-					.filter( m -> m.identifier().equals( name ) )
-					.findAny();
-		}
+    public final Optional<? extends Member.Field> field(String name) {
+      return fields().filter(m -> m.identifier().equals(name)).findAny();
+    }
 
-		public final Stream< ? extends Member.HigherMethod > methods( String name ) {
-			return methods().filter( m -> m.identifier().equals( name ) );
-		}
+    public final Stream<? extends Member.HigherMethod> methods(String name) {
+      return methods().filter(m -> m.identifier().equals(name));
+    }
+  }
 
-	}
+  /**
+   * @see HigherDataType.Proxy
+   */
+  protected abstract class Proxy extends HigherDataType.Proxy implements GroundReferenceType {
 
-	/** @see HigherDataType.Proxy */
-	protected abstract class Proxy extends HigherDataType.Proxy implements GroundReferenceType {
+    Proxy(Substitution substitution) {
+      super(substitution);
+    }
 
-		Proxy( Substitution substitution ) {
-			super( substitution );
-		}
+    @Override
+    protected abstract HigherReferenceType.Definition definition();
 
-		@Override
-		protected abstract HigherReferenceType.Definition definition();
+    public Stream<? extends Member.Field> fields() {
+      return definition().fields().map(x -> x.applySubstitution(substitution()));
+    }
 
-		public Stream< ? extends Member.Field > fields() {
-			return definition().fields().map( x -> x.applySubstitution( substitution() ) );
-		}
+    public Optional<? extends Member.Field> field(String name) {
+      return definition().field(name).map(x -> x.applySubstitution(substitution()));
+    }
 
-		public Optional< ? extends Member.Field > field( String name ) {
-			return definition().field( name ).map( x -> x.applySubstitution( substitution() ) );
-		}
+    public Stream<? extends Member.HigherMethod> methods() {
+      return definition().methods().map(x -> x.applySubstitution(substitution()));
+    }
 
-		public Stream< ? extends Member.HigherMethod > methods() {
-			return definition().methods().map( x -> x.applySubstitution( substitution() ) );
-		}
-
-		public Stream< ? extends Member.HigherMethod > methods( String name ) {
-			return definition().methods( name ).map( x -> x.applySubstitution( substitution() ) );
-		}
-
-	}
+    public Stream<? extends Member.HigherMethod> methods(String name) {
+      return definition().methods(name).map(x -> x.applySubstitution(substitution()));
+    }
+  }
 }

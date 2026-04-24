@@ -21,25 +21,28 @@
 
 package choral.examples.HealthCareService;
 
-import choral.examples.DistAuth.DistAuth_IP;
 import choral.choralUnit.testUtils.TestUtils_A;
 import choral.choralUnit.testUtils.TestUtils_B;
-import choral.runtime.TLSChannel.TLSChannel_A;
+import choral.examples.DistAuth.DistAuth_IP;
 import choral.lang.Unit;
-
+import choral.runtime.TLSChannel.TLSChannel_A;
 import java.util.UUID;
 
 public class HealthIdentityProvider {
 
-	public static TLSChannel_A< Object > connect() {
-		String CLIENT_IP = UUID.randomUUID().toString();
-		String SERVICE_IP = UUID.randomUUID().toString();
-		new Thread( () -> new Storage().authenticate(
-				TestUtils_A.newLocalTLSChannel( SERVICE_IP, Unit.id ) ) ).start();
-		new Thread( () -> new DistAuth_IP(
-				TestUtils_B.newLocalTLSChannel( Unit.id, CLIENT_IP ),
-				TestUtils_B.newLocalTLSChannel( Unit.id, SERVICE_IP )
-		).authenticate() ).start();
-		return TestUtils_A.newLocalTLSChannel( CLIENT_IP, Unit.id );
-	}
+  public static TLSChannel_A<Object> connect() {
+    String CLIENT_IP = UUID.randomUUID().toString();
+    String SERVICE_IP = UUID.randomUUID().toString();
+    new Thread(
+            () -> new Storage().authenticate(TestUtils_A.newLocalTLSChannel(SERVICE_IP, Unit.id)))
+        .start();
+    new Thread(
+            () ->
+                new DistAuth_IP(
+                        TestUtils_B.newLocalTLSChannel(Unit.id, CLIENT_IP),
+                        TestUtils_B.newLocalTLSChannel(Unit.id, SERVICE_IP))
+                    .authenticate())
+        .start();
+    return TestUtils_A.newLocalTLSChannel(CLIENT_IP, Unit.id);
+  }
 }

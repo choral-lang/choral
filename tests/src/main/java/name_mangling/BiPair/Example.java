@@ -36,13 +36,12 @@ import choral.examples.DistAuthUtils.AuthToken;
 
 public class Example {
 
-	public static class _1_2 {
-		public static void main( String[] args ) {
-			AuthResult._1_2 a1 = new AuthResult._1_2();
-			AuthResult._1_2 a2 = new AuthResult._1_2( new AuthToken( "1" ), new AuthToken( "1" ) );
-			AuthResult._1_2 a3 = new AuthResult._1_2();
-			AuthResult._1_2 a4 = new AuthResult._1_2( new AuthToken( "2" ), new AuthToken( "2" ) );
-		}
-	}
-
+  public static class _1_2 {
+    public static void main(String[] args) {
+      AuthResult._1_2 a1 = new AuthResult._1_2();
+      AuthResult._1_2 a2 = new AuthResult._1_2(new AuthToken("1"), new AuthToken("1"));
+      AuthResult._1_2 a3 = new AuthResult._1_2();
+      AuthResult._1_2 a4 = new AuthResult._1_2(new AuthToken("2"), new AuthToken("2"));
+    }
+  }
 }

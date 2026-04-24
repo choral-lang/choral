@@ -21,1026 +21,1016 @@
 
 package choral.types;
 
+import static choral.types.Modifier.*;
+import static choral.types.ModifierUtils.assertAccessModifiers;
+import static choral.types.ModifierUtils.assertIllegalCombinationOfModifiers;
+
 import choral.ast.Node;
 import choral.ast.expression.Expression;
 import choral.ast.statement.Statement;
 import choral.exceptions.StaticVerificationException;
 import choral.utils.Formatting;
 import choral.utils.Pair;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static choral.types.Modifier.*;
-import static choral.types.ModifierUtils.assertAccessModifiers;
-import static choral.types.ModifierUtils.assertIllegalCombinationOfModifiers;
-
 public abstract class Member implements HasSource {
 
-	protected Member(
-			GroundClassOrInterface declarationContext,
-			String identifier,
-			Variety variety,
-			EnumSet< Modifier > modifiers
-	) {
-		this( declarationContext, identifier, variety, modifiers, true );
-	}
-
-	protected Member(
-			GroundClassOrInterface declarationContext,
-			String identifier,
-			Variety variety,
-			EnumSet< Modifier > modifiers,
-			boolean checkModifiers
-	) {
-		this.declarationContext = declarationContext;
-		this.variety = variety;
-		this.modifiers = EnumSet.copyOf( modifiers );
-		this.identifier = identifier;
-		if( checkModifiers ) {
-			assertModifiers( modifiers );
-		}
-	}
-
-	// source code position for error reporting
-	private Node source;
-
-	@Override
-	public final Optional< Node > sourceCode() {
-		return Optional.ofNullable( source );
-	}
-
-	@Override
-	public final void setSourceCode( Node source ) {
-		this.source = source;
-	}
-
-	private final String identifier;
-
-	public String identifier() {
-		return identifier;
-	}
-
-	private final EnumSet< Modifier > modifiers;
-
-	protected void assertModifiers( EnumSet< Modifier > modifiers ) {
-		assertAccessModifiers( modifiers );
-		assertIllegalCombinationOfModifiers( modifiers, ABSTRACT, STATIC );
-		assertIllegalCombinationOfModifiers( modifiers, ABSTRACT, PRIVATE );
-		assertIllegalCombinationOfModifiers( modifiers, ABSTRACT, FINAL );
-		assertIllegalCombinationOfModifiers(modifiers, DEFAULT, ABSTRACT);
-		assertIllegalCombinationOfModifiers(modifiers, DEFAULT, STATIC);
-	}
-
-	protected final EnumSet< Modifier > modifiers() {
-		return modifiers;
-	}
-
-	public final boolean isDefault() {
-		return modifiers.contains(DEFAULT);
-	}
-
-	public final boolean isAbstract() {
-		return modifiers.contains( ABSTRACT );
-	}
-
-	public final boolean isPublic() {
-		return modifiers.contains( PUBLIC );
-	}
-
-	public final boolean isPrivate() {
-		return modifiers.contains( PRIVATE );
-	}
-
-	public final boolean isProtected() {
-		return modifiers.contains( PROTECTED );
-	}
-
-	public final boolean isPackagePrivate() {
-		return !isPublic() && !isProtected() && !isPrivate();
-	}
-
-	public final boolean isFinal() {
-		return modifiers.contains( FINAL );
-	}
-
-	public final boolean isStatic() {
-		return modifiers.contains( STATIC );
-	}
-
-	public final boolean isAccessibleFrom( GroundClassOrInterface context ) {
-		/* DEBUG */
-//		System.out.println("-- isAccessible");
-//		System.out.println("  " + this);
-//		System.out.println("  " + this.declarationContext + " == " +  context + " " + (this.declarationContext == context));
-//		System.out.println("  " + this.isPublic());
-//		System.out.println("  " + this.isProtected());
-//		System.out.println("  " + this.isPrivate());
-//		System.out.println("  " + this.isPackagePrivate());
-//		System.out.println("-- result = " + (this.declarationContext == context || this.isPublic() || this.isProtected() || ( this.isPackagePrivate() &&
-//				context.declarationPackage() == this.declarationContext().declarationPackage() )));
-		return this.declarationContext == context
-				|| this.isPublic()
-				|| this.isProtected()
-				|| ( this.isPackagePrivate() && this.declarationContext().declarationPackage() == context.declarationPackage() )
-				|| ( this.isPrivate() && this.declarationContext().typeConstructor() == context.typeConstructor() );
-	}
-
-	public final boolean isAccessibleFrom( GroundTypeParameter context ) {
-		return this.isPublic()
-				|| this.isProtected()
-				|| ( this.isPackagePrivate()
-				   && this.declarationContext().declarationPackage() == context.typeConstructor().declarationContext().declarationPackage() );
-	}
-
-	private final GroundClassOrInterface declarationContext;
-
-	public GroundClassOrInterface declarationContext() {
-		return declarationContext;
-	}
-
-	public enum Variety {
-		FIELD( "field" ),
-		METHOD( "method" ),
-		CONSTRUCTOR( "constructor" );
-
-		public final String label;
-
-		Variety( String label ) {
-			this.label = label;
-		}
-	}
-
-	private final Variety variety;
-
-	public final Variety variety() {
-		return variety;
-	}
-
-	abstract Member applySubstitution( Substitution substitution );
-
-	public static final class Field extends Member {
-
-		private final GroundDataType type;
-
-		public Field(
-				GroundClassOrInterface declarationContext,
-				String identifier,
-				EnumSet< Modifier > modifiers,
-				GroundDataType type
-		) {
-			super( declarationContext, identifier, Variety.FIELD, modifiers );
-			this.type = type;
-		}
-
-		private Field(
-				GroundClassOrInterface declarationContext,
-				String identifier,
-				EnumSet< Modifier > modifiers,
-				GroundDataType type,
-				boolean performCheks
-		) {
-			super( declarationContext, identifier, Variety.FIELD, modifiers, performCheks );
-			this.type = type;
-		}
-
-		@Override
-		protected void assertModifiers( EnumSet< Modifier > modifiers ) {
-			if( modifiers.contains( ABSTRACT ) ) {
-				throw new StaticVerificationException(
-						"modifier 'abstract' not allowed for fields" );
-			}
-			super.assertModifiers( modifiers );
-		}
-
-		public GroundDataType type() {
-			return type;
-		}
-
-		@Override
-		Field applySubstitution( Substitution substitution ) {
-			GroundDataType type = this.type().applySubstitution( substitution );
-			GroundClassOrInterface declarationContext = this.declarationContext().applySubstitution(
-					substitution );
-			return new Field( declarationContext, identifier(), modifiers(), type, false );
-		}
-	}
-
-	public static abstract class HigherCallable extends Member
-			implements TypeParameterDeclarationContext {
-
-		private final static String CONSTRUCTOR_NAME = "new";
-
-		protected HigherCallable(
-				GroundClassOrInterface declarationContext,
-				String identifier,
-				Variety variety,
-				EnumSet< Modifier > modifiers,
-				List< HigherTypeParameter > typeParameters,
-				boolean performChecks
-		) {
-			super(
-					declarationContext,
-					identifier,
-					variety,
-					modifiers,
-					performChecks
-			);
-
-			this.typeParameters = new ArrayList<>( typeParameters );
-			if( performChecks ) {
-				String[] names = new String[ typeParameters.size() ];
-				int i = 0;
-				for( HigherTypeParameter x : typeParameters ) {
-					x.setDeclarationContext( this );
-					for( int j = 0; j < i; j++ ) {
-						if( names[ j ].equals( x.identifier() ) ) {
-							throw StaticVerificationException.of(
-									"duplicate type parameter '" + names[ j ] + "'",
-									x.sourceCode() );
-						}
-					}
-					names[ i++ ] = x.identifier();
-				}
-			}
-		}
-
-		@Override
-		public Package declarationPackage() {
-			return declarationContext().typeConstructor().declarationPackage();
-		}
-
-		private final ArrayList< HigherTypeParameter > typeParameters;
-
-		@Override
-		public List< ? extends HigherTypeParameter > typeParameters() {
-			return Collections.unmodifiableList( typeParameters );
-		}
-
-		@Override
-		public Optional< ? extends HigherTypeParameter > typeParameter( int index ) {
-			if( 0 <= index && index < typeParameters.size() ) {
-				return Optional.of( typeParameters.get( index ) );
-			} else {
-				return Optional.empty();
-			}
-		}
-
-		@Override
-		public Optional< ? extends HigherTypeParameter > typeParameter( String name ) {
-			return typeParameters.stream().filter( x -> x.identifier().equals( name ) ).findAny();
-		}
-
-		public abstract GroundCallable applyTo( List< ? extends HigherReferenceType > typeArgs );
-
-		protected final Substitution getApplicationSubstitution(
-				List< ? extends HigherReferenceType > typeArgs
-		) {
-			if( typeArgs.size() != typeParameters.size() ) {
-				throw new StaticVerificationException(
-						"illegal type instantiation: expected " + typeParameters.size() + " type arguments but found " + typeArgs.size() );
-			}
-			Substitution substitution = new Substitution() {
-				@Override
-				public HigherReferenceType get( HigherTypeParameter placeHolder ) {
-					int i = typeParameters.indexOf( placeHolder );
-					return ( i == -1 ) ? placeHolder : typeArgs.get( i );
-				}
-			};
-			for( HigherTypeParameter t : typeParameters ) {
-				t.assertWithinBounds( substitution );
-			}
-			return substitution;
-		}
-
-		@Override
-		abstract HigherCallable applySubstitution( Substitution substitution );
-
-		protected final List< HigherTypeParameter > prepareTypeParameters(
-				Substitution substitution
-		) {
-			Universe universe = declarationContext().universe();
-			List< HigherTypeParameter > newTypeParams = new ArrayList<>();
-			for( HigherTypeParameter t : typeParameters() ) {
-				newTypeParams.add( new HigherTypeParameter(
-						universe,
-						t.identifier(),
-						t.worldParameters.stream().map(
-								x -> new World( universe, x.identifier() ) ).collect(
-								Collectors.toList() )
-				) );
-			}
-			for( int i = 0; i < typeParameters().size(); i++ ) {
-				HigherTypeParameter oldTypeParam = typeParameters().get( i );
-				HigherTypeParameter newTypeParam = newTypeParams.get( i );
-				List< World > newWorldParams = newTypeParam.worldParameters;
-//						oldTypeParam.worldParameters().stream()
-//						.map( x -> new World( universe, x.identifier() ) ).collect(
-//								Collectors.toList() );
-				Substitution boundSubs = new Substitution() {
-					@Override
-					public World get( World placeHolder ) {
-						int i = oldTypeParam.worldParameters.indexOf( placeHolder );
-						return ( i == -1 )
-								? substitution.get( placeHolder )
-								: newWorldParams.get( i );
-					}
-
-					@Override
-					public HigherReferenceType get( HigherTypeParameter placeHolder ) {
-						int i = typeParameters().indexOf( placeHolder );
-						return ( i == -1 )
-								? substitution.get( placeHolder )
-								: newTypeParams.get( i );
-					}
-				};
-				oldTypeParam.innerType().upperBound().forEach(
-						x -> newTypeParam.innerType().addUpperBound(
-								x.applySubstitution( boundSubs ) ) );
-				assert ( oldTypeParam.innerType().isBoundFinalised() );
-				newTypeParam.innerType().finaliseBound();
-			}
-			return newTypeParams;
-		}
-
-		/**
-		 * (JLS 8.4.2) Two methods or constructors, M and N, have the <b>same signature</b> if:
-		 * 1. They have the same name,
-		 * 2. They have the same type parameters, and
-		 * 3. After adapting the formal parameter types of N to the type parameters of M, they have the same formal
-		 *    parameter types.
-		 * <p>
-		 * (JLS 8.4.4) Two methods or constructors M and N have the <b>same type parameters</b> if both:
-		 * 1. M and N have same number of type parameters (possibly zero).
-		 * 2. Where A1, ..., An are the type parameters of M and B1, ..., Bn are the type parameters of N,
-		 *    let θ=[B1:=A1, ..., Bn:=An]. Then, for all i (1 ≤ i ≤ n), the bound of Ai is the same type as θ applied to
-		 *    the bound of Bi.
-		 * <p>
-		 * (JLS 8.4.4) Let M and N be methods or constructors with the same type parameters, by a substitution θ applied
-		 * to N. A type mentioned in N can be <b>adapted to the type parameters of M</b> by applying θ to the type.
-		 */
-		public boolean sameSignatureAs(HigherCallable other ) {
-			if( !this.identifier().equals( other.identifier() )
-					|| this.typeParameters.size() != other.typeParameters.size()
-					|| this.arity() != other.arity() ) {
-				return false;
-			}
-			Substitution s1 = new Substitution() {
-				@Override
-				public HigherReferenceType get( HigherTypeParameter placeHolder ) {
-					int i = typeParameters.indexOf( placeHolder );
-					return ( i == -1 )
-							? placeHolder
-							: other.typeParameters.get( i );
-				}
-			};
-			Substitution s2 = new Substitution() {
-				@Override
-				public HigherReferenceType get( HigherTypeParameter placeHolder ) {
-					int i = other.typeParameters().indexOf( placeHolder );
-					return ( i == -1 )
-							? placeHolder
-							: typeParameters.get( i );
-				}
-			};
-			for( int i = 0; i < this.typeParameters.size(); i++ ) {
-				HigherTypeParameter t1 = this.typeParameters.get( i );
-				HigherTypeParameter t2 = other.typeParameters.get( i );
-				if( !t1.isSameKind( t2 ) ) {
-					return false;
-				}
-				// Substitute this method's world parameters with other's world parameters
-				// and rename type parameter i for this method to the name of type parameter i in the other method
-				GroundReferenceType g1 = t1.applyTo( t2.worldParameters ).applySubstitution( s1 );
-				// Substitute the other method's world parameters with this method's world parameters
-				// and rename type parameter i for the other method to the name of type parameter i in this method
-				GroundReferenceType g2 = t2.applyTo( t1.worldParameters ).applySubstitution( s2 );
-				// Per JLS 8.4.2: after renaming each B_i to A_i, the bounds of corresponding
-				// type parameters must be the same (checked via mutual subtype satisfaction).
-				// Implementation detail: Instead of only doing "B_i to A_i" (s2), we also do "A_i to B_i" (s1)
-				if( !t1.innerType().upperBound().allMatch( g2::isSubtypeOf )
-						|| !t2.innerType().upperBound().allMatch( g1::isSubtypeOf ) ) {
-					return false;
-				}
-			}
-			for( int i = 0; i < this.arity(); i++ ) {
-				GroundDataType t1 = this.innerCallable().signature().parameters().get( i ).type();
-				GroundDataType t2 = other.innerCallable().signature().parameters().get( i ).type();
-				if( !t1.isEquivalentTo( t2.applySubstitution( s2 ) ) ) {
-					return false;
-				}
-			}
-			return true;
-		}
-
-		/**
-		 * (JLS 8.4.2) This method's signature is a subsignature of {@code other}'s signature if:
-		 * 1. this method has the same signature as the other signature, or
-		 * 2. this method has the same signature as the other signature's ERASURE.
-		 * <p>
-		 * "The notion of subsignature is designed to express a relationship between two methods whose signatures are
-		 * not identical, but in which one may override the other. Specifically, it allows a method whose signature does
-		 * not use generic types to override any generified version of that method."
-		 */
-		public boolean isSubSignatureOf( HigherCallable other ) {
-			return this.sameSignatureAs( other ) || this.sameSignatureAsErasureOf( other );
-		}
-
-		/**
-		 * Checks whether the signature of this method is equal to the erasure of the signature of the {@code other}
-		 * method.
-		 */
-		public boolean sameSignatureAsErasureOf(HigherCallable other ) {
-			// If this method has a different name or takes a different number of arguments, then the signatures
-			// certainly don't match. Also note that the erasure of a type does not have type parameters.
-			// If this method has type parameters, it cannot have the same signature as the erasure of `other`.
-			if( !this.identifier().equals( other.identifier() ) || this.arity() != other.arity()
-					|| !this.typeParameters.isEmpty() ) {
-				return false;
-			}
-			for( int i = 0; i < this.arity(); i++ ) {
-				GroundDataType t1 = this.innerCallable().signature().parameters().get( i ).type();
-				GroundDataType t2 = other.innerCallable().signature().parameters().get( i ).type();
-				if( !t1.isEquivalentToErasureOf( t2 ) ) {
-					return false;
-				}
-			}
-			return true;
-		}
-
-		public boolean sameErasureAs( HigherCallable other ) {
-			if( !this.identifier().equals( other.identifier() ) || this.arity() != other.arity()  ) {
-				return false;
-			}
-			for( int i = 0; i < this.arity(); i++ ) {
-				GroundDataType t1 = this.innerCallable().signature().parameters().get( i ).type();
-				GroundDataType t2 = other.innerCallable().signature().parameters().get( i ).type();
-				if( !t1.isEquivalentToErasureOf( t2 ) && !t2.isEquivalentToErasureOf( t1 ) ) {
-					// TODO This condition is fishy. "t1 is not equivalent to the erasure of t2" and
-					//  "t2 is not equivalent to the erasure of t1" is not the same thing as
-					//  "the erasure of t1 is not equivalent to the erasure of t2".
-					return false;
-				}
-			}
-			return true;
-		}
-
-		/**
-		 * (JLS 8.4.2) Two method signatures m1 and m2 are override-equivalent iff either m1 is a subsignature of
-		 * m2 or m2 is a subsignature of m1.
-		 * <p>
-		 * Note that the following methods are override-equivalent, even though one of them is abstract:
-		 * <pre>{@code
-		 * class Point {
-		 *   int x, y;
-		 *   abstract void move(int dx, int dy);
-		 *   void move(int dx, int dy) { x += dx; y += dy; }
-		 * }
-		 * }</pre>
-		 */
-		public boolean isOverrideEquivalentTo( HigherCallable other ) {
-			// Inlined the definition of #isSubSignatureOf for efficiency
-			return this.sameSignatureAs( other ) ||
-					this.sameSignatureAsErasureOf( other ) ||
-					other.sameSignatureAsErasureOf( this );
-		}
-
-		public int arity() {
-			return innerCallable().signature().parameters().size();
-		}
-
-		/**
-		 * Returns the GroundCallable that serves as this callable's definition.
-		 * @see HigherDataType.Proxy
-		 */
-		public abstract Definition innerCallable();
-
-		/**
-		 * A mapping from worlds to their dependencies in the body of this callable, used for communication inference.
-		 * <p>
-		 * For example, if the body were:
-		 * <pre>
-		 * {@code
-		 * int@A i_A = 0@A;
-		 * int@B i_B = i_A;}
-		 * </pre>
-		 * The mapping for {@code B} would contain a reference to the statement {@code int@A i_A = 0@A}.
-		 */
-		private Map<World, List<Pair<Expression, Statement>>> worldDependencies =  new HashMap<>();
-		
-		public void addDependencies( List<? extends World> worlds, Expression expression, Statement statement ){
-			for( World world : worlds ){
-				addDependency(world, expression, statement);
-			}
-		}
-
-		public void addDependency( World world, Expression expression, Statement statement ){
-			worldDependencies.putIfAbsent(world, new ArrayList<>());
-			worldDependencies.get(world).add(new Pair<>(expression, statement));
-		}
-
-		public Map<World, List<Pair<Expression, Statement>>> worldDependencies(){
-			return worldDependencies;
-		}
-
-		public List<Pair<Expression, Statement>> worldDependencies( World world ){
-			return worldDependencies.get(world);
-		}
-
-		public void clearDependencies(){
-			worldDependencies.clear();
-		}
-
-		/**
-		 * A list of all the channels available to the method from either the 
-		 * enclosing class' fields or the method's arguments.
-		 */
-		private List<Pair<String, GroundInterface>> channels = new ArrayList<>();
-
-		public void addChannel( List<Pair<String, GroundInterface>> channelList ){
-			for( Pair<String, GroundInterface> channelPair : channelList ){
-				addChannel(channelPair);
-			}
-		}
-
-		public void addChannel( Pair<String, GroundInterface> channelPair ){
-			channels.add(channelPair);
-		}
-
-		public List<Pair<String, GroundInterface>> channels(){
-			return channels;
-		}
-
-		public abstract class Definition implements GroundCallable {
-
-			Definition( Signature signature ) {
-				this.signature = signature;
-			}
-
-			@Override
-			public List< ? extends HigherReferenceType > typeArguments() {
-				return typeParameters();
-			}
-
-			private final Signature signature;
-
-			@Override
-			public Signature signature() {
-				return signature;
-			}
-
-			private boolean finalised = false;
-
-			boolean isFinalised() {
-				return finalised && signature().isFinalised();
-			}
-
-			public void finalise() {
-				signature().finalise();
-				finalised = true;
-			}
-		}
-
-		/** @see HigherDataType.Proxy */
-		protected abstract class Proxy implements GroundCallable {
-
-			Proxy( Substitution substitution ) {
-				this.substitution = substitution;
-			}
-
-			protected abstract Definition definition();
-
-			private final Substitution substitution;
-
-			protected final Substitution substitution() {
-				return substitution;
-			}
-
-			public final List< ? extends HigherReferenceType > typeArguments() {
-				return HigherCallable.this.typeParameters().stream().map(
-						substitution()::get ).collect( Collectors.toList() );
-			}
-
-			public Signature signature() {
-				return definition().signature().applySubstitution( substitution() );
-			}
-		}
-	}
-
-	public interface GroundCallable {
-		List< ? extends HigherReferenceType > typeArguments();
-
-		Signature signature();
-
-		HigherCallable higherCallable();
-	}
-
-	public static final class HigherMethod extends HigherCallable {
-
-		public HigherMethod(
-				GroundClassOrInterface declarationContext,
-				String identifier,
-				EnumSet< Modifier > modifiers,
-				List< HigherTypeParameter > typeParameters
-		) {
-			this( declarationContext, identifier, modifiers, typeParameters, new Signature(),
-					true );
-		}
-
-		private HigherMethod(
-				GroundClassOrInterface declarationContext,
-				String identifier,
-				EnumSet< Modifier > modifiers,
-				List< HigherTypeParameter > typeParameters,
-				Signature signature,
-				boolean performChecks
-		) {
-			super( declarationContext, identifier, Variety.METHOD, modifiers, typeParameters,
-					performChecks );
-			assert ( !HigherCallable.CONSTRUCTOR_NAME.equals( identifier ) );
-			this.innerCallable = new Definition( signature );
-		}
-
-		@Override
-		public String toString() {
-			return identifier() + innerCallable().signature();
-		}
-
-		/**
-		 * (JLS 8.4.5) A method declaration d1 with return type R1 is **return-type-substitutable** for another method
-		 * d2 with return type R2 iff any of the following is true:
-		 * 1. If R1 is void then R2 is void.
-		 * 2. If R1 is a primitive type then R2 is identical to R1.
-		 * 3. If R1 is a reference type then one of the following is true:
-		 * 	(a) R1, adapted to the type parameters of d2 (JLS 8.4.4), is a subtype of R2.
-		 * 	(b) R1 can be converted to a subtype of R2 by unchecked conversion (JLS 5.1.9).
-		 * 	(c) d1 does not have the same signature as d2 (JLS 8.4.2), and R1 is the same as the erasure of R2.
-		 */
-		public boolean isReturnTypeSubstitutableFor(HigherMethod other ) {
-			HigherMethod d1 = this;
-			HigherMethod d2 = other;
-			GroundDataTypeOrVoid r1 = d1.innerCallable().returnType;
-			GroundDataTypeOrVoid r2 = d2.innerCallable().returnType;
-			if ( r1.isVoid() ) {
-				return r2.isVoid();
-			}
-			if( r1 instanceof GroundPrimitiveDataType rp1 ) {
-				return r2 instanceof GroundPrimitiveDataType rp2 && rp1.isEquivalentTo( rp2 );
-			}
-			if ( r1 instanceof GroundReferenceType rr1 ) {
-				// (a) Adapt r1 to the type parameters of the other method and check if it's a subtype of r2
-				Substitution s1 = new Substitution() {
-					@Override
-					public HigherReferenceType get( HigherTypeParameter placeHolder ) {
-						int i = d1.typeParameters().indexOf( placeHolder );
-						return ( i == -1 )
-								? placeHolder
-								: d2.typeParameters().get( i );
-					}
-				};
-				if ( !r2.isVoid() && rr1.applySubstitution( s1 ).isSubtypeOf( (GroundDataType)r2 ) ) {
-					return true;
-				}
-
-				// (b) Check if r1 can be converted to a subtype of r2 by unchecked conversion.
-				// Nothing to do here, since Choral doesn't support raw types.
-
-				// (c) Check if this method does not have the same signature as the other method and r1 is the same as
-				// the erasure of r2
-                return !this.sameSignatureAs( other ) &&
-                        r2 instanceof GroundReferenceType rr2 &&
-                        rr1.isEquivalentToErasureOf( rr2 );
+  protected Member(
+      GroundClassOrInterface declarationContext,
+      String identifier,
+      Variety variety,
+      EnumSet<Modifier> modifiers) {
+    this(declarationContext, identifier, variety, modifiers, true);
+  }
+
+  protected Member(
+      GroundClassOrInterface declarationContext,
+      String identifier,
+      Variety variety,
+      EnumSet<Modifier> modifiers,
+      boolean checkModifiers) {
+    this.declarationContext = declarationContext;
+    this.variety = variety;
+    this.modifiers = EnumSet.copyOf(modifiers);
+    this.identifier = identifier;
+    if (checkModifiers) {
+      assertModifiers(modifiers);
+    }
+  }
+
+  // source code position for error reporting
+  private Node source;
+
+  @Override
+  public final Optional<Node> sourceCode() {
+    return Optional.ofNullable(source);
+  }
+
+  @Override
+  public final void setSourceCode(Node source) {
+    this.source = source;
+  }
+
+  private final String identifier;
+
+  public String identifier() {
+    return identifier;
+  }
+
+  private final EnumSet<Modifier> modifiers;
+
+  protected void assertModifiers(EnumSet<Modifier> modifiers) {
+    assertAccessModifiers(modifiers);
+    assertIllegalCombinationOfModifiers(modifiers, ABSTRACT, STATIC);
+    assertIllegalCombinationOfModifiers(modifiers, ABSTRACT, PRIVATE);
+    assertIllegalCombinationOfModifiers(modifiers, ABSTRACT, FINAL);
+    assertIllegalCombinationOfModifiers(modifiers, DEFAULT, ABSTRACT);
+    assertIllegalCombinationOfModifiers(modifiers, DEFAULT, STATIC);
+  }
+
+  protected final EnumSet<Modifier> modifiers() {
+    return modifiers;
+  }
+
+  public final boolean isDefault() {
+    return modifiers.contains(DEFAULT);
+  }
+
+  public final boolean isAbstract() {
+    return modifiers.contains(ABSTRACT);
+  }
+
+  public final boolean isPublic() {
+    return modifiers.contains(PUBLIC);
+  }
+
+  public final boolean isPrivate() {
+    return modifiers.contains(PRIVATE);
+  }
+
+  public final boolean isProtected() {
+    return modifiers.contains(PROTECTED);
+  }
+
+  public final boolean isPackagePrivate() {
+    return !isPublic() && !isProtected() && !isPrivate();
+  }
+
+  public final boolean isFinal() {
+    return modifiers.contains(FINAL);
+  }
+
+  public final boolean isStatic() {
+    return modifiers.contains(STATIC);
+  }
+
+  public final boolean isAccessibleFrom(GroundClassOrInterface context) {
+    /* DEBUG */
+    //		System.out.println("-- isAccessible");
+    //		System.out.println("  " + this);
+    //		System.out.println("  " + this.declarationContext + " == " +  context + " " +
+    // (this.declarationContext == context));
+    //		System.out.println("  " + this.isPublic());
+    //		System.out.println("  " + this.isProtected());
+    //		System.out.println("  " + this.isPrivate());
+    //		System.out.println("  " + this.isPackagePrivate());
+    //		System.out.println("-- result = " + (this.declarationContext == context || this.isPublic()
+    // || this.isProtected() || ( this.isPackagePrivate() &&
+    //				context.declarationPackage() == this.declarationContext().declarationPackage() )));
+    return this.declarationContext == context
+        || this.isPublic()
+        || this.isProtected()
+        || (this.isPackagePrivate()
+            && this.declarationContext().declarationPackage() == context.declarationPackage())
+        || (this.isPrivate()
+            && this.declarationContext().typeConstructor() == context.typeConstructor());
+  }
+
+  public final boolean isAccessibleFrom(GroundTypeParameter context) {
+    return this.isPublic()
+        || this.isProtected()
+        || (this.isPackagePrivate()
+            && this.declarationContext().declarationPackage()
+                == context.typeConstructor().declarationContext().declarationPackage());
+  }
+
+  private final GroundClassOrInterface declarationContext;
+
+  public GroundClassOrInterface declarationContext() {
+    return declarationContext;
+  }
+
+  public enum Variety {
+    FIELD("field"),
+    METHOD("method"),
+    CONSTRUCTOR("constructor");
+
+    public final String label;
+
+    Variety(String label) {
+      this.label = label;
+    }
+  }
+
+  private final Variety variety;
+
+  public final Variety variety() {
+    return variety;
+  }
+
+  abstract Member applySubstitution(Substitution substitution);
+
+  public static final class Field extends Member {
+
+    private final GroundDataType type;
+
+    public Field(
+        GroundClassOrInterface declarationContext,
+        String identifier,
+        EnumSet<Modifier> modifiers,
+        GroundDataType type) {
+      super(declarationContext, identifier, Variety.FIELD, modifiers);
+      this.type = type;
+    }
+
+    private Field(
+        GroundClassOrInterface declarationContext,
+        String identifier,
+        EnumSet<Modifier> modifiers,
+        GroundDataType type,
+        boolean performCheks) {
+      super(declarationContext, identifier, Variety.FIELD, modifiers, performCheks);
+      this.type = type;
+    }
+
+    @Override
+    protected void assertModifiers(EnumSet<Modifier> modifiers) {
+      if (modifiers.contains(ABSTRACT)) {
+        throw new StaticVerificationException("modifier 'abstract' not allowed for fields");
+      }
+      super.assertModifiers(modifiers);
+    }
+
+    public GroundDataType type() {
+      return type;
+    }
+
+    @Override
+    Field applySubstitution(Substitution substitution) {
+      GroundDataType type = this.type().applySubstitution(substitution);
+      GroundClassOrInterface declarationContext =
+          this.declarationContext().applySubstitution(substitution);
+      return new Field(declarationContext, identifier(), modifiers(), type, false);
+    }
+  }
+
+  public abstract static class HigherCallable extends Member
+      implements TypeParameterDeclarationContext {
+
+    private static final String CONSTRUCTOR_NAME = "new";
+
+    protected HigherCallable(
+        GroundClassOrInterface declarationContext,
+        String identifier,
+        Variety variety,
+        EnumSet<Modifier> modifiers,
+        List<HigherTypeParameter> typeParameters,
+        boolean performChecks) {
+      super(declarationContext, identifier, variety, modifiers, performChecks);
+
+      this.typeParameters = new ArrayList<>(typeParameters);
+      if (performChecks) {
+        String[] names = new String[typeParameters.size()];
+        int i = 0;
+        for (HigherTypeParameter x : typeParameters) {
+          x.setDeclarationContext(this);
+          for (int j = 0; j < i; j++) {
+            if (names[j].equals(x.identifier())) {
+              throw StaticVerificationException.of(
+                  "duplicate type parameter '" + names[j] + "'", x.sourceCode());
             }
-			return false;
-		}
+          }
+          names[i++] = x.identifier();
+        }
+      }
+    }
 
-		boolean selectionMethod = false;
+    @Override
+    public Package declarationPackage() {
+      return declarationContext().typeConstructor().declarationPackage();
+    }
 
-		public boolean isSelectionMethod() {
-			return selectionMethod;
-		}
+    private final ArrayList<HigherTypeParameter> typeParameters;
 
-		public void setSelectionMethod() {
-			this.selectionMethod = true;
-		}
+    @Override
+    public List<? extends HigherTypeParameter> typeParameters() {
+      return Collections.unmodifiableList(typeParameters);
+    }
 
-        boolean typeSelectionMethod = false;
+    @Override
+    public Optional<? extends HigherTypeParameter> typeParameter(int index) {
+      if (0 <= index && index < typeParameters.size()) {
+        return Optional.of(typeParameters.get(index));
+      } else {
+        return Optional.empty();
+      }
+    }
 
-        public boolean isTypeSelectionMethod() {
-            return typeSelectionMethod;
+    @Override
+    public Optional<? extends HigherTypeParameter> typeParameter(String name) {
+      return typeParameters.stream().filter(x -> x.identifier().equals(name)).findAny();
+    }
+
+    public abstract GroundCallable applyTo(List<? extends HigherReferenceType> typeArgs);
+
+    protected final Substitution getApplicationSubstitution(
+        List<? extends HigherReferenceType> typeArgs) {
+      if (typeArgs.size() != typeParameters.size()) {
+        throw new StaticVerificationException(
+            "illegal type instantiation: expected "
+                + typeParameters.size()
+                + " type arguments but found "
+                + typeArgs.size());
+      }
+      Substitution substitution =
+          new Substitution() {
+            @Override
+            public HigherReferenceType get(HigherTypeParameter placeHolder) {
+              int i = typeParameters.indexOf(placeHolder);
+              return (i == -1) ? placeHolder : typeArgs.get(i);
+            }
+          };
+      for (HigherTypeParameter t : typeParameters) {
+        t.assertWithinBounds(substitution);
+      }
+      return substitution;
+    }
+
+    @Override
+    abstract HigherCallable applySubstitution(Substitution substitution);
+
+    protected final List<HigherTypeParameter> prepareTypeParameters(Substitution substitution) {
+      Universe universe = declarationContext().universe();
+      List<HigherTypeParameter> newTypeParams = new ArrayList<>();
+      for (HigherTypeParameter t : typeParameters()) {
+        newTypeParams.add(
+            new HigherTypeParameter(
+                universe,
+                t.identifier(),
+                t.worldParameters.stream()
+                    .map(x -> new World(universe, x.identifier()))
+                    .collect(Collectors.toList())));
+      }
+      for (int i = 0; i < typeParameters().size(); i++) {
+        HigherTypeParameter oldTypeParam = typeParameters().get(i);
+        HigherTypeParameter newTypeParam = newTypeParams.get(i);
+        List<World> newWorldParams = newTypeParam.worldParameters;
+        //						oldTypeParam.worldParameters().stream()
+        //						.map( x -> new World( universe, x.identifier() ) ).collect(
+        //								Collectors.toList() );
+        Substitution boundSubs =
+            new Substitution() {
+              @Override
+              public World get(World placeHolder) {
+                int i = oldTypeParam.worldParameters.indexOf(placeHolder);
+                return (i == -1) ? substitution.get(placeHolder) : newWorldParams.get(i);
+              }
+
+              @Override
+              public HigherReferenceType get(HigherTypeParameter placeHolder) {
+                int i = typeParameters().indexOf(placeHolder);
+                return (i == -1) ? substitution.get(placeHolder) : newTypeParams.get(i);
+              }
+            };
+        oldTypeParam
+            .innerType()
+            .upperBound()
+            .forEach(x -> newTypeParam.innerType().addUpperBound(x.applySubstitution(boundSubs)));
+        assert (oldTypeParam.innerType().isBoundFinalised());
+        newTypeParam.innerType().finaliseBound();
+      }
+      return newTypeParams;
+    }
+
+    /**
+     * (JLS 8.4.2) Two methods or constructors, M and N, have the <b>same signature</b> if: 1. They
+     * have the same name, 2. They have the same type parameters, and 3. After adapting the formal
+     * parameter types of N to the type parameters of M, they have the same formal parameter types.
+     *
+     * <p>(JLS 8.4.4) Two methods or constructors M and N have the <b>same type parameters</b> if
+     * both: 1. M and N have same number of type parameters (possibly zero). 2. Where A1, ..., An
+     * are the type parameters of M and B1, ..., Bn are the type parameters of N, let θ=[B1:=A1,
+     * ..., Bn:=An]. Then, for all i (1 ≤ i ≤ n), the bound of Ai is the same type as θ applied to
+     * the bound of Bi.
+     *
+     * <p>(JLS 8.4.4) Let M and N be methods or constructors with the same type parameters, by a
+     * substitution θ applied to N. A type mentioned in N can be <b>adapted to the type parameters
+     * of M</b> by applying θ to the type.
+     */
+    public boolean sameSignatureAs(HigherCallable other) {
+      if (!this.identifier().equals(other.identifier())
+          || this.typeParameters.size() != other.typeParameters.size()
+          || this.arity() != other.arity()) {
+        return false;
+      }
+      Substitution s1 =
+          new Substitution() {
+            @Override
+            public HigherReferenceType get(HigherTypeParameter placeHolder) {
+              int i = typeParameters.indexOf(placeHolder);
+              return (i == -1) ? placeHolder : other.typeParameters.get(i);
+            }
+          };
+      Substitution s2 =
+          new Substitution() {
+            @Override
+            public HigherReferenceType get(HigherTypeParameter placeHolder) {
+              int i = other.typeParameters().indexOf(placeHolder);
+              return (i == -1) ? placeHolder : typeParameters.get(i);
+            }
+          };
+      for (int i = 0; i < this.typeParameters.size(); i++) {
+        HigherTypeParameter t1 = this.typeParameters.get(i);
+        HigherTypeParameter t2 = other.typeParameters.get(i);
+        if (!t1.isSameKind(t2)) {
+          return false;
+        }
+        // Substitute this method's world parameters with other's world parameters
+        // and rename type parameter i for this method to the name of type parameter i in the other
+        // method
+        GroundReferenceType g1 = t1.applyTo(t2.worldParameters).applySubstitution(s1);
+        // Substitute the other method's world parameters with this method's world parameters
+        // and rename type parameter i for the other method to the name of type parameter i in this
+        // method
+        GroundReferenceType g2 = t2.applyTo(t1.worldParameters).applySubstitution(s2);
+        // Per JLS 8.4.2: after renaming each B_i to A_i, the bounds of corresponding
+        // type parameters must be the same (checked via mutual subtype satisfaction).
+        // Implementation detail: Instead of only doing "B_i to A_i" (s2), we also do "A_i to B_i"
+        // (s1)
+        if (!t1.innerType().upperBound().allMatch(g2::isSubtypeOf)
+            || !t2.innerType().upperBound().allMatch(g1::isSubtypeOf)) {
+          return false;
+        }
+      }
+      for (int i = 0; i < this.arity(); i++) {
+        GroundDataType t1 = this.innerCallable().signature().parameters().get(i).type();
+        GroundDataType t2 = other.innerCallable().signature().parameters().get(i).type();
+        if (!t1.isEquivalentTo(t2.applySubstitution(s2))) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    /**
+     * (JLS 8.4.2) This method's signature is a subsignature of {@code other}'s signature if: 1.
+     * this method has the same signature as the other signature, or 2. this method has the same
+     * signature as the other signature's ERASURE.
+     *
+     * <p>"The notion of subsignature is designed to express a relationship between two methods
+     * whose signatures are not identical, but in which one may override the other. Specifically, it
+     * allows a method whose signature does not use generic types to override any generified version
+     * of that method."
+     */
+    public boolean isSubSignatureOf(HigherCallable other) {
+      return this.sameSignatureAs(other) || this.sameSignatureAsErasureOf(other);
+    }
+
+    /**
+     * Checks whether the signature of this method is equal to the erasure of the signature of the
+     * {@code other} method.
+     */
+    public boolean sameSignatureAsErasureOf(HigherCallable other) {
+      // If this method has a different name or takes a different number of arguments, then the
+      // signatures
+      // certainly don't match. Also note that the erasure of a type does not have type parameters.
+      // If this method has type parameters, it cannot have the same signature as the erasure of
+      // `other`.
+      if (!this.identifier().equals(other.identifier())
+          || this.arity() != other.arity()
+          || !this.typeParameters.isEmpty()) {
+        return false;
+      }
+      for (int i = 0; i < this.arity(); i++) {
+        GroundDataType t1 = this.innerCallable().signature().parameters().get(i).type();
+        GroundDataType t2 = other.innerCallable().signature().parameters().get(i).type();
+        if (!t1.isEquivalentToErasureOf(t2)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    public boolean sameErasureAs(HigherCallable other) {
+      if (!this.identifier().equals(other.identifier()) || this.arity() != other.arity()) {
+        return false;
+      }
+      for (int i = 0; i < this.arity(); i++) {
+        GroundDataType t1 = this.innerCallable().signature().parameters().get(i).type();
+        GroundDataType t2 = other.innerCallable().signature().parameters().get(i).type();
+        if (!t1.isEquivalentToErasureOf(t2) && !t2.isEquivalentToErasureOf(t1)) {
+          // TODO This condition is fishy. "t1 is not equivalent to the erasure of t2" and
+          //  "t2 is not equivalent to the erasure of t1" is not the same thing as
+          //  "the erasure of t1 is not equivalent to the erasure of t2".
+          return false;
+        }
+      }
+      return true;
+    }
+
+    /**
+     * (JLS 8.4.2) Two method signatures m1 and m2 are override-equivalent iff either m1 is a
+     * subsignature of m2 or m2 is a subsignature of m1.
+     *
+     * <p>Note that the following methods are override-equivalent, even though one of them is
+     * abstract:
+     *
+     * <pre>{@code
+     * class Point {
+     *   int x, y;
+     *   abstract void move(int dx, int dy);
+     *   void move(int dx, int dy) { x += dx; y += dy; }
+     * }
+     * }</pre>
+     */
+    public boolean isOverrideEquivalentTo(HigherCallable other) {
+      // Inlined the definition of #isSubSignatureOf for efficiency
+      return this.sameSignatureAs(other)
+          || this.sameSignatureAsErasureOf(other)
+          || other.sameSignatureAsErasureOf(this);
+    }
+
+    public int arity() {
+      return innerCallable().signature().parameters().size();
+    }
+
+    /**
+     * Returns the GroundCallable that serves as this callable's definition.
+     *
+     * @see HigherDataType.Proxy
+     */
+    public abstract Definition innerCallable();
+
+    /**
+     * A mapping from worlds to their dependencies in the body of this callable, used for
+     * communication inference.
+     *
+     * <p>For example, if the body were:
+     *
+     * <pre>{@code
+     * int@A i_A = 0@A;
+     * int@B i_B = i_A;
+     * }</pre>
+     *
+     * The mapping for {@code B} would contain a reference to the statement {@code int@A i_A = 0@A}.
+     */
+    private Map<World, List<Pair<Expression, Statement>>> worldDependencies = new HashMap<>();
+
+    public void addDependencies(
+        List<? extends World> worlds, Expression expression, Statement statement) {
+      for (World world : worlds) {
+        addDependency(world, expression, statement);
+      }
+    }
+
+    public void addDependency(World world, Expression expression, Statement statement) {
+      worldDependencies.putIfAbsent(world, new ArrayList<>());
+      worldDependencies.get(world).add(new Pair<>(expression, statement));
+    }
+
+    public Map<World, List<Pair<Expression, Statement>>> worldDependencies() {
+      return worldDependencies;
+    }
+
+    public List<Pair<Expression, Statement>> worldDependencies(World world) {
+      return worldDependencies.get(world);
+    }
+
+    public void clearDependencies() {
+      worldDependencies.clear();
+    }
+
+    /**
+     * A list of all the channels available to the method from either the enclosing class' fields or
+     * the method's arguments.
+     */
+    private List<Pair<String, GroundInterface>> channels = new ArrayList<>();
+
+    public void addChannel(List<Pair<String, GroundInterface>> channelList) {
+      for (Pair<String, GroundInterface> channelPair : channelList) {
+        addChannel(channelPair);
+      }
+    }
+
+    public void addChannel(Pair<String, GroundInterface> channelPair) {
+      channels.add(channelPair);
+    }
+
+    public List<Pair<String, GroundInterface>> channels() {
+      return channels;
+    }
+
+    public abstract class Definition implements GroundCallable {
+
+      Definition(Signature signature) {
+        this.signature = signature;
+      }
+
+      @Override
+      public List<? extends HigherReferenceType> typeArguments() {
+        return typeParameters();
+      }
+
+      private final Signature signature;
+
+      @Override
+      public Signature signature() {
+        return signature;
+      }
+
+      private boolean finalised = false;
+
+      boolean isFinalised() {
+        return finalised && signature().isFinalised();
+      }
+
+      public void finalise() {
+        signature().finalise();
+        finalised = true;
+      }
+    }
+
+    /**
+     * @see HigherDataType.Proxy
+     */
+    protected abstract class Proxy implements GroundCallable {
+
+      Proxy(Substitution substitution) {
+        this.substitution = substitution;
+      }
+
+      protected abstract Definition definition();
+
+      private final Substitution substitution;
+
+      protected final Substitution substitution() {
+        return substitution;
+      }
+
+      public final List<? extends HigherReferenceType> typeArguments() {
+        return HigherCallable.this.typeParameters().stream()
+            .map(substitution()::get)
+            .collect(Collectors.toList());
+      }
+
+      public Signature signature() {
+        return definition().signature().applySubstitution(substitution());
+      }
+    }
+  }
+
+  public interface GroundCallable {
+    List<? extends HigherReferenceType> typeArguments();
+
+    Signature signature();
+
+    HigherCallable higherCallable();
+  }
+
+  public static final class HigherMethod extends HigherCallable {
+
+    public HigherMethod(
+        GroundClassOrInterface declarationContext,
+        String identifier,
+        EnumSet<Modifier> modifiers,
+        List<HigherTypeParameter> typeParameters) {
+      this(declarationContext, identifier, modifiers, typeParameters, new Signature(), true);
+    }
+
+    private HigherMethod(
+        GroundClassOrInterface declarationContext,
+        String identifier,
+        EnumSet<Modifier> modifiers,
+        List<HigherTypeParameter> typeParameters,
+        Signature signature,
+        boolean performChecks) {
+      super(
+          declarationContext, identifier, Variety.METHOD, modifiers, typeParameters, performChecks);
+      assert (!HigherCallable.CONSTRUCTOR_NAME.equals(identifier));
+      this.innerCallable = new Definition(signature);
+    }
+
+    @Override
+    public String toString() {
+      return identifier() + innerCallable().signature();
+    }
+
+    /**
+     * (JLS 8.4.5) A method declaration d1 with return type R1 is **return-type-substitutable** for
+     * another method d2 with return type R2 iff any of the following is true: 1. If R1 is void then
+     * R2 is void. 2. If R1 is a primitive type then R2 is identical to R1. 3. If R1 is a reference
+     * type then one of the following is true: (a) R1, adapted to the type parameters of d2 (JLS
+     * 8.4.4), is a subtype of R2. (b) R1 can be converted to a subtype of R2 by unchecked
+     * conversion (JLS 5.1.9). (c) d1 does not have the same signature as d2 (JLS 8.4.2), and R1 is
+     * the same as the erasure of R2.
+     */
+    public boolean isReturnTypeSubstitutableFor(HigherMethod other) {
+      HigherMethod d1 = this;
+      HigherMethod d2 = other;
+      GroundDataTypeOrVoid r1 = d1.innerCallable().returnType;
+      GroundDataTypeOrVoid r2 = d2.innerCallable().returnType;
+      if (r1.isVoid()) {
+        return r2.isVoid();
+      }
+      if (r1 instanceof GroundPrimitiveDataType rp1) {
+        return r2 instanceof GroundPrimitiveDataType rp2 && rp1.isEquivalentTo(rp2);
+      }
+      if (r1 instanceof GroundReferenceType rr1) {
+        // (a) Adapt r1 to the type parameters of the other method and check if it's a subtype of r2
+        Substitution s1 =
+            new Substitution() {
+              @Override
+              public HigherReferenceType get(HigherTypeParameter placeHolder) {
+                int i = d1.typeParameters().indexOf(placeHolder);
+                return (i == -1) ? placeHolder : d2.typeParameters().get(i);
+              }
+            };
+        if (!r2.isVoid() && rr1.applySubstitution(s1).isSubtypeOf((GroundDataType) r2)) {
+          return true;
         }
 
-        public void setTypeSelectionMethod() {
-            this.typeSelectionMethod = true;
+        // (b) Check if r1 can be converted to a subtype of r2 by unchecked conversion.
+        // Nothing to do here, since Choral doesn't support raw types.
+
+        // (c) Check if this method does not have the same signature as the other method and r1 is
+        // the same as
+        // the erasure of r2
+        return !this.sameSignatureAs(other)
+            && r2 instanceof GroundReferenceType rr2
+            && rr1.isEquivalentToErasureOf(rr2);
+      }
+      return false;
+    }
+
+    boolean selectionMethod = false;
+
+    public boolean isSelectionMethod() {
+      return selectionMethod;
+    }
+
+    public void setSelectionMethod() {
+      this.selectionMethod = true;
+    }
+
+    boolean typeSelectionMethod = false;
+
+    public boolean isTypeSelectionMethod() {
+      return typeSelectionMethod;
+    }
+
+    public void setTypeSelectionMethod() {
+      this.typeSelectionMethod = true;
+    }
+
+    private final HashMap<Substitution, HigherMethod> alphaIndex = new HashMap<>();
+
+    @Override
+    HigherMethod applySubstitution(Substitution substitution) {
+      HigherMethod result = alphaIndex.get(substitution);
+      if (result == null) {
+        List<HigherTypeParameter> newTypeParams = prepareTypeParameters(substitution);
+        Substitution newSubstitution =
+            new Substitution() {
+
+              @Override
+              public World get(World placeHolder) {
+                return substitution.get(placeHolder);
+              }
+
+              @Override
+              public HigherReferenceType get(HigherTypeParameter placeHolder) {
+                int i = typeParameters().indexOf(placeHolder);
+                return (i == -1) ? substitution.get(placeHolder) : newTypeParams.get(i);
+              }
+            };
+        Signature signature = this.innerCallable.signature().applySubstitution(newSubstitution);
+        result =
+            new HigherMethod(
+                this.declarationContext().applySubstitution(substitution),
+                identifier(),
+                modifiers(),
+                newTypeParams,
+                signature,
+                false);
+        result.innerCallable.setReturnType(
+            this.innerCallable.returnType.applySubstitution(newSubstitution));
+        if (isSelectionMethod()) {
+          result.setSelectionMethod();
         }
+        if (isTypeSelectionMethod()) {
+          result.setTypeSelectionMethod();
+        }
+        result.innerCallable.finalise();
+        alphaIndex.put(substitution, result);
+      }
+      return result;
+    }
 
-		private final HashMap< Substitution, HigherMethod > alphaIndex = new HashMap<>();
+    HigherMethod copyFor(GroundClassOrInterface declarationContext) {
+      List<HigherTypeParameter> newTypeParams = prepareTypeParameters(Substitution.ID);
+      Substitution newSubstitution =
+          new Substitution() {
 
-		@Override
-		HigherMethod applySubstitution( Substitution substitution ) {
-			HigherMethod result = alphaIndex.get( substitution );
-			if( result == null ) {
-				List< HigherTypeParameter > newTypeParams = prepareTypeParameters( substitution );
-				Substitution newSubstitution = new Substitution() {
-
-					@Override
-					public World get( World placeHolder ) {
-						return substitution.get( placeHolder );
-					}
-
-					@Override
-					public HigherReferenceType get( HigherTypeParameter placeHolder ) {
-						int i = typeParameters().indexOf( placeHolder );
-						return ( i == -1 )
-								? substitution.get( placeHolder )
-								: newTypeParams.get( i );
-					}
-				};
-				Signature signature = this.innerCallable.signature().applySubstitution(
-						newSubstitution );
-				result = new HigherMethod(
-						this.declarationContext().applySubstitution( substitution ),
-						identifier(),
-						modifiers(),
-						newTypeParams,
-						signature,
-						false
-				);
-				result.innerCallable.setReturnType(
-						this.innerCallable.returnType.applySubstitution( newSubstitution ) );
-				if( isSelectionMethod() ) {
-					result.setSelectionMethod();
-				}
-				if (isTypeSelectionMethod()) {
-                    result.setTypeSelectionMethod();
-                }
-				result.innerCallable.finalise();
-				alphaIndex.put( substitution, result );
-			}
-			return result;
-		}
-
-		HigherMethod copyFor( GroundClassOrInterface declarationContext ) {
-			List< HigherTypeParameter > newTypeParams = prepareTypeParameters( Substitution.ID );
-			Substitution newSubstitution = new Substitution() {
-
-				@Override
-				public HigherReferenceType get( HigherTypeParameter placeHolder ) {
-					int i = typeParameters().indexOf( placeHolder );
-					return ( i == -1 )
-							? placeHolder
-							: newTypeParams.get( i );
-				}
-
-			};
-			Signature signature = this.innerCallable.signature().applySubstitution(
-					newSubstitution );
-			HigherMethod result = new HigherMethod(
-					declarationContext,
-					identifier(),
-					modifiers(),
-					newTypeParams,
-					signature,
-					false
-			);
-			result.innerCallable.setReturnType(
-					this.innerCallable.returnType.applySubstitution( newSubstitution ) );
-			if( isSelectionMethod() ) {
-				result.setSelectionMethod();
-			}
-			if (isTypeSelectionMethod()) {
-                result.setTypeSelectionMethod();
+            @Override
+            public HigherReferenceType get(HigherTypeParameter placeHolder) {
+              int i = typeParameters().indexOf(placeHolder);
+              return (i == -1) ? placeHolder : newTypeParams.get(i);
             }
-			result.innerCallable.finalise();
-			return result;
-		}
+          };
+      Signature signature = this.innerCallable.signature().applySubstitution(newSubstitution);
+      HigherMethod result =
+          new HigherMethod(
+              declarationContext, identifier(), modifiers(), newTypeParams, signature, false);
+      result.innerCallable.setReturnType(
+          this.innerCallable.returnType.applySubstitution(newSubstitution));
+      if (isSelectionMethod()) {
+        result.setSelectionMethod();
+      }
+      if (isTypeSelectionMethod()) {
+        result.setTypeSelectionMethod();
+      }
+      result.innerCallable.finalise();
+      return result;
+    }
 
-		private final HashMap< List< ? extends HigherReferenceType >, GroundMethod > instIndex = new HashMap<>();
+    private final HashMap<List<? extends HigherReferenceType>, GroundMethod> instIndex =
+        new HashMap<>();
 
-		@Override
-		public GroundMethod applyTo( List< ? extends HigherReferenceType > typeArgs ) {
-			GroundMethod result = instIndex.get( typeArgs );
-			if( result == null ) {
-				result = new Proxy( getApplicationSubstitution( typeArgs ) );
-				instIndex.put( typeArgs, result );
-			}
-			return result;
-		}
+    @Override
+    public GroundMethod applyTo(List<? extends HigherReferenceType> typeArgs) {
+      GroundMethod result = instIndex.get(typeArgs);
+      if (result == null) {
+        result = new Proxy(getApplicationSubstitution(typeArgs));
+        instIndex.put(typeArgs, result);
+      }
+      return result;
+    }
 
-		private final Definition innerCallable;
+    private final Definition innerCallable;
 
-		@Override
-		public Definition innerCallable() {
-			return innerCallable;
-		}
+    @Override
+    public Definition innerCallable() {
+      return innerCallable;
+    }
 
-		public final class Definition extends HigherCallable.Definition implements GroundMethod {
+    public final class Definition extends HigherCallable.Definition implements GroundMethod {
 
-			private Definition( Signature signature ) {
-				super( signature );
-			}
+      private Definition(Signature signature) {
+        super(signature);
+      }
 
-			@Override
-			public String toString() {
-				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
-						Formatting.joining( ",", "<", ">", "" ) )
-						+ identifier()
-						+ signature();
-			}
+      @Override
+      public String toString() {
+        return typeArguments().stream()
+                .map(HigherReferenceType::toString)
+                .collect(Formatting.joining(",", "<", ">", ""))
+            + identifier()
+            + signature();
+      }
 
-			private GroundDataTypeOrVoid returnType;
+      private GroundDataTypeOrVoid returnType;
 
-			public GroundDataTypeOrVoid returnType() {
-				return returnType;
-			}
+      public GroundDataTypeOrVoid returnType() {
+        return returnType;
+      }
 
-			public void setReturnType( GroundDataTypeOrVoid type ) {
-				assert ( !isFinalised() );
-				this.returnType = type;
-			}
+      public void setReturnType(GroundDataTypeOrVoid type) {
+        assert (!isFinalised());
+        this.returnType = type;
+      }
 
-			@Override
-			public HigherMethod higherCallable() {
-				return HigherMethod.this;
-			}
+      @Override
+      public HigherMethod higherCallable() {
+        return HigherMethod.this;
+      }
+    }
 
-		}
+    private final class Proxy extends HigherCallable.Proxy implements GroundMethod {
 
-		private final class Proxy extends HigherCallable.Proxy implements GroundMethod {
+      private Proxy(Substitution substitution) {
+        super(substitution);
+      }
 
-			private Proxy( Substitution substitution ) {
-				super( substitution );
-			}
+      @Override
+      public String toString() {
+        return typeArguments().stream()
+                .map(HigherReferenceType::toString)
+                .collect(Formatting.joining(",", "<", ">", ""))
+            + identifier()
+            + signature();
+      }
 
-			@Override
-			public String toString() {
-				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
-						Formatting.joining( ",", "<", ">", "" ) )
-						+ identifier()
-						+ signature();
-			}
+      @Override
+      protected Definition definition() {
+        return HigherMethod.this.innerCallable();
+      }
 
-			@Override
-			protected Definition definition() {
-				return HigherMethod.this.innerCallable();
-			}
+      public GroundDataTypeOrVoid returnType() {
+        return definition().returnType().applySubstitution(substitution());
+      }
 
-			public GroundDataTypeOrVoid returnType() {
-				return definition().returnType().applySubstitution( substitution() );
-			}
+      @Override
+      public HigherMethod higherCallable() {
+        return HigherMethod.this;
+      }
+    }
+  }
 
-			@Override
-			public HigherMethod higherCallable() {
-				return HigherMethod.this;
-			}
+  public interface GroundMethod extends GroundCallable {
 
-		}
-	}
+    GroundDataTypeOrVoid returnType();
 
+    HigherMethod higherCallable();
+  }
 
-	public interface GroundMethod extends GroundCallable {
+  public static final class HigherConstructor extends HigherCallable {
 
-		GroundDataTypeOrVoid returnType();
+    public HigherConstructor(
+        GroundClass declarationContext,
+        EnumSet<Modifier> modifiers,
+        List<HigherTypeParameter> typeParameters) {
+      this(declarationContext, modifiers, typeParameters, new Signature(), true);
+    }
 
-		HigherMethod higherCallable();
+    private HigherConstructor(
+        GroundClass declarationContext,
+        EnumSet<Modifier> modifiers,
+        List<HigherTypeParameter> typeParameters,
+        Signature signature,
+        boolean performChecks) {
+      super(
+          declarationContext,
+          HigherCallable.CONSTRUCTOR_NAME,
+          Variety.CONSTRUCTOR,
+          modifiers,
+          typeParameters,
+          performChecks);
+      this.innerCallable = new Definition(signature);
+    }
 
-	}
+    @Override
+    public String toString() {
+      return declarationContext().typeConstructor().identifier() + innerCallable().signature();
+    }
 
-	public static final class HigherConstructor extends HigherCallable {
+    public GroundClass declarationContext() {
+      return (GroundClass) super.declarationContext();
+    }
 
-		public HigherConstructor(
-				GroundClass declarationContext,
-				EnumSet< Modifier > modifiers,
-				List< HigherTypeParameter > typeParameters
-		) {
-			this( declarationContext, modifiers, typeParameters, new Signature(), true );
-		}
+    private final HashMap<Substitution, HigherConstructor> alphaIndex = new HashMap<>();
 
-		private HigherConstructor(
-				GroundClass declarationContext,
-				EnumSet< Modifier > modifiers,
-				List< HigherTypeParameter > typeParameters,
-				Signature signature,
-				boolean performChecks
-		) {
-			super( declarationContext, HigherCallable.CONSTRUCTOR_NAME, Variety.CONSTRUCTOR,
-					modifiers, typeParameters, performChecks );
-			this.innerCallable = new Definition( signature );
-		}
+    @Override
+    HigherConstructor applySubstitution(Substitution substitution) {
+      HigherConstructor result = alphaIndex.get(substitution);
+      if (result == null) {
+        List<HigherTypeParameter> newTypeParams = prepareTypeParameters(substitution);
+        Substitution newSubstitution =
+            new Substitution() {
 
-		@Override
-		public String toString() {
-			return declarationContext().typeConstructor().identifier() + innerCallable().signature();
-		}
+              @Override
+              public World get(World placeHolder) {
+                return substitution.get(placeHolder);
+              }
 
-		public GroundClass declarationContext() {
-			return (GroundClass) super.declarationContext();
-		}
+              @Override
+              public HigherReferenceType get(HigherTypeParameter placeHolder) {
+                int i = typeParameters().indexOf(placeHolder);
+                return (i == -1) ? substitution.get(placeHolder) : newTypeParams.get(i);
+              }
+            };
+        result =
+            new HigherConstructor(
+                this.declarationContext().applySubstitution(substitution),
+                modifiers(),
+                newTypeParams,
+                this.innerCallable.signature().applySubstitution(newSubstitution),
+                false);
+        result.innerCallable.finalise();
+        alphaIndex.put(substitution, result);
+      }
+      return result;
+    }
 
-		private final HashMap< Substitution, HigherConstructor > alphaIndex = new HashMap<>();
+    private final HashMap<List<? extends HigherReferenceType>, GroundConstructor> instIndex =
+        new HashMap<>();
 
-		@Override
-		HigherConstructor applySubstitution( Substitution substitution ) {
-			HigherConstructor result = alphaIndex.get( substitution );
-			if( result == null ) {
-				List< HigherTypeParameter > newTypeParams = prepareTypeParameters( substitution );
-				Substitution newSubstitution = new Substitution() {
+    @Override
+    public GroundConstructor applyTo(List<? extends HigherReferenceType> typeArgs) {
+      GroundConstructor result = instIndex.get(typeArgs);
+      if (result == null) {
+        result = new Proxy(getApplicationSubstitution(typeArgs));
+        instIndex.put(typeArgs, result);
+      }
+      return result;
+    }
 
-					@Override
-					public World get( World placeHolder ) {
-						return substitution.get( placeHolder );
-					}
+    private final Definition innerCallable;
 
-					@Override
-					public HigherReferenceType get( HigherTypeParameter placeHolder ) {
-						int i = typeParameters().indexOf( placeHolder );
-						return ( i == -1 )
-								? substitution.get( placeHolder )
-								: newTypeParams.get( i );
-					}
-				};
-				result = new HigherConstructor(
-						this.declarationContext().applySubstitution( substitution ),
-						modifiers(),
-						newTypeParams,
-						this.innerCallable.signature().applySubstitution( newSubstitution ),
-						false
-				);
-				result.innerCallable.finalise();
-				alphaIndex.put( substitution, result );
-			}
-			return result;
-		}
+    @Override
+    public Definition innerCallable() {
+      return innerCallable;
+    }
 
-		private final HashMap< List< ? extends HigherReferenceType >, GroundConstructor > instIndex = new HashMap<>();
+    public final class Definition extends HigherCallable.Definition implements GroundConstructor {
 
-		@Override
-		public GroundConstructor applyTo( List< ? extends HigherReferenceType > typeArgs ) {
-			GroundConstructor result = instIndex.get( typeArgs );
-			if( result == null ) {
-				result = new Proxy( getApplicationSubstitution( typeArgs ) );
-				instIndex.put( typeArgs, result );
-			}
-			return result;
-		}
+      private Definition(Signature signature) {
+        super(signature);
+      }
 
-		private final Definition innerCallable;
+      @Override
+      public String toString() {
+        return typeArguments().stream()
+                .map(HigherReferenceType::toString)
+                .collect(Formatting.joining(",", "<", ">", ""))
+            + declarationContext().typeConstructor().identifier()
+            + signature();
+      }
 
-		@Override
-		public Definition innerCallable() {
-			return innerCallable;
-		}
+      @Override
+      public HigherConstructor higherCallable() {
+        return HigherConstructor.this;
+      }
+    }
 
-		public final class Definition extends HigherCallable.Definition
-				implements GroundConstructor {
+    private final class Proxy extends HigherCallable.Proxy implements GroundConstructor {
 
-			private Definition( Signature signature ) {
-				super( signature );
-			}
+      private Proxy(Substitution substitution) {
+        super(substitution);
+      }
 
-			@Override
-			public String toString() {
-				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
-						Formatting.joining( ",", "<", ">", "" ) )
-						+ declarationContext().typeConstructor().identifier()
-						+ signature();
-			}
+      @Override
+      public String toString() {
+        return typeArguments().stream()
+                .map(HigherReferenceType::toString)
+                .collect(Formatting.joining(",", "<", ">", ""))
+            + declarationContext().typeConstructor().identifier()
+            + signature();
+      }
 
-			@Override
-			public HigherConstructor higherCallable() {
-				return HigherConstructor.this;
-			}
+      @Override
+      protected Definition definition() {
+        return HigherConstructor.this.innerCallable();
+      }
 
-		}
+      @Override
+      public HigherConstructor higherCallable() {
+        return HigherConstructor.this;
+      }
+    }
+  }
 
-		private final class Proxy extends HigherCallable.Proxy implements GroundConstructor {
-
-			private Proxy( Substitution substitution ) {
-				super( substitution );
-			}
-
-			@Override
-			public String toString() {
-				return typeArguments().stream().map( HigherReferenceType::toString ).collect(
-						Formatting.joining( ",", "<", ">", "" ) )
-						+ declarationContext().typeConstructor().identifier()
-						+ signature();
-			}
-
-			@Override
-			protected Definition definition() {
-				return HigherConstructor.this.innerCallable();
-			}
-
-			@Override
-			public HigherConstructor higherCallable() {
-				return HigherConstructor.this;
-			}
-
-		}
-	}
-
-	public interface GroundConstructor extends GroundCallable {
-		HigherConstructor higherCallable();
-	}
+  public interface GroundConstructor extends GroundCallable {
+    HigherConstructor higherCallable();
+  }
 }

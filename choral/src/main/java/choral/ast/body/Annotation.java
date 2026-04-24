@@ -26,46 +26,42 @@ import choral.ast.Node;
 import choral.ast.Position;
 import choral.ast.expression.LiteralExpression;
 import choral.ast.visitors.ChoralVisitorInterface;
-
 import java.util.Map;
 
 public class Annotation extends Node {
 
-	private final Name name;
-	private final Map< Name, LiteralExpression > values;
+  private final Name name;
+  private final Map<Name, LiteralExpression> values;
 
-	public Annotation( Name name, Map< Name, LiteralExpression > values ) {
-		this.name = name;
-		this.values = values;
-	}
+  public Annotation(Name name, Map<Name, LiteralExpression> values) {
+    this.name = name;
+    this.values = values;
+  }
 
+  public Annotation(Name name, Map<Name, LiteralExpression> values, final Position position) {
+    super(position);
+    this.name = name;
+    this.values = values;
+  }
 
-	public Annotation(
-			Name name, Map< Name, LiteralExpression > values, final Position position
-	) {
-		super( position );
-		this.name = name;
-		this.values = values;
-	}
+  public Name getName() {
+    return name;
+  }
 
-	public Name getName() {
-		return name;
-	}
+  public Map<Name, LiteralExpression> getValues() {
+    return values;
+  }
 
-	public Map< Name, LiteralExpression > getValues() {
-		return values;
-	}
+  @Override
+  // Used in the merge, does not check world correspondence
+  public boolean equals(Object n) {
+    return n instanceof Annotation
+        && name.equals(((Annotation) n).name)
+        && values.equals(((Annotation) n).values);
+  }
 
-	@Override
-	// Used in the merge, does not check world correspondence
-	public boolean equals( Object n ) {
-		return n instanceof Annotation && name.equals( ( (Annotation) n ).name ) && values.equals(
-				( (Annotation) n ).values );
-	}
-
-	@Override
-	public < R > R accept( ChoralVisitorInterface< R > v ) {
-		return v.visit( this );
-	}
-
+  @Override
+  public <R> R accept(ChoralVisitorInterface<R> v) {
+    return v.visit(this);
+  }
 }

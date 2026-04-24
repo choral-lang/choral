@@ -21,51 +21,49 @@
 
 package choral.compiler;
 
+import choral.ast.CompilationUnit;
+import choral.exceptions.ChoralCompoundException;
+import choral.grammar.ChoralLexer;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import choral.ast.CompilationUnit;
-import choral.exceptions.ChoralCompoundException;
-import choral.grammar.ChoralLexer;
-
 public class Parser {
 
-	private static CompilationUnit parse( String fileName, CharStream content ){
-		ChoralLexer lexer = new ChoralLexer(content);
-		CommonTokenStream tokens = new CommonTokenStream(lexer);
-		choral.grammar.ChoralParser cp = new choral.grammar.ChoralParser(tokens);
-		cp.removeErrorListeners();
-		ParsingErrorListener errorListener = new ParsingErrorListener(fileName);
-		cp.addErrorListener( errorListener );
-		choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
-		if( errorListener.getErrors().isEmpty() ) {
-			return AstOptimizer
-					.loadParameters( /* new String[]{ "showDebug" } */ )
-					.optimise( ctx, fileName );
-		} else {
-			throw new ChoralCompoundException( errorListener.getErrors() );
-		}
-	}
+  private static CompilationUnit parse(String fileName, CharStream content) {
+    ChoralLexer lexer = new ChoralLexer(content);
+    CommonTokenStream tokens = new CommonTokenStream(lexer);
+    choral.grammar.ChoralParser cp = new choral.grammar.ChoralParser(tokens);
+    cp.removeErrorListeners();
+    ParsingErrorListener errorListener = new ParsingErrorListener(fileName);
+    cp.addErrorListener(errorListener);
+    choral.grammar.ChoralParser.CompilationUnitContext ctx = cp.compilationUnit();
+    if (errorListener.getErrors().isEmpty()) {
+      return AstOptimizer.loadParameters(/* new String[]{ "showDebug" } */ )
+          .optimise(ctx, fileName);
+    } else {
+      throw new ChoralCompoundException(errorListener.getErrors());
+    }
+  }
 
-	public static CompilationUnit parseString( String sourceCode ) {
-		CharStream content = CharStreams.fromString(sourceCode);
-		return parse(null, content);
-	}
+  public static CompilationUnit parseString(String sourceCode) {
+    CharStream content = CharStreams.fromString(sourceCode);
+    return parse(null, content);
+  }
 
-	public static CompilationUnit parseSourceFile( File file ) throws IOException {
-		String filename = file.getCanonicalPath();
-		CharStream input = CharStreams.fromFileName(filename);
-		return parse(filename, input);
-	}
+  public static CompilationUnit parseSourceFile(File file) throws IOException {
+    String filename = file.getCanonicalPath();
+    CharStream input = CharStreams.fromFileName(filename);
+    return parse(filename, input);
+  }
 
-	public static CompilationUnit parseSourceFile( InputStream in, String filename ) throws IOException {
-		ANTLRInputStream input = new ANTLRInputStream( in );
-		return parse(filename, input);
-	}
+  public static CompilationUnit parseSourceFile(InputStream in, String filename)
+      throws IOException {
+    ANTLRInputStream input = new ANTLRInputStream(in);
+    return parse(filename, input);
+  }
 }

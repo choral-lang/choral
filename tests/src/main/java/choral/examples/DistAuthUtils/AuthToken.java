@@ -22,37 +22,36 @@
 package choral.examples.DistAuthUtils;
 
 import choral.runtime.Serializers.KryoSerializable;
-
 import java.util.Objects;
 import java.util.UUID;
 
 @KryoSerializable
 public class AuthToken {
 
-	private final String id;
+  private final String id;
 
-	public AuthToken( String id ) {
-		this.id = id;
-	}
+  public AuthToken(String id) {
+    this.id = id;
+  }
 
-	@Override
-	public boolean equals( Object o ) {
-		if( this == o ) return true;
-		if( o == null || getClass() != o.getClass() ) return false;
-		AuthToken authToken = (AuthToken) o;
-		return Objects.equals( id, authToken.id );
-	}
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    AuthToken authToken = (AuthToken) o;
+    return Objects.equals(id, authToken.id);
+  }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash( id );
-	}
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
+  }
 
-	public String id() {
-		return id;
-	}
+  public String id() {
+    return id;
+  }
 
-	public static AuthToken create() {
-		return new AuthToken( UUID.randomUUID().toString() );
-	}
+  public static AuthToken create() {
+    return new AuthToken(UUID.randomUUID().toString());
+  }
 }

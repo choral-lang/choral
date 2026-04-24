@@ -73,9 +73,10 @@
                             <exclude>**/expectedOutput/**</exclude>
                             <exclude>**/projectedOutput/**</exclude>
                         </excludes>
-                        <eclipse>
-                            <file>Eclipse_code_style.xml</file>
-                        </eclipse>
+                        <googleJavaFormat>
+                            <version>1.22.0</version>
+                            <style>GOOGLE</style>
+                        </googleJavaFormat>
                     </java>
                 </configuration>
             </plugin>
