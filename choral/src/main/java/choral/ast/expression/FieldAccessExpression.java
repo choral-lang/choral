@@ -34,10 +34,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Access of a field of an object or a class with shape: a.b.
- * In a.b, "b" is the name of the field and "a" is the scope.
+ * In a field access like `this.foo.bar`, this class represents the `.bar` part. The `this.foo`
+ * part is called the "scope", represented by a {@link ScopedExpression}.
  */
-
 public class FieldAccessExpression extends Expression {
 
 	private final Name name;

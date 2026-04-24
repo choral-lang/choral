@@ -39,11 +39,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * A method call on an object of the shape a( b ) where
- * a is the method name
- * b is the list of arguments
+ * In a method call like `this.foo.bar( args* )`, this class represents the `bar( args* )` part.
+ * The `this.foo` part is called the "scope", represented by a {@link ScopedExpression}.
  */
-
 public class MethodCallExpression extends InvocationExpression {
 
 	private final Name name;

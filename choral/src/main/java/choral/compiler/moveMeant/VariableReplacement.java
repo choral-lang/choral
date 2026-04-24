@@ -87,8 +87,8 @@ public class VariableReplacement{
 	 * and collects them in {@code amendedStatements}.
 	 */
 	private void buildAmendedStatements( CompilationUnit cu ){
-		for( HigherCallable method : Utils.getJustMethods(cu) ){
-			for( Entry<World, List<Pair<Expression, Statement>>> entryset : method.worldDependencies().entrySet() ){
+		for( var method : Utils.getJustMethods(cu) ){
+			for( var entryset : method.worldDependencies().entrySet() ){
 				
 				World receiver = entryset.getKey();
 				
@@ -113,7 +113,9 @@ public class VariableReplacement{
 					
 					if( comPair == null ){
 						// No viable communication method was found.
-						throw new CommunicationInferenceException( "No viable communication method was found for the dependency " + dependencyExpression );
+						throw new CommunicationInferenceException(
+								"No viable communication method was found for the dependency " +
+										dependencyExpression );
 					}
 
 					// This pair consists of the channel's identifier and its type.
@@ -145,7 +147,7 @@ public class VariableReplacement{
 		List<? extends World> senders;
 		if( dependencyExpression instanceof MethodCallExpression ){
 			// MethodCallExpressions don't use typeAnnotation but instead use methodAnnotation
-			GroundDataType methodReturnType = (GroundDataType)((MethodCallExpression)dependencyExpression).methodAnnotation().get().returnType();
+			GroundDataType methodReturnType = (GroundDataType) ((MethodCallExpression)dependencyExpression).methodAnnotation().get().returnType();
 			// Set typeannotation = returntype here for more easy access to an expression's type
 			dependencyExpression.setTypeAnnotation(methodReturnType); 
 			senders = methodReturnType.worldArguments();
@@ -155,7 +157,8 @@ public class VariableReplacement{
 		
 		if( senders.size() != 1 ){
 			// We don't accept dependencies with multiple sender worlds
-			throw new CommunicationInferenceException( "Found Dependency with " + senders.size() + " senders, expected 1" );
+			throw new CommunicationInferenceException(
+					"Found Dependency with " + senders.size() + " senders, expected 1" );
 		}
 		return senders.get(0);
 	}
@@ -173,7 +176,8 @@ public class VariableReplacement{
 		for( Class cls : old.classes() ){
 			List<ConstructorDefinition> newConstructors = new ArrayList<>();
 			for( ConstructorDefinition constructor : cls.constructors() ){
-				Statement newBody = new VisitStatement().visitContinutation(constructor.blockStatements());
+				Statement newBody =
+						new VisitStatement().visitContinutation(constructor.blockStatements());
 
 				newConstructors.add(new ConstructorDefinition(
 					constructor.signature(), 
