@@ -15,7 +15,9 @@ import choral.utils.Pair;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Normalizes a typed {@link CompilationUnit} by hoisting cross-world subexpressions
@@ -27,7 +29,7 @@ import java.util.List;
  * }</pre>
  * is rewritten to
  * <pre>{@code
- * Int@B tmp0 = B_state.x;
+ * Int@A tmp0 = B_state.x;
  * A_state.m( tmp0 );
  * }</pre>
  * <p>
@@ -125,6 +127,9 @@ public class Normalizer {
 			for( ConstructorDefinition constructor : cls.constructors() ) {
 				Statement newBody = constructor.blockStatements()
 						.accept( new VisitStatement( null ) ).first();
+				// Explicit this(...)/super(...) invocations are MethodCallExpression nodes
+				// without a selected constructor annotation. Safely normalizing their
+				// arguments needs either that annotation or a dedicated AST node.
 				newConstructors.add( new ConstructorDefinition(
 						constructor.signature(),
 						constructor.explicitConstructorInvocation().orElse( null ),
@@ -257,8 +262,17 @@ public class Normalizer {
 
 		@Override
 		public NormalizedStmt visit( SwitchStatement n ) {
-			throw new UnsupportedOperationException(
-					"SwitchStatement not supported\n\tStatement at " + n.position().toString() );
+			NormalizedExpr guard = n.guard().accept( new VisitExpression( typeOf( n.guard() ) ) );
+			Map< SwitchArgument< ? >, Statement > cases = new LinkedHashMap<>();
+			for( Map.Entry< SwitchArgument< ? >, Statement > entry : n.cases().entrySet() ) {
+				cases.put( entry.getKey(), entry.getValue().accept( this ).first() );
+			}
+			SwitchStatement newStmt = new SwitchStatement(
+					guard.expression(),
+					cases,
+					visitContinuation( n.continuation() ),
+					n.position() );
+			return NormalizedStmt.of( guard.first(), guard.last(), newStmt );
 		}
 
 		@Override
@@ -380,9 +394,9 @@ public class Normalizer {
 			}
 			Expression rebuilt = new ClassInstantiationExpression(
 					n.typeExpression(), newArgs.results, n.typeArguments(), n.position() );
-			rebuilt.setTypeAnnotation( n.typeAnnotation().orElseThrow() );
-			( (ClassInstantiationExpression) rebuilt )
-					.setConstructorAnnotation( n.constructorAnnotation().orElseThrow() );
+			rebuilt.setTypeAnnotation( typeOf( n ) );
+			n.constructorAnnotation().ifPresent(
+					( (ClassInstantiationExpression) rebuilt )::setConstructorAnnotation );
 			return maybeHoist( newArgs.first, newArgs.last, rebuilt );
 		}
 
@@ -404,33 +418,34 @@ public class Normalizer {
 
 		@Override
 		public NormalizedExpr visit( ScopedExpression n ) {
+			NormalizedExpr scope = n.scope().accept( visitor( typeOf( n.scope() ) ) );
 			NormalizedExpr inner = n.scopedExpression().accept( visitor( typeOf( n ) ) );
+			var newArgs = new NormalizedResults< Expression >();
+			newArgs.add( scope.first(), scope.last(), scope.expression() );
+			newArgs.add( inner.first(), inner.last(), inner.expression() );
 			Expression rebuilt = new ScopedExpression(
-					n.scope(), inner.expression(), n.position() );
+					scope.expression(), inner.expression(), n.position() );
 			rebuilt.setTypeAnnotation( n.typeAnnotation().orElseThrow() );
-			return maybeHoist( inner.first(), inner.last(), rebuilt );
+			return maybeHoist( newArgs.first, newArgs.last, rebuilt );
 		}
 
 		@Override
 		public NormalizedExpr visit( FieldAccessExpression n ) {
-			// TODO How could a field access be hoisted without its scope?
 			return maybeHoist( null, null, n );
 		}
 
 		@Override
 		public NormalizedExpr visit( StaticAccessExpression n ) {
-			// TODO What happens here? Needs tests.
-			return maybeHoist( null, null, n );
-		}
-
-		@Override
-		public NormalizedExpr visit( NullExpression n ) {
 			return NormalizedExpr.unchanged( n );
 		}
 
 		@Override
+		public NormalizedExpr visit( NullExpression n ) {
+			return maybeHoist( null, null, n );
+		}
+
+		@Override
 		public NormalizedExpr visit( LiteralExpression.BooleanLiteralExpression n ) {
-			// TODO What happens here? Needs tests.
 			return maybeHoist( null, null, n );
 		}
 
@@ -451,27 +466,21 @@ public class Normalizer {
 
 		@Override
 		public NormalizedExpr visit( ThisExpression n ) {
-			// TODO
-			throw new UnsupportedOperationException(
-					"ThisExpression not supported\n\tExpression at " + n.position().toString() );
+			return maybeHoist( null, null, n );
 		}
 
 		@Override
 		public NormalizedExpr visit( SuperExpression n ) {
-			// TODO
-			throw new UnsupportedOperationException(
-					"SuperExpression not supported\n\tExpression at " + n.position().toString() );
+			return maybeHoist( null, null, n );
 		}
 
 		@Override
 		public NormalizedExpr visit( EnumCaseInstantiationExpression n ) {
-			// TODO
-			throw new UnsupportedOperationException(
-					"EnumCaseInstantiationExpression not supported\n\tExpression at " + n.position().toString() );
+			return maybeHoist( null, null, n );
 		}
 
 		/**
-		 * If {@code original} is cross-world relative to {@link #expectedWorlds}, append
+		 * If {@code original} is cross-world relative to {@link #expectedType}, append
 		 * a fresh {@code tmp = rebuilt} hoist after the existing chain
 		 * {@code (firstHoist, lastHoist)} and return a {@link FieldAccessExpression}
 		 * pointing at {@code tmp}. Otherwise return {@code rebuilt} with the chain
@@ -539,6 +548,14 @@ public class Normalizer {
 	 * Returns {@code n}'s type annotation as a reference type.
 	 */
 	private static GroundDataTypeOrVoid typeOf( Expression n ) {
+		if( n.typeAnnotation().isPresent() ) {
+			return box( n.typeAnnotation().get() );
+		}
+		if( n instanceof ClassInstantiationExpression cie
+				&& cie.typeExpression().typeAnnotation().isPresent()
+				&& cie.typeExpression().typeAnnotation().get() instanceof GroundDataTypeOrVoid t ) {
+			return box( t );
+		}
 		return box( n.typeAnnotation().orElseThrow() );
 	}
 

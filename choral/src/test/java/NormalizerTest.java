@@ -345,6 +345,66 @@ public class NormalizerTest {
 					this.take( tmp0 );
 				}
 			}
+		""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void hoistsThisFieldAccessAsWhole() throws IOException {
+		String src =
+			"""
+			package test;
+			class C@( A, B ) {
+				public Integer@A x;
+				public void take( Integer@B x ) {}
+				public void run() {
+					this.take( this.x );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class C@( A, B ) {
+				public Integer@A x;
+				public void take( Integer@B x ) {}
+				public void run() {
+					Integer@B tmp0 = this.x;
+					this.take( tmp0 );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void hoistsSuperFieldAccessAsWhole() throws IOException {
+		String src =
+			"""
+			package test;
+			class Base@( D, E ) {
+				public Integer@D x;
+			}
+			class C@( A, B ) extends Base@( A, B ) {
+				public void take( Integer@B x ) {}
+				public void run() {
+					this.take( super.x );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class Base@( D, E ) {
+				public Integer@D x;
+			}
+			class C@( A, B ) extends Base@( A, B ) {
+				public void take( Integer@B x ) {}
+				public void run() {
+					Integer@B tmp0 = super.x;
+					this.take( tmp0 );
+				}
+			}
 			""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
@@ -454,6 +514,156 @@ public class NormalizerTest {
 				public void run( Foo@B foo ) {
 					Integer@A tmp0 = foo.bar.bar.baz;
 					this.take( tmp0 );
+				}
+			}
+		""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void hoistsStaticCallArgumentAndWholeStaticCall() throws IOException {
+		String src =
+			"""
+			package test;
+			class C@( A, B ) {
+				public void run() {
+					Integer@A x = Integer@B.valueOf( 42@A );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class C@( A, B ) {
+				public void run() {
+					Integer@B tmp0 = 42@A;
+					Integer@A tmp1 = Integer@B.valueOf( tmp0 );
+					Integer@A x = tmp1;
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void hoistsEnumCaseInstantiation() throws IOException {
+		String src =
+			"""
+			package test;
+			enum Choice@R { YES, NO }
+			class C@( A, B ) {
+				public void take( Choice@A choice ) {}
+				public void run() {
+					this.take( Choice@B.YES );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			enum Choice@R { YES, NO }
+			class C@( A, B ) {
+				public void take( Choice@A choice ) {}
+				public void run() {
+					Choice@A tmp0 = Choice@B.YES;
+					this.take( tmp0 );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void hoistsCrossWorldLiteralsAndNull() throws IOException {
+		String src =
+			"""
+			package test;
+			class Box@D {}
+			class C@( A, B ) {
+				public void take( Integer@A i, Boolean@A b, String@A s, Box@A box ) {}
+				public void run() {
+					this.take( 1@B, true@B, "x"@B, null@B );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class Box@D {}
+			class C@( A, B ) {
+				public void take( Integer@A i, Boolean@A b, String@A s, Box@A box ) {}
+				public void run() {
+					Integer@A tmp0 = 1@B;
+					Boolean@A tmp1 = true@B;
+					String@A tmp2 = "x"@B;
+					Box@A tmp3 = null@B;
+					this.take( tmp0, tmp1, tmp2, tmp3 );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void normalizesHoistsInsideScopedExpressionScope() throws IOException {
+		String src =
+			"""
+			package test;
+			class Box@D {
+				public Integer@D value;
+				public Box( Integer@D value ) { this.value = value; }
+			}
+			class C@( A, B ) {
+				public Box@A getBox( Integer@A value ) { return new Box@A( value ); }
+				public void take( Integer@A value ) {}
+				public void run( Integer@B b ) {
+					this.take( this.getBox( b ).value );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class Box@D {
+				public Integer@D value;
+				public Box( Integer@D value ) { this.value = value; }
+			}
+			class C@( A, B ) {
+				public Box@A getBox( Integer@A value ) { return new Box@A( value ); }
+				public void take( Integer@A value ) {}
+				public void run( Integer@B b ) {
+					Integer@A tmp0 = b;
+					this.take( this.getBox( tmp0 ).value );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void normalizesSwitchGuardAndCaseBodies() throws IOException {
+		String src =
+			"""
+			package test;
+			class C@( A, B ) {
+				public void run( Integer@A a, Integer@B b ) {
+					switch( b + a ) {
+						case 0@B -> { Integer@A x = b; }
+						default -> { Integer@A y = b; }
+					}
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class C@( A, B ) {
+				public void run( Integer@A a, Integer@B b ) {
+					Integer@B tmp0 = a;
+					switch( b + tmp0 ) {
+						case 0@B -> { Integer@A tmp1 = b; Integer@A x = tmp1; }
+						default -> { Integer@A tmp2 = b; Integer@A y = tmp2; }
+					}
 				}
 			}
 			""";
