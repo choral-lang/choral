@@ -1,9 +1,11 @@
 package choral.compiler.moveMeant;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import choral.ast.CompilationUnit;
+import choral.ast.Name;
 import choral.ast.body.Class;
 import choral.ast.body.ClassMethodDefinition;
 import choral.ast.body.ConstructorDefinition;
@@ -35,9 +37,14 @@ import choral.ast.statement.SwitchStatement;
 import choral.ast.statement.TryCatchStatement;
 import choral.ast.statement.VariableDeclarationStatement;
 import choral.ast.type.TypeExpression;
+import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
+import choral.types.GroundClass;
+import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
 import choral.types.GroundDataTypeOrVoid;
+import choral.types.GroundReferenceType;
+import choral.types.GroundTypeParameter;
 import choral.types.Member;
 import choral.types.World;
 import choral.utils.Pair;
@@ -65,13 +72,32 @@ import choral.utils.Pair;
  */
 public class Normalizer {
 
+	private int seqnum;
+
 	public Normalizer() {}
+
+	private int seqnum() {
+		return seqnum++;
+	}
 
 	/**
 	 * Returns a normalized copy of {@code cu}.
 	 */
 	public CompilationUnit normalize( CompilationUnit cu ) {
 		return rebuildCompilationUnit( cu );
+	}
+
+	/**
+	 * The result of normalizing an expression: a list of {@code tmp = ...} variable
+	 * declaration statements that must be inserted before the enclosing statement,
+	 * and the rewritten expression that takes the place of the original.
+	 * <p>
+	 * Hoist statements appear in source/evaluation order: index 0 is emitted first.
+	 */
+	private record NormalizedExpr( List< Statement > hoists, Expression expression ) {
+		static NormalizedExpr unchanged( Expression e ) {
+			return new NormalizedExpr( Collections.emptyList(), e );
+		}
 	}
 
 	/**
@@ -135,7 +161,8 @@ public class Normalizer {
 	/**
 	 * Walks a method body and returns a structurally equivalent tree. Each expression
 	 * slot is normalized by a {@link VisitExpression} constructed with the expected
-	 * worlds for that slot.
+	 * worlds for that slot; the resulting {@link NormalizedExpr#hoists hoists} are
+	 * chained in front of the statement they came from via {@link #chainHoists}.
 	 */
 	private class VisitStatement extends AbstractChoralVisitor< Statement > {
 
@@ -149,22 +176,26 @@ public class Normalizer {
 		@Override
 		public Statement visit( ExpressionStatement n ) {
 			Expression e = n.expression();
-			return new ExpressionStatement(
-					e.accept( new VisitExpression( worldsOf( e ) ) ),
+			NormalizedExpr res = e.accept( new VisitExpression( worldsOf( e ) ) );
+			Statement tail = new ExpressionStatement(
+					res.expression(),
 					visitContinuation( n.continuation() ),
 					n.position() );
+			return chainHoists( res.hoists(), tail );
 		}
 
 		@Override
 		public Statement visit( VariableDeclarationStatement n ) {
+			List< Statement > hoists = new ArrayList<>();
 			List< VariableDeclaration > newVariables = new ArrayList<>();
 			for( VariableDeclaration vd : n.variables() ) {
-				newVariables.add( visitVariableDeclaration( vd ) );
+				newVariables.add( visitVariableDeclaration( vd, hoists ) );
 			}
-			return new VariableDeclarationStatement(
+			Statement tail = new VariableDeclarationStatement(
 					newVariables,
 					visitContinuation( n.continuation() ),
 					n.position() );
+			return chainHoists( hoists, tail );
 		}
 
 		@Override
@@ -183,12 +214,14 @@ public class Normalizer {
 		@Override
 		public Statement visit( IfStatement n ) {
 			Expression cond = n.condition();
-			return new IfStatement(
-					cond.accept( new VisitExpression( worldsOf( cond ) ) ),
+			NormalizedExpr res = cond.accept( new VisitExpression( worldsOf( cond ) ) );
+			Statement tail = new IfStatement(
+					res.expression(),
 					visitContinuation( n.ifBranch() ),
 					visitContinuation( n.elseBranch() ),
 					visitContinuation( n.continuation() ),
 					n.position() );
+			return chainHoists( res.hoists(), tail );
 		}
 
 		@Override
@@ -199,26 +232,30 @@ public class Normalizer {
 
 		@Override
 		public Statement visit( TryCatchStatement n ) {
+			List< Statement > hoists = new ArrayList<>();
 			List< Pair< VariableDeclaration, Statement > > newCatches = new ArrayList<>();
 			for( Pair< VariableDeclaration, Statement > pair : n.catches() ) {
 				newCatches.add( new Pair<>(
-						visitVariableDeclaration( pair.left() ),
+						visitVariableDeclaration( pair.left(), hoists ),
 						pair.right().accept( this ) ) );
 			}
-			return new TryCatchStatement(
+			Statement tail = new TryCatchStatement(
 					n.body().accept( this ),
 					newCatches,
 					visitContinuation( n.continuation() ),
 					n.position() );
+			return chainHoists( hoists, tail );
 		}
 
 		@Override
 		public Statement visit( ReturnStatement n ) {
 			Expression e = n.returnExpression();
-			return new ReturnStatement(
-					e.accept( new VisitExpression( worldsOf( e ) ) ),
+			NormalizedExpr res = e.accept( new VisitExpression( worldsOf( e ) ) );
+			Statement tail = new ReturnStatement(
+					res.expression(),
 					visitContinuation( n.continuation() ),
 					n.position() );
+			return chainHoists( res.hoists(), tail );
 		}
 
 		/** Dispatches to {@link #visit(Statement)} if the continuation is non-null. */
@@ -227,18 +264,22 @@ public class Normalizer {
 			return continuation.accept( this );
 		}
 
-		private VariableDeclaration visitVariableDeclaration( VariableDeclaration vd ) {
+		/**
+		 * Normalizes {@code vd}'s initializer (if any) and appends any hoists generated
+		 * to {@code hoists}. Returns the (possibly rewritten) declaration.
+		 */
+		private VariableDeclaration visitVariableDeclaration(
+				VariableDeclaration vd, List< Statement > hoists ) {
 			if( vd.initializer().isEmpty() ) return vd;
 			AssignExpression init = vd.initializer().get();
-			// The initializer's value is expected at the declared variable's worlds
-			// (i.e. the worlds of the assignment target).
-			AssignExpression newInit = (AssignExpression) init.accept(
+			NormalizedExpr res = init.accept(
 					new VisitExpression( worldsOf( init.target() ) ) );
+			hoists.addAll( res.hoists() );
 			return new VariableDeclaration(
 					vd.name(),
 					vd.type(),
 					vd.annotations(),
-					newInit,
+					(AssignExpression) res.expression(),
 					vd.position() );
 		}
 	}
@@ -249,17 +290,15 @@ public class Normalizer {
 	 * Each instance is bound to one slot's expected worlds; recursion into a child slot
 	 * with a different expectation is done by constructing a new {@code VisitExpression}.
 	 * Transparent wrappers ({@link NotExpression}, {@link EnclosedExpression},
-	 * {@link ScopedExpression}'s right side) reuse {@code this} since the child slot
-	 * inherits the parent's expected worlds.
+	 * {@link ScopedExpression}'s right side) reuse {@code this}.
 	 * <p>
-	 * In later steps, when the visited node's own worlds do not match
-	 * {@link #expectedWorlds}, the whole node is hoisted into a fresh {@code tmp}
-	 * declaration and replaced with a {@link FieldAccessExpression} referring to that
-	 * {@code tmp}. For now {@code expectedWorlds} is recorded but not acted on.
+	 * Hoisting is currently performed only on cross-world method-call arguments; other
+	 * imposing slots collect/forward hoists from children but do not yet hoist
+	 * themselves (added in later steps).
 	 */
-	private class VisitExpression extends AbstractChoralVisitor< Expression > {
+	private class VisitExpression extends AbstractChoralVisitor< NormalizedExpr > {
 
-		@SuppressWarnings( "unused" ) // activated in Step 4
+		@SuppressWarnings( "unused" ) // activated for self-hoisting in Step 5+
 		private final List< ? extends World > expectedWorlds;
 
 		VisitExpression( List< ? extends World > expectedWorlds ) {
@@ -267,143 +306,199 @@ public class Normalizer {
 		}
 
 		@Override
-		public Expression visit( Expression n ) {
+		public NormalizedExpr visit( Expression n ) {
 			return n.accept( this );
 		}
 
 		@Override
-		public Expression visit( MethodCallExpression n ) {
+		public NormalizedExpr visit( MethodCallExpression n ) {
+			List< Statement > hoists = new ArrayList<>();
 			List< Expression > newArgs = new ArrayList<>();
 			for( int i = 0; i < n.arguments().size(); i++ ) {
 				Expression arg = n.arguments().get( i );
-				newArgs.add( arg.accept( new VisitExpression( paramWorlds( n, i ) ) ) );
+				List< ? extends World > slotWorlds = paramWorlds( n, i );
+				NormalizedExpr argRes = arg.accept( new VisitExpression( slotWorlds ) );
+				hoists.addAll( argRes.hoists() );
+				if( isCrossWorld( arg, slotWorlds ) ) {
+					Name tmp = freshTmpName();
+					hoists.add( makeHoist( tmp, argRes.expression(), arg ) );
+					newArgs.add( new FieldAccessExpression( tmp, arg.position() ) );
+				} else {
+					newArgs.add( argRes.expression() );
+				}
 			}
-			return new MethodCallExpression(
-					n.name(), newArgs, n.typeArguments(), n.position() );
+			return new NormalizedExpr(
+					hoists,
+					new MethodCallExpression(
+							n.name(), newArgs, n.typeArguments(), n.position() ) );
 		}
 
 		@Override
-		public Expression visit( BinaryExpression n ) {
-			// Both operands should share a world; use the left operand's worlds as the
-			// expected context for both (matches Typer's homeWorlds rule).
+		public NormalizedExpr visit( BinaryExpression n ) {
 			VisitExpression sub = new VisitExpression( worldsOf( n.left() ) );
-			return new BinaryExpression(
-					n.left().accept( sub ),
-					n.right().accept( sub ),
-					n.operator(),
-					n.position() );
+			NormalizedExpr l = n.left().accept( sub );
+			NormalizedExpr r = n.right().accept( sub );
+			List< Statement > hoists = new ArrayList<>( l.hoists() );
+			hoists.addAll( r.hoists() );
+			return new NormalizedExpr(
+					hoists,
+					new BinaryExpression(
+							l.expression(), r.expression(), n.operator(), n.position() ) );
 		}
 
 		@Override
-		public Expression visit( AssignExpression n ) {
-			VisitExpression sub = new VisitExpression( worldsOf( n.target() ) );
-			return new AssignExpression(
-					n.value().accept( sub ),
-					n.target(),
-					n.operator(),
-					n.position() );
+		public NormalizedExpr visit( AssignExpression n ) {
+			NormalizedExpr v = n.value().accept(
+					new VisitExpression( worldsOf( n.target() ) ) );
+			return new NormalizedExpr(
+					v.hoists(),
+					new AssignExpression(
+							v.expression(), n.target(), n.operator(), n.position() ) );
 		}
 
 		@Override
-		public Expression visit( ClassInstantiationExpression n ) {
-			// Constructor argument slots are analogous to method-call args. Until we
-			// have a per-parameter world lookup for constructors (Step 5), use the
-			// instantiated type's worlds for all arguments.
+		public NormalizedExpr visit( ClassInstantiationExpression n ) {
 			VisitExpression sub = new VisitExpression( worldsOf( n ) );
+			List< Statement > hoists = new ArrayList<>();
 			List< Expression > newArgs = new ArrayList<>();
 			for( Expression arg : n.arguments() ) {
-				newArgs.add( arg.accept( sub ) );
+				NormalizedExpr argRes = arg.accept( sub );
+				hoists.addAll( argRes.hoists() );
+				newArgs.add( argRes.expression() );
 			}
-			return new ClassInstantiationExpression(
-					n.typeExpression(), newArgs, n.typeArguments(), n.position() );
+			return new NormalizedExpr(
+					hoists,
+					new ClassInstantiationExpression(
+							n.typeExpression(), newArgs, n.typeArguments(), n.position() ) );
 		}
 
 		@Override
-		public Expression visit( NotExpression n ) {
-			return new NotExpression(
-					n.expression().accept( this ),
-					n.position() );
+		public NormalizedExpr visit( NotExpression n ) {
+			NormalizedExpr inner = n.expression().accept( this );
+			return new NormalizedExpr(
+					inner.hoists(),
+					new NotExpression( inner.expression(), n.position() ) );
 		}
 
 		@Override
-		public Expression visit( EnclosedExpression n ) {
-			return new EnclosedExpression(
-					n.nestedExpression().accept( this ),
-					n.position() );
+		public NormalizedExpr visit( EnclosedExpression n ) {
+			NormalizedExpr inner = n.nestedExpression().accept( this );
+			return new NormalizedExpr(
+					inner.hoists(),
+					new EnclosedExpression( inner.expression(), n.position() ) );
 		}
 
 		@Override
-		public Expression visit( ScopedExpression n ) {
-			return new ScopedExpression(
-					n.scope(),
-					n.scopedExpression().accept( this ),
-					n.position() );
+		public NormalizedExpr visit( ScopedExpression n ) {
+			NormalizedExpr inner = n.scopedExpression().accept( this );
+			return new NormalizedExpr(
+					inner.hoists(),
+					new ScopedExpression( n.scope(), inner.expression(), n.position() ) );
 		}
 
 		@Override
-		public Expression visit( FieldAccessExpression n ) {
-			return n;
+		public NormalizedExpr visit( FieldAccessExpression n ) {
+			return NormalizedExpr.unchanged( n );
 		}
 
 		@Override
-		public Expression visit( StaticAccessExpression n ) {
-			return n;
+		public NormalizedExpr visit( StaticAccessExpression n ) {
+			return NormalizedExpr.unchanged( n );
 		}
 
 		@Override
-		public Expression visit( NullExpression n ) {
-			return n;
+		public NormalizedExpr visit( NullExpression n ) {
+			return NormalizedExpr.unchanged( n );
 		}
 
 		@Override
-		public Expression visit( LiteralExpression.BooleanLiteralExpression n ) {
-			return n;
+		public NormalizedExpr visit( LiteralExpression.BooleanLiteralExpression n ) {
+			return NormalizedExpr.unchanged( n );
 		}
 
 		@Override
-		public Expression visit( LiteralExpression.IntegerLiteralExpression n ) {
-			return n;
+		public NormalizedExpr visit( LiteralExpression.IntegerLiteralExpression n ) {
+			return NormalizedExpr.unchanged( n );
 		}
 
 		@Override
-		public Expression visit( LiteralExpression.DoubleLiteralExpression n ) {
-			return n;
+		public NormalizedExpr visit( LiteralExpression.DoubleLiteralExpression n ) {
+			return NormalizedExpr.unchanged( n );
 		}
 
 		@Override
-		public Expression visit( LiteralExpression.StringLiteralExpression n ) {
-			return n;
+		public NormalizedExpr visit( LiteralExpression.StringLiteralExpression n ) {
+			return NormalizedExpr.unchanged( n );
 		}
 
 		@Override
-		public Expression visit( ThisExpression n ) {
+		public NormalizedExpr visit( ThisExpression n ) {
 			throw new UnsupportedOperationException(
 					"ThisExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override
-		public Expression visit( SuperExpression n ) {
+		public NormalizedExpr visit( SuperExpression n ) {
 			throw new UnsupportedOperationException(
 					"SuperExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override
-		public Expression visit( TypeExpression n ) {
+		public NormalizedExpr visit( TypeExpression n ) {
 			throw new UnsupportedOperationException(
 					"TypeExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override
-		public Expression visit( BlankExpression n ) {
+		public NormalizedExpr visit( BlankExpression n ) {
 			throw new UnsupportedOperationException(
 					"BlankExpression not supported\n\tExpression at " + n.position().toString() );
 		}
 
 		@Override
-		public Expression visit( EnumCaseInstantiationExpression n ) {
+		public NormalizedExpr visit( EnumCaseInstantiationExpression n ) {
 			throw new UnsupportedOperationException(
 					"EnumCaseInstantiationExpression not supported\n\tExpression at " + n.position().toString() );
 		}
+
+		/**
+		 * Builds a {@code T@W tmp = init} {@link VariableDeclarationStatement} where
+		 * {@code T} and {@code W} come from {@code original}'s type annotation (i.e.,
+		 * the sender's worlds). The continuation is left null; {@link #chainHoists}
+		 * splices it into the surrounding statement chain.
+		 */
+		private VariableDeclarationStatement makeHoist(
+				Name tmp, Expression init, Expression original ) {
+			AssignExpression initializer = new AssignExpression(
+					init,
+					new FieldAccessExpression( tmp, original.position() ),
+					AssignExpression.Operator.ASSIGN,
+					original.position() );
+			VariableDeclaration vd = new VariableDeclaration(
+					tmp,
+					getType( original ),
+					Collections.emptyList(),
+					initializer,
+					original.position() );
+			return new VariableDeclarationStatement(
+					List.of( vd ), null, original.position() );
+		}
+	}
+
+	private Name freshTmpName() {
+		return new Name( "tmp" + seqnum() );
+	}
+
+	/**
+	 * Chains {@code hoists} (in source order) before {@code tail}: returns a statement
+	 * equivalent to {@code hoists[0]; hoists[1]; ...; tail}.
+	 */
+	private static Statement chainHoists( List< Statement > hoists, Statement tail ) {
+		Statement result = tail;
+		for( int i = hoists.size() - 1; i >= 0; i-- ) {
+			result = hoists.get( i ).cloneWithContinuation( result );
+		}
+		return result;
 	}
 
 	/**
@@ -416,16 +511,17 @@ public class Normalizer {
 	 * annotations.
 	 */
 	private static List< ? extends World > worldsOf( Expression n ) {
-		GroundDataTypeOrVoid t;
-		if( n instanceof MethodCallExpression mc ) {
-			if( mc.methodAnnotation().isEmpty() ) return List.of();
-			t = mc.methodAnnotation().get().returnType();
-		} else {
-			if( n.typeAnnotation().isEmpty() ) return List.of();
-			t = n.typeAnnotation().get();
-		}
-		if( t.isVoid() ) return List.of();
+		GroundDataTypeOrVoid t = typeOf( n );
+		if( t == null || t.isVoid() ) return List.of();
 		return ( (GroundDataType) t ).worldArguments();
+	}
+
+	/** Returns {@code n}'s type annotation, or {@code null} if not annotated. */
+	private static GroundDataTypeOrVoid typeOf( Expression n ) {
+		if( n instanceof MethodCallExpression mc ) {
+			return mc.methodAnnotation().map( m -> m.returnType() ).orElse( null );
+		}
+		return n.typeAnnotation().orElse( null );
 	}
 
 	/**
@@ -445,9 +541,70 @@ public class Normalizer {
 	 * Matches {@code Typer.recordDependencies}: a child is cross-world iff its own
 	 * worlds are not fully contained in the expected worlds of its slot.
 	 */
-	@SuppressWarnings( "unused" ) // activated in Step 4
-	private static boolean isCrossWorld( Expression child, List< ? extends World > expectedWorlds ) {
+	private static boolean isCrossWorld(
+			Expression child, List< ? extends World > expectedWorlds ) {
 		List< ? extends World > childWorlds = worldsOf( child );
 		return !expectedWorlds.containsAll( childWorlds );
+	}
+
+	/**
+	 * Returns {@code n}'s type as a {@link TypeExpression}, with the world annotation
+	 * set to {@code n}'s own worlds (the sender's). Used to type fresh hoisted
+	 * temporaries.
+	 */
+	private static TypeExpression getType( Expression n ) {
+		GroundDataTypeOrVoid t = typeOf( n );
+		if( t == null || t.isVoid() ) {
+			throw new IllegalStateException(
+					"Cannot construct type expression for void or unannotated expression at "
+							+ n.position() );
+		}
+		return outerTypeExpr( (GroundDataType) t );
+	}
+
+	/** Outer {@code TypeExpression}: includes the type's own world annotation. */
+	private static TypeExpression outerTypeExpr( GroundDataType t ) {
+		List< WorldArgument > worldArgs = t.worldArguments().stream()
+				.map( w -> new WorldArgument( new Name( w.identifier() ), null ) )
+				.toList();
+		if( t instanceof GroundClassOrInterface gc ) {
+			List< TypeExpression > typeArgs = gc.typeArguments().stream()
+					.map( ta -> innerTypeExpr( ta.applyTo( gc.worldArguments() ) ) )
+					.toList();
+			return new TypeExpression(
+					new Name( gc.typeConstructor().identifier() ), worldArgs, typeArgs );
+		}
+		if( t instanceof GroundTypeParameter gtp ) {
+			return new TypeExpression(
+					new Name( gtp.typeConstructor().identifier() ),
+					worldArgs,
+					Collections.emptyList() );
+		}
+		throw new IllegalStateException(
+				"Unsupported type for hoist: " + t.getClass().getSimpleName() );
+	}
+
+	/**
+	 * Inner (nested) {@code TypeExpression}: no world annotation, matching the existing
+	 * convention from {@code VariableReplacement.getTypeExpression}.
+	 */
+	private static TypeExpression innerTypeExpr( GroundReferenceType t ) {
+		if( t instanceof GroundClass gc ) {
+			List< TypeExpression > typeArgs = gc.typeArguments().stream()
+					.map( ta -> innerTypeExpr( ta.applyTo( gc.worldArguments() ) ) )
+					.toList();
+			return new TypeExpression(
+					new Name( gc.typeConstructor().identifier() ),
+					Collections.emptyList(),
+					typeArgs );
+		}
+		if( t instanceof GroundTypeParameter gtp ) {
+			return new TypeExpression(
+					new Name( gtp.typeConstructor().identifier() ),
+					Collections.emptyList(),
+					Collections.emptyList() );
+		}
+		throw new IllegalStateException(
+				"Unsupported inner type for hoist: " + t.getClass().getSimpleName() );
 	}
 }

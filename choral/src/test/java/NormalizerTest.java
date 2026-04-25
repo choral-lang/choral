@@ -109,4 +109,62 @@ public class NormalizerTest {
 				"}\n";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
+
+	@Test
+	public void hoistsCrossWorldMethodArg() throws IOException {
+		String src =
+				"package test;\n" +
+				"class C@( A, B ) {\n" +
+				"\tpublic Integer@A take( Integer@A x ) { return x; }\n" +
+				"\tpublic void run( Integer@B b ) {\n" +
+				"\t\tthis.take( b );\n" +
+				"\t}\n" +
+				"}\n";
+		String expected =
+				"package test;\n" +
+				"class C@( A, B ) {\n" +
+				"\tpublic Integer@A take( Integer@A x ) { return x; }\n" +
+				"\tpublic void run( Integer@B b ) {\n" +
+				"\t\tInteger@B tmp0 = b;\n" +
+				"\t\tthis.take( tmp0 );\n" +
+				"\t}\n" +
+				"}\n";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void hoistsTwoCrossWorldArgsInOrder() throws IOException {
+		String src =
+				"package test;\n" +
+				"class C@( A, B, D ) {\n" +
+				"\tpublic Integer@A take( Integer@A x, Integer@A y ) { return x; }\n" +
+				"\tpublic void run( Integer@B b, Integer@D d ) {\n" +
+				"\t\tthis.take( b, d );\n" +
+				"\t}\n" +
+				"}\n";
+		String expected =
+				"package test;\n" +
+				"class C@( A, B, D ) {\n" +
+				"\tpublic Integer@A take( Integer@A x, Integer@A y ) { return x; }\n" +
+				"\tpublic void run( Integer@B b, Integer@D d ) {\n" +
+				"\t\tInteger@B tmp0 = b;\n" +
+				"\t\tInteger@D tmp1 = d;\n" +
+				"\t\tthis.take( tmp0, tmp1 );\n" +
+				"\t}\n" +
+				"}\n";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void sameWorldArgsNotHoisted() throws IOException {
+		String src =
+				"package test;\n" +
+				"class C@( A, B ) {\n" +
+				"\tpublic Integer@A take( Integer@A x ) { return x; }\n" +
+				"\tpublic void run( Integer@A a ) {\n" +
+				"\t\tthis.take( a );\n" +
+				"\t}\n" +
+				"}\n";
+		assertEquals( prettyPrint( src ), normalize( src ) );
+	}
 }
