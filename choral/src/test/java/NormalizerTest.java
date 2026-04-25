@@ -42,129 +42,151 @@ public class NormalizerTest {
 	@Test
 	public void emptyClass() throws IOException {
 		String src =
-				"package test;\n" +
-				"class Empty@( A ) { }\n";
+			"""
+			package test;
+			class Empty@( A ) { }
+			""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void sameWorldAssignment() throws IOException {
 		String src =
-				"package test;\n" +
-				"class SameWorld@( A ) {\n" +
-				"\tpublic void m() {\n" +
-				"\t\tInteger@A x = 1@A;\n" +
-				"\t\tInteger@A y = x + 1@A;\n" +
-				"\t}\n" +
-				"}\n";
+			"""
+			package test;
+			class SameWorld@( A ) {
+				public void m() {
+					Integer@A x = 1@A;
+					Integer@A y = x + 1@A;
+				}
+			}
+			""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void sameWorldMethodCall() throws IOException {
 		String src =
-				"package test;\n" +
-				"class C@( A ) {\n" +
-				"\tpublic Integer@A m( Integer@A x ) { return x; }\n" +
-				"\tpublic void run() {\n" +
-				"\t\tInteger@A y = this.m( 1@A );\n" +
-				"\t}\n" +
-				"}\n";
+			"""
+			package test;
+			class C@( A ) {
+				public Integer@A m( Integer@A x ) { return x; }
+				public void run() {
+					Integer@A y = this.m( 1@A );
+				}
+			}
+			""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void sameWorldIfReturn() throws IOException {
 		String src =
-				"package test;\n" +
-				"class C@( A ) {\n" +
-				"\tpublic Integer@A m( Boolean@A b ) {\n" +
-				"\t\tif( b ) { return 1@A; } else { return 2@A; }\n" +
-				"\t}\n" +
-				"}\n";
+			"""
+			package test;
+			class C@( A ) {
+				public Integer@A m( Boolean@A b ) {
+					if( b ) { return 1@A; } else { return 2@A; }
+				}
+			}
+			""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void sameWorldBlockAndNot() throws IOException {
 		String src =
-				"package test;\n" +
-				"class C@( A ) {\n" +
-				"\tpublic Boolean@A m( Boolean@A b ) {\n" +
-				"\t\t{ Boolean@A c = !b; return c; }\n" +
-				"\t}\n" +
-				"}\n";
+			"""
+			package test;
+			class C@( A ) {
+				public Boolean@A m( Boolean@A b ) {
+					{ Boolean@A c = !b; return c; }
+				}
+			}
+			""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void sameWorldEnclosed() throws IOException {
 		String src =
-				"package test;\n" +
-				"class C@( A ) {\n" +
-				"\tpublic Integer@A m() {\n" +
-				"\t\tInteger@A x = ( 1@A + 2@A );\n" +
-				"\t\treturn x;\n" +
-				"\t}\n" +
-				"}\n";
+			"""
+			package test;
+			class C@( A ) {
+				public Integer@A m() {
+					Integer@A x = ( 1@A + 2@A );
+					return x;
+				}
+			}
+			""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsCrossWorldMethodArg() throws IOException {
 		String src =
-				"package test;\n" +
-				"class C@( A, B ) {\n" +
-				"\tpublic Integer@A take( Integer@A x ) { return x; }\n" +
-				"\tpublic void run( Integer@B b ) {\n" +
-				"\t\tthis.take( b );\n" +
-				"\t}\n" +
-				"}\n";
+			"""
+			package test;
+			class C@( A, B ) {
+				public Integer@A take( Integer@A x ) { return x; }
+				public void run( Integer@B b ) {
+					this.take( b );
+				}
+			}
+			""";
 		String expected =
-				"package test;\n" +
-				"class C@( A, B ) {\n" +
-				"\tpublic Integer@A take( Integer@A x ) { return x; }\n" +
-				"\tpublic void run( Integer@B b ) {\n" +
-				"\t\tInteger@B tmp0 = b;\n" +
-				"\t\tthis.take( tmp0 );\n" +
-				"\t}\n" +
-				"}\n";
+			"""
+			package test;
+			class C@( A, B ) {
+				public Integer@A take( Integer@A x ) { return x; }
+				public void run( Integer@B b ) {
+					Integer@B tmp0 = b;
+					this.take( tmp0 );
+				}
+			}
+			""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsTwoCrossWorldArgsInOrder() throws IOException {
 		String src =
-				"package test;\n" +
-				"class C@( A, B, D ) {\n" +
-				"\tpublic Integer@A take( Integer@A x, Integer@A y ) { return x; }\n" +
-				"\tpublic void run( Integer@B b, Integer@D d ) {\n" +
-				"\t\tthis.take( b, d );\n" +
-				"\t}\n" +
-				"}\n";
+			"""
+			package test;
+			class C@( A, B, D ) {
+				public Integer@A take( Integer@A x, Integer@A y ) { return x; }
+				public void run( Integer@B b, Integer@D d ) {
+					this.take( b, d );
+				}
+			}
+			""";
 		String expected =
-				"package test;\n" +
-				"class C@( A, B, D ) {\n" +
-				"\tpublic Integer@A take( Integer@A x, Integer@A y ) { return x; }\n" +
-				"\tpublic void run( Integer@B b, Integer@D d ) {\n" +
-				"\t\tInteger@B tmp0 = b;\n" +
-				"\t\tInteger@D tmp1 = d;\n" +
-				"\t\tthis.take( tmp0, tmp1 );\n" +
-				"\t}\n" +
-				"}\n";
+			"""
+			package test;
+			class C@( A, B, D ) {
+				public Integer@A take( Integer@A x, Integer@A y ) { return x; }
+				public void run( Integer@B b, Integer@D d ) {
+					Integer@B tmp0 = b;
+					Integer@D tmp1 = d;
+					this.take( tmp0, tmp1 );
+				}
+			}
+			""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void sameWorldArgsNotHoisted() throws IOException {
 		String src =
-				"package test;\n" +
-				"class C@( A, B ) {\n" +
-				"\tpublic Integer@A take( Integer@A x ) { return x; }\n" +
-				"\tpublic void run( Integer@A a ) {\n" +
-				"\t\tthis.take( a );\n" +
-				"\t}\n" +
-				"}\n";
+			"""
+			package test;
+			class C@( A, B ) {
+				public Integer@A take( Integer@A x ) { return x; }
+				public void run( Integer@A a ) {
+					this.take( a );
+				}
+			}
+			""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 }
