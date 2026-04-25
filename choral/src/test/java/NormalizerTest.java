@@ -189,4 +189,138 @@ public class NormalizerTest {
 			""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
+
+	@Test
+	public void hoistsCrossWorldBinaryRightOperand() throws IOException {
+		String src =
+			"""
+			package test;
+			class C@( A, B ) {
+				public void run( Integer@A a, Integer@B b ) {
+					Integer@A z = a + b;
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class C@( A, B ) {
+				public void run( Integer@A a, Integer@B b ) {
+					Integer@B tmp0 = b;
+					Integer@A z = a + tmp0;
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void hoistsCrossWorldAssignRhs() throws IOException {
+		String src =
+			"""
+			package test;
+			class C@( A, B ) {
+				public void run( Integer@A a, Integer@B b ) {
+					a = b;
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class C@( A, B ) {
+				public void run( Integer@A a, Integer@B b ) {
+					Integer@B tmp0 = b;
+					a = tmp0;
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void hoistsNotExpressionAsWhole() throws IOException {
+		String src =
+			"""
+			package test;
+			class C@( A, B ) {
+				public void take( Boolean@A x ) {}
+				public void run( Boolean@B b ) {
+					this.take( !b );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class C@( A, B ) {
+				public void take( Boolean@A x ) {}
+				public void run( Boolean@B b ) {
+					Boolean@B tmp0 = !b;
+					this.take( tmp0 );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void hoistsEnclosedExpressionAsWhole() throws IOException {
+		String src =
+			"""
+			package test;
+			class C@( A, B ) {
+				public void take( Integer@A x ) {}
+				public void run( Integer@B b ) {
+					this.take( ( b ) );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class C@( A, B ) {
+				public void take( Integer@A x ) {}
+				public void run( Integer@B b ) {
+					Integer@B tmp0 = ( b );
+					this.take( tmp0 );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void hoistsScopedFieldAccess() throws IOException {
+		String src =
+			"""
+			package test;
+			class Pair@D {
+				public Integer@D x;
+				public Pair( Integer@D x ) { this.x = x; }
+			}
+			class C@( A, B ) {
+				public void take( Integer@A x ) {}
+				public void run( Pair@B p ) {
+					this.take( p.x );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class Pair@D {
+				public Integer@D x;
+				public Pair( Integer@D x ) { this.x = x; }
+			}
+			class C@( A, B ) {
+				public void take( Integer@A x ) {}
+				public void run( Pair@B p ) {
+					Integer@B tmp0 = p.x;
+					this.take( tmp0 );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
 }
