@@ -28,6 +28,11 @@ import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 
+/**
+ * A block {@code { stmt... }; continuation }. The first statement in the block is accessed with
+ * {@link #enclosedStatement()}. The first statement <i>after</i> the block (if it exists) is
+ * accessed with {@link #continuation()}.
+ */
 public class BlockStatement extends Statement {
 
 	final private Statement enclosedStatement;
@@ -44,6 +49,10 @@ public class BlockStatement extends Statement {
 		this.enclosedStatement = enclosedStatement;
 	}
 
+	/**
+	 * Returns the first statement in the block. Since every statement carries its continuation,
+	 * the rest of the block can be accessed by traversing the {@link #continuation()}s.
+	 */
 	public Statement enclosedStatement() {
 		return enclosedStatement;
 	}
