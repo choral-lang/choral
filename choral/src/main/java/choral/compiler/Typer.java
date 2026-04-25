@@ -1774,7 +1774,7 @@ public class Typer {
 
 			@Override
 			public GroundDataTypeOrVoid visit( EnclosedExpression n ) {
-				return synth( n.nestedExpression() );
+				return annotate( n, synth( n.nestedExpression() ) );
 			}
 
 			private boolean checkMemberAccess( Member m ) {

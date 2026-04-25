@@ -39,14 +39,7 @@ import choral.ast.statement.VariableDeclarationStatement;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
-import choral.types.GroundClass;
-import choral.types.GroundClassOrInterface;
-import choral.types.GroundDataType;
-import choral.types.GroundDataTypeOrVoid;
-import choral.types.GroundReferenceType;
-import choral.types.GroundTypeParameter;
-import choral.types.Member;
-import choral.types.World;
+import choral.types.*;
 import choral.utils.Pair;
 
 /**
@@ -334,7 +327,11 @@ public class Normalizer {
 			hoists.addAll( r.hoists() );
 			Expression rebuilt = new BinaryExpression(
 					l.expression(), r.expression(), n.operator(), n.position() );
-			return maybeHoist( n, rebuilt, hoists );
+			// No need for maybeHoist: each operand is already checked against the
+			// parent's expected worlds. After VariableReplacement rewrites cross-world
+			// operand tmps via ch.com(...), all operands align with the destination world,
+			// so the BinaryExpression itself need not be hoisted.
+			return new NormalizedExpr( hoists, rebuilt );
 		}
 
 		@Override
@@ -465,10 +462,6 @@ public class Normalizer {
 		 */
 		private NormalizedExpr maybeHoist(
 				Expression original, Expression rebuilt, List< Statement > innerHoists ) {
-			System.err.println( "DEBUG maybeHoist " + original.getClass().getSimpleName()
-					+ " worldsOf=" + worldsOf( original )
-					+ " expected=" + expectedWorlds
-					+ " typeAnn=" + original.typeAnnotation() );
 			if( !isCrossWorld( original, expectedWorlds ) ) {
 				return new NormalizedExpr( innerHoists, rebuilt );
 			}
@@ -534,17 +527,14 @@ public class Normalizer {
 		return ( (GroundDataType) t ).worldArguments();
 	}
 
-	/** Returns {@code n}'s type annotation, or {@code null} if not annotated. */
+	/** Returns {@code n}'s type annotation as a reference type. */
 	private static GroundDataTypeOrVoid typeOf( Expression n ) {
-		if( n instanceof MethodCallExpression mc ) {
-			return mc.methodAnnotation().map( m -> m.returnType() ).orElse( null );
+		GroundDataTypeOrVoid t = n.typeAnnotation().orElseThrow();
+		if( t instanceof GroundPrimitiveDataType pt ) {
+			return pt.boxedType();
+		} else {
+			return t;
 		}
-		// EnclosedExpression has no own typeAnnotation — delegate to its nested
-		// expression, mirroring the Typer's transparent treatment of parentheses.
-		if( n instanceof EnclosedExpression ee ) {
-			return typeOf( ee.nestedExpression() );
-		}
-		return n.typeAnnotation().orElse( null );
 	}
 
 	/**
