@@ -358,12 +358,7 @@ public class Normalizer {
 			Expression rebuilt = new BinaryExpression(
 					l.expression, r.expression, n.operator(), n.position() );
 			rebuilt.setTypeAnnotation( n.typeAnnotation().orElseThrow() );
-			// TODO The typer should set the world of a binary expression to match the expected world
-			// No need for maybeHoist: each operand is already checked against the
-			// parent's expected worlds. After VariableReplacement rewrites cross-world
-			// operand tmps via ch.com(...), all operands align with the destination world,
-			// so the BinaryExpression itself need not be hoisted.
-			return new NormalizedExpr( newArgs.first, newArgs.last, rebuilt );
+			return maybeHoist( newArgs.first, newArgs.last, rebuilt );
 		}
 
 		@Override

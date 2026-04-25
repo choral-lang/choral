@@ -1641,8 +1641,8 @@ public class Typer {
 								( rightType.specialTypeTag() == SpecialTypeTag.CHARACTER ||
 										rightType.primitiveTypeTag() == PrimitiveTypeTag.CHAR ) )
 						) {
-							return universe().specialType( SpecialTypeTag.STRING ).applyTo(
-									worlds );
+							return universe().specialType( SpecialTypeTag.STRING )
+									.applyTo( worlds );
 						}
 					}
 					case MINUS:
@@ -1656,13 +1656,12 @@ public class Typer {
 									( pl.primitiveTypeTag().compareTo( pr.primitiveTypeTag() ) > 0 )
 									? pl
 									: pr;
-							if( p.primitiveTypeTag().compareTo(
-									PrimitiveTypeTag.INT ) < 0 ) {
-								p = universe().primitiveDataType(
-										PrimitiveTypeTag.INT ).applyTo(
-										worlds );
+							if( p.primitiveTypeTag().compareTo( PrimitiveTypeTag.INT ) < 0 ) {
+								p = universe().primitiveDataType( PrimitiveTypeTag.INT )
+										.applyTo( worlds );
 							}
-							return p;
+							return universe().primitiveDataType( p.primitiveTypeTag() )
+									.applyTo( worlds );
 						}
 						break;
 					case LESS:
@@ -1672,9 +1671,8 @@ public class Typer {
 						pl = assertUnbox( leftType, position );
 						pr = assertUnbox( rightType, position );
 						if( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() ) {
-							return universe().primitiveDataType(
-									PrimitiveTypeTag.BOOLEAN ).applyTo(
-									worlds );
+							return universe().primitiveDataType( PrimitiveTypeTag.BOOLEAN )
+									.applyTo( worlds );
 						}
 						break;
 					case OR: // bitwise / non-short-circuting comparison.
@@ -1682,11 +1680,12 @@ public class Typer {
 						pl = assertUnbox( leftType, position );
 						pr = assertUnbox( rightType, position );
 						if( pl.primitiveTypeTag().isIntegral() && pr.primitiveTypeTag().isIntegral() ) {
-							if( pl.primitiveTypeTag().compareTo(
-									pr.primitiveTypeTag() ) > 0 ) {
-								return pl;
+							if( pl.primitiveTypeTag().compareTo( pr.primitiveTypeTag() ) > 0 ) {
+								return universe().primitiveDataType( pl.primitiveTypeTag() )
+										.applyTo( worlds );
 							} else {
-								return pr;
+								return universe().primitiveDataType( pr.primitiveTypeTag() )
+										.applyTo( worlds );
 							}
 						}
 					case SHORT_CIRCUITED_OR:
@@ -1704,18 +1703,16 @@ public class Typer {
 						boolean tlSubtype = opts.relaxed() ? leftType.isSubtypeOf_relaxed( rightType ) : leftType.isSubtypeOf( rightType );
 						if( ( leftType instanceof GroundReferenceType && trSubtype ) ||
 							( rightType instanceof GroundReferenceType && tlSubtype ) ) {
-							return universe().primitiveDataType(
-									PrimitiveTypeTag.BOOLEAN ).applyTo(
-									worlds );
+							return universe().primitiveDataType( PrimitiveTypeTag.BOOLEAN )
+									.applyTo( worlds );
 						} else {
 							pl = assertUnbox( leftType, position );
 							pr = assertUnbox( rightType, position );
 							if( pl.primitiveTypeTag() == pr.primitiveTypeTag() ||
 									( pl.primitiveTypeTag().isNumeric() && pr.primitiveTypeTag().isNumeric() )
 							) {
-								return universe().primitiveDataType(
-										PrimitiveTypeTag.BOOLEAN ).applyTo(
-										worlds );
+								return universe().primitiveDataType( PrimitiveTypeTag.BOOLEAN )
+										.applyTo( worlds );
 							}
 						}
 				}
