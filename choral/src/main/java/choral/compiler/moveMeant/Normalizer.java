@@ -404,7 +404,6 @@ public class Normalizer {
 
 		@Override
 		public NormalizedExpr visit( ScopedExpression n ) {
-			// TODO Not sure this is correct. Needs more tests.
 			NormalizedExpr inner = n.scopedExpression().accept( visitor( typeOf( n ) ) );
 			Expression rebuilt = new ScopedExpression(
 					n.scope(), inner.expression(), n.position() );

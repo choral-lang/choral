@@ -234,6 +234,65 @@ public class NormalizerTest {
 					a = tmp0;
 				}
 			}
+		""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void hoistsNestedAlternatingWorldMethodCallsInsideOut() throws IOException {
+		String src =
+			"""
+			package test;
+			class C@( A, B ) {
+				public Integer@A takeA( Integer@A x ) { return x; }
+				public Integer@B makeB( Integer@B x ) { return x; }
+				public void run( Integer@A a ) {
+					this.takeA( this.makeB( a ) );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class C@( A, B ) {
+				public Integer@A takeA( Integer@A x ) { return x; }
+				public Integer@B makeB( Integer@B x ) { return x; }
+				public void run( Integer@A a ) {
+					Integer@B tmp0 = a;
+					Integer@A tmp1 = this.makeB( tmp0 );
+					this.takeA( tmp1 );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void hoistsThreeLevelAlternatingWorldMethodCallsInsideOut() throws IOException {
+		String src =
+			"""
+			package test;
+			class C@( A, B ) {
+				public Integer@A takeA( Integer@A x ) { return x; }
+				public Integer@B makeB( Integer@B x ) { return x; }
+				public void run( Integer@B b ) {
+					this.takeA( this.makeB( this.takeA( b ) ) );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class C@( A, B ) {
+				public Integer@A takeA( Integer@A x ) { return x; }
+				public Integer@B makeB( Integer@B x ) { return x; }
+				public void run( Integer@B b ) {
+					Integer@A tmp0 = b;
+					Integer@B tmp1 = this.takeA( tmp0 );
+					Integer@A tmp2 = this.makeB( tmp1 );
+					this.takeA( tmp2 );
+				}
+			}
 			""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
@@ -317,6 +376,83 @@ public class NormalizerTest {
 				public void take( Integer@A x ) {}
 				public void run( Pair@B p ) {
 					Integer@A tmp0 = p.x;
+					this.take( tmp0 );
+				}
+			}
+		""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void sameWorldDeepScopedFieldAccessNotHoisted() throws IOException {
+		String src =
+			"""
+			package test;
+			class Leaf@D {
+				public Integer@D baz;
+				public Leaf( Integer@D baz ) { this.baz = baz; }
+			}
+			class Middle@D {
+				public Leaf@D bar;
+				public Middle( Leaf@D bar ) { this.bar = bar; }
+			}
+			class Foo@D {
+				public Middle@D bar;
+				public Foo( Middle@D bar ) { this.bar = bar; }
+			}
+			class C@( A ) {
+				public void take( Integer@A x ) {}
+				public void run( Foo@A foo ) {
+					this.take( foo.bar.bar.baz );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( src ), normalize( src ) );
+	}
+
+	@Test
+	public void hoistsDeepScopedFieldAccessAsWhole() throws IOException {
+		String src =
+			"""
+			package test;
+			class Leaf@D {
+				public Integer@D baz;
+				public Leaf( Integer@D baz ) { this.baz = baz; }
+			}
+			class Middle@D {
+				public Leaf@D bar;
+				public Middle( Leaf@D bar ) { this.bar = bar; }
+			}
+			class Foo@D {
+				public Middle@D bar;
+				public Foo( Middle@D bar ) { this.bar = bar; }
+			}
+			class C@( A, B ) {
+				public void take( Integer@A x ) {}
+				public void run( Foo@B foo ) {
+					this.take( foo.bar.bar.baz );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class Leaf@D {
+				public Integer@D baz;
+				public Leaf( Integer@D baz ) { this.baz = baz; }
+			}
+			class Middle@D {
+				public Leaf@D bar;
+				public Middle( Leaf@D bar ) { this.bar = bar; }
+			}
+			class Foo@D {
+				public Middle@D bar;
+				public Foo( Middle@D bar ) { this.bar = bar; }
+			}
+			class C@( A, B ) {
+				public void take( Integer@A x ) {}
+				public void run( Foo@B foo ) {
+					Integer@A tmp0 = foo.bar.bar.baz;
 					this.take( tmp0 );
 				}
 			}
