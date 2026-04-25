@@ -140,7 +140,7 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public Integer@A take( Integer@A x ) { return x; }
 				public void run( Integer@B b ) {
-					Integer@B tmp0 = b;
+					Integer@A tmp0 = b;
 					this.take( tmp0 );
 				}
 			}
@@ -166,8 +166,8 @@ public class NormalizerTest {
 			class C@( A, B, D ) {
 				public Integer@A take( Integer@A x, Integer@A y ) { return x; }
 				public void run( Integer@B b, Integer@D d ) {
-					Integer@B tmp0 = b;
-					Integer@D tmp1 = d;
+					Integer@A tmp0 = b;
+					Integer@A tmp1 = d;
 					this.take( tmp0, tmp1 );
 				}
 			}
@@ -206,7 +206,7 @@ public class NormalizerTest {
 			package test;
 			class C@( A, B ) {
 				public void run( Integer@A a, Integer@B b ) {
-					Integer@B tmp0 = b;
+					Integer@A tmp0 = b;
 					Integer@A z = a + tmp0;
 				}
 			}
@@ -230,7 +230,7 @@ public class NormalizerTest {
 			package test;
 			class C@( A, B ) {
 				public void run( Integer@A a, Integer@B b ) {
-					Integer@B tmp0 = b;
+					Integer@A tmp0 = b;
 					a = tmp0;
 				}
 			}
@@ -256,7 +256,7 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public void take( Boolean@A x ) {}
 				public void run( Boolean@B b ) {
-					Boolean@B tmp0 = !b;
+					Boolean@A tmp0 = !b;
 					this.take( tmp0 );
 				}
 			}
@@ -282,7 +282,7 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public void take( Integer@A x ) {}
 				public void run( Integer@B b ) {
-					Integer@B tmp0 = ( b );
+					Integer@A tmp0 = ( b );
 					this.take( tmp0 );
 				}
 			}
@@ -316,7 +316,7 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public void take( Integer@A x ) {}
 				public void run( Pair@B p ) {
-					Integer@B tmp0 = p.x;
+					Integer@A tmp0 = p.x;
 					this.take( tmp0 );
 				}
 			}

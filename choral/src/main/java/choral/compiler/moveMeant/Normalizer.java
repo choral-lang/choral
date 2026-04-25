@@ -124,7 +124,7 @@ public class Normalizer {
 			List< ConstructorDefinition > newConstructors = new ArrayList<>();
 			for( ConstructorDefinition constructor : cls.constructors() ) {
 				Statement newBody = constructor.blockStatements()
-						.accept( new VisitStatement() ).first();
+						.accept( new VisitStatement( null ) ).first();
 				newConstructors.add( new ConstructorDefinition(
 						constructor.signature(),
 						constructor.explicitConstructorInvocation().orElse( null ),
@@ -138,7 +138,10 @@ public class Normalizer {
 			for( ClassMethodDefinition method : cls.methods() ) {
 				Statement newBody = null;
 				if( method.body().isPresent() ) {
-					newBody = method.body().get().accept( new VisitStatement() ).first();
+					newBody = method.body().get()
+							.accept( new VisitStatement(
+									method.signature().typeAnnotation().orElseThrow()
+											.innerCallable().returnType() ) ).first();
 				}
 				newMethods.add( new ClassMethodDefinition(
 						method.signature(),
@@ -178,13 +181,16 @@ public class Normalizer {
 	 */
 	private class VisitStatement extends AbstractChoralVisitor< NormalizedStmt > {
 
-		VisitStatement() {
+		private final GroundDataTypeOrVoid expectedReturnType;
+
+		VisitStatement( GroundDataTypeOrVoid expectedReturnType ) {
+			this.expectedReturnType = expectedReturnType;
 		}
 
 		@Override
 		public NormalizedStmt visit( ExpressionStatement n ) {
 			Expression e = n.expression();
-			NormalizedExpr res = e.accept( new VisitExpression( worldsOf( e ) ) );
+			NormalizedExpr res = e.accept( new VisitExpression( typeOf( e ) ) );
 			ExpressionStatement newStmt = new ExpressionStatement(
 					res.expression(),
 					visitContinuation( n.continuation() ),
@@ -201,7 +207,8 @@ public class Normalizer {
 				} else {
 					AssignExpression init = vd.initializer().get();
 					NormalizedExpr res =
-							init.accept( new VisitExpression( worldsOf( init.target() ) ) );
+							init.accept( new VisitExpression(
+									(GroundDataTypeOrVoid) vd.type().typeAnnotation().orElseThrow() ) );
 					VariableDeclaration newVd = new VariableDeclaration(
 							vd.name(),
 							vd.type(),
@@ -238,7 +245,7 @@ public class Normalizer {
 		@Override
 		public NormalizedStmt visit( IfStatement n ) {
 			Expression cond = n.condition();
-			NormalizedExpr res = cond.accept( new VisitExpression( worldsOf( cond ) ) );
+			NormalizedExpr res = cond.accept( new VisitExpression( typeOf( cond ) ) );
 			IfStatement newStmt = new IfStatement(
 					res.expression(),
 					visitContinuation( n.ifBranch() ),
@@ -276,7 +283,7 @@ public class Normalizer {
 		@Override
 		public NormalizedStmt visit( ReturnStatement n ) {
 			Expression e = n.returnExpression();
-			NormalizedExpr res = e.accept( new VisitExpression( worldsOf( e ) ) );
+			NormalizedExpr res = e.accept( new VisitExpression( expectedReturnType ) );
 			ReturnStatement newStmt = new ReturnStatement(
 					res.expression(),
 					visitContinuation( n.continuation() ),
@@ -296,31 +303,31 @@ public class Normalizer {
 	}
 
 	/**
-	 * Normalizes an expression node, given the worlds expected by the surrounding context.
+	 * Normalizes an expression node, given the type expected by the surrounding context.
 	 * <p>
-	 * Each instance is bound to one context's expected worlds; recursion into a child context
+	 * Each instance is bound to one context's expected type; recursion into a child context
 	 * with a different expectation is done by constructing a new {@code VisitExpression}.
 	 * <p>
 	 * Every {@code visit} ends with {@link #maybeHoist}: if the node's own worlds do not
-	 * fit {@link #expectedWorlds}, the node is hoisted into a fresh {@code tmp} and
+	 * fit {@link #expectedType}, the node is hoisted into a fresh {@code tmp} and
 	 * replaced by a {@link FieldAccessExpression}. Transparent wrappers
 	 * ({@link NotExpression}, {@link EnclosedExpression}, {@link ScopedExpression}'s
-	 * right side) recurse with the wrapper's own worlds as the child's expected worlds,
+	 * right side) recurse with the wrapper's own type as the child's expected type,
 	 * so the wrapper hoists as a single unit rather than its child.
 	 */
 	private class VisitExpression extends AbstractChoralVisitor< NormalizedExpr > {
 
-		private final List< ? extends World > expectedWorlds;
+		private final GroundDataTypeOrVoid expectedType;
 
-		VisitExpression( List< ? extends World > expectedWorlds ) {
-			this.expectedWorlds = expectedWorlds;
+		VisitExpression( GroundDataTypeOrVoid expectedType ) {
+			this.expectedType = box( expectedType );
 		}
 
-		VisitExpression visitor( List< ? extends World > expectedWorlds ) {
-			if( this.expectedWorlds.equals( expectedWorlds ) ) {
+		VisitExpression visitor( GroundDataTypeOrVoid expectedType ) {
+			if( this.expectedType == expectedType ) {
 				return this;
 			} else {
-				return new VisitExpression( expectedWorlds );
+				return new VisitExpression( expectedType );
 			}
 		}
 
@@ -329,19 +336,20 @@ public class Normalizer {
 			var newArgs = new NormalizedResults< Expression >();
 			for( int i = 0; i < n.arguments().size(); i++ ) {
 				Expression arg = n.arguments().get( i );
-				NormalizedExpr res = arg.accept( visitor( paramWorlds( n, i ) ) );
+				NormalizedExpr res = arg.accept( visitor( paramType( n, i ) ) );
 				newArgs.add( res.first, res.last, res.expression );
 			}
 			Expression rebuilt = new MethodCallExpression(
 					n.name(), newArgs.results, n.typeArguments(), n.position() );
 			rebuilt.setTypeAnnotation( n.typeAnnotation().orElseThrow() );
+			( (MethodCallExpression) rebuilt ).setMethodAnnotation( n.methodAnnotation().orElseThrow() );
 			return maybeHoist( newArgs.first, newArgs.last, rebuilt );
 		}
 
 		@Override
 		public NormalizedExpr visit( BinaryExpression n ) {
-			NormalizedExpr l = n.left().accept( this );
-			NormalizedExpr r = n.right().accept( this );
+			NormalizedExpr l = n.left().accept( visitor( typeWithWorldsOf( n.left(), expectedType ) ) );
+			NormalizedExpr r = n.right().accept( visitor( typeWithWorldsOf( n.right(), expectedType ) ) );
 
 			var newArgs = new NormalizedResults<>();
 			newArgs.add( l.first, l.last, l.expression );
@@ -360,7 +368,7 @@ public class Normalizer {
 
 		@Override
 		public NormalizedExpr visit( AssignExpression n ) {
-			NormalizedExpr v = n.value().accept( visitor( worldsOf( n.target() ) ) );
+			NormalizedExpr v = n.value().accept( visitor( typeOf( n.target() ) ) );
 			Expression rebuilt = new AssignExpression(
 					v.expression(), n.target(), n.operator(), n.position() );
 			rebuilt.setTypeAnnotation( n.typeAnnotation().orElseThrow() );
@@ -370,19 +378,22 @@ public class Normalizer {
 		@Override
 		public NormalizedExpr visit( ClassInstantiationExpression n ) {
 			var newArgs = new NormalizedResults< Expression >();
-			for( Expression arg : n.arguments() ) {
-				NormalizedExpr res = arg.accept( visitor( worldsOf( n ) ) );
+			for( int i = 0; i < n.arguments().size(); i++ ) {
+				Expression arg = n.arguments().get( i );
+				NormalizedExpr res = arg.accept( visitor( constructorParamType( n, i ) ) );
 				newArgs.add( res.first, res.last, res.expression );
 			}
 			Expression rebuilt = new ClassInstantiationExpression(
 					n.typeExpression(), newArgs.results, n.typeArguments(), n.position() );
 			rebuilt.setTypeAnnotation( n.typeAnnotation().orElseThrow() );
+			( (ClassInstantiationExpression) rebuilt )
+					.setConstructorAnnotation( n.constructorAnnotation().orElseThrow() );
 			return maybeHoist( newArgs.first, newArgs.last, rebuilt );
 		}
 
 		@Override
 		public NormalizedExpr visit( NotExpression n ) {
-			NormalizedExpr inner = n.expression().accept( visitor( worldsOf( n ) ) );
+			NormalizedExpr inner = n.expression().accept( visitor( typeOf( n ) ) );
 			Expression rebuilt = new NotExpression( inner.expression(), n.position() );
 			rebuilt.setTypeAnnotation( n.typeAnnotation().orElseThrow() );
 			return maybeHoist( inner.first(), inner.last(), rebuilt );
@@ -390,7 +401,7 @@ public class Normalizer {
 
 		@Override
 		public NormalizedExpr visit( EnclosedExpression n ) {
-			NormalizedExpr inner = n.nestedExpression().accept( visitor( worldsOf( n ) ) );
+			NormalizedExpr inner = n.nestedExpression().accept( visitor( typeOf( n ) ) );
 			Expression rebuilt = new EnclosedExpression( inner.expression(), n.position() );
 			rebuilt.setTypeAnnotation( n.typeAnnotation().orElseThrow() );
 			return maybeHoist( inner.first(), inner.last(), rebuilt );
@@ -399,7 +410,7 @@ public class Normalizer {
 		@Override
 		public NormalizedExpr visit( ScopedExpression n ) {
 			// TODO Not sure this is correct. Needs more tests.
-			NormalizedExpr inner = n.scopedExpression().accept( visitor( worldsOf( n ) ) );
+			NormalizedExpr inner = n.scopedExpression().accept( visitor( typeOf( n ) ) );
 			Expression rebuilt = new ScopedExpression(
 					n.scope(), inner.expression(), n.position() );
 			rebuilt.setTypeAnnotation( n.typeAnnotation().orElseThrow() );
@@ -473,11 +484,11 @@ public class Normalizer {
 		 * unchanged.
 		 */
 		private NormalizedExpr maybeHoist( Statement first, Statement last, Expression expr ) {
-			if( !isCrossWorld( expr, expectedWorlds ) ) {
+			if( !isCrossWorld( expr, expectedType ) ) {
 				return new NormalizedExpr( first, last, expr );
 			}
 			Name tmp = freshTmpName();
-			Statement newHoist = makeHoist( tmp, expr );
+			Statement newHoist = makeHoist( tmp, expr, expectedType );
 			Statement newFirst;
 			if( first == null ) {
 				newFirst = newHoist;
@@ -485,25 +496,29 @@ public class Normalizer {
 				last.dangerouslySetContinuation( newHoist );
 				newFirst = first;
 			}
-			return new NormalizedExpr(
-					newFirst, newHoist,
-					new FieldAccessExpression( tmp, expr.position() ) );
+			FieldAccessExpression tmpAccess = new FieldAccessExpression( tmp, expr.position() );
+			tmpAccess.setTypeAnnotation( expectedType );
+			return new NormalizedExpr( newFirst, newHoist, tmpAccess );
 		}
 
 		/**
 		 * Builds a {@code T@W tmp = init} {@link VariableDeclarationStatement} where
-		 * {@code T} and {@code W} come from {@code original}'s type annotation (i.e.,
-		 * the sender's worlds). The continuation is left null.
+		 * {@code T} and {@code W} come from the type expected by the context. The
+		 * continuation is left null.
 		 */
-		private VariableDeclarationStatement makeHoist( Name tmp, Expression expr ) {
+		private VariableDeclarationStatement makeHoist(
+				Name tmp, Expression expr, GroundDataTypeOrVoid expectedType ) {
+			FieldAccessExpression target = new FieldAccessExpression( tmp, expr.position() );
+			target.setTypeAnnotation( expectedType );
 			AssignExpression initializer = new AssignExpression(
 					expr,
-					new FieldAccessExpression( tmp, expr.position() ),
+					target,
 					AssignExpression.Operator.ASSIGN,
 					expr.position() );
+			initializer.setTypeAnnotation( expectedType );
 			VariableDeclaration vd = new VariableDeclaration(
 					tmp,
-					getType( expr ),
+					getType( expectedType ),
 					Collections.emptyList(),
 					initializer,
 					expr.position() );
@@ -530,7 +545,10 @@ public class Normalizer {
 	 * Returns {@code n}'s type annotation as a reference type.
 	 */
 	private static GroundDataTypeOrVoid typeOf( Expression n ) {
-		GroundDataTypeOrVoid t = n.typeAnnotation().orElseThrow();
+		return box( n.typeAnnotation().orElseThrow() );
+	}
+
+	private static GroundDataTypeOrVoid box( GroundDataTypeOrVoid t ) {
 		if( t instanceof GroundPrimitiveDataType pt ) {
 			return pt.boxedType();
 		} else {
@@ -539,36 +557,53 @@ public class Normalizer {
 	}
 
 	/**
-	 * Returns the expected worlds of the {@code i}th argument of a method call: the
-	 * worlds of that parameter in the method signature.
-	 * <p>
-	 * Mirrors {@code Typer.getParamWorlds}.
+	 * Returns the expected type of the {@code i}th argument of a method call: the
+	 * type of that parameter in the method signature.
 	 */
-	private static List< ? extends World > paramWorlds( MethodCallExpression n, int i ) {
+	private static GroundDataType paramType( MethodCallExpression n, int i ) {
 		Member.GroundMethod method = n.methodAnnotation().get();
-		return method.signature().parameters().get( i ).type().worldArguments();
+		return method.signature().parameters().get( i ).type();
+	}
+
+	private static GroundDataType constructorParamType( ClassInstantiationExpression n, int i ) {
+		Member.GroundConstructor constructor = n.constructorAnnotation().get();
+		return constructor.signature().parameters().get( i ).type();
 	}
 
 	/**
-	 * Whether {@code child} is "cross-world" relative to the given expected worlds.
+	 * Whether {@code child} is "cross-world" relative to the given expected type.
 	 */
-	private static boolean isCrossWorld(
-			Expression child, List< ? extends World > expectedWorlds ) {
+	private static boolean isCrossWorld( Expression child, GroundDataTypeOrVoid expectedType ) {
+		if( expectedType == null || expectedType.isVoid() ) return false;
 		List< ? extends World > childWorlds = worldsOf( child );
+		List< ? extends World > expectedWorlds = ( (GroundDataType) expectedType ).worldArguments();
 		return !childWorlds.containsAll( expectedWorlds );
 	}
 
+	private static GroundDataTypeOrVoid typeWithWorldsOf(
+			Expression typedLike, GroundDataTypeOrVoid worldSource ) {
+		if( worldSource == null || worldSource.isVoid() ) return typeOf( typedLike );
+		GroundDataType type = (GroundDataType) typeOf( typedLike );
+		List< ? extends World > worlds = ( (GroundDataType) worldSource ).worldArguments();
+		if( type instanceof GroundClassOrInterface gc ) {
+			return gc.typeConstructor().applyTo( worlds, gc.typeArguments() );
+		}
+		if( type instanceof GroundTypeParameter gtp ) {
+			return gtp.typeConstructor().applyTo( worlds );
+		}
+		throw new IllegalStateException(
+				"Unsupported type for expected context: " + type.getClass().getSimpleName() );
+	}
+
 	/**
-	 * Returns {@code n}'s type as a {@link TypeExpression}, with the world annotation
-	 * set to {@code n}'s own worlds (the sender's). Used to type fresh hoisted
+	 * Returns {@code t} as a {@link TypeExpression}. Used to type fresh hoisted
 	 * temporaries.
 	 */
-	private static TypeExpression getType( Expression n ) {
-		GroundDataTypeOrVoid t = typeOf( n );
+	private static TypeExpression getType( GroundDataTypeOrVoid t ) {
+		t = box( t );
 		if( t == null || t.isVoid() ) {
 			throw new IllegalStateException(
-					"Cannot construct type expression for void or unannotated expression at "
-							+ n.position() );
+					"Cannot construct type expression for void or unannotated expected type" );
 		}
 		return outerTypeExpr( (GroundDataType) t );
 	}
