@@ -3,26 +3,14 @@ package choral.compiler.moveMeant;
 import choral.ast.CompilationUnit;
 import choral.ast.Name;
 import choral.ast.body.VariableDeclaration;
-import choral.ast.expression.AssignExpression;
-import choral.ast.expression.Expression;
-import choral.ast.expression.FieldAccessExpression;
-import choral.ast.expression.MethodCallExpression;
-import choral.ast.expression.ScopedExpression;
-import choral.ast.type.TypeExpression;
+import choral.ast.expression.*;
+import choral.exceptions.AstPositionedException;
+import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.CommunicationInferenceException;
-import choral.types.GroundClassOrInterface;
-import choral.types.GroundDataType;
-import choral.types.GroundDataTypeOrVoid;
-import choral.types.GroundInterface;
-import choral.types.GroundPrimitiveDataType;
-import choral.types.GroundReferenceType;
-import choral.types.HigherReferenceType;
-import choral.types.Member;
-import choral.types.World;
-import choral.utils.Pair;
+import choral.types.*;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Inserts data communications for Normalizer-created hoists.
@@ -40,167 +28,84 @@ public class VariableReplacement {
 
 	public CompilationUnit inferComms( CompilationUnit cu ) {
 		Normalizer.Result normalized = new Normalizer().normalize( cu );
-		for( Map.Entry< Member.HigherCallable, List< VariableDeclaration > > entry :
-				normalized.hoistedDefinitions().entrySet() ) {
-			insertCommunications( entry.getKey(), entry.getValue() );
+		var errors = new ArrayList< AstPositionedException >();
+
+		for( var entry : normalized.hoistedDefinitions().entrySet() ) {
+			var callable = entry.getKey();
+			var hoistedDeclarations = entry.getValue();
+			for( var hoist : hoistedDeclarations ) {
+				try {
+					insertCommunication( callable, hoist );
+				} catch( AstPositionedException e ) {
+					errors.add( e );
+				}
+			}
 		}
-		Utils.clearAllDependencies( normalized.compilationUnit() );
+
+		if( !errors.isEmpty() ) {
+			throw new ChoralCompoundException( errors );
+		}
 		return normalized.compilationUnit();
 	}
 
-	private void insertCommunications(
-			Member.HigherCallable callable, List< VariableDeclaration > hoists ) {
-		for( VariableDeclaration hoist : hoists ) {
-			insertCommunication( callable, hoist );
-		}
-	}
+	/**
+	 * Given a variable declaration of the form {@code T@B msg = expr}, where expr is an expression
+	 * at some other world A, mutate the initializer to be {@code T@B msg = ch.<T>com(expr)}, where
+	 * ch is a channel from A to B accessible in the body of the callable.
+	 *
+	 * @param callable the method or constructor containing the declaration.
+	 * @param hoist    the declaration to rewrite.
+	 */
+	private void insertCommunication( Member.HigherCallable callable, VariableDeclaration hoist ) {
+		var initializer = hoist.initializer().orElseThrow();
+		var expr = initializer.value();
 
-	private void insertCommunication(
-			Member.HigherCallable callable, VariableDeclaration hoist ) {
-		AssignExpression initializer = hoist.initializer().orElseThrow( () ->
-				inferenceError( hoist, "Hoisted variable has no initializer" ) );
-		if( initializer.operator() != AssignExpression.Operator.ASSIGN ) {
-			throw inferenceError( hoist,
-					"Hoisted initializer uses unsupported operator " + initializer.operator() );
-		}
-
-		Expression value = initializer.value();
-		GroundDataType receiverType = dataTypeOf(
-				receiverTypeAnnotation( initializer, hoist ),
-				hoist,
-				"receiver" );
-		GroundDataType messageType = messageTypeOf( value, hoist );
-		World receiver = singleWorld( receiverType, hoist, "receiver" );
-		World sender = singleWorld( messageType, hoist, "sender" );
+		var inType = boxed( expr.typeAnnotation().orElseThrow() );
+		var outType = boxed( initializer.typeAnnotation().orElseThrow() );
+		var sender = inType.worldArguments().get( 0 );
+		var receiver = outType.worldArguments().get( 0 );
 
 		if( sender.equals( receiver ) ) return;
 
-		Pair< Pair< String, GroundInterface >, Member.HigherMethod > comPair =
-				Utils.findComMethod( receiver, sender, messageType, callable.channels() );
+		// Find the communication channel
+		var comPair = Utils.findComMethod( receiver, sender, inType, callable.channels() );
 		if( comPair == null ) {
-			throw inferenceError( hoist,
-					"No viable communication method from " + sender.identifier()
-							+ " to " + receiver.identifier()
-							+ " for type " + messageType );
+			throw new AstPositionedException( hoist.position(),
+						new CommunicationInferenceException(
+								"No viable communication method from " + sender.identifier()
+										+ " to " + receiver.identifier()
+										+ " for type " + inType	) );
 		}
+		var channelName = comPair.left().left();
+		var channelType = comPair.left().right();
+		var comMethod = comPair.right();
 
-		initializer.dangerouslyUpdateValue( createComExpression(
-				value,
-				messageType,
-				comPair.left().left(),
-				comPair.left().right(),
-				hoist,
-				comPair.right() ) );
+		// Build the communication expression
+		var methodType = comMethod.applyTo( List.of( inType.typeConstructor() ) );
+		var inTypeExpr = Utils.innerTypeExpression( inType );
+
+		// The '<T>com( expr )' part
+		var scopedExpression = new MethodCallExpression( new Name( comMethod.identifier() ),
+				List.of( expr ), List.of( inTypeExpr ), expr.position() );
+		scopedExpression.setMethodAnnotation( methodType );
+		scopedExpression.setTypeAnnotation( outType );
+
+		// The 'ch_AB' part
+		var scope = new FieldAccessExpression( new Name( channelName ), expr.position() );
+		scope.setTypeAnnotation( channelType );
+
+		// The whole 'ch_AB.com( expr )' part
+		var comExpression = new ScopedExpression( scope, scopedExpression, expr.position() );
+		comExpression.setTypeAnnotation( outType );
+
+		// Update the variable declaration
+		initializer.dangerouslyUpdateValue( comExpression );
 	}
 
-	private static GroundDataType messageTypeOf( Expression value, VariableDeclaration hoist ) {
-		if( value instanceof MethodCallExpression methodCall
-				&& methodCall.methodAnnotation().isPresent() ) {
-			return dataTypeOf(
-					methodCall.methodAnnotation().get().returnType(),
-					hoist,
-					"message" );
-		}
-		return dataTypeOf(
-				value.typeAnnotation().orElseThrow( () ->
-						inferenceError( hoist, "Hoisted value has no type annotation" ) ),
-				hoist,
-				"message" );
-	}
-
-	private static GroundDataTypeOrVoid receiverTypeAnnotation(
-			AssignExpression initializer, VariableDeclaration hoist ) {
-		return initializer.typeAnnotation().orElseThrow( () ->
-				inferenceError( hoist, "Hoisted initializer has no receiver type annotation" ) );
-	}
-
-	private static GroundDataType dataTypeOf(
-			GroundDataTypeOrVoid type, VariableDeclaration hoist, String label ) {
-		if( type == null || type.isVoid() ) {
-			throw inferenceError( hoist, "Hoisted " + label + " type is void or missing" );
-		}
+	private static GroundReferenceType boxed( GroundDataTypeOrVoid type ) {
 		if( type instanceof GroundPrimitiveDataType primitive ) {
 			return primitive.boxedType();
 		}
-		if( type instanceof GroundDataType dataType ) {
-			return dataType;
-		}
-		throw inferenceError( hoist,
-				"Hoisted " + label + " type is not a data type: "
-						+ type.getClass().getSimpleName() );
-	}
-
-	private static World singleWorld(
-			GroundDataType type, VariableDeclaration hoist, String label ) {
-		if( type.worldArguments().size() != 1 ) {
-			throw inferenceError( hoist,
-					"Hoisted " + label + " type has "
-							+ type.worldArguments().size()
-							+ " worlds, expected 1" );
-		}
-		return type.worldArguments().get( 0 );
-	}
-
-	private static Expression createComExpression(
-			Expression value, GroundDataType messageType, String channelIdentifier,
-			GroundInterface channelType, VariableDeclaration hoist,
-			Member.HigherMethod comMethod ) {
-		List< ? extends HigherReferenceType > methodTypeArgs =
-				methodTypeArguments( messageType, hoist, comMethod );
-		Member.GroundMethod groundComMethod = comMethod.applyTo( methodTypeArgs );
-		GroundDataType returnType = dataTypeOf(
-				groundComMethod.returnType(), hoist, "communication return" );
-		List< TypeExpression > typeArguments =
-				comMethod.typeParameters().isEmpty()
-						? List.of()
-						: List.of( Utils.innerTypeExpression( messageType ) );
-		MethodCallExpression scopedExpression = new MethodCallExpression(
-				new Name( comMethod.identifier() ),
-				List.of( value ),
-				typeArguments,
-				value.position() );
-		scopedExpression.setMethodAnnotation( groundComMethod );
-		scopedExpression.setTypeAnnotation( returnType );
-		FieldAccessExpression scope = new FieldAccessExpression(
-				new Name( channelIdentifier ), value.position() );
-		scope.setTypeAnnotation( channelType );
-		ScopedExpression comExpression =
-				new ScopedExpression( scope, scopedExpression, value.position() );
-		comExpression.setTypeAnnotation( returnType );
-		return comExpression;
-	}
-
-	private static List< ? extends HigherReferenceType > methodTypeArguments(
-			GroundDataType messageType, VariableDeclaration hoist,
-			Member.HigherMethod comMethod ) {
-		if( comMethod.typeParameters().isEmpty() ) {
-			return List.of();
-		}
-		if( comMethod.typeParameters().size() != 1 ) {
-			throw inferenceError( hoist,
-					"Communication method has "
-							+ comMethod.typeParameters().size()
-							+ " type parameters, expected 0 or 1" );
-		}
-		if( messageType instanceof GroundClassOrInterface referenceType ) {
-			return List.of(
-					referenceType.typeConstructor()
-							.partiallyApplyTo( referenceType.typeArguments() ) );
-		}
-		if( messageType instanceof GroundReferenceType referenceType ) {
-			return List.of( referenceType.typeConstructor() );
-		}
-		throw inferenceError( hoist,
-				"Hoisted message type cannot be used as a communication type argument: "
-						+ messageType );
-	}
-
-	private static CommunicationInferenceException inferenceError(
-			VariableDeclaration hoist, String message ) {
-		return new CommunicationInferenceException(
-				message + " for hoist " + hoist.name()
-						+ hoist.initializer()
-								.map( initializer -> " initialized by " + initializer.value() )
-								.orElse( "" ) );
+		return (GroundReferenceType) type;
 	}
 }

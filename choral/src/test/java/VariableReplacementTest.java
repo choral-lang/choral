@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
+import choral.exceptions.ChoralCompoundException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,7 +15,6 @@ import choral.compiler.Parser;
 import choral.compiler.Typer;
 import choral.compiler.TyperOptions;
 import choral.compiler.moveMeant.VariableReplacement;
-import choral.exceptions.CommunicationInferenceException;
 import choral.utils.VerbosityLevel;
 
 public class VariableReplacementTest {
@@ -171,6 +171,6 @@ public class VariableReplacementTest {
 				}
 			}
 			""";
-		assertThrows( CommunicationInferenceException.class, () -> inferCommsCu( src ) );
+		assertThrows( ChoralCompoundException.class, () -> inferCommsCu( src ) );
 	}
 }

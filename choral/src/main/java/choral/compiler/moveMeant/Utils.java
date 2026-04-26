@@ -51,22 +51,6 @@ public class Utils {
 				)).toList();
 	}
 
-    /**
-	 * Retreives all methods from the {@code CompilationUnit} including constructors.
-     * <p>
-     * Returns a list of the methods' typeannotations.
-	 */
-    public static List<HigherCallable> getJustMethods( CompilationUnit cu ){
-		return Stream.concat( 
-			cu.classes().stream()
-				.flatMap( cls -> cls.methods().stream() )
-				.map( method -> method.signature().typeAnnotation().get() ), // we assume that methods are type-annotated
-			cu.classes().stream()
-				.flatMap(cls -> cls.constructors().stream()
-				.map( method -> method.signature().typeAnnotation().get() )
-				)).toList();
-	}
-
 	/**
 	 * Searches through the methods of {@code channels} and returns the first viable com 
 	 * method based on the input. 
@@ -88,8 +72,8 @@ public class Utils {
 		
 		for( Pair<String, GroundInterface> channelPair : channels ){
 
-			// Data channels might not return the same datatype at the receiver as 
-			// the datatype from the sender. Since we only store one type for the 
+			// Data channels might not return the same datatype at the receiver as
+			// the datatype from the sender. Since we only store one type for the
 			// dependency we assume that all types in a channel are the same.
 			GroundInterface channel = channelPair.right();
 			if( channel.typeArguments().stream().anyMatch( typeArg -> dependencyType.typeConstructor().isSubtypeOf( typeArg ) ) ){
@@ -163,21 +147,6 @@ public class Utils {
 		}
 	}
 
-	/**
-	 * Chains Statements together through continuations.
-	 * <p>
-	 * Given a list of statements {@code stms}, it returns the {@code stms[0]} with its 
-	 * continuation set to {@code stms[1]}, and {@code stms[1]}'s continuation set to 
-	 * {@code stms[2]} and so on.
-	 */
-	public static Statement chainStatements( List<Statement> statements ){
-		if( statements.size() == 1 )
-			return statements.get(0);
-		
-		Statement last = statements.remove(statements.size()-1);
-		return chainStatements(statements, last);
-	}
-
 	public static Statement chainStatements( List<Statement> statements, Statement last ){
 		if( statements.size() == 0 )
 			return last;
@@ -234,15 +203,5 @@ public class Utils {
 		}
 		throw new IllegalStateException(
 				"Unsupported type for type expression: " + t.getClass().getSimpleName() );
-	}
-
-	/**
-	 * Clears world dependencies on every method and constructor of {@code cu}.
-	 * Used by communication-inference passes to reset state before re-typing.
-	 */
-	public static void clearAllDependencies( CompilationUnit cu ) {
-		for( HigherCallable callable : getJustMethods( cu ) ) {
-			callable.clearDependencies();
-		}
 	}
 }
