@@ -1,7 +1,6 @@
 package choral.compiler.moveMeant;
 
 import choral.ast.CompilationUnit;
-import choral.compiler.Typer;
 import choral.compiler.TyperOptions;
 import choral.compiler.moveMeant.MiniZincInference.MiniZincInference;
 
@@ -34,8 +33,6 @@ public class MoveMeant {
 			Collection< CompilationUnit > dataComCus = sources.stream().map( cu ->
 					new VariableReplacement().inferComms( cu )
 			).toList();
-			// Since dataComCu is now without type annotations, we need to re-annotate them again
-			Typer.annotate( dataComCus, headers, opts.normalMode() );
 
 			for( CompilationUnit dataComCu : dataComCus ) {
 				Selections selections = new BasicKOCInference().inferKOC( dataComCu );

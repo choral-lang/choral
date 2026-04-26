@@ -194,7 +194,12 @@ public class Utils {
 	 */
 	public static TypeExpression outerTypeExpression( GroundDataType t ) {
 		List< WorldArgument > worldArgs = t.worldArguments().stream()
-				.map( w -> new WorldArgument( new Name( w.identifier() ), null ) )
+				.map( w -> {
+					WorldArgument worldArgument =
+							new WorldArgument( new Name( w.identifier() ), null );
+					worldArgument.setTypeAnnotation( w );
+					return worldArgument;
+				} )
 				.toList();
 		return typeExpression( t, worldArgs );
 	}
@@ -214,14 +219,18 @@ public class Utils {
 			List< TypeExpression > typeArgs = gc.typeArguments().stream()
 					.map( ta -> innerTypeExpression( ta.applyTo( gc.worldArguments() ) ) )
 					.toList();
-			return new TypeExpression(
+			TypeExpression typeExpression = new TypeExpression(
 					new Name( gc.typeConstructor().identifier() ), worldArgs, typeArgs );
+			typeExpression.setTypeAnnotation( gc );
+			return typeExpression;
 		}
 		if( t instanceof GroundTypeParameter gtp ) {
-			return new TypeExpression(
+			TypeExpression typeExpression = new TypeExpression(
 					new Name( gtp.typeConstructor().identifier() ),
 					worldArgs,
 					Collections.emptyList() );
+			typeExpression.setTypeAnnotation( gtp );
+			return typeExpression;
 		}
 		throw new IllegalStateException(
 				"Unsupported type for type expression: " + t.getClass().getSimpleName() );

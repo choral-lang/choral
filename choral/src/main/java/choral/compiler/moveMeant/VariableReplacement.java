@@ -8,11 +8,15 @@ import choral.ast.expression.Expression;
 import choral.ast.expression.FieldAccessExpression;
 import choral.ast.expression.MethodCallExpression;
 import choral.ast.expression.ScopedExpression;
+import choral.ast.type.TypeExpression;
 import choral.exceptions.CommunicationInferenceException;
+import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
 import choral.types.GroundDataTypeOrVoid;
 import choral.types.GroundInterface;
 import choral.types.GroundPrimitiveDataType;
+import choral.types.GroundReferenceType;
+import choral.types.HigherReferenceType;
 import choral.types.Member;
 import choral.types.World;
 import choral.utils.Pair;
@@ -26,7 +30,8 @@ import java.util.Map;
  * This pass expects a typed compilation unit. It first normalizes cross-world
  * expressions into temporary variables, then rewrites each hoist initializer from
  * {@code T@B msg = expr@A} into {@code T@B msg = ch.<T>com(expr@A)}.
- * The returned compilation unit is re-typed by {@link MoveMeant}.
+ * The returned compilation unit preserves the type annotations needed by later
+ * moveMeant passes.
  */
 public class VariableReplacement {
 
@@ -83,10 +88,19 @@ public class VariableReplacement {
 				value,
 				messageType,
 				comPair.left().left(),
+				comPair.left().right(),
+				hoist,
 				comPair.right() ) );
 	}
 
 	private static GroundDataType messageTypeOf( Expression value, VariableDeclaration hoist ) {
+		if( value instanceof MethodCallExpression methodCall
+				&& methodCall.methodAnnotation().isPresent() ) {
+			return dataTypeOf(
+					methodCall.methodAnnotation().get().returnType(),
+					hoist,
+					"message" );
+		}
 		return dataTypeOf(
 				value.typeAnnotation().orElseThrow( () ->
 						inferenceError( hoist, "Hoisted value has no type annotation" ) ),
@@ -129,15 +143,56 @@ public class VariableReplacement {
 
 	private static Expression createComExpression(
 			Expression value, GroundDataType messageType, String channelIdentifier,
+			GroundInterface channelType, VariableDeclaration hoist,
 			Member.HigherMethod comMethod ) {
+		List< ? extends HigherReferenceType > methodTypeArgs =
+				methodTypeArguments( messageType, hoist, comMethod );
+		Member.GroundMethod groundComMethod = comMethod.applyTo( methodTypeArgs );
+		GroundDataType returnType = dataTypeOf(
+				groundComMethod.returnType(), hoist, "communication return" );
+		List< TypeExpression > typeArguments =
+				comMethod.typeParameters().isEmpty()
+						? List.of()
+						: List.of( Utils.innerTypeExpression( messageType ) );
 		MethodCallExpression scopedExpression = new MethodCallExpression(
 				new Name( comMethod.identifier() ),
 				List.of( value ),
-				List.of( Utils.innerTypeExpression( messageType ) ),
+				typeArguments,
 				value.position() );
+		scopedExpression.setMethodAnnotation( groundComMethod );
+		scopedExpression.setTypeAnnotation( returnType );
 		FieldAccessExpression scope = new FieldAccessExpression(
 				new Name( channelIdentifier ), value.position() );
-		return new ScopedExpression( scope, scopedExpression, value.position() );
+		scope.setTypeAnnotation( channelType );
+		ScopedExpression comExpression =
+				new ScopedExpression( scope, scopedExpression, value.position() );
+		comExpression.setTypeAnnotation( returnType );
+		return comExpression;
+	}
+
+	private static List< ? extends HigherReferenceType > methodTypeArguments(
+			GroundDataType messageType, VariableDeclaration hoist,
+			Member.HigherMethod comMethod ) {
+		if( comMethod.typeParameters().isEmpty() ) {
+			return List.of();
+		}
+		if( comMethod.typeParameters().size() != 1 ) {
+			throw inferenceError( hoist,
+					"Communication method has "
+							+ comMethod.typeParameters().size()
+							+ " type parameters, expected 0 or 1" );
+		}
+		if( messageType instanceof GroundClassOrInterface referenceType ) {
+			return List.of(
+					referenceType.typeConstructor()
+							.partiallyApplyTo( referenceType.typeArguments() ) );
+		}
+		if( messageType instanceof GroundReferenceType referenceType ) {
+			return List.of( referenceType.typeConstructor() );
+		}
+		throw inferenceError( hoist,
+				"Hoisted message type cannot be used as a communication type argument: "
+						+ messageType );
 	}
 
 	private static CommunicationInferenceException inferenceError(
