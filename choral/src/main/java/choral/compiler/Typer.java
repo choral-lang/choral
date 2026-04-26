@@ -1493,6 +1493,10 @@ public class Typer {
 			private final VariableDeclarationScope scope;
 			private GroundDataTypeOrVoid left = null;
 			private boolean leftStatic = false;
+			/**
+			 * Whether we're typechecking the arguments of an explicit constructor invocation,
+			 * e.g. the arguments of `super(...)` or `this(...)`.
+			 */
 			private final boolean explicitConstructorArg;
 			private final TyperOptions opts;
 
@@ -1507,6 +1511,10 @@ public class Typer {
 			private final HigherCallable enclosingMethod;
 			/** The statement that contains the current expression. */
 			private final Statement enclosingStatement;
+
+			private boolean isInStaticContext() {
+				return explicitConstructorArg || enclosingMethod.isStatic();
+			}
 
 			GroundDataTypeOrVoid synth( Expression n ) {
 				return new Synth(
@@ -1781,7 +1789,7 @@ public class Typer {
 					result = scope.lookupVariable( identifier );
 					if( result.isEmpty() ) {
 						left = scope.lookupThis();
-						leftStatic = explicitConstructorArg;
+						leftStatic = isInStaticContext();
 					}
 				}
 				if( left instanceof GroundReferenceType ) {
@@ -1868,7 +1876,7 @@ public class Typer {
 			public GroundDataTypeOrVoid visit( MethodCallExpression n ) {
 				if( left == null ) { // only happens for simple method calls (local)
 					left = scope.lookupThis();
-					leftStatic = explicitConstructorArg;
+					leftStatic = isInStaticContext();
 				}
 				Pair<List< ? extends HigherReferenceType >, List< ? extends GroundDataType >> typeargsArgs = getArgsTypeargs(scope, n);
 
@@ -1959,6 +1967,11 @@ public class Typer {
 									"cannot reference 'this' before constructor has been called" ) );
 
 				}
+				if( enclosingMethod.isStatic() ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException(
+									"non-static variable 'this' cannot be referenced from a static context" ) );
+				}
 				return annotate( n, scope.lookupThis() );
 			}
 
@@ -1969,6 +1982,11 @@ public class Typer {
 							new StaticVerificationException(
 									"cannot reference 'super' before supertype constructor has been called" ) );
 
+				}
+				if( enclosingMethod.isStatic() ) {
+					throw new AstPositionedException( n.position(),
+							new StaticVerificationException(
+									"non-static variable 'super' cannot be referenced from a static context" ) );
 				}
 				return annotate( n, scope.lookupSuper() );
 			}

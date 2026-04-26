@@ -113,7 +113,7 @@ public class JavaCompiler extends PrettyPrinterVisitor {
 		if( n.catches().isEmpty() ) {
 			String body = visit( n.body() );
 			if( body.trim().length() < 1 ) {
-				return "";
+				return getContinuation( n, "" );
 			}
 			HashMap< String, Object > m = new HashMap<>();
 			String template = "{" + NEWLINE +
