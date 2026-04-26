@@ -557,7 +557,8 @@ public class TestChoral {
 						javaCompilationErrors.add(
 								String.format( "Error on line %d in %s%n",
 										diagnostic.getLineNumber(),
-										diagnostic.getSource().toUri() ) );
+										diagnostic.getSource() == null ?
+												"<no source>" : diagnostic.getSource().toUri() ) );
 						javaCompilationErrors.add( diagnostic.getMessage( null ) );
 					}
 					String javaErrors = String.join( "\n", javaCompilationErrors );

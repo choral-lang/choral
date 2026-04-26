@@ -60,6 +60,37 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 		return n.accept( this );
 	}
 
+	/** Returns true iff all code paths can reach a return statement. */
+	private static boolean alwaysReturns( Statement n ) {
+		if( n == null || n instanceof NilStatement ) {
+			return false;
+		}
+		if( n instanceof ReturnStatement ) {
+			return true;
+		}
+		if( n instanceof BlockStatement block ) {
+			return alwaysReturns( block.enclosedStatement() ) ||
+					alwaysReturns( block.continuation() );
+		}
+		if( n instanceof IfStatement ifStatement ) {
+			return alwaysReturns( ifStatement.continuation() ) ||
+					( alwaysReturns( ifStatement.ifBranch() ) &&
+							alwaysReturns( ifStatement.elseBranch() ) );
+		}
+		if( n instanceof SwitchStatement switchStatement ) {
+			return alwaysReturns( switchStatement.continuation() ) ||
+					switchStatement.cases().values().stream().allMatch(
+							StatementsProjector::alwaysReturns );
+		}
+		if( n instanceof TryCatchStatement tryCatchStatement ) {
+			return alwaysReturns( tryCatchStatement.continuation() ) ||
+					( alwaysReturns( tryCatchStatement.body() ) &&
+							tryCatchStatement.catches().stream().allMatch(
+									p -> alwaysReturns( p.right() ) ) );
+		}
+		return alwaysReturns( n.continuation() );
+	}
+
 	@Override
 	public TryCatchStatement visit( TryCatchStatement n ) {
 		return new TryCatchStatement(
@@ -340,12 +371,21 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 		} else {
 			List< Statement > cases = n.cases().values().stream()
 					.map( this::visit ).collect( Collectors.toList() );
+			Statement mergedCases = StatementsMerger.merge( cases );
+
+			// Sometimes projection generates unreachable code, like
+			// `return true; ...` - see the StatementsProjector test case
+			// for example. That projected code won't compile unless you throw away
+			// the unreachable code.
+			Statement continuation = alwaysReturns( mergedCases ) ?
+					new NilStatement( n.position() ) : visit( n.continuation() );
+
 			return new BlockStatement(
 					new ExpressionStatement(
 							ExpressionProjector.visit( this.world(), n.guard() ),
-							StatementsMerger.merge( cases )
+							mergedCases
 					),
-					visit( n.continuation() )
+					continuation
 			).copyPosition( n );
 		}
 	}
@@ -358,7 +398,8 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 	@Override
 	public Statement visit( ReturnStatement n ) {
 		return new ReturnStatement(
-				ExpressionProjector.visit( this.world(), n.returnExpression() ),
+				n.returnExpression() == null ? null :
+						ExpressionProjector.visit( this.world(), n.returnExpression() ),
 				visit( n.continuation() )
 		).copyPosition( n );
 	}

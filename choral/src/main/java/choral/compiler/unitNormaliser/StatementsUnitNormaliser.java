@@ -127,7 +127,8 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 	@Override
 	public Statement visit( ReturnStatement n ) {
 		return new ReturnStatement(
-				ExpressionUnitNormaliser.visitExpression( n.returnExpression() ),
+				n.returnExpression() == null ? null :
+						ExpressionUnitNormaliser.visitExpression( n.returnExpression() ),
 				visit( n.continuation() )
 		).copyPosition( n );
 	}

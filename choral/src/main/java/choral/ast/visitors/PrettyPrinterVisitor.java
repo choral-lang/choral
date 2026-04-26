@@ -290,12 +290,22 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( MethodCallExpression n ) {
-		return
-				( n.typeArguments().isEmpty() ? "" : "< " + visitAndCollect( n.typeArguments(),
-						SPACED_COMMA ) + " >" )
-						+ visit( n.name() )
-						+ ( n.arguments().isEmpty() ? "()" : "( " + visitAndCollect( n.arguments(),
-						SPACED_COMMA ) + " )" );
+		return visitMethodCall( n, !n.typeArguments().isEmpty() );
+	}
+
+	/**
+	 * Helper for printing method calls, with an option to explicitly print "this."---useful for
+	 * method calls with typer arguments like {@code <Integer>com( 1@A )}, which is syntactically
+	 * incorrect without the "this." prefix.
+	 * @param explicitThisReceiver if true, the method call is printed with an explicit "this."
+	 */
+	private String visitMethodCall( MethodCallExpression n, boolean explicitThisReceiver ) {
+		String typeArguments = n.typeArguments().isEmpty() ? "" :
+				"< " + visitAndCollect( n.typeArguments(), SPACED_COMMA ) + " >";
+		String receiver = explicitThisReceiver ? "this." : "";
+		return receiver + typeArguments + visit( n.name() )
+				+ ( n.arguments().isEmpty() ? "()" : "( " + visitAndCollect( n.arguments(),
+				SPACED_COMMA ) + " )" );
 	}
 
 	@Override
@@ -425,6 +435,9 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( ScopedExpression n ) {
+		if( n.scopedExpression() instanceof MethodCallExpression methodCall ) {
+			return visit( n.scope() ) + "." + visitMethodCall( methodCall, false );
+		}
 		return visit( n.scope() ) + "." + visit( n.scopedExpression() );
 	}
 

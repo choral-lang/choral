@@ -168,7 +168,9 @@ public class ImportProjector implements ChoralVisitorInterface< Void > {
 
 	@Override
 	public Void visit( ReturnStatement n ) {
-		visit( n.returnExpression() );
+		if( n.returnExpression() != null ) {
+			visit( n.returnExpression() );
+		}
 		return null;
 	}
 
