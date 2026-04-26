@@ -2,6 +2,7 @@ package choral.compiler.moveMeant;
 
 import choral.ast.CompilationUnit;
 import choral.ast.Name;
+import choral.ast.Position;
 import choral.ast.body.*;
 import choral.ast.body.Class;
 import choral.ast.body.Enum;
@@ -10,6 +11,7 @@ import choral.ast.statement.*;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
+import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.types.*;
 import choral.utils.Pair;
 
@@ -116,6 +118,39 @@ public class Normalizer {
 		}
 	}
 
+	private record HoistKey(String expression, List< String > expectedWorlds) {
+	}
+
+	private record HoistBinding(Name tmp, GroundDataTypeOrVoid type, Statement declaration) {
+	}
+
+	private class Context {
+		private final Context parent;
+		private final Map< HoistKey, HoistBinding > hoistedPureExpressions = new LinkedHashMap<>();
+
+		Context() {
+			this( null );
+		}
+
+		private Context( Context parent ) {
+			this.parent = parent;
+		}
+
+		Context child() {
+			return new Context( this );
+		}
+
+		HoistBinding lookup( HoistKey key ) {
+			HoistBinding local = hoistedPureExpressions.get( key );
+			if( local != null ) return local;
+			return parent == null ? null : parent.lookup( key );
+		}
+
+		void register( HoistKey key, HoistBinding binding ) {
+			hoistedPureExpressions.put( key, binding );
+		}
+	}
+
 	/**
 	 * Rebuilds {@code cu} by visiting every method and constructor body. {@code Statement}s
 	 * and {@code Expression}s are immutable, so rebuilding is how we insert nodes.
@@ -126,7 +161,7 @@ public class Normalizer {
 			List< ConstructorDefinition > newConstructors = new ArrayList<>();
 			for( ConstructorDefinition constructor : cls.constructors() ) {
 				Statement newBody = constructor.blockStatements()
-						.accept( new VisitStatement( null ) ).first();
+						.accept( new VisitStatement( null, new Context() ) ).first();
 				// Explicit this(...)/super(...) invocations are MethodCallExpression nodes
 				// without a selected constructor annotation. Safely normalizing their
 				// arguments needs either that annotation or a dedicated AST node.
@@ -146,7 +181,8 @@ public class Normalizer {
 					newBody = method.body().get()
 							.accept( new VisitStatement(
 									method.signature().typeAnnotation().orElseThrow()
-											.innerCallable().returnType() ) ).first();
+											.innerCallable().returnType(),
+									new Context() ) ).first();
 				}
 				newMethods.add( new ClassMethodDefinition(
 						method.signature(),
@@ -187,15 +223,17 @@ public class Normalizer {
 	private class VisitStatement extends AbstractChoralVisitor< NormalizedStmt > {
 
 		private final GroundDataTypeOrVoid expectedReturnType;
+		private final Context context;
 
-		VisitStatement( GroundDataTypeOrVoid expectedReturnType ) {
+		VisitStatement( GroundDataTypeOrVoid expectedReturnType, Context context ) {
 			this.expectedReturnType = expectedReturnType;
+			this.context = context;
 		}
 
 		@Override
 		public NormalizedStmt visit( ExpressionStatement n ) {
 			Expression e = n.expression();
-			NormalizedExpr res = e.accept( new VisitExpression( typeOf( e ) ) );
+			NormalizedExpr res = e.accept( new VisitExpression( typeOf( e ), context ) );
 			ExpressionStatement newStmt = new ExpressionStatement(
 					res.expression(),
 					visitContinuation( n.continuation() ),
@@ -213,7 +251,8 @@ public class Normalizer {
 					AssignExpression init = vd.initializer().get();
 					NormalizedExpr res =
 							init.accept( new VisitExpression(
-									(GroundDataTypeOrVoid) vd.type().typeAnnotation().orElseThrow() ) );
+									(GroundDataTypeOrVoid) vd.type().typeAnnotation().orElseThrow(),
+									context ) );
 					VariableDeclaration newVd = new VariableDeclaration(
 							vd.name(),
 							vd.type(),
@@ -239,7 +278,8 @@ public class Normalizer {
 		public NormalizedStmt visit( BlockStatement n ) {
 			// A block introduces a scope: hoists from the enclosed statement are spliced
 			// inside the block, not lifted out of it.
-			Statement enclosed = n.enclosedStatement().accept( this ).first();
+			Statement enclosed = n.enclosedStatement()
+					.accept( new VisitStatement( expectedReturnType, context.child() ) ).first();
 			BlockStatement blk = new BlockStatement(
 					enclosed,
 					visitContinuation( n.continuation() ),
@@ -250,11 +290,11 @@ public class Normalizer {
 		@Override
 		public NormalizedStmt visit( IfStatement n ) {
 			Expression cond = n.condition();
-			NormalizedExpr res = cond.accept( new VisitExpression( typeOf( cond ) ) );
+			NormalizedExpr res = cond.accept( new VisitExpression( typeOf( cond ), context ) );
 			IfStatement newStmt = new IfStatement(
 					res.expression(),
-					visitContinuation( n.ifBranch() ),
-					visitContinuation( n.elseBranch() ),
+					visitChildScope( n.ifBranch() ),
+					visitChildScope( n.elseBranch() ),
 					visitContinuation( n.continuation() ),
 					n.position() );
 			return NormalizedStmt.of( res.first(), res.last(), newStmt );
@@ -262,10 +302,11 @@ public class Normalizer {
 
 		@Override
 		public NormalizedStmt visit( SwitchStatement n ) {
-			NormalizedExpr guard = n.guard().accept( new VisitExpression( typeOf( n.guard() ) ) );
+			NormalizedExpr guard = n.guard().accept(
+					new VisitExpression( typeOf( n.guard() ), context ) );
 			Map< SwitchArgument< ? >, Statement > cases = new LinkedHashMap<>();
 			for( Map.Entry< SwitchArgument< ? >, Statement > entry : n.cases().entrySet() ) {
-				cases.put( entry.getKey(), entry.getValue().accept( this ).first() );
+				cases.put( entry.getKey(), visitChildScope( entry.getValue() ) );
 			}
 			SwitchStatement newStmt = new SwitchStatement(
 					guard.expression(),
@@ -279,12 +320,12 @@ public class Normalizer {
 		public NormalizedStmt visit( TryCatchStatement n ) {
 			// Try and catch bodies are scopes; their hoists stay inside. Catch
 			// declarations have no initializer, so they cannot generate hoists.
-			Statement body = n.body().accept( this ).first();
+			Statement body = visitChildScope( n.body() );
 			List< Pair< VariableDeclaration, Statement > > newCatches = new ArrayList<>();
 			for( Pair< VariableDeclaration, Statement > pair : n.catches() ) {
 				newCatches.add( new Pair<>(
 						pair.left(),
-						pair.right().accept( this ).first() ) );
+						visitChildScope( pair.right() ) ) );
 			}
 			TryCatchStatement newStmt = new TryCatchStatement(
 					body,
@@ -297,7 +338,7 @@ public class Normalizer {
 		@Override
 		public NormalizedStmt visit( ReturnStatement n ) {
 			Expression e = n.returnExpression();
-			NormalizedExpr res = e.accept( new VisitExpression( expectedReturnType ) );
+			NormalizedExpr res = e.accept( new VisitExpression( expectedReturnType, context ) );
 			ReturnStatement newStmt = new ReturnStatement(
 					res.expression(),
 					visitContinuation( n.continuation() ),
@@ -312,6 +353,12 @@ public class Normalizer {
 		private Statement visitContinuation( Statement continuation ) {
 			if( continuation == null ) return null;
 			return continuation.accept( this ).first();
+		}
+
+		private Statement visitChildScope( Statement statement ) {
+			if( statement == null ) return null;
+			return statement.accept( new VisitStatement( expectedReturnType, context.child() ) )
+					.first();
 		}
 
 	}
@@ -332,16 +379,18 @@ public class Normalizer {
 	private class VisitExpression extends AbstractChoralVisitor< NormalizedExpr > {
 
 		private final GroundDataTypeOrVoid expectedType;
+		private final Context context;
 
-		VisitExpression( GroundDataTypeOrVoid expectedType ) {
+		VisitExpression( GroundDataTypeOrVoid expectedType, Context context ) {
 			this.expectedType = box( expectedType );
+			this.context = context;
 		}
 
 		VisitExpression visitor( GroundDataTypeOrVoid expectedType ) {
 			if( this.expectedType == expectedType ) {
 				return this;
 			} else {
-				return new VisitExpression( expectedType );
+				return new VisitExpression( expectedType, context );
 			}
 		}
 
@@ -353,10 +402,10 @@ public class Normalizer {
 				NormalizedExpr res = arg.accept( visitor( paramType( n, i ) ) );
 				newArgs.add( res.first, res.last, res.expression );
 			}
-			Expression rebuilt = new MethodCallExpression(
+			MethodCallExpression rebuilt = new MethodCallExpression(
 					n.name(), newArgs.results, n.typeArguments(), n.position() );
 			rebuilt.setTypeAnnotation( n.typeAnnotation().orElseThrow() );
-			( (MethodCallExpression) rebuilt ).setMethodAnnotation( n.methodAnnotation().orElseThrow() );
+			rebuilt.setMethodAnnotation( n.methodAnnotation().orElseThrow() );
 			return maybeHoist( newArgs.first, newArgs.last, rebuilt );
 		}
 
@@ -392,11 +441,10 @@ public class Normalizer {
 				NormalizedExpr res = arg.accept( visitor( constructorParamType( n, i ) ) );
 				newArgs.add( res.first, res.last, res.expression );
 			}
-			Expression rebuilt = new ClassInstantiationExpression(
+			ClassInstantiationExpression rebuilt = new ClassInstantiationExpression(
 					n.typeExpression(), newArgs.results, n.typeArguments(), n.position() );
 			rebuilt.setTypeAnnotation( typeOf( n ) );
-			n.constructorAnnotation().ifPresent(
-					( (ClassInstantiationExpression) rebuilt )::setConstructorAnnotation );
+			n.constructorAnnotation().ifPresent( rebuilt::setConstructorAnnotation );
 			return maybeHoist( newArgs.first, newArgs.last, rebuilt );
 		}
 
@@ -490,8 +538,29 @@ public class Normalizer {
 			if( !isCrossWorld( expr, expectedType ) ) {
 				return new NormalizedExpr( first, last, expr );
 			}
+			if( isPureHoistExpression( expr ) ) {
+				HoistKey key = hoistKey( expr, expectedType );
+				HoistBinding existing = context.lookup( key );
+				if( existing != null ) {
+					return new NormalizedExpr(
+							first,
+							last,
+							tmpAccess( existing.tmp(), existing.type(), expr.position() ) );
+				}
+				Name tmp = freshTmpName();
+				Statement newHoist = makeHoist( tmp, expr, expectedType );
+				context.register( key, new HoistBinding( tmp, expectedType, newHoist ) );
+				return appendHoist( first, last, expr, tmp, expectedType, newHoist );
+			}
 			Name tmp = freshTmpName();
 			Statement newHoist = makeHoist( tmp, expr, expectedType );
+			return appendHoist( first, last, expr, tmp, expectedType, newHoist );
+		}
+
+		private NormalizedExpr appendHoist(
+				Statement first, Statement last, Expression expr, Name tmp,
+				GroundDataTypeOrVoid expectedType, Statement newHoist
+		) {
 			Statement newFirst;
 			if( first == null ) {
 				newFirst = newHoist;
@@ -499,9 +568,8 @@ public class Normalizer {
 				last.dangerouslySetContinuation( newHoist );
 				newFirst = first;
 			}
-			FieldAccessExpression tmpAccess = new FieldAccessExpression( tmp, expr.position() );
-			tmpAccess.setTypeAnnotation( expectedType );
-			return new NormalizedExpr( newFirst, newHoist, tmpAccess );
+			return new NormalizedExpr(
+					newFirst, newHoist, tmpAccess( tmp, expectedType, expr.position() ) );
 		}
 
 		/**
@@ -532,6 +600,35 @@ public class Normalizer {
 
 	private Name freshTmpName() {
 		return new Name( "tmp" + seqnum() );
+	}
+
+	private static FieldAccessExpression tmpAccess(
+			Name tmp, GroundDataTypeOrVoid type, Position position ) {
+		FieldAccessExpression tmpAccess = new FieldAccessExpression( tmp, position );
+		tmpAccess.setTypeAnnotation( type );
+		return tmpAccess;
+	}
+
+	private static HoistKey hoistKey( Expression expr, GroundDataTypeOrVoid expectedType ) {
+		List< String > expectedWorlds = ( (GroundDataType) expectedType ).worldArguments()
+				.stream()
+				.map( World::identifier )
+				.toList();
+		return new HoistKey( new PrettyPrinterVisitor().visit( expr ), expectedWorlds );
+	}
+
+	private static boolean isPureHoistExpression( Expression expr ) {
+		if( expr instanceof FieldAccessExpression
+				|| expr instanceof ThisExpression
+				|| expr instanceof SuperExpression
+				|| expr instanceof StaticAccessExpression ) {
+			return true;
+		}
+		if( expr instanceof ScopedExpression scoped ) {
+			return isPureHoistExpression( scoped.scope() )
+					&& isPureHoistExpression( scoped.scopedExpression() );
+		}
+		return false;
 	}
 
 	/**

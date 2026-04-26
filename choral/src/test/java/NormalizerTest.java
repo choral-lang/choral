@@ -521,6 +521,213 @@ public class NormalizerTest {
 	}
 
 	@Test
+	public void deduplicatesRepeatedPureVariableHoists() throws IOException {
+		String src =
+			"""
+			package test;
+			class Thing@D {}
+			class C@( A, B ) {
+				public void takeB( Thing@B first, Thing@B second ) {}
+				public void run( Thing@A y ) {
+					this.takeB( y, y );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class Thing@D {}
+			class C@( A, B ) {
+				public void takeB( Thing@B first, Thing@B second ) {}
+				public void run( Thing@A y ) {
+					Thing@B tmp0 = y;
+					this.takeB( tmp0, tmp0 );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void deduplicatesRepeatedPureScopedFieldHoists() throws IOException {
+		String src =
+			"""
+			package test;
+			class Bar@D {}
+			class Foo@D { public Bar@D bar; }
+			class Thing@D { public Foo@D foo; }
+			class C@( A, B ) {
+				public void takeB( Bar@B first, Bar@B second ) {}
+				public void run( Thing@A y ) {
+					this.takeB( y.foo.bar, y.foo.bar );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class Bar@D {}
+			class Foo@D { public Bar@D bar; }
+			class Thing@D { public Foo@D foo; }
+			class C@( A, B ) {
+				public void takeB( Bar@B first, Bar@B second ) {}
+				public void run( Thing@A y ) {
+					Bar@B tmp0 = y.foo.bar;
+					this.takeB( tmp0, tmp0 );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void doesNotDeduplicateSamePureExpressionAcrossDifferentExpectedWorlds() throws IOException {
+		String src =
+			"""
+			package test;
+			class Thing@D {}
+			class C@( A, B, D ) {
+				public void takeBoth( Thing@B atB, Thing@D atD ) {}
+				public void run( Thing@A y ) {
+					this.takeBoth( y, y );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class Thing@D {}
+			class C@( A, B, D ) {
+				public void takeBoth( Thing@B atB, Thing@D atD ) {}
+				public void run( Thing@A y ) {
+					Thing@B tmp0 = y;
+					Thing@D tmp1 = y;
+					this.takeBoth( tmp0, tmp1 );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void doesNotDeduplicateRepeatedImpureMethodCallHoists() throws IOException {
+		String src =
+			"""
+			package test;
+			class Bar@D {}
+			class Foo@D {
+				public Bar@D bar;
+				public Bar@D baz() { return bar; }
+			}
+			class Thing@D { public Foo@D foo; }
+			class C@( A, B ) {
+				public void takeB( Bar@B first, Bar@B second ) {}
+				public void run( Thing@A y ) {
+					this.takeB( y.foo.baz(), y.foo.baz() );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class Bar@D {}
+			class Foo@D {
+				public Bar@D bar;
+				public Bar@D baz() { return bar; }
+			}
+			class Thing@D { public Foo@D foo; }
+			class C@( A, B ) {
+				public void takeB( Bar@B first, Bar@B second ) {}
+				public void run( Thing@A y ) {
+					Bar@B tmp0 = y.foo.baz();
+					Bar@B tmp1 = y.foo.baz();
+					this.takeB( tmp0, tmp1 );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void deduplicatesOnlyPureHoistsInMixedExpressionList() throws IOException {
+		String src =
+			"""
+			package test;
+			class Bar@D {}
+			class Foo@D {
+				public Bar@D bar;
+				public Bar@D baz() { return bar; }
+			}
+			class Thing@D { public Foo@D foo; }
+			class C@( A, B ) {
+				public Integer@B takeB(
+					Thing@B t1, Thing@B t2,
+					Bar@B b1, Bar@B b2,
+					Bar@B c1, Bar@B c2 ) { return 0@B; }
+				public void run( Thing@A y ) {
+					Integer@B x = this.takeB(
+						y, y, y.foo.bar, y.foo.bar, y.foo.baz(), y.foo.baz() );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class Bar@D {}
+			class Foo@D {
+				public Bar@D bar;
+				public Bar@D baz() { return bar; }
+			}
+			class Thing@D { public Foo@D foo; }
+			class C@( A, B ) {
+				public Integer@B takeB(
+					Thing@B t1, Thing@B t2,
+					Bar@B b1, Bar@B b2,
+					Bar@B c1, Bar@B c2 ) { return 0@B; }
+				public void run( Thing@A y ) {
+					Thing@B tmp0 = y;
+					Bar@B tmp1 = y.foo.bar;
+					Bar@B tmp2 = y.foo.baz();
+					Bar@B tmp3 = y.foo.baz();
+					Integer@B x = this.takeB(
+						tmp0, tmp0, tmp1, tmp1, tmp2, tmp3 );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void doesNotReusePureHoistDeclaredOnlyInsideChildScope() throws IOException {
+		String src =
+			"""
+			package test;
+			class Thing@D {}
+			class C@( A, B ) {
+				public void takeB( Thing@B y ) {}
+				public void run( Boolean@A cond, Thing@A y ) {
+					if( cond ) { this.takeB( y ); } else { }
+					this.takeB( y );
+				}
+			}
+			""";
+		String expected =
+			"""
+			package test;
+			class Thing@D {}
+			class C@( A, B ) {
+				public void takeB( Thing@B y ) {}
+				public void run( Boolean@A cond, Thing@A y ) {
+					if( cond ) { Thing@B tmp0 = y; this.takeB( tmp0 ); } else { }
+					Thing@B tmp1 = y;
+					this.takeB( tmp1 );
+				}
+			}
+			""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
 	public void hoistsStaticCallArgumentAndWholeStaticCall() throws IOException {
 		String src =
 			"""
