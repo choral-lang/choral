@@ -1,12 +1,17 @@
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import choral.ast.CompilationUnit;
+import choral.ast.body.ClassMethodDefinition;
+import choral.ast.body.ConstructorDefinition;
+import choral.ast.body.VariableDeclaration;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.HeaderLoader;
 import choral.compiler.Parser;
@@ -29,8 +34,46 @@ public class NormalizerTest {
 				HeaderLoader.loadStandardProfile().toList(),
 				opts );
 		CompilationUnit typedCu = typed.iterator().next();
-		CompilationUnit normalized = new Normalizer().normalize( typedCu );
+		CompilationUnit normalized = normalizeResult( typedCu ).compilationUnit();
 		return new PrettyPrinterVisitor().visit( normalized );
+	}
+
+	private static Normalizer.Result normalizeResult( String source ) throws IOException {
+		CompilationUnit cu = Parser.parseString( source );
+		TyperOptions opts = new TyperOptions( VerbosityLevel.WARNINGS ).relaxedMode();
+		Collection< CompilationUnit > typed = Typer.annotate(
+				List.of( cu ),
+				HeaderLoader.loadStandardProfile().toList(),
+				opts );
+		return normalizeResult( typed.iterator().next() );
+	}
+
+	private static Normalizer.Result normalizeResult( CompilationUnit typedCu ) {
+		return new Normalizer().normalize( typedCu );
+	}
+
+	private static List< VariableDeclaration > hoistsForMethod(
+			Normalizer.Result result, String methodName ) {
+		for( Map.Entry< Object, List< VariableDeclaration > > entry :
+				result.hoistedDefinitions().entrySet() ) {
+			if( entry.getKey() instanceof ClassMethodDefinition method
+					&& method.signature().name().identifier().equals( methodName ) ) {
+				return entry.getValue();
+			}
+		}
+		throw new AssertionError( "No method hoists found for " + methodName );
+	}
+
+	private static List< VariableDeclaration > hoistsForConstructor(
+			Normalizer.Result result, String constructorName ) {
+		for( Map.Entry< Object, List< VariableDeclaration > > entry :
+				result.hoistedDefinitions().entrySet() ) {
+			if( entry.getKey() instanceof ConstructorDefinition constructor
+					&& constructor.signature().name().identifier().equals( constructorName ) ) {
+				return entry.getValue();
+			}
+		}
+		throw new AssertionError( "No constructor hoists found for " + constructorName );
 	}
 
 	/** Parse and pretty-print, for golden comparisons in identity cases. */
@@ -875,5 +918,110 @@ public class NormalizerTest {
 			}
 			""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
+	}
+
+	@Test
+	public void recordsPureVariableHoistMetadata() throws IOException {
+		String src =
+			"""
+			package test;
+			class Thing@D {}
+			class C@( A, B ) {
+				public void takeB( Thing@B y ) {}
+				public void run( Thing@A y ) {
+					this.takeB( y );
+				}
+			}
+			""";
+		Normalizer.Result result = normalizeResult( src );
+		List< VariableDeclaration > hoists = hoistsForMethod( result, "run" );
+		assertEquals( 1, hoists.size() );
+		assertEquals( "tmp0", hoists.get( 0 ).name().identifier() );
+		assertEquals( "Thing", hoists.get( 0 ).type().name().identifier() );
+		assertEquals( "B", hoists.get( 0 ).type().worldArguments().get( 0 ).name().identifier() );
+		assertTrue( hoists.get( 0 ).initializer().isPresent() );
+	}
+
+	@Test
+	public void recordsDeduplicatedPureHoistOnce() throws IOException {
+		String src =
+			"""
+			package test;
+			class Thing@D {}
+			class C@( A, B ) {
+				public void takeB( Thing@B y1, Thing@B y2 ) {}
+				public void run( Thing@A y ) {
+					this.takeB( y, y );
+				}
+			}
+			""";
+		Normalizer.Result result = normalizeResult( src );
+		List< VariableDeclaration > hoists = hoistsForMethod( result, "run" );
+		assertEquals( 1, hoists.size() );
+		assertEquals( "tmp0", hoists.get( 0 ).name().identifier() );
+	}
+
+	@Test
+	public void recordsRepeatedImpureHoistsSeparately() throws IOException {
+		String src =
+			"""
+			package test;
+			class Bar@D {}
+			class Foo@D { public Bar@D baz() { return new Bar@D(); } }
+			class Thing@D { public Foo@D foo; }
+			class C@( A, B ) {
+				public void takeB( Bar@B b1, Bar@B b2 ) {}
+				public void run( Thing@A y ) {
+					this.takeB( y.foo.baz(), y.foo.baz() );
+				}
+			}
+			""";
+		Normalizer.Result result = normalizeResult( src );
+		List< VariableDeclaration > hoists = hoistsForMethod( result, "run" );
+		assertEquals( 2, hoists.size() );
+		assertEquals( "tmp0", hoists.get( 0 ).name().identifier() );
+		assertEquals( "tmp1", hoists.get( 1 ).name().identifier() );
+	}
+
+	@Test
+	public void recordsHoistsInsideChildScopesForEnclosingMethod() throws IOException {
+		String src =
+			"""
+			package test;
+			class C@( A, B ) {
+				public void run( Integer@A a, Integer@B b ) {
+					switch( b + a ) {
+						case 0@B -> { Integer@A x = b; }
+						default -> { Integer@A y = b; }
+					}
+				}
+			}
+			""";
+		Normalizer.Result result = normalizeResult( src );
+		List< VariableDeclaration > hoists = hoistsForMethod( result, "run" );
+		assertEquals( 3, hoists.size() );
+		assertEquals( "tmp0", hoists.get( 0 ).name().identifier() );
+		assertEquals( "tmp1", hoists.get( 1 ).name().identifier() );
+		assertEquals( "tmp2", hoists.get( 2 ).name().identifier() );
+	}
+
+	@Test
+	public void recordsConstructorHoistMetadata() throws IOException {
+		String src =
+			"""
+			package test;
+			class C@( A, B ) {
+				public C( Integer@B b ) {
+					this.takeA( b );
+				}
+				public void takeA( Integer@A x ) {}
+			}
+			""";
+		Normalizer.Result result = normalizeResult( src );
+		List< VariableDeclaration > hoists = hoistsForConstructor( result, "C" );
+		assertEquals( 1, hoists.size() );
+		assertEquals( "tmp0", hoists.get( 0 ).name().identifier() );
+		assertEquals( "Integer", hoists.get( 0 ).type().name().identifier() );
+		assertEquals( "A", hoists.get( 0 ).type().worldArguments().get( 0 ).name().identifier() );
 	}
 }

@@ -62,11 +62,33 @@ public class VariableReplacement{
 	Map<Statement, List<Dependency>> amendedStatements = new HashMap<>();
     /** A map mapping from a dependency to the variable containing the communicated dependency */
     Map<Dependency, Name> dependencyVariables = new HashMap<>();
+	/** Hoisted definitions supplied by Normalizer for future communication insertion. */
+	Map< Object, List< VariableDeclaration > > normalizerHoistedDefinitions;
 	/** Sequence number for naming variables */
 	private int seqnum;
 
     public VariableReplacement( Selections selections ){
+		this( selections, Collections.emptyMap() );
+	}
+
+	public VariableReplacement(
+			Selections selections,
+			Map< Object, List< VariableDeclaration > > normalizerHoistedDefinitions ){
 		this.selections = selections;
+		this.normalizerHoistedDefinitions = copyHoistedDefinitions( normalizerHoistedDefinitions );
+	}
+
+	public Map< Object, List< VariableDeclaration > > normalizerHoistedDefinitions() {
+		return normalizerHoistedDefinitions;
+	}
+
+	private static Map< Object, List< VariableDeclaration > > copyHoistedDefinitions(
+			Map< Object, List< VariableDeclaration > > hoistedDefinitions ) {
+		Map< Object, List< VariableDeclaration > > copy = new LinkedHashMap<>();
+		for( Entry< Object, List< VariableDeclaration > > entry : hoistedDefinitions.entrySet() ) {
+			copy.put( entry.getKey(), List.copyOf( entry.getValue() ) );
+		}
+		return Collections.unmodifiableMap( copy );
 	}
 
 	private int seqnum() { return seqnum++; }

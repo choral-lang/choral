@@ -56,9 +56,19 @@ public class Normalizer {
 	}
 
 	/**
-	 * Returns a normalized copy of {@code cu}.
+	 * The normalized compilation unit together with the hoisted definitions created
+	 * for each rebuilt callable body.
 	 */
-	public CompilationUnit normalize( CompilationUnit cu ) {
+	public record Result(
+			CompilationUnit compilationUnit,
+			Map< Object, List< VariableDeclaration > > hoistedDefinitions ) {
+	}
+
+	/**
+	 * Returns a normalized copy of {@code cu} and the hoisted definitions created
+	 * while normalizing each callable body.
+	 */
+	public Result normalize( CompilationUnit cu ) {
 		return rebuildCompilationUnit( cu );
 	}
 
@@ -125,18 +135,20 @@ public class Normalizer {
 
 	private class Context {
 		private final Context parent;
+		private final List< VariableDeclaration > hoistedDefinitions;
 		private final Map< HoistKey, HoistBinding > hoistedPureExpressions = new LinkedHashMap<>();
 
 		Context() {
-			this( null );
+			this( null, new ArrayList<>() );
 		}
 
-		private Context( Context parent ) {
+		private Context( Context parent, List< VariableDeclaration > hoistedDefinitions ) {
 			this.parent = parent;
+			this.hoistedDefinitions = hoistedDefinitions;
 		}
 
 		Context child() {
-			return new Context( this );
+			return new Context( this, hoistedDefinitions );
 		}
 
 		HoistBinding lookup( HoistKey key ) {
@@ -148,47 +160,62 @@ public class Normalizer {
 		void register( HoistKey key, HoistBinding binding ) {
 			hoistedPureExpressions.put( key, binding );
 		}
+
+		void registerHoist( VariableDeclaration declaration ) {
+			hoistedDefinitions.add( declaration );
+		}
+
+		List< VariableDeclaration > hoistedDefinitions() {
+			return List.copyOf( hoistedDefinitions );
+		}
 	}
 
 	/**
 	 * Rebuilds {@code cu} by visiting every method and constructor body. {@code Statement}s
 	 * and {@code Expression}s are immutable, so rebuilding is how we insert nodes.
 	 */
-	private CompilationUnit rebuildCompilationUnit( CompilationUnit cu ) {
+	private Result rebuildCompilationUnit( CompilationUnit cu ) {
 		List< Class > newClasses = new ArrayList<>();
+		Map< Object, List< VariableDeclaration > > hoistedDefinitions = new LinkedHashMap<>();
 		for( Class cls : cu.classes() ) {
 			List< ConstructorDefinition > newConstructors = new ArrayList<>();
 			for( ConstructorDefinition constructor : cls.constructors() ) {
+				Context context = new Context();
 				Statement newBody = constructor.blockStatements()
-						.accept( new VisitStatement( null, new Context() ) ).first();
+						.accept( new VisitStatement( null, context ) ).first();
 				// Explicit this(...)/super(...) invocations are MethodCallExpression nodes
 				// without a selected constructor annotation. Safely normalizing their
 				// arguments needs either that annotation or a dedicated AST node.
-				newConstructors.add( new ConstructorDefinition(
+				ConstructorDefinition newConstructor = new ConstructorDefinition(
 						constructor.signature(),
 						constructor.explicitConstructorInvocation().orElse( null ),
 						newBody,
 						constructor.annotations(),
 						constructor.modifiers(),
-						constructor.position() ) );
+						constructor.position() );
+				newConstructors.add( newConstructor );
+				hoistedDefinitions.put( newConstructor, context.hoistedDefinitions() );
 			}
 
 			List< ClassMethodDefinition > newMethods = new ArrayList<>();
 			for( ClassMethodDefinition method : cls.methods() ) {
 				Statement newBody = null;
+				Context context = new Context();
 				if( method.body().isPresent() ) {
 					newBody = method.body().get()
 							.accept( new VisitStatement(
 									method.signature().typeAnnotation().orElseThrow()
 											.innerCallable().returnType(),
-									new Context() ) ).first();
+									context ) ).first();
 				}
-				newMethods.add( new ClassMethodDefinition(
+				ClassMethodDefinition newMethod = new ClassMethodDefinition(
 						method.signature(),
 						newBody,
 						method.annotations(),
 						method.modifiers(),
-						method.position() ) );
+						method.position() );
+				newMethods.add( newMethod );
+				hoistedDefinitions.put( newMethod, context.hoistedDefinitions() );
 			}
 
 			newClasses.add( new Class(
@@ -207,13 +234,14 @@ public class Normalizer {
 
 		List< Enum > newEnums = cu.enums();
 
-		return new CompilationUnit(
+		CompilationUnit normalized = new CompilationUnit(
 				cu.packageDeclaration(),
 				cu.imports(),
 				cu.interfaces(),
 				newClasses,
 				newEnums,
 				cu.position().sourceFile() );
+		return new Result( normalized, Collections.unmodifiableMap( hoistedDefinitions ) );
 	}
 
 	/**
@@ -592,6 +620,7 @@ public class Normalizer {
 					Collections.emptyList(),
 					initializer,
 					expr.position() );
+			context.registerHoist( vd );
 			return new VariableDeclarationStatement(
 					List.of( vd ), null, expr.position() );
 		}
