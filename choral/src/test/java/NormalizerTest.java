@@ -9,8 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import choral.ast.CompilationUnit;
-import choral.ast.body.ClassMethodDefinition;
-import choral.ast.body.ConstructorDefinition;
 import choral.ast.body.VariableDeclaration;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.HeaderLoader;
@@ -18,6 +16,7 @@ import choral.compiler.Parser;
 import choral.compiler.Typer;
 import choral.compiler.TyperOptions;
 import choral.compiler.moveMeant.Normalizer;
+import choral.types.Member;
 import choral.utils.VerbosityLevel;
 
 public class NormalizerTest {
@@ -54,10 +53,10 @@ public class NormalizerTest {
 
 	private static List< VariableDeclaration > hoistsForMethod(
 			Normalizer.Result result, String methodName ) {
-		for( Map.Entry< Object, List< VariableDeclaration > > entry :
+		for( Map.Entry< Member.HigherCallable, List< VariableDeclaration > > entry :
 				result.hoistedDefinitions().entrySet() ) {
-			if( entry.getKey() instanceof ClassMethodDefinition method
-					&& method.signature().name().identifier().equals( methodName ) ) {
+			if( entry.getKey() instanceof Member.HigherMethod method
+					&& method.identifier().equals( methodName ) ) {
 				return entry.getValue();
 			}
 		}
@@ -65,15 +64,16 @@ public class NormalizerTest {
 	}
 
 	private static List< VariableDeclaration > hoistsForConstructor(
-			Normalizer.Result result, String constructorName ) {
-		for( Map.Entry< Object, List< VariableDeclaration > > entry :
+			Normalizer.Result result, String className ) {
+		for( Map.Entry< Member.HigherCallable, List< VariableDeclaration > > entry :
 				result.hoistedDefinitions().entrySet() ) {
-			if( entry.getKey() instanceof ConstructorDefinition constructor
-					&& constructor.signature().name().identifier().equals( constructorName ) ) {
+			if( entry.getKey() instanceof Member.HigherConstructor constructor
+					&& constructor.declarationContext().typeConstructor().identifier()
+							.equals( className ) ) {
 				return entry.getValue();
 			}
 		}
-		throw new AssertionError( "No constructor hoists found for " + constructorName );
+		throw new AssertionError( "No constructor hoists found for " + className );
 	}
 
 	/** Parse and pretty-print, for golden comparisons in identity cases. */

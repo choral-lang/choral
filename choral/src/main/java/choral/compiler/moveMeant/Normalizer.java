@@ -9,7 +9,6 @@ import choral.ast.body.Enum;
 import choral.ast.expression.*;
 import choral.ast.statement.*;
 import choral.ast.type.TypeExpression;
-import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.types.*;
 import choral.utils.Pair;
@@ -57,11 +56,11 @@ public class Normalizer {
 
 	/**
 	 * The normalized compilation unit together with the hoisted definitions created
-	 * for each rebuilt callable body.
+	 * for each rebuilt callable body, keyed by that callable's type annotation.
 	 */
 	public record Result(
 			CompilationUnit compilationUnit,
-			Map< Object, List< VariableDeclaration > > hoistedDefinitions ) {
+			Map< Member.HigherCallable, List< VariableDeclaration > > hoistedDefinitions ) {
 	}
 
 	/**
@@ -103,15 +102,9 @@ public class Normalizer {
 	}
 
 	private class NormalizedResults< T > {
-		Statement first;
-		Statement last;
-		List< T > results;
-
-		NormalizedResults() {
-			this.first = null;
-			this.last = null;
-			this.results = new ArrayList<>();
-		}
+		private Statement first = null;
+		private Statement last = null;
+		private final List< T > results = new ArrayList<>();
 
 		void add( Statement first, Statement last, T result ) {
 			if( first != null ) {
@@ -125,6 +118,10 @@ public class Normalizer {
 			}
 			this.results.add( result );
 		}
+
+		Statement first() { return first; }
+		Statement last() { return last; }
+		List< T > results() { return results; }
 	}
 
 	private record HoistKey(Expression expression, List< String > expectedWorlds) {
@@ -172,11 +169,13 @@ public class Normalizer {
 
 	/**
 	 * Rebuilds {@code cu} by visiting every method and constructor body. {@code Statement}s
-	 * and {@code Expression}s are immutable, so rebuilding is how we insert nodes.
+	 * and {@code Expression}s are immutable to outside observers, so rebuilding is how we
+	 * insert nodes.
 	 */
 	private Result rebuildCompilationUnit( CompilationUnit cu ) {
 		List< Class > newClasses = new ArrayList<>();
-		Map< Object, List< VariableDeclaration > > hoistedDefinitions = new LinkedHashMap<>();
+		Map< Member.HigherCallable, List< VariableDeclaration > > hoistedDefinitions =
+				new LinkedHashMap<>();
 		for( Class cls : cu.classes() ) {
 			List< ConstructorDefinition > newConstructors = new ArrayList<>();
 			for( ConstructorDefinition constructor : cls.constructors() ) {
@@ -194,7 +193,9 @@ public class Normalizer {
 						constructor.modifiers(),
 						constructor.position() );
 				newConstructors.add( newConstructor );
-				hoistedDefinitions.put( newConstructor, context.hoistedDefinitions() );
+				hoistedDefinitions.put(
+						constructor.signature().typeAnnotation().orElseThrow(),
+						context.hoistedDefinitions() );
 			}
 
 			List< ClassMethodDefinition > newMethods = new ArrayList<>();
@@ -215,7 +216,9 @@ public class Normalizer {
 						method.modifiers(),
 						method.position() );
 				newMethods.add( newMethod );
-				hoistedDefinitions.put( newMethod, context.hoistedDefinitions() );
+				hoistedDefinitions.put(
+						method.signature().typeAnnotation().orElseThrow(),
+						context.hoistedDefinitions() );
 			}
 
 			newClasses.add( new Class(
@@ -286,14 +289,14 @@ public class Normalizer {
 							vd.annotations(),
 							(AssignExpression) res.expression(),
 							vd.position() );
-					exprs.add( res.first, res.last, newVd );
+					exprs.add( res.first(), res.last(), newVd );
 				}
 			}
 			VariableDeclarationStatement newStmt = new VariableDeclarationStatement(
-					exprs.results,
+					exprs.results(),
 					visitContinuation( n.continuation() ),
 					n.position() );
-			return NormalizedStmt.of( exprs.first, exprs.last, newStmt );
+			return NormalizedStmt.of( exprs.first(), exprs.last(), newStmt );
 		}
 
 		@Override
@@ -427,13 +430,13 @@ public class Normalizer {
 			for( int i = 0; i < n.arguments().size(); i++ ) {
 				Expression arg = n.arguments().get( i );
 				NormalizedExpr res = arg.accept( visitor( paramType( n, i ) ) );
-				newArgs.add( res.first, res.last, res.expression );
+				newArgs.add( res.first(), res.last(), res.expression() );
 			}
 			MethodCallExpression rebuilt = new MethodCallExpression(
-					n.name(), newArgs.results, n.typeArguments(), n.position() );
+					n.name(), newArgs.results(), n.typeArguments(), n.position() );
 			rebuilt.setTypeAnnotation( n.typeAnnotation().orElseThrow() );
 			rebuilt.setMethodAnnotation( n.methodAnnotation().orElseThrow() );
-			return maybeHoist( newArgs.first, newArgs.last, rebuilt );
+			return maybeHoist( newArgs.first(), newArgs.last(), rebuilt );
 		}
 
 		@Override
@@ -441,18 +444,18 @@ public class Normalizer {
 			NormalizedExpr l = n.left().accept( visitor( typeWithWorldsOf( n.left(), expectedType ) ) );
 			NormalizedExpr r = n.right().accept( visitor( typeWithWorldsOf( n.right(), expectedType ) ) );
 
-			var newArgs = new NormalizedResults<>();
-			newArgs.add( l.first, l.last, l.expression );
-			newArgs.add( r.first, r.last, r.expression );
+			var newArgs = new NormalizedResults< Expression >();
+			newArgs.add( l.first(), l.last(), l.expression() );
+			newArgs.add( r.first(), r.last(), r.expression() );
 
 			Expression rebuilt = new BinaryExpression(
-					l.expression, r.expression, n.operator(), n.position() );
+					l.expression(), r.expression(), n.operator(), n.position() );
 			rebuilt.setTypeAnnotation(
 					expectedType == null || expectedType.isVoid() ?
 							typeOf( n ) :
 							typeWithWorldsOf( n, expectedType )
 			);
-			return maybeHoist( newArgs.first, newArgs.last, rebuilt );
+			return maybeHoist( newArgs.first(), newArgs.last(), rebuilt );
 		}
 
 		@Override
@@ -470,13 +473,13 @@ public class Normalizer {
 			for( int i = 0; i < n.arguments().size(); i++ ) {
 				Expression arg = n.arguments().get( i );
 				NormalizedExpr res = arg.accept( visitor( constructorParamType( n, i ) ) );
-				newArgs.add( res.first, res.last, res.expression );
+				newArgs.add( res.first(), res.last(), res.expression() );
 			}
 			ClassInstantiationExpression rebuilt = new ClassInstantiationExpression(
-					n.typeExpression(), newArgs.results, n.typeArguments(), n.position() );
+					n.typeExpression(), newArgs.results(), n.typeArguments(), n.position() );
 			rebuilt.setTypeAnnotation( typeOf( n ) );
 			n.constructorAnnotation().ifPresent( rebuilt::setConstructorAnnotation );
-			return maybeHoist( newArgs.first, newArgs.last, rebuilt );
+			return maybeHoist( newArgs.first(), newArgs.last(), rebuilt );
 		}
 
 		@Override
@@ -505,7 +508,7 @@ public class Normalizer {
 			Expression rebuilt = new ScopedExpression(
 					scope.expression(), inner.expression(), n.position() );
 			rebuilt.setTypeAnnotation( n.typeAnnotation().orElseThrow() );
-			return maybeHoist( newArgs.first, newArgs.last, rebuilt );
+			return maybeHoist( newArgs.first(), newArgs.last(), rebuilt );
 		}
 
 		@Override
@@ -685,7 +688,7 @@ public class Normalizer {
 				&& cie.typeExpression().typeAnnotation().get() instanceof GroundDataTypeOrVoid t ) {
 			return box( t );
 		}
-		return box( n.typeAnnotation().orElseThrow() );
+		throw new IllegalStateException( "Expression has no type annotation: " + n );
 	}
 
 	private static GroundDataTypeOrVoid box( GroundDataTypeOrVoid t ) {
@@ -740,60 +743,6 @@ public class Normalizer {
 	 * temporaries.
 	 */
 	private static TypeExpression getType( GroundDataTypeOrVoid t ) {
-		t = box( t );
-		if( t == null || t.isVoid() ) {
-			throw new IllegalStateException(
-					"Cannot construct type expression for void or unannotated expected type" );
-		}
-		return outerTypeExpr( (GroundDataType) t );
-	}
-
-	/**
-	 * Outer {@code TypeExpression}: includes the type's own world annotation.
-	 */
-	private static TypeExpression outerTypeExpr( GroundDataType t ) {
-		List< WorldArgument > worldArgs = t.worldArguments().stream()
-				.map( w -> new WorldArgument( new Name( w.identifier() ), null ) )
-				.toList();
-		if( t instanceof GroundClassOrInterface gc ) {
-			List< TypeExpression > typeArgs = gc.typeArguments().stream()
-					.map( ta -> innerTypeExpr( ta.applyTo( gc.worldArguments() ) ) )
-					.toList();
-			return new TypeExpression(
-					new Name( gc.typeConstructor().identifier() ), worldArgs, typeArgs );
-		}
-		if( t instanceof GroundTypeParameter gtp ) {
-			return new TypeExpression(
-					new Name( gtp.typeConstructor().identifier() ),
-					worldArgs,
-					Collections.emptyList() );
-		}
-		// GroundPrimitiveDataType is unreachable here because typeOf boxes primitives.
-		throw new IllegalStateException(
-				"Unsupported type for hoist: " + t.getClass().getSimpleName() );
-	}
-
-	/**
-	 * Inner (nested) {@code TypeExpression}: no world annotation, matching the existing
-	 * convention from {@code VariableReplacement.getTypeExpression}.
-	 */
-	private static TypeExpression innerTypeExpr( GroundReferenceType t ) {
-		if( t instanceof GroundClass gc ) {
-			List< TypeExpression > typeArgs = gc.typeArguments().stream()
-					.map( ta -> innerTypeExpr( ta.applyTo( gc.worldArguments() ) ) )
-					.toList();
-			return new TypeExpression(
-					new Name( gc.typeConstructor().identifier() ),
-					Collections.emptyList(),
-					typeArgs );
-		}
-		if( t instanceof GroundTypeParameter gtp ) {
-			return new TypeExpression(
-					new Name( gtp.typeConstructor().identifier() ),
-					Collections.emptyList(),
-					Collections.emptyList() );
-		}
-		throw new IllegalStateException(
-				"Unsupported inner type for hoist: " + t.getClass().getSimpleName() );
+		return Utils.outerTypeExpression( (GroundDataType) box( t ) );
 	}
 }

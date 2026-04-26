@@ -5,17 +5,24 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import choral.ast.CompilationUnit;
+import choral.ast.Name;
 import choral.ast.expression.Expression;
 import choral.ast.statement.NilStatement;
 import choral.ast.statement.Statement;
+import choral.ast.type.TypeExpression;
+import choral.ast.type.WorldArgument;
 import choral.compiler.merge.ExpressionsMerger;
+import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
 import choral.types.GroundInterface;
+import choral.types.GroundTypeParameter;
 import choral.types.Member.HigherCallable;
 import choral.types.Member.HigherMethod;
 import choral.types.World;
 import choral.utils.Continuation;
 import choral.utils.Pair;
+
+import java.util.Collections;
 
 public class Utils {
 
@@ -174,8 +181,59 @@ public class Utils {
 	public static Statement chainStatements( List<Statement> statements, Statement last ){
 		if( statements.size() == 0 )
 			return last;
-		
+
 		Statement stm = statements.remove(statements.size()-1);
 		return chainStatements(statements, Continuation.continuationAfter(stm, last));
+	}
+
+	/**
+	 * Builds a {@link TypeExpression} for {@code t} at world-annotation position
+	 * (e.g. {@code T@W msg = ...}); the type's own world arguments are emitted on the
+	 * outermost level. Type arguments nested inside are rendered without world annotations
+	 * via {@link #innerTypeExpression}.
+	 */
+	public static TypeExpression outerTypeExpression( GroundDataType t ) {
+		List< WorldArgument > worldArgs = t.worldArguments().stream()
+				.map( w -> new WorldArgument( new Name( w.identifier() ), null ) )
+				.toList();
+		return typeExpression( t, worldArgs );
+	}
+
+	/**
+	 * Builds a {@link TypeExpression} for {@code t} at type-argument position
+	 * (e.g. inside {@code Map< K, V >} or {@code ch.<T>com(...)}); world arguments are
+	 * omitted at every level.
+	 */
+	public static TypeExpression innerTypeExpression( GroundDataType t ) {
+		return typeExpression( t, Collections.emptyList() );
+	}
+
+	private static TypeExpression typeExpression(
+			GroundDataType t, List< WorldArgument > worldArgs ) {
+		if( t instanceof GroundClassOrInterface gc ) {
+			List< TypeExpression > typeArgs = gc.typeArguments().stream()
+					.map( ta -> innerTypeExpression( ta.applyTo( gc.worldArguments() ) ) )
+					.toList();
+			return new TypeExpression(
+					new Name( gc.typeConstructor().identifier() ), worldArgs, typeArgs );
+		}
+		if( t instanceof GroundTypeParameter gtp ) {
+			return new TypeExpression(
+					new Name( gtp.typeConstructor().identifier() ),
+					worldArgs,
+					Collections.emptyList() );
+		}
+		throw new IllegalStateException(
+				"Unsupported type for type expression: " + t.getClass().getSimpleName() );
+	}
+
+	/**
+	 * Clears world dependencies on every method and constructor of {@code cu}.
+	 * Used by communication-inference passes to reset state before re-typing.
+	 */
+	public static void clearAllDependencies( CompilationUnit cu ) {
+		for( HigherCallable callable : getJustMethods( cu ) ) {
+			callable.clearDependencies();
+		}
 	}
 }
