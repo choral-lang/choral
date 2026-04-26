@@ -31,6 +31,7 @@ import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -81,5 +82,17 @@ public class FieldAccessExpression extends Expression {
 							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
 							this ) + "\n with " + n.getClass().getSimpleName() );
 		}
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof FieldAccessExpression other ) ) return false;
+		return Objects.equals( name, other.name );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( name );
 	}
 }

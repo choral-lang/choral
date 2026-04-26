@@ -26,6 +26,8 @@ import choral.ast.Position;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 
+import java.util.Objects;
+
 /**
  * Expression of the type: expression binary-operator expression, e.g.,
  * a.b && c.d
@@ -80,6 +82,20 @@ public class BinaryExpression extends Expression {
 
 	public String toString(){
 		return left + " " + operator.symbol + " " + right;
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof BinaryExpression other ) ) return false;
+		return Objects.equals( left, other.left )
+				&& Objects.equals( right, other.right )
+				&& operator == other.operator;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( left, right, operator );
 	}
 
 	public enum Operator {

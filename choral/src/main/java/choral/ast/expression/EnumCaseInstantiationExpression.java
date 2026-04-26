@@ -28,6 +28,8 @@ import choral.ast.type.WorldArgument;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 
+import java.util.Objects;
+
 public class EnumCaseInstantiationExpression extends Expression {
 
 	private final WorldArgument world;
@@ -70,6 +72,20 @@ public class EnumCaseInstantiationExpression extends Expression {
 	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
 		assert n instanceof EnumCaseInstantiationExpression;
 		return m.merge( this, (EnumCaseInstantiationExpression) n );
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof EnumCaseInstantiationExpression other ) ) return false;
+		return Objects.equals( name, other.name )
+				&& Objects.equals( _case, other._case )
+				&& Objects.equals( world, other.world );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( name, _case, world );
 	}
 
 }

@@ -34,6 +34,7 @@ import choral.types.Member;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -111,5 +112,18 @@ public class MethodCallExpression extends InvocationExpression {
 							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
 							this ) + "\n with " + n.getClass().getSimpleName() );
 		}
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof MethodCallExpression other ) ) return false;
+		return super.equals( other )
+				&& Objects.equals( name, other.name );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( super.hashCode(), name );
 	}
 }

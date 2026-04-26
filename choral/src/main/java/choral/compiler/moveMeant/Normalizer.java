@@ -11,7 +11,6 @@ import choral.ast.statement.*;
 import choral.ast.type.TypeExpression;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.AbstractChoralVisitor;
-import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.types.*;
 import choral.utils.Pair;
 
@@ -118,7 +117,7 @@ public class Normalizer {
 		}
 	}
 
-	private record HoistKey(String expression, List< String > expectedWorlds) {
+	private record HoistKey(Expression expression, List< String > expectedWorlds) {
 	}
 
 	private record HoistBinding(Name tmp, GroundDataTypeOrVoid type, Statement declaration) {
@@ -614,7 +613,7 @@ public class Normalizer {
 				.stream()
 				.map( World::identifier )
 				.toList();
-		return new HoistKey( new PrettyPrinterVisitor().visit( expr ), expectedWorlds );
+		return new HoistKey( expr, expectedWorlds );
 	}
 
 	private static boolean isPureHoistExpression( Expression expr ) {

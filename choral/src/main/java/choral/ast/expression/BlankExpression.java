@@ -51,4 +51,14 @@ public class BlankExpression extends Expression {
 		return m.merge( this, (BlankExpression) n );
 	}
 
+	@Override
+	public boolean equals( Object obj ) {
+		return obj instanceof BlankExpression;
+	}
+
+	@Override
+	public int hashCode() {
+		return BlankExpression.class.hashCode();
+	}
+
 }

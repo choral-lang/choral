@@ -28,6 +28,8 @@ import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 
+import java.util.Objects;
+
 /**
  * A qualified access expression like {@code a.b.c}. For example, {@code System.out.println} is a
  * {@link ScopedExpression} where {@code out.println} is its "scoped expression" and {@code System}
@@ -82,5 +84,18 @@ public class ScopedExpression extends Expression {
 							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
 							this ) + "\n with " + n.getClass().getSimpleName() );
 		}
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof ScopedExpression other ) ) return false;
+		return Objects.equals( scope, other.scope )
+				&& Objects.equals( scopedExpression, other.scopedExpression );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( scope, scopedExpression );
 	}
 }

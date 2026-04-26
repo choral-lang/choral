@@ -29,6 +29,7 @@ import choral.ast.visitors.MergerInterface;
 import choral.types.Member;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class ClassInstantiationExpression extends InvocationExpression {
@@ -73,6 +74,19 @@ public class ClassInstantiationExpression extends InvocationExpression {
 	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
 		assert n instanceof ClassInstantiationExpression;
 		return m.merge( this, (ClassInstantiationExpression) n );
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof ClassInstantiationExpression other ) ) return false;
+		return super.equals( other )
+				&& Objects.equals( type, other.type );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( super.hashCode(), type );
 	}
 
 }

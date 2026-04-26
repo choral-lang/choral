@@ -30,6 +30,7 @@ import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A wrapper for the invocation of `null`
@@ -68,6 +69,18 @@ public class NullExpression extends Expression {
 							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
 							this ) + "\n with " + n.getClass().getSimpleName() );
 		}
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof NullExpression other ) ) return false;
+		return Objects.equals( worlds, other.worlds );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( worlds );
 	}
 
 }

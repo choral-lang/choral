@@ -25,6 +25,7 @@ import choral.ast.Position;
 import choral.ast.type.TypeExpression;
 
 import java.util.List;
+import java.util.Objects;
 
 public abstract class InvocationExpression extends Expression {
 	private final List< Expression > arguments;
@@ -52,6 +53,19 @@ public abstract class InvocationExpression extends Expression {
 
 	public List< Expression > arguments() {
 		return arguments;
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof InvocationExpression other ) ) return false;
+		return Objects.equals( arguments, other.arguments )
+				&& Objects.equals( typeArguments, other.typeArguments );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( arguments, typeArguments );
 	}
 
 }

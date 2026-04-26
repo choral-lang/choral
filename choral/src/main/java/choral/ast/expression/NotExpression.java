@@ -27,6 +27,9 @@ import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
+
+import java.util.Objects;
+
 /**
  * NotExpression refers to applying the {@code !} operator to an expression. 
  */
@@ -63,5 +66,17 @@ public class NotExpression extends Expression {
 							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
 							this ) + "\n with " + n.getClass().getSimpleName() );
 		}
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof NotExpression other ) ) return false;
+		return Objects.equals( expression, other.expression );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( expression );
 	}
 }

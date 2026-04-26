@@ -95,4 +95,16 @@ public class ThisExpression extends Expression {
 		}
 	}
 
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof ThisExpression other ) ) return false;
+		return aliasOf == null ? other.aliasOf == null : other.aliasOf != null && aliasOf.equals( other.aliasOf );
+	}
+
+	@Override
+	public int hashCode() {
+		return aliasOf == null ? 0 : aliasOf.hashCode();
+	}
+
 }
