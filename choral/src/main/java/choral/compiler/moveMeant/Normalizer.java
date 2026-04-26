@@ -30,13 +30,13 @@ import java.util.Map;
  * }</pre>
  * is rewritten to
  * <pre>{@code
- * Int@A tmp0 = B_state.x;
- * A_state.m( tmp0 );
+ * Int@A msg0 = B_state.x;
+ * A_state.m( msg0 );
  * }</pre>
  * <p>
  * The output is intentionally not well-typed on its own: a subsequent pass is
  * responsible for wrapping each cross-world initializer in a channel communication
- * (e.g. {@code tmp0 = ch.com(B_state.x)}) so the resulting program typechecks.
+ * (e.g. {@code msg0 = ch.com(B_state.x)}) so the resulting program typechecks.
  * <p>
  * This pass is driven purely by type annotations on the input AST; it does not
  * consult the Typer's {@code worldDependencies} side-table. It assumes every visited
@@ -92,7 +92,7 @@ public class Normalizer {
 
 	/**
 	 * The result of normalizing an expression: a (possibly empty) hoist chain of
-	 * {@code tmp = ...} variable declaration statements that must be inserted before
+	 * {@code msg = ...} variable declaration statements that must be inserted before
 	 * the enclosing statement, and the rewritten expression that takes the place of
 	 * the original.
 	 */
@@ -130,7 +130,7 @@ public class Normalizer {
 	private record HoistKey(Expression expression, List< String > expectedWorlds) {
 	}
 
-	private record HoistBinding(Name tmp, GroundDataTypeOrVoid type, Statement declaration) {
+	private record HoistBinding(Name msg, GroundDataTypeOrVoid type, Statement declaration) {
 	}
 
 	private class Context {
@@ -397,7 +397,7 @@ public class Normalizer {
 	 * with a different expectation is done by constructing a new {@code VisitExpression}.
 	 * <p>
 	 * Every {@code visit} ends with {@link #maybeHoist}: if the node's own worlds do not
-	 * fit {@link #expectedType}, the node is hoisted into a fresh {@code tmp} and
+	 * fit {@link #expectedType}, the node is hoisted into a fresh {@code msg} and
 	 * replaced by a {@link FieldAccessExpression}. Transparent wrappers
 	 * ({@link NotExpression}, {@link EnclosedExpression}, {@link ScopedExpression}'s
 	 * right side) recurse with the wrapper's own type as the child's expected type,
@@ -447,7 +447,11 @@ public class Normalizer {
 
 			Expression rebuilt = new BinaryExpression(
 					l.expression, r.expression, n.operator(), n.position() );
-			rebuilt.setTypeAnnotation( n.typeAnnotation().orElseThrow() );
+			rebuilt.setTypeAnnotation(
+					expectedType == null || expectedType.isVoid() ?
+							typeOf( n ) :
+							typeWithWorldsOf( n, expectedType )
+			);
 			return maybeHoist( newArgs.first, newArgs.last, rebuilt );
 		}
 
@@ -556,9 +560,9 @@ public class Normalizer {
 
 		/**
 		 * If {@code original} is cross-world relative to {@link #expectedType}, append
-		 * a fresh {@code tmp = rebuilt} hoist after the existing chain
+		 * a fresh {@code msg = rebuilt} hoist after the existing chain
 		 * {@code (firstHoist, lastHoist)} and return a {@link FieldAccessExpression}
-		 * pointing at {@code tmp}. Otherwise return {@code rebuilt} with the chain
+		 * pointing at {@code msg}. Otherwise return {@code rebuilt} with the chain
 		 * unchanged.
 		 */
 		private NormalizedExpr maybeHoist( Statement first, Statement last, Expression expr ) {
@@ -572,20 +576,20 @@ public class Normalizer {
 					return new NormalizedExpr(
 							first,
 							last,
-							tmpAccess( existing.tmp(), existing.type(), expr.position() ) );
+							msgAccess( existing.msg(), existing.type(), expr.position() ) );
 				}
-				Name tmp = freshTmpName();
-				Statement newHoist = makeHoist( tmp, expr, expectedType );
-				context.register( key, new HoistBinding( tmp, expectedType, newHoist ) );
-				return appendHoist( first, last, expr, tmp, expectedType, newHoist );
+				Name msg = freshMsgName();
+				Statement newHoist = makeHoist( msg, expr, expectedType );
+				context.register( key, new HoistBinding( msg, expectedType, newHoist ) );
+				return appendHoist( first, last, expr, msg, expectedType, newHoist );
 			}
-			Name tmp = freshTmpName();
-			Statement newHoist = makeHoist( tmp, expr, expectedType );
-			return appendHoist( first, last, expr, tmp, expectedType, newHoist );
+			Name msg = freshMsgName();
+			Statement newHoist = makeHoist( msg, expr, expectedType );
+			return appendHoist( first, last, expr, msg, expectedType, newHoist );
 		}
 
 		private NormalizedExpr appendHoist(
-				Statement first, Statement last, Expression expr, Name tmp,
+				Statement first, Statement last, Expression expr, Name msg,
 				GroundDataTypeOrVoid expectedType, Statement newHoist
 		) {
 			Statement newFirst;
@@ -596,17 +600,17 @@ public class Normalizer {
 				newFirst = first;
 			}
 			return new NormalizedExpr(
-					newFirst, newHoist, tmpAccess( tmp, expectedType, expr.position() ) );
+					newFirst, newHoist, msgAccess( msg, expectedType, expr.position() ) );
 		}
 
 		/**
-		 * Builds a {@code T@W tmp = init} {@link VariableDeclarationStatement} where
+		 * Builds a {@code T@W msg = init} {@link VariableDeclarationStatement} where
 		 * {@code T} and {@code W} come from the type expected by the context. The
 		 * continuation is left null.
 		 */
 		private VariableDeclarationStatement makeHoist(
-				Name tmp, Expression expr, GroundDataTypeOrVoid expectedType ) {
-			FieldAccessExpression target = new FieldAccessExpression( tmp, expr.position() );
+				Name msg, Expression expr, GroundDataTypeOrVoid expectedType ) {
+			FieldAccessExpression target = new FieldAccessExpression( msg, expr.position() );
 			target.setTypeAnnotation( expectedType );
 			AssignExpression initializer = new AssignExpression(
 					expr,
@@ -615,7 +619,7 @@ public class Normalizer {
 					expr.position() );
 			initializer.setTypeAnnotation( expectedType );
 			VariableDeclaration vd = new VariableDeclaration(
-					tmp,
+					msg,
 					getType( expectedType ),
 					Collections.emptyList(),
 					initializer,
@@ -626,15 +630,15 @@ public class Normalizer {
 		}
 	}
 
-	private Name freshTmpName() {
-		return new Name( "tmp" + seqnum() );
+	private Name freshMsgName() {
+		return new Name( "msg" + seqnum() );
 	}
 
-	private static FieldAccessExpression tmpAccess(
-			Name tmp, GroundDataTypeOrVoid type, Position position ) {
-		FieldAccessExpression tmpAccess = new FieldAccessExpression( tmp, position );
-		tmpAccess.setTypeAnnotation( type );
-		return tmpAccess;
+	private static FieldAccessExpression msgAccess(
+			Name msg, GroundDataTypeOrVoid type, Position position ) {
+		FieldAccessExpression msgAccess = new FieldAccessExpression( msg, position );
+		msgAccess.setTypeAnnotation( type );
+		return msgAccess;
 	}
 
 	private static HoistKey hoistKey( Expression expr, GroundDataTypeOrVoid expectedType ) {

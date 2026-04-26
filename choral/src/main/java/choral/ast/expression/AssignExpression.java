@@ -31,7 +31,8 @@ import java.util.Objects;
 
 public class AssignExpression extends Expression {
 
-	private final Expression target, value;
+	private final Expression target;
+	private Expression value;
 	private final Operator operator;
 
 	@Override
@@ -143,6 +144,11 @@ public class AssignExpression extends Expression {
 
 	public Expression value() {
 		return value;
+	}
+
+	/** Mutating the AST is dangerous. Tread carefully! */
+	public void dangerouslyUpdateValue( Expression value ) {
+		this.value = value;
 	}
 
 	public Operator operator() {

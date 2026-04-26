@@ -32,7 +32,7 @@ public class MoveMeant {
 
 		if( INFERENCE_MODEL.equals( "simple" ) ) {
 			Collection< CompilationUnit > dataComCus = sources.stream().map( cu ->
-					new VariableReplacement( new Selections() ).inferComms( cu )
+					new VariableReplacement().inferComms( cu )
 			).toList();
 			// Since dataComCu is now without type annotations, we need to re-annotate them again
 			Typer.annotate( dataComCus, headers, opts.normalMode() );

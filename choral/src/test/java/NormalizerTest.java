@@ -183,8 +183,8 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public Integer@A take( Integer@A x ) { return x; }
 				public void run( Integer@B b ) {
-					Integer@A tmp0 = b;
-					this.take( tmp0 );
+					Integer@A msg0 = b;
+					this.take( msg0 );
 				}
 			}
 			""";
@@ -209,9 +209,9 @@ public class NormalizerTest {
 			class C@( A, B, D ) {
 				public Integer@A take( Integer@A x, Integer@A y ) { return x; }
 				public void run( Integer@B b, Integer@D d ) {
-					Integer@A tmp0 = b;
-					Integer@A tmp1 = d;
-					this.take( tmp0, tmp1 );
+					Integer@A msg0 = b;
+					Integer@A msg1 = d;
+					this.take( msg0, msg1 );
 				}
 			}
 			""";
@@ -249,8 +249,8 @@ public class NormalizerTest {
 			package test;
 			class C@( A, B ) {
 				public void run( Integer@A a, Integer@B b ) {
-					Integer@A tmp0 = b;
-					Integer@A z = a + tmp0;
+					Integer@A msg0 = b;
+					Integer@A z = a + msg0;
 				}
 			}
 			""";
@@ -273,8 +273,8 @@ public class NormalizerTest {
 			package test;
 			class C@( A, B ) {
 				public void run( Integer@A a, Integer@B b ) {
-					Integer@A tmp0 = b;
-					a = tmp0;
+					Integer@A msg0 = b;
+					a = msg0;
 				}
 			}
 		""";
@@ -301,9 +301,9 @@ public class NormalizerTest {
 				public Integer@A takeA( Integer@A x ) { return x; }
 				public Integer@B makeB( Integer@B x ) { return x; }
 				public void run( Integer@A a ) {
-					Integer@B tmp0 = a;
-					Integer@A tmp1 = this.makeB( tmp0 );
-					this.takeA( tmp1 );
+					Integer@B msg0 = a;
+					Integer@A msg1 = this.makeB( msg0 );
+					this.takeA( msg1 );
 				}
 			}
 			""";
@@ -330,10 +330,10 @@ public class NormalizerTest {
 				public Integer@A takeA( Integer@A x ) { return x; }
 				public Integer@B makeB( Integer@B x ) { return x; }
 				public void run( Integer@B b ) {
-					Integer@A tmp0 = b;
-					Integer@B tmp1 = this.takeA( tmp0 );
-					Integer@A tmp2 = this.makeB( tmp1 );
-					this.takeA( tmp2 );
+					Integer@A msg0 = b;
+					Integer@B msg1 = this.takeA( msg0 );
+					Integer@A msg2 = this.makeB( msg1 );
+					this.takeA( msg2 );
 				}
 			}
 			""";
@@ -358,8 +358,8 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public void take( Boolean@A x ) {}
 				public void run( Boolean@B b ) {
-					Boolean@A tmp0 = !b;
-					this.take( tmp0 );
+					Boolean@A msg0 = !b;
+					this.take( msg0 );
 				}
 			}
 			""";
@@ -384,8 +384,8 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public void take( Integer@A x ) {}
 				public void run( Integer@B b ) {
-					Integer@A tmp0 = ( b );
-					this.take( tmp0 );
+					Integer@A msg0 = ( b );
+					this.take( msg0 );
 				}
 			}
 		""";
@@ -412,8 +412,8 @@ public class NormalizerTest {
 				public Integer@A x;
 				public void take( Integer@B x ) {}
 				public void run() {
-					Integer@B tmp0 = this.x;
-					this.take( tmp0 );
+					Integer@B msg0 = this.x;
+					this.take( msg0 );
 				}
 			}
 			""";
@@ -444,8 +444,8 @@ public class NormalizerTest {
 			class C@( A, B ) extends Base@( A, B ) {
 				public void take( Integer@B x ) {}
 				public void run() {
-					Integer@B tmp0 = super.x;
-					this.take( tmp0 );
+					Integer@B msg0 = super.x;
+					this.take( msg0 );
 				}
 			}
 			""";
@@ -478,8 +478,8 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public void take( Integer@A x ) {}
 				public void run( Pair@B p ) {
-					Integer@A tmp0 = p.x;
-					this.take( tmp0 );
+					Integer@A msg0 = p.x;
+					this.take( msg0 );
 				}
 			}
 		""";
@@ -555,8 +555,8 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public void take( Integer@A x ) {}
 				public void run( Foo@B foo ) {
-					Integer@A tmp0 = foo.bar.bar.baz;
-					this.take( tmp0 );
+					Integer@A msg0 = foo.bar.bar.baz;
+					this.take( msg0 );
 				}
 			}
 		""";
@@ -583,8 +583,8 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public void takeB( Thing@B first, Thing@B second ) {}
 				public void run( Thing@A y ) {
-					Thing@B tmp0 = y;
-					this.takeB( tmp0, tmp0 );
+					Thing@B msg0 = y;
+					this.takeB( msg0, msg0 );
 				}
 			}
 			""";
@@ -615,8 +615,8 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public void takeB( Bar@B first, Bar@B second ) {}
 				public void run( Thing@A y ) {
-					Bar@B tmp0 = y.foo.bar;
-					this.takeB( tmp0, tmp0 );
+					Bar@B msg0 = y.foo.bar;
+					this.takeB( msg0, msg0 );
 				}
 			}
 			""";
@@ -643,9 +643,9 @@ public class NormalizerTest {
 			class C@( A, B, D ) {
 				public void takeBoth( Thing@B atB, Thing@D atD ) {}
 				public void run( Thing@A y ) {
-					Thing@B tmp0 = y;
-					Thing@D tmp1 = y;
-					this.takeBoth( tmp0, tmp1 );
+					Thing@B msg0 = y;
+					Thing@D msg1 = y;
+					this.takeBoth( msg0, msg1 );
 				}
 			}
 			""";
@@ -682,9 +682,9 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public void takeB( Bar@B first, Bar@B second ) {}
 				public void run( Thing@A y ) {
-					Bar@B tmp0 = y.foo.baz();
-					Bar@B tmp1 = y.foo.baz();
-					this.takeB( tmp0, tmp1 );
+					Bar@B msg0 = y.foo.baz();
+					Bar@B msg1 = y.foo.baz();
+					this.takeB( msg0, msg1 );
 				}
 			}
 			""";
@@ -728,12 +728,12 @@ public class NormalizerTest {
 					Bar@B b1, Bar@B b2,
 					Bar@B c1, Bar@B c2 ) { return 0@B; }
 				public void run( Thing@A y ) {
-					Thing@B tmp0 = y;
-					Bar@B tmp1 = y.foo.bar;
-					Bar@B tmp2 = y.foo.baz();
-					Bar@B tmp3 = y.foo.baz();
+					Thing@B msg0 = y;
+					Bar@B msg1 = y.foo.bar;
+					Bar@B msg2 = y.foo.baz();
+					Bar@B msg3 = y.foo.baz();
 					Integer@B x = this.takeB(
-						tmp0, tmp0, tmp1, tmp1, tmp2, tmp3 );
+						msg0, msg0, msg1, msg1, msg2, msg3 );
 				}
 			}
 			""";
@@ -761,9 +761,9 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public void takeB( Thing@B y ) {}
 				public void run( Boolean@A cond, Thing@A y ) {
-					if( cond ) { Thing@B tmp0 = y; this.takeB( tmp0 ); } else { }
-					Thing@B tmp1 = y;
-					this.takeB( tmp1 );
+					if( cond ) { Thing@B msg0 = y; this.takeB( msg0 ); } else { }
+					Thing@B msg1 = y;
+					this.takeB( msg1 );
 				}
 			}
 			""";
@@ -786,9 +786,9 @@ public class NormalizerTest {
 			package test;
 			class C@( A, B ) {
 				public void run() {
-					Integer@B tmp0 = 42@A;
-					Integer@A tmp1 = Integer@B.valueOf( tmp0 );
-					Integer@A x = tmp1;
+					Integer@B msg0 = 42@A;
+					Integer@A msg1 = Integer@B.valueOf( msg0 );
+					Integer@A x = msg1;
 				}
 			}
 			""";
@@ -815,8 +815,8 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public void take( Choice@A choice ) {}
 				public void run() {
-					Choice@A tmp0 = Choice@B.YES;
-					this.take( tmp0 );
+					Choice@A msg0 = Choice@B.YES;
+					this.take( msg0 );
 				}
 			}
 			""";
@@ -843,11 +843,11 @@ public class NormalizerTest {
 			class C@( A, B ) {
 				public void take( Integer@A i, Boolean@A b, String@A s, Box@A box ) {}
 				public void run() {
-					Integer@A tmp0 = 1@B;
-					Boolean@A tmp1 = true@B;
-					String@A tmp2 = "x"@B;
-					Box@A tmp3 = null@B;
-					this.take( tmp0, tmp1, tmp2, tmp3 );
+					Integer@A msg0 = 1@B;
+					Boolean@A msg1 = true@B;
+					String@A msg2 = "x"@B;
+					Box@A msg3 = null@B;
+					this.take( msg0, msg1, msg2, msg3 );
 				}
 			}
 			""";
@@ -882,8 +882,8 @@ public class NormalizerTest {
 				public Box@A getBox( Integer@A value ) { return new Box@A( value ); }
 				public void take( Integer@A value ) {}
 				public void run( Integer@B b ) {
-					Integer@A tmp0 = b;
-					this.take( this.getBox( tmp0 ).value );
+					Integer@A msg0 = b;
+					this.take( this.getBox( msg0 ).value );
 				}
 			}
 			""";
@@ -909,10 +909,10 @@ public class NormalizerTest {
 			package test;
 			class C@( A, B ) {
 				public void run( Integer@A a, Integer@B b ) {
-					Integer@B tmp0 = a;
-					switch( b + tmp0 ) {
-						case 0@B -> { Integer@A tmp1 = b; Integer@A x = tmp1; }
-						default -> { Integer@A tmp2 = b; Integer@A y = tmp2; }
+					Integer@B msg0 = a;
+					switch( b + msg0 ) {
+						case 0@B -> { Integer@A msg1 = b; Integer@A x = msg1; }
+						default -> { Integer@A msg2 = b; Integer@A y = msg2; }
 					}
 				}
 			}
@@ -936,7 +936,7 @@ public class NormalizerTest {
 		Normalizer.Result result = normalizeResult( src );
 		List< VariableDeclaration > hoists = hoistsForMethod( result, "run" );
 		assertEquals( 1, hoists.size() );
-		assertEquals( "tmp0", hoists.get( 0 ).name().identifier() );
+		assertEquals( "msg0", hoists.get( 0 ).name().identifier() );
 		assertEquals( "Thing", hoists.get( 0 ).type().name().identifier() );
 		assertEquals( "B", hoists.get( 0 ).type().worldArguments().get( 0 ).name().identifier() );
 		assertTrue( hoists.get( 0 ).initializer().isPresent() );
@@ -958,7 +958,7 @@ public class NormalizerTest {
 		Normalizer.Result result = normalizeResult( src );
 		List< VariableDeclaration > hoists = hoistsForMethod( result, "run" );
 		assertEquals( 1, hoists.size() );
-		assertEquals( "tmp0", hoists.get( 0 ).name().identifier() );
+		assertEquals( "msg0", hoists.get( 0 ).name().identifier() );
 	}
 
 	@Test
@@ -979,8 +979,8 @@ public class NormalizerTest {
 		Normalizer.Result result = normalizeResult( src );
 		List< VariableDeclaration > hoists = hoistsForMethod( result, "run" );
 		assertEquals( 2, hoists.size() );
-		assertEquals( "tmp0", hoists.get( 0 ).name().identifier() );
-		assertEquals( "tmp1", hoists.get( 1 ).name().identifier() );
+		assertEquals( "msg0", hoists.get( 0 ).name().identifier() );
+		assertEquals( "msg1", hoists.get( 1 ).name().identifier() );
 	}
 
 	@Test
@@ -1000,9 +1000,9 @@ public class NormalizerTest {
 		Normalizer.Result result = normalizeResult( src );
 		List< VariableDeclaration > hoists = hoistsForMethod( result, "run" );
 		assertEquals( 3, hoists.size() );
-		assertEquals( "tmp0", hoists.get( 0 ).name().identifier() );
-		assertEquals( "tmp1", hoists.get( 1 ).name().identifier() );
-		assertEquals( "tmp2", hoists.get( 2 ).name().identifier() );
+		assertEquals( "msg0", hoists.get( 0 ).name().identifier() );
+		assertEquals( "msg1", hoists.get( 1 ).name().identifier() );
+		assertEquals( "msg2", hoists.get( 2 ).name().identifier() );
 	}
 
 	@Test
@@ -1020,8 +1020,46 @@ public class NormalizerTest {
 		Normalizer.Result result = normalizeResult( src );
 		List< VariableDeclaration > hoists = hoistsForConstructor( result, "C" );
 		assertEquals( 1, hoists.size() );
-		assertEquals( "tmp0", hoists.get( 0 ).name().identifier() );
+		assertEquals( "msg0", hoists.get( 0 ).name().identifier() );
 		assertEquals( "Integer", hoists.get( 0 ).type().name().identifier() );
 		assertEquals( "A", hoists.get( 0 ).type().worldArguments().get( 0 ).name().identifier() );
+	}
+
+	@Test
+	public void increments() throws IOException {
+		String src =
+				"""
+				package MoveMeant.Increments;
+				
+				import choral.channels.SymChannel;
+				
+				class Increments@( A, B ) {
+					public void fun( SymChannel@( A, B )< Object > ch_AB ) {
+						Boolean@B b3 = true@B;
+						Boolean@A a3 = b3 && false@A;
+						b3 &= a3 || true@B;
+						a3 |= false@A || b3;
+					}
+				}
+				""";
+		String expected =
+				"""
+				package MoveMeant.Increments;
+
+				import choral.channels.SymChannel;
+
+				class Increments@(A, B) {
+					public void fun( SymChannel@( A, B )< Object > ch_AB ) {
+						Boolean@( B ) b3 = true@B;
+						Boolean@( A ) msg0 = b3;
+						Boolean@( A ) a3 = msg0 && false@A;
+						Boolean@( B ) msg1 = a3;
+						b3 &= msg1 || true@B;
+						a3 |= false@A || msg0;
+					}
+
+				}
+				""";
+		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 }
