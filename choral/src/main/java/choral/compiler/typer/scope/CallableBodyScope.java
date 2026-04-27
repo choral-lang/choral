@@ -1,6 +1,6 @@
 package choral.compiler.typer.scope;
 
-import choral.compiler.Typer;
+import choral.ast.body.VariableDeclaration;
 import choral.exceptions.StaticVerificationException;
 import choral.types.*;
 
@@ -16,13 +16,10 @@ public final class CallableBodyScope extends ChildScope
 		implements VariableDeclarationScope {
 
 	private final CallableScope parent;
-	private final Map< String, GroundDataType > variables = new HashMap<>();
+	private final Map< String, VariableDeclaration > variables = new HashMap<>();
 
 	public CallableBodyScope( CallableScope parent ) {
 		this.parent = parent;
-		for( Signature.Parameter p : parent.callable.innerCallable().signature().parameters() ) {
-			variables.put( p.identifier(), p.type() );
-		}
 	}
 
 	@Override
@@ -31,14 +28,15 @@ public final class CallableBodyScope extends ChildScope
 	}
 
 	@Override
-	public Map< String, GroundDataType > variables() {
+	public Map< String, VariableDeclaration > variables() {
 		return variables;
 	}
 
 	@Override
-	public void declareVariable( String identifier, GroundDataType type ) {
+	public void declareVariable( VariableDeclaration declaration ) {
+		String identifier = declaration.name().identifier();
 		if( lookupVariable( identifier ).isEmpty() ) {
-			variables.put( identifier, type );
+			variables.put( identifier, declaration );
 		} else {
 			throw new StaticVerificationException( "variable '" + identifier
 					+ "' already defined in the scope" );
@@ -46,18 +44,19 @@ public final class CallableBodyScope extends ChildScope
 	}
 
 	@Override
-	public Optional< ? extends GroundDataType > lookupVariable( String identifier ) {
+	public Optional< VariableDeclaration > lookupVariable( String identifier ) {
 		return Optional.ofNullable( variables.get( identifier ) );
 	}
 
 	@Override
 	public Optional< ? extends GroundDataType > lookupVariableOrField( String identifier ) {
-		GroundDataType result = variables.get( identifier );
-		if( result == null ) {
+		Optional< ? extends GroundDataType > result =
+				lookupVariable( identifier ).flatMap( VariableDeclaration::typeAnnotation );
+		if( result.isEmpty() ) {
 			return parent().callable.declarationContext().field( identifier )
 					.map( Member.Field::type );
 		} else {
-			return Optional.of( result );
+			return result;
 		}
 	}
 

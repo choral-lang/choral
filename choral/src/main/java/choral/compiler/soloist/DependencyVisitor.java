@@ -423,12 +423,6 @@ public class DependencyVisitor implements ChoralVisitorInterface< Void > {
 	}
 
 	@Override
-	public Void visit( FormalMethodParameter n ) {
-		visit( n.type() );
-		return null;
-	}
-
-	@Override
 	public Void visit( ClassMethodDefinition n ) {
 		visit( n.signature() );
 		n.body().ifPresent( this::visit );

@@ -247,10 +247,13 @@ public class Typer {
 							: classOrInterfaceStaticScope.getInstanceScope().getScope( tm );
 					visitTypeParametersBound( callableScope, nm.signature().typeParameters(),
 							true );
-					for( FormalMethodParameter x : nm.signature().parameters() ) {
+					for( VariableDeclaration x : nm.signature().parameters() ) {
+						GroundDataType parameterType =
+								visitGroundDataTypeExpression( callableScope, x.type(), true );
+						x.setTypeAnnotation( parameterType );
 						tm.innerCallable().signature().addParameter( x.name().identifier(),
-								visitGroundDataTypeExpression( callableScope, x.type(),
-										true ) );
+								parameterType );
+						callableScope.getScope().declareVariable( x );
 					}
 					TypeExpression r = nm.signature().returnType();
 					if( r.name().identifier().equals( "void" ) ) {
@@ -304,10 +307,13 @@ public class Typer {
 							tm );
 					visitTypeParametersBound( callableScope, nm.signature().typeParameters(),
 							false );
-					for( FormalMethodParameter x : nm.signature().parameters() ) {
+					for( VariableDeclaration x : nm.signature().parameters() ) {
+						GroundDataType parameterType =
+								visitGroundDataTypeExpression( callableScope, x.type(), false );
+						x.setTypeAnnotation( parameterType );
 						tm.innerCallable().signature().addParameter( x.name().identifier(),
-								visitGroundDataTypeExpression( callableScope, x.type(),
-										false ) );
+								parameterType );
+						callableScope.getScope().declareVariable( x );
 					}
 					try {
 						tm.innerCallable().finalise();
@@ -444,9 +450,13 @@ public class Typer {
 							: classOrInterfaceStaticScope.getInstanceScope().getScope( tm );
 					visitTypeParametersBound( methodScope, nm.signature().typeParameters(),
 							true );
-					for( FormalMethodParameter x : nm.signature().parameters() ) {
+					for( VariableDeclaration x : nm.signature().parameters() ) {
+						GroundDataType parameterType =
+								visitGroundDataTypeExpression( methodScope, x.type(), false );
+						x.setTypeAnnotation( parameterType );
 						tm.innerCallable().signature().addParameter( x.name().identifier(),
-								visitGroundDataTypeExpression( methodScope, x.type(), false ) );
+								parameterType );
+						methodScope.getScope().declareVariable( x );
 					}
 					TypeExpression r = nm.signature().returnType();
 					if( r.name().identifier().equals( "void" ) ) {
@@ -1380,7 +1390,8 @@ public class Typer {
 					openBlock();  // ---
 					try {
 						// check whether variable already exists
-						scope.declareVariable( c.left().name().identifier(), te );
+						c.left().setTypeAnnotation( te );
+						scope.declareVariable( c.left() );
 					} catch( StaticVerificationException e ) {
 						throw new AstPositionedException( c.left().name().position(), e );
 					}
@@ -1430,8 +1441,9 @@ public class Typer {
 			public Boolean visit( VariableDeclarationStatement n ) {
 				for( VariableDeclaration x : n.variables() ) {
 					GroundDataType type = visitGroundDataTypeExpression( scope, x.type(), false );
-					scope.declareVariable( x.name().identifier(), type );
-					x.initializer().ifPresent( e -> synth( e, n ) );
+					x.setTypeAnnotation( type );
+					x.initializer().ifPresent( e -> checkInitializer( e, n, type ) );
+					scope.declareVariable( x );
 				}
 				return assertReachableContinuation( n, false );
 			}
@@ -1460,6 +1472,22 @@ public class Typer {
 				return new Synth(
 						scope, false, Collections.emptyList(), enclosingMethod, statement, opts
 				).visit( n );
+			}
+
+			private void checkInitializer(
+					AssignExpression initializer, Statement statement, GroundDataType declaredType ) {
+				initializer.target().setTypeAnnotation( declaredType );
+				initializer.setTypeAnnotation( declaredType );
+				GroundDataTypeOrVoid found =
+						synth( initializer.value(), statement, declaredType.worldArguments() );
+				boolean assignable = opts.relaxed() ?
+						found.isAssignableTo_relaxed( declaredType ) :
+						found.isAssignableTo( declaredType );
+				if( !assignable ) {
+					throw new AstPositionedException( initializer.position(),
+							new StaticVerificationException(
+									"required type '" + declaredType + "', found '" + found + "'" ) );
+				}
 			}
 
 			GroundDataTypeOrVoid synth(
@@ -1727,6 +1755,7 @@ public class Typer {
 
 			@Override
 			public GroundDataType visit( AssignExpression n ) {
+				assertAssignableTarget( n );
 				GroundDataTypeOrVoid tvl = synth( n.target(), Collections.emptyList() );
 				if( tvl.isVoid() ) {
 					throw new AstPositionedException( n.position(),
@@ -1759,6 +1788,19 @@ public class Typer {
 				return annotate( n, tl );
 			}
 
+			private void assertAssignableTarget( AssignExpression n ) {
+				if( n.target() instanceof FieldAccessExpression target ) {
+					String identifier = target.name().identifier();
+					if( scope.lookupVariable( identifier ).isPresent() &&
+							scope.lookupVariable( identifier ).get().isFinal() ) {
+						throw new AstPositionedException( n.position(),
+								new StaticVerificationException(
+										"cannot assign a value to final variable '" + identifier
+												+ "'" ) );
+					}
+				}
+			}
+
 			@Override
 			public GroundDataType visit( BinaryExpression n ) {
 				GroundDataTypeOrVoid tl = synth( n.left() );
@@ -1786,7 +1828,8 @@ public class Typer {
 				String identifier = n.name().identifier();
 				Optional< ? extends GroundDataType > result = Optional.empty();
 				if( left == null ) {
-					result = scope.lookupVariable( identifier );
+					result = scope.lookupVariable( identifier )
+							.flatMap( VariableDeclaration::typeAnnotation );
 					if( result.isEmpty() ) {
 						left = scope.lookupThis();
 						leftStatic = isInStaticContext();

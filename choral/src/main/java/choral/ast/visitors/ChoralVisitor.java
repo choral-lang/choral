@@ -358,16 +358,6 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 	}
 
 	@Override
-	public Node visit( FormalMethodParameter n ) {
-		return new FormalMethodParameter(
-				n.name(),
-				safeVisit( n.type() ),
-				visitAndCollect( n.annotations() ),
-				n.position()
-		);
-	}
-
-	@Override
 	public Node visit( Interface n ) {
 		return new Interface(
 				n.name(),
@@ -466,6 +456,7 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 				safeVisit( n.type() ),
 				visitAndCollect( n.annotations() ),
 				safeVisit( n.initializer().orElse( null ) ),
+				n.modifiers(),
 				n.position()
 		);
 	}

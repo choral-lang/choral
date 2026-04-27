@@ -1,6 +1,7 @@
 package choral.compiler.typer.scope;
 
 import choral.ast.Name;
+import choral.ast.body.VariableDeclaration;
 import choral.exceptions.AstPositionedException;
 import choral.types.GroundClass;
 import choral.types.GroundClassOrInterface;
@@ -23,33 +24,11 @@ import java.util.function.Predicate;
  */
 public interface VariableDeclarationScope extends Scope {
 
-	Optional< ? extends GroundDataType > lookupVariable( String identifier );
+	Optional< VariableDeclaration > lookupVariable( String identifier );
 
-	default GroundDataType assertLookupVariable( String identifier ) {
-		return lookupVariable( identifier ).orElseThrow(
-				() -> new UnresolvedSymbolException( identifier ) );
-	}
-
-	default GroundDataType assertLookupVariable( Name query ) {
-		return lookupVariable( query.identifier() ).orElseThrow(
-				() -> new AstPositionedException( query.position(),
-						new UnresolvedSymbolException( query.identifier() ) ) );
-	}
-
-	void declareVariable( String identifier, GroundDataType type );
+	void declareVariable( VariableDeclaration declaration );
 
 	Optional< ? extends GroundDataType > lookupVariableOrField( String identifier );
-
-	default GroundDataType assertLookupVariableOrField( String identifier ) {
-		return lookupVariableOrField( identifier ).orElseThrow(
-				() -> new UnresolvedSymbolException( identifier ) );
-	}
-
-	default GroundDataType assertLookupVariableOrField( Name query ) {
-		return lookupVariableOrField( query.identifier() ).orElseThrow(
-				() -> new AstPositionedException( query.position(),
-						new UnresolvedSymbolException( query.identifier() ) ) );
-	}
 
 	GroundClassOrInterface lookupThis();
 
@@ -57,7 +36,7 @@ public interface VariableDeclarationScope extends Scope {
 
 	Scope parent();
 
-	Map< String, GroundDataType > variables();
+	Map< String, VariableDeclaration > variables();
 
 	BlockScope newBlockScope();
 
@@ -82,7 +61,7 @@ public interface VariableDeclarationScope extends Scope {
 		VariableDeclarationScope currentScope = this;
 		while( true ) {
 			currentScope.variables().forEach( ( key, val ) -> {
-				if( val instanceof GroundInterface type ) {
+				if( val.typeAnnotation().orElse( null ) instanceof GroundInterface type ) {
 					if( isChannel.test( type ) ) {
 						channels.putIfAbsent( key, type );
 					}

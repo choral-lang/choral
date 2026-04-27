@@ -1,5 +1,6 @@
 package choral.compiler.typer.scope;
 
+import choral.ast.body.VariableDeclaration;
 import choral.exceptions.StaticVerificationException;
 import choral.types.GroundClass;
 import choral.types.GroundClassOrInterface;
@@ -16,7 +17,7 @@ public class BlockScope extends ChildScope
 		implements VariableDeclarationScope {
 
 	private final VariableDeclarationScope parent;
-	private final Map< String, GroundDataType > variables = new HashMap<>();
+	private final Map< String, VariableDeclaration > variables = new HashMap<>();
 
 	public BlockScope( VariableDeclarationScope parent ) {
 		this.parent = parent;
@@ -28,14 +29,15 @@ public class BlockScope extends ChildScope
 	}
 
 	@Override
-	public Map< String, GroundDataType > variables() {
+	public Map< String, VariableDeclaration > variables() {
 		return variables;
 	}
 
 	@Override
-	public void declareVariable( String identifier, GroundDataType type ) {
+	public void declareVariable( VariableDeclaration declaration ) {
+		String identifier = declaration.name().identifier();
 		if( lookupVariable( identifier ).isEmpty() ) {
-			variables.put( identifier, type );
+			variables.put( identifier, declaration );
 		} else {
 			throw new StaticVerificationException( "variable '" + identifier
 					+ "' already defined in the scope" );
@@ -43,8 +45,8 @@ public class BlockScope extends ChildScope
 	}
 
 	@Override
-	public Optional< ? extends GroundDataType > lookupVariable( String identifier ) {
-		GroundDataType result = variables.get( identifier );
+	public Optional< VariableDeclaration > lookupVariable( String identifier ) {
+		VariableDeclaration result = variables.get( identifier );
 		if( result == null ) {
 			return parent().lookupVariable( identifier );
 		} else {
@@ -54,11 +56,12 @@ public class BlockScope extends ChildScope
 
 	@Override
 	public Optional< ? extends GroundDataType > lookupVariableOrField( String identifier ) {
-		GroundDataType result = variables.get( identifier );
-		if( result == null ) {
+		Optional< ? extends GroundDataType > result =
+				lookupVariable( identifier ).flatMap( VariableDeclaration::typeAnnotation );
+		if( result.isEmpty() ) {
 			return parent().lookupVariableOrField( identifier );
 		} else {
-			return Optional.of( result );
+			return result;
 		}
 	}
 

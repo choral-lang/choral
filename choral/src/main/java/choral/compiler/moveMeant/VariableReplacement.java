@@ -514,6 +514,7 @@ public class VariableReplacement{
 				vd.type(), 
 				vd.annotations(), 
 				(AssignExpression)visitExpression(dependencyList, vd.initializer().get()), 
+				vd.modifiers(),
 				vd.position());
 		}
 

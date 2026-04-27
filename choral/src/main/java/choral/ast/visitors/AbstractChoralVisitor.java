@@ -234,11 +234,6 @@ public abstract class AbstractChoralVisitor< T > implements ChoralVisitorInterfa
 	}
 
 	@Override
-	public T visit( FormalMethodParameter n ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public T visit( ClassMethodDefinition n ) {
 		throw new UnsupportedOperationException();
 	}

@@ -35,13 +35,13 @@ import java.util.Optional;
 public class MethodSignature extends Node {
 	private final Name name;
 	private final List< FormalTypeParameter > typeParameters;
-	private final List< FormalMethodParameter > parameters;
+	private final List< VariableDeclaration > parameters;
 	private final TypeExpression returnType;
 
 	public MethodSignature(
 			final Name name,
 			final List< FormalTypeParameter > typeParameters,
-			final List< FormalMethodParameter > parameters,
+			final List< VariableDeclaration > parameters,
 			final TypeExpression returnType,
 			final Position position
 	) {
@@ -56,7 +56,7 @@ public class MethodSignature extends Node {
 		return this.name;
 	}
 
-	public List< FormalMethodParameter > parameters() {
+	public List< VariableDeclaration > parameters() {
 		return this.parameters;
 	}
 

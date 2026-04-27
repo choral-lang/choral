@@ -199,11 +199,6 @@ public class AbstractMerger< T > implements MergerInterface< T > {
 	}
 
 	@Override
-	public T merge( FormalMethodParameter n1, FormalMethodParameter n2 ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public T merge( ClassMethodDefinition n1, ClassMethodDefinition n2 ) {
 		throw new UnsupportedOperationException();
 	}

@@ -92,14 +92,14 @@ public class CourtesyMethodsSynthesiser extends AbstractChoralVisitor< Node > {
 	private Set< Name > _visit( MethodSignature n ) {
 		return n.parameters().stream()
 				.filter( p -> p.type().name().equals( UnitRepresentation.UNIT ) )
-				.map( FormalMethodParameter::name )
+				.map( VariableDeclaration::name )
 				.collect( Collectors.toSet() );
 	}
 
 	private Set< Name > _visit( ConstructorSignature n ) {
 		return n.parameters().stream()
 				.filter( p -> p.type().name().equals( UnitRepresentation.UNIT ) )
-				.map( FormalMethodParameter::name )
+				.map( VariableDeclaration::name )
 				.collect( Collectors.toSet() );
 	}
 

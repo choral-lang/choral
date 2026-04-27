@@ -38,15 +38,15 @@ import java.util.List;
 
 public class CaseSignature extends Node {
 	private final Name name;
-	private final List< FormalMethodParameter > parameters;
+	private final List< VariableDeclaration > parameters;
 
-	public CaseSignature( final Name name, final List< FormalMethodParameter > parameters ) {
+	public CaseSignature( final Name name, final List< VariableDeclaration > parameters ) {
 		this.name = name;
 		this.parameters = parameters;
 	}
 
 	public CaseSignature(
-			final Name name, final List< FormalMethodParameter > parameters, final Position position
+			final Name name, final List< VariableDeclaration > parameters, final Position position
 	) {
 		super( position );
 		this.name = name;
@@ -57,7 +57,7 @@ public class CaseSignature extends Node {
 		return name;
 	}
 
-	public List< FormalMethodParameter > parameters() {
+	public List< VariableDeclaration > parameters() {
 		return parameters;
 	}
 

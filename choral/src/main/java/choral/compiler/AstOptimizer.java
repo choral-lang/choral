@@ -635,7 +635,7 @@ public class AstOptimizer implements ChoralVisitor {
 	}
 
 	@Override
-	public List< FormalMethodParameter > visitFormalParameterList(
+	public List< VariableDeclaration > visitFormalParameterList(
 			ChoralParser.FormalParameterListContext fpl
 	) {
 		debugInfo();
@@ -645,7 +645,7 @@ public class AstOptimizer implements ChoralVisitor {
 	/* * * * * * * * * * INTERFACE BODIES  * * * * * * * * */
 
 	@Override
-	public List< FormalMethodParameter > visitFormalParameters(
+	public List< VariableDeclaration > visitFormalParameters(
 			ChoralParser.FormalParametersContext fps
 	) {
 		debugInfo();
@@ -654,13 +654,15 @@ public class AstOptimizer implements ChoralVisitor {
 	}
 
 	@Override
-	public FormalMethodParameter visitFormalParameter( ChoralParser.FormalParameterContext fp ) {
+	public VariableDeclaration visitFormalParameter( ChoralParser.FormalParameterContext fp ) {
 		debugInfo();
-		return new FormalMethodParameter(
+		return new VariableDeclaration(
 				getName( fp.Identifier() ),
 				visitReferenceType( fp.referenceType() ),
 				fp.annotation().stream().map( this::visitAnnotation ).collect(
 						Collectors.toList() ),
+				null,
+				visitVariableModifiers( fp.variableModifier() ),
 				getPosition( fp )
 		);
 	}
@@ -897,13 +899,31 @@ public class AstOptimizer implements ChoralVisitor {
 		TypeExpression type = visitReferenceType( lvd.referenceType() );
 		List< Annotation > annotations = lvd.annotation().stream().map(
 				this::visitAnnotation ).collect( Collectors.toList() );
+		EnumSet< VariableModifier > modifiers = visitVariableModifiers( lvd.variableModifier() );
 		return new VariableDeclarationStatement(
 				lvd.variableDeclarator().stream().map(
-						vd -> visitVariableDeclarator( vd, type, annotations )
+						vd -> visitVariableDeclarator( vd, type, annotations, modifiers )
 				).collect( Collectors.toList() ),
 				null,
 				getPosition( lvd )
 		);
+	}
+
+	@Override
+	public VariableModifier visitVariableModifier(
+			ChoralParser.VariableModifierContext ctx
+	) {
+		return VariableModifier.valueOf( ctx.getText().toUpperCase() );
+	}
+
+	private EnumSet< VariableModifier > visitVariableModifiers(
+			List< ChoralParser.VariableModifierContext > contexts
+	) {
+		EnumSet< VariableModifier > modifiers = EnumSet.noneOf( VariableModifier.class );
+		for( ChoralParser.VariableModifierContext ctx : contexts ) {
+			modifiers.add( visitVariableModifier( ctx ) );
+		}
+		return modifiers;
 	}
 
 	@Override
@@ -918,7 +938,8 @@ public class AstOptimizer implements ChoralVisitor {
 	public VariableDeclaration visitVariableDeclarator(
 			ChoralParser.VariableDeclaratorContext vd,
 			TypeExpression type,
-			List< Annotation > annotations
+			List< Annotation > annotations,
+			EnumSet< VariableModifier > modifiers
 	) {
 		return new VariableDeclaration(
 				getName( vd.Identifier() ),
@@ -942,6 +963,7 @@ public class AstOptimizer implements ChoralVisitor {
 						AssignExpression.Operator.ASSIGN,
 						getPosition( vd )
 				) : null,
+				modifiers,
 				getPosition( vd )
 		);
 	}

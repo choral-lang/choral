@@ -54,7 +54,8 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 										p.left().name(),
 										p.left().type(),
 										p.left().annotations(),
-										p.left().initializer().orElse( null )
+										p.left().initializer().orElse( null ),
+										p.left().modifiers()
 								),
 								visit( p.right() ) ) )
 						.collect( Collectors.toList() ),
@@ -80,7 +81,8 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 								v.annotations(),
 								v.initializer().isPresent() ?
 										(AssignExpression) ExpressionUnitNormaliser.visitExpression(
-												v.initializer().get() ) : null
+												v.initializer().get() ) : null,
+								v.modifiers()
 						)
 				).collect( Collectors.toList() ),
 				visit( n.continuation() )

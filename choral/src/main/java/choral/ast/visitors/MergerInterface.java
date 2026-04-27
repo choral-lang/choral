@@ -98,8 +98,6 @@ public interface MergerInterface< T > {
 
 	T merge( Field n1, Field n2 );
 
-	T merge( FormalMethodParameter n1, FormalMethodParameter n2 );
-
 	T merge( ClassMethodDefinition n1, ClassMethodDefinition n2 );
 
 	T merge( MethodSignature n1, MethodSignature n2 );
