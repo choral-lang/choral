@@ -27,9 +27,13 @@ import choral.ast.Position;
 import choral.ast.expression.AssignExpression;
 import choral.ast.type.TypeExpression;
 import choral.ast.visitors.ChoralVisitorInterface;
+import choral.types.GroundDataType;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+
+import static choral.ast.body.VariableModifier.FINAL;
 
 public class VariableDeclaration extends Node {
 
@@ -37,18 +41,7 @@ public class VariableDeclaration extends Node {
 	private final TypeExpression type;
 	private final List< Annotation > annotations;
 	private final AssignExpression initializer;
-
-	public VariableDeclaration(
-			final Name name,
-			final TypeExpression type,
-			final List< Annotation > annotations,
-			final AssignExpression initializer
-	) {
-		this.name = name;
-		this.type = type;
-		this.annotations = annotations;
-		this.initializer = initializer;
-	}
+	private final EnumSet< VariableModifier > modifiers;
 
 	public VariableDeclaration(
 			final Name name,
@@ -57,11 +50,37 @@ public class VariableDeclaration extends Node {
 			final AssignExpression initializer,
 			final Position position
 	) {
+		this( name, type, annotations, initializer, EnumSet.noneOf( VariableModifier.class ), position );
+	}
+
+	public VariableDeclaration(
+			final Name name,
+			final TypeExpression type,
+			final List< Annotation > annotations,
+			final AssignExpression initializer,
+			final EnumSet< VariableModifier > modifiers
+	) {
+		this.name = name;
+		this.type = type;
+		this.annotations = annotations;
+		this.initializer = initializer;
+		this.modifiers = copyModifiers( modifiers );
+	}
+
+	public VariableDeclaration(
+			final Name name,
+			final TypeExpression type,
+			final List< Annotation > annotations,
+			final AssignExpression initializer,
+			final EnumSet< VariableModifier > modifiers,
+			final Position position
+	) {
 		super( position );
 		this.name = name;
 		this.type = type;
 		this.annotations = annotations;
 		this.initializer = initializer;
+		this.modifiers = copyModifiers( modifiers );
 	}
 
 	public Name name() {
@@ -76,8 +95,33 @@ public class VariableDeclaration extends Node {
 		return annotations;
 	}
 
+	public EnumSet< VariableModifier > modifiers() {
+		return modifiers;
+	}
+
+	public boolean isFinal() {
+		return modifiers.contains( FINAL );
+	}
+
 	public Optional< AssignExpression > initializer() {
 		return Optional.ofNullable( initializer );
+	}
+
+	private GroundDataType typeAnnotation;
+
+	public Optional< ? extends GroundDataType > typeAnnotation() {
+		return Optional.ofNullable( typeAnnotation );
+	}
+
+	public void setTypeAnnotation( GroundDataType typeAnnotation ) {
+		this.typeAnnotation = typeAnnotation;
+	}
+
+	private static EnumSet< VariableModifier > copyModifiers(
+			EnumSet< VariableModifier > modifiers ) {
+		return modifiers.isEmpty()
+				? EnumSet.noneOf( VariableModifier.class )
+				: EnumSet.copyOf( modifiers );
 	}
 
 	@Override

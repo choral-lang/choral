@@ -346,7 +346,8 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 				v -> visit( v.name() ) + v.initializer().map(
 						e -> ASSIGN + visit( e.value() ) ).orElse( "" )
 		).collect( Collectors.joining( SPACED_COMMA ) );
-		return type + " " + variables + getContinuation( n, SEMICOLON );
+		String modifier = n.variables().get( 0 ).isFinal() ? "final " : "";
+		return modifier + type + " " + variables + getContinuation( n, SEMICOLON );
 	}
 
 	@Override
@@ -409,11 +410,6 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 		String template = "${annotations}$modifiers$type $name";
 		return Utils.createVelocityTemplate( template ).render( m );
-	}
-
-	@Override
-	public String visit( FormalMethodParameter n ) {
-		return visitAndCollect( n.annotations(), " ", " " ) + visit( n.type() ) + " " + n.name();
 	}
 
 	@Override
@@ -518,7 +514,8 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 	}
 
 	public String visit( VariableDeclaration n, String separator ) {
-		return visitAndCollect( n.annotations(), separator, separator ) + visit(
+		return visitAndCollect( n.annotations(), separator, separator )
+				+ ( n.isFinal() ? "final " : "" ) + visit(
 				n.type() ) + " " + visit( n.name() );
 	}
 

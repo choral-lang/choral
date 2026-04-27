@@ -34,12 +34,12 @@ import java.util.Optional;
 public class ConstructorSignature extends Node {
 	private final Name name;
 	private final List< FormalTypeParameter > typeParameters;
-	private final List< FormalMethodParameter > parameters;
+	private final List< VariableDeclaration > parameters;
 
 	public ConstructorSignature(
 			final Name name,
 			final List< FormalTypeParameter > typeParameters,
-			final List< FormalMethodParameter > parameters,
+			final List< VariableDeclaration > parameters,
 			final Position position
 	) {
 		super( position );
@@ -56,7 +56,7 @@ public class ConstructorSignature extends Node {
 		return this.typeParameters;
 	}
 
-	public List< FormalMethodParameter > parameters() {
+	public List< VariableDeclaration > parameters() {
 		return parameters;
 	}
 

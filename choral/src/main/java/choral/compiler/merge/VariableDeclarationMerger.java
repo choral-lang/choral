@@ -64,7 +64,8 @@ class VariableDeclarationMerger extends AbstractMerger< VariableDeclaration > {
 				i1.isPresent() && i2.isPresent()
 						? (AssignExpression) ExpressionsMerger.mergeExpressions( i1.get(),
 						i2.get() )
-						: null
+						: null,
+				n1.modifiers()
 		);
 	}
 }

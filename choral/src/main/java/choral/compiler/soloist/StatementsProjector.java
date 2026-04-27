@@ -104,7 +104,8 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 												this.world(), p.left().type()
 										).get( 0 ),
 										p.left().annotations(),
-										null
+										null,
+										p.left().modifiers()
 								),
 								visit( p.right() ) ) ) // add exceptions to gamma here
 						.collect( Collectors.toList() )
@@ -253,7 +254,8 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 									v.annotations(),
 									v.initializer().isEmpty() ? null
 											: (AssignExpression) ExpressionProjector.visit(
-													this.world(), v.initializer().get() ) ) )
+													this.world(), v.initializer().get() ),
+									v.modifiers() ) )
 							.collect( Collectors.toList() ),
 					visit( n.continuation() ) ).copyPosition( n );
 		}

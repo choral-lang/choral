@@ -240,7 +240,7 @@ formalParameters
 	;
 
 formalParameter
-	: annotation* referenceType Identifier
+	: annotation* variableModifier* referenceType Identifier
 	;
 
 methodBody
@@ -350,7 +350,11 @@ blockStatement
 	;
 
 localVariableDeclaration
-	: annotation* referenceType variableDeclarator ( COMMA variableDeclarator )* SEMI
+	: annotation* variableModifier* referenceType variableDeclarator ( COMMA variableDeclarator )* SEMI
+	;
+
+variableModifier
+	: 'final'
 	;
 
 variableDeclarator
