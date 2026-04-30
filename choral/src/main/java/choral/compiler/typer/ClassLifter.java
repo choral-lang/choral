@@ -108,7 +108,14 @@ public class ClassLifter {
 		Position previousPosition = this.currentPosition;
 		this.currentPosition = position;
 		try {
-			return Optional.of( liftClassOrInterface( fullyQualifiedName ) );
+			HigherClassOrInterface result = liftClassOrInterface( fullyQualifiedName );
+
+			// In the case of on-demand imports, our current phase might already be
+			// MEMBER_DEFINITIONS. We need to process all the tasks we enqueued now before we
+			// return, so lifted types look the way our caller expects.
+			taskQueue.processUpToCurrentPhase();
+
+			return Optional.of( result );
 		} catch( LiftException e ) {
 			return Optional.empty();
 		} finally {
@@ -131,7 +138,11 @@ public class ClassLifter {
 
 		java.lang.Class<?> clazz;
 		try {
-			clazz = java.lang.Class.forName( fullyQualifiedName );
+			ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+			if( classLoader == null ) {
+				classLoader = ClassLifter.class.getClassLoader();
+			}
+			clazz = java.lang.Class.forName( fullyQualifiedName, false, classLoader );
 		} catch( ClassNotFoundException e ) {
 			throw LiftException.notFound( fullyQualifiedName );
 		}
@@ -407,7 +418,7 @@ public class ClassLifter {
 		return higherConstructor;
 	}
 	/////////////////////////////////////////////////////////////////////
-	//////////////////// S FOR LIFTING TYPES  /////////////////////
+	//////////////////// HELPERS FOR LIFTING TYPES  /////////////////////
 	/////////////////////////////////////////////////////////////////////
 
 	private List< HigherTypeParameter > liftTypeParameters(

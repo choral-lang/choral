@@ -39,6 +39,8 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -112,7 +114,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 
 		@Override
 		public Integer call() {
-			try {
+			try( ClassPathContext ignored = useClassPath() ) {
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 				Collection< CompilationUnit > headerUnits = Stream.concat(
@@ -182,7 +184,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 
 		@Override
 		public Integer call() {
-			try {
+			try( ClassPathContext ignored = useClassPath() ) {
 				Collection< File > sourceFiles = sourcesPathOption.getPaths( true ).stream()
 						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
 							if( Files.isDirectory( q ) ) return false;
@@ -311,7 +313,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 
 		@Override
 		public Integer call() {
-			try {
+			try( ClassPathContext ignored = useClassPath() ) {
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 				Collection< CompilationUnit > headerUnits = Stream.concat(
@@ -583,6 +585,16 @@ abstract class PathOption {
 			super.setValue( value );
 		}
 	}
+
+	public final static class ClassPathOption extends PathOption {
+		@Option( names = { "-cp", "--classpath" },
+				paramLabel = "<PATH>",
+				description = "Specify where to find Java classes and JARs." )
+		@Override
+		protected void setValue( String value ) {
+			super.setValue( value );
+		}
+	}
 }
 
 @Command()
@@ -679,6 +691,44 @@ class HeaderCompilerOptions {
 abstract class ChoralCommand {
 	@Mixin
 	VerbosityOptions verbosityOptions;
+
+	@Mixin
+	PathOption.ClassPathOption classPathOption;
+
+	protected ClassPathContext useClassPath() throws IOException {
+		return new ClassPathContext( classPathOption.getPaths() );
+	}
+
+	protected static final class ClassPathContext implements AutoCloseable {
+		private final ClassLoader previousClassLoader;
+		private final URLClassLoader classLoader;
+
+		private ClassPathContext( List< Path > classPath ) throws IOException {
+			if( classPath.isEmpty() ) {
+				previousClassLoader = null;
+				classLoader = null;
+				return;
+			}
+
+			previousClassLoader = Thread.currentThread().getContextClassLoader();
+			URL[] urls = new URL[ classPath.size() ];
+			for( int i = 0; i < classPath.size(); i++ ) {
+				Path path = classPath.get( i );
+				urls[i] = path.toAbsolutePath().normalize().toUri().toURL();
+			}
+			classLoader = new URLClassLoader( urls, previousClassLoader );
+			Thread.currentThread().setContextClassLoader( classLoader );
+		}
+
+		@Override
+		public void close() throws IOException {
+			if( classLoader == null ) {
+				return;
+			}
+			Thread.currentThread().setContextClassLoader( previousClassLoader );
+			classLoader.close();
+		}
+	}
 }
 
 class ChoralVersionProvider implements IVersionProvider {

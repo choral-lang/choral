@@ -119,7 +119,7 @@ public class TestChoral {
 	 * @param sourceFolder Location of the Choral class and its dependencies
 	 * @param javaSources Location of the Java sources needed to compile the expected output (e.g., runtime library)
 	 * @param worlds Which worlds to project. Defaults to all worlds.
-	 * @param classPaths Classpaths needed to compile the expected output (e.g., external libraries).
+	 * @param classPaths Classpaths needed by Choral and javac (e.g., external libraries).
 	 * @param flags Extra flags to pass to the Choral compiler (e.g., --infer-comms).
 	 */
 	private record CompilationRequest(String symbol,
@@ -279,6 +279,10 @@ public class TestChoral {
 		parameters.add( PROJECTED );
 		parameters.add( "-s" );
 		parameters.add( String.join( File.pathSeparator, compilationRequest.sourceFolder() ) );
+		if( !compilationRequest.classPaths().isEmpty() ) {
+			parameters.add( "-cp" );
+			parameters.add( String.join( File.pathSeparator, compilationRequest.classPaths() ) );
+		}
 		parameters.add( compilationRequest.symbol() );
 		parameters.addAll( compilationRequest.worlds() );
 		parameters.add( "--annotate" );
