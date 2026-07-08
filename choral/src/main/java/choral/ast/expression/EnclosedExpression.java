@@ -26,6 +26,8 @@ import choral.ast.Position;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 
+import java.util.Objects;
+
 /**
  * An expression with shape (a+b)</code>
  */
@@ -56,6 +58,18 @@ public class EnclosedExpression extends Expression {
 	public < R, T extends Node > R merge( MergerInterface< R > m, T n ) {
 		assert n instanceof EnclosedExpression;
 		return m.merge( this, (EnclosedExpression) n );
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof EnclosedExpression other ) ) return false;
+		return Objects.equals( nestedExpression, other.nestedExpression );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( nestedExpression );
 	}
 
 }

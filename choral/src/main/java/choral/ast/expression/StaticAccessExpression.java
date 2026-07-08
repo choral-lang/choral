@@ -77,4 +77,16 @@ public class StaticAccessExpression extends Expression {
 							this ) + "\n with " + n.getClass().getSimpleName() );
 		}
 	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof StaticAccessExpression other ) ) return false;
+		return typeExpression.equals( other.typeExpression );
+	}
+
+	@Override
+	public int hashCode() {
+		return typeExpression.hashCode();
+	}
 }

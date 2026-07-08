@@ -32,7 +32,8 @@ import choral.ast.visitors.MergerInterface;
 
 public abstract class Statement extends Node implements WithReturnAnnotation {
 
-	final private Statement continuation;
+	/** Should only be mutated by {@link #dangerouslySetContinuation( Statement )} */
+	private Statement continuation;
 
 	private WithReturnAnnotation.ReturnAnnotation returnAnnotation = ReturnAnnotation.NotSet;
 
@@ -54,6 +55,12 @@ public abstract class Statement extends Node implements WithReturnAnnotation {
 	}
 
 	public abstract Statement cloneWithContinuation( Statement continuation );
+
+	/** Mutating the AST is not usually a good idea, but it's safe to do within a module. */
+	public Statement dangerouslySetContinuation( Statement continuation ) {
+		this.continuation = continuation;
+		return this;
+	};
 
 	@Override
 	public ReturnAnnotation returnAnnotation() {

@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 /** @see choral.types.GroundDataType */
 public interface GroundClassOrInterface extends ClassOrInterface, GroundReferenceType {
 
+	@Override
 	HigherClassOrInterface typeConstructor();
 
 	@Override

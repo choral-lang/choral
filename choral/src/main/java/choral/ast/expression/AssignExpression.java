@@ -27,9 +27,12 @@ import choral.ast.Position;
 import choral.ast.visitors.ChoralVisitorInterface;
 import choral.ast.visitors.MergerInterface;
 
+import java.util.Objects;
+
 public class AssignExpression extends Expression {
 
-	private final Expression target, value;
+	private final Expression target;
+	private Expression value;
 	private final Operator operator;
 
 	@Override
@@ -143,7 +146,26 @@ public class AssignExpression extends Expression {
 		return value;
 	}
 
+	/** Mutating the AST is dangerous. Tread carefully! */
+	public void dangerouslyUpdateValue( Expression value ) {
+		this.value = value;
+	}
+
 	public Operator operator() {
 		return operator;
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof AssignExpression other ) ) return false;
+		return Objects.equals( value, other.value )
+				&& Objects.equals( target, other.target )
+				&& operator == other.operator;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( value, target, operator );
 	}
 }

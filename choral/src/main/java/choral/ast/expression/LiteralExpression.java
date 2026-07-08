@@ -30,6 +30,7 @@ import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -75,6 +76,19 @@ public abstract class LiteralExpression< T > extends Expression {
 	}
 
 	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof LiteralExpression< ? > other ) ) return false;
+		return Objects.equals( content, other.content )
+				&& Objects.equals( world, other.world );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( content, world );
+	}
+
+	@Override
 	public String toString() {
 		return content + "@" + world.name();
 	}
@@ -111,15 +125,12 @@ public abstract class LiteralExpression< T > extends Expression {
 
 		@Override
 		public int hashCode() {
-			return this.content().hashCode();
+			return Objects.hash( BooleanLiteralExpression.class, super.hashCode() );
 		}
 
 		@Override
 		public boolean equals( Object obj ) {
-			if( obj instanceof BooleanLiteralExpression ) {
-				return ( (BooleanLiteralExpression) obj ).content().equals( this.content() );
-			}
-			return false;
+			return obj instanceof BooleanLiteralExpression && super.equals( obj );
 		}
 
 	}
@@ -156,15 +167,12 @@ public abstract class LiteralExpression< T > extends Expression {
 
 		@Override
 		public int hashCode() {
-			return this.content().hashCode();
+			return Objects.hash( IntegerLiteralExpression.class, super.hashCode() );
 		}
 
 		@Override
 		public boolean equals( Object obj ) {
-			if( obj instanceof IntegerLiteralExpression ) {
-				return ( (IntegerLiteralExpression) obj ).content().equals( this.content() );
-			}
-			return false;
+			return obj instanceof IntegerLiteralExpression && super.equals( obj );
 		}
 
 	}
@@ -201,15 +209,12 @@ public abstract class LiteralExpression< T > extends Expression {
 
 		@Override
 		public int hashCode() {
-			return this.content().hashCode();
+			return Objects.hash( DoubleLiteralExpression.class, super.hashCode() );
 		}
 
 		@Override
 		public boolean equals( Object obj ) {
-			if( obj instanceof DoubleLiteralExpression ) {
-				return ( (DoubleLiteralExpression) obj ).content().equals( this.content() );
-			}
-			return false;
+			return obj instanceof DoubleLiteralExpression && super.equals( obj );
 		}
 
 	}
@@ -246,15 +251,12 @@ public abstract class LiteralExpression< T > extends Expression {
 
 		@Override
 		public int hashCode() {
-			return this.content().hashCode();
+			return Objects.hash( StringLiteralExpression.class, super.hashCode() );
 		}
 
 		@Override
 		public boolean equals( Object obj ) {
-			if( obj instanceof StringLiteralExpression ) {
-				return ( (StringLiteralExpression) obj ).content().equals( this.content() );
-			}
-			return false;
+			return obj instanceof StringLiteralExpression && super.equals( obj );
 		}
 	}
 

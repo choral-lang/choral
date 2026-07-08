@@ -5,17 +5,24 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import choral.ast.CompilationUnit;
+import choral.ast.Name;
 import choral.ast.expression.Expression;
 import choral.ast.statement.NilStatement;
 import choral.ast.statement.Statement;
+import choral.ast.type.TypeExpression;
+import choral.ast.type.WorldArgument;
 import choral.compiler.merge.ExpressionsMerger;
+import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
 import choral.types.GroundInterface;
+import choral.types.GroundTypeParameter;
 import choral.types.Member.HigherCallable;
 import choral.types.Member.HigherMethod;
 import choral.types.World;
 import choral.utils.Continuation;
 import choral.utils.Pair;
+
+import java.util.Collections;
 
 public class Utils {
 
@@ -44,22 +51,6 @@ public class Utils {
 				)).toList();
 	}
 
-    /**
-	 * Retreives all methods from the {@code CompilationUnit} including constructors.
-     * <p>
-     * Returns a list of the methods' typeannotations.
-	 */
-    public static List<HigherCallable> getJustMethods( CompilationUnit cu ){
-		return Stream.concat( 
-			cu.classes().stream()
-				.flatMap( cls -> cls.methods().stream() )
-				.map( method -> method.signature().typeAnnotation().get() ), // we assume that methods are type-annotated
-			cu.classes().stream()
-				.flatMap(cls -> cls.constructors().stream()
-				.map( method -> method.signature().typeAnnotation().get() )
-				)).toList();
-	}
-
 	/**
 	 * Searches through the methods of {@code channels} and returns the first viable com 
 	 * method based on the input. 
@@ -81,8 +72,8 @@ public class Utils {
 		
 		for( Pair<String, GroundInterface> channelPair : channels ){
 
-			// Data channels might not return the same datatype at the receiver as 
-			// the datatype from the sender. Since we only store one type for the 
+			// Data channels might not return the same datatype at the receiver as
+			// the datatype from the sender. Since we only store one type for the
 			// dependency we assume that all types in a channel are the same.
 			GroundInterface channel = channelPair.right();
 			if( channel.typeArguments().stream().anyMatch( typeArg -> dependencyType.typeConstructor().isSubtypeOf( typeArg ) ) ){
@@ -156,26 +147,61 @@ public class Utils {
 		}
 	}
 
-	/**
-	 * Chains Statements together through continuations.
-	 * <p>
-	 * Given a list of statements {@code stms}, it returns the {@code stms[0]} with its 
-	 * continuation set to {@code stms[1]}, and {@code stms[1]}'s continuation set to 
-	 * {@code stms[2]} and so on.
-	 */
-	public static Statement chainStatements( List<Statement> statements ){
-		if( statements.size() == 1 )
-			return statements.get(0);
-		
-		Statement last = statements.remove(statements.size()-1);
-		return chainStatements(statements, last);
-	}
-
 	public static Statement chainStatements( List<Statement> statements, Statement last ){
 		if( statements.size() == 0 )
 			return last;
-		
+
 		Statement stm = statements.remove(statements.size()-1);
 		return chainStatements(statements, Continuation.continuationAfter(stm, last));
+	}
+
+	/**
+	 * Builds a {@link TypeExpression} for {@code t} at world-annotation position
+	 * (e.g. {@code T@W msg = ...}); the type's own world arguments are emitted on the
+	 * outermost level. Type arguments nested inside are rendered without world annotations
+	 * via {@link #innerTypeExpression}.
+	 */
+	public static TypeExpression outerTypeExpression( GroundDataType t ) {
+		List< WorldArgument > worldArgs = t.worldArguments().stream()
+				.map( w -> {
+					WorldArgument worldArgument =
+							new WorldArgument( new Name( w.identifier() ), null );
+					worldArgument.setTypeAnnotation( w );
+					return worldArgument;
+				} )
+				.toList();
+		return typeExpression( t, worldArgs );
+	}
+
+	/**
+	 * Builds a {@link TypeExpression} for {@code t} at type-argument position
+	 * (e.g. inside {@code Map< K, V >} or {@code ch.<T>com(...)}); world arguments are
+	 * omitted at every level.
+	 */
+	public static TypeExpression innerTypeExpression( GroundDataType t ) {
+		return typeExpression( t, Collections.emptyList() );
+	}
+
+	private static TypeExpression typeExpression(
+			GroundDataType t, List< WorldArgument > worldArgs ) {
+		if( t instanceof GroundClassOrInterface gc ) {
+			List< TypeExpression > typeArgs = gc.typeArguments().stream()
+					.map( ta -> innerTypeExpression( ta.applyTo( gc.worldArguments() ) ) )
+					.toList();
+			TypeExpression typeExpression = new TypeExpression(
+					new Name( gc.typeConstructor().identifier() ), worldArgs, typeArgs );
+			typeExpression.setTypeAnnotation( gc );
+			return typeExpression;
+		}
+		if( t instanceof GroundTypeParameter gtp ) {
+			TypeExpression typeExpression = new TypeExpression(
+					new Name( gtp.typeConstructor().identifier() ),
+					worldArgs,
+					Collections.emptyList() );
+			typeExpression.setTypeAnnotation( gtp );
+			return typeExpression;
+		}
+		throw new IllegalStateException(
+				"Unsupported type for type expression: " + t.getClass().getSimpleName() );
 	}
 }
