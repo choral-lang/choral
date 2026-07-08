@@ -24,6 +24,11 @@ public class ClassLifterTest {
 		
 		ClassLifter classLifter = new ClassLifter(universe, taskQueue, opts);
 
+		classLifter.lookup("java.nio.ByteBuffer", null );
+		classLifter.lookup("java.math.BigInteger", null );
+		classLifter.lookup("java.security.MessageDigest", null );
+		classLifter.lookup("java.security.NoSuchAlgorithmException", null );
+		classLifter.lookup("java.nio.charset.StandardCharsets", null );
 		classLifter.lookup("java.lang.System", null );
 		classLifter.lookup("java.lang.Object", null );
 		classLifter.lookup("java.lang.Enum", null );
