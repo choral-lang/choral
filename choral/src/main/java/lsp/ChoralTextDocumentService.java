@@ -8,6 +8,8 @@ import com.google.gson.JsonObject;
 import choral.diagrams.ChoreographyDiagram;
 import choral.diagrams.ChoreographyDiagramException;
 import choral.diagrams.ChoreographyDiagramProvider;
+import choral.diagrams.ChoreographyDiagramPrinter;
+import choral.diagrams.MermaidDiagramPrinter;
 
 import java.net.URI;
 import java.nio.file.Files;
@@ -34,12 +36,14 @@ public class ChoralTextDocumentService implements TextDocumentService {
     private static final Gson GSON = new Gson();
     private final DiagnosticsProvider diagnosticsProvider;
     private final ChoreographyDiagramProvider choreographyDiagramProvider;
+    private final ChoreographyDiagramPrinter choreographyDiagramPrinter;
     private final Map<String, String> documents = new ConcurrentHashMap<>();
     private LanguageClient client;
 
     public ChoralTextDocumentService() {
         diagnosticsProvider = new DiagnosticsProvider();
         choreographyDiagramProvider = new ChoreographyDiagramProvider();
+        choreographyDiagramPrinter = new MermaidDiagramPrinter();
     }
 
     @Override
@@ -82,6 +86,18 @@ public class ChoralTextDocumentService implements TextDocumentService {
         if (request.isEmpty()) {
             System.err.println("Unsupported choreography request payload: " + (params == null ? "null" : params.getClass().getName()) + " " + params);
         }
+        Object requestedFormat = request.get("format");
+        if (requestedFormat != null && !(requestedFormat instanceof String)) {
+            return CompletableFuture.completedFuture(diagramError(
+                    "The choreography request format must be a string.", "invalidParams"));
+        }
+        String format = requestedFormat instanceof String string
+                ? string : choreographyDiagramPrinter.format();
+        if (!choreographyDiagramPrinter.format().equals(format)) {
+            return CompletableFuture.completedFuture(diagramError(
+                    "The choreography diagram format '" + format + "' is not supported.",
+                    "unsupportedFormat"));
+        }
         String uri = stringAt(request, "textDocument", "uri");
         if (uri == null) {
             return CompletableFuture.completedFuture(diagramError(
@@ -100,7 +116,11 @@ public class ChoralTextDocumentService implements TextDocumentService {
                 numberAt(request, "position", "line"),
                 numberAt(request, "position", "character"));
         try {
-            return CompletableFuture.completedFuture(choreographyDiagramProvider.diagram(content, position));
+            ChoreographyDiagram diagram = choreographyDiagramProvider.diagram(content, position);
+            return CompletableFuture.completedFuture(new RenderedChoreographyDiagram(
+                    2,
+                    choreographyDiagramPrinter.format(),
+                    choreographyDiagramPrinter.print(diagram)));
         } catch (ChoreographyDiagramException exception) {
             return CompletableFuture.completedFuture(diagramError(
                     exception.getMessage(), diagramErrorCode(exception)));
@@ -159,6 +179,9 @@ public class ChoralTextDocumentService implements TextDocumentService {
             case PARSE_ERROR -> "parseError";
             case NO_SYMBOL -> "noSymbol";
         };
+    }
+
+    public record RenderedChoreographyDiagram(int version, String format, String source) {
     }
 
     public static final class ChoreographyDiagramErrorResult {
