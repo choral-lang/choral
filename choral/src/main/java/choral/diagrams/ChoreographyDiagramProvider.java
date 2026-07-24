@@ -1,10 +1,14 @@
-package lsp.features;
+package choral.diagrams;
 
 import choral.ast.CompilationUnit;
 import choral.ast.body.TemplateDeclaration;
 import choral.ast.type.FormalWorldParameter;
 import choral.compiler.Parser;
-import org.eclipse.lsp4j.Position;
+import choral.diagrams.ChoreographyDiagram.Message;
+import choral.diagrams.ChoreographyDiagram.Participant;
+import choral.diagrams.ChoreographyDiagram.Position;
+import choral.diagrams.ChoreographyDiagram.Range;
+import choral.diagrams.ChoreographyDiagram.Symbol;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -13,7 +17,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Builds the versioned JSON model consumed by the choreography panel. */
+/** Builds a format-neutral choreography diagram from Choral source. */
 public final class ChoreographyDiagramProvider {
     private static final Pattern CHANNEL = Pattern.compile(
             "(?:[A-Za-z_][\\w.]*)\\s*@\\(\\s*([A-Za-z_]\\w*)\\s*,\\s*([A-Za-z_]\\w*)\\s*\\)\\s*(?:<[^;=()]*>)?\\s+([A-Za-z_]\\w*)");
@@ -22,17 +26,19 @@ public final class ChoreographyDiagramProvider {
     private static final Pattern CHANNEL_CALL = Pattern.compile(
             "\\b([A-Za-z_]\\w*)\\s*\\.\\s*(?:<[^>]*>\\s*)?(com|select)\\s*\\(");
 
-    public Object diagram(String source, Position cursor) {
+    public ChoreographyDiagram diagram(String source, Position cursor) {
         final CompilationUnit unit;
         try {
             unit = Parser.parseString(source);
         } catch (Exception exception) {
-            return error("Unable to parse the Choral document: " + exception.getMessage(), "parseError");
+            throw new ChoreographyDiagramException(ChoreographyDiagramException.Reason.PARSE_ERROR,
+                    "Unable to parse the Choral document: " + exception.getMessage(), exception);
         }
         TemplateDeclaration declaration = declarationAt(unit, cursor);
         if (declaration == null || declaration.worldParameters().isEmpty())
-            return error("No choreography symbol was found at the cursor.", "noSymbol");
-        Diagram result = new Diagram();
+            throw new ChoreographyDiagramException(ChoreographyDiagramException.Reason.NO_SYMBOL,
+                    "No choreography symbol was found at the cursor.");
+        ChoreographyDiagram result = new ChoreographyDiagram();
         result.symbol = new Symbol(declaration.name().identifier(),
                 rangeFor(source, declaration.name().identifier(), 0));
         for (FormalWorldParameter world : declaration.worldParameters())
@@ -58,12 +64,8 @@ public final class ChoreographyDiagramProvider {
         return result;
     }
 
-    public static ErrorResult error(String message, String code) {
-        return new ErrorResult(message, code);
-    }
-
     private static TemplateDeclaration declarationAt(CompilationUnit unit, Position cursor) {
-        int line = cursor == null ? Integer.MAX_VALUE : cursor.getLine() + 1;
+        int line = cursor == null ? Integer.MAX_VALUE : cursor.line() + 1;
         TemplateDeclaration candidate = null;
         List<TemplateDeclaration> declarations = new ArrayList<>();
         declarations.addAll(unit.classes());
@@ -135,35 +137,5 @@ public final class ChoreographyDiagramProvider {
         String other(String world) {
             return first.equals(world) ? second : second.equals(world) ? first : null;
         }
-    }
-
-    public static final class Diagram {
-        public final int version = 1;
-        public Symbol symbol;
-        public final List<Participant> participants = new ArrayList<>();
-        public final List<Message> events = new ArrayList<>();
-    }
-
-    public record Symbol(String name, Range range) {
-    }
-
-    public record Participant(String id, String label) {
-    }
-
-    public record Message(String kind, String from, String to, String label, Range range) {
-    }
-
-    public record Range(Position start, Position end) {
-    }
-
-    public static final class ErrorResult {
-        public final Error error;
-
-        ErrorResult(String message, String code) {
-            error = new Error(message, code);
-        }
-    }
-
-    public record Error(String message, String code) {
     }
 }

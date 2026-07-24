@@ -5,6 +5,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import choral.diagrams.ChoreographyDiagram;
+import choral.diagrams.ChoreographyDiagramException;
+import choral.diagrams.ChoreographyDiagramProvider;
+
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,13 +23,11 @@ import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
-import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 
-import lsp.features.ChoreographyDiagramProvider;
 import lsp.features.DiagnosticsProvider;
 
 public class ChoralTextDocumentService implements TextDocumentService {
@@ -82,7 +84,7 @@ public class ChoralTextDocumentService implements TextDocumentService {
         }
         String uri = stringAt(request, "textDocument", "uri");
         if (uri == null) {
-            return CompletableFuture.completedFuture(ChoreographyDiagramProvider.error(
+            return CompletableFuture.completedFuture(diagramError(
                     "The choreography request did not include a document URI.", "invalidParams"));
         }
         String content = documents.get(uri);
@@ -90,14 +92,19 @@ public class ChoralTextDocumentService implements TextDocumentService {
             content = readFileDocument(uri);
         }
         if (content == null) {
-            return CompletableFuture.completedFuture(ChoreographyDiagramProvider.error(
+            return CompletableFuture.completedFuture(diagramError(
                     "The document is not open in the Choral language server and could not be read from disk.",
                     "documentUnavailable"));
         }
-        Position position = new Position(
+        ChoreographyDiagram.Position position = new ChoreographyDiagram.Position(
                 numberAt(request, "position", "line"),
                 numberAt(request, "position", "character"));
-        return CompletableFuture.completedFuture(choreographyDiagramProvider.diagram(content, position));
+        try {
+            return CompletableFuture.completedFuture(choreographyDiagramProvider.diagram(content, position));
+        } catch (ChoreographyDiagramException exception) {
+            return CompletableFuture.completedFuture(diagramError(
+                    exception.getMessage(), diagramErrorCode(exception)));
+        }
     }
 
     private String readFileDocument(String uri) {
@@ -141,5 +148,27 @@ public class ChoralTextDocumentService implements TextDocumentService {
 
     private void publishDiagnostics(String uri, List<Diagnostic> diagnostics) {
         if (client != null) client.publishDiagnostics(new PublishDiagnosticsParams(uri, diagnostics));
+    }
+
+    private static ChoreographyDiagramErrorResult diagramError(String message, String code) {
+        return new ChoreographyDiagramErrorResult(message, code);
+    }
+
+    private static String diagramErrorCode(ChoreographyDiagramException exception) {
+        return switch (exception.reason()) {
+            case PARSE_ERROR -> "parseError";
+            case NO_SYMBOL -> "noSymbol";
+        };
+    }
+
+    public static final class ChoreographyDiagramErrorResult {
+        public final ChoreographyDiagramError error;
+
+        private ChoreographyDiagramErrorResult(String message, String code) {
+            error = new ChoreographyDiagramError(message, code);
+        }
+    }
+
+    public record ChoreographyDiagramError(String message, String code) {
     }
 }
