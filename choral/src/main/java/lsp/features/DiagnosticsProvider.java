@@ -15,8 +15,12 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.services.LanguageClient;
 
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class DiagnosticsProvider {
 	private LanguageClient client;
@@ -33,7 +37,7 @@ public class DiagnosticsProvider {
 			// to pass along error messages to language client
 			CompilationUnit compUnit = Parser.parseString( content );
 
-			List< CompilationUnit > headerUnits = HeaderLoader.loadStandardProfile().toList();
+			List< CompilationUnit > headerUnits = loadHeaders( uri );
 
 			TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS )
 					.withInfoChannel( ( pos, s ) -> {
@@ -68,6 +72,20 @@ public class DiagnosticsProvider {
 		return diagnostics;
 	}
 
+	private static List< CompilationUnit > loadHeaders( String uri ) throws Exception {
+		Stream< CompilationUnit > standardHeaders = HeaderLoader.loadStandardProfile();
+		if( uri == null || !uri.startsWith( "file:" ) ) {
+			return standardHeaders.toList();
+		}
+		Path documentPath = Paths.get( URI.create( uri ) );
+		Path parent = documentPath.getParent();
+		if( parent == null ) {
+			return standardHeaders.toList();
+		}
+		return Stream.concat( standardHeaders, HeaderLoader.loadFromPath( List.of( parent ) ) )
+				.toList();
+	}
+
 	private static Diagnostic warningDiagnostic( String message ) {
 		Diagnostic diagnostic = new Diagnostic();
 		diagnostic.setSeverity( DiagnosticSeverity.Warning );
@@ -78,6 +96,7 @@ public class DiagnosticsProvider {
 
 	private static Diagnostic errorDiagnostic( String message ) {
 		Diagnostic diagnostic = new Diagnostic();
+		diagnostic.setRange( new Range( new Position( 0, 0 ), new Position( 0, 0 ) ) );
 		diagnostic.setSeverity( DiagnosticSeverity.Error );
 		diagnostic.setMessage( message );
 		diagnostic.setSource( "choral-compiler" );
@@ -85,6 +104,10 @@ public class DiagnosticsProvider {
 	}
 
 	private static void setRange( Diagnostic diagnostic, choral.ast.Position position ) {
+		if( position == null ) {
+			diagnostic.setRange( new Range( new Position( 0, 0 ), new Position( 0, 0 ) ) );
+			return;
+		}
 		// position.line() -1 to account for diff between 0-indexing and 1-indexing
 		Range range = new Range( new Position( position.line() - 1, position.column() ),
 				new Position( position.line() - 1, position.column() ) );
