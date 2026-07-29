@@ -20,6 +20,7 @@ import choral.ast.statement.IfStatement;
 import choral.ast.statement.NilStatement;
 import choral.ast.statement.ReturnStatement;
 import choral.ast.statement.Statement;
+import choral.ast.statement.SwitchArgument;
 import choral.ast.statement.SwitchStatement;
 import choral.ast.statement.TryCatchStatement;
 import choral.ast.statement.VariableDeclarationStatement;
@@ -119,15 +120,29 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     @Override
     public Void visit(SwitchStatement statement) {
         visitExpression(statement.guard());
-        statement.cases().values().forEach(this::visitStatement);
+        boolean first = true;
+        for (var switchCase : statement.cases().entrySet()) {
+            lines.add((first ? "alt " : "else ")
+                    + switchCaseLabel(statement.guard(), switchCase.getKey()));
+            visitStatement(switchCase.getValue());
+            first = false;
+        }
+        if (!first)
+            lines.add("end");
         visitStatement(statement.continuation());
         return null;
     }
 
     @Override
     public Void visit(TryCatchStatement statement) {
+        lines.add("critical try");
         visitStatement(statement.body());
-        statement.catches().forEach(block -> visitStatement(block.right()));
+        for (var catchBlock : statement.catches()) {
+            lines.add("option catch "
+                    + escapeMermaid(prettyPrinter.visit(catchBlock.left(), " ")));
+            visitStatement(catchBlock.right());
+        }
+        lines.add("end");
         visitStatement(statement.continuation());
         return null;
     }
@@ -229,6 +244,24 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         String to = returnType.worldArguments().get(0).identifier();
         lines.add(participantId(from) + (selection ? "-->>" : "->>") + participantId(to)
                 + ": " + escapeMermaid(call.name().identifier()));
+    }
+
+    private String switchCaseLabel(Expression guard, SwitchArgument<?> switchCase) {
+        if (switchCase instanceof SwitchArgument.SwitchArgumentDefault ||
+                switchCase instanceof SwitchArgument.SwitchArgumentMergeDefault)
+            return "default";
+        String value;
+        if (switchCase instanceof SwitchArgument.SwitchArgumentLiteral literal) {
+            value = prettyPrinter.visit(literal.argument());
+        } else if (switchCase instanceof SwitchArgument.SwitchArgumentLabel label) {
+            value = label.argument().identifier();
+        } else if (switchCase instanceof SwitchArgument.SwitchArgumentClassLabel label) {
+            value = label.argument().left().identifier() + " "
+                    + label.argument().right().identifier();
+        } else {
+            value = switchCase.argument().toString();
+        }
+        return escapeMermaid(prettyPrinter.visit(guard)) + " = " + escapeMermaid(value);
     }
 
     private static String receiverName(Expression receiver) {

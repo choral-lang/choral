@@ -204,6 +204,95 @@ public class MermaidTest {
 	}
 
 	@Test
+	public void switchCasesAreRenderedAsOrderedAlternatives() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			enum Route@X { FAST, SAFE }
+
+			class Routing@( A, B, C ) {
+				void run(
+						SymChannel@( A, B )< Object > ab,
+						SymChannel@( B, C )< Object > bc,
+						SymChannel@( C, A )< Object > ca,
+						Route@A route,
+						String@A a,
+						String@B b,
+						String@C c ) {
+					switch( route ) {
+						case FAST -> { ab.< String >com( a ); }
+						case SAFE -> { bc.< String >com( b ); }
+						default -> { ca.< String >com( c ); }
+					}
+					ab.< String >com( a );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				participant p_C as C
+				alt route = FAST
+				p_A->>p_B: com
+				else route = SAFE
+				p_B->>p_C: com
+				else default
+				p_C->>p_A: com
+				end
+				p_A->>p_B: com
+				""".strip(),
+				mermaidAt( source, "case SAFE" ) );
+	}
+
+	@Test
+	public void tryCatchPathsUseCriticalOptionsInOrder() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Recovery@( A, B, C ) {
+				void run(
+						SymChannel@( A, B )< Object > ab,
+						SymChannel@( B, C )< Object > bc,
+						SymChannel@( C, A )< Object > ca,
+						String@A a,
+						String@B b,
+						String@C c ) {
+					try {
+						ab.< String >com( a );
+					} catch( Exception@B first ) {
+						bc.< String >com( b );
+					} catch( Exception@C second ) {
+						ca.< String >com( c );
+					}
+					bc.< String >com( b );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				participant p_C as C
+				critical try
+				p_A->>p_B: com
+				option catch Exception@( B ) first
+				p_B->>p_C: com
+				option catch Exception@( C ) second
+				p_C->>p_A: com
+				end
+				p_B->>p_C: com
+				""".strip(),
+				mermaidAt( source, "Exception@C second" ) );
+	}
+
+	@Test
 	public void fieldAndParameterChannelsAcrossMethodsAreTraversedInOrder() {
 		String source =
 			"""
