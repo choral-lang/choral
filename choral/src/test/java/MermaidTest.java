@@ -113,6 +113,76 @@ public class MermaidTest {
 	}
 
 	@Test
+	public void nestedStatementsAndExpressionsAreTraversed() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			enum Choice@X { THEN, ELSE }
+
+			class Nested@( A, B ) {
+				void consume( String@B value ) {}
+
+				void run(
+						SymChannel@( A, B )< Object > channel,
+						String@A value ) {
+					if( true@A ) {
+						channel.< Choice >select( Choice@A.THEN );
+						consume( channel.< String >com( value ) );
+					} else {
+						channel.< Choice >select( Choice@A.ELSE );
+						channel.< String >com( value );
+					}
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				p_A-->>p_B: select
+				p_A->>p_B: com
+				p_A-->>p_B: select
+				p_A->>p_B: com
+				""".strip(),
+				mermaidAt( source, "consume( channel" ) );
+	}
+
+	@Test
+	public void fieldAndParameterChannelsAcrossMethodsAreTraversedInOrder() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class ChannelSources@( A, B ) {
+				SymChannel@( A, B )< Object > field;
+
+				void fromField( String@A value ) {
+					field.< String >com( value );
+				}
+
+				void fromParameter(
+						SymChannel@( B, A )< Object > parameter,
+						String@B value ) {
+					parameter.< String >com( value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				p_A->>p_B: com
+				p_B->>p_A: com
+				""".strip(),
+				mermaidAt( source, "parameter.< String >com" ) );
+	}
+
+	@Test
 	public void onlyTypedChannelCallsBecomeEvents() {
 		String source =
 			"""
@@ -120,6 +190,7 @@ public class MermaidTest {
 
 			class Helper@( X ) {
 				String@X com( String@X value ) { return value; }
+				String@X select( String@X value ) { return value; }
 			}
 
 			class Typed@( A, B ) {
@@ -128,7 +199,9 @@ public class MermaidTest {
 						Helper@A helper,
 						String@A value ) {
 					// fake.< String >com( value );
+					String@A fakeText = "arbitrarilyNamed.< String >com( value )"@A;
 					String@A local = helper.com( value );
+					String@A selected = helper.select( value );
 					String@B received = arbitrarilyNamed.< String >com(
 							value
 					);
@@ -144,6 +217,32 @@ public class MermaidTest {
 				p_A->>p_B: com
 				""".strip(),
 				mermaidAt( source, "arbitrarilyNamed.< String >com" ) );
+	}
+
+	@Test
+	public void constructorCommunicationsAreExcluded() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Constructed@( A, B ) {
+				public Constructed(
+						SymChannel@( A, B )< Object > channel,
+						String@A value ) {
+					channel.< String >com( value );
+				}
+
+				void run() {}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				""".strip(),
+				mermaidAt( source, "void run" ) );
 	}
 
 	@Test
