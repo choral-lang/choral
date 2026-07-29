@@ -142,12 +142,65 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
+				alt true@A
 				p_A-->>p_B: select
 				p_A->>p_B: com
+				else
 				p_A-->>p_B: select
 				p_A->>p_B: com
+				end
 				""".strip(),
 				mermaidAt( source, "consume( channel" ) );
+	}
+
+	@Test
+	public void nestedConditionalsPreserveStructureAndOrder() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Alternatives@( A, B, C ) {
+				void run(
+						SymChannel@( A, B )< Object > ab,
+						SymChannel@( B, C )< Object > bc,
+						SymChannel@( C, A )< Object > ca,
+						String@A a,
+						String@B b,
+						String@C c ) {
+					if( true@A ) {
+						ab.< String >com( a );
+						if( false@B ) {
+							bc.< String >com( b );
+						} else {
+							ca.< String >com( c );
+						}
+					} else {
+						ab.< String >com( a );
+					}
+					bc.< String >com( b );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				participant p_C as C
+				alt true@A
+				p_A->>p_B: com
+				alt false@B
+				p_B->>p_C: com
+				else
+				p_C->>p_A: com
+				end
+				else
+				p_A->>p_B: com
+				end
+				p_B->>p_C: com
+				""".strip(),
+				mermaidAt( source, "if( false@B )" ) );
 	}
 
 	@Test

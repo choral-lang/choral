@@ -24,6 +24,7 @@ import choral.ast.statement.SwitchStatement;
 import choral.ast.statement.TryCatchStatement;
 import choral.ast.statement.VariableDeclarationStatement;
 import choral.ast.visitors.AbstractChoralVisitor;
+import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.types.GroundDataType;
 import choral.types.Member;
 
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
 /** Renders a typed Choral declaration directly as a Mermaid sequence diagram. */
 public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     private final List<String> lines = new ArrayList<>();
+    private final PrettyPrinterVisitor prettyPrinter = new PrettyPrinterVisitor();
     private Set<String> channels = Set.of();
 
     public String render(TemplateDeclaration declaration) {
@@ -103,8 +105,13 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     @Override
     public Void visit(IfStatement statement) {
         visitExpression(statement.condition());
+        lines.add("alt " + escapeMermaid(prettyPrinter.visit(statement.condition())));
         visitStatement(statement.ifBranch());
-        visitStatement(statement.elseBranch());
+        if (!(statement.elseBranch() instanceof NilStatement)) {
+            lines.add("else");
+            visitStatement(statement.elseBranch());
+        }
+        lines.add("end");
         visitStatement(statement.continuation());
         return null;
     }
