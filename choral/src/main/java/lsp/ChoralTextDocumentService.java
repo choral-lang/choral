@@ -39,7 +39,7 @@ public class ChoralTextDocumentService implements TextDocumentService {
     private final ChoreographyDiagramPrinter choreographyDiagramPrinter;
     private final Map<String, String> documents = new ConcurrentHashMap<>();
     private LanguageClient client;
-
+    
     public ChoralTextDocumentService() {
         diagnosticsProvider = new DiagnosticsProvider();
         choreographyDiagramProvider = new ChoreographyDiagramProvider();
@@ -47,37 +47,39 @@ public class ChoralTextDocumentService implements TextDocumentService {
     }
 
     @Override
-    public void didOpen(DidOpenTextDocumentParams params) {
+    public void didOpen(DidOpenTextDocumentParams params){
         String uri = params.getTextDocument().getUri();
         String content = params.getTextDocument().getText();
+        
         documents.put(uri, content);
         analyzeAndPublish(uri, content);
     }
 
     @Override
-    public void didClose(DidCloseTextDocumentParams params) {
+    public void didClose(DidCloseTextDocumentParams params){
         String uri = params.getTextDocument().getUri();
         documents.remove(uri);
         publishDiagnostics(uri, new ArrayList<>());
     }
 
     @Override
-    public void didSave(DidSaveTextDocumentParams params) {
-        // Full text synchronization keeps the current content in documents.
+    public void didSave(DidSaveTextDocumentParams params){
+        // missing implementation
     }
 
     @Override
-    public void didChange(DidChangeTextDocumentParams params) {
+    public void didChange(DidChangeTextDocumentParams params){
         String uri = params.getTextDocument().getUri();
         String content = params.getContentChanges().get(0).getText();
+
         documents.put(uri, content);
         analyzeAndPublish(uri, content);
     }
 
-    public void setClient(LanguageClient client) {
+    public void setClient(LanguageClient client){
         System.err.println("Client connected in Text Document Service");
         this.client = client;
-        diagnosticsProvider.setClient(client);
+		diagnosticsProvider.setClient( client );
     }
 
     @JsonRequest("choral/choreographyDiagram")
@@ -85,18 +87,6 @@ public class ChoralTextDocumentService implements TextDocumentService {
         Map<String, Object> request = requestObject(params);
         if (request.isEmpty()) {
             System.err.println("Unsupported choreography request payload: " + (params == null ? "null" : params.getClass().getName()) + " " + params);
-        }
-        Object requestedFormat = request.get("format");
-        if (requestedFormat != null && !(requestedFormat instanceof String)) {
-            return CompletableFuture.completedFuture(diagramError(
-                    "The choreography request format must be a string.", "invalidParams"));
-        }
-        String format = requestedFormat instanceof String string
-                ? string : choreographyDiagramPrinter.format();
-        if (!choreographyDiagramPrinter.format().equals(format)) {
-            return CompletableFuture.completedFuture(diagramError(
-                    "The choreography diagram format '" + format + "' is not supported.",
-                    "unsupportedFormat"));
         }
         String uri = stringAt(request, "textDocument", "uri");
         if (uri == null) {
@@ -117,10 +107,7 @@ public class ChoralTextDocumentService implements TextDocumentService {
                 numberAt(request, "position", "character"));
         try {
             ChoreographyDiagram diagram = choreographyDiagramProvider.diagram(content, position);
-            return CompletableFuture.completedFuture(new RenderedChoreographyDiagram(
-                    2,
-                    choreographyDiagramPrinter.format(),
-                    choreographyDiagramPrinter.print(diagram)));
+            return CompletableFuture.completedFuture(choreographyDiagramPrinter.print(diagram));
         } catch (ChoreographyDiagramException exception) {
             return CompletableFuture.completedFuture(diagramError(
                     exception.getMessage(), diagramErrorCode(exception)));
@@ -161,13 +148,32 @@ public class ChoralTextDocumentService implements TextDocumentService {
         return value instanceof Number number ? number.intValue() : 0;
     }
 
-    private void analyzeAndPublish(String uri, String content) {
+    private void analyzeAndPublish(String uri, String content){
         List<Diagnostic> diagnostics = diagnosticsProvider.analyze(uri, content);
-        publishDiagnostics(uri, diagnostics);
+
+        for (Diagnostic d : diagnostics) {
+            System.err.println("  - " + d.getMessage() + " at line " + d.getRange().getStart().getLine()
+                    + " and at column " + d.getRange().getStart().getCharacter());
+        }
+
+        publishDiagnostics(uri, diagnostics);        
     }
 
-    private void publishDiagnostics(String uri, List<Diagnostic> diagnostics) {
-        if (client != null) client.publishDiagnostics(new PublishDiagnosticsParams(uri, diagnostics));
+    private void publishDiagnostics(String uri, List<Diagnostic> diagnostics){
+        System.err.println("=== PUBLISHING DIAGNOSTICS ===");
+        System.err.println("URI: " + uri);
+        System.err.println("Count: " + diagnostics.size());
+        
+        if (client == null) {
+            System.err.println("ERROR: client is null!");
+            return;
+        }
+
+        PublishDiagnosticsParams params = new PublishDiagnosticsParams(uri, diagnostics);
+
+        client.publishDiagnostics(params);
+
+        System.err.println("Diagnostics published successfully");
     }
 
     private static ChoreographyDiagramErrorResult diagramError(String message, String code) {
@@ -179,9 +185,6 @@ public class ChoralTextDocumentService implements TextDocumentService {
             case PARSE_ERROR -> "parseError";
             case NO_SYMBOL -> "noSymbol";
         };
-    }
-
-    public record RenderedChoreographyDiagram(int version, String format, String source) {
     }
 
     public static final class ChoreographyDiagramErrorResult {

@@ -6,8 +6,6 @@ import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
-import java.util.List;
-import java.util.Map;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageClientAware;
 import org.eclipse.lsp4j.services.LanguageServer;
@@ -61,10 +59,6 @@ public class ChoralLanguageServer implements LanguageServer, LanguageClientAware
         ServerCapabilities capabilities = new ServerCapabilities();
         // Ask the client to send the full content of documents on each change
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
-        capabilities.setExperimental(Map.of(
-                "choral", Map.of("choreographyDiagram", Map.of(
-                        "version", 2,
-                        "formats", List.of("mermaid")))));
 
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
     }
