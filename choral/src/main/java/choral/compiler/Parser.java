@@ -58,6 +58,11 @@ public class Parser {
 		return parse(null, content);
 	}
 
+	public static CompilationUnit parseString( String sourceCode, String sourceFile ) {
+		CharStream content = CharStreams.fromString( sourceCode );
+		return parse( sourceFile, content );
+	}
+
 	public static CompilationUnit parseSourceFile( File file ) throws IOException {
 		String filename = file.getCanonicalPath();
 		CharStream input = CharStreams.fromFileName(filename);

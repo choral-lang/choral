@@ -5,11 +5,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import choral.diagrams.ChoreographyDiagram;
+import choral.ast.CompilationUnit;
+import choral.compiler.Parser;
 import choral.diagrams.ChoreographyDiagramException;
 import choral.diagrams.ChoreographyDiagramProvider;
-import choral.diagrams.ChoreographyDiagramPrinter;
-import choral.diagrams.MermaidDiagramPrinter;
+import choral.diagrams.ChoreographyDiagramProvider.Position;
 
 import java.net.URI;
 import java.nio.file.Files;
@@ -36,14 +36,12 @@ public class ChoralTextDocumentService implements TextDocumentService {
     private static final Gson GSON = new Gson();
     private final DiagnosticsProvider diagnosticsProvider;
     private final ChoreographyDiagramProvider choreographyDiagramProvider;
-    private final ChoreographyDiagramPrinter choreographyDiagramPrinter;
     private final Map<String, String> documents = new ConcurrentHashMap<>();
     private LanguageClient client;
     
     public ChoralTextDocumentService() {
         diagnosticsProvider = new DiagnosticsProvider();
         choreographyDiagramProvider = new ChoreographyDiagramProvider();
-        choreographyDiagramPrinter = new MermaidDiagramPrinter();
     }
 
     @Override
@@ -102,12 +100,24 @@ public class ChoralTextDocumentService implements TextDocumentService {
                     "The document is not open in the Choral language server and could not be read from disk.",
                     "documentUnavailable"));
         }
-        ChoreographyDiagram.Position position = new ChoreographyDiagram.Position(
+        Position position = new Position(
                 numberAt(request, "position", "line"),
                 numberAt(request, "position", "character"));
         try {
-            ChoreographyDiagram diagram = choreographyDiagramProvider.diagram(content, position);
-            return CompletableFuture.completedFuture(choreographyDiagramPrinter.print(diagram));
+            CompilationUnit unit;
+            try {
+                unit = Parser.parseString(content, sourceFile(uri));
+            } catch (Exception exception) {
+                throw new ChoreographyDiagramException(ChoreographyDiagramException.Reason.PARSE_ERROR,
+                        "Unable to parse the Choral document: " + exception.getMessage(), exception);
+            }
+            try {
+                diagnosticsProvider.typeCheck(uri, unit);
+            } catch (Exception exception) {
+                throw new ChoreographyDiagramException(ChoreographyDiagramException.Reason.TYPE_ERROR,
+                        "Unable to type-check the Choral document: " + exception.getMessage(), exception);
+            }
+            return CompletableFuture.completedFuture(choreographyDiagramProvider.diagram(unit, position));
         } catch (ChoreographyDiagramException exception) {
             return CompletableFuture.completedFuture(diagramError(
                     exception.getMessage(), diagramErrorCode(exception)));
@@ -122,6 +132,14 @@ public class ChoralTextDocumentService implements TextDocumentService {
             return content;
         } catch (Exception exception) {
             System.err.println("Unable to read choreography document " + uri + ": " + exception.getMessage());
+            return null;
+        }
+    }
+
+    private static String sourceFile(String uri) {
+        try {
+            return uri.startsWith("file:") ? Path.of(URI.create(uri)).toString() : null;
+        } catch (Exception exception) {
             return null;
         }
     }
@@ -183,6 +201,7 @@ public class ChoralTextDocumentService implements TextDocumentService {
     private static String diagramErrorCode(ChoreographyDiagramException exception) {
         return switch (exception.reason()) {
             case PARSE_ERROR -> "parseError";
+            case TYPE_ERROR -> "typeError";
             case NO_SYMBOL -> "noSymbol";
         };
     }

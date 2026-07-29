@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 public class DiagnosticsProvider {
@@ -35,18 +36,13 @@ public class DiagnosticsProvider {
 		try { // choral compiler errors are reported through exceptions
 			// so try to parse and type program, then catch any exceptions
 			// to pass along error messages to language client
-			CompilationUnit compUnit = Parser.parseString( content );
-
-			List< CompilationUnit > headerUnits = loadHeaders( uri );
-
-			TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS )
-					.withInfoChannel( ( pos, s ) -> {
-						if( pos == null ) pos = new choral.ast.Position( null, 1, 1 );
-						Diagnostic diagnostic = warningDiagnostic( s );
-						setRange( diagnostic, pos );
-						diagnostics.add( diagnostic );
-					} );
-			Typer.annotate( List.of( compUnit ), headerUnits, typerOptions );
+			CompilationUnit compUnit = Parser.parseString( content, sourceFile( uri ) );
+			typeCheck( uri, compUnit, ( pos, s ) -> {
+				if( pos == null ) pos = new choral.ast.Position( null, 1, 1 );
+				Diagnostic diagnostic = warningDiagnostic( s );
+				setRange( diagnostic, pos );
+				diagnostics.add( diagnostic );
+			} );
 
 		} catch( ChoralCompoundException e ) {
 			for( ChoralException cause : e.getCauses() ) {
@@ -70,6 +66,26 @@ public class DiagnosticsProvider {
 		}
 
 		return diagnostics;
+	}
+
+	public CompilationUnit typeCheck( String uri, CompilationUnit compUnit ) throws Exception {
+		return typeCheck( uri, compUnit, ( pos, message ) -> {} );
+	}
+
+	private static CompilationUnit typeCheck(
+			String uri, CompilationUnit compUnit,
+			BiConsumer< choral.ast.Position, String > infoChannel
+	) throws Exception {
+		List< CompilationUnit > headerUnits = loadHeaders( uri );
+		TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS )
+				.withInfoChannel( infoChannel );
+		Typer.annotate( List.of( compUnit ), headerUnits, typerOptions );
+		return compUnit;
+	}
+
+	private static String sourceFile( String uri ) {
+		if( uri == null || !uri.startsWith( "file:" ) ) return null;
+		return Paths.get( URI.create( uri ) ).toString();
 	}
 
 	private static List< CompilationUnit > loadHeaders( String uri ) throws Exception {

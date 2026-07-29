@@ -1,8 +1,13 @@
-import choral.diagrams.ChoreographyDiagram;
-import choral.diagrams.ChoreographyDiagram.Position;
 import choral.diagrams.ChoreographyDiagramProvider;
-import choral.diagrams.MermaidDiagramPrinter;
+import choral.diagrams.ChoreographyDiagramProvider.Position;
+import choral.compiler.HeaderLoader;
+import choral.compiler.Parser;
+import choral.compiler.Typer;
+import choral.compiler.TyperOptions;
+import choral.utils.VerbosityLevel;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -108,6 +113,40 @@ public class MermaidTest {
 	}
 
 	@Test
+	public void onlyTypedChannelCallsBecomeEvents() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Helper@( X ) {
+				String@X com( String@X value ) { return value; }
+			}
+
+			class Typed@( A, B ) {
+				void run(
+						SymChannel@( A, B )< Object > arbitrarilyNamed,
+						Helper@A helper,
+						String@A value ) {
+					// fake.< String >com( value );
+					String@A local = helper.com( value );
+					String@B received = arbitrarilyNamed.< String >com(
+							value
+					);
+				}
+			}
+			""";
+
+		assertEquals(
+				"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				p_A->>p_B: com
+				""".strip(),
+				mermaidAt( source, "arbitrarilyNamed.< String >com" ) );
+	}
+
+	@Test
 	public void participantIdentifiersAreSanitized() {
 		String source =
 			"""
@@ -158,9 +197,16 @@ public class MermaidTest {
 	}
 
 	private static String mermaid( String source, int line, int character ) {
-		ChoreographyDiagram diagram = new ChoreographyDiagramProvider().diagram(
-				source, new Position( line, character ) );
-		return new MermaidDiagramPrinter().print( diagram );
+		try {
+			var unit = Parser.parseString( source );
+			Typer.annotate(
+					List.of( unit ), HeaderLoader.loadStandardProfile().toList(),
+					new TyperOptions( VerbosityLevel.WARNINGS ) );
+			return new ChoreographyDiagramProvider().diagram(
+					unit, new Position( line, character ) );
+		} catch( Exception exception ) {
+			throw new RuntimeException( exception );
+		}
 	}
 
 	private static String mermaidAt( String source, String marker ) {

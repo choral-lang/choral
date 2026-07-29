@@ -4,6 +4,7 @@ package choral.diagrams;
 public final class ChoreographyDiagramException extends RuntimeException {
     public enum Reason {
         PARSE_ERROR,
+        TYPE_ERROR,
         NO_SYMBOL
     }
 
