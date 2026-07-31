@@ -26,6 +26,8 @@ import java.nio.file.Paths;
 public class Position {
 	private final int line;
 	private final int column;
+	private final int endLine;
+	private final int endColumn;
 	private final String sourceFile;
 
 	/**
@@ -33,8 +35,20 @@ public class Position {
 	 * @param sourceFile Path to the source file, or null if unknown.
 	 */
 	public Position( String sourceFile, int line, int column ) {
+		this( sourceFile, line, column, line, column );
+	}
+
+	/**
+	 * Creates a position with an inclusive end at the beginning of the final source token.
+	 * Lines are one-based and columns are zero-based, matching the parser's token positions.
+	 */
+	public Position(
+			String sourceFile, int line, int column, int endLine, int endColumn
+	) {
 		this.line = line;
 		this.column = column;
+		this.endLine = endLine;
+		this.endColumn = endColumn;
 		this.sourceFile = sourceFile;
 	}
 
@@ -44,6 +58,14 @@ public class Position {
 
 	public int column() {
 		return column;
+	}
+
+	public int endLine() {
+		return endLine;
+	}
+
+	public int endColumn() {
+		return endColumn;
 	}
 
 	public String sourceFile() {

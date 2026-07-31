@@ -1714,7 +1714,13 @@ public class AstOptimizer implements ChoralVisitor {
 	}
 
 	private Position getPosition( ParserRuleContext c ) {
-		return getPosition( c.getStart() );
+		Token start = c.getStart();
+		Token stop = c.getStop();
+		return new Position(
+				this.file,
+				start.getLine(), start.getCharPositionInLine(),
+				stop.getLine(), stop.getCharPositionInLine()
+		);
 	}
 
 	private void setLastMethod( String m ) {

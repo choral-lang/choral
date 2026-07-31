@@ -17,12 +17,27 @@ public final class ChoreographyDiagramProvider {
     }
 
     private static TemplateDeclaration declarationAt(CompilationUnit unit, Position cursor) {
-        int line = cursor == null ? Integer.MAX_VALUE : cursor.line() + 1;
-        TemplateDeclaration candidate = null;
+        if (cursor == null)
+            return null;
+        int line = cursor.line() + 1;
         for (TemplateDeclaration declaration : declarations(unit))
-            if (!declaration.hasPosition() || declaration.position().line() <= line)
-                candidate = declaration;
-        return candidate;
+            if (declaration.hasPosition() &&
+                    atOrAfter(line, cursor.character(), declaration.position().line(),
+                            declaration.position().column()) &&
+                    atOrBefore(line, cursor.character(), declaration.position().endLine(),
+                            declaration.position().endColumn()))
+                return declaration;
+        return null;
+    }
+
+    private static boolean atOrAfter(int line, int character, int boundaryLine,
+            int boundaryCharacter) {
+        return line > boundaryLine || line == boundaryLine && character >= boundaryCharacter;
+    }
+
+    private static boolean atOrBefore(int line, int character, int boundaryLine,
+            int boundaryCharacter) {
+        return line < boundaryLine || line == boundaryLine && character <= boundaryCharacter;
     }
 
     private static List<TemplateDeclaration> declarations(CompilationUnit unit) {

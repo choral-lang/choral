@@ -1,5 +1,6 @@
 import choral.diagrams.ChoreographyDiagramProvider;
 import choral.diagrams.ChoreographyDiagramProvider.Position;
+import choral.diagrams.ChoreographyDiagramException;
 import choral.compiler.HeaderLoader;
 import choral.compiler.Parser;
 import choral.compiler.Typer;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MermaidTest {
 	@Test
@@ -437,6 +439,32 @@ public class MermaidTest {
 				mermaidAt( source, "secondChannel.< Decision >select" ) );
 	}
 
+	@Test
+	public void selectsChoreographiesOnlyInsideTheirSourceRanges() {
+		String source =
+			"""
+			/* before */ class First@( A, B ) {} /* between */ class Second@( X, Y ) {} /* after */
+			""";
+
+		assertNoChoreographyAt( source, "before" );
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				""".strip(),
+				mermaidAt( source, "First" ) );
+		assertNoChoreographyAt( source, "between" );
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_X as X
+				participant p_Y as Y
+				""".strip(),
+				mermaidAt( source, "Second" ) );
+		assertNoChoreographyAt( source, "after" );
+	}
+
 	private static String mermaid( String source, int line, int character ) {
 		try {
 			var unit = Parser.parseString( source );
@@ -445,9 +473,18 @@ public class MermaidTest {
 					new TyperOptions( VerbosityLevel.WARNINGS ) );
 			return new ChoreographyDiagramProvider().diagram(
 					unit, new Position( line, character ) );
+		} catch( ChoreographyDiagramException exception ) {
+			throw exception;
 		} catch( Exception exception ) {
 			throw new RuntimeException( exception );
 		}
+	}
+
+	private static void assertNoChoreographyAt( String source, String marker ) {
+		ChoreographyDiagramException exception = assertThrows(
+				ChoreographyDiagramException.class,
+				() -> mermaidAt( source, marker ) );
+		assertEquals( ChoreographyDiagramException.Reason.NO_SYMBOL, exception.reason() );
 	}
 
 	private static String mermaidAt( String source, String marker ) {
