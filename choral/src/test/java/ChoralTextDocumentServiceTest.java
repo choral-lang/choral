@@ -85,7 +85,7 @@ public class ChoralTextDocumentServiceTest {
                 sequenceDiagram
                 participant p_A as A
                 participant p_B as B
-                p_A->>p_B: com
+                p_A->>p_B: value
                 """.strip(),
                 result);
     }
@@ -236,7 +236,7 @@ public class ChoralTextDocumentServiceTest {
         String diagram = assertInstanceOf(
                 String.class, diagramAt(service, uri, source, "channel.< String >com").join());
 
-        assertTrue(diagram.contains("p_A->>p_B: com"));
+        assertTrue(diagram.contains("p_A->>p_B: local"));
         assertEquals(1, diagnostics.analyses());
     }
 

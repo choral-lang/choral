@@ -9,11 +9,13 @@ import choral.ast.expression.AssignExpression;
 import choral.ast.expression.BinaryExpression;
 import choral.ast.expression.ClassInstantiationExpression;
 import choral.ast.expression.EnclosedExpression;
+import choral.ast.expression.EnumCaseInstantiationExpression;
 import choral.ast.expression.Expression;
 import choral.ast.expression.FieldAccessExpression;
 import choral.ast.expression.MethodCallExpression;
 import choral.ast.expression.NotExpression;
 import choral.ast.expression.ScopedExpression;
+import choral.ast.expression.StaticAccessExpression;
 import choral.ast.statement.BlockStatement;
 import choral.ast.statement.ExpressionStatement;
 import choral.ast.statement.IfStatement;
@@ -243,7 +245,29 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         String from = method.signature().parameters().get(0).type().worldArguments().get(0).identifier();
         String to = returnType.worldArguments().get(0).identifier();
         lines.add(participantId(from) + (selection ? "-->>" : "->>") + participantId(to)
-                + ": " + escapeMermaid(call.name().identifier()));
+                + ": " + eventLabel(call));
+    }
+
+    private String eventLabel(MethodCallExpression call) {
+        if (!call.arguments().isEmpty())
+            return escapeMermaid(expressionLabel(call.arguments().get(0)));
+        if (!call.typeArguments().isEmpty())
+            return escapeMermaid(prettyPrinter.visit(call.typeArguments().get(0)));
+        return escapeMermaid(call.name().identifier());
+    }
+
+    private String expressionLabel(Expression expression) {
+        if (expression instanceof EnumCaseInstantiationExpression enumCase)
+            return enumCase.name().identifier() + "@" + enumCase.world().name().identifier()
+                    + "." + enumCase._case().identifier();
+        if (expression instanceof ScopedExpression scoped &&
+                scoped.scope() instanceof StaticAccessExpression staticAccess &&
+                staticAccess.typeExpression().worldArguments().size() == 1 &&
+                scoped.scopedExpression() instanceof FieldAccessExpression field)
+            return staticAccess.typeExpression().name().identifier() + "@"
+                    + staticAccess.typeExpression().worldArguments().get(0).name().identifier()
+                    + "." + field.name().identifier();
+        return prettyPrinter.visit(expression);
     }
 
     private String switchCaseLabel(Expression guard, SwitchArgument<?> switchCase) {
@@ -278,8 +302,10 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     }
 
     private static String escapeMermaid(String value) {
-        String escaped = value.replaceAll("[\\n\\r]+", " ")
-                .replaceAll("[:{};]", " ")
+        String escaped = value.replaceAll("[\\p{Cc}\\p{Zl}\\p{Zp}]+", " ")
+                .replaceAll("[:{};<>`]", " ")
+                .replaceAll("%{2,}", "%")
+                .replaceAll("\\s+", " ")
                 .strip();
         return escaped.isEmpty() ? " " : escaped;
     }

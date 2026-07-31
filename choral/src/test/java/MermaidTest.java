@@ -51,7 +51,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_Customer as Customer
 				participant p_Seller as Seller
-				p_Customer->>p_Seller: com
+				p_Customer->>p_Seller: order
 				""".strip(),
 				mermaid( source, 6, 10 ) );
 	}
@@ -76,9 +76,32 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_Customer as Customer
 				participant p_Seller as Seller
-				p_Customer-->>p_Seller: select
+				p_Customer-->>p_Seller: Decision@Customer.ACCEPT
 				""".strip(),
 				mermaid( source, 6, 10 ) );
+	}
+
+	@Test
+	public void eventLabelsEscapeMermaidSyntax() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Escaped@( A, B ) {
+				void run( SymChannel@( A, B )< Object > channel ) {
+					channel.< String >com( "ready: <go>; %% end"@A );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				p_A->>p_B: "ready go % end"@A
+				""".strip(),
+				mermaidAt( source, "ready:" ) );
 	}
 
 	@Test
@@ -107,9 +130,9 @@ public class MermaidTest {
 				participant p_Customer as Customer
 				participant p_Seller as Seller
 				participant p_Shipper as Shipper
-				p_Customer->>p_Seller: com
-				p_Seller->>p_Shipper: com
-				p_Shipper-->>p_Seller: select
+				p_Customer->>p_Seller: order
+				p_Seller->>p_Shipper: received
+				p_Shipper-->>p_Seller: State@Shipper.DONE
 				""".strip(),
 				mermaid( source, 10, 10 ) );
 	}
@@ -145,11 +168,11 @@ public class MermaidTest {
 				participant p_A as A
 				participant p_B as B
 				alt true@A
-				p_A-->>p_B: select
-				p_A->>p_B: com
+				p_A-->>p_B: Choice@A.THEN
+				p_A->>p_B: value
 				else
-				p_A-->>p_B: select
-				p_A->>p_B: com
+				p_A-->>p_B: Choice@A.ELSE
+				p_A->>p_B: value
 				end
 				""".strip(),
 				mermaidAt( source, "consume( channel" ) );
@@ -191,16 +214,16 @@ public class MermaidTest {
 				participant p_B as B
 				participant p_C as C
 				alt true@A
-				p_A->>p_B: com
+				p_A->>p_B: a
 				alt false@B
-				p_B->>p_C: com
+				p_B->>p_C: b
 				else
-				p_C->>p_A: com
+				p_C->>p_A: c
 				end
 				else
-				p_A->>p_B: com
+				p_A->>p_B: a
 				end
-				p_B->>p_C: com
+				p_B->>p_C: b
 				""".strip(),
 				mermaidAt( source, "if( false@B )" ) );
 	}
@@ -239,13 +262,13 @@ public class MermaidTest {
 				participant p_B as B
 				participant p_C as C
 				alt route = FAST
-				p_A->>p_B: com
+				p_A->>p_B: a
 				else route = SAFE
-				p_B->>p_C: com
+				p_B->>p_C: b
 				else default
-				p_C->>p_A: com
+				p_C->>p_A: c
 				end
-				p_A->>p_B: com
+				p_A->>p_B: a
 				""".strip(),
 				mermaidAt( source, "case SAFE" ) );
 	}
@@ -283,13 +306,13 @@ public class MermaidTest {
 				participant p_B as B
 				participant p_C as C
 				critical try
-				p_A->>p_B: com
+				p_A->>p_B: a
 				option catch Exception@( B ) first
-				p_B->>p_C: com
+				p_B->>p_C: b
 				option catch Exception@( C ) second
-				p_C->>p_A: com
+				p_C->>p_A: c
 				end
-				p_B->>p_C: com
+				p_B->>p_C: b
 				""".strip(),
 				mermaidAt( source, "Exception@C second" ) );
 	}
@@ -320,8 +343,8 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
-				p_A->>p_B: com
-				p_B->>p_A: com
+				p_A->>p_B: value
+				p_B->>p_A: value
 				""".strip(),
 				mermaidAt( source, "parameter.< String >com" ) );
 	}
@@ -358,7 +381,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
-				p_A->>p_B: com
+				p_A->>p_B: value
 				""".strip(),
 				mermaidAt( source, "arbitrarilyNamed.< String >com" ) );
 	}
@@ -434,7 +457,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_X as X
 				participant p_Y as Y
-				p_Y-->>p_X: select
+				p_Y-->>p_X: Decision@Y.ACCEPT
 				""".strip(),
 				mermaidAt( source, "secondChannel.< Decision >select" ) );
 	}
