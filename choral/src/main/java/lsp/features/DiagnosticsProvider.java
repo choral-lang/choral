@@ -31,20 +31,41 @@ public class DiagnosticsProvider {
 	}
 
 	public List< Diagnostic > analyze( String uri, String content ) {
+		return analyzeTyped( uri, content ).diagnostics();
+	}
+
+	public AnalysisResult analyzeTyped( String uri, String content ) {
 		List< Diagnostic > diagnostics = new ArrayList<>();
+		CompilationUnit compUnit;
+
+		try {
+			compUnit = Parser.parseString( content, sourceFile( uri ) );
+		} catch( Exception e ) {
+			addErrorDiagnostics( diagnostics, e );
+			return AnalysisResult.failure(
+					diagnostics, AnalysisFailure.PARSE_ERROR, e.getMessage() );
+		}
 
 		try { // choral compiler errors are reported through exceptions
-			// so try to parse and type program, then catch any exceptions
+			// so try to type the program, then catch any exceptions
 			// to pass along error messages to language client
-			CompilationUnit compUnit = Parser.parseString( content, sourceFile( uri ) );
 			typeCheck( uri, compUnit, ( pos, s ) -> {
 				if( pos == null ) pos = new choral.ast.Position( null, 1, 1 );
 				Diagnostic diagnostic = warningDiagnostic( s );
 				setRange( diagnostic, pos );
 				diagnostics.add( diagnostic );
 			} );
+		} catch( Exception e ) {
+			addErrorDiagnostics( diagnostics, e );
+			return AnalysisResult.failure(
+					diagnostics, AnalysisFailure.TYPE_ERROR, e.getMessage() );
+		}
 
-		} catch( ChoralCompoundException e ) {
+		return AnalysisResult.success( compUnit, diagnostics );
+	}
+
+	private static void addErrorDiagnostics( List< Diagnostic > diagnostics, Exception exception ) {
+		if( exception instanceof ChoralCompoundException e ) {
 			for( ChoralException cause : e.getCauses() ) {
 				if( cause instanceof AstPositionedException ape ) {
 					Diagnostic diagnostic = errorDiagnostic( ape.getMessage() );
@@ -55,17 +76,45 @@ public class DiagnosticsProvider {
 					diagnostics.add( diagnostic );
 				}
 			}
-		} catch( AstPositionedException e ) {
+		} else if( exception instanceof AstPositionedException e ) {
 			Diagnostic diagnostic = errorDiagnostic( e.getMessage() );
 			setRange( diagnostic, e.position() );
 			diagnostics.add( diagnostic );
-
-		} catch( Exception e ) {
-			Diagnostic diagnostic = errorDiagnostic( "Internal compiler error: " + e.getMessage() );
+		} else {
+			Diagnostic diagnostic = errorDiagnostic(
+					"Internal compiler error: " + exception.getMessage() );
 			diagnostics.add( diagnostic );
 		}
+	}
 
-		return diagnostics;
+	public enum AnalysisFailure {
+		PARSE_ERROR,
+		TYPE_ERROR
+	}
+
+	public record AnalysisResult(
+			CompilationUnit compilationUnit,
+			List< Diagnostic > diagnostics,
+			AnalysisFailure failure,
+			String failureMessage
+	) {
+		private static AnalysisResult success(
+				CompilationUnit compilationUnit, List< Diagnostic > diagnostics
+		) {
+			return new AnalysisResult(
+					compilationUnit, List.copyOf( diagnostics ), null, null );
+		}
+
+		private static AnalysisResult failure(
+				List< Diagnostic > diagnostics, AnalysisFailure failure, String failureMessage
+		) {
+			return new AnalysisResult(
+					null, List.copyOf( diagnostics ), failure, failureMessage );
+		}
+
+		public boolean successful() {
+			return failure == null;
+		}
 	}
 
 	public CompilationUnit typeCheck( String uri, CompilationUnit compUnit ) throws Exception {
