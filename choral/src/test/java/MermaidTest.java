@@ -319,6 +319,182 @@ public class MermaidTest {
 	}
 
 	@Test
+	public void localHelperMethodsAreExpandedAtCallSites() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Checkout@( A, B, C ) {
+				SymChannel@( A, B )< Object > ab;
+				SymChannel@( B, C )< Object > bc;
+
+				void run( String@A order, Boolean@B ready, String@B shipment ) {
+					receive( order );
+					this.ship( ready, shipment );
+				}
+
+				private void receive( String@A order ) {
+					ab.< String >com( order );
+				}
+
+				private void ship( Boolean@B ready, String@B shipment ) {
+					if( ready ) {
+						notifyWarehouse( shipment );
+					} else {
+						bc.< String >com( shipment );
+					}
+				}
+
+				private void notifyWarehouse( String@B shipment ) {
+					bc.< String >com( shipment );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				participant p_C as C
+				p_A->>p_B: order
+				alt ready
+				p_B->>p_C: shipment
+				else
+				p_B->>p_C: shipment
+				end
+				""".strip(),
+				mermaidAt( source, "void run" ) );
+	}
+
+	@Test
+	public void helperArgumentsAreVisitedBeforeTheHelperBody() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class EvaluationOrder@( A, B ) {
+				SymChannel@( A, B )< Object > forward;
+				SymChannel@( B, A )< Object > reverse;
+
+				void run( String@A value ) {
+					respond( forward.< String >com( value ) );
+				}
+
+				private void respond( String@B received ) {
+					reverse.< String >com( received );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				p_A->>p_B: value
+				p_B->>p_A: received
+				""".strip(),
+				mermaidAt( source, "void run" ) );
+	}
+
+	@Test
+	public void methodsOnExternalObjectsAreNotExpanded() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class External@( A, B ) {
+				void send(
+						SymChannel@( A, B )< Object > channel,
+						String@A value ) {
+					channel.< String >com( value );
+				}
+			}
+
+			class Root@( A, B ) {
+				void run(
+						External@( A, B ) external,
+						SymChannel@( A, B )< Object > channel,
+						String@A value ) {
+					external.send( channel, value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				""".strip(),
+				mermaidAt( source, "external.send" ) );
+	}
+
+	@Test
+	public void overloadedHelpersAreResolvedFromTypedMethodAnnotations() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Overloaded@( A, B ) {
+				SymChannel@( A, B )< Object > forward;
+				SymChannel@( B, A )< Object > reverse;
+
+				void run( String@A fromA, String@B fromB ) {
+					send( fromA );
+					send( fromB );
+				}
+
+				private void send( String@A value ) {
+					forward.< String >com( value );
+				}
+
+				private void send( String@B value ) {
+					reverse.< String >com( value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				p_A->>p_B: value
+				p_B->>p_A: value
+				""".strip(),
+				mermaidAt( source, "void run" ) );
+	}
+
+	@Test
+	public void recursiveHelperExpansionStopsWithANote() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Recursive@( A, B ) {
+				SymChannel@( A, B )< Object > channel;
+
+				void run( String@A value ) {
+					channel.< String >com( value );
+					run( value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				p_A->>p_B: value
+				Note over p_A,p_B: recursive call to run omitted
+				""".strip(),
+				mermaidAt( source, "void run" ) );
+	}
+
+	@Test
 	public void onlyTheMethodAtTheCursorIsRendered() {
 		String source =
 			"""

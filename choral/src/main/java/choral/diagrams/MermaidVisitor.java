@@ -16,6 +16,7 @@ import choral.ast.expression.MethodCallExpression;
 import choral.ast.expression.NotExpression;
 import choral.ast.expression.ScopedExpression;
 import choral.ast.expression.StaticAccessExpression;
+import choral.ast.expression.ThisExpression;
 import choral.ast.statement.BlockStatement;
 import choral.ast.statement.ExpressionStatement;
 import choral.ast.statement.IfStatement;
@@ -32,6 +33,8 @@ import choral.types.GroundDataType;
 import choral.types.Member;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,15 +44,27 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     private final List<String> lines = new ArrayList<>();
     private final PrettyPrinterVisitor prettyPrinter = new PrettyPrinterVisitor();
     private Set<String> channels = Set.of();
+    private Set<MethodDefinition> localMethods = Set.of();
+    private Set<MethodDefinition> activeMethods = Set.of();
+    private List<String> participantIds = List.of();
 
     public String render(TemplateDeclaration declaration, MethodDefinition method) {
         lines.clear();
         channels = Set.of();
+        localMethods = Collections.newSetFromMap(new IdentityHashMap<>());
+        if (declaration instanceof choral.ast.body.Class type)
+            localMethods.addAll(type.methods());
+        if (declaration instanceof choral.ast.body.Interface type)
+            localMethods.addAll(type.methods());
+        activeMethods = Collections.newSetFromMap(new IdentityHashMap<>());
+        participantIds = declaration.worldParameters().stream()
+                .map(world -> participantId(world.name().identifier()))
+                .toList();
         lines.add("sequenceDiagram");
         declaration.worldParameters().forEach(world -> lines.add(
                 "participant " + participantId(world.name().identifier()) + " as "
                         + escapeMermaid(world.name().identifier())));
-        method.accept(this);
+        visitLocalMethod(method, method.signature().name().identifier());
         return String.join("\n", lines);
     }
 
@@ -71,8 +86,11 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
                 .flatMap(annotation -> annotation.channels().stream())
                 .map(channel -> channel.left())
                 .collect(Collectors.toSet());
-        visitStatement(body);
-        channels = previousChannels;
+        try {
+            visitStatement(body);
+        } finally {
+            channels = previousChannels;
+        }
     }
 
     @Override
@@ -169,6 +187,8 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         if (expression.scopedExpression() instanceof MethodCallExpression call) {
             call.arguments().forEach(this::visitExpression);
             addChannelEvent(expression.scope(), call);
+            if (expression.scope() instanceof ThisExpression)
+                visitLocalMethod(call);
         } else {
             visitExpression(expression.scopedExpression());
         }
@@ -178,6 +198,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     @Override
     public Void visit(MethodCallExpression expression) {
         expression.arguments().forEach(this::visitExpression);
+        visitLocalMethod(expression);
         return null;
     }
 
@@ -224,6 +245,31 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
                 expression instanceof ClassInstantiationExpression || expression instanceof EnclosedExpression ||
                 expression instanceof NotExpression)
             visit(expression);
+    }
+
+    private void visitLocalMethod(MethodCallExpression call) {
+        Member.GroundMethod method = call.methodAnnotation().orElse(null);
+        if (method == null)
+            return;
+        var source = method.higherCallable().sourceCode().orElse(null);
+        if (source instanceof MethodDefinition definition && localMethods.contains(definition))
+            visitLocalMethod(definition, call.name().identifier());
+    }
+
+    private void visitLocalMethod(MethodDefinition method, String callName) {
+        if (!activeMethods.add(method)) {
+            String over = participantIds.get(0);
+            if (participantIds.size() > 1)
+                over += "," + participantIds.get(participantIds.size() - 1);
+            lines.add("Note over " + over + ": recursive call to "
+                    + escapeMermaid(callName) + " omitted");
+            return;
+        }
+        try {
+            method.accept(this);
+        } finally {
+            activeMethods.remove(method);
+        }
     }
 
     private void addChannelEvent(Expression receiver, MethodCallExpression call) {
