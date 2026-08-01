@@ -91,6 +91,46 @@ public class ChoralTextDocumentServiceTest {
     }
 
     @Test
+    public void rendersOnlyTheMethodAtTheRequestedPosition(@TempDir Path project) {
+        String uri = project.resolve("Example.ch").toUri().toString();
+        String source = """
+                import choral.channels.SymChannel;
+
+                class Example@( A, B ) {
+                    SymChannel@( A, B )< Object > forward;
+                    SymChannel@( B, A )< Object > reverse;
+
+                    void first( String@A value ) {
+                        forward.< String >com( value );
+                    }
+
+                    void second( String@B value ) {
+                        reverse.< String >com( value );
+                    }
+                }
+                """;
+        ChoralTextDocumentService service = new ChoralTextDocumentService();
+        service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
+
+        assertEquals(
+                """
+                sequenceDiagram
+                participant p_A as A
+                participant p_B as B
+                p_A->>p_B: value
+                """.strip(),
+                diagramAt(service, uri, source, "void first").join());
+        assertEquals(
+                """
+                sequenceDiagram
+                participant p_A as A
+                participant p_B as B
+                p_B->>p_A: value
+                """.strip(),
+                diagramAt(service, uri, source, "reverse.< String >com").join());
+    }
+
+    @Test
     public void reportsTypeCheckingFailures(@TempDir Path project) {
         String uri = project.resolve("Example.ch").toUri().toString();
         String source = """
@@ -124,13 +164,13 @@ public class ChoralTextDocumentServiceTest {
     @Test
     public void reusesTypedAnalysisForUnchangedDiagramRequests(@TempDir Path project) {
         String uri = project.resolve("Example.ch").toUri().toString();
-        String source = "class Example@( A, B ) {}";
+        String source = "class Example@( A, B ) { void run() {} }";
         CountingDiagnosticsProvider diagnostics = new CountingDiagnosticsProvider();
         ChoralTextDocumentService service = new ChoralTextDocumentService(diagnostics);
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
 
-        assertInstanceOf(String.class, diagramAt(service, uri, source, "Example").join());
-        assertInstanceOf(String.class, diagramAt(service, uri, source, "Example").join());
+        assertInstanceOf(String.class, diagramAt(service, uri, source, "run()").join());
+        assertInstanceOf(String.class, diagramAt(service, uri, source, "run()").join());
 
         assertEquals(1, diagnostics.analyses());
     }
@@ -138,8 +178,8 @@ public class ChoralTextDocumentServiceTest {
     @Test
     public void documentChangesReplaceTheCachedTypedAst(@TempDir Path project) {
         String uri = project.resolve("Example.ch").toUri().toString();
-        String first = "class First@( A, B ) {}";
-        String second = "class Second@( X, Y ) {}";
+        String first = "class First@( A, B ) { void first() {} }";
+        String second = "class Second@( X, Y ) { void second() {} }";
         CountingDiagnosticsProvider diagnostics = new CountingDiagnosticsProvider();
         ChoralTextDocumentService service = new ChoralTextDocumentService(diagnostics);
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, first)));
@@ -148,7 +188,7 @@ public class ChoralTextDocumentServiceTest {
                 new VersionedTextDocumentIdentifier(uri, 2),
                 List.of(new TextDocumentContentChangeEvent(second))));
         String diagram = assertInstanceOf(
-                String.class, diagramAt(service, uri, second, "Second").join());
+                String.class, diagramAt(service, uri, second, "second()").join());
 
         assertTrue(diagram.contains("participant p_X as X"));
         assertFalse(diagram.contains("participant p_A as A"));
@@ -175,8 +215,8 @@ public class ChoralTextDocumentServiceTest {
     public void overlappingRequestsWaitForTheCurrentDocumentVersion(@TempDir Path project)
             throws Exception {
         String uri = project.resolve("Example.ch").toUri().toString();
-        String first = "class First@( A, B ) {}";
-        String second = "class Second@( X, Y ) {}";
+        String first = "class First@( A, B ) { void first() {} }";
+        String second = "class Second@( X, Y ) { void second() {} }";
         BlockingDiagnosticsProvider diagnostics = new BlockingDiagnosticsProvider("Second");
         ChoralTextDocumentService service = new ChoralTextDocumentService(diagnostics);
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, first)));
@@ -188,8 +228,8 @@ public class ChoralTextDocumentServiceTest {
                             List.of(new TextDocumentContentChangeEvent(second)))), executor);
             assertTrue(diagnostics.awaitAnalysis());
 
-            CompletableFuture<Object> firstRequest = diagramAt(service, uri, second, "Second");
-            CompletableFuture<Object> secondRequest = diagramAt(service, uri, second, "Second");
+            CompletableFuture<Object> firstRequest = diagramAt(service, uri, second, "second()");
+            CompletableFuture<Object> secondRequest = diagramAt(service, uri, second, "second()");
             assertFalse(firstRequest.isDone());
             assertFalse(secondRequest.isDone());
 

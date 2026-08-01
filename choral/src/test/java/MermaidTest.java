@@ -15,10 +15,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MermaidTest {
 	@Test
-	public void emptyChoreography() {
+	public void emptyMethod() {
 		String source =
 			"""
 			class Empty@( Customer, Seller ) {
+				void run() {}
 			}
 			""";
 
@@ -28,7 +29,7 @@ public class MermaidTest {
 				participant p_Customer as Customer
 				participant p_Seller as Seller
 				""".strip(),
-				mermaid( source, 0, 0 ) );
+				mermaidAt( source, "void run" ) );
 	}
 
 	@Test
@@ -318,7 +319,7 @@ public class MermaidTest {
 	}
 
 	@Test
-	public void fieldAndParameterChannelsAcrossMethodsAreTraversedInOrder() {
+	public void onlyTheMethodAtTheCursorIsRendered() {
 		String source =
 			"""
 			import choral.channels.SymChannel;
@@ -344,9 +345,17 @@ public class MermaidTest {
 				participant p_A as A
 				participant p_B as B
 				p_A->>p_B: value
+				""".strip(),
+				mermaidAt( source, "fromField" ) );
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
 				p_B->>p_A: value
 				""".strip(),
 				mermaidAt( source, "parameter.< String >com" ) );
+		assertNoChoreographyAt( source, "field;" );
 	}
 
 	@Test
@@ -410,6 +419,7 @@ public class MermaidTest {
 				participant p_B as B
 				""".strip(),
 				mermaidAt( source, "void run" ) );
+		assertNoChoreographyAt( source, "public Constructed" );
 	}
 
 	@Test
@@ -417,6 +427,7 @@ public class MermaidTest {
 		String source =
 			"""
 			class International@( Customer$EU, Seller ) {
+				void run() {}
 			}
 			""";
 
@@ -426,7 +437,7 @@ public class MermaidTest {
 				participant p_Customer_EU as Customer$EU
 				participant p_Seller as Seller
 				""".strip(),
-				mermaid( source, 0, 0 ) );
+				mermaidAt( source, "void run" ) );
 	}
 
 	@Test
@@ -463,28 +474,30 @@ public class MermaidTest {
 	}
 
 	@Test
-	public void selectsChoreographiesOnlyInsideTheirSourceRanges() {
+	public void selectsMethodsOnlyInsideTheirSourceRanges() {
 		String source =
 			"""
-			/* before */ class First@( A, B ) {} /* between */ class Second@( X, Y ) {} /* after */
+			/* before */ class First@( A, B ) { void first() {} } /* between */ class Second@( X, Y ) { void second() {} } /* after */
 			""";
 
 		assertNoChoreographyAt( source, "before" );
+		assertNoChoreographyAt( source, "First" );
 		assertEquals(
 			"""
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
 				""".strip(),
-				mermaidAt( source, "First" ) );
+				mermaidAt( source, "first()" ) );
 		assertNoChoreographyAt( source, "between" );
+		assertNoChoreographyAt( source, "Second" );
 		assertEquals(
 			"""
 				sequenceDiagram
 				participant p_X as X
 				participant p_Y as Y
 				""".strip(),
-				mermaidAt( source, "Second" ) );
+				mermaidAt( source, "second()" ) );
 		assertNoChoreographyAt( source, "after" );
 	}
 

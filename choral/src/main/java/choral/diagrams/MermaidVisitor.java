@@ -42,17 +42,14 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     private final PrettyPrinterVisitor prettyPrinter = new PrettyPrinterVisitor();
     private Set<String> channels = Set.of();
 
-    public String render(TemplateDeclaration declaration) {
+    public String render(TemplateDeclaration declaration, MethodDefinition method) {
         lines.clear();
         channels = Set.of();
         lines.add("sequenceDiagram");
         declaration.worldParameters().forEach(world -> lines.add(
                 "participant " + participantId(world.name().identifier()) + " as "
                         + escapeMermaid(world.name().identifier())));
-        if (declaration instanceof choral.ast.body.Class type)
-            type.methods().forEach(this::visit);
-        if (declaration instanceof choral.ast.body.Interface type)
-            type.methods().forEach(this::visit);
+        method.accept(this);
         return String.join("\n", lines);
     }
 
