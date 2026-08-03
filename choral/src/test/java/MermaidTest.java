@@ -28,6 +28,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_Customer as Customer
 				participant p_Seller as Seller
+				Note over p_Customer,p_Seller: Empty.run
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -52,6 +53,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_Customer as Customer
 				participant p_Seller as Seller
+				Note over p_Customer,p_Seller: Order.run
 				p_Customer->>p_Seller: order
 				""".strip(),
 				mermaid( source, 6, 10 ) );
@@ -77,6 +79,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_Customer as Customer
 				participant p_Seller as Seller
+				Note over p_Customer,p_Seller: Approval.run
 				p_Customer-->>p_Seller: Decision@Customer.ACCEPT
 				""".strip(),
 				mermaid( source, 6, 10 ) );
@@ -100,6 +103,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
+				Note over p_A,p_B: Escaped.run
 				p_A->>p_B: "ready go % end"@A
 				""".strip(),
 				mermaidAt( source, "ready:" ) );
@@ -131,6 +135,7 @@ public class MermaidTest {
 				participant p_Customer as Customer
 				participant p_Seller as Seller
 				participant p_Shipper as Shipper
+				Note over p_Customer,p_Shipper: Shipping.run
 				p_Customer->>p_Seller: order
 				p_Seller->>p_Shipper: received
 				p_Shipper-->>p_Seller: State@Shipper.DONE
@@ -168,6 +173,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
+				Note over p_A,p_B: Nested.run
 				alt true@A
 				p_A-->>p_B: Choice@A.THEN
 				p_A->>p_B: value
@@ -214,6 +220,7 @@ public class MermaidTest {
 				participant p_A as A
 				participant p_B as B
 				participant p_C as C
+				Note over p_A,p_C: Alternatives.run
 				alt true@A
 				p_A->>p_B: a
 				alt false@B
@@ -262,6 +269,7 @@ public class MermaidTest {
 				participant p_A as A
 				participant p_B as B
 				participant p_C as C
+				Note over p_A,p_C: Routing.run
 				alt route = FAST
 				p_A->>p_B: a
 				else route = SAFE
@@ -306,6 +314,7 @@ public class MermaidTest {
 				participant p_A as A
 				participant p_B as B
 				participant p_C as C
+				Note over p_A,p_C: Recovery.run
 				critical try
 				p_A->>p_B: a
 				option catch Exception@( B ) first
@@ -357,12 +366,19 @@ public class MermaidTest {
 				participant p_A as A
 				participant p_B as B
 				participant p_C as C
+				Note over p_A,p_C: Checkout.run
+				Note over p_A,p_C: call receive
 				p_A->>p_B: order
+				Note over p_A,p_C: return receive
+				Note over p_A,p_C: call ship
 				alt ready
+				Note over p_A,p_C: call notifyWarehouse
 				p_B->>p_C: shipment
+				Note over p_A,p_C: return notifyWarehouse
 				else
 				p_B->>p_C: shipment
 				end
+				Note over p_A,p_C: return ship
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -392,8 +408,11 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
+				Note over p_A,p_B: EvaluationOrder.run
 				p_A->>p_B: value
+				Note over p_A,p_B: call respond
 				p_B->>p_A: received
+				Note over p_A,p_B: return respond
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -427,6 +446,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
+				Note over p_A,p_B: Root.run
 				""".strip(),
 				mermaidAt( source, "external.send" ) );
 	}
@@ -461,10 +481,43 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
+				Note over p_A,p_B: Overloaded.run
+				Note over p_A,p_B: call send(String@( A ))
 				p_A->>p_B: value
+				Note over p_A,p_B: return send(String@( A ))
+				Note over p_A,p_B: call send(String@( B ))
 				p_B->>p_A: value
+				Note over p_A,p_B: return send(String@( B ))
 				""".strip(),
 				mermaidAt( source, "void run" ) );
+	}
+
+	@Test
+	public void overloadedRootMethodsAreIdentifiedBySignature() {
+		String source =
+			"""
+			class OverloadedRoot@( A, B ) {
+				void run( String@A value ) {}
+				void run( String@B value ) {}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: OverloadedRoot.run(String@( A ))
+				""".strip(),
+				mermaidAt( source, "String@A value" ) );
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: OverloadedRoot.run(String@( B ))
+				""".strip(),
+				mermaidAt( source, "String@B value" ) );
 	}
 
 	@Test
@@ -488,6 +541,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
+				Note over p_A,p_B: Recursive.run
 				p_A->>p_B: value
 				Note over p_A,p_B: recursive call to run omitted
 				""".strip(),
@@ -520,6 +574,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
+				Note over p_A,p_B: ChannelSources.fromField
 				p_A->>p_B: value
 				""".strip(),
 				mermaidAt( source, "fromField" ) );
@@ -528,6 +583,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
+				Note over p_A,p_B: ChannelSources.fromParameter
 				p_B->>p_A: value
 				""".strip(),
 				mermaidAt( source, "parameter.< String >com" ) );
@@ -566,6 +622,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
+				Note over p_A,p_B: Typed.run
 				p_A->>p_B: value
 				""".strip(),
 				mermaidAt( source, "arbitrarilyNamed.< String >com" ) );
@@ -593,6 +650,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
+				Note over p_A,p_B: Constructed.run
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 		assertNoChoreographyAt( source, "public Constructed" );
@@ -612,6 +670,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_Customer_EU as Customer$EU
 				participant p_Seller as Seller
+				Note over p_Customer_EU,p_Seller: International.run
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -644,6 +703,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_X as X
 				participant p_Y as Y
+				Note over p_X,p_Y: Second.run
 				p_Y-->>p_X: Decision@Y.ACCEPT
 				""".strip(),
 				mermaidAt( source, "secondChannel.< Decision >select" ) );
@@ -663,6 +723,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_A as A
 				participant p_B as B
+				Note over p_A,p_B: First.first
 				""".strip(),
 				mermaidAt( source, "first()" ) );
 		assertNoChoreographyAt( source, "between" );
@@ -672,6 +733,7 @@ public class MermaidTest {
 				sequenceDiagram
 				participant p_X as X
 				participant p_Y as Y
+				Note over p_X,p_Y: Second.second
 				""".strip(),
 				mermaidAt( source, "second()" ) );
 		assertNoChoreographyAt( source, "after" );

@@ -85,6 +85,7 @@ public class ChoralTextDocumentServiceTest {
                 sequenceDiagram
                 participant p_A as A
                 participant p_B as B
+                Note over p_A,p_B: Example.run
                 p_A->>p_B: value
                 """.strip(),
                 result);
@@ -117,6 +118,7 @@ public class ChoralTextDocumentServiceTest {
                 sequenceDiagram
                 participant p_A as A
                 participant p_B as B
+                Note over p_A,p_B: Example.first
                 p_A->>p_B: value
                 """.strip(),
                 diagramAt(service, uri, source, "void first").join());
@@ -125,6 +127,7 @@ public class ChoralTextDocumentServiceTest {
                 sequenceDiagram
                 participant p_A as A
                 participant p_B as B
+                Note over p_A,p_B: Example.second
                 p_B->>p_A: value
                 """.strip(),
                 diagramAt(service, uri, source, "reverse.< String >com").join());

@@ -64,7 +64,13 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         declaration.worldParameters().forEach(world -> lines.add(
                 "participant " + participantId(world.name().identifier()) + " as "
                         + escapeMermaid(world.name().identifier())));
-        visitLocalMethod(method, method.signature().name().identifier());
+        addNote(declaration.name().identifier() + "." + methodLabel(method));
+        activeMethods.add(method);
+        try {
+            method.accept(this);
+        } finally {
+            activeMethods.remove(method);
+        }
         return String.join("\n", lines);
     }
 
@@ -253,23 +259,51 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
             return;
         var source = method.higherCallable().sourceCode().orElse(null);
         if (source instanceof MethodDefinition definition && localMethods.contains(definition))
-            visitLocalMethod(definition, call.name().identifier());
+            visitLocalMethod(definition);
     }
 
-    private void visitLocalMethod(MethodDefinition method, String callName) {
+    private void visitLocalMethod(MethodDefinition method) {
+        String methodName = methodLabel(method);
         if (!activeMethods.add(method)) {
-            String over = participantIds.get(0);
-            if (participantIds.size() > 1)
-                over += "," + participantIds.get(participantIds.size() - 1);
-            lines.add("Note over " + over + ": recursive call to "
-                    + escapeMermaid(callName) + " omitted");
+            addNote("recursive call to " + methodName + " omitted");
             return;
         }
+        int contextLine = lines.size();
+        addNote("call " + methodName);
+        boolean contextAdded = lines.size() > contextLine;
+        int bodyLine = lines.size();
         try {
             method.accept(this);
         } finally {
             activeMethods.remove(method);
         }
+        if (lines.size() == bodyLine) {
+            if (contextAdded)
+                lines.remove(contextLine);
+        } else {
+            addNote("return " + methodName);
+        }
+    }
+
+    private void addNote(String text) {
+        if (participantIds.isEmpty())
+            return;
+        String over = participantIds.get(0);
+        if (participantIds.size() > 1)
+            over += "," + participantIds.get(participantIds.size() - 1);
+        lines.add("Note over " + over + ": " + escapeMermaid(text));
+    }
+
+    private String methodLabel(MethodDefinition method) {
+        String name = method.signature().name().identifier();
+        long overloads = localMethods.stream()
+                .filter(candidate -> candidate.signature().name().identifier().equals(name))
+                .count();
+        if (overloads < 2)
+            return name;
+        return name + "(" + method.signature().parameters().stream()
+                .map(parameter -> prettyPrinter.visit(parameter.type()))
+                .collect(Collectors.joining(", ")) + ")";
     }
 
     private void addChannelEvent(Expression receiver, MethodCallExpression call) {
