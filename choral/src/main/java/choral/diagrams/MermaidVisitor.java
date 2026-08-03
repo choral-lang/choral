@@ -12,11 +12,11 @@ import choral.ast.expression.EnclosedExpression;
 import choral.ast.expression.EnumCaseInstantiationExpression;
 import choral.ast.expression.Expression;
 import choral.ast.expression.FieldAccessExpression;
+import choral.ast.expression.LiteralExpression;
 import choral.ast.expression.MethodCallExpression;
 import choral.ast.expression.NotExpression;
 import choral.ast.expression.ScopedExpression;
 import choral.ast.expression.StaticAccessExpression;
-import choral.ast.expression.ThisExpression;
 import choral.ast.statement.BlockStatement;
 import choral.ast.statement.ExpressionStatement;
 import choral.ast.statement.IfStatement;
@@ -34,9 +34,13 @@ import choral.types.Member;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /** Renders a typed Choral declaration directly as a Mermaid sequence diagram. */
@@ -53,6 +57,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     private Set<String> channels = Set.of();
     private Set<MethodDefinition> localMethods = Set.of();
     private Set<MethodDefinition> activeMethods = Set.of();
+    private Map<String, String> worldMapping = Map.of();
     private List<String> participantIds = List.of();
     private int helperDepth;
     private int helperExpansions;
@@ -83,6 +88,8 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         if (declaration instanceof choral.ast.body.Interface type)
             localMethods.addAll(type.methods());
         activeMethods = Collections.newSetFromMap(new IdentityHashMap<>());
+        worldMapping = declaration.worldParameters().stream().collect(Collectors.toMap(
+                world -> world.name().identifier(), world -> world.name().identifier()));
         helperDepth = 0;
         helperExpansions = 0;
         helperDepthLimitReported = false;
@@ -160,7 +167,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     public Void visit(IfStatement statement) {
         visitExpression(statement.condition());
         int blockLine = lines.size();
-        lines.add("alt " + escapeMermaid(prettyPrinter.visit(statement.condition())));
+        lines.add("alt " + escapeMermaid(expressionLabel(statement.condition())));
         int branchLine = lines.size();
         visitStatement(statement.ifBranch());
         boolean hasContent = lines.size() > branchLine;
@@ -240,8 +247,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         if (expression.scopedExpression() instanceof MethodCallExpression call) {
             call.arguments().forEach(this::visitExpression);
             addChannelEvent(expression.scope(), call);
-            if (expression.scope() instanceof ThisExpression)
-                visitLocalMethod(call);
+            visitSourceMethod(call);
         } else {
             visitExpression(expression.scopedExpression());
         }
@@ -251,7 +257,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     @Override
     public Void visit(MethodCallExpression expression) {
         expression.arguments().forEach(this::visitExpression);
-        visitLocalMethod(expression);
+        visitSourceMethod(expression);
         return null;
     }
 
@@ -305,17 +311,24 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
             lines.subList(blockLine, lines.size()).clear();
     }
 
-    private void visitLocalMethod(MethodCallExpression call) {
+    private void visitSourceMethod(MethodCallExpression call) {
         Member.GroundMethod method = call.methodAnnotation().orElse(null);
         if (method == null)
             return;
         var source = method.higherCallable().sourceCode().orElse(null);
-        if (source instanceof MethodDefinition definition && localMethods.contains(definition))
-            visitLocalMethod(definition);
+        if (!(source instanceof MethodDefinition definition) || !hasBody(definition))
+            return;
+        Map<String, String> previousWorldMapping = worldMapping;
+        worldMapping = groundedWorlds(definition, method);
+        try {
+            visitSourceMethod(definition);
+        } finally {
+            worldMapping = previousWorldMapping;
+        }
     }
 
-    private void visitLocalMethod(MethodDefinition method) {
-        String methodName = methodLabel(method);
+    private void visitSourceMethod(MethodDefinition method) {
+        String methodName = expandedMethodLabel(method);
         if (activeMethods.contains(method)) {
             addNote("recursive call to " + methodName + " omitted");
             return;
@@ -357,6 +370,14 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         }
     }
 
+    private static boolean hasBody(MethodDefinition method) {
+        if (method instanceof ClassMethodDefinition definition)
+            return definition.body().isPresent();
+        if (method instanceof InterfaceMethodDefinition definition)
+            return definition.body().isPresent();
+        return false;
+    }
+
     private void addNote(String text) {
         if (participantIds.isEmpty())
             return;
@@ -368,14 +389,39 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
 
     private String methodLabel(MethodDefinition method) {
         String name = method.signature().name().identifier();
-        long overloads = localMethods.stream()
-                .filter(candidate -> candidate.signature().name().identifier().equals(name))
+        long overloads = method.typeAnnotation().stream()
+                .flatMap(annotation -> annotation.declarationContext().declaredMethods())
+                .filter(candidate -> candidate.identifier().equals(name))
                 .count();
         if (overloads < 2)
             return name;
         return name + "(" + method.signature().parameters().stream()
-                .map(parameter -> prettyPrinter.visit(parameter.type()))
+                .map(parameter -> groundedTypeLabel(prettyPrinter.visit(parameter.type())))
                 .collect(Collectors.joining(", ")) + ")";
+    }
+
+    private String expandedMethodLabel(MethodDefinition method) {
+        String label = methodLabel(method);
+        if (localMethods.contains(method))
+            return label;
+        return method.typeAnnotation()
+                .map(annotation -> annotation.declarationContext().typeConstructor().identifier()
+                        + "." + label)
+                .orElse(label);
+    }
+
+    private Map<String, String> groundedWorlds(
+            MethodDefinition definition, Member.GroundMethod method) {
+        Map<String, String> grounded = new HashMap<>(worldMapping);
+        List<? extends choral.types.World> formalWorlds = definition.typeAnnotation()
+                .map(annotation -> annotation.declarationContext().worldArguments())
+                .orElse(List.of());
+        List<? extends choral.types.World> actualWorlds =
+                method.higherCallable().declarationContext().worldArguments();
+        for (int index = 0; index < Math.min(formalWorlds.size(), actualWorlds.size()); index++)
+            grounded.put(formalWorlds.get(index).identifier(),
+                    groundedWorld(actualWorlds.get(index).identifier()));
+        return Map.copyOf(grounded);
     }
 
     private void addChannelEvent(Expression receiver, MethodCallExpression call) {
@@ -391,10 +437,15 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
                 !(method.returnType() instanceof GroundDataType returnType) ||
                 returnType.worldArguments().isEmpty())
             return;
-        String from = method.signature().parameters().get(0).type().worldArguments().get(0).identifier();
-        String to = returnType.worldArguments().get(0).identifier();
+        String from = groundedWorld(
+                method.signature().parameters().get(0).type().worldArguments().get(0).identifier());
+        String to = groundedWorld(returnType.worldArguments().get(0).identifier());
         lines.add(participantId(from) + (selection ? "-->>" : "->>") + participantId(to)
                 + ": " + eventLabel(call));
+    }
+
+    private String groundedWorld(String world) {
+        return worldMapping.getOrDefault(world, world);
     }
 
     private String eventLabel(MethodCallExpression call) {
@@ -407,16 +458,43 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
 
     private String expressionLabel(Expression expression) {
         if (expression instanceof EnumCaseInstantiationExpression enumCase)
-            return enumCase.name().identifier() + "@" + enumCase.world().name().identifier()
+            return enumCase.name().identifier() + "@"
+                    + groundedWorld(enumCase.world().name().identifier())
                     + "." + enumCase._case().identifier();
+        if (expression instanceof LiteralExpression<?> literal) {
+            String label = prettyPrinter.visit(literal);
+            if (literal.world() != null)
+                return groundedWorldReferences(label);
+            return label;
+        }
         if (expression instanceof ScopedExpression scoped &&
                 scoped.scope() instanceof StaticAccessExpression staticAccess &&
                 staticAccess.typeExpression().worldArguments().size() == 1 &&
                 scoped.scopedExpression() instanceof FieldAccessExpression field)
             return staticAccess.typeExpression().name().identifier() + "@"
-                    + staticAccess.typeExpression().worldArguments().get(0).name().identifier()
+                    + groundedWorld(staticAccess.typeExpression().worldArguments().get(0)
+                            .name().identifier())
                     + "." + field.name().identifier();
-        return prettyPrinter.visit(expression);
+        return groundedWorldReferences(prettyPrinter.visit(expression));
+    }
+
+    private String groundedWorldReferences(String label) {
+        String grounded = label;
+        for (var mapping : worldMapping.entrySet())
+            grounded = grounded.replaceAll(
+                    "@" + Pattern.quote(mapping.getKey()) + "(?![A-Za-z0-9_$])",
+                    Matcher.quoteReplacement("@" + mapping.getValue()));
+        return grounded;
+    }
+
+    private String groundedTypeLabel(String label) {
+        String grounded = label;
+        for (var mapping : worldMapping.entrySet())
+            grounded = grounded.replaceAll(
+                    "(?<![A-Za-z0-9_$])" + Pattern.quote(mapping.getKey())
+                            + "(?![A-Za-z0-9_$])",
+                    Matcher.quoteReplacement(mapping.getValue()));
+        return grounded;
     }
 
     private String switchCaseLabel(Expression guard, SwitchArgument<?> switchCase) {
@@ -434,7 +512,8 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         } else {
             value = switchCase.argument().toString();
         }
-        return escapeMermaid(prettyPrinter.visit(guard)) + " = " + escapeMermaid(value);
+        return escapeMermaid(expressionLabel(guard)) + " = "
+                + escapeMermaid(groundedWorldReferences(value));
     }
 
     private static String receiverName(Expression receiver) {

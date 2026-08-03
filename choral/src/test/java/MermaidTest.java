@@ -496,7 +496,7 @@ public class MermaidTest {
 	}
 
 	@Test
-	public void methodsOnExternalObjectsAreNotExpanded() {
+	public void methodsOnExternalObjectsAreExpanded() {
 		String source =
 			"""
 			import choral.channels.SymChannel;
@@ -525,8 +525,296 @@ public class MermaidTest {
 				participant p_A as A
 				participant p_B as B
 				Note over p_A,p_B: Root.run
+				Note over p_A,p_B: call External.send
+				p_A->>p_B: value
+				Note over p_A,p_B: return External.send
 				""".strip(),
 				mermaidAt( source, "external.send" ) );
+	}
+
+	@Test
+	public void externalMethodWorldsAreGroundedAtTheCallSite() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class External@( Sender, Receiver ) {
+				void send(
+						SymChannel@( Sender, Receiver )< Object > channel,
+						String@Sender value ) {
+					channel.< String >com( value );
+				}
+			}
+
+			class Root@( A, B ) {
+				void run(
+						External@( B, A ) external,
+						SymChannel@( B, A )< Object > channel,
+						String@B value ) {
+					external.send( channel, value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: Root.run
+				Note over p_A,p_B: call External.send
+				p_B->>p_A: value
+				Note over p_A,p_B: return External.send
+				""".strip(),
+				mermaidAt( source, "external.send" ) );
+	}
+
+	@Test
+	public void externalSelectionLabelsUseGroundedWorlds() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			enum Decision@X { READY }
+
+			class External@( Sender, Receiver ) {
+				void decide( SymChannel@( Sender, Receiver )< Object > channel ) {
+					channel.< Decision >select( Decision@Sender.READY );
+				}
+			}
+
+			class Root@( A, B ) {
+				void run(
+						External@( B, A ) external,
+						SymChannel@( B, A )< Object > channel ) {
+					external.decide( channel );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: Root.run
+				Note over p_A,p_B: call External.decide
+				p_B-->>p_A: Decision@B.READY
+				Note over p_A,p_B: return External.decide
+				""".strip(),
+				mermaidAt( source, "external.decide" ) );
+	}
+
+	@Test
+	public void inheritedSourceMethodsAreExpandedWithGroundedWorlds() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Base@( Sender, Receiver ) {
+				public void send(
+						SymChannel@( Sender, Receiver )< Object > channel,
+						String@Sender value ) {
+					channel.< String >com( value );
+				}
+			}
+
+			class Child@( Left, Right ) extends Base@( Left, Right ) {}
+
+			class Root@( A, B ) {
+				void run(
+						Child@( B, A ) child,
+						SymChannel@( B, A )< Object > channel,
+						String@B value ) {
+					child.send( channel, value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: Root.run
+				Note over p_A,p_B: call Base.send
+				p_B->>p_A: value
+				Note over p_A,p_B: return Base.send
+				""".strip(),
+				mermaidAt( source, "child.send" ) );
+	}
+
+	@Test
+	public void staticSourceMethodsAreExpanded() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class External@( Sender, Receiver ) {
+				static void send(
+						SymChannel@( Sender, Receiver )< Object > channel,
+						String@Sender value ) {
+					channel.< String >com( value );
+				}
+			}
+
+			class Root@( A, B ) {
+				void run(
+						SymChannel@( B, A )< Object > channel,
+						String@B value ) {
+					External@( B, A ).send( channel, value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: Root.run
+				Note over p_A,p_B: call External.send
+				p_B->>p_A: value
+				Note over p_A,p_B: return External.send
+				""".strip(),
+				mermaidAt( source, "External@( B, A ).send" ) );
+	}
+
+	@Test
+	public void externalOverloadsUseTheResolvedSourceDefinition() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class External@( Sender, Receiver ) {
+				void send(
+						SymChannel@( Sender, Receiver )< Object > channel,
+						String@Sender value ) {
+					channel.< String >com( value );
+				}
+
+				void send(
+						SymChannel@( Receiver, Sender )< Object > channel,
+						String@Receiver value ) {
+					channel.< String >com( value );
+				}
+			}
+
+			class Root@( A, B ) {
+				void run(
+						External@( A, B ) external,
+						SymChannel@( A, B )< Object > forward,
+						SymChannel@( B, A )< Object > reverse,
+						String@A fromA,
+						String@B fromB ) {
+					external.send( forward, fromA );
+					external.send( reverse, fromB );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: Root.run
+				Note over p_A,p_B: call External.send(SymChannel@( A, B ) Object , String@( A ))
+				p_A->>p_B: value
+				Note over p_A,p_B: return External.send(SymChannel@( A, B ) Object , String@( A ))
+				Note over p_A,p_B: call External.send(SymChannel@( B, A ) Object , String@( B ))
+				p_B->>p_A: value
+				Note over p_A,p_B: return External.send(SymChannel@( B, A ) Object , String@( B ))
+				""".strip(),
+				mermaidAt( source, "void run" ) );
+	}
+
+	@Test
+	public void importedSourceMethodsAreExpandedAcrossCompilationUnits() {
+		String helper =
+			"""
+			package helpers;
+
+			import choral.channels.SymChannel;
+
+			public class Helper@( Sender, Receiver ) {
+				public void send(
+						SymChannel@( Sender, Receiver )< Object > channel,
+						String@Sender value ) {
+					channel.< String >com( value );
+				}
+			}
+			""";
+		String root =
+			"""
+			package app;
+
+			import choral.channels.SymChannel;
+			import helpers.Helper;
+
+			class Root@( A, B ) {
+				void run(
+						Helper@( B, A ) helper,
+						SymChannel@( B, A )< Object > channel,
+						String@B value ) {
+					helper.send( channel, value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: Root.run
+				Note over p_A,p_B: call Helper.send
+				p_B->>p_A: value
+				Note over p_A,p_B: return Helper.send
+				""".strip(),
+				mermaidAt( List.of( helper, root ), 1, "helper.send" ) );
+	}
+
+	@Test
+	public void crossClassRecursionStopsAtTheSharedActiveCallSet() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class First@( A, B ) {
+				void start(
+						First@( A, B ) first,
+						Second@( A, B ) second,
+						SymChannel@( A, B )< Object > channel,
+						String@A value ) {
+					second.forward( first, second, channel, value );
+				}
+			}
+
+			class Second@( A, B ) {
+				void forward(
+						First@( A, B ) first,
+						Second@( A, B ) second,
+						SymChannel@( A, B )< Object > channel,
+						String@A value ) {
+					channel.< String >com( value );
+					first.start( first, second, channel, value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: First.start
+				Note over p_A,p_B: call Second.forward
+				p_A->>p_B: value
+				Note over p_A,p_B: recursive call to start omitted
+				Note over p_A,p_B: return Second.forward
+				""".strip(),
+				mermaidAt( source, "void start" ) );
 	}
 
 	@Test
@@ -956,6 +1244,22 @@ public class MermaidTest {
 		}
 	}
 
+	private static String mermaid(
+			List<String> sources, int unitIndex, int line, int character ) {
+		try {
+			var units = sources.stream().map(source -> Parser.parseString(source)).toList();
+			Typer.annotate(
+					units, HeaderLoader.loadStandardProfile().toList(),
+					new TyperOptions( VerbosityLevel.WARNINGS ) );
+			return new ChoreographyDiagramProvider().diagram(
+					units.get( unitIndex ), new Position( line, character ) );
+		} catch( ChoreographyDiagramException exception ) {
+			throw exception;
+		} catch( Exception exception ) {
+			throw new RuntimeException( exception );
+		}
+	}
+
 	private static String mermaidWithLimits(
 			String source, int maximumHelperDepth, int maximumHelperExpansions ) {
 		try {
@@ -979,6 +1283,12 @@ public class MermaidTest {
 	}
 
 	private static String mermaidAt( String source, String marker ) {
+		return mermaidAt( List.of( source ), 0, marker );
+	}
+
+	private static String mermaidAt(
+			List<String> sources, int unitIndex, String marker ) {
+		String source = sources.get( unitIndex );
 		int offset = source.indexOf( marker );
 		if( offset < 0 )
 			throw new IllegalArgumentException( "Marker not found: " + marker );
@@ -992,6 +1302,8 @@ public class MermaidTest {
 				character++;
 			}
 		}
-		return mermaid( source, line, character );
+		return sources.size() == 1
+				? mermaid( source, line, character )
+				: mermaid( sources, unitIndex, line, character );
 	}
 }

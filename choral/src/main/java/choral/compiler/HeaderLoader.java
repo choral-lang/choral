@@ -127,7 +127,7 @@ public class HeaderLoader {
 		String f = file.toString();
 		if( f.toLowerCase().endsWith( SourceObject.HeaderSourceObject.FILE_EXTENSION ) ) {
 			if( ignoreIfSourcePresent ) {
-				String s = f.substring(
+				String s = f.substring( 0,
 						f.length() - SourceObject.HeaderSourceObject.FILE_EXTENSION.length() )
 						+ SourceObject.ChoralSourceObject.FILE_EXTENSION;
 				for( File sf : sourceFiles ) {

@@ -283,6 +283,59 @@ public class ChoralTextDocumentServiceTest {
         assertEquals(1, diagnostics.analyses());
     }
 
+    @Test
+    public void expandsImportedSourceMethodsFromTheWorkspace(@TempDir Path project)
+            throws Exception {
+        Files.writeString(project.resolve("Helper.ch"), """
+                package helpers;
+
+                import choral.channels.SymChannel;
+
+                public class Helper@( Sender, Receiver ) {
+                    public void send(
+                            SymChannel@( Sender, Receiver )< Object > channel,
+                            String@Sender value ) {
+                        channel.< String >com( value );
+                    }
+                }
+                """);
+        Files.writeString(project.resolve("Helper.chh"), """
+                package helpers;
+
+                public interface Helper@( Sender, Receiver ) {}
+                """);
+        String uri = project.resolve("Root.ch").toUri().toString();
+        String source = """
+                package app;
+
+                import choral.channels.SymChannel;
+                import helpers.Helper;
+
+                class Root@( A, B ) {
+                    void run(
+                            Helper@( B, A ) helper,
+                            SymChannel@( B, A )< Object > channel,
+                            String@B value ) {
+                        helper.send( channel, value );
+                    }
+                }
+                """;
+        ChoralTextDocumentService service = new ChoralTextDocumentService();
+        service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
+
+        assertEquals(
+                """
+                sequenceDiagram
+                participant p_A as A
+                participant p_B as B
+                Note over p_A,p_B: Root.run
+                Note over p_A,p_B: call Helper.send
+                p_B->>p_A: value
+                Note over p_A,p_B: return Helper.send
+                """.strip(),
+                diagramAt(service, uri, source, "helper.send").join());
+    }
+
     private static CompletableFuture<Object> diagramAt(
             ChoralTextDocumentService service, String uri, String source, String marker
     ) {
