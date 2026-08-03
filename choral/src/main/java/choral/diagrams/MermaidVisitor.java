@@ -41,12 +41,38 @@ import java.util.stream.Collectors;
 
 /** Renders a typed Choral declaration directly as a Mermaid sequence diagram. */
 public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
+    /** Default nesting limit for expanded helper bodies. */
+    public static final int DEFAULT_MAXIMUM_HELPER_DEPTH = 16;
+    /** Default total number of helper bodies expanded in one diagram. */
+    public static final int DEFAULT_MAXIMUM_HELPER_EXPANSIONS = 128;
+
     private final List<String> lines = new ArrayList<>();
     private final PrettyPrinterVisitor prettyPrinter = new PrettyPrinterVisitor();
+    private final int maximumHelperDepth;
+    private final int maximumHelperExpansions;
     private Set<String> channels = Set.of();
     private Set<MethodDefinition> localMethods = Set.of();
     private Set<MethodDefinition> activeMethods = Set.of();
     private List<String> participantIds = List.of();
+    private int helperDepth;
+    private int helperExpansions;
+    private boolean helperDepthLimitReported;
+    private boolean helperCountLimitReported;
+
+    /** Creates a visitor with the default helper-expansion limits. */
+    public MermaidVisitor() {
+        this(DEFAULT_MAXIMUM_HELPER_DEPTH, DEFAULT_MAXIMUM_HELPER_EXPANSIONS);
+    }
+
+    /** Creates a visitor with explicit helper nesting and total-expansion limits. */
+    public MermaidVisitor(int maximumHelperDepth, int maximumHelperExpansions) {
+        if (maximumHelperDepth < 0)
+            throw new IllegalArgumentException("maximumHelperDepth must not be negative");
+        if (maximumHelperExpansions < 0)
+            throw new IllegalArgumentException("maximumHelperExpansions must not be negative");
+        this.maximumHelperDepth = maximumHelperDepth;
+        this.maximumHelperExpansions = maximumHelperExpansions;
+    }
 
     public String render(TemplateDeclaration declaration, MethodDefinition method) {
         lines.clear();
@@ -57,6 +83,10 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         if (declaration instanceof choral.ast.body.Interface type)
             localMethods.addAll(type.methods());
         activeMethods = Collections.newSetFromMap(new IdentityHashMap<>());
+        helperDepth = 0;
+        helperExpansions = 0;
+        helperDepthLimitReported = false;
+        helperCountLimitReported = false;
         participantIds = declaration.worldParameters().stream()
                 .map(world -> participantId(world.name().identifier()))
                 .toList();
@@ -264,10 +294,29 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
 
     private void visitLocalMethod(MethodDefinition method) {
         String methodName = methodLabel(method);
-        if (!activeMethods.add(method)) {
+        if (activeMethods.contains(method)) {
             addNote("recursive call to " + methodName + " omitted");
             return;
         }
+        if (helperDepth >= maximumHelperDepth) {
+            if (!helperDepthLimitReported) {
+                addNote("helper expansion depth limit " + maximumHelperDepth
+                        + " reached - deeper helper calls omitted");
+                helperDepthLimitReported = true;
+            }
+            return;
+        }
+        if (helperExpansions >= maximumHelperExpansions) {
+            if (!helperCountLimitReported) {
+                addNote("helper expansion count limit " + maximumHelperExpansions
+                        + " reached - remaining helper calls omitted");
+                helperCountLimitReported = true;
+            }
+            return;
+        }
+        activeMethods.add(method);
+        helperDepth++;
+        helperExpansions++;
         int contextLine = lines.size();
         addNote("call " + methodName);
         boolean contextAdded = lines.size() > contextLine;
@@ -275,6 +324,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         try {
             method.accept(this);
         } finally {
+            helperDepth--;
             activeMethods.remove(method);
         }
         if (lines.size() == bodyLine) {

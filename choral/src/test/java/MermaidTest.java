@@ -1,6 +1,7 @@
 import choral.diagrams.ChoreographyDiagramProvider;
 import choral.diagrams.ChoreographyDiagramProvider.Position;
 import choral.diagrams.ChoreographyDiagramException;
+import choral.diagrams.MermaidVisitor;
 import choral.compiler.HeaderLoader;
 import choral.compiler.Parser;
 import choral.compiler.Typer;
@@ -549,6 +550,130 @@ public class MermaidTest {
 	}
 
 	@Test
+	public void mutuallyRecursiveHelperExpansionStopsWithANote() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class MutuallyRecursive@( A, B ) {
+				SymChannel@( A, B )< Object > channel;
+
+				void run( String@A value ) {
+					first( value );
+				}
+
+				private void first( String@A value ) {
+					channel.< String >com( value );
+					second( value );
+				}
+
+				private void second( String@A value ) {
+					first( value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: MutuallyRecursive.run
+				Note over p_A,p_B: call first
+				p_A->>p_B: value
+				Note over p_A,p_B: call second
+				Note over p_A,p_B: recursive call to first omitted
+				Note over p_A,p_B: return second
+				Note over p_A,p_B: return first
+				""".strip(),
+				mermaidAt( source, "void run" ) );
+	}
+
+	@Test
+	public void helperDepthLimitPreservesBalancedControlFlow() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Deep@( A, B ) {
+				SymChannel@( A, B )< Object > channel;
+
+				void run( Boolean@A ready, String@A value ) {
+					guarded( ready, value );
+				}
+
+				private void guarded( Boolean@A ready, String@A value ) {
+					if( ready ) {
+						deeper( value );
+						deeper( value );
+					} else {
+						channel.< String >com( value );
+					}
+				}
+
+				private void deeper( String@A value ) {
+					channel.< String >com( value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: Deep.run
+				Note over p_A,p_B: call guarded
+				alt ready
+				Note over p_A,p_B: helper expansion depth limit 1 reached - deeper helper calls omitted
+				else
+				p_A->>p_B: value
+				end
+				Note over p_A,p_B: return guarded
+				""".strip(),
+				mermaidWithLimits( source, 1, 10 ) );
+	}
+
+	@Test
+	public void helperExpansionCountIsBoundedDeterministically() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Repeated@( A, B ) {
+				SymChannel@( A, B )< Object > channel;
+
+				void run( String@A value ) {
+					send( value );
+					send( value );
+					send( value );
+					send( value );
+				}
+
+				private void send( String@A value ) {
+					channel.< String >com( value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: Repeated.run
+				Note over p_A,p_B: call send
+				p_A->>p_B: value
+				Note over p_A,p_B: return send
+				Note over p_A,p_B: call send
+				p_A->>p_B: value
+				Note over p_A,p_B: return send
+				Note over p_A,p_B: helper expansion count limit 2 reached - remaining helper calls omitted
+				""".strip(),
+				mermaidWithLimits( source, 10, 2 ) );
+	}
+
+	@Test
 	public void onlyTheMethodAtTheCursorIsRendered() {
 		String source =
 			"""
@@ -749,6 +874,21 @@ public class MermaidTest {
 					unit, new Position( line, character ) );
 		} catch( ChoreographyDiagramException exception ) {
 			throw exception;
+		} catch( Exception exception ) {
+			throw new RuntimeException( exception );
+		}
+	}
+
+	private static String mermaidWithLimits(
+			String source, int maximumHelperDepth, int maximumHelperExpansions ) {
+		try {
+			var unit = Parser.parseString( source );
+			Typer.annotate(
+					List.of( unit ), HeaderLoader.loadStandardProfile().toList(),
+					new TyperOptions( VerbosityLevel.WARNINGS ) );
+			var declaration = unit.classes().get( 0 );
+			return new MermaidVisitor( maximumHelperDepth, maximumHelperExpansions )
+					.render( declaration, declaration.methods().get( 0 ) );
 		} catch( Exception exception ) {
 			throw new RuntimeException( exception );
 		}
