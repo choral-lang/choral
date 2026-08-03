@@ -159,13 +159,19 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     @Override
     public Void visit(IfStatement statement) {
         visitExpression(statement.condition());
+        int blockLine = lines.size();
         lines.add("alt " + escapeMermaid(prettyPrinter.visit(statement.condition())));
+        int branchLine = lines.size();
         visitStatement(statement.ifBranch());
+        boolean hasContent = lines.size() > branchLine;
         if (!(statement.elseBranch() instanceof NilStatement)) {
             lines.add("else");
+            branchLine = lines.size();
             visitStatement(statement.elseBranch());
+            hasContent |= lines.size() > branchLine;
         }
         lines.add("end");
+        removeBlockIfEmpty(blockLine, hasContent);
         visitStatement(statement.continuation());
         return null;
     }
@@ -173,29 +179,40 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     @Override
     public Void visit(SwitchStatement statement) {
         visitExpression(statement.guard());
+        int blockLine = lines.size();
         boolean first = true;
+        boolean hasContent = false;
         for (var switchCase : statement.cases().entrySet()) {
             lines.add((first ? "alt " : "else ")
                     + switchCaseLabel(statement.guard(), switchCase.getKey()));
+            int branchLine = lines.size();
             visitStatement(switchCase.getValue());
+            hasContent |= lines.size() > branchLine;
             first = false;
         }
         if (!first)
             lines.add("end");
+        removeBlockIfEmpty(blockLine, hasContent);
         visitStatement(statement.continuation());
         return null;
     }
 
     @Override
     public Void visit(TryCatchStatement statement) {
+        int blockLine = lines.size();
         lines.add("critical try");
+        int branchLine = lines.size();
         visitStatement(statement.body());
+        boolean hasContent = lines.size() > branchLine;
         for (var catchBlock : statement.catches()) {
             lines.add("option catch "
                     + escapeMermaid(prettyPrinter.visit(catchBlock.left(), " ")));
+            branchLine = lines.size();
             visitStatement(catchBlock.right());
+            hasContent |= lines.size() > branchLine;
         }
         lines.add("end");
+        removeBlockIfEmpty(blockLine, hasContent);
         visitStatement(statement.continuation());
         return null;
     }
@@ -281,6 +298,11 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
                 expression instanceof ClassInstantiationExpression || expression instanceof EnclosedExpression ||
                 expression instanceof NotExpression)
             visit(expression);
+    }
+
+    private void removeBlockIfEmpty(int blockLine, boolean hasContent) {
+        if (!hasContent)
+            lines.subList(blockLine, lines.size()).clear();
     }
 
     private void visitLocalMethod(MethodCallExpression call) {

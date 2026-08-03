@@ -329,6 +329,83 @@ public class MermaidTest {
 	}
 
 	@Test
+	public void controlFlowWithoutDiagramContentIsOmitted() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			enum Choice@X { FIRST }
+
+			class EmptyControlFlow@( A, B ) {
+				void run(
+						SymChannel@( A, B )< Object > channel,
+						Boolean@A condition,
+						Choice@A choice,
+						String@A value ) {
+					if( condition ) {}
+					switch( choice ) {
+						case FIRST -> {}
+						default -> {}
+					}
+					try {} catch( Exception@A error ) {}
+					channel.< String >com( value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: EmptyControlFlow.run
+				p_A->>p_B: value
+				""".strip(),
+				mermaidAt( source, "void run" ) );
+	}
+
+	@Test
+	public void emptyNestedControlFlowIsOmittedFromVisibleAlternatives() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			enum StreamState@X { OFF }
+
+			class Streaming@( A, B ) {
+				void gather(
+						SymChannel@( A, B )< Object > channel,
+						Boolean@A streaming,
+						Boolean@B valid,
+						String@A value ) {
+					if( streaming ) {
+						channel.< String >com( value );
+						if( valid ) {}
+						gather( channel, streaming, valid, value );
+					} else {
+						channel.< StreamState >select( StreamState@A.OFF );
+					}
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: Streaming.gather
+				alt streaming
+				p_A->>p_B: value
+				Note over p_A,p_B: recursive call to gather omitted
+				else
+				p_A-->>p_B: StreamState@A.OFF
+				end
+				""".strip(),
+				mermaidAt( source, "if( valid )" ) );
+	}
+
+	@Test
 	public void localHelperMethodsAreExpandedAtCallSites() {
 		String source =
 			"""
