@@ -1,6 +1,5 @@
 import choral.diagrams.ChoreographyDiagramProvider;
 import choral.diagrams.ChoreographyDiagramProvider.Position;
-import choral.diagrams.ChoreographyDiagramException;
 import choral.diagrams.MermaidVisitor;
 import choral.compiler.HeaderLoader;
 import choral.compiler.Parser;
@@ -10,9 +9,10 @@ import choral.utils.VerbosityLevel;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MermaidTest {
 	@Test
@@ -1119,6 +1119,37 @@ public class MermaidTest {
 	}
 
 	@Test
+	public void channelCallsOnTypedComputedReceiversBecomeEvents() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class ComputedReceiver@( A, B ) {
+				SymChannel@( A, B )< Object > channel(
+						SymChannel@( A, B )< Object > value ) {
+					return value;
+				}
+
+				void run(
+						SymChannel@( A, B )< Object > channel,
+						String@A value ) {
+					this.channel( channel ).< String >com( value );
+				}
+			}
+			""";
+
+		assertEquals(
+				"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: ComputedReceiver.run
+				p_A->>p_B: value
+				""".strip(),
+				mermaidAt( source, "this.channel" ) );
+	}
+
+	@Test
 	public void constructorCommunicationsAreExcluded() {
 		String source =
 			"""
@@ -1230,6 +1261,10 @@ public class MermaidTest {
 	}
 
 	private static String mermaid( String source, int line, int character ) {
+		return diagram( source, line, character ).orElseThrow();
+	}
+
+	private static Optional<String> diagram( String source, int line, int character ) {
 		try {
 			var unit = Parser.parseString( source );
 			Typer.annotate(
@@ -1237,14 +1272,17 @@ public class MermaidTest {
 					new TyperOptions( VerbosityLevel.WARNINGS ) );
 			return new ChoreographyDiagramProvider().diagram(
 					unit, new Position( line, character ) );
-		} catch( ChoreographyDiagramException exception ) {
-			throw exception;
 		} catch( Exception exception ) {
 			throw new RuntimeException( exception );
 		}
 	}
 
 	private static String mermaid(
+			List<String> sources, int unitIndex, int line, int character ) {
+		return diagram( sources, unitIndex, line, character ).orElseThrow();
+	}
+
+	private static Optional<String> diagram(
 			List<String> sources, int unitIndex, int line, int character ) {
 		try {
 			var units = sources.stream().map(source -> Parser.parseString(source)).toList();
@@ -1253,8 +1291,6 @@ public class MermaidTest {
 					new TyperOptions( VerbosityLevel.WARNINGS ) );
 			return new ChoreographyDiagramProvider().diagram(
 					units.get( unitIndex ), new Position( line, character ) );
-		} catch( ChoreographyDiagramException exception ) {
-			throw exception;
 		} catch( Exception exception ) {
 			throw new RuntimeException( exception );
 		}
@@ -1276,10 +1312,7 @@ public class MermaidTest {
 	}
 
 	private static void assertNoChoreographyAt( String source, String marker ) {
-		ChoreographyDiagramException exception = assertThrows(
-				ChoreographyDiagramException.class,
-				() -> mermaidAt( source, marker ) );
-		assertEquals( ChoreographyDiagramException.Reason.NO_SYMBOL, exception.reason() );
+		assertTrue( diagramAt( List.of( source ), 0, marker ).isEmpty() );
 	}
 
 	private static String mermaidAt( String source, String marker ) {
@@ -1287,6 +1320,11 @@ public class MermaidTest {
 	}
 
 	private static String mermaidAt(
+			List<String> sources, int unitIndex, String marker ) {
+		return diagramAt( sources, unitIndex, marker ).orElseThrow();
+	}
+
+	private static Optional<String> diagramAt(
 			List<String> sources, int unitIndex, String marker ) {
 		String source = sources.get( unitIndex );
 		int offset = source.indexOf( marker );
@@ -1303,7 +1341,7 @@ public class MermaidTest {
 			}
 		}
 		return sources.size() == 1
-				? mermaid( source, line, character )
-				: mermaid( sources, unitIndex, line, character );
+				? diagram( source, line, character )
+				: diagram( sources, unitIndex, line, character );
 	}
 }

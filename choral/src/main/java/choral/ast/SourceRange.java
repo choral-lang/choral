@@ -21,49 +21,17 @@
 
 package choral.ast;
 
-import java.nio.file.Paths;
+import java.util.Objects;
 
-public class Position {
-	private final int line;
-	private final int column;
-	private final String sourceFile;
-
-	/**
-	 * Constructor for Position.
-	 * @param sourceFile Path to the source file, or null if unknown.
-	 */
-	public Position( String sourceFile, int line, int column ) {
-		this.line = line;
-		this.column = column;
-		this.sourceFile = sourceFile;
+/** The inclusive source span between two positions. */
+public record SourceRange( Position start, Position end ) {
+	public SourceRange {
+		Objects.requireNonNull( start );
+		Objects.requireNonNull( end );
 	}
 
-	public int line() {
-		return line;
+	/** Creates a zero-length range at a single source position. */
+	public static SourceRange at( Position position ) {
+		return new SourceRange( position, position );
 	}
-
-	public int column() {
-		return column;
-	}
-
-	public String sourceFile() {
-		return sourceFile;
-	}
-
-	public String prettyPath() {
-		if (sourceFile == null) {
-			return "<unknown>";
-		}
-		return Paths.get( "." ).toAbsolutePath().relativize(
-				Paths.get( sourceFile ).toAbsolutePath() ).toString();
-	}
-
-	public String formattedPosition() {
-		return String.format( "file '%s' line %d column %d", prettyPath(), line, column );
-	}
-
-	public String toString() {
-		return formattedPosition();
-	}
-
 }

@@ -46,7 +46,8 @@ public class ChoralTextDocumentServiceTest {
                     }
                 }
                 """;
-        CompilationUnit unit = Parser.parseString(source, project.resolve("Example.ch").toString());
+        CompilationUnit unit = Parser.parseStringWithSourceFile(
+                project.resolve("Example.ch").toString(), source);
 
         CompilationUnit typedUnit = new DiagnosticsProvider().typeCheck(uri, unit);
 
@@ -131,6 +132,11 @@ public class ChoralTextDocumentServiceTest {
                 p_B->>p_A: value
                 """.strip(),
                 diagramAt(service, uri, source, "reverse.< String >com").join());
+
+        ChoralTextDocumentService.ChoreographyDiagramErrorResult result = assertInstanceOf(
+                ChoralTextDocumentService.ChoreographyDiagramErrorResult.class,
+                diagramAt(service, uri, source, "class Example").join());
+        assertEquals("noSymbol", result.error.code());
     }
 
     @Test

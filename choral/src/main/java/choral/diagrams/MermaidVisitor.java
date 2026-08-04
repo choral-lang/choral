@@ -30,6 +30,7 @@ import choral.ast.statement.VariableDeclarationStatement;
 import choral.ast.visitors.AbstractChoralVisitor;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.types.GroundDataType;
+import choral.types.GroundInterface;
 import choral.types.Member;
 
 import java.util.ArrayList;
@@ -43,25 +44,40 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/** Renders a typed Choral declaration directly as a Mermaid sequence diagram. */
+/**
+ * Renders a typed Choral method directly as Mermaid sequence-diagram source.
+ * The visitor appends complete Mermaid statements to {@link #diagramLines} while traversing
+ * statements, expressions, and source-backed method calls in execution order.
+ */
 public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     /** Default nesting limit for expanded helper bodies. */
     public static final int DEFAULT_MAXIMUM_HELPER_DEPTH = 16;
     /** Default total number of helper bodies expanded in one diagram. */
     public static final int DEFAULT_MAXIMUM_HELPER_EXPANSIONS = 128;
 
-    private final List<String> lines = new ArrayList<>();
+    /** Complete Mermaid source lines accumulated during the current render. */
+    private final List<String> diagramLines = new ArrayList<>();
+    /** Formats Choral AST fragments used as human-readable Mermaid labels. */
     private final PrettyPrinterVisitor prettyPrinter = new PrettyPrinterVisitor();
+    /** Maximum number of nested source-backed method bodies to expand. */
     private final int maximumHelperDepth;
+    /** Maximum total number of source-backed method bodies to expand. */
     private final int maximumHelperExpansions;
-    private Set<String> channels = Set.of();
+    /** Methods declared directly by the root choreography, tracked by AST identity. */
     private Set<MethodDefinition> localMethods = Set.of();
+    /** Methods on the current expansion stack, used to stop recursive expansion. */
     private Set<MethodDefinition> activeMethods = Set.of();
+    /** Maps worlds in the current method body to participant worlds in the root diagram. */
     private Map<String, String> worldMapping = Map.of();
+    /** Mermaid identifiers for root participants, in declaration order. */
     private List<String> participantIds = List.of();
+    /** Current nesting depth of expanded source-backed method bodies. */
     private int helperDepth;
+    /** Total source-backed method bodies expanded during the current render. */
     private int helperExpansions;
+    /** Whether the depth-limit truncation note has already been emitted. */
     private boolean helperDepthLimitReported;
+    /** Whether the total-expansion-limit note has already been emitted. */
     private boolean helperCountLimitReported;
 
     /** Creates a visitor with the default helper-expansion limits. */
@@ -80,8 +96,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     }
 
     public String render(TemplateDeclaration declaration, MethodDefinition method) {
-        lines.clear();
-        channels = Set.of();
+        diagramLines.clear();
         localMethods = Collections.newSetFromMap(new IdentityHashMap<>());
         if (declaration instanceof choral.ast.body.Class type)
             localMethods.addAll(type.methods());
@@ -97,8 +112,8 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         participantIds = declaration.worldParameters().stream()
                 .map(world -> participantId(world.name().identifier()))
                 .toList();
-        lines.add("sequenceDiagram");
-        declaration.worldParameters().forEach(world -> lines.add(
+        diagramLines.add("sequenceDiagram");
+        declaration.worldParameters().forEach(world -> diagramLines.add(
                 "participant " + participantId(world.name().identifier()) + " as "
                         + escapeMermaid(world.name().identifier())));
         addNote(declaration.name().identifier() + "." + methodLabel(method));
@@ -108,32 +123,23 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         } finally {
             activeMethods.remove(method);
         }
-        return String.join("\n", lines);
+        return String.join("\n", diagramLines);
     }
 
     @Override
     public Void visit(ClassMethodDefinition method) {
-        visitMethod(method, method.body().orElse(null));
+        visitMethod(method.body().orElse(null));
         return null;
     }
 
     @Override
     public Void visit(InterfaceMethodDefinition method) {
-        visitMethod(method, method.body().orElse(null));
+        visitMethod(method.body().orElse(null));
         return null;
     }
 
-    private void visitMethod(MethodDefinition method, Statement body) {
-        Set<String> previousChannels = channels;
-        channels = method.typeAnnotation().stream()
-                .flatMap(annotation -> annotation.channels().stream())
-                .map(channel -> channel.left())
-                .collect(Collectors.toSet());
-        try {
-            visitStatement(body);
-        } finally {
-            channels = previousChannels;
-        }
+    private void visitMethod(Statement body) {
+        visitStatement(body);
     }
 
     @Override
@@ -166,18 +172,18 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     @Override
     public Void visit(IfStatement statement) {
         visitExpression(statement.condition());
-        int blockLine = lines.size();
-        lines.add("alt " + escapeMermaid(expressionLabel(statement.condition())));
-        int branchLine = lines.size();
+        int blockLine = diagramLines.size();
+        diagramLines.add("alt " + escapeMermaid(expressionLabel(statement.condition())));
+        int branchLine = diagramLines.size();
         visitStatement(statement.ifBranch());
-        boolean hasContent = lines.size() > branchLine;
+        boolean hasContent = diagramLines.size() > branchLine;
         if (!(statement.elseBranch() instanceof NilStatement)) {
-            lines.add("else");
-            branchLine = lines.size();
+            diagramLines.add("else");
+            branchLine = diagramLines.size();
             visitStatement(statement.elseBranch());
-            hasContent |= lines.size() > branchLine;
+            hasContent |= diagramLines.size() > branchLine;
         }
-        lines.add("end");
+        diagramLines.add("end");
         removeBlockIfEmpty(blockLine, hasContent);
         visitStatement(statement.continuation());
         return null;
@@ -186,19 +192,19 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     @Override
     public Void visit(SwitchStatement statement) {
         visitExpression(statement.guard());
-        int blockLine = lines.size();
+        int blockLine = diagramLines.size();
         boolean first = true;
         boolean hasContent = false;
         for (var switchCase : statement.cases().entrySet()) {
-            lines.add((first ? "alt " : "else ")
+            diagramLines.add((first ? "alt " : "else ")
                     + switchCaseLabel(statement.guard(), switchCase.getKey()));
-            int branchLine = lines.size();
+            int branchLine = diagramLines.size();
             visitStatement(switchCase.getValue());
-            hasContent |= lines.size() > branchLine;
+            hasContent |= diagramLines.size() > branchLine;
             first = false;
         }
         if (!first)
-            lines.add("end");
+            diagramLines.add("end");
         removeBlockIfEmpty(blockLine, hasContent);
         visitStatement(statement.continuation());
         return null;
@@ -206,19 +212,19 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
 
     @Override
     public Void visit(TryCatchStatement statement) {
-        int blockLine = lines.size();
-        lines.add("critical try");
-        int branchLine = lines.size();
+        int blockLine = diagramLines.size();
+        diagramLines.add("critical try");
+        int branchLine = diagramLines.size();
         visitStatement(statement.body());
-        boolean hasContent = lines.size() > branchLine;
+        boolean hasContent = diagramLines.size() > branchLine;
         for (var catchBlock : statement.catches()) {
-            lines.add("option catch "
+            diagramLines.add("option catch "
                     + escapeMermaid(prettyPrinter.visit(catchBlock.left(), " ")));
-            branchLine = lines.size();
+            branchLine = diagramLines.size();
             visitStatement(catchBlock.right());
-            hasContent |= lines.size() > branchLine;
+            hasContent |= diagramLines.size() > branchLine;
         }
-        lines.add("end");
+        diagramLines.add("end");
         removeBlockIfEmpty(blockLine, hasContent);
         visitStatement(statement.continuation());
         return null;
@@ -308,7 +314,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
 
     private void removeBlockIfEmpty(int blockLine, boolean hasContent) {
         if (!hasContent)
-            lines.subList(blockLine, lines.size()).clear();
+            diagramLines.subList(blockLine, diagramLines.size()).clear();
     }
 
     private void visitSourceMethod(MethodCallExpression call) {
@@ -352,19 +358,19 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         activeMethods.add(method);
         helperDepth++;
         helperExpansions++;
-        int contextLine = lines.size();
+        int contextLine = diagramLines.size();
         addNote("call " + methodName);
-        boolean contextAdded = lines.size() > contextLine;
-        int bodyLine = lines.size();
+        boolean contextAdded = diagramLines.size() > contextLine;
+        int bodyLine = diagramLines.size();
         try {
             method.accept(this);
         } finally {
             helperDepth--;
             activeMethods.remove(method);
         }
-        if (lines.size() == bodyLine) {
+        if (diagramLines.size() == bodyLine) {
             if (contextAdded)
-                lines.remove(contextLine);
+                diagramLines.remove(contextLine);
         } else {
             addNote("return " + methodName);
         }
@@ -384,7 +390,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         String over = participantIds.get(0);
         if (participantIds.size() > 1)
             over += "," + participantIds.get(participantIds.size() - 1);
-        lines.add("Note over " + over + ": " + escapeMermaid(text));
+        diagramLines.add("Note over " + over + ": " + escapeMermaid(text));
     }
 
     private String methodLabel(MethodDefinition method) {
@@ -425,9 +431,8 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     }
 
     private void addChannelEvent(Expression receiver, MethodCallExpression call) {
-        String channel = receiverName(receiver);
         Member.GroundMethod method = call.methodAnnotation().orElse(null);
-        if (channel == null || !channels.contains(channel) || method == null)
+        if (!isChannelReceiver(receiver) || method == null)
             return;
         boolean selection = call.isSelect();
         if (!selection && !"com".equals(call.name().identifier()))
@@ -440,8 +445,21 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         String from = groundedWorld(
                 method.signature().parameters().get(0).type().worldArguments().get(0).identifier());
         String to = groundedWorld(returnType.worldArguments().get(0).identifier());
-        lines.add(participantId(from) + (selection ? "-->>" : "->>") + participantId(to)
+        diagramLines.add(participantId(from) + (selection ? "-->>" : "->>") + participantId(to)
                 + ": " + eventLabel(call));
+    }
+
+    private static boolean isChannelReceiver(Expression receiver) {
+        if (!(receiver.typeAnnotation().orElse(null) instanceof GroundInterface type))
+            return false;
+        return isChannelInterface(type) ||
+                type.allExtendedInterfaces().anyMatch(MermaidVisitor::isChannelInterface);
+    }
+
+    private static boolean isChannelInterface(GroundInterface type) {
+        String name = type.typeConstructor().identifier(true);
+        return "choral.channels.DiDataChannel".equals(name) ||
+                "choral.channels.DiSelectChannel".equals(name);
     }
 
     private String groundedWorld(String world) {
@@ -514,15 +532,6 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         }
         return escapeMermaid(expressionLabel(guard)) + " = "
                 + escapeMermaid(groundedWorldReferences(value));
-    }
-
-    private static String receiverName(Expression receiver) {
-        if (receiver instanceof FieldAccessExpression field)
-            return field.name().identifier();
-        if (receiver instanceof ScopedExpression scoped &&
-                scoped.scopedExpression() instanceof FieldAccessExpression field)
-            return field.name().identifier();
-        return null;
     }
 
     private static String participantId(String value) {

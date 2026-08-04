@@ -1,36 +1,37 @@
 package choral.diagrams;
 
 import choral.ast.CompilationUnit;
+import choral.ast.SourceRange;
 import choral.ast.body.MethodDefinition;
 import choral.ast.body.TemplateDeclaration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /** Selects a choreography declaration and renders its typed AST as Mermaid. */
 public final class ChoreographyDiagramProvider {
-    public String diagram(CompilationUnit unit, Position cursor) {
-        TemplateDeclaration declaration = declarationAt(unit, cursor);
-        if (declaration == null || declaration.worldParameters().isEmpty())
-            throw new ChoreographyDiagramException(ChoreographyDiagramException.Reason.NO_SYMBOL,
-                    "No choreography symbol was found at the cursor.");
-        MethodDefinition method = methodAt(declaration, cursor);
-        if (method == null)
-            throw new ChoreographyDiagramException(ChoreographyDiagramException.Reason.NO_SYMBOL,
-                    "No choreography method was found at the cursor.");
-        return new MermaidVisitor().render(declaration, method);
+    public Optional<String> diagram(CompilationUnit unit, Position cursor) {
+        return declarationAt(unit, cursor)
+                .filter(declaration -> !declaration.worldParameters().isEmpty())
+                .flatMap(declaration -> methodAt(declaration, cursor)
+                        .map(method -> new MermaidVisitor().render(declaration, method)));
     }
 
-    private static TemplateDeclaration declarationAt(CompilationUnit unit, Position cursor) {
+    private static Optional<TemplateDeclaration> declarationAt(
+            CompilationUnit unit, Position cursor
+    ) {
         if (cursor == null)
-            return null;
+            return Optional.empty();
         for (TemplateDeclaration declaration : declarations(unit))
             if (contains(declaration, cursor))
-                return declaration;
-        return null;
+                return Optional.of(declaration);
+        return Optional.empty();
     }
 
-    private static MethodDefinition methodAt(TemplateDeclaration declaration, Position cursor) {
+    private static Optional<? extends MethodDefinition> methodAt(
+            TemplateDeclaration declaration, Position cursor
+    ) {
         List<? extends MethodDefinition> methods;
         if (declaration instanceof choral.ast.body.Class type) {
             methods = type.methods();
@@ -39,17 +40,18 @@ public final class ChoreographyDiagramProvider {
         } else {
             methods = List.of();
         }
-        return methods.stream().filter(method -> contains(method, cursor)).findFirst().orElse(null);
+        return methods.stream().filter(method -> contains(method, cursor)).findFirst();
     }
 
     private static boolean contains(choral.ast.Node node, Position cursor) {
-        if (cursor == null || !node.hasPosition())
+        if (cursor == null || !node.hasSourceRange())
             return false;
+        SourceRange sourceRange = node.sourceRange();
         int line = cursor.line() + 1;
-        return atOrAfter(line, cursor.character(), node.position().line(),
-                node.position().column()) &&
-                atOrBefore(line, cursor.character(), node.position().endLine(),
-                        node.position().endColumn());
+        return atOrAfter(line, cursor.character(), sourceRange.start().line(),
+                sourceRange.start().column()) &&
+                atOrBefore(line, cursor.character(), sourceRange.end().line(),
+                        sourceRange.end().column());
     }
 
     private static boolean atOrAfter(int line, int character, int boundaryLine,

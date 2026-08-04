@@ -5,7 +5,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import choral.diagrams.ChoreographyDiagramException;
 import choral.diagrams.ChoreographyDiagramProvider;
 import choral.diagrams.ChoreographyDiagramProvider.Position;
 
@@ -137,22 +136,15 @@ public class ChoralTextDocumentService implements TextDocumentService {
                     "Unable to analyze the Choral document: " + failure.getMessage(),
                     "typeError");
         if (!analysis.successful()) {
-            ChoreographyDiagramException.Reason reason =
-                    analysis.failure() == AnalysisFailure.PARSE_ERROR
-                            ? ChoreographyDiagramException.Reason.PARSE_ERROR
-                            : ChoreographyDiagramException.Reason.TYPE_ERROR;
-            String action = reason == ChoreographyDiagramException.Reason.PARSE_ERROR
-                    ? "parse" : "type-check";
-            ChoreographyDiagramException exception = new ChoreographyDiagramException(
-                    reason, "Unable to " + action + " the Choral document: "
-                            + analysis.failureMessage());
-            return diagramError(exception.getMessage(), diagramErrorCode(exception));
+            boolean parseError = analysis.failure() == AnalysisFailure.PARSE_ERROR;
+            String action = parseError ? "parse" : "type-check";
+            return diagramError("Unable to " + action + " the Choral document: "
+                    + analysis.failureMessage(), parseError ? "parseError" : "typeError");
         }
-        try {
-            return choreographyDiagramProvider.diagram(analysis.compilationUnit(), position);
-        } catch (ChoreographyDiagramException exception) {
-            return diagramError(exception.getMessage(), diagramErrorCode(exception));
-        }
+        return choreographyDiagramProvider.diagram(analysis.compilationUnit(), position)
+                .<Object>map(diagram -> diagram)
+                .orElseGet(() -> diagramError(
+                        "No choreography method was found at the cursor.", "noSymbol"));
     }
 
     private String readFileDocument(String uri) {
@@ -246,14 +238,6 @@ public class ChoralTextDocumentService implements TextDocumentService {
 
     private static ChoreographyDiagramErrorResult diagramError(String message, String code) {
         return new ChoreographyDiagramErrorResult(message, code);
-    }
-
-    private static String diagramErrorCode(ChoreographyDiagramException exception) {
-        return switch (exception.reason()) {
-            case PARSE_ERROR -> "parseError";
-            case TYPE_ERROR -> "typeError";
-            case NO_SYMBOL -> "noSymbol";
-        };
     }
 
     public static final class ChoreographyDiagramErrorResult {

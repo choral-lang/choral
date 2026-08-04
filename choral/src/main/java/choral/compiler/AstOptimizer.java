@@ -243,6 +243,7 @@ public class AstOptimizer implements ChoralVisitor {
 				modifiers,
 				getPosition( cls )
 		);
+		c.setSourceRange( getSourceRange( cls ) );
 		classes.add( c );
 		return null;
 	}
@@ -293,6 +294,7 @@ public class AstOptimizer implements ChoralVisitor {
 				modifiers,
 				getPosition( id )
 		);
+		i.setSourceRange( getSourceRange( id ) );
 		interfaces.add( i );
 		return null;
 	}
@@ -618,14 +620,14 @@ public class AstOptimizer implements ChoralVisitor {
 			}
 		}
 
-		return new ClassMethodDefinition(
+		return withSourceRange( new ClassMethodDefinition(
 				visitMethodHeader( md.methodHeader() ),
 				visitMethodBody( md.methodBody() ).orElse( null ),
 				md.annotation().stream().map( this::visitAnnotation ).collect(
 						Collectors.toList() ),
 				modifiers,
 				getPosition( md )
-		);
+		), md );
 	}
 
 
@@ -782,14 +784,14 @@ public class AstOptimizer implements ChoralVisitor {
 			}
 		}
 
-		return new InterfaceMethodDefinition(
+		return withSourceRange( new InterfaceMethodDefinition(
 				visitMethodHeader( imd.methodHeader() ),
 				visitMethodBody( imd.methodBody() ).orElse( null ),
 				imd.annotation().stream().map( this::visitAnnotation ).collect(
 						Collectors.toList() ),
 				modifiers,
 				getPosition( imd )
-		);
+		), imd );
 	}
 
 	@Override
@@ -1714,13 +1716,17 @@ public class AstOptimizer implements ChoralVisitor {
 	}
 
 	private Position getPosition( ParserRuleContext c ) {
-		Token start = c.getStart();
-		Token stop = c.getStop();
-		return new Position(
-				this.file,
-				start.getLine(), start.getCharPositionInLine(),
-				stop.getLine(), stop.getCharPositionInLine()
-		);
+		return getPosition( c.getStart() );
+	}
+
+	private SourceRange getSourceRange( ParserRuleContext context ) {
+		return new SourceRange(
+				getPosition( context.getStart() ), getPosition( context.getStop() ) );
+	}
+
+	private < T extends Node > T withSourceRange( T node, ParserRuleContext context ) {
+		node.setSourceRange( getSourceRange( context ) );
+		return node;
 	}
 
 	private void setLastMethod( String m ) {

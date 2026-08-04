@@ -54,13 +54,13 @@ public class Parser {
 	}
 
 	public static CompilationUnit parseString( String sourceCode ) {
-		CharStream content = CharStreams.fromString(sourceCode);
-		return parse(null, content);
+		return parse( null, CharStreams.fromString( sourceCode ) );
 	}
 
-	public static CompilationUnit parseString( String sourceCode, String sourceFile ) {
-		CharStream content = CharStreams.fromString( sourceCode );
-		return parse( sourceFile, content );
+	public static CompilationUnit parseStringWithSourceFile(
+			String sourceFile, String sourceCode
+	) {
+		return parse( sourceFile, CharStreams.fromString( sourceCode ) );
 	}
 
 	public static CompilationUnit parseSourceFile( File file ) throws IOException {

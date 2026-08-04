@@ -44,7 +44,7 @@ public class DiagnosticsProvider {
 		CompilationUnit compUnit;
 
 		try {
-			compUnit = Parser.parseString( content, sourceFile( uri ) );
+			compUnit = Parser.parseStringWithSourceFile( sourceFile( uri ), content );
 		} catch( Exception e ) {
 			addErrorDiagnostics( diagnostics, e );
 			return AnalysisResult.failure(
