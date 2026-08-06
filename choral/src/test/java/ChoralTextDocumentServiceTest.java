@@ -46,8 +46,8 @@ public class ChoralTextDocumentServiceTest {
                     }
                 }
                 """;
-        CompilationUnit unit = Parser.parseStringWithSourceFile(
-                project.resolve("Example.ch").toString(), source);
+        CompilationUnit unit = Parser.parseString(
+                source, project.resolve("Example.ch").toString());
 
         CompilationUnit typedUnit = new DiagnosticsProvider().typeCheck(uri, unit);
 
