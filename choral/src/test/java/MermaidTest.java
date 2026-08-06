@@ -1,11 +1,14 @@
 import choral.ast.CompilationUnit;
-import choral.diagrams.ChoreographyDiagramProvider;
-import choral.diagrams.ChoreographyDiagramProvider.Position;
-import choral.diagrams.MermaidVisitor;
+import choral.ast.expression.MethodCallExpression;
+import choral.ast.expression.ScopedExpression;
+import choral.ast.statement.ExpressionStatement;
 import choral.compiler.HeaderLoader;
 import choral.compiler.Parser;
 import choral.compiler.Typer;
 import choral.compiler.TyperOptions;
+import choral.diagrams.ChoreographyDiagramProvider;
+import choral.diagrams.ChoreographyDiagramProvider.Position;
+import choral.diagrams.MermaidVisitor;
 import choral.utils.VerbosityLevel;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -804,6 +808,125 @@ public class MermaidTest {
 	}
 
 	@Test
+	public void helperCatchLabelsUseGroundedParenthesizedWorlds() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class External@( A, B ) {
+				void recover(
+						SymChannel@( A, B )< Object > channel,
+						String@A value ) {
+					try {
+					} catch( Exception@A error ) {
+						channel.< String >com( value );
+					}
+				}
+			}
+
+			class Root@( A, B ) {
+				void run(
+						External@( B, A ) external,
+						SymChannel@( B, A )< Object > channel,
+						String@B value ) {
+					external.recover( channel, value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Root.run
+				Note over p0,p1: call External.recover
+				critical try
+				option catch Exception@( B ) error
+				p1->>p0: value
+				end
+				Note over p0,p1: return External.recover
+				""".strip(),
+				mermaidAt( source, "external.recover" ) );
+	}
+
+	@Test
+	public void helperInstantiationArgumentsUseGroundedParenthesizedWorlds() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Payload@X {
+				public Payload() {}
+			}
+
+			class External@( A, B ) {
+				void send( SymChannel@( A, B )< Object > channel ) {
+					channel.< Payload >com( new Payload@A() );
+				}
+			}
+
+			class Root@( A, B ) {
+				void run(
+						External@( B, A ) external,
+						SymChannel@( B, A )< Object > channel ) {
+					external.send( channel );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Root.run
+				Note over p0,p1: call External.send
+				p1->>p0: new Payload@( B )()
+				Note over p0,p1: return External.send
+				""".strip(),
+				mermaidAt( source, "external.send" ) );
+	}
+
+	@Test
+	public void helperExpansionRejectsMismatchedWorldArity() {
+		var unit = typedUnits( List.of(
+			"""
+			class One@X {
+				void placeholder() {}
+			}
+
+			class External@( A, B ) {
+				void send() {}
+			}
+
+			class Root@( A, B ) {
+				void run( External@( A, B ) external ) {
+					external.send();
+				}
+			}
+			""" ) ).get( 0 );
+		var externalMethod = unit.classes().get( 1 ).methods().get( 0 );
+		var mismatchedAnnotation = unit.classes().get( 0 ).methods().get( 0 )
+				.typeAnnotation().orElseThrow();
+		// The typer prevents this mismatch, so pair two real typed halves to test the guard.
+		mismatchedAnnotation.setSourceCode( externalMethod );
+		var root = unit.classes().get( 2 );
+		var statement = assertInstanceOf( ExpressionStatement.class,
+				root.methods().get( 0 ).body().orElseThrow() );
+		var scoped = assertInstanceOf( ScopedExpression.class, statement.expression() );
+		var call = assertInstanceOf( MethodCallExpression.class, scoped.scopedExpression() );
+		call.setMethodAnnotation( mismatchedAnnotation.innerCallable() );
+
+		var exception = assertThrows( IllegalStateException.class,
+				() -> MermaidVisitor.render( root, root.methods().get( 0 ) ) );
+
+		assertEquals(
+				"World arity mismatch while expanding method 'send': expected 2 but resolved 1",
+				exception.getMessage() );
+	}
+
+	@Test
 	public void inheritedSourceMethodsAreExpandedWithGroundedWorlds() {
 		String source =
 			"""
@@ -1285,6 +1408,49 @@ public class MermaidTest {
 				() -> MermaidVisitor.render( null, declaration.methods().get( 0 ) ) );
 		assertThrows( NullPointerException.class,
 				() -> MermaidVisitor.render( declaration, null ) );
+	}
+
+	@Test
+	public void renderingAnUntypedOrdinaryCallFailsClearly() {
+		var unit = Parser.parseString(
+			"""
+			class Untyped@( A, B ) {
+				void run() {
+					helper();
+				}
+
+				private void helper() {}
+			}
+			""" );
+		var declaration = unit.classes().get( 0 );
+
+		var exception = assertThrows( IllegalStateException.class,
+				() -> MermaidVisitor.render( declaration, declaration.methods().get( 0 ) ) );
+
+		assertEquals( "Method call has no resolved method annotation: helper",
+				exception.getMessage() );
+	}
+
+	@Test
+	public void rendererRejectsAMethodOwnedByAnotherDeclaration() {
+		var unit = typedUnits( List.of(
+			"""
+			class First@( A, B ) {
+				void first() {}
+			}
+
+			class Second@( A, B ) {
+				void second() {}
+			}
+			""" ) ).get( 0 );
+		var first = unit.classes().get( 0 );
+		var secondMethod = unit.classes().get( 1 ).methods().get( 0 );
+
+		var exception = assertThrows( IllegalArgumentException.class,
+				() -> MermaidVisitor.render( first, secondMethod ) );
+
+		assertEquals( "Method 'second' does not belong to declaration 'First'",
+				exception.getMessage() );
 	}
 
 	@Test

@@ -132,6 +132,10 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     }
 
     private String render(MethodDefinition method) {
+        if (!localMethods.contains(method))
+            throw new IllegalArgumentException("Method '"
+                    + method.signature().name().identifier()
+                    + "' does not belong to declaration '" + rootDeclarationName + "'");
         addNote(rootDeclarationName + "." + methodLabel(method));
         activeMethods.add(method);
         try {
@@ -220,7 +224,8 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         branches.add(new Branch("try", capture(() -> visitStatement(statement.body()))));
         for (var catchBlock : statement.catches()) {
             branches.add(new Branch("catch "
-                    + escapeMermaid(prettyPrinter.visit(catchBlock.left(), " ")),
+                    + escapeMermaid(groundedWorldReferences(
+                            prettyPrinter.visit(catchBlock.left(), " "))),
                     capture(() -> visitStatement(catchBlock.right()))));
         }
         addBlock("critical", "option", branches);
@@ -366,11 +371,13 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     }
 
     private record WorldMapping(Map<String, String> worlds) {
+        private static final String WORLD_IDENTIFIER =
+                "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*";
         private static final Pattern WORLD_REFERENCE = Pattern.compile(
-                "@(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)");
+                "@(" + WORLD_IDENTIFIER + ")|@\\(([^)]*)\\)");
         private static final Pattern IDENTIFIER = Pattern.compile(
                 "(?<!\\p{javaJavaIdentifierPart})"
-                        + "(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)"
+                        + "(" + WORLD_IDENTIFIER + ")"
                         + "(?!\\p{javaJavaIdentifierPart})");
 
         private String ground(String world) {
@@ -378,7 +385,16 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         }
 
         private String references(String label) {
-            return replace(label, WORLD_REFERENCE, "@");
+            Matcher matcher = WORLD_REFERENCE.matcher(label);
+            StringBuffer result = new StringBuffer();
+            while (matcher.find()) {
+                String replacement = matcher.group(1) != null
+                        ? "@" + ground(matcher.group(1))
+                        : "@(" + replace(matcher.group(2), IDENTIFIER, "") + ")";
+                matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+            }
+            matcher.appendTail(result);
+            return result.toString();
         }
 
         private String types(String label) {
@@ -423,9 +439,9 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     }
 
     private void visitSourceMethod(MethodCallExpression call) {
-        Member.GroundMethod method = call.methodAnnotation().orElse(null);
-        if (method == null)
-            return;
+        Member.GroundMethod method = call.methodAnnotation().orElseThrow(() ->
+                new IllegalStateException("Method call has no resolved method annotation: "
+                        + call.name().identifier()));
         var source = method.higherCallable().sourceCode().orElse(null);
         if (!(source instanceof MethodDefinition definition) || !hasBody(definition))
             return;
@@ -520,13 +536,17 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
 
     private WorldMapping groundedWorlds(
             MethodDefinition definition, Member.GroundMethod method) {
-        Map<String, String> grounded = new HashMap<>(worldMapping().worlds());
         List<? extends choral.types.World> formalWorlds = definition.typeAnnotation()
                 .map(annotation -> annotation.declarationContext().worldArguments())
                 .orElse(List.of());
         List<? extends choral.types.World> actualWorlds =
                 method.higherCallable().declarationContext().worldArguments();
-        for (int index = 0; index < Math.min(formalWorlds.size(), actualWorlds.size()); index++)
+        if (formalWorlds.size() != actualWorlds.size())
+            throw new IllegalStateException("World arity mismatch while expanding method '"
+                    + definition.signature().name().identifier() + "': expected "
+                    + formalWorlds.size() + " but resolved " + actualWorlds.size());
+        Map<String, String> grounded = new HashMap<>(worldMapping().worlds());
+        for (int index = 0; index < formalWorlds.size(); index++)
             grounded.put(formalWorlds.get(index).identifier(),
                     worldMapping().ground(actualWorlds.get(index).identifier()));
         return new WorldMapping(Map.copyOf(grounded));
