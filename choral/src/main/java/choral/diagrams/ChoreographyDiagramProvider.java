@@ -5,9 +5,8 @@ import choral.ast.SourceRange;
 import choral.ast.body.MethodDefinition;
 import choral.ast.body.TemplateDeclaration;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /** Selects a choreography declaration and renders its typed AST as Mermaid. */
 public final class ChoreographyDiagramProvider {
@@ -19,28 +18,15 @@ public final class ChoreographyDiagramProvider {
     }
 
     private static Optional<TemplateDeclaration> declarationAt(
-            CompilationUnit unit, Position cursor
-    ) {
+            CompilationUnit unit, Position cursor) {
         if (cursor == null)
             return Optional.empty();
-        for (TemplateDeclaration declaration : declarations(unit))
-            if (contains(declaration, cursor))
-                return Optional.of(declaration);
-        return Optional.empty();
+        return declarations(unit).filter(declaration -> contains(declaration, cursor)).findFirst();
     }
 
     private static Optional<? extends MethodDefinition> methodAt(
-            TemplateDeclaration declaration, Position cursor
-    ) {
-        List<? extends MethodDefinition> methods;
-        if (declaration instanceof choral.ast.body.Class type) {
-            methods = type.methods();
-        } else if (declaration instanceof choral.ast.body.Interface type) {
-            methods = type.methods();
-        } else {
-            methods = List.of();
-        }
-        return methods.stream().filter(method -> contains(method, cursor)).findFirst();
+            TemplateDeclaration declaration, Position cursor) {
+        return methods(declaration).filter(method -> contains(method, cursor)).findFirst();
     }
 
     private static boolean contains(choral.ast.Node node, Position cursor) {
@@ -64,20 +50,19 @@ public final class ChoreographyDiagramProvider {
         return line < boundaryLine || line == boundaryLine && character <= boundaryCharacter;
     }
 
-    private static List<TemplateDeclaration> declarations(CompilationUnit unit) {
-        List<TemplateDeclaration> declarations = new ArrayList<>();
-        declarations.addAll(unit.classes());
-        declarations.addAll(unit.interfaces());
-        declarations.sort((left, right) -> {
-            if (!left.hasPosition())
-                return right.hasPosition() ? -1 : 0;
-            if (!right.hasPosition())
-                return 1;
-            int lines = Integer.compare(left.position().line(), right.position().line());
-            return lines != 0 ? lines
-                    : Integer.compare(left.position().column(), right.position().column());
-        });
-        return declarations;
+    private static Stream<TemplateDeclaration> declarations(CompilationUnit unit) {
+        return Stream.concat(
+                unit.classes().stream().map(declaration -> (TemplateDeclaration) declaration),
+                unit.interfaces().stream().map(declaration -> (TemplateDeclaration) declaration));
+    }
+
+    private static Stream<? extends MethodDefinition> methods(
+            TemplateDeclaration declaration) {
+        if (declaration instanceof choral.ast.body.Class type)
+            return type.methods().stream();
+        if (declaration instanceof choral.ast.body.Interface type)
+            return type.methods().stream();
+        return Stream.empty();
     }
 
     /** Zero-based source position, independent of the LSP transport types. */
