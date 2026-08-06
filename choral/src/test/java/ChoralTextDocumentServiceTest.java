@@ -84,10 +84,10 @@ public class ChoralTextDocumentServiceTest {
         assertEquals(
                 """
                 sequenceDiagram
-                participant p_A as A
-                participant p_B as B
-                Note over p_A,p_B: Example.run
-                p_A->>p_B: value
+                participant p0 as A
+                participant p1 as B
+                Note over p0,p1: Example.run
+                p0->>p1: value
                 """.strip(),
                 result);
     }
@@ -117,19 +117,19 @@ public class ChoralTextDocumentServiceTest {
         assertEquals(
                 """
                 sequenceDiagram
-                participant p_A as A
-                participant p_B as B
-                Note over p_A,p_B: Example.first
-                p_A->>p_B: value
+                participant p0 as A
+                participant p1 as B
+                Note over p0,p1: Example.first
+                p0->>p1: value
                 """.strip(),
                 diagramAt(service, uri, source, "void first").join());
         assertEquals(
                 """
                 sequenceDiagram
-                participant p_A as A
-                participant p_B as B
-                Note over p_A,p_B: Example.second
-                p_B->>p_A: value
+                participant p0 as A
+                participant p1 as B
+                Note over p0,p1: Example.second
+                p1->>p0: value
                 """.strip(),
                 diagramAt(service, uri, source, "reverse.< String >com").join());
 
@@ -199,8 +199,8 @@ public class ChoralTextDocumentServiceTest {
         String diagram = assertInstanceOf(
                 String.class, diagramAt(service, uri, second, "second()").join());
 
-        assertTrue(diagram.contains("participant p_X as X"));
-        assertFalse(diagram.contains("participant p_A as A"));
+        assertTrue(diagram.contains("participant p0 as X"));
+        assertFalse(diagram.contains("participant p0 as A"));
         assertEquals(2, diagnostics.analyses());
     }
 
@@ -248,7 +248,7 @@ public class ChoralTextDocumentServiceTest {
                     String.class, firstRequest.get(10, TimeUnit.SECONDS));
             String secondDiagram = assertInstanceOf(
                     String.class, secondRequest.get(10, TimeUnit.SECONDS));
-            assertTrue(firstDiagram.contains("participant p_X as X"));
+            assertTrue(firstDiagram.contains("participant p0 as X"));
             assertEquals(firstDiagram, secondDiagram);
             assertEquals(2, diagnostics.analyses());
         } finally {
@@ -285,7 +285,7 @@ public class ChoralTextDocumentServiceTest {
         String diagram = assertInstanceOf(
                 String.class, diagramAt(service, uri, source, "channel.< String >com").join());
 
-        assertTrue(diagram.contains("p_A->>p_B: local"));
+        assertTrue(diagram.contains("p0->>p1: local"));
         assertEquals(1, diagnostics.analyses());
     }
 
@@ -332,12 +332,12 @@ public class ChoralTextDocumentServiceTest {
         assertEquals(
                 """
                 sequenceDiagram
-                participant p_A as A
-                participant p_B as B
-                Note over p_A,p_B: Root.run
-                Note over p_A,p_B: call Helper.send
-                p_B->>p_A: value
-                Note over p_A,p_B: return Helper.send
+                participant p0 as A
+                participant p1 as B
+                Note over p0,p1: Root.run
+                Note over p0,p1: call Helper.send
+                p1->>p0: value
+                Note over p0,p1: return Helper.send
                 """.strip(),
                 diagramAt(service, uri, source, "helper.send").join());
     }
