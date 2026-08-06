@@ -18,6 +18,43 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MermaidTest {
 	@Test
+	public void computedReceiverIsEvaluatedBeforeOuterCommunication() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Evaluation@( A, B ) {
+				SymChannel@( A, B )< Object > route(
+						SymChannel@( A, B )< Object > channel,
+						String@A before ) {
+					channel.< String >com( before );
+					return channel;
+				}
+
+				void run(
+						SymChannel@( A, B )< Object > channel,
+						String@A before,
+						String@A after ) {
+					this.route( channel, before ).< String >com( after );
+				}
+			}
+			""";
+
+		assertEquals(
+				"""
+					sequenceDiagram
+					participant p_A as A
+					participant p_B as B
+					Note over p_A,p_B: Evaluation.run
+					Note over p_A,p_B: call route
+					p_A->>p_B: before
+					Note over p_A,p_B: return route
+					p_A->>p_B: after
+					""".strip(),
+				mermaidAt( source, "this.route" ) );
+	}
+
+	@Test
 	public void emptyMethod() {
 		String source =
 			"""

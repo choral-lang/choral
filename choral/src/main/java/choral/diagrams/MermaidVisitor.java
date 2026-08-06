@@ -7,6 +7,7 @@ import choral.ast.body.TemplateDeclaration;
 import choral.ast.body.VariableDeclaration;
 import choral.ast.expression.AssignExpression;
 import choral.ast.expression.BinaryExpression;
+import choral.ast.expression.BlankExpression;
 import choral.ast.expression.ClassInstantiationExpression;
 import choral.ast.expression.EnclosedExpression;
 import choral.ast.expression.EnumCaseInstantiationExpression;
@@ -15,8 +16,11 @@ import choral.ast.expression.FieldAccessExpression;
 import choral.ast.expression.LiteralExpression;
 import choral.ast.expression.MethodCallExpression;
 import choral.ast.expression.NotExpression;
+import choral.ast.expression.NullExpression;
 import choral.ast.expression.ScopedExpression;
 import choral.ast.expression.StaticAccessExpression;
+import choral.ast.expression.SuperExpression;
+import choral.ast.expression.ThisExpression;
 import choral.ast.statement.BlockStatement;
 import choral.ast.statement.ExpressionStatement;
 import choral.ast.statement.IfStatement;
@@ -310,17 +314,69 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         return null;
     }
 
+    @Override
+    public Void visit(EnumCaseInstantiationExpression expression) {
+        return null;
+    }
+
+    @Override
+    public Void visit(FieldAccessExpression expression) {
+        return null;
+    }
+
+    @Override
+    public Void visit(StaticAccessExpression expression) {
+        return null;
+    }
+
+    @Override
+    public Void visit(ThisExpression expression) {
+        return null;
+    }
+
+    @Override
+    public Void visit(SuperExpression expression) {
+        return null;
+    }
+
+    @Override
+    public Void visit(NullExpression expression) {
+        return null;
+    }
+
+    @Override
+    public Void visit(BlankExpression expression) {
+        return null;
+    }
+
+    @Override
+    public Void visit(LiteralExpression.BooleanLiteralExpression expression) {
+        return null;
+    }
+
+    @Override
+    public Void visit(LiteralExpression.IntegerLiteralExpression expression) {
+        return null;
+    }
+
+    @Override
+    public Void visit(LiteralExpression.DoubleLiteralExpression expression) {
+        return null;
+    }
+
+    @Override
+    public Void visit(LiteralExpression.StringLiteralExpression expression) {
+        return null;
+    }
+
     private void visitStatement(Statement statement) {
         if (statement != null)
             visit(statement);
     }
 
     private void visitExpression(Expression expression) {
-        if (expression instanceof ScopedExpression || expression instanceof MethodCallExpression ||
-                expression instanceof AssignExpression || expression instanceof BinaryExpression ||
-                expression instanceof ClassInstantiationExpression || expression instanceof EnclosedExpression ||
-                expression instanceof NotExpression)
-            visit(expression);
+        if (expression != null)
+            expression.accept(this);
     }
 
     private void removeBlockIfEmpty(int blockLine, boolean hasContent) {
@@ -442,9 +498,11 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     }
 
     private void addChannelEvent(Expression receiver, MethodCallExpression call) {
-        Member.GroundMethod method = call.methodAnnotation().orElse(null);
-        if (!isChannelReceiver(receiver) || method == null)
+        if (!isChannelReceiver(receiver))
             return;
+        Member.GroundMethod method = call.methodAnnotation().orElseThrow(() ->
+                new IllegalStateException("Typed channel call has no resolved method: "
+                        + call.name().identifier()));
         boolean selection = call.isSelect();
         if (!selection && !"com".equals(call.name().identifier()))
             return;
