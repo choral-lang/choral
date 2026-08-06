@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,13 +65,15 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     /** Maximum total number of source-backed method bodies to expand. */
     private final int maximumHelperExpansions;
     /** Methods declared directly by the root choreography, tracked by AST identity. */
-    private Set<MethodDefinition> localMethods = Set.of();
+    private final Set<MethodDefinition> localMethods;
     /** Methods on the current expansion stack, used to stop recursive expansion. */
-    private Set<MethodDefinition> activeMethods = Set.of();
+    private final Set<MethodDefinition> activeMethods;
     /** Maps worlds in the current method body to participant worlds in the root diagram. */
-    private Map<String, String> worldMapping = Map.of();
+    private Map<String, String> worldMapping;
     /** Mermaid identifiers for root participants, in declaration order. */
-    private List<String> participantIds = List.of();
+    private final List<String> participantIds;
+    /** Name of the root declaration being rendered. */
+    private final String rootDeclarationName;
     /** Current nesting depth of expanded source-backed method bodies. */
     private int helperDepth;
     /** Total source-backed method bodies expanded during the current render. */
@@ -80,23 +83,31 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     /** Whether the total-expansion-limit note has already been emitted. */
     private boolean helperCountLimitReported;
 
-    /** Creates a visitor with the default helper-expansion limits. */
-    public MermaidVisitor() {
-        this(DEFAULT_MAXIMUM_HELPER_DEPTH, DEFAULT_MAXIMUM_HELPER_EXPANSIONS);
+    public static String render(
+            TemplateDeclaration declaration, MethodDefinition method) {
+        return render(declaration, method, DEFAULT_MAXIMUM_HELPER_DEPTH,
+                DEFAULT_MAXIMUM_HELPER_EXPANSIONS);
     }
 
-    /** Creates a visitor with explicit helper nesting and total-expansion limits. */
-    public MermaidVisitor(int maximumHelperDepth, int maximumHelperExpansions) {
+    public static String render(
+            TemplateDeclaration declaration, MethodDefinition method,
+            int maximumHelperDepth, int maximumHelperExpansions) {
+        Objects.requireNonNull(declaration, "declaration");
+        Objects.requireNonNull(method, "method");
+        return new MermaidVisitor(declaration, maximumHelperDepth, maximumHelperExpansions)
+                .render(method);
+    }
+
+    private MermaidVisitor(
+            TemplateDeclaration declaration,
+            int maximumHelperDepth,
+            int maximumHelperExpansions) {
         if (maximumHelperDepth < 0)
             throw new IllegalArgumentException("maximumHelperDepth must not be negative");
         if (maximumHelperExpansions < 0)
             throw new IllegalArgumentException("maximumHelperExpansions must not be negative");
         this.maximumHelperDepth = maximumHelperDepth;
         this.maximumHelperExpansions = maximumHelperExpansions;
-    }
-
-    public String render(TemplateDeclaration declaration, MethodDefinition method) {
-        diagramLines.clear();
         localMethods = Collections.newSetFromMap(new IdentityHashMap<>());
         if (declaration instanceof choral.ast.body.Class type)
             localMethods.addAll(type.methods());
@@ -105,10 +116,6 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         activeMethods = Collections.newSetFromMap(new IdentityHashMap<>());
         worldMapping = declaration.worldParameters().stream().collect(Collectors.toMap(
                 world -> world.name().identifier(), world -> world.name().identifier()));
-        helperDepth = 0;
-        helperExpansions = 0;
-        helperDepthLimitReported = false;
-        helperCountLimitReported = false;
         participantIds = declaration.worldParameters().stream()
                 .map(world -> participantId(world.name().identifier()))
                 .toList();
@@ -116,7 +123,11 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         declaration.worldParameters().forEach(world -> diagramLines.add(
                 "participant " + participantId(world.name().identifier()) + " as "
                         + escapeMermaid(world.name().identifier())));
-        addNote(declaration.name().identifier() + "." + methodLabel(method));
+        rootDeclarationName = declaration.name().identifier();
+    }
+
+    private String render(MethodDefinition method) {
+        addNote(rootDeclarationName + "." + methodLabel(method));
         activeMethods.add(method);
         try {
             method.accept(this);

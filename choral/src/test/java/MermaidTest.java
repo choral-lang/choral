@@ -1,3 +1,4 @@
+import choral.ast.CompilationUnit;
 import choral.diagrams.ChoreographyDiagramProvider;
 import choral.diagrams.ChoreographyDiagramProvider.Position;
 import choral.diagrams.MermaidVisitor;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MermaidTest {
@@ -1039,6 +1041,57 @@ public class MermaidTest {
 	}
 
 	@Test
+	public void separateStaticRendersDoNotShareState() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Separate@( A, B ) {
+				void forward(
+						SymChannel@( A, B )< Object > channel,
+						String@A value ) {
+					channel.< String >com( value );
+				}
+
+				void reverse(
+						SymChannel@( B, A )< Object > channel,
+						String@B value ) {
+					channel.< String >com( value );
+				}
+			}
+			""";
+		var unit = typedUnits( List.of( source ) ).get( 0 );
+		var declaration = unit.classes().get( 0 );
+
+		assertEquals(
+				"""
+					sequenceDiagram
+					participant p_A as A
+					participant p_B as B
+					Note over p_A,p_B: Separate.forward
+					p_A->>p_B: value
+					""".strip(),
+				MermaidVisitor.render( declaration, declaration.methods().get( 0 ) ) );
+		assertEquals(
+				"""
+					sequenceDiagram
+					participant p_A as A
+					participant p_B as B
+					Note over p_A,p_B: Separate.reverse
+					p_B->>p_A: value
+					""".strip(),
+				MermaidVisitor.render( declaration, declaration.methods().get( 1 ) ) );
+		assertThrows( IllegalArgumentException.class,
+				() -> MermaidVisitor.render( declaration, declaration.methods().get( 0 ), -1, 1 ) );
+		assertThrows( IllegalArgumentException.class,
+				() -> MermaidVisitor.render( declaration, declaration.methods().get( 0 ), 1, -1 ) );
+		assertThrows( NullPointerException.class,
+				() -> MermaidVisitor.render( null, declaration.methods().get( 0 ) ) );
+		assertThrows( NullPointerException.class,
+				() -> MermaidVisitor.render( declaration, null ) );
+	}
+
+	@Test
 	public void onlyTheMethodAtTheCursorIsRendered() {
 		String source =
 			"""
@@ -1266,10 +1319,7 @@ public class MermaidTest {
 
 	private static Optional<String> diagram( String source, int line, int character ) {
 		try {
-			var unit = Parser.parseString( source );
-			Typer.annotate(
-					List.of( unit ), HeaderLoader.loadStandardProfile().toList(),
-					new TyperOptions( VerbosityLevel.WARNINGS ) );
+			var unit = typedUnits( List.of( source ) ).get( 0 );
 			return new ChoreographyDiagramProvider().diagram(
 					unit, new Position( line, character ) );
 		} catch( Exception exception ) {
@@ -1285,10 +1335,7 @@ public class MermaidTest {
 	private static Optional<String> diagram(
 			List<String> sources, int unitIndex, int line, int character ) {
 		try {
-			var units = sources.stream().map(source -> Parser.parseString(source)).toList();
-			Typer.annotate(
-					units, HeaderLoader.loadStandardProfile().toList(),
-					new TyperOptions( VerbosityLevel.WARNINGS ) );
+			var units = typedUnits( sources );
 			return new ChoreographyDiagramProvider().diagram(
 					units.get( unitIndex ), new Position( line, character ) );
 		} catch( Exception exception ) {
@@ -1299,13 +1346,22 @@ public class MermaidTest {
 	private static String mermaidWithLimits(
 			String source, int maximumHelperDepth, int maximumHelperExpansions ) {
 		try {
-			var unit = Parser.parseString( source );
-			Typer.annotate(
-					List.of( unit ), HeaderLoader.loadStandardProfile().toList(),
-					new TyperOptions( VerbosityLevel.WARNINGS ) );
+			var unit = typedUnits( List.of( source ) ).get( 0 );
 			var declaration = unit.classes().get( 0 );
-			return new MermaidVisitor( maximumHelperDepth, maximumHelperExpansions )
-					.render( declaration, declaration.methods().get( 0 ) );
+			return MermaidVisitor.render( declaration, declaration.methods().get( 0 ),
+					maximumHelperDepth, maximumHelperExpansions );
+		} catch( Exception exception ) {
+			throw new RuntimeException( exception );
+		}
+	}
+
+	private static List<CompilationUnit> typedUnits( List<String> sources ) {
+		try {
+			var units = sources.stream().map( Parser::parseString ).toList();
+			Typer.annotate(
+					units, HeaderLoader.loadStandardProfile().toList(),
+					new TyperOptions( VerbosityLevel.WARNINGS ) );
+			return units;
 		} catch( Exception exception ) {
 			throw new RuntimeException( exception );
 		}

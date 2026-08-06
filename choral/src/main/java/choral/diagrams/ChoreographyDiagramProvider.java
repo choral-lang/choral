@@ -15,7 +15,7 @@ public final class ChoreographyDiagramProvider {
         return declarationAt(unit, cursor)
                 .filter(declaration -> !declaration.worldParameters().isEmpty())
                 .flatMap(declaration -> methodAt(declaration, cursor)
-                        .map(method -> new MermaidVisitor().render(declaration, method)));
+                        .map(method -> MermaidVisitor.render(declaration, method)));
     }
 
     private static Optional<TemplateDeclaration> declarationAt(
