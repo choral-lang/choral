@@ -722,6 +722,88 @@ public class MermaidTest {
 	}
 
 	@Test
+	public void helperWorldLabelsAreGroundedInOnePass() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			enum Decision@X { FIRST, SECOND }
+
+			class External@( A, B ) {
+				void decide(
+						SymChannel@( A, B )< Object > forward,
+						SymChannel@( B, A )< Object > reverse ) {
+					forward.< Decision >select( Decision@A.FIRST );
+					reverse.< Decision >select( Decision@B.SECOND );
+				}
+			}
+
+			class Root@( A, B ) {
+				void run(
+						External@( B, A ) external,
+						SymChannel@( B, A )< Object > reverse,
+						SymChannel@( A, B )< Object > forward ) {
+					external.decide( reverse, forward );
+					forward.< Decision >select( Decision@A.FIRST );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: Root.run
+				Note over p_A,p_B: call External.decide
+				p_B-->>p_A: Decision@B.FIRST
+				p_A-->>p_B: Decision@A.SECOND
+				Note over p_A,p_B: return External.decide
+				p_A-->>p_B: Decision@A.FIRST
+				""".strip(),
+				mermaidAt( source, "external.decide" ) );
+	}
+
+	@Test
+	public void helperWorldLiteralLabelsAreGroundedInOnePass() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class External@( A, B ) {
+				void send(
+						SymChannel@( A, B )< Object > forward,
+						SymChannel@( B, A )< Object > reverse ) {
+					forward.< String >com( "first"@A );
+					reverse.< String >com( "second"@B );
+				}
+			}
+
+			class Root@( A, B ) {
+				void run(
+						External@( B, A ) external,
+						SymChannel@( B, A )< Object > reverse,
+						SymChannel@( A, B )< Object > forward ) {
+					external.send( reverse, forward );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: Root.run
+				Note over p_A,p_B: call External.send
+				p_B->>p_A: "first"@B
+				p_A->>p_B: "second"@A
+				Note over p_A,p_B: return External.send
+				""".strip(),
+				mermaidAt( source, "external.send" ) );
+	}
+
+	@Test
 	public void inheritedSourceMethodsAreExpandedWithGroundedWorlds() {
 		String source =
 			"""
