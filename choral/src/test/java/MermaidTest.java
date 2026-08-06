@@ -404,6 +404,83 @@ public class MermaidTest {
 	}
 
 	@Test
+	public void mixedEmptyControlFlowBranchesRemainVisible() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			enum Choice@X { FIRST }
+
+			class Partial@( A, B ) {
+				void run(
+						SymChannel@( A, B )< Object > forward,
+						SymChannel@( B, A )< Object > reverse,
+						Boolean@A ready,
+						Choice@A choice,
+						String@A fromA,
+						String@B fromB ) {
+					if( ready ) {} else { forward.< String >com( fromA ); }
+					switch( choice ) {
+						case FIRST -> {}
+						default -> { reverse.< String >com( fromB ); }
+					}
+					try {} catch( Exception@A error ) {
+						forward.< String >com( fromA );
+					}
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p_A as A
+				participant p_B as B
+				Note over p_A,p_B: Partial.run
+				alt ready
+				else
+				p_A->>p_B: fromA
+				end
+				alt choice = FIRST
+				else default
+				p_B->>p_A: fromB
+				end
+				critical try
+				option catch Exception@( A ) error
+				p_A->>p_B: fromA
+				end
+				""".strip(),
+			mermaidAt( source, "if( ready )" ) );
+	}
+
+	@Test
+	public void guardCommunicationsPrecedeControlFlowBlocks() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Guard@( A, B ) {
+				void run(
+						SymChannel@( A, B )< Object > forward,
+						SymChannel@( B, A )< Object > reverse,
+						Boolean@A ready,
+						String@B value ) {
+					if( forward.< Boolean >com( ready ) ) {
+						reverse.< String >com( value );
+					}
+				}
+			}
+			""";
+		String diagram = mermaidAt( source, "if( forward" );
+		int guard = diagram.indexOf( "p_A->>p_B: ready" );
+		int alternative = diagram.indexOf( "\nalt " );
+		int branch = diagram.indexOf( "p_B->>p_A: value" );
+
+		assertTrue( guard >= 0 && guard < alternative );
+		assertTrue( alternative < branch );
+	}
+
+	@Test
 	public void emptyNestedControlFlowIsOmittedFromVisibleAlternatives() {
 		String source =
 			"""

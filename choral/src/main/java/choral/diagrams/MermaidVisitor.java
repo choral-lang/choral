@@ -187,19 +187,14 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     @Override
     public Void visit(IfStatement statement) {
         visitExpression(statement.condition());
-        int blockLine = diagramLines.size();
-        diagramLines.add("alt " + escapeMermaid(expressionLabel(statement.condition())));
-        int branchLine = diagramLines.size();
-        visitStatement(statement.ifBranch());
-        boolean hasContent = diagramLines.size() > branchLine;
+        List<Branch> branches = new ArrayList<>();
+        branches.add(new Branch(
+                escapeMermaid(expressionLabel(statement.condition())),
+                capture(() -> visitStatement(statement.ifBranch()))));
         if (!(statement.elseBranch() instanceof NilStatement)) {
-            diagramLines.add("else");
-            branchLine = diagramLines.size();
-            visitStatement(statement.elseBranch());
-            hasContent |= diagramLines.size() > branchLine;
+            branches.add(new Branch("", capture(() -> visitStatement(statement.elseBranch()))));
         }
-        diagramLines.add("end");
-        removeBlockIfEmpty(blockLine, hasContent);
+        addBlock("alt", "else", branches);
         visitStatement(statement.continuation());
         return null;
     }
@@ -207,40 +202,27 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     @Override
     public Void visit(SwitchStatement statement) {
         visitExpression(statement.guard());
-        int blockLine = diagramLines.size();
-        boolean first = true;
-        boolean hasContent = false;
+        List<Branch> branches = new ArrayList<>();
         for (var switchCase : statement.cases().entrySet()) {
-            diagramLines.add((first ? "alt " : "else ")
-                    + switchCaseLabel(statement.guard(), switchCase.getKey()));
-            int branchLine = diagramLines.size();
-            visitStatement(switchCase.getValue());
-            hasContent |= diagramLines.size() > branchLine;
-            first = false;
+            branches.add(new Branch(
+                    switchCaseLabel(statement.guard(), switchCase.getKey()),
+                    capture(() -> visitStatement(switchCase.getValue()))));
         }
-        if (!first)
-            diagramLines.add("end");
-        removeBlockIfEmpty(blockLine, hasContent);
+        addBlock("alt", "else", branches);
         visitStatement(statement.continuation());
         return null;
     }
 
     @Override
     public Void visit(TryCatchStatement statement) {
-        int blockLine = diagramLines.size();
-        diagramLines.add("critical try");
-        int branchLine = diagramLines.size();
-        visitStatement(statement.body());
-        boolean hasContent = diagramLines.size() > branchLine;
+        List<Branch> branches = new ArrayList<>();
+        branches.add(new Branch("try", capture(() -> visitStatement(statement.body()))));
         for (var catchBlock : statement.catches()) {
-            diagramLines.add("option catch "
-                    + escapeMermaid(prettyPrinter.visit(catchBlock.left(), " ")));
-            branchLine = diagramLines.size();
-            visitStatement(catchBlock.right());
-            hasContent |= diagramLines.size() > branchLine;
+            branches.add(new Branch("catch "
+                    + escapeMermaid(prettyPrinter.visit(catchBlock.left(), " ")),
+                    capture(() -> visitStatement(catchBlock.right()))));
         }
-        diagramLines.add("end");
-        removeBlockIfEmpty(blockLine, hasContent);
+        addBlock("critical", "option", branches);
         visitStatement(statement.continuation());
         return null;
     }
@@ -379,9 +361,30 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
             expression.accept(this);
     }
 
-    private void removeBlockIfEmpty(int blockLine, boolean hasContent) {
-        if (!hasContent)
-            diagramLines.subList(blockLine, diagramLines.size()).clear();
+    private record Branch(String label, List<String> lines) {
+    }
+
+    private List<String> capture(Runnable render) {
+        int firstLine = diagramLines.size();
+        render.run();
+        List<String> captured = List.copyOf(
+                diagramLines.subList(firstLine, diagramLines.size()));
+        diagramLines.subList(firstLine, diagramLines.size()).clear();
+        return captured;
+    }
+
+    private void addBlock(
+            String firstKeyword, String nextKeyword, List<Branch> branches) {
+        if (branches.stream().noneMatch(branch -> !branch.lines().isEmpty()))
+            return;
+        for (int index = 0; index < branches.size(); index++) {
+            Branch branch = branches.get(index);
+            String keyword = index == 0 ? firstKeyword : nextKeyword;
+            diagramLines.add(keyword
+                    + (branch.label().isEmpty() ? "" : " " + branch.label()));
+            diagramLines.addAll(branch.lines());
+        }
+        diagramLines.add("end");
     }
 
     private void visitSourceMethod(MethodCallExpression call) {
