@@ -43,13 +43,13 @@ public class MermaidTest {
 		assertEquals(
 				"""
 					sequenceDiagram
-					participant p_A as A
-					participant p_B as B
-					Note over p_A,p_B: Evaluation.run
-					Note over p_A,p_B: call route
-					p_A->>p_B: before
-					Note over p_A,p_B: return route
-					p_A->>p_B: after
+					participant p0 as A
+					participant p1 as B
+					Note over p0,p1: Evaluation.run
+					Note over p0,p1: call route
+					p0->>p1: before
+					Note over p0,p1: return route
+					p0->>p1: after
 					""".strip(),
 				mermaidAt( source, "this.route" ) );
 	}
@@ -66,9 +66,9 @@ public class MermaidTest {
 		assertEquals(
 				"""
 				sequenceDiagram
-				participant p_Customer as Customer
-				participant p_Seller as Seller
-				Note over p_Customer,p_Seller: Empty.run
+				participant p0 as Customer
+				participant p1 as Seller
+				Note over p0,p1: Empty.run
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -91,10 +91,10 @@ public class MermaidTest {
 		assertEquals(
 				"""
 				sequenceDiagram
-				participant p_Customer as Customer
-				participant p_Seller as Seller
-				Note over p_Customer,p_Seller: Order.run
-				p_Customer->>p_Seller: order
+				participant p0 as Customer
+				participant p1 as Seller
+				Note over p0,p1: Order.run
+				p0->>p1: order
 				""".strip(),
 				mermaid( source, 6, 10 ) );
 	}
@@ -117,10 +117,10 @@ public class MermaidTest {
 		assertEquals(
 				"""
 				sequenceDiagram
-				participant p_Customer as Customer
-				participant p_Seller as Seller
-				Note over p_Customer,p_Seller: Approval.run
-				p_Customer-->>p_Seller: Decision@Customer.ACCEPT
+				participant p0 as Customer
+				participant p1 as Seller
+				Note over p0,p1: Approval.run
+				p0-->>p1: Decision@Customer.ACCEPT
 				""".strip(),
 				mermaid( source, 6, 10 ) );
 	}
@@ -141,10 +141,10 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Escaped.run
-				p_A->>p_B: "ready go % end"@A
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Escaped.run
+				p0->>p1: "ready go % end"@A
 				""".strip(),
 				mermaidAt( source, "ready:" ) );
 	}
@@ -172,13 +172,13 @@ public class MermaidTest {
 		assertEquals(
 				"""
 				sequenceDiagram
-				participant p_Customer as Customer
-				participant p_Seller as Seller
-				participant p_Shipper as Shipper
-				Note over p_Customer,p_Shipper: Shipping.run
-				p_Customer->>p_Seller: order
-				p_Seller->>p_Shipper: received
-				p_Shipper-->>p_Seller: State@Shipper.DONE
+				participant p0 as Customer
+				participant p1 as Seller
+				participant p2 as Shipper
+				Note over p0,p2: Shipping.run
+				p0->>p1: order
+				p1->>p2: received
+				p2-->>p1: State@Shipper.DONE
 				""".strip(),
 				mermaid( source, 10, 10 ) );
 	}
@@ -211,15 +211,15 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Nested.run
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Nested.run
 				alt true@A
-				p_A-->>p_B: Choice@A.THEN
-				p_A->>p_B: value
+				p0-->>p1: Choice@A.THEN
+				p0->>p1: value
 				else
-				p_A-->>p_B: Choice@A.ELSE
-				p_A->>p_B: value
+				p0-->>p1: Choice@A.ELSE
+				p0->>p1: value
 				end
 				""".strip(),
 				mermaidAt( source, "consume( channel" ) );
@@ -257,21 +257,21 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				participant p_C as C
-				Note over p_A,p_C: Alternatives.run
+				participant p0 as A
+				participant p1 as B
+				participant p2 as C
+				Note over p0,p2: Alternatives.run
 				alt true@A
-				p_A->>p_B: a
+				p0->>p1: a
 				alt false@B
-				p_B->>p_C: b
+				p1->>p2: b
 				else
-				p_C->>p_A: c
+				p2->>p0: c
 				end
 				else
-				p_A->>p_B: a
+				p0->>p1: a
 				end
-				p_B->>p_C: b
+				p1->>p2: b
 				""".strip(),
 				mermaidAt( source, "if( false@B )" ) );
 	}
@@ -306,18 +306,18 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				participant p_C as C
-				Note over p_A,p_C: Routing.run
+				participant p0 as A
+				participant p1 as B
+				participant p2 as C
+				Note over p0,p2: Routing.run
 				alt route = FAST
-				p_A->>p_B: a
+				p0->>p1: a
 				else route = SAFE
-				p_B->>p_C: b
+				p1->>p2: b
 				else default
-				p_C->>p_A: c
+				p2->>p0: c
 				end
-				p_A->>p_B: a
+				p0->>p1: a
 				""".strip(),
 				mermaidAt( source, "case SAFE" ) );
 	}
@@ -351,18 +351,18 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				participant p_C as C
-				Note over p_A,p_C: Recovery.run
+				participant p0 as A
+				participant p1 as B
+				participant p2 as C
+				Note over p0,p2: Recovery.run
 				critical try
-				p_A->>p_B: a
+				p0->>p1: a
 				option catch Exception@( B ) first
-				p_B->>p_C: b
+				p1->>p2: b
 				option catch Exception@( C ) second
-				p_C->>p_A: c
+				p2->>p0: c
 				end
-				p_B->>p_C: b
+				p1->>p2: b
 				""".strip(),
 				mermaidAt( source, "Exception@C second" ) );
 	}
@@ -395,10 +395,10 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: EmptyControlFlow.run
-				p_A->>p_B: value
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: EmptyControlFlow.run
+				p0->>p1: value
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -434,20 +434,20 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Partial.run
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Partial.run
 				alt ready
 				else
-				p_A->>p_B: fromA
+				p0->>p1: fromA
 				end
 				alt choice = FIRST
 				else default
-				p_B->>p_A: fromB
+				p1->>p0: fromB
 				end
 				critical try
 				option catch Exception@( A ) error
-				p_A->>p_B: fromA
+				p0->>p1: fromA
 				end
 				""".strip(),
 			mermaidAt( source, "if( ready )" ) );
@@ -472,9 +472,9 @@ public class MermaidTest {
 			}
 			""";
 		String diagram = mermaidAt( source, "if( forward" );
-		int guard = diagram.indexOf( "p_A->>p_B: ready" );
+		int guard = diagram.indexOf( "p0->>p1: ready" );
 		int alternative = diagram.indexOf( "\nalt " );
-		int branch = diagram.indexOf( "p_B->>p_A: value" );
+		int branch = diagram.indexOf( "p1->>p0: value" );
 
 		assertTrue( guard >= 0 && guard < alternative );
 		assertTrue( alternative < branch );
@@ -508,14 +508,14 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Streaming.gather
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Streaming.gather
 				alt streaming
-				p_A->>p_B: value
-				Note over p_A,p_B: recursive call to gather omitted
+				p0->>p1: value
+				Note over p0,p1: recursive call to gather omitted
 				else
-				p_A-->>p_B: StreamState@A.OFF
+				p0-->>p1: StreamState@A.OFF
 				end
 				""".strip(),
 				mermaidAt( source, "if( valid )" ) );
@@ -557,22 +557,22 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				participant p_C as C
-				Note over p_A,p_C: Checkout.run
-				Note over p_A,p_C: call receive
-				p_A->>p_B: order
-				Note over p_A,p_C: return receive
-				Note over p_A,p_C: call ship
+				participant p0 as A
+				participant p1 as B
+				participant p2 as C
+				Note over p0,p2: Checkout.run
+				Note over p0,p2: call receive
+				p0->>p1: order
+				Note over p0,p2: return receive
+				Note over p0,p2: call ship
 				alt ready
-				Note over p_A,p_C: call notifyWarehouse
-				p_B->>p_C: shipment
-				Note over p_A,p_C: return notifyWarehouse
+				Note over p0,p2: call notifyWarehouse
+				p1->>p2: shipment
+				Note over p0,p2: return notifyWarehouse
 				else
-				p_B->>p_C: shipment
+				p1->>p2: shipment
 				end
-				Note over p_A,p_C: return ship
+				Note over p0,p2: return ship
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -600,13 +600,13 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: EvaluationOrder.run
-				p_A->>p_B: value
-				Note over p_A,p_B: call respond
-				p_B->>p_A: received
-				Note over p_A,p_B: return respond
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: EvaluationOrder.run
+				p0->>p1: value
+				Note over p0,p1: call respond
+				p1->>p0: received
+				Note over p0,p1: return respond
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -638,12 +638,12 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Root.run
-				Note over p_A,p_B: call External.send
-				p_A->>p_B: value
-				Note over p_A,p_B: return External.send
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Root.run
+				Note over p0,p1: call External.send
+				p0->>p1: value
+				Note over p0,p1: return External.send
 				""".strip(),
 				mermaidAt( source, "external.send" ) );
 	}
@@ -675,12 +675,12 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Root.run
-				Note over p_A,p_B: call External.send
-				p_B->>p_A: value
-				Note over p_A,p_B: return External.send
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Root.run
+				Note over p0,p1: call External.send
+				p1->>p0: value
+				Note over p0,p1: return External.send
 				""".strip(),
 				mermaidAt( source, "external.send" ) );
 	}
@@ -711,12 +711,12 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Root.run
-				Note over p_A,p_B: call External.decide
-				p_B-->>p_A: Decision@B.READY
-				Note over p_A,p_B: return External.decide
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Root.run
+				Note over p0,p1: call External.decide
+				p1-->>p0: Decision@B.READY
+				Note over p0,p1: return External.decide
 				""".strip(),
 				mermaidAt( source, "external.decide" ) );
 	}
@@ -752,14 +752,14 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Root.run
-				Note over p_A,p_B: call External.decide
-				p_B-->>p_A: Decision@B.FIRST
-				p_A-->>p_B: Decision@A.SECOND
-				Note over p_A,p_B: return External.decide
-				p_A-->>p_B: Decision@A.FIRST
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Root.run
+				Note over p0,p1: call External.decide
+				p1-->>p0: Decision@B.FIRST
+				p0-->>p1: Decision@A.SECOND
+				Note over p0,p1: return External.decide
+				p0-->>p1: Decision@A.FIRST
 				""".strip(),
 				mermaidAt( source, "external.decide" ) );
 	}
@@ -792,13 +792,13 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Root.run
-				Note over p_A,p_B: call External.send
-				p_B->>p_A: "first"@B
-				p_A->>p_B: "second"@A
-				Note over p_A,p_B: return External.send
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Root.run
+				Note over p0,p1: call External.send
+				p1->>p0: "first"@B
+				p0->>p1: "second"@A
+				Note over p0,p1: return External.send
 				""".strip(),
 				mermaidAt( source, "external.send" ) );
 	}
@@ -832,12 +832,12 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Root.run
-				Note over p_A,p_B: call Base.send
-				p_B->>p_A: value
-				Note over p_A,p_B: return Base.send
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Root.run
+				Note over p0,p1: call Base.send
+				p1->>p0: value
+				Note over p0,p1: return Base.send
 				""".strip(),
 				mermaidAt( source, "child.send" ) );
 	}
@@ -868,12 +868,12 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Root.run
-				Note over p_A,p_B: call External.send
-				p_B->>p_A: value
-				Note over p_A,p_B: return External.send
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Root.run
+				Note over p0,p1: call External.send
+				p1->>p0: value
+				Note over p0,p1: return External.send
 				""".strip(),
 				mermaidAt( source, "External@( B, A ).send" ) );
 	}
@@ -914,15 +914,15 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Root.run
-				Note over p_A,p_B: call External.send(SymChannel@( A, B ) Object , String@( A ))
-				p_A->>p_B: value
-				Note over p_A,p_B: return External.send(SymChannel@( A, B ) Object , String@( A ))
-				Note over p_A,p_B: call External.send(SymChannel@( B, A ) Object , String@( B ))
-				p_B->>p_A: value
-				Note over p_A,p_B: return External.send(SymChannel@( B, A ) Object , String@( B ))
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Root.run
+				Note over p0,p1: call External.send(SymChannel@( A, B ) Object , String@( A ))
+				p0->>p1: value
+				Note over p0,p1: return External.send(SymChannel@( A, B ) Object , String@( A ))
+				Note over p0,p1: call External.send(SymChannel@( B, A ) Object , String@( B ))
+				p1->>p0: value
+				Note over p0,p1: return External.send(SymChannel@( B, A ) Object , String@( B ))
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -963,12 +963,12 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Root.run
-				Note over p_A,p_B: call Helper.send
-				p_B->>p_A: value
-				Note over p_A,p_B: return Helper.send
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Root.run
+				Note over p0,p1: call Helper.send
+				p1->>p0: value
+				Note over p0,p1: return Helper.send
 				""".strip(),
 				mermaidAt( List.of( helper, root ), 1, "helper.send" ) );
 	}
@@ -1004,13 +1004,13 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: First.start
-				Note over p_A,p_B: call Second.forward
-				p_A->>p_B: value
-				Note over p_A,p_B: recursive call to start omitted
-				Note over p_A,p_B: return Second.forward
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: First.start
+				Note over p0,p1: call Second.forward
+				p0->>p1: value
+				Note over p0,p1: recursive call to start omitted
+				Note over p0,p1: return Second.forward
 				""".strip(),
 				mermaidAt( source, "void start" ) );
 	}
@@ -1043,15 +1043,15 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Overloaded.run
-				Note over p_A,p_B: call send(String@( A ))
-				p_A->>p_B: value
-				Note over p_A,p_B: return send(String@( A ))
-				Note over p_A,p_B: call send(String@( B ))
-				p_B->>p_A: value
-				Note over p_A,p_B: return send(String@( B ))
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Overloaded.run
+				Note over p0,p1: call send(String@( A ))
+				p0->>p1: value
+				Note over p0,p1: return send(String@( A ))
+				Note over p0,p1: call send(String@( B ))
+				p1->>p0: value
+				Note over p0,p1: return send(String@( B ))
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -1069,17 +1069,17 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: OverloadedRoot.run(String@( A ))
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: OverloadedRoot.run(String@( A ))
 				""".strip(),
 				mermaidAt( source, "String@A value" ) );
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: OverloadedRoot.run(String@( B ))
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: OverloadedRoot.run(String@( B ))
 				""".strip(),
 				mermaidAt( source, "String@B value" ) );
 	}
@@ -1103,11 +1103,11 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Recursive.run
-				p_A->>p_B: value
-				Note over p_A,p_B: recursive call to run omitted
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Recursive.run
+				p0->>p1: value
+				Note over p0,p1: recursive call to run omitted
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -1139,15 +1139,15 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: MutuallyRecursive.run
-				Note over p_A,p_B: call first
-				p_A->>p_B: value
-				Note over p_A,p_B: call second
-				Note over p_A,p_B: recursive call to first omitted
-				Note over p_A,p_B: return second
-				Note over p_A,p_B: return first
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: MutuallyRecursive.run
+				Note over p0,p1: call first
+				p0->>p1: value
+				Note over p0,p1: call second
+				Note over p0,p1: recursive call to first omitted
+				Note over p0,p1: return second
+				Note over p0,p1: return first
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -1183,16 +1183,16 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Deep.run
-				Note over p_A,p_B: call guarded
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Deep.run
+				Note over p0,p1: call guarded
 				alt ready
-				Note over p_A,p_B: helper expansion depth limit 1 reached - deeper helper calls omitted
+				Note over p0,p1: helper expansion depth limit 1 reached - deeper helper calls omitted
 				else
-				p_A->>p_B: value
+				p0->>p1: value
 				end
-				Note over p_A,p_B: return guarded
+				Note over p0,p1: return guarded
 				""".strip(),
 				mermaidWithLimits( source, 1, 10 ) );
 	}
@@ -1222,16 +1222,16 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Repeated.run
-				Note over p_A,p_B: call send
-				p_A->>p_B: value
-				Note over p_A,p_B: return send
-				Note over p_A,p_B: call send
-				p_A->>p_B: value
-				Note over p_A,p_B: return send
-				Note over p_A,p_B: helper expansion count limit 2 reached - remaining helper calls omitted
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Repeated.run
+				Note over p0,p1: call send
+				p0->>p1: value
+				Note over p0,p1: return send
+				Note over p0,p1: call send
+				p0->>p1: value
+				Note over p0,p1: return send
+				Note over p0,p1: helper expansion count limit 2 reached - remaining helper calls omitted
 				""".strip(),
 				mermaidWithLimits( source, 10, 2 ) );
 	}
@@ -1262,19 +1262,19 @@ public class MermaidTest {
 		assertEquals(
 				"""
 					sequenceDiagram
-					participant p_A as A
-					participant p_B as B
-					Note over p_A,p_B: Separate.forward
-					p_A->>p_B: value
+					participant p0 as A
+					participant p1 as B
+					Note over p0,p1: Separate.forward
+					p0->>p1: value
 					""".strip(),
 				MermaidVisitor.render( declaration, declaration.methods().get( 0 ) ) );
 		assertEquals(
 				"""
 					sequenceDiagram
-					participant p_A as A
-					participant p_B as B
-					Note over p_A,p_B: Separate.reverse
-					p_B->>p_A: value
+					participant p0 as A
+					participant p1 as B
+					Note over p0,p1: Separate.reverse
+					p1->>p0: value
 					""".strip(),
 				MermaidVisitor.render( declaration, declaration.methods().get( 1 ) ) );
 		assertThrows( IllegalArgumentException.class,
@@ -1311,19 +1311,19 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: ChannelSources.fromField
-				p_A->>p_B: value
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: ChannelSources.fromField
+				p0->>p1: value
 				""".strip(),
 				mermaidAt( source, "fromField" ) );
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: ChannelSources.fromParameter
-				p_B->>p_A: value
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: ChannelSources.fromParameter
+				p1->>p0: value
 				""".strip(),
 				mermaidAt( source, "parameter.< String >com" ) );
 		assertNoChoreographyAt( source, "field;" );
@@ -1359,10 +1359,10 @@ public class MermaidTest {
 		assertEquals(
 				"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Typed.run
-				p_A->>p_B: value
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Typed.run
+				p0->>p1: value
 				""".strip(),
 				mermaidAt( source, "arbitrarilyNamed.< String >com" ) );
 	}
@@ -1390,10 +1390,10 @@ public class MermaidTest {
 		assertEquals(
 				"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: ComputedReceiver.run
-				p_A->>p_B: value
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: ComputedReceiver.run
+				p0->>p1: value
 				""".strip(),
 				mermaidAt( source, "this.channel" ) );
 	}
@@ -1418,16 +1418,35 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: Constructed.run
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Constructed.run
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 		assertNoChoreographyAt( source, "public Constructed" );
 	}
 
 	@Test
-	public void participantIdentifiersAreSanitized() {
+	public void distinctWorldNamesReceiveDistinctParticipantIds() {
+		String source =
+			"""
+			class Identifiers@( A$B, A_B ) {
+				void run() {}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p0 as A$B
+				participant p1 as A_B
+				Note over p0,p1: Identifiers.run
+				""".strip(),
+			mermaidAt( source, "void run" ) );
+	}
+
+	@Test
+	public void participantIdentifiersFollowDeclarationOrder() {
 		String source =
 			"""
 			class International@( Customer$EU, Seller ) {
@@ -1438,9 +1457,9 @@ public class MermaidTest {
 		assertEquals(
 				"""
 				sequenceDiagram
-				participant p_Customer_EU as Customer$EU
-				participant p_Seller as Seller
-				Note over p_Customer_EU,p_Seller: International.run
+				participant p0 as Customer$EU
+				participant p1 as Seller
+				Note over p0,p1: International.run
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -1471,10 +1490,10 @@ public class MermaidTest {
 		assertEquals(
 				"""
 				sequenceDiagram
-				participant p_X as X
-				participant p_Y as Y
-				Note over p_X,p_Y: Second.run
-				p_Y-->>p_X: Decision@Y.ACCEPT
+				participant p0 as X
+				participant p1 as Y
+				Note over p0,p1: Second.run
+				p1-->>p0: Decision@Y.ACCEPT
 				""".strip(),
 				mermaidAt( source, "secondChannel.< Decision >select" ) );
 	}
@@ -1491,9 +1510,9 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_A as A
-				participant p_B as B
-				Note over p_A,p_B: First.first
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: First.first
 				""".strip(),
 				mermaidAt( source, "first()" ) );
 		assertNoChoreographyAt( source, "between" );
@@ -1501,9 +1520,9 @@ public class MermaidTest {
 		assertEquals(
 			"""
 				sequenceDiagram
-				participant p_X as X
-				participant p_Y as Y
-				Note over p_X,p_Y: Second.second
+				participant p0 as X
+				participant p1 as Y
+				Note over p0,p1: Second.second
 				""".strip(),
 				mermaidAt( source, "second()" ) );
 		assertNoChoreographyAt( source, "after" );

@@ -76,8 +76,8 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     private final Set<MethodDefinition> activeMethods;
     /** World mappings for active method bodies, innermost mapping first. */
     private final Deque<WorldMapping> worldMappings = new ArrayDeque<>();
-    /** Mermaid identifiers for root participants, in declaration order. */
-    private final List<String> participantIds;
+    /** Root participant worlds, in declaration order. */
+    private final List<String> participantWorlds;
     /** Name of the root declaration being rendered. */
     private final String rootDeclarationName;
     /** Total source-backed method bodies expanded during the current render. */
@@ -121,13 +121,13 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         worldMappings.push(new WorldMapping(declaration.worldParameters().stream().collect(
                 Collectors.toMap(world -> world.name().identifier(),
                         world -> world.name().identifier()))));
-        participantIds = declaration.worldParameters().stream()
-                .map(world -> participantId(world.name().identifier()))
+        participantWorlds = declaration.worldParameters().stream()
+                .map(world -> world.name().identifier())
                 .toList();
         diagramLines.add("sequenceDiagram");
-        declaration.worldParameters().forEach(world -> diagramLines.add(
-                "participant " + participantId(world.name().identifier()) + " as "
-                        + escapeMermaid(world.name().identifier())));
+        for (int index = 0; index < participantWorlds.size(); index++)
+            diagramLines.add("participant p" + index + " as "
+                    + escapeMermaid(participantWorlds.get(index)));
         rootDeclarationName = declaration.name().identifier();
     }
 
@@ -487,11 +487,11 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     }
 
     private void addNote(String text) {
-        if (participantIds.isEmpty())
+        if (participantWorlds.isEmpty())
             return;
-        String over = participantIds.get(0);
-        if (participantIds.size() > 1)
-            over += "," + participantIds.get(participantIds.size() - 1);
+        String over = participantId(participantWorlds.get(0));
+        if (participantWorlds.size() > 1)
+            over += "," + participantId(participantWorlds.get(participantWorlds.size() - 1));
         diagramLines.add("Note over " + over + ": " + escapeMermaid(text));
     }
 
@@ -631,8 +631,12 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
                 + escapeMermaid(groundedWorldReferences(value));
     }
 
-    private static String participantId(String value) {
-        return "p_" + value.replaceAll("[^A-Za-z0-9_]", "_");
+    private String participantId(String world) {
+        int index = participantWorlds.indexOf(world);
+        if (index < 0)
+            throw new IllegalStateException("World '" + world
+                    + "' is not a root diagram participant");
+        return "p" + index;
     }
 
     private static String escapeMermaid(String value) {
