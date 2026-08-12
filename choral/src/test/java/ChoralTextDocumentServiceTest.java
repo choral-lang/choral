@@ -13,7 +13,6 @@ import choral.ast.CompilationUnit;
 import choral.ast.expression.MethodCallExpression;
 import choral.ast.expression.ScopedExpression;
 import choral.ast.statement.ExpressionStatement;
-import choral.compiler.Parser;
 import choral.types.GroundDataType;
 import lsp.ChoralTextDocumentService;
 import lsp.features.DiagnosticsProvider;
@@ -46,10 +45,9 @@ public class ChoralTextDocumentServiceTest {
                     }
                 }
                 """;
-        CompilationUnit unit = Parser.parseString(
-                source, project.resolve("Example.ch").toString());
-
-        CompilationUnit typedUnit = new DiagnosticsProvider().typeCheck(uri, unit);
+        AnalysisResult analysis = new DiagnosticsProvider().analyzeTyped(uri, source);
+        assertTrue(analysis.successful());
+        CompilationUnit typedUnit = analysis.compilationUnit();
 
         ExpressionStatement statement = assertInstanceOf(ExpressionStatement.class,
                 typedUnit.classes().get(0).methods().get(0).body().orElseThrow());

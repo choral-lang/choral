@@ -122,10 +122,6 @@ public class DiagnosticsProvider {
 		}
 	}
 
-	public CompilationUnit typeCheck( String uri, CompilationUnit compUnit ) throws Exception {
-		return typeCheck( uri, sourceUnits( uri, compUnit ), ( pos, message ) -> {} );
-	}
-
 	private static CompilationUnit typeCheck(
 			String uri, List< CompilationUnit > sourceUnits,
 			BiConsumer< choral.ast.Position, String > infoChannel
