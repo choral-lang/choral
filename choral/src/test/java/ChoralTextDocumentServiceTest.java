@@ -1,8 +1,8 @@
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,16 +20,22 @@ import lsp.features.DiagnosticsProvider.AnalysisResult;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ChoralTextDocumentServiceTest {
@@ -62,7 +68,7 @@ public class ChoralTextDocumentServiceTest {
     }
 
     @Test
-    public void returnsMermaidForPositionalCustomRequestParameters(@TempDir Path project) {
+    public void returnsMermaidForTypedRequestParameters(@TempDir Path project) {
         String uri = project.resolve("Example.ch").toUri().toString();
         String source = """
                 import choral.channels.SymChannel;
@@ -75,9 +81,8 @@ public class ChoralTextDocumentServiceTest {
         ChoralTextDocumentService service = new ChoralTextDocumentService();
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
 
-        Object result = service.choreographyDiagram(List.of(Map.of(
-                "textDocument", Map.of("uri", uri),
-                "position", Map.of("line", 4, "character", 45)))).join();
+        String result = service.choreographyDiagram(new TextDocumentPositionParams(
+                new TextDocumentIdentifier(uri), new Position(4, 45))).join();
 
         assertEquals(
                 """
@@ -131,10 +136,10 @@ public class ChoralTextDocumentServiceTest {
                 """.strip(),
                 diagramAt(service, uri, source, "reverse.< String >com").join());
 
-        ChoralTextDocumentService.ChoreographyDiagramErrorResult result = assertInstanceOf(
-                ChoralTextDocumentService.ChoreographyDiagramErrorResult.class,
-                diagramAt(service, uri, source, "class Example").join());
-        assertEquals("noSymbol", result.error.code());
+        ResponseError error = diagramError(
+                diagramAt(service, uri, source, "class Example"));
+        assertEquals(ResponseErrorCode.RequestFailed.getValue(), error.getCode());
+        assertEquals("No choreography method was found at the cursor.", error.getMessage());
     }
 
     @Test
@@ -148,24 +153,54 @@ public class ChoralTextDocumentServiceTest {
         ChoralTextDocumentService service = new ChoralTextDocumentService();
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
 
-        ChoralTextDocumentService.ChoreographyDiagramErrorResult result = assertInstanceOf(
-                ChoralTextDocumentService.ChoreographyDiagramErrorResult.class,
-                service.choreographyDiagram(Map.of(
-                        "textDocument", Map.of("uri", uri),
-                        "position", Map.of("line", 1, "character", 10))).join());
+        ResponseError error = diagramError(service.choreographyDiagram(
+                new TextDocumentPositionParams(
+                        new TextDocumentIdentifier(uri), new Position(1, 10))));
 
-        assertEquals("typeError", result.error.code());
+        assertEquals(ResponseErrorCode.RequestFailed.getValue(), error.getCode());
+        assertTrue(error.getMessage().startsWith("Unable to type-check the Choral document:"));
     }
 
     @Test
-    public void ownsChoreographyRequestErrorResults() {
+    public void reportsInvalidChoreographyRequestParameters() {
         ChoralTextDocumentService service = new ChoralTextDocumentService();
 
-        ChoralTextDocumentService.ChoreographyDiagramErrorResult result = assertInstanceOf(
-                ChoralTextDocumentService.ChoreographyDiagramErrorResult.class,
-                service.choreographyDiagram(Map.of()).join());
+        ResponseError error = diagramError(service.choreographyDiagram(
+                new TextDocumentPositionParams()));
 
-        assertEquals("invalidParams", result.error.code());
+        assertEquals(ResponseErrorCode.InvalidParams.getValue(), error.getCode());
+        assertEquals("The choreography request did not include a document URI.", error.getMessage());
+    }
+
+    @Test
+    public void requiresAChoreographyRequestPosition() {
+        ChoralTextDocumentService service = new ChoralTextDocumentService();
+        TextDocumentPositionParams params = new TextDocumentPositionParams();
+        params.setTextDocument(new TextDocumentIdentifier("file:///Example.ch"));
+
+        ResponseError error = diagramError(service.choreographyDiagram(params));
+
+        assertEquals(ResponseErrorCode.InvalidParams.getValue(), error.getCode());
+        assertEquals("The choreography request did not include a cursor position.", error.getMessage());
+    }
+
+    @Test
+    public void reportsUnexpectedAnalysisFailuresAsInternalErrors(@TempDir Path project) {
+        String uri = project.resolve("Example.ch").toUri().toString();
+        String source = "class Example@( A, B ) { void run() {} }";
+        DiagnosticsProvider diagnostics = new DiagnosticsProvider() {
+            @Override
+            public AnalysisResult analyzeTyped(String uri, String content) {
+                throw new IllegalStateException("analysis failed");
+            }
+        };
+        ChoralTextDocumentService service = new ChoralTextDocumentService(diagnostics);
+        service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
+
+        ResponseError error = diagramError(diagramAt(service, uri, source, "run()"));
+
+        assertEquals(ResponseErrorCode.InternalError.getValue(), error.getCode());
+        assertEquals("Unable to analyze the Choral document: analysis failed", error.getMessage());
     }
 
     @Test
@@ -176,8 +211,8 @@ public class ChoralTextDocumentServiceTest {
         ChoralTextDocumentService service = new ChoralTextDocumentService(diagnostics);
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
 
-        assertInstanceOf(String.class, diagramAt(service, uri, source, "run()").join());
-        assertInstanceOf(String.class, diagramAt(service, uri, source, "run()").join());
+        diagramAt(service, uri, source, "run()").join();
+        diagramAt(service, uri, source, "run()").join();
 
         assertEquals(1, diagnostics.analyses());
     }
@@ -194,8 +229,7 @@ public class ChoralTextDocumentServiceTest {
         service.didChange(new DidChangeTextDocumentParams(
                 new VersionedTextDocumentIdentifier(uri, 2),
                 List.of(new TextDocumentContentChangeEvent(second))));
-        String diagram = assertInstanceOf(
-                String.class, diagramAt(service, uri, second, "second()").join());
+        String diagram = diagramAt(service, uri, second, "second()").join();
 
         assertTrue(diagram.contains("participant p0 as X"));
         assertFalse(diagram.contains("participant p0 as A"));
@@ -235,17 +269,15 @@ public class ChoralTextDocumentServiceTest {
                             List.of(new TextDocumentContentChangeEvent(second)))), executor);
             assertTrue(diagnostics.awaitAnalysis());
 
-            CompletableFuture<Object> firstRequest = diagramAt(service, uri, second, "second()");
-            CompletableFuture<Object> secondRequest = diagramAt(service, uri, second, "second()");
+            CompletableFuture<String> firstRequest = diagramAt(service, uri, second, "second()");
+            CompletableFuture<String> secondRequest = diagramAt(service, uri, second, "second()");
             assertFalse(firstRequest.isDone());
             assertFalse(secondRequest.isDone());
 
             diagnostics.releaseAnalysis();
             change.get(10, TimeUnit.SECONDS);
-            String firstDiagram = assertInstanceOf(
-                    String.class, firstRequest.get(10, TimeUnit.SECONDS));
-            String secondDiagram = assertInstanceOf(
-                    String.class, secondRequest.get(10, TimeUnit.SECONDS));
+            String firstDiagram = firstRequest.get(10, TimeUnit.SECONDS);
+            String secondDiagram = secondRequest.get(10, TimeUnit.SECONDS);
             assertTrue(firstDiagram.contains("participant p0 as X"));
             assertEquals(firstDiagram, secondDiagram);
             assertEquals(2, diagnostics.analyses());
@@ -280,8 +312,7 @@ public class ChoralTextDocumentServiceTest {
         ChoralTextDocumentService service = new ChoralTextDocumentService(diagnostics);
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
 
-        String diagram = assertInstanceOf(
-                String.class, diagramAt(service, uri, source, "channel.< String >com").join());
+        String diagram = diagramAt(service, uri, source, "channel.< String >com").join();
 
         assertTrue(diagram.contains("p0->>p1: local"));
         assertEquals(1, diagnostics.analyses());
@@ -341,7 +372,7 @@ public class ChoralTextDocumentServiceTest {
                 diagramAt(service, uri, source, "helper.send").join());
     }
 
-    private static CompletableFuture<Object> diagramAt(
+    private static CompletableFuture<String> diagramAt(
             ChoralTextDocumentService service, String uri, String source, String marker
     ) {
         int offset = source.indexOf(marker);
@@ -355,9 +386,15 @@ public class ChoralTextDocumentServiceTest {
                 character++;
             }
         }
-        return service.choreographyDiagram(Map.of(
-                "textDocument", Map.of("uri", uri),
-                "position", Map.of("line", line, "character", character)));
+        return service.choreographyDiagram(new TextDocumentPositionParams(
+                new TextDocumentIdentifier(uri), new Position(line, character)));
+    }
+
+    private static ResponseError diagramError(CompletableFuture<String> request) {
+        CompletionException completion = assertThrows(CompletionException.class, request::join);
+        ResponseErrorException failure = assertInstanceOf(
+                ResponseErrorException.class, completion.getCause());
+        return failure.getResponseError();
     }
 
     private static class CountingDiagnosticsProvider extends DiagnosticsProvider {

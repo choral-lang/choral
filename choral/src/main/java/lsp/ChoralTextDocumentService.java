@@ -1,10 +1,5 @@
 package lsp;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-
 import choral.diagrams.ChoreographyDiagramProvider;
 import choral.diagrams.ChoreographyDiagramProvider.Position;
 
@@ -24,6 +19,10 @@ import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
@@ -33,7 +32,6 @@ import lsp.features.DiagnosticsProvider.AnalysisFailure;
 import lsp.features.DiagnosticsProvider.AnalysisResult;
 
 public class ChoralTextDocumentService implements TextDocumentService {
-    private static final Gson GSON = new Gson();
     private final DiagnosticsProvider diagnosticsProvider;
     private final ChoreographyDiagramProvider choreographyDiagramProvider;
     private final Map<String, DocumentState> documents = new ConcurrentHashMap<>();
@@ -85,37 +83,39 @@ public class ChoralTextDocumentService implements TextDocumentService {
     }
 
     @JsonRequest("choral/choreographyDiagram")
-    public CompletableFuture<Object> choreographyDiagram(Object params) {
-        Map<String, Object> request = requestObject(params);
-        if (request.isEmpty()) {
-            System.err.println("Unsupported choreography request payload: " + (params == null ? "null" : params.getClass().getName()) + " " + params);
+    public CompletableFuture<String> choreographyDiagram(TextDocumentPositionParams params) {
+        if (params == null || params.getTextDocument() == null
+                || params.getTextDocument().getUri() == null) {
+            return CompletableFuture.failedFuture(diagramFailure(
+                    "The choreography request did not include a document URI.",
+                    ResponseErrorCode.InvalidParams));
         }
-        String uri = stringAt(request, "textDocument", "uri");
-        if (uri == null) {
-            return CompletableFuture.completedFuture(diagramError(
-                    "The choreography request did not include a document URI.", "invalidParams"));
+        String uri = params.getTextDocument().getUri();
+        if (params.getPosition() == null) {
+            return CompletableFuture.failedFuture(diagramFailure(
+                    "The choreography request did not include a cursor position.",
+                    ResponseErrorCode.InvalidParams));
         }
         Position position = new Position(
-                numberAt(request, "position", "line"),
-                numberAt(request, "position", "character"));
+                params.getPosition().getLine(), params.getPosition().getCharacter());
         return diagram(uri, position);
     }
 
-    private CompletableFuture<Object> diagram(String uri, Position position) {
+    private CompletableFuture<String> diagram(String uri, Position position) {
         DocumentState state = documents.get(uri);
         if (state != null)
             return diagram(uri, position, state, true);
         String content = readFileDocument(uri);
         if (content == null)
-            return CompletableFuture.completedFuture(diagramError(
+            return CompletableFuture.failedFuture(diagramFailure(
                     "The document is not open in the Choral language server and could not be read from disk.",
-                    "documentUnavailable"));
+                    ResponseErrorCode.RequestFailed));
         DocumentState detached = new DocumentState(null, content, new CompletableFuture<>());
         analyze(uri, detached);
         return diagram(uri, position, detached, false);
     }
 
-    private CompletableFuture<Object> diagram(
+    private CompletableFuture<String> diagram(
             String uri, Position position, DocumentState state, boolean cached
     ) {
         return state.analysis().handle((analysis, failure) -> {
@@ -130,21 +130,21 @@ public class ChoralTextDocumentService implements TextDocumentService {
         }).thenCompose(result -> result);
     }
 
-    private Object diagram(AnalysisResult analysis, Throwable failure, Position position) {
+    private String diagram(AnalysisResult analysis, Throwable failure, Position position) {
         if (failure != null)
-            return diagramError(
+            throw diagramFailure(
                     "Unable to analyze the Choral document: " + failure.getMessage(),
-                    "typeError");
+                    ResponseErrorCode.InternalError);
         if (!analysis.successful()) {
             boolean parseError = analysis.failure() == AnalysisFailure.PARSE_ERROR;
             String action = parseError ? "parse" : "type-check";
-            return diagramError("Unable to " + action + " the Choral document: "
-                    + analysis.failureMessage(), parseError ? "parseError" : "typeError");
+            throw diagramFailure("Unable to " + action + " the Choral document: "
+                    + analysis.failureMessage(), ResponseErrorCode.RequestFailed);
         }
         return choreographyDiagramProvider.diagram(analysis.compilationUnit(), position)
-                .<Object>map(diagram -> diagram)
-                .orElseGet(() -> diagramError(
-                        "No choreography method was found at the cursor.", "noSymbol"));
+                .orElseThrow(() -> diagramFailure(
+                        "No choreography method was found at the cursor.",
+                        ResponseErrorCode.RequestFailed));
     }
 
     private String readFileDocument(String uri) {
@@ -155,28 +155,6 @@ public class ChoralTextDocumentService implements TextDocumentService {
             System.err.println("Unable to read choreography document " + uri + ": " + exception.getMessage());
             return null;
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> requestObject(Object params) {
-        if (params instanceof Map<?, ?> map) return (Map<String, Object>) map;
-        if (params instanceof List<?> list && list.size() == 1) return requestObject(list.get(0));
-        if (params instanceof JsonArray array && array.size() == 1) return requestObject(array.get(0));
-        if (params instanceof JsonObject object) return GSON.fromJson(object, Map.class);
-        if (params instanceof JsonElement element && element.isJsonObject()) return GSON.fromJson(element, Map.class);
-        return Map.of();
-    }
-
-    private static String stringAt(Map<String, Object> params, String objectName, String propertyName) {
-        if (!(params.get(objectName) instanceof Map<?, ?> object)) return null;
-        Object value = object.get(propertyName);
-        return value instanceof String string ? string : null;
-    }
-
-    private static int numberAt(Map<String, Object> params, String objectName, String propertyName) {
-        if (!(params.get(objectName) instanceof Map<?, ?> object)) return 0;
-        Object value = object.get(propertyName);
-        return value instanceof Number number ? number.intValue() : 0;
     }
 
     private void updateDocument(String uri, Integer version, String content) {
@@ -236,19 +214,10 @@ public class ChoralTextDocumentService implements TextDocumentService {
         System.err.println("Diagnostics published successfully");
     }
 
-    private static ChoreographyDiagramErrorResult diagramError(String message, String code) {
-        return new ChoreographyDiagramErrorResult(message, code);
-    }
-
-    public static final class ChoreographyDiagramErrorResult {
-        public final ChoreographyDiagramError error;
-
-        private ChoreographyDiagramErrorResult(String message, String code) {
-            error = new ChoreographyDiagramError(message, code);
-        }
-    }
-
-    public record ChoreographyDiagramError(String message, String code) {
+    private static ResponseErrorException diagramFailure(
+            String message, ResponseErrorCode code
+    ) {
+        return new ResponseErrorException(new ResponseError(code, message, null));
     }
 
     private record DocumentState(
