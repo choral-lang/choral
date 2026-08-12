@@ -335,9 +335,10 @@ public class ChoralTextDocumentServiceTest {
                 participant p0 as A
                 participant p1 as B
                 Note over p0,p1: Root.run
-                Note over p0,p1: call Helper.send
+                rect rgba(0, 0, 0, 0.05)
+                Note left of p0: call Helper.send
                 p1->>p0: value
-                Note over p0,p1: return Helper.send
+                end
                 """.strip(),
                 diagramAt(service, uri, source, "helper.send").join());
     }

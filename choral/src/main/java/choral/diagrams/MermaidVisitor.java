@@ -57,8 +57,6 @@ import java.util.stream.Collectors;
  * statements, expressions, and source-backed method calls in execution order.
  */
 public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
-    /** Default nesting limit for expanded helper bodies. */
-    public static final int DEFAULT_MAXIMUM_HELPER_DEPTH = 16;
     /** Default total number of helper bodies expanded in one diagram. */
     public static final int DEFAULT_MAXIMUM_HELPER_EXPANSIONS = 128;
 
@@ -66,8 +64,6 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     private final List<String> diagramLines = new ArrayList<>();
     /** Formats Choral AST fragments used as human-readable Mermaid labels. */
     private final PrettyPrinterVisitor prettyPrinter = new PrettyPrinterVisitor();
-    /** Maximum number of nested source-backed method bodies to expand. */
-    private final int maximumHelperDepth;
     /** Maximum total number of source-backed method bodies to expand. */
     private final int maximumHelperExpansions;
     /** Methods declared directly by the root choreography, tracked by AST identity. */
@@ -82,35 +78,28 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     private final String rootDeclarationName;
     /** Total source-backed method bodies expanded during the current render. */
     private int helperExpansions;
-    /** Whether the depth-limit truncation note has already been emitted. */
-    private boolean helperDepthLimitReported;
     /** Whether the total-expansion-limit note has already been emitted. */
     private boolean helperCountLimitReported;
 
     public static String render(
             TemplateDeclaration declaration, MethodDefinition method) {
-        return render(declaration, method, DEFAULT_MAXIMUM_HELPER_DEPTH,
-                DEFAULT_MAXIMUM_HELPER_EXPANSIONS);
+        return render(declaration, method, DEFAULT_MAXIMUM_HELPER_EXPANSIONS);
     }
 
     public static String render(
             TemplateDeclaration declaration, MethodDefinition method,
-            int maximumHelperDepth, int maximumHelperExpansions) {
+            int maximumHelperExpansions) {
         Objects.requireNonNull(declaration, "declaration");
         Objects.requireNonNull(method, "method");
-        return new MermaidVisitor(declaration, maximumHelperDepth, maximumHelperExpansions)
+        return new MermaidVisitor(declaration, maximumHelperExpansions)
                 .render(method);
     }
 
     private MermaidVisitor(
             TemplateDeclaration declaration,
-            int maximumHelperDepth,
             int maximumHelperExpansions) {
-        if (maximumHelperDepth < 0)
-            throw new IllegalArgumentException("maximumHelperDepth must not be negative");
         if (maximumHelperExpansions < 0)
             throw new IllegalArgumentException("maximumHelperExpansions must not be negative");
-        this.maximumHelperDepth = maximumHelperDepth;
         this.maximumHelperExpansions = maximumHelperExpansions;
         localMethods = Collections.newSetFromMap(new IdentityHashMap<>());
         if (declaration instanceof choral.ast.body.Class type)
@@ -194,7 +183,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         visitExpression(statement.condition());
         List<Branch> branches = new ArrayList<>();
         branches.add(new Branch(
-                escapeMermaid(expressionLabel(statement.condition())),
+                escapeMermaid(groundedExpressionLabel(statement.condition())),
                 capture(() -> visitStatement(statement.ifBranch()))));
         if (!(statement.elseBranch() instanceof NilStatement)) {
             branches.add(new Branch("", capture(() -> visitStatement(statement.elseBranch()))));
@@ -210,7 +199,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         List<Branch> branches = new ArrayList<>();
         for (var switchCase : statement.cases().entrySet()) {
             branches.add(new Branch(
-                    switchCaseLabel(statement.guard(), switchCase.getKey()),
+                    escapeMermaid(switchCaseLabel(statement.guard(), switchCase.getKey())),
                     capture(() -> visitStatement(switchCase.getValue()))));
         }
         addBlock("alt", "else", branches);
@@ -459,14 +448,6 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
             addNote("recursive call to " + methodName + " omitted");
             return;
         }
-        if (activeMethods.size() - 1 >= maximumHelperDepth) {
-            if (!helperDepthLimitReported) {
-                addNote("helper expansion depth limit " + maximumHelperDepth
-                        + " reached - deeper helper calls omitted");
-                helperDepthLimitReported = true;
-            }
-            return;
-        }
         if (helperExpansions >= maximumHelperExpansions) {
             if (!helperCountLimitReported) {
                 addNote("helper expansion count limit " + maximumHelperExpansions
@@ -477,20 +458,18 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         }
         activeMethods.add(method);
         helperExpansions++;
-        int contextLine = diagramLines.size();
-        addNote("call " + methodName);
-        boolean contextAdded = diagramLines.size() > contextLine;
-        int bodyLine = diagramLines.size();
+        List<String> body;
         try {
-            method.accept(this);
+            body = capture(() -> method.accept(this));
         } finally {
             activeMethods.remove(method);
         }
-        if (diagramLines.size() == bodyLine) {
-            if (contextAdded)
-                diagramLines.remove(contextLine);
-        } else {
-            addNote("return " + methodName);
+        if (!body.isEmpty()) {
+            diagramLines.add("rect rgba(0, 0, 0, 0.05)");
+            diagramLines.add("Note left of " + participantId(participantWorlds.get(0))
+                    + ": " + escapeMermaid("call " + methodName));
+            diagramLines.addAll(body);
+            diagramLines.add("end");
         }
     }
 
@@ -570,7 +549,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
                 method.signature().parameters().get(0).type().worldArguments().get(0).identifier());
         String to = groundedWorld(returnType.worldArguments().get(0).identifier());
         diagramLines.add(participantId(from) + (selection ? "-->>" : "->>") + participantId(to)
-                + ": " + eventLabel(call));
+                + ": " + escapeMermaid(eventLabel(call)));
     }
 
     private static boolean isChannelReceiver(Expression receiver) {
@@ -592,13 +571,13 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
 
     private String eventLabel(MethodCallExpression call) {
         if (!call.arguments().isEmpty())
-            return escapeMermaid(expressionLabel(call.arguments().get(0)));
+            return groundedExpressionLabel(call.arguments().get(0));
         if (!call.typeArguments().isEmpty())
-            return escapeMermaid(prettyPrinter.visit(call.typeArguments().get(0)));
-        return escapeMermaid(call.name().identifier());
+            return prettyPrinter.visit(call.typeArguments().get(0));
+        return call.name().identifier();
     }
 
-    private String expressionLabel(Expression expression) {
+    private String groundedExpressionLabel(Expression expression) {
         if (expression instanceof EnumCaseInstantiationExpression enumCase)
             return enumCase.name().identifier() + "@"
                     + groundedWorld(enumCase.world().name().identifier())
@@ -647,8 +626,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         } else {
             value = switchCase.argument().toString();
         }
-        return escapeMermaid(expressionLabel(guard)) + " = "
-                + escapeMermaid(groundedWorldReferences(value));
+        return groundedExpressionLabel(guard) + " = " + groundedWorldReferences(value);
     }
 
     private String participantId(String world) {

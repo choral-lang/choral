@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -50,9 +51,10 @@ public class MermaidTest {
 					participant p0 as A
 					participant p1 as B
 					Note over p0,p1: Evaluation.run
-					Note over p0,p1: call route
+					rect rgba(0, 0, 0, 0.05)
+					Note left of p0: call route
 					p0->>p1: before
-					Note over p0,p1: return route
+					end
 					p0->>p1: after
 					""".strip(),
 				mermaidAt( source, "this.route" ) );
@@ -565,18 +567,21 @@ public class MermaidTest {
 				participant p1 as B
 				participant p2 as C
 				Note over p0,p2: Checkout.run
-				Note over p0,p2: call receive
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call receive
 				p0->>p1: order
-				Note over p0,p2: return receive
-				Note over p0,p2: call ship
+				end
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call ship
 				alt ready
-				Note over p0,p2: call notifyWarehouse
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call notifyWarehouse
 				p1->>p2: shipment
-				Note over p0,p2: return notifyWarehouse
+				end
 				else
 				p1->>p2: shipment
 				end
-				Note over p0,p2: return ship
+				end
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -608,9 +613,10 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: EvaluationOrder.run
 				p0->>p1: value
-				Note over p0,p1: call respond
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call respond
 				p1->>p0: received
-				Note over p0,p1: return respond
+				end
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -645,9 +651,10 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Root.run
-				Note over p0,p1: call External.send
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call External.send
 				p0->>p1: value
-				Note over p0,p1: return External.send
+				end
 				""".strip(),
 				mermaidAt( source, "external.send" ) );
 	}
@@ -682,9 +689,10 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Root.run
-				Note over p0,p1: call External.send
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call External.send
 				p1->>p0: value
-				Note over p0,p1: return External.send
+				end
 				""".strip(),
 				mermaidAt( source, "external.send" ) );
 	}
@@ -718,9 +726,10 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Root.run
-				Note over p0,p1: call External.decide
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call External.decide
 				p1-->>p0: Decision@B.READY
-				Note over p0,p1: return External.decide
+				end
 				""".strip(),
 				mermaidAt( source, "external.decide" ) );
 	}
@@ -759,10 +768,11 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Root.run
-				Note over p0,p1: call External.decide
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call External.decide
 				p1-->>p0: Decision@B.FIRST
 				p0-->>p1: Decision@A.SECOND
-				Note over p0,p1: return External.decide
+				end
 				p0-->>p1: Decision@A.FIRST
 				""".strip(),
 				mermaidAt( source, "external.decide" ) );
@@ -799,10 +809,11 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Root.run
-				Note over p0,p1: call External.send
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call External.send
 				p1->>p0: "first"@B
 				p0->>p1: "second"@A
-				Note over p0,p1: return External.send
+				end
 				""".strip(),
 				mermaidAt( source, "external.send" ) );
 	}
@@ -840,12 +851,13 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Root.run
-				Note over p0,p1: call External.recover
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call External.recover
 				critical try
 				option catch Exception@( B ) error
 				p1->>p0: value
 				end
-				Note over p0,p1: return External.recover
+				end
 				""".strip(),
 				mermaidAt( source, "external.recover" ) );
 	}
@@ -881,9 +893,10 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Root.run
-				Note over p0,p1: call External.send
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call External.send
 				p1->>p0: new Payload@( B )()
-				Note over p0,p1: return External.send
+				end
 				""".strip(),
 				mermaidAt( source, "external.send" ) );
 	}
@@ -958,9 +971,10 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Root.run
-				Note over p0,p1: call Base.send
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call Base.send
 				p1->>p0: value
-				Note over p0,p1: return Base.send
+				end
 				""".strip(),
 				mermaidAt( source, "child.send" ) );
 	}
@@ -994,9 +1008,10 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Root.run
-				Note over p0,p1: call External.send
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call External.send
 				p1->>p0: value
-				Note over p0,p1: return External.send
+				end
 				""".strip(),
 				mermaidAt( source, "External@( B, A ).send" ) );
 	}
@@ -1040,12 +1055,14 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Root.run
-				Note over p0,p1: call External.send(SymChannel@( A, B ) Object , String@( A ))
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call External.send(SymChannel@( A, B ) Object , String@( A ))
 				p0->>p1: value
-				Note over p0,p1: return External.send(SymChannel@( A, B ) Object , String@( A ))
-				Note over p0,p1: call External.send(SymChannel@( B, A ) Object , String@( B ))
+				end
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call External.send(SymChannel@( B, A ) Object , String@( B ))
 				p1->>p0: value
-				Note over p0,p1: return External.send(SymChannel@( B, A ) Object , String@( B ))
+				end
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -1089,9 +1106,10 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Root.run
-				Note over p0,p1: call Helper.send
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call Helper.send
 				p1->>p0: value
-				Note over p0,p1: return Helper.send
+				end
 				""".strip(),
 				mermaidAt( List.of( helper, root ), 1, "helper.send" ) );
 	}
@@ -1130,10 +1148,11 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: First.start
-				Note over p0,p1: call Second.forward
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call Second.forward
 				p0->>p1: value
 				Note over p0,p1: recursive call to start omitted
-				Note over p0,p1: return Second.forward
+				end
 				""".strip(),
 				mermaidAt( source, "void start" ) );
 	}
@@ -1169,12 +1188,14 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Overloaded.run
-				Note over p0,p1: call send(String@( A ))
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call send(String@( A ))
 				p0->>p1: value
-				Note over p0,p1: return send(String@( A ))
-				Note over p0,p1: call send(String@( B ))
+				end
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call send(String@( B ))
 				p1->>p0: value
-				Note over p0,p1: return send(String@( B ))
+				end
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
@@ -1265,59 +1286,57 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: MutuallyRecursive.run
-				Note over p0,p1: call first
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call first
 				p0->>p1: value
-				Note over p0,p1: call second
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call second
 				Note over p0,p1: recursive call to first omitted
-				Note over p0,p1: return second
-				Note over p0,p1: return first
+				end
+				end
 				""".strip(),
 				mermaidAt( source, "void run" ) );
 	}
 
 	@Test
-	public void helperDepthLimitPreservesBalancedControlFlow() {
+	public void helperExpansionHasNoDepthLimit() {
 		String source =
 			"""
 			import choral.channels.SymChannel;
 
 			class Deep@( A, B ) {
 				SymChannel@( A, B )< Object > channel;
+				String@A value;
 
-				void run( Boolean@A ready, String@A value ) {
-					guarded( ready, value );
+				void run() {
+					helper0();
 				}
 
-				private void guarded( Boolean@A ready, String@A value ) {
-					if( ready ) {
-						deeper( value );
-						deeper( value );
-					} else {
-						channel.< String >com( value );
-					}
-				}
-
-				private void deeper( String@A value ) {
-					channel.< String >com( value );
-				}
+				private void helper0() { helper1(); }
+				private void helper1() { helper2(); }
+				private void helper2() { helper3(); }
+				private void helper3() { helper4(); }
+				private void helper4() { helper5(); }
+				private void helper5() { helper6(); }
+				private void helper6() { helper7(); }
+				private void helper7() { helper8(); }
+				private void helper8() { helper9(); }
+				private void helper9() { helper10(); }
+				private void helper10() { helper11(); }
+				private void helper11() { helper12(); }
+				private void helper12() { helper13(); }
+				private void helper13() { helper14(); }
+				private void helper14() { helper15(); }
+				private void helper15() { helper16(); }
+				private void helper16() { channel.< String >com( value ); }
 			}
 			""";
 
-		assertEquals(
-			"""
-				sequenceDiagram
-				participant p0 as A
-				participant p1 as B
-				Note over p0,p1: Deep.run
-				Note over p0,p1: call guarded
-				alt ready
-				Note over p0,p1: helper expansion depth limit 1 reached - deeper helper calls omitted
-				else
-				p0->>p1: value
-				end
-				Note over p0,p1: return guarded
-				""".strip(),
-				mermaidWithLimits( source, 1, 10 ) );
+		String mermaid = mermaidAt( source, "void run" );
+
+		assertTrue( mermaid.contains( "Note left of p0: call helper16" ) );
+		assertTrue( mermaid.contains( "p0->>p1: value" ) );
+		assertFalse( mermaid.contains( "helper expansion depth limit" ) );
 	}
 
 	@Test
@@ -1348,15 +1367,17 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Repeated.run
-				Note over p0,p1: call send
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call send
 				p0->>p1: value
-				Note over p0,p1: return send
-				Note over p0,p1: call send
+				end
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call send
 				p0->>p1: value
-				Note over p0,p1: return send
+				end
 				Note over p0,p1: helper expansion count limit 2 reached - remaining helper calls omitted
 				""".strip(),
-				mermaidWithLimits( source, 10, 2 ) );
+				mermaidWithExpansionLimit( source, 2 ) );
 	}
 
 	@Test
@@ -1401,9 +1422,7 @@ public class MermaidTest {
 					""".strip(),
 				MermaidVisitor.render( declaration, declaration.methods().get( 1 ) ) );
 		assertThrows( IllegalArgumentException.class,
-				() -> MermaidVisitor.render( declaration, declaration.methods().get( 0 ), -1, 1 ) );
-		assertThrows( IllegalArgumentException.class,
-				() -> MermaidVisitor.render( declaration, declaration.methods().get( 0 ), 1, -1 ) );
+				() -> MermaidVisitor.render( declaration, declaration.methods().get( 0 ), -1 ) );
 		assertThrows( NullPointerException.class,
 				() -> MermaidVisitor.render( null, declaration.methods().get( 0 ) ) );
 		assertThrows( NullPointerException.class,
@@ -1724,13 +1743,13 @@ public class MermaidTest {
 		}
 	}
 
-	private static String mermaidWithLimits(
-			String source, int maximumHelperDepth, int maximumHelperExpansions ) {
+	private static String mermaidWithExpansionLimit(
+			String source, int maximumHelperExpansions ) {
 		try {
 			var unit = typedUnits( List.of( source ) ).get( 0 );
 			var declaration = unit.classes().get( 0 );
 			return MermaidVisitor.render( declaration, declaration.methods().get( 0 ),
-					maximumHelperDepth, maximumHelperExpansions );
+					maximumHelperExpansions );
 		} catch( Exception exception ) {
 			throw new RuntimeException( exception );
 		}
