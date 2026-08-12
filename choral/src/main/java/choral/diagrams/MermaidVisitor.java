@@ -57,15 +57,13 @@ import java.util.stream.Collectors;
  * statements, expressions, and source-backed method calls in execution order.
  */
 public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
-    /** Default total number of helper bodies expanded in one diagram. */
-    public static final int DEFAULT_MAXIMUM_HELPER_EXPANSIONS = 128;
+    /** Maximum total number of helper bodies expanded in one diagram. */
+    private static final int MAXIMUM_HELPER_EXPANSIONS = 128;
 
     /** Complete Mermaid source lines accumulated during the current render. */
     private final List<String> diagramLines = new ArrayList<>();
     /** Formats Choral AST fragments used as human-readable Mermaid labels. */
     private final PrettyPrinterVisitor prettyPrinter = new PrettyPrinterVisitor();
-    /** Maximum total number of source-backed method bodies to expand. */
-    private final int maximumHelperExpansions;
     /** Methods declared directly by the root choreography, tracked by AST identity. */
     private final Set<MethodDefinition> localMethods;
     /** Methods on the current expansion stack, used to stop recursive expansion. */
@@ -83,24 +81,12 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
 
     public static String render(
             TemplateDeclaration declaration, MethodDefinition method) {
-        return render(declaration, method, DEFAULT_MAXIMUM_HELPER_EXPANSIONS);
-    }
-
-    public static String render(
-            TemplateDeclaration declaration, MethodDefinition method,
-            int maximumHelperExpansions) {
         Objects.requireNonNull(declaration, "declaration");
         Objects.requireNonNull(method, "method");
-        return new MermaidVisitor(declaration, maximumHelperExpansions)
-                .render(method);
+        return new MermaidVisitor(declaration).render(method);
     }
 
-    private MermaidVisitor(
-            TemplateDeclaration declaration,
-            int maximumHelperExpansions) {
-        if (maximumHelperExpansions < 0)
-            throw new IllegalArgumentException("maximumHelperExpansions must not be negative");
-        this.maximumHelperExpansions = maximumHelperExpansions;
+    private MermaidVisitor(TemplateDeclaration declaration) {
         localMethods = Collections.newSetFromMap(new IdentityHashMap<>());
         if (declaration instanceof choral.ast.body.Class type)
             localMethods.addAll(type.methods());
@@ -448,9 +434,9 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
             addNote("recursive call to " + methodName + " omitted");
             return;
         }
-        if (helperExpansions >= maximumHelperExpansions) {
+        if (helperExpansions >= MAXIMUM_HELPER_EXPANSIONS) {
             if (!helperCountLimitReported) {
-                addNote("helper expansion count limit " + maximumHelperExpansions
+                addNote("helper expansion count limit " + MAXIMUM_HELPER_EXPANSIONS
                         + " reached - remaining helper calls omitted");
                 helperCountLimitReported = true;
             }

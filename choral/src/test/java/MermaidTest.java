@@ -1341,6 +1341,7 @@ public class MermaidTest {
 
 	@Test
 	public void helperExpansionCountIsBoundedDeterministically() {
+		String calls = "send( value );\n".repeat( 129 );
 		String source =
 			"""
 			import choral.channels.SymChannel;
@@ -1349,35 +1350,22 @@ public class MermaidTest {
 				SymChannel@( A, B )< Object > channel;
 
 				void run( String@A value ) {
-					send( value );
-					send( value );
-					send( value );
-					send( value );
+					%s
 				}
 
 				private void send( String@A value ) {
 					channel.< String >com( value );
 				}
 			}
-			""";
+			""".formatted( calls );
 
-		assertEquals(
-			"""
-				sequenceDiagram
-				participant p0 as A
-				participant p1 as B
-				Note over p0,p1: Repeated.run
-				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call send
-				p0->>p1: value
-				end
-				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call send
-				p0->>p1: value
-				end
-				Note over p0,p1: helper expansion count limit 2 reached - remaining helper calls omitted
-				""".strip(),
-				mermaidWithExpansionLimit( source, 2 ) );
+		String mermaid = mermaidAt( source, "void run" );
+
+		assertEquals( 128, mermaid.lines()
+				.filter( "Note left of p0: call send"::equals )
+				.count() );
+		assertTrue( mermaid.contains(
+				"helper expansion count limit 128 reached - remaining helper calls omitted" ) );
 	}
 
 	@Test
@@ -1421,8 +1409,6 @@ public class MermaidTest {
 					p1->>p0: value
 					""".strip(),
 				MermaidVisitor.render( declaration, declaration.methods().get( 1 ) ) );
-		assertThrows( IllegalArgumentException.class,
-				() -> MermaidVisitor.render( declaration, declaration.methods().get( 0 ), -1 ) );
 		assertThrows( NullPointerException.class,
 				() -> MermaidVisitor.render( null, declaration.methods().get( 0 ) ) );
 		assertThrows( NullPointerException.class,
@@ -1738,18 +1724,6 @@ public class MermaidTest {
 			var units = typedUnits( sources );
 			return new ChoreographyDiagramProvider().diagram(
 					units.get( unitIndex ), new Position( line, character ) );
-		} catch( Exception exception ) {
-			throw new RuntimeException( exception );
-		}
-	}
-
-	private static String mermaidWithExpansionLimit(
-			String source, int maximumHelperExpansions ) {
-		try {
-			var unit = typedUnits( List.of( source ) ).get( 0 );
-			var declaration = unit.classes().get( 0 );
-			return MermaidVisitor.render( declaration, declaration.methods().get( 0 ),
-					maximumHelperExpansions );
 		} catch( Exception exception ) {
 			throw new RuntimeException( exception );
 		}
