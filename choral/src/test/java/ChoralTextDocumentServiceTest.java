@@ -373,6 +373,225 @@ public class ChoralTextDocumentServiceTest {
     }
 
     @Test
+    public void expandsSamePackageMethodsWithoutAnImport(@TempDir Path project)
+            throws Exception {
+        Path packageFolder = Files.createDirectories(project.resolve("app"));
+        Files.writeString(packageFolder.resolve("Helper.ch"), """
+                package app;
+
+                import choral.channels.SymChannel;
+
+                public class Helper@( Sender, Receiver ) {
+                    public void send(
+                            SymChannel@( Sender, Receiver )< Object > channel,
+                            String@Sender value ) {
+                        channel.< String >com( value );
+                    }
+                }
+                """);
+        Files.writeString(packageFolder.resolve("Helper.chh"), """
+                package app;
+
+                import choral.channels.SymChannel;
+
+                public interface Helper@( Sender, Receiver ) {
+                    public void send(
+                            SymChannel@( Sender, Receiver )< Object > channel,
+                            String@Sender value );
+                }
+                """);
+        String uri = packageFolder.resolve("Root.ch").toUri().toString();
+        String source = """
+                package app;
+
+                import choral.channels.SymChannel;
+
+                class Root@( A, B ) {
+                    void run(
+                            Helper@( B, A ) helper,
+                            SymChannel@( B, A )< Object > channel,
+                            String@B value ) {
+                        helper.send( channel, value );
+                    }
+                }
+                """;
+        ChoralTextDocumentService service = new ChoralTextDocumentService();
+        service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
+
+        String diagram = diagramAt(service, uri, source, "helper.send").join();
+
+        assertTrue(diagram.contains("Note left of p0: call Helper.send"));
+        assertTrue(diagram.contains("p1->>p0: value"));
+    }
+
+    @Test
+    public void expandsHelpersThroughCyclicSourceImports(@TempDir Path project)
+            throws Exception {
+        Path helpers = Files.createDirectories(project.resolve("helpers"));
+        Files.writeString(helpers.resolve("First.ch"), """
+                package helpers;
+
+                import choral.channels.SymChannel;
+                import helpers.Second;
+
+                public class First@( Sender, Receiver ) {
+                    public void send(
+                            Second@( Sender, Receiver ) next,
+                            SymChannel@( Sender, Receiver )< Object > channel,
+                            String@Sender value ) {
+                        next.send( channel, value );
+                    }
+                }
+                """);
+        Files.writeString(helpers.resolve("Second.ch"), """
+                package helpers;
+
+                import choral.channels.SymChannel;
+                import helpers.First;
+
+                public class Second@( Sender, Receiver ) {
+                    public void send(
+                            SymChannel@( Sender, Receiver )< Object > channel,
+                            String@Sender value ) {
+                        channel.< String >com( value );
+                    }
+                }
+                """);
+        String uri = project.resolve("Root.ch").toUri().toString();
+        String source = """
+                package app;
+
+                import choral.channels.SymChannel;
+                import helpers.First;
+                import helpers.Second;
+
+                class Root@( A, B ) {
+                    void run(
+                            First@( B, A ) first,
+                            Second@( B, A ) second,
+                            SymChannel@( B, A )< Object > channel,
+                            String@B value ) {
+                        first.send( second, channel, value );
+                    }
+                }
+                """;
+        ChoralTextDocumentService service = new ChoralTextDocumentService();
+        service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
+
+        String diagram = diagramAt(service, uri, source, "first.send").join();
+
+        assertTrue(diagram.contains("call First.send"));
+        assertTrue(diagram.contains("call Second.send"));
+        assertTrue(diagram.contains("p1->>p0: value"));
+    }
+
+    @Test
+    public void wildcardImportsDoNotLoadUnreferencedBrokenSources(@TempDir Path project)
+            throws Exception {
+        Path helpers = Files.createDirectories(project.resolve("helpers"));
+        Files.writeString(helpers.resolve("Helper.ch"), """
+                package helpers;
+
+                import choral.channels.SymChannel;
+
+                public class Helper@( Sender, Receiver ) {
+                    public void send(
+                            SymChannel@( Sender, Receiver )< Object > channel,
+                            String@Sender value ) {
+                        channel.< String >com( value );
+                    }
+                }
+                """);
+        Files.writeString(helpers.resolve("Broken.ch"), """
+                package helpers;
+
+                public class Broken@( A ) {
+                    public void fail( Missing@A value ) {}
+                }
+                """);
+        String uri = project.resolve("Root.ch").toUri().toString();
+        String source = """
+                package app;
+
+                import choral.channels.SymChannel;
+                import helpers.*;
+
+                class Root@( A, B ) {
+                    void run(
+                            Helper@( B, A ) helper,
+                            SymChannel@( B, A )< Object > channel,
+                            String@B value ) {
+                        helper.send( channel, value );
+                    }
+                }
+                """;
+        ChoralTextDocumentService service = new ChoralTextDocumentService();
+        service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
+
+        String diagram = diagramAt(service, uri, source, "helper.send").join();
+
+        assertTrue(diagram.contains("call Helper.send"));
+        assertTrue(diagram.contains("p1->>p0: value"));
+    }
+
+    @Test
+    public void expandsInheritedMethodsFromSamePackageSources(@TempDir Path project)
+            throws Exception {
+        Path packageFolder = Files.createDirectories(project.resolve("app"));
+        Files.writeString(packageFolder.resolve("Base.ch"), """
+                package app;
+
+                import choral.channels.SymChannel;
+
+                public class Base@( Sender, Receiver ) {
+                    public void send(
+                            SymChannel@( Sender, Receiver )< Object > channel,
+                            String@Sender value ) {
+                        channel.< String >com( value );
+                    }
+                }
+                """);
+        Files.writeString(packageFolder.resolve("Base.chh"), """
+                package app;
+
+                import choral.channels.SymChannel;
+
+                public class Base@( Sender, Receiver ) {
+                    public void send(
+                            SymChannel@( Sender, Receiver )< Object > channel,
+                            String@Sender value );
+                }
+                """);
+        Files.writeString(packageFolder.resolve("Child.ch"), """
+                package app;
+
+                public class Child@( Left, Right ) extends Base@( Left, Right ) {}
+                """);
+        String uri = packageFolder.resolve("Root.ch").toUri().toString();
+        String source = """
+                package app;
+
+                import choral.channels.SymChannel;
+
+                class Root@( A, B ) {
+                    void run(
+                            Child@( B, A ) child,
+                            SymChannel@( B, A )< Object > channel,
+                            String@B value ) {
+                        child.send( channel, value );
+                    }
+                }
+                """;
+        ChoralTextDocumentService service = new ChoralTextDocumentService();
+        service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
+
+        String diagram = diagramAt(service, uri, source, "child.send").join();
+
+        assertTrue(diagram.contains("call Base.send"));
+        assertTrue(diagram.contains("p1->>p0: value"));
+    }
+
+    @Test
     public void doesNotAttributeImportedSourceErrorsToTheActiveDocument(@TempDir Path project)
             throws Exception {
         Files.writeString(project.resolve("Helper.ch"), """

@@ -1,6 +1,10 @@
 package lsp.features;
 
 import choral.ast.CompilationUnit;
+import choral.ast.Node;
+import choral.ast.body.Class;
+import choral.ast.type.TypeExpression;
+import choral.ast.visitors.ChoralVisitor;
 import choral.compiler.HeaderLoader;
 import choral.compiler.Parser;
 import choral.compiler.Typer;
@@ -122,15 +126,27 @@ public class TypedSourceAnalyzer {
 		pending.add( new SourceUnit( normalisedActivePath, activeUnit ) );
 		while( !pending.isEmpty() ) {
 			SourceUnit source = pending.remove();
+			Set< String > referencedTypes = referencedTypes( source.unit() );
+			String packageName = source.unit().packageDeclaration().orElse( "" );
+			for( String typeName : referencedTypes ) {
+				if( typeName.contains( "." ) ) continue;
+				String qualifiedName = packageName.isEmpty()
+						? typeName : packageName + "." + typeName;
+				addSource( source.path().getParent().resolve( typeName + ".ch" ),
+						qualifiedName, false, sourceOverlays, units, pending );
+			}
 			for( var imported : source.unit().imports() ) {
 				String name = imported.name();
 				if( imported.isOnDemand() ) {
-					String packageName = name.substring( 0, name.length() - 2 );
+					String importedPackage = name.substring( 0, name.length() - 2 );
 					Path packagePath = sourceRoot.resolve(
-							packageName.replace( '.', java.io.File.separatorChar ) );
-					for( Path path : packageSources( packagePath, sourceOverlays ) )
-						addSource( path, packageName, true,
+							importedPackage.replace( '.', java.io.File.separatorChar ) );
+					for( String typeName : referencedTypes ) {
+						if( typeName.contains( "." ) ) continue;
+						addSource( packagePath.resolve( typeName + ".ch" ),
+								importedPackage + "." + typeName, false,
 								sourceOverlays, units, pending );
+					}
 				} else {
 					String simpleName = name.substring( name.lastIndexOf( '.' ) + 1 );
 					addSource( source.path().getParent().resolve( simpleName + ".ch" ),
@@ -144,25 +160,26 @@ public class TypedSourceAnalyzer {
 		return List.copyOf( units.values() );
 	}
 
-	private static Set< Path > packageSources(
-			Path packagePath, Map< Path, String > sourceOverlays
-	) throws Exception {
-		Path normalisedPackagePath = normalise( packagePath );
-		Set< Path > sources = new LinkedHashSet<>();
-		if( Files.isDirectory( normalisedPackagePath ) ) {
-			try( Stream< Path > files = Files.list( normalisedPackagePath ) ) {
-				files.filter( TypedSourceAnalyzer::isChoralSource )
-						.sorted()
-						.map( TypedSourceAnalyzer::normalise )
-						.forEach( sources::add );
-			}
+	private static Set< String > referencedTypes( CompilationUnit unit ) {
+		ReferencedTypesVisitor visitor = new ReferencedTypesVisitor();
+		unit.accept( visitor );
+		return visitor.names;
+	}
+
+	private static final class ReferencedTypesVisitor extends ChoralVisitor {
+		private final Set< String > names = new LinkedHashSet<>();
+
+		@Override
+		public Node visit( Class type ) {
+			type.superClass().ifPresent( parent -> parent.accept( this ) );
+			return super.visit( type );
 		}
-		sourceOverlays.keySet().stream()
-				.filter( TypedSourceAnalyzer::hasChoralExtension )
-				.filter( path -> normalisedPackagePath.equals( path.getParent() ) )
-				.sorted()
-				.forEach( sources::add );
-		return sources;
+
+		@Override
+		public Node visit( TypeExpression type ) {
+			names.add( type.name().identifier() );
+			return super.visit( type );
+		}
 	}
 
 	private static void addSource(
@@ -220,14 +237,6 @@ public class TypedSourceAnalyzer {
 			if( path != null ) overlays.put( normalise( path ), content );
 		} );
 		return overlays;
-	}
-
-	private static boolean isChoralSource( Path path ) {
-		return Files.isRegularFile( path ) && hasChoralExtension( path );
-	}
-
-	private static boolean hasChoralExtension( Path path ) {
-		return path.toString().toLowerCase().endsWith( ".ch" );
 	}
 
 	private static Path sourcePath( String uri ) {
