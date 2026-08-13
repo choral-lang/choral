@@ -23,7 +23,6 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
-import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 
@@ -83,7 +82,6 @@ public class ChoralTextDocumentService implements TextDocumentService {
 		diagnosticsProvider.setClient( client );
     }
 
-    @JsonRequest("choral/choreographyDiagram")
     public CompletableFuture<String> choreographyDiagram(TextDocumentPositionParams params) {
         if (params == null || params.getTextDocument() == null
                 || params.getTextDocument().getUri() == null) {

@@ -27,29 +27,20 @@ import choral.ast.statement.IfStatement;
 import choral.ast.statement.NilStatement;
 import choral.ast.statement.ReturnStatement;
 import choral.ast.statement.Statement;
-import choral.ast.statement.SwitchArgument;
 import choral.ast.statement.SwitchStatement;
 import choral.ast.statement.TryCatchStatement;
 import choral.ast.statement.VariableDeclarationStatement;
 import choral.ast.visitors.AbstractChoralVisitor;
-import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.types.GroundDataType;
 import choral.types.GroundInterface;
 import choral.types.Member;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Renders a typed Choral method directly as Mermaid sequence-diagram source.
@@ -62,14 +53,10 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
 
     /** Complete Mermaid source lines accumulated during the current render. */
     private final List<String> diagramLines = new ArrayList<>();
-    /** Formats Choral AST fragments used as human-readable Mermaid labels. */
-    private final PrettyPrinterVisitor prettyPrinter = new PrettyPrinterVisitor();
-    /** Methods declared directly by the root choreography, tracked by AST identity. */
-    private final Set<MethodDefinition> localMethods;
     /** Methods on the current expansion stack, used to stop recursive expansion. */
     private final Set<MethodDefinition> activeMethods;
-    /** World mappings for active method bodies, innermost mapping first. */
-    private final Deque<WorldMapping> worldMappings = new ArrayDeque<>();
+    /** Converts typed AST fragments to grounded, Mermaid-safe labels. */
+    private final MermaidLabels labels;
     /** Root participant worlds, in declaration order. */
     private final List<String> participantWorlds;
     /** Name of the root declaration being rendered. */
@@ -87,31 +74,24 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     }
 
     private MermaidVisitor(TemplateDeclaration declaration) {
-        localMethods = Collections.newSetFromMap(new IdentityHashMap<>());
-        if (declaration instanceof choral.ast.body.Class type)
-            localMethods.addAll(type.methods());
-        if (declaration instanceof choral.ast.body.Interface type)
-            localMethods.addAll(type.methods());
         activeMethods = Collections.newSetFromMap(new IdentityHashMap<>());
-        worldMappings.push(new WorldMapping(declaration.worldParameters().stream().collect(
-                Collectors.toMap(world -> world.name().identifier(),
-                        world -> world.name().identifier()))));
+        labels = new MermaidLabels(declaration);
         participantWorlds = declaration.worldParameters().stream()
                 .map(world -> world.name().identifier())
                 .toList();
         diagramLines.add("sequenceDiagram");
         for (int index = 0; index < participantWorlds.size(); index++)
             diagramLines.add("participant p" + index + " as "
-                    + escapeMermaid(participantWorlds.get(index)));
+                    + labels.escape(participantWorlds.get(index)));
         rootDeclarationName = declaration.name().identifier();
     }
 
     private String render(MethodDefinition method) {
-        if (!localMethods.contains(method))
+        if (!labels.isLocal(method))
             throw new IllegalArgumentException("Method '"
                     + method.signature().name().identifier()
                     + "' does not belong to declaration '" + rootDeclarationName + "'");
-        addNote(rootDeclarationName + "." + methodLabel(method));
+        addNote(rootDeclarationName + "." + labels.method(method));
         activeMethods.add(method);
         try {
             method.accept(this);
@@ -169,7 +149,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         visitExpression(statement.condition());
         List<Branch> branches = new ArrayList<>();
         branches.add(new Branch(
-                escapeMermaid(groundedExpressionLabel(statement.condition())),
+                labels.expression(statement.condition()),
                 capture(() -> visitStatement(statement.ifBranch()))));
         if (!(statement.elseBranch() instanceof NilStatement)) {
             branches.add(new Branch("", capture(() -> visitStatement(statement.elseBranch()))));
@@ -185,7 +165,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         List<Branch> branches = new ArrayList<>();
         for (var switchCase : statement.cases().entrySet()) {
             branches.add(new Branch(
-                    escapeMermaid(switchCaseLabel(statement.guard(), switchCase.getKey())),
+                    labels.switchCase(statement.guard(), switchCase.getKey()),
                     capture(() -> visitStatement(switchCase.getValue()))));
         }
         addBlock("alt", "else", branches);
@@ -198,9 +178,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         List<Branch> branches = new ArrayList<>();
         branches.add(new Branch("try", capture(() -> visitStatement(statement.body()))));
         for (var catchBlock : statement.catches()) {
-            branches.add(new Branch("catch "
-                    + escapeMermaid(groundedWorldReferences(
-                            prettyPrinter.visit(catchBlock.left(), " "))),
+            branches.add(new Branch(labels.catchLabel(catchBlock.left()),
                     capture(() -> visitStatement(catchBlock.right()))));
         }
         addBlock("critical", "option", branches);
@@ -345,51 +323,6 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     private record Branch(String label, List<String> lines) {
     }
 
-    private record WorldMapping(Map<String, String> worlds) {
-        private static final String WORLD_IDENTIFIER =
-                "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*";
-        private static final Pattern WORLD_REFERENCE = Pattern.compile(
-                "@(" + WORLD_IDENTIFIER + ")|@\\(([^)]*)\\)");
-        private static final Pattern IDENTIFIER = Pattern.compile(
-                "(?<!\\p{javaJavaIdentifierPart})"
-                        + "(" + WORLD_IDENTIFIER + ")"
-                        + "(?!\\p{javaJavaIdentifierPart})");
-
-        private String ground(String world) {
-            return worlds.getOrDefault(world, world);
-        }
-
-        private String references(String label) {
-            Matcher matcher = WORLD_REFERENCE.matcher(label);
-            StringBuffer result = new StringBuffer();
-            while (matcher.find()) {
-                String replacement = matcher.group(1) != null
-                        ? "@" + ground(matcher.group(1))
-                        : "@(" + replace(matcher.group(2), IDENTIFIER, "") + ")";
-                matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
-            }
-            matcher.appendTail(result);
-            return result.toString();
-        }
-
-        private String types(String label) {
-            return replace(label, IDENTIFIER, "");
-        }
-
-        private String replace(String label, Pattern pattern, String prefix) {
-            Matcher matcher = pattern.matcher(label);
-            StringBuffer result = new StringBuffer();
-            while (matcher.find()) {
-                String replacement = worlds.get(matcher.group(1));
-                if (replacement != null)
-                    matcher.appendReplacement(result,
-                            Matcher.quoteReplacement(prefix + replacement));
-            }
-            matcher.appendTail(result);
-            return result.toString();
-        }
-    }
-
     private List<String> capture(Runnable render) {
         int firstLine = diagramLines.size();
         render.run();
@@ -420,16 +353,11 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         var source = method.higherCallable().sourceCode().orElse(null);
         if (!(source instanceof MethodDefinition definition) || !hasBody(definition))
             return;
-        worldMappings.push(groundedWorlds(definition, method));
-        try {
-            visitSourceMethod(definition);
-        } finally {
-            worldMappings.pop();
-        }
+        labels.withMethodWorlds(definition, method, () -> visitSourceMethod(definition));
     }
 
     private void visitSourceMethod(MethodDefinition method) {
-        String methodName = expandedMethodLabel(method);
+        String methodName = labels.expandedMethod(method);
         if (activeMethods.contains(method)) {
             addNote("recursive call to " + methodName + " omitted");
             return;
@@ -453,7 +381,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         if (!body.isEmpty()) {
             diagramLines.add("rect rgba(0, 0, 0, 0.05)");
             diagramLines.add("Note left of " + participantId(participantWorlds.get(0))
-                    + ": " + escapeMermaid("call " + methodName));
+                    + ": " + labels.escape("call " + methodName));
             diagramLines.addAll(body);
             diagramLines.add("end");
         }
@@ -473,48 +401,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         String over = participantId(participantWorlds.get(0));
         if (participantWorlds.size() > 1)
             over += "," + participantId(participantWorlds.get(participantWorlds.size() - 1));
-        diagramLines.add("Note over " + over + ": " + escapeMermaid(text));
-    }
-
-    private String methodLabel(MethodDefinition method) {
-        String name = method.signature().name().identifier();
-        long overloads = method.typeAnnotation().stream()
-                .flatMap(annotation -> annotation.declarationContext().declaredMethods())
-                .filter(candidate -> candidate.identifier().equals(name))
-                .count();
-        if (overloads < 2)
-            return name;
-        return name + "(" + method.signature().parameters().stream()
-                .map(parameter -> groundedTypeLabel(prettyPrinter.visit(parameter.type())))
-                .collect(Collectors.joining(", ")) + ")";
-    }
-
-    private String expandedMethodLabel(MethodDefinition method) {
-        String label = methodLabel(method);
-        if (localMethods.contains(method))
-            return label;
-        return method.typeAnnotation()
-                .map(annotation -> annotation.declarationContext().typeConstructor().identifier()
-                        + "." + label)
-                .orElse(label);
-    }
-
-    private WorldMapping groundedWorlds(
-            MethodDefinition definition, Member.GroundMethod method) {
-        List<? extends choral.types.World> formalWorlds = definition.typeAnnotation()
-                .map(annotation -> annotation.declarationContext().worldArguments())
-                .orElse(List.of());
-        List<? extends choral.types.World> actualWorlds =
-                method.higherCallable().declarationContext().worldArguments();
-        if (formalWorlds.size() != actualWorlds.size())
-            throw new IllegalStateException("World arity mismatch while expanding method '"
-                    + definition.signature().name().identifier() + "': expected "
-                    + formalWorlds.size() + " but resolved " + actualWorlds.size());
-        Map<String, String> grounded = new HashMap<>(worldMapping().worlds());
-        for (int index = 0; index < formalWorlds.size(); index++)
-            grounded.put(formalWorlds.get(index).identifier(),
-                    worldMapping().ground(actualWorlds.get(index).identifier()));
-        return new WorldMapping(Map.copyOf(grounded));
+        diagramLines.add("Note over " + over + ": " + labels.escape(text));
     }
 
     private void addChannelEvent(Expression receiver, MethodCallExpression call) {
@@ -531,11 +418,11 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
                 !(method.returnType() instanceof GroundDataType returnType) ||
                 returnType.worldArguments().isEmpty())
             return;
-        String from = groundedWorld(
+        String from = labels.world(
                 method.signature().parameters().get(0).type().worldArguments().get(0).identifier());
-        String to = groundedWorld(returnType.worldArguments().get(0).identifier());
+        String to = labels.world(returnType.worldArguments().get(0).identifier());
         diagramLines.add(participantId(from) + (selection ? "-->>" : "->>") + participantId(to)
-                + ": " + escapeMermaid(eventLabel(call)));
+                + ": " + labels.event(call));
     }
 
     private static boolean isChannelReceiver(Expression receiver) {
@@ -551,70 +438,6 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
                 "choral.channels.DiSelectChannel".equals(name);
     }
 
-    private String groundedWorld(String world) {
-        return worldMapping().ground(world);
-    }
-
-    private String eventLabel(MethodCallExpression call) {
-        if (!call.arguments().isEmpty())
-            return groundedExpressionLabel(call.arguments().get(0));
-        if (!call.typeArguments().isEmpty())
-            return prettyPrinter.visit(call.typeArguments().get(0));
-        return call.name().identifier();
-    }
-
-    private String groundedExpressionLabel(Expression expression) {
-        if (expression instanceof EnumCaseInstantiationExpression enumCase)
-            return enumCase.name().identifier() + "@"
-                    + groundedWorld(enumCase.world().name().identifier())
-                    + "." + enumCase._case().identifier();
-        if (expression instanceof LiteralExpression<?> literal) {
-            String label = prettyPrinter.visit(literal);
-            if (literal.world() != null)
-                return groundedWorldReferences(label);
-            return label;
-        }
-        if (expression instanceof ScopedExpression scoped &&
-                scoped.scope() instanceof StaticAccessExpression staticAccess &&
-                staticAccess.typeExpression().worldArguments().size() == 1 &&
-                scoped.scopedExpression() instanceof FieldAccessExpression field)
-            return staticAccess.typeExpression().name().identifier() + "@"
-                    + groundedWorld(staticAccess.typeExpression().worldArguments().get(0)
-                            .name().identifier())
-                    + "." + field.name().identifier();
-        return groundedWorldReferences(prettyPrinter.visit(expression));
-    }
-
-    private String groundedWorldReferences(String label) {
-        return worldMapping().references(label);
-    }
-
-    private String groundedTypeLabel(String label) {
-        return worldMapping().types(label);
-    }
-
-    private WorldMapping worldMapping() {
-        return worldMappings.element();
-    }
-
-    private String switchCaseLabel(Expression guard, SwitchArgument<?> switchCase) {
-        if (switchCase instanceof SwitchArgument.SwitchArgumentDefault ||
-                switchCase instanceof SwitchArgument.SwitchArgumentMergeDefault)
-            return "default";
-        String value;
-        if (switchCase instanceof SwitchArgument.SwitchArgumentLiteral literal) {
-            value = prettyPrinter.visit(literal.argument());
-        } else if (switchCase instanceof SwitchArgument.SwitchArgumentLabel label) {
-            value = label.argument().identifier();
-        } else if (switchCase instanceof SwitchArgument.SwitchArgumentClassLabel label) {
-            value = label.argument().left().identifier() + " "
-                    + label.argument().right().identifier();
-        } else {
-            value = switchCase.argument().toString();
-        }
-        return groundedExpressionLabel(guard) + " = " + groundedWorldReferences(value);
-    }
-
     private String participantId(String world) {
         int index = participantWorlds.indexOf(world);
         if (index < 0)
@@ -623,12 +446,4 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         return "p" + index;
     }
 
-    private static String escapeMermaid(String value) {
-        String escaped = value.replaceAll("[\\p{Cc}\\p{Zl}\\p{Zp}]+", " ")
-                .replaceAll("[:{};<>`]", " ")
-                .replaceAll("%{2,}", "%")
-                .replaceAll("\\s+", " ")
-                .strip();
-        return escaped.isEmpty() ? " " : escaped;
-    }
 }

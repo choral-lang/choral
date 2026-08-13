@@ -9,6 +9,7 @@ import choral.ast.expression.MethodCallExpression;
 import choral.ast.expression.ScopedExpression;
 import choral.ast.statement.ExpressionStatement;
 import choral.types.GroundDataType;
+import lsp.ChoralLanguageServer;
 import lsp.ChoralTextDocumentService;
 import lsp.features.DiagnosticsProvider;
 import lsp.features.TypedSourceAnalyzer;
@@ -24,17 +25,28 @@ import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
+import org.eclipse.lsp4j.jsonrpc.services.ServiceEndpoints;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ChoralTextDocumentServiceTest {
+    @Test
+    public void exposesTypedChoreographyRequestToJsonRpc() {
+        var request = ServiceEndpoints.getSupportedMethods(ChoralLanguageServer.class)
+                .get("choral/choreographyDiagram");
+
+        assertNotNull(request);
+        assertEquals(TextDocumentPositionParams.class, request.getParameterTypes()[0]);
+    }
+
     @Test
     public void typeCheckingAnnotatesTheAstUsedForDiagramExtraction(@TempDir Path project) throws Exception {
         String uri = project.resolve("Example.ch").toUri().toString();
