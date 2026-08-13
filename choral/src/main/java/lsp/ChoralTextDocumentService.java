@@ -6,7 +6,7 @@ import choral.diagrams.ChoreographyDiagramProvider.Position;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -28,21 +28,24 @@ import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 
 import lsp.features.DiagnosticsProvider;
-import lsp.features.DiagnosticsProvider.AnalysisFailure;
-import lsp.features.DiagnosticsProvider.AnalysisResult;
+import lsp.features.TypedSourceAnalyzer;
+import lsp.features.TypedSourceAnalyzer.AnalysisFailure;
+import lsp.features.TypedSourceAnalyzer.AnalysisResult;
 
 public class ChoralTextDocumentService implements TextDocumentService {
+    private final TypedSourceAnalyzer analyzer;
     private final DiagnosticsProvider diagnosticsProvider;
     private final ChoreographyDiagramProvider choreographyDiagramProvider;
-    private final Map<String, DocumentState> documents = new ConcurrentHashMap<>();
+    private final Map<String, String> documents = new ConcurrentHashMap<>();
     private LanguageClient client;
     
     public ChoralTextDocumentService() {
-        this(new DiagnosticsProvider());
+        this(new TypedSourceAnalyzer());
     }
 
-    public ChoralTextDocumentService(DiagnosticsProvider diagnosticsProvider) {
-        this.diagnosticsProvider = Objects.requireNonNull(diagnosticsProvider);
+    public ChoralTextDocumentService(TypedSourceAnalyzer analyzer) {
+        this.analyzer = Objects.requireNonNull(analyzer);
+        diagnosticsProvider = new DiagnosticsProvider();
         choreographyDiagramProvider = new ChoreographyDiagramProvider();
     }
 
@@ -51,16 +54,14 @@ public class ChoralTextDocumentService implements TextDocumentService {
         String uri = params.getTextDocument().getUri();
         String content = params.getTextDocument().getText();
 
-        updateDocument(uri, params.getTextDocument().getVersion(), content);
+        updateDocument(uri, content);
     }
 
     @Override
     public void didClose(DidCloseTextDocumentParams params){
         String uri = params.getTextDocument().getUri();
-        synchronized (documents) {
-            documents.remove(uri);
-        }
-        publishDiagnostics(uri, new ArrayList<>());
+        documents.remove(uri);
+        publishDiagnostics(uri, List.of());
     }
 
     @Override
@@ -73,7 +74,7 @@ public class ChoralTextDocumentService implements TextDocumentService {
         String uri = params.getTextDocument().getUri();
         String content = params.getContentChanges().get(0).getText();
 
-        updateDocument(uri, params.getTextDocument().getVersion(), content);
+        updateDocument(uri, content);
     }
 
     public void setClient(LanguageClient client){
@@ -102,39 +103,25 @@ public class ChoralTextDocumentService implements TextDocumentService {
     }
 
     private CompletableFuture<String> diagram(String uri, Position position) {
-        DocumentState state = documents.get(uri);
-        if (state != null)
-            return diagram(uri, position, state, true);
-        String content = readFileDocument(uri);
+        String content = documents.get(uri);
+        if (content == null) content = readFileDocument(uri);
         if (content == null)
             return CompletableFuture.failedFuture(diagramFailure(
                     "The document is not open in the Choral language server and could not be read from disk.",
                     ResponseErrorCode.RequestFailed));
-        DocumentState detached = new DocumentState(null, content, new CompletableFuture<>());
-        analyze(uri, detached);
-        return diagram(uri, position, detached, false);
-    }
-
-    private CompletableFuture<String> diagram(
-            String uri, Position position, DocumentState state, boolean cached
-    ) {
-        return state.analysis().handle((analysis, failure) -> {
-            synchronized (documents) {
-                boolean stale = cached
-                        ? documents.get(uri) != state
-                        : documents.get(uri) != null;
-                if (stale)
-                    return diagram(uri, position);
-                return CompletableFuture.completedFuture(diagram(analysis, failure, position));
-            }
-        }).thenCompose(result -> result);
-    }
-
-    private String diagram(AnalysisResult analysis, Throwable failure, Position position) {
-        if (failure != null)
-            throw diagramFailure(
+        try {
+            AnalysisResult analysis = analyzer.analyze(uri, content, openDocuments());
+            return CompletableFuture.completedFuture(diagram(analysis, position));
+        } catch (ResponseErrorException failure) {
+            return CompletableFuture.failedFuture(failure);
+        } catch (Exception failure) {
+            return CompletableFuture.failedFuture(diagramFailure(
                     "Unable to analyze the Choral document: " + failure.getMessage(),
-                    ResponseErrorCode.InternalError);
+                    ResponseErrorCode.InternalError));
+        }
+    }
+
+    private String diagram(AnalysisResult analysis, Position position) {
         if (!analysis.successful()) {
             boolean parseError = analysis.failure() == AnalysisFailure.PARSE_ERROR;
             String action = parseError ? "parse" : "type-check";
@@ -157,37 +144,26 @@ public class ChoralTextDocumentService implements TextDocumentService {
         }
     }
 
-    private void updateDocument(String uri, Integer version, String content) {
-        DocumentState proposed = new DocumentState(
-                version, content, new CompletableFuture<>());
-        DocumentState state;
-        synchronized (documents) {
-            DocumentState current = documents.get(uri);
-            state = current != null && current.matches(version, content) ? current : proposed;
-            if (state == proposed)
-                documents.put(uri, state);
+    private void updateDocument(String uri, String content) {
+        documents.put(uri, content);
+        try {
+            AnalysisResult analysis = analyzer.analyze(uri, content, openDocuments());
+            if (content.equals(documents.get(uri)))
+                publishAnalysis(uri, analysis);
+        } catch (Exception failure) {
+            System.err.println("Unable to analyze Choral document " + uri + ": "
+                    + failure.getMessage());
         }
-        state.analysis().thenAccept(analysis -> {
-            synchronized (documents) {
-                if (documents.get(uri) == state)
-                    publishAnalysis(uri, analysis);
-            }
-        });
-        if (state == proposed)
-            analyze(uri, state);
     }
 
-    private void analyze(String uri, DocumentState state) {
-        try {
-            state.analysis().complete(
-                    diagnosticsProvider.analyzeTyped(uri, state.content()));
-        } catch (Exception failure) {
-            state.analysis().completeExceptionally(failure);
-        }
+    private Map<String, String> openDocuments() {
+        Map<String, String> contents = new LinkedHashMap<>();
+        contents.putAll(documents);
+        return contents;
     }
 
     private void publishAnalysis(String uri, AnalysisResult analysis){
-        List<Diagnostic> diagnostics = analysis.diagnostics();
+        List<Diagnostic> diagnostics = diagnosticsProvider.diagnostics(uri, analysis);
 
         for (Diagnostic d : diagnostics) {
             System.err.println("  - " + d.getMessage() + " at line " + d.getRange().getStart().getLine()
@@ -218,13 +194,5 @@ public class ChoralTextDocumentService implements TextDocumentService {
             String message, ResponseErrorCode code
     ) {
         return new ResponseErrorException(new ResponseError(code, message, null));
-    }
-
-    private record DocumentState(
-            Integer version, String content, CompletableFuture<AnalysisResult> analysis
-    ) {
-        private boolean matches(Integer otherVersion, String otherContent) {
-            return Objects.equals(version, otherVersion) && content.equals(otherContent);
-        }
     }
 }

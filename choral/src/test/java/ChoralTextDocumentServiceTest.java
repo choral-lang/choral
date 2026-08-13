@@ -3,11 +3,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import choral.ast.CompilationUnit;
 import choral.ast.expression.MethodCallExpression;
@@ -16,9 +11,9 @@ import choral.ast.statement.ExpressionStatement;
 import choral.types.GroundDataType;
 import lsp.ChoralTextDocumentService;
 import lsp.features.DiagnosticsProvider;
-import lsp.features.DiagnosticsProvider.AnalysisResult;
+import lsp.features.TypedSourceAnalyzer;
+import lsp.features.TypedSourceAnalyzer.AnalysisResult;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
-import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
@@ -51,7 +46,7 @@ public class ChoralTextDocumentServiceTest {
                     }
                 }
                 """;
-        AnalysisResult analysis = new DiagnosticsProvider().analyzeTyped(uri, source);
+        AnalysisResult analysis = new TypedSourceAnalyzer().analyze(uri, source);
         assertTrue(analysis.successful());
         CompilationUnit typedUnit = analysis.compilationUnit();
 
@@ -188,13 +183,15 @@ public class ChoralTextDocumentServiceTest {
     public void reportsUnexpectedAnalysisFailuresAsInternalErrors(@TempDir Path project) {
         String uri = project.resolve("Example.ch").toUri().toString();
         String source = "class Example@( A, B ) { void run() {} }";
-        DiagnosticsProvider diagnostics = new DiagnosticsProvider() {
+        TypedSourceAnalyzer analyzer = new TypedSourceAnalyzer() {
             @Override
-            public AnalysisResult analyzeTyped(String uri, String content) {
+            public AnalysisResult analyze(
+                    String uri, String content, java.util.Map<String, String> openDocuments
+            ) {
                 throw new IllegalStateException("analysis failed");
             }
         };
-        ChoralTextDocumentService service = new ChoralTextDocumentService(diagnostics);
+        ChoralTextDocumentService service = new ChoralTextDocumentService(analyzer);
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
 
         ResponseError error = diagramError(diagramAt(service, uri, source, "run()"));
@@ -204,26 +201,11 @@ public class ChoralTextDocumentServiceTest {
     }
 
     @Test
-    public void reusesTypedAnalysisForUnchangedDiagramRequests(@TempDir Path project) {
-        String uri = project.resolve("Example.ch").toUri().toString();
-        String source = "class Example@( A, B ) { void run() {} }";
-        CountingDiagnosticsProvider diagnostics = new CountingDiagnosticsProvider();
-        ChoralTextDocumentService service = new ChoralTextDocumentService(diagnostics);
-        service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
-
-        diagramAt(service, uri, source, "run()").join();
-        diagramAt(service, uri, source, "run()").join();
-
-        assertEquals(1, diagnostics.analyses());
-    }
-
-    @Test
-    public void documentChangesReplaceTheCachedTypedAst(@TempDir Path project) {
+    public void documentChangesReplaceTheTypedAst(@TempDir Path project) {
         String uri = project.resolve("Example.ch").toUri().toString();
         String first = "class First@( A, B ) { void first() {} }";
         String second = "class Second@( X, Y ) { void second() {} }";
-        CountingDiagnosticsProvider diagnostics = new CountingDiagnosticsProvider();
-        ChoralTextDocumentService service = new ChoralTextDocumentService(diagnostics);
+        ChoralTextDocumentService service = new ChoralTextDocumentService();
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, first)));
 
         service.didChange(new DidChangeTextDocumentParams(
@@ -233,62 +215,10 @@ public class ChoralTextDocumentServiceTest {
 
         assertTrue(diagram.contains("participant p0 as X"));
         assertFalse(diagram.contains("participant p0 as A"));
-        assertEquals(2, diagnostics.analyses());
     }
 
     @Test
-    public void closingADocumentInvalidatesItsCachedAnalysis(@TempDir Path project) {
-        String uri = project.resolve("Example.ch").toUri().toString();
-        String source = "class Example@( A, B ) {}";
-        CountingDiagnosticsProvider diagnostics = new CountingDiagnosticsProvider();
-        ChoralTextDocumentService service = new ChoralTextDocumentService(diagnostics);
-        DidOpenTextDocumentParams open = new DidOpenTextDocumentParams(
-                new TextDocumentItem(uri, "choral", 1, source));
-        service.didOpen(open);
-
-        service.didClose(new DidCloseTextDocumentParams(new TextDocumentIdentifier(uri)));
-        service.didOpen(open);
-
-        assertEquals(2, diagnostics.analyses());
-    }
-
-    @Test
-    public void overlappingRequestsWaitForTheCurrentDocumentVersion(@TempDir Path project)
-            throws Exception {
-        String uri = project.resolve("Example.ch").toUri().toString();
-        String first = "class First@( A, B ) { void first() {} }";
-        String second = "class Second@( X, Y ) { void second() {} }";
-        BlockingDiagnosticsProvider diagnostics = new BlockingDiagnosticsProvider("Second");
-        ChoralTextDocumentService service = new ChoralTextDocumentService(diagnostics);
-        service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, first)));
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        try {
-            CompletableFuture<Void> change = CompletableFuture.runAsync(() ->
-                    service.didChange(new DidChangeTextDocumentParams(
-                            new VersionedTextDocumentIdentifier(uri, 2),
-                            List.of(new TextDocumentContentChangeEvent(second)))), executor);
-            assertTrue(diagnostics.awaitAnalysis());
-
-            CompletableFuture<String> firstRequest = diagramAt(service, uri, second, "second()");
-            CompletableFuture<String> secondRequest = diagramAt(service, uri, second, "second()");
-            assertFalse(firstRequest.isDone());
-            assertFalse(secondRequest.isDone());
-
-            diagnostics.releaseAnalysis();
-            change.get(10, TimeUnit.SECONDS);
-            String firstDiagram = firstRequest.get(10, TimeUnit.SECONDS);
-            String secondDiagram = secondRequest.get(10, TimeUnit.SECONDS);
-            assertTrue(firstDiagram.contains("participant p0 as X"));
-            assertEquals(firstDiagram, secondDiagram);
-            assertEquals(2, diagnostics.analyses());
-        } finally {
-            diagnostics.releaseAnalysis();
-            executor.shutdownNow();
-        }
-    }
-
-    @Test
-    public void cachedAnalysisResolvesProjectHeaders(@TempDir Path project) throws Exception {
+    public void analysisResolvesProjectHeaders(@TempDir Path project) throws Exception {
         Files.writeString(project.resolve("ProjectValue.chh"), """
                 interface ProjectValue@( X ) {
                     String@X identity( String@X value );
@@ -308,14 +238,12 @@ public class ChoralTextDocumentServiceTest {
                     }
                 }
                 """;
-        CountingDiagnosticsProvider diagnostics = new CountingDiagnosticsProvider();
-        ChoralTextDocumentService service = new ChoralTextDocumentService(diagnostics);
+        ChoralTextDocumentService service = new ChoralTextDocumentService();
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
 
         String diagram = diagramAt(service, uri, source, "channel.< String >com").join();
 
         assertTrue(diagram.contains("p0->>p1: local"));
-        assertEquals(1, diagnostics.analyses());
     }
 
     @Test
@@ -372,6 +300,106 @@ public class ChoralTextDocumentServiceTest {
                 diagramAt(service, uri, source, "helper.send").join());
     }
 
+    @Test
+    public void expandsImportedMethodsFromUnsavedOpenDocuments(@TempDir Path project)
+            throws Exception {
+        Path helperPath = project.resolve("Helper.ch");
+        Files.writeString(helperPath, """
+                package helpers;
+
+                import choral.channels.SymChannel;
+
+                public class Helper@( Sender, Receiver ) {
+                    public void send(
+                            SymChannel@( Sender, Receiver )< Object > channel,
+                            String@Sender diskValue ) {
+                        channel.< String >com( diskValue );
+                    }
+                }
+                """);
+        Files.writeString(project.resolve("Helper.chh"), """
+                package helpers;
+
+                public interface Helper@( Sender, Receiver ) {}
+                """);
+        String helperUri = helperPath.toUri().toString();
+        String unsavedHelper = """
+                package helpers;
+
+                import choral.channels.SymChannel;
+
+                public class Helper@( Sender, Receiver ) {
+                    public void send(
+                            SymChannel@( Sender, Receiver )< Object > channel,
+                            String@Sender unsavedValue ) {
+                        channel.< String >com( unsavedValue );
+                    }
+                }
+                """;
+        String rootUri = project.resolve("Root.ch").toUri().toString();
+        String rootSource = """
+                package app;
+
+                import choral.channels.SymChannel;
+                import helpers.Helper;
+
+                class Root@( A, B ) {
+                    void run(
+                            Helper@( B, A ) helper,
+                            SymChannel@( B, A )< Object > channel,
+                            String@B value ) {
+                        helper.send( channel, value );
+                    }
+                }
+                """;
+        ChoralTextDocumentService service = new ChoralTextDocumentService();
+        service.didOpen(new DidOpenTextDocumentParams(
+                new TextDocumentItem(helperUri, "choral", 1, unsavedHelper)));
+        service.didOpen(new DidOpenTextDocumentParams(
+                new TextDocumentItem(rootUri, "choral", 1, rootSource)));
+
+        String diagram = diagramAt(service, rootUri, rootSource, "helper.send").join();
+
+        assertTrue(diagram.contains("p1->>p0: unsavedValue"));
+        assertFalse(diagram.contains("p1->>p0: diskValue"));
+
+        String changedHelper = unsavedHelper.replace("unsavedValue", "changedValue");
+        service.didChange(new DidChangeTextDocumentParams(
+                new VersionedTextDocumentIdentifier(helperUri, 2),
+                List.of(new TextDocumentContentChangeEvent(changedHelper))));
+
+        String updatedDiagram = diagramAt(service, rootUri, rootSource, "helper.send").join();
+
+        assertTrue(updatedDiagram.contains("p1->>p0: changedValue"));
+        assertFalse(updatedDiagram.contains("p1->>p0: unsavedValue"));
+    }
+
+    @Test
+    public void doesNotAttributeImportedSourceErrorsToTheActiveDocument(@TempDir Path project)
+            throws Exception {
+        Files.writeString(project.resolve("Helper.ch"), """
+                package helpers;
+
+                public class Helper@( A ) {
+                    public void broken( Missing@A value ) {}
+                }
+                """);
+        String uri = project.resolve("Root.ch").toUri().toString();
+        String source = """
+                package app;
+
+                import helpers.Helper;
+
+                class Root@( A ) {
+                    void run( Helper@A helper ) {}
+                }
+                """;
+        AnalysisResult analysis = new TypedSourceAnalyzer().analyze(uri, source);
+
+        assertFalse(analysis.successful());
+        assertTrue(new DiagnosticsProvider().diagnostics(uri, analysis).isEmpty());
+    }
+
     private static CompletableFuture<String> diagramAt(
             ChoralTextDocumentService service, String uri, String source, String marker
     ) {
@@ -397,50 +425,4 @@ public class ChoralTextDocumentServiceTest {
         return failure.getResponseError();
     }
 
-    private static class CountingDiagnosticsProvider extends DiagnosticsProvider {
-        private final AtomicInteger analyses = new AtomicInteger();
-
-        @Override
-        public AnalysisResult analyzeTyped(String uri, String content) {
-            analyses.incrementAndGet();
-            return super.analyzeTyped(uri, content);
-        }
-
-        protected int analyses() {
-            return analyses.get();
-        }
-    }
-
-    private static final class BlockingDiagnosticsProvider extends CountingDiagnosticsProvider {
-        private final String marker;
-        private final CountDownLatch analysisStarted = new CountDownLatch(1);
-        private final CountDownLatch continueAnalysis = new CountDownLatch(1);
-
-        private BlockingDiagnosticsProvider(String marker) {
-            this.marker = marker;
-        }
-
-        @Override
-        public AnalysisResult analyzeTyped(String uri, String content) {
-            if (content.contains(marker)) {
-                analysisStarted.countDown();
-                try {
-                    if (!continueAnalysis.await(10, TimeUnit.SECONDS))
-                        throw new IllegalStateException("Timed out waiting to continue analysis");
-                } catch (InterruptedException exception) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException(exception);
-                }
-            }
-            return super.analyzeTyped(uri, content);
-        }
-
-        private boolean awaitAnalysis() throws InterruptedException {
-            return analysisStarted.await(10, TimeUnit.SECONDS);
-        }
-
-        private void releaseAnalysis() {
-            continueAnalysis.countDown();
-        }
-    }
 }
