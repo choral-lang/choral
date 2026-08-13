@@ -30,6 +30,7 @@ import org.junit.jupiter.api.io.TempDir;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -131,10 +132,7 @@ public class ChoralTextDocumentServiceTest {
                 """.strip(),
                 diagramAt(service, uri, source, "reverse.< String >com").join());
 
-        ResponseError error = diagramError(
-                diagramAt(service, uri, source, "class Example"));
-        assertEquals(ResponseErrorCode.RequestFailed.getValue(), error.getCode());
-        assertEquals("No choreography method was found at the cursor.", error.getMessage());
+        assertNull(diagramAt(service, uri, source, "class Example").join());
     }
 
     @Test

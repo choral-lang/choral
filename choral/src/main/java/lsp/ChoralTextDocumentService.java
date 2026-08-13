@@ -129,9 +129,7 @@ public class ChoralTextDocumentService implements TextDocumentService {
                     + analysis.failureMessage(), ResponseErrorCode.RequestFailed);
         }
         return choreographyDiagramProvider.diagram(analysis.compilationUnit(), position)
-                .orElseThrow(() -> diagramFailure(
-                        "No choreography method was found at the cursor.",
-                        ResponseErrorCode.RequestFailed));
+                .orElse(null);
     }
 
     private String readFileDocument(String uri) {
