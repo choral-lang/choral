@@ -133,7 +133,7 @@ public class TypedSourceAnalyzer {
 				String qualifiedName = packageName.isEmpty()
 						? typeName : packageName + "." + typeName;
 				addSource( source.path().getParent().resolve( typeName + ".ch" ),
-						qualifiedName, false, sourceOverlays, units, pending );
+						qualifiedName, sourceOverlays, units, pending );
 			}
 			for( var imported : source.unit().imports() ) {
 				String name = imported.name();
@@ -144,16 +144,16 @@ public class TypedSourceAnalyzer {
 					for( String typeName : referencedTypes ) {
 						if( typeName.contains( "." ) ) continue;
 						addSource( packagePath.resolve( typeName + ".ch" ),
-								importedPackage + "." + typeName, false,
+								importedPackage + "." + typeName,
 								sourceOverlays, units, pending );
 					}
 				} else {
 					String simpleName = name.substring( name.lastIndexOf( '.' ) + 1 );
 					addSource( source.path().getParent().resolve( simpleName + ".ch" ),
-							name, false, sourceOverlays, units, pending );
+							name, sourceOverlays, units, pending );
 					addSource( sourceRoot.resolve(
 							name.replace( '.', java.io.File.separatorChar ) + ".ch" ),
-							name, false, sourceOverlays, units, pending );
+							name, sourceOverlays, units, pending );
 				}
 			}
 		}
@@ -183,7 +183,7 @@ public class TypedSourceAnalyzer {
 	}
 
 	private static void addSource(
-			Path path, String importedName, boolean onDemand,
+			Path path, String importedName,
 			Map< Path, String > sourceOverlays,
 			Map< Path, CompilationUnit > units, ArrayDeque< SourceUnit > pending
 	) throws Exception {
@@ -194,21 +194,18 @@ public class TypedSourceAnalyzer {
 		CompilationUnit unit = sourceCode == null
 				? Parser.parseSourceFile( normalised.toFile() )
 				: Parser.parseString( sourceCode, normalised.toString() );
-		if( !declaresImport( unit, importedName, onDemand ) ) return;
+		if( !declaresType( unit, importedName ) ) return;
 		units.put( normalised, unit );
 		pending.add( new SourceUnit( normalised, unit ) );
 	}
 
-	private static boolean declaresImport(
-			CompilationUnit unit, String importedName, boolean onDemand
-	) {
+	private static boolean declaresType( CompilationUnit unit, String qualifiedName ) {
 		String packageName = unit.packageDeclaration().orElse( "" );
-		if( onDemand ) return packageName.equals( importedName );
 		String prefix = packageName.isEmpty() ? "" : packageName + ".";
 		return Stream.of( unit.classes(), unit.interfaces(), unit.enums() )
 				.flatMap( List::stream )
 				.anyMatch( declaration -> ( prefix + declaration.name().identifier() )
-						.equals( importedName ) );
+						.equals( qualifiedName ) );
 	}
 
 	private static Path sourceRoot( Path activePath, CompilationUnit activeUnit ) {
