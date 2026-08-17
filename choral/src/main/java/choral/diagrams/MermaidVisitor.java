@@ -48,9 +48,6 @@ import java.util.Set;
  * statements, expressions, and source-backed method calls in execution order.
  */
 public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
-    /** Maximum total number of helper bodies expanded in one diagram. */
-    private static final int MAXIMUM_RENDERED_HELPER_BODIES = 128;
-
     /** Complete Mermaid source lines accumulated during the current render. */
     private final List<String> diagramLines = new ArrayList<>();
     private final Set<MethodDefinition> localMethods;
@@ -62,19 +59,20 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     private final List<String> participantWorlds;
     /** Name of the root declaration being rendered. */
     private final String rootDeclarationName;
-    /** Total source-backed method bodies expanded during the current render. */
-    private int renderedHelperBodies;
-    /** Whether the total-expansion-limit note has already been emitted. */
-    private boolean helperBodyLimitReported;
+    private final int helperExpansionDepth;
+    private int currentHelperDepth;
 
     public static String render(
-            TemplateDeclaration declaration, MethodDefinition method) {
+            TemplateDeclaration declaration, MethodDefinition method,
+            int helperExpansionDepth) {
         Objects.requireNonNull(declaration, "declaration");
         Objects.requireNonNull(method, "method");
-        return new MermaidVisitor(declaration).render(method);
+        if (helperExpansionDepth < 0)
+            throw new IllegalArgumentException("Helper expansion depth must not be negative");
+        return new MermaidVisitor(declaration, helperExpansionDepth).render(method);
     }
 
-    private MermaidVisitor(TemplateDeclaration declaration) {
+    private MermaidVisitor(TemplateDeclaration declaration, int helperExpansionDepth) {
         localMethods = Collections.newSetFromMap(new IdentityHashMap<>());
         if (declaration instanceof choral.ast.body.Class type)
             localMethods.addAll(type.methods());
@@ -90,6 +88,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
             diagramLines.add("participant p" + index + " as "
                     + labels.escape(participantWorlds.get(index)));
         rootDeclarationName = declaration.name().identifier();
+        this.helperExpansionDepth = helperExpansionDepth;
     }
 
     private String render(MethodDefinition method) {
@@ -359,6 +358,8 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         var source = method.higherCallable().sourceCode().orElse(null);
         if (!(source instanceof MethodDefinition definition) || !hasBody(definition))
             return;
+        if (currentHelperDepth >= helperExpansionDepth)
+            return;
         labels.withMethodWorlds(definition, method, () -> visitSourceMethod(definition));
     }
 
@@ -369,20 +370,13 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
             addNote("recursive call to " + methodName + " omitted");
             return;
         }
-        if (renderedHelperBodies >= MAXIMUM_RENDERED_HELPER_BODIES) {
-            if (!helperBodyLimitReported) {
-                addNote("helper expansion count limit " + MAXIMUM_RENDERED_HELPER_BODIES
-                        + " reached - remaining helper calls omitted");
-                helperBodyLimitReported = true;
-            }
-            return;
-        }
         activeMethods.add(method);
-        renderedHelperBodies++;
+        currentHelperDepth++;
         List<String> body;
         try {
             body = capture(() -> method.accept(this));
         } finally {
+            currentHelperDepth--;
             activeMethods.remove(method);
         }
         if (!body.isEmpty()) {

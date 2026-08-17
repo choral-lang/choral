@@ -11,10 +11,16 @@ import java.util.stream.Stream;
 /** Selects a choreography declaration and renders its typed AST as Mermaid. */
 public final class ChoreographyDiagramProvider {
     public Optional<String> diagram(CompilationUnit unit, Position cursor) {
+        return diagram(unit, cursor, 0);
+    }
+
+    public Optional<String> diagram(
+            CompilationUnit unit, Position cursor, int helperExpansionDepth) {
         return declarationAt(unit, cursor)
                 .filter(declaration -> !declaration.worldParameters().isEmpty())
                 .flatMap(declaration -> methodAt(declaration, cursor)
-                        .map(method -> MermaidVisitor.render(declaration, method)));
+                        .map(method -> MermaidVisitor.render(
+                                declaration, method, helperExpansionDepth)));
     }
 
     private static Optional<TemplateDeclaration> declarationAt(

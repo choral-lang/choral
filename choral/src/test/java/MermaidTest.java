@@ -190,7 +190,7 @@ public class MermaidTest {
 					end
 					p0->>p1: after
 					""".strip(),
-				mermaidAt( source, "this.route" ) );
+				mermaidAt( source, "this.route", 1 ) );
 	}
 
 	@Test
@@ -583,7 +583,7 @@ public class MermaidTest {
 				end
 				end
 				""".strip(),
-				mermaidAt( source, "void run" ) );
+				mermaidAt( source, "void run", 2 ) );
 	}
 
 	@Test
@@ -618,7 +618,7 @@ public class MermaidTest {
 				p1->>p0: received
 				end
 				""".strip(),
-				mermaidAt( source, "void run" ) );
+				mermaidAt( source, "void run", 1 ) );
 	}
 
 	@Test
@@ -656,7 +656,7 @@ public class MermaidTest {
 				p0->>p1: value
 				end
 				""".strip(),
-				mermaidAt( source, "external.send" ) );
+				mermaidAt( source, "external.send", 1 ) );
 	}
 
 	////////// WORLD SUBSTITUTION //////////
@@ -696,7 +696,7 @@ public class MermaidTest {
 				p1->>p0: value
 				end
 				""".strip(),
-				mermaidAt( source, "external.send" ) );
+				mermaidAt( source, "external.send", 1 ) );
 	}
 
 	@Test
@@ -733,7 +733,7 @@ public class MermaidTest {
 				p1-->>p0: Decision@B.READY
 				end
 				""".strip(),
-				mermaidAt( source, "external.decide" ) );
+				mermaidAt( source, "external.decide", 1 ) );
 	}
 
 	@Test
@@ -777,7 +777,7 @@ public class MermaidTest {
 				end
 				p0-->>p1: Decision@A.FIRST
 				""".strip(),
-				mermaidAt( source, "external.decide" ) );
+				mermaidAt( source, "external.decide", 1 ) );
 	}
 
 	@Test
@@ -817,7 +817,7 @@ public class MermaidTest {
 				p0->>p1: "second"@A
 				end
 				""".strip(),
-				mermaidAt( source, "external.send" ) );
+				mermaidAt( source, "external.send", 1 ) );
 	}
 
 	@Test
@@ -861,7 +861,7 @@ public class MermaidTest {
 				end
 				end
 				""".strip(),
-				mermaidAt( source, "external.recover" ) );
+				mermaidAt( source, "external.recover", 1 ) );
 	}
 
 	@Test
@@ -900,7 +900,7 @@ public class MermaidTest {
 				p1->>p0: new Payload@( B )()
 				end
 				""".strip(),
-				mermaidAt( source, "external.send" ) );
+				mermaidAt( source, "external.send", 1 ) );
 	}
 
 	@Test
@@ -934,7 +934,7 @@ public class MermaidTest {
 		call.setMethodAnnotation( mismatchedAnnotation.innerCallable() );
 
 		var exception = assertThrows( IllegalStateException.class,
-				() -> MermaidVisitor.render( root, root.methods().get( 0 ) ) );
+				() -> MermaidVisitor.render( root, root.methods().get( 0 ), 1 ) );
 
 		assertEquals(
 				"World arity mismatch while expanding method 'send': expected 2 but resolved 1",
@@ -978,7 +978,7 @@ public class MermaidTest {
 				p1->>p0: value
 				end
 				""".strip(),
-				mermaidAt( source, "child.send" ) );
+				mermaidAt( source, "child.send", 1 ) );
 	}
 
 	@Test
@@ -1015,7 +1015,7 @@ public class MermaidTest {
 				p1->>p0: value
 				end
 				""".strip(),
-				mermaidAt( source, "External@( B, A ).send" ) );
+				mermaidAt( source, "External@( B, A ).send", 1 ) );
 	}
 
 	@Test
@@ -1066,7 +1066,7 @@ public class MermaidTest {
 				p1->>p0: value
 				end
 				""".strip(),
-				mermaidAt( source, "void run" ) );
+				mermaidAt( source, "void run", 1 ) );
 	}
 
 	@Test
@@ -1113,7 +1113,7 @@ public class MermaidTest {
 				p1->>p0: value
 				end
 				""".strip(),
-				diagramAt( List.of( helper, root ), 1, "helper.send" ).orElseThrow() );
+				diagramAt( List.of( helper, root ), 1, "helper.send", 1 ).orElseThrow() );
 	}
 
 	@Test
@@ -1156,7 +1156,7 @@ public class MermaidTest {
 				Note over p0,p1: recursive call to start omitted
 				end
 				""".strip(),
-				mermaidAt( source, "void start" ) );
+				mermaidAt( source, "void start", 2 ) );
 	}
 
 	@Test
@@ -1199,7 +1199,7 @@ public class MermaidTest {
 				p1->>p0: value
 				end
 				""".strip(),
-				mermaidAt( source, "void run" ) );
+				mermaidAt( source, "void run", 1 ) );
 	}
 
 	@Test
@@ -1230,7 +1230,7 @@ public class MermaidTest {
 				mermaidAt( source, "String@B value" ) );
 	}
 
-	////////// RECURSION AND SAFETY LIMITS //////////
+	////////// RECURSION AND EXPANSION DEPTH //////////
 
 	@Test
 	public void recursiveHelperExpansionStopsWithANote() {
@@ -1257,7 +1257,7 @@ public class MermaidTest {
 				p0->>p1: value
 				Note over p0,p1: recursive call to run omitted
 				""".strip(),
-				mermaidAt( source, "void run" ) );
+				mermaidAt( source, "void run", 1 ) );
 	}
 
 	@Test
@@ -1299,11 +1299,11 @@ public class MermaidTest {
 				end
 				end
 				""".strip(),
-				mermaidAt( source, "void run" ) );
+				mermaidAt( source, "void run", 3 ) );
 	}
 
 	@Test
-	public void helperExpansionHasNoDepthLimit() {
+	public void configuredDepthCanExpandDeepHelperChains() {
 		String source =
 			"""
 			import choral.channels.SymChannel;
@@ -1336,40 +1336,75 @@ public class MermaidTest {
 			}
 			""";
 
-		String mermaid = mermaidAt( source, "void run" );
+		String mermaid = mermaidAt( source, "void run", 17 );
 
 		assertTrue( mermaid.contains( "Note left of p0: call helper16" ) );
 		assertTrue( mermaid.contains( "p0->>p1: value" ) );
-		assertFalse( mermaid.contains( "helper expansion depth limit" ) );
 	}
 
 	@Test
-	public void helperExpansionCountIsBoundedDeterministically() {
-		String calls = "send( value );\n".repeat( 129 );
+	public void helperExpansionDepthControlsRenderedBodies() {
 		String source =
 			"""
 			import choral.channels.SymChannel;
 
-			class Repeated@( A, B ) {
-				SymChannel@( A, B )< Object > channel;
+			class Depth@( A, B ) {
+				SymChannel@( A, B )< Object > forward;
+				SymChannel@( B, A )< Object > reverse;
+				String@A fromA;
+				String@B fromB;
 
-				void run( String@A value ) {
-					%s
+				void run() {
+					first();
 				}
 
-				private void send( String@A value ) {
-					channel.< String >com( value );
+				private void first() {
+					forward.< String >com( fromA );
+					second();
+				}
+
+				private void second() {
+					reverse.< String >com( fromB );
 				}
 			}
-			""".formatted( calls );
+			""";
 
-		String mermaid = mermaidAt( source, "void run" );
-
-		assertEquals( 128, mermaid.lines()
-				.filter( "Note left of p0: call send"::equals )
-				.count() );
-		assertTrue( mermaid.contains(
-				"helper expansion count limit 128 reached - remaining helper calls omitted" ) );
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Depth.run
+				""".strip(),
+				mermaidAt( source, "void run", 0 ) );
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Depth.run
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call first
+				p0->>p1: fromA
+				end
+				""".strip(),
+				mermaidAt( source, "void run", 1 ) );
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Depth.run
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call first
+				p0->>p1: fromA
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call second
+				p1->>p0: fromB
+				end
+				end
+				""".strip(),
+				mermaidAt( source, "void run", 2 ) );
 	}
 
 	@Test
@@ -1403,7 +1438,7 @@ public class MermaidTest {
 					Note over p0,p1: Separate.forward
 					p0->>p1: value
 					""".strip(),
-				MermaidVisitor.render( declaration, declaration.methods().get( 0 ) ) );
+				MermaidVisitor.render( declaration, declaration.methods().get( 0 ), 0 ) );
 		assertEquals(
 				"""
 					sequenceDiagram
@@ -1412,11 +1447,13 @@ public class MermaidTest {
 					Note over p0,p1: Separate.reverse
 					p1->>p0: value
 					""".strip(),
-				MermaidVisitor.render( declaration, declaration.methods().get( 1 ) ) );
+				MermaidVisitor.render( declaration, declaration.methods().get( 1 ), 0 ) );
 		assertThrows( NullPointerException.class,
-				() -> MermaidVisitor.render( null, declaration.methods().get( 0 ) ) );
+				() -> MermaidVisitor.render( null, declaration.methods().get( 0 ), 0 ) );
 		assertThrows( NullPointerException.class,
-				() -> MermaidVisitor.render( declaration, null ) );
+				() -> MermaidVisitor.render( declaration, null, 0 ) );
+		assertThrows( IllegalArgumentException.class,
+				() -> MermaidVisitor.render( declaration, declaration.methods().get( 0 ), -1 ) );
 	}
 
 	////////// TYPED CALL DETECTION //////////
@@ -1436,7 +1473,7 @@ public class MermaidTest {
 		var declaration = unit.classes().get( 0 );
 
 		var exception = assertThrows( IllegalStateException.class,
-				() -> MermaidVisitor.render( declaration, declaration.methods().get( 0 ) ) );
+				() -> MermaidVisitor.render( declaration, declaration.methods().get( 0 ), 0 ) );
 
 		assertEquals( "Method call has no resolved method annotation: helper",
 				exception.getMessage() );
@@ -1458,7 +1495,7 @@ public class MermaidTest {
 		var secondMethod = unit.classes().get( 1 ).methods().get( 0 );
 
 		var exception = assertThrows( IllegalArgumentException.class,
-				() -> MermaidVisitor.render( first, secondMethod ) );
+				() -> MermaidVisitor.render( first, secondMethod, 0 ) );
 
 		assertEquals( "Method 'second' does not belong to declaration 'First'",
 				exception.getMessage() );
@@ -1714,10 +1751,15 @@ public class MermaidTest {
 	}
 
 	private static Optional<String> diagram( String source, int line, int character ) {
+		return diagram( source, line, character, 0 );
+	}
+
+	private static Optional<String> diagram(
+			String source, int line, int character, int helperExpansionDepth ) {
 		try {
 			var unit = typedUnits( List.of( source ) ).get( 0 );
 			return new ChoreographyDiagramProvider().diagram(
-					unit, new Position( line, character ) );
+					unit, new Position( line, character ), helperExpansionDepth );
 		} catch( Exception exception ) {
 			throw new RuntimeException( exception );
 		}
@@ -1730,10 +1772,17 @@ public class MermaidTest {
 
 	private static Optional<String> diagram(
 			List<String> sources, int unitIndex, int line, int character ) {
+		return diagram( sources, unitIndex, line, character, 0 );
+	}
+
+	private static Optional<String> diagram(
+			List<String> sources, int unitIndex, int line, int character,
+			int helperExpansionDepth ) {
 		try {
 			var units = typedUnits( sources );
 			return new ChoreographyDiagramProvider().diagram(
-					units.get( unitIndex ), new Position( line, character ) );
+					units.get( unitIndex ), new Position( line, character ),
+					helperExpansionDepth );
 		} catch( Exception exception ) {
 			throw new RuntimeException( exception );
 		}
@@ -1756,11 +1805,20 @@ public class MermaidTest {
 	}
 
 	private static String mermaidAt( String source, String marker ) {
-		return diagramAt( List.of( source ), 0, marker ).orElseThrow();
+		return mermaidAt( source, marker, 0 );
+	}
+
+	private static String mermaidAt( String source, String marker, int helperExpansionDepth ) {
+		return diagramAt( List.of( source ), 0, marker, helperExpansionDepth ).orElseThrow();
 	}
 
 	private static Optional<String> diagramAt(
 			List<String> sources, int unitIndex, String marker ) {
+		return diagramAt( sources, unitIndex, marker, 0 );
+	}
+
+	private static Optional<String> diagramAt(
+			List<String> sources, int unitIndex, String marker, int helperExpansionDepth ) {
 		String source = sources.get( unitIndex );
 		int offset = source.indexOf( marker );
 		if( offset < 0 )
@@ -1776,7 +1834,7 @@ public class MermaidTest {
 			}
 		}
 		return sources.size() == 1
-				? diagram( source, line, character )
-				: diagram( sources, unitIndex, line, character );
+				? diagram( source, line, character, helperExpansionDepth )
+				: diagram( sources, unitIndex, line, character, helperExpansionDepth );
 	}
 }
