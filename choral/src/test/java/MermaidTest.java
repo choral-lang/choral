@@ -185,7 +185,7 @@ public class MermaidTest {
 					participant p1 as B
 					Note over p0,p1: Evaluation.run
 					rect rgba(0, 0, 0, 0.05)
-					Note left of p0: call route
+					Note over p0,p1: call route
 					p0->>p1: before
 					end
 					p0->>p1: after
@@ -217,7 +217,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Nested.run
 				p0->>p1: value
-				Note left of p0: call consume
+				Note over p0,p1: call consume
 				""".strip(),
 				mermaidAt( source, "consume( channel" ) );
 	}
@@ -569,14 +569,14 @@ public class MermaidTest {
 				participant p2 as C
 				Note over p0,p2: Checkout.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call receive
+				Note over p0,p2: call receive
 				p0->>p1: order
 				end
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call ship
+				Note over p0,p2: call ship
 				alt ready
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call notifyWarehouse
+				Note over p0,p2: call notifyWarehouse
 				p1->>p2: shipment
 				end
 				else
@@ -615,7 +615,7 @@ public class MermaidTest {
 				Note over p0,p1: EvaluationOrder.run
 				p0->>p1: value
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call respond
+				Note over p0,p1: call respond
 				p1->>p0: received
 				end
 				""".strip(),
@@ -653,7 +653,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Root.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call External.send
+				Note over p0,p1: call External.send
 				p0->>p1: value
 				end
 				""".strip(),
@@ -693,7 +693,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Root.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call External.send
+				Note over p0,p1: call External.send
 				p1->>p0: value
 				end
 				""".strip(),
@@ -730,7 +730,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Root.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call External.decide
+				Note over p0,p1: call External.decide
 				p1-->>p0: Decision@B.READY
 				end
 				""".strip(),
@@ -772,7 +772,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Root.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call External.decide
+				Note over p0,p1: call External.decide
 				p1-->>p0: Decision@B.FIRST
 				p0-->>p1: Decision@A.SECOND
 				end
@@ -813,7 +813,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Root.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call External.send
+				Note over p0,p1: call External.send
 				p1->>p0: "first"@B
 				p0->>p1: "second"@A
 				end
@@ -855,7 +855,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Root.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call External.recover
+				Note over p0,p1: call External.recover
 				critical try
 				option catch Exception@( B ) error
 				p1->>p0: value
@@ -897,7 +897,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Root.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call External.send
+				Note over p0,p1: call External.send
 				p1->>p0: new Payload@( B )()
 				end
 				""".strip(),
@@ -975,7 +975,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Root.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call Base.send
+				Note over p0,p1: call Base.send
 				p1->>p0: value
 				end
 				""".strip(),
@@ -1012,7 +1012,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Root.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call External.send
+				Note over p0,p1: call External.send
 				p1->>p0: value
 				end
 				""".strip(),
@@ -1059,11 +1059,11 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Root.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call External.send(SymChannel@( A, B ) Object , String@( A ))
+				Note over p0,p1: call External.send(SymChannel@( A, B ) Object , String@( A ))
 				p0->>p1: value
 				end
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call External.send(SymChannel@( B, A ) Object , String@( B ))
+				Note over p0,p1: call External.send(SymChannel@( B, A ) Object , String@( B ))
 				p1->>p0: value
 				end
 				""".strip(),
@@ -1110,7 +1110,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Root.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call Helper.send
+				Note over p0,p1: call Helper.send
 				p1->>p0: value
 				end
 				""".strip(),
@@ -1152,7 +1152,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: First.start
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call Second.forward
+				Note over p0,p1: call Second.forward
 				p0->>p1: value
 				Note over p0,p1: recursive call to start omitted
 				end
@@ -1192,11 +1192,11 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Overloaded.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call send(String@( A ))
+				Note over p0,p1: call send(String@( A ))
 				p0->>p1: value
 				end
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call send(String@( B ))
+				Note over p0,p1: call send(String@( B ))
 				p1->>p0: value
 				end
 				""".strip(),
@@ -1290,7 +1290,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: RecursiveHelper.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call repeat
+				Note over p0,p1: call repeat
 				p0->>p1: value
 				Note over p0,p1: recursive call to repeat omitted
 				end
@@ -1329,10 +1329,10 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: MutuallyRecursive.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call first
+				Note over p0,p1: call first
 				p0->>p1: value
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call second
+				Note over p0,p1: call second
 				Note over p0,p1: recursive call to first omitted
 				end
 				end
@@ -1376,7 +1376,7 @@ public class MermaidTest {
 
 		String mermaid = mermaidAt( source, "void run", 17 );
 
-		assertTrue( mermaid.contains( "Note left of p0: call helper16" ) );
+		assertTrue( mermaid.contains( "Note over p0,p1: call helper16" ) );
 		assertTrue( mermaid.contains( "p0->>p1: value" ) );
 	}
 
@@ -1413,7 +1413,7 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Depth.run
-				Note left of p0: call first
+				Note over p0,p1: call first
 				""".strip(),
 				mermaidAt( source, "void run", 0 ) );
 		assertEquals(
@@ -1423,9 +1423,9 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Depth.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call first
+				Note over p0,p1: call first
 				p0->>p1: fromA
-				Note left of p0: call second
+				Note over p0,p1: call second
 				end
 				""".strip(),
 				mermaidAt( source, "void run", 1 ) );
@@ -1436,15 +1436,47 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Depth.run
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call first
+				Note over p0,p1: call first
 				p0->>p1: fromA
 				rect rgba(0, 0, 0, 0.05)
-				Note left of p0: call second
+				Note over p0,p1: call second
 				p1->>p0: fromB
 				end
 				end
 				""".strip(),
 				mermaidAt( source, "void run", 2 ) );
+	}
+
+	@Test
+	public void helperCallNotesSpanAllParticipants() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Spanning@( A, B, C ) {
+				SymChannel@( A, B )< Object > channel;
+				String@A value;
+
+				void run() {
+					helper();
+				}
+
+				private void helper() {
+					channel.< String >com( value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p0 as A
+				participant p1 as B
+				participant p2 as C
+				Note over p0,p2: Spanning.run
+				Note over p0,p2: call helper
+				""".strip(),
+				mermaidAt( source, "void run", 0 ) );
 	}
 
 	@Test
@@ -1646,8 +1678,8 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Typed.run
-				Note left of p0: call Helper.com
-				Note left of p0: call Helper.select
+				Note over p0,p1: call Helper.com
+				Note over p0,p1: call Helper.select
 				p0->>p1: value
 				""".strip(),
 				mermaidAt( source, "arbitrarilyNamed.< String >com" ) );
@@ -1679,7 +1711,7 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: ComputedReceiver.run
-				Note left of p0: call channel
+				Note over p0,p1: call channel
 				p0->>p1: value
 				""".strip(),
 				mermaidAt( source, "this.channel" ) );

@@ -369,7 +369,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
             return;
         }
         if (currentHelperDepth >= helperExpansionDepth) {
-            addCallNote(methodName);
+            addNote("call " + methodName);
             return;
         }
         activeMethods.add(method);
@@ -383,16 +383,10 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         }
         if (!body.isEmpty()) {
             diagramLines.add("rect rgba(0, 0, 0, 0.05)");
-            addCallNote(methodName);
+            addNote("call " + methodName);
             diagramLines.addAll(body);
             diagramLines.add("end");
         }
-    }
-
-    private void addCallNote(String methodName) {
-        if (!participantWorlds.isEmpty())
-            diagramLines.add("Note left of " + participantId(participantWorlds.get(0))
-                    + ": " + labels.escape("call " + methodName));
     }
 
     private static boolean hasSourceBody(MethodDefinition method) {

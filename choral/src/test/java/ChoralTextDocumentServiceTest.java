@@ -126,7 +126,7 @@ public class ChoralTextDocumentServiceTest {
                 participant p0 as A
                 participant p1 as B
                 Note over p0,p1: Example.run
-                Note left of p0: call helper
+                Note over p0,p1: call helper
                 """.strip(),
                 diagramAt(service, uri, source, "void run").join());
         assertEquals(
@@ -136,7 +136,7 @@ public class ChoralTextDocumentServiceTest {
                 participant p1 as B
                 Note over p0,p1: Example.run
                 rect rgba(0, 0, 0, 0.05)
-                Note left of p0: call helper
+                Note over p0,p1: call helper
                 p0->>p1: value
                 end
                 """.strip(),
@@ -355,7 +355,7 @@ public class ChoralTextDocumentServiceTest {
                 participant p1 as B
                 Note over p0,p1: Root.run
                 rect rgba(0, 0, 0, 0.05)
-                Note left of p0: call Helper.send
+                Note over p0,p1: call Helper.send
                 p1->>p0: value
                 end
                 """.strip(),
@@ -485,7 +485,7 @@ public class ChoralTextDocumentServiceTest {
 
         String diagram = diagramAt(service, uri, source, "helper.send", 1).join();
 
-        assertTrue(diagram.contains("Note left of p0: call Helper.send"));
+        assertTrue(diagram.contains("Note over p0,p1: call Helper.send"));
         assertTrue(diagram.contains("p1->>p0: value"));
     }
 
