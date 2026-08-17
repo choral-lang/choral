@@ -503,7 +503,6 @@ public class MermaidTest {
 					if( streaming ) {
 						channel.< String >com( value );
 						if( valid ) {}
-						gather( channel, streaming, valid, value );
 					} else {
 						channel.< StreamState >select( StreamState@A.OFF );
 					}
@@ -519,7 +518,6 @@ public class MermaidTest {
 				Note over p0,p1: Streaming.gather
 				alt streaming
 				p0->>p1: value
-				Note over p0,p1: recursive call to gather omitted
 				else
 				p0-->>p1: StreamState@A.OFF
 				end
