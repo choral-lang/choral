@@ -49,7 +49,7 @@ import java.util.Set;
  */
 public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     /** Maximum total number of helper bodies expanded in one diagram. */
-    private static final int MAXIMUM_HELPER_EXPANSIONS = 128;
+    private static final int MAXIMUM_RENDERED_HELPER_BODIES = 128;
 
     /** Complete Mermaid source lines accumulated during the current render. */
     private final List<String> diagramLines = new ArrayList<>();
@@ -63,9 +63,9 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     /** Name of the root declaration being rendered. */
     private final String rootDeclarationName;
     /** Total source-backed method bodies expanded during the current render. */
-    private int helperExpansions;
+    private int renderedHelperBodies;
     /** Whether the total-expansion-limit note has already been emitted. */
-    private boolean helperCountLimitReported;
+    private boolean helperBodyLimitReported;
 
     public static String render(
             TemplateDeclaration declaration, MethodDefinition method) {
@@ -369,16 +369,16 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
             addNote("recursive call to " + methodName + " omitted");
             return;
         }
-        if (helperExpansions >= MAXIMUM_HELPER_EXPANSIONS) {
-            if (!helperCountLimitReported) {
-                addNote("helper expansion count limit " + MAXIMUM_HELPER_EXPANSIONS
+        if (renderedHelperBodies >= MAXIMUM_RENDERED_HELPER_BODIES) {
+            if (!helperBodyLimitReported) {
+                addNote("helper expansion count limit " + MAXIMUM_RENDERED_HELPER_BODIES
                         + " reached - remaining helper calls omitted");
-                helperCountLimitReported = true;
+                helperBodyLimitReported = true;
             }
             return;
         }
         activeMethods.add(method);
-        helperExpansions++;
+        renderedHelperBodies++;
         List<String> body;
         try {
             body = capture(() -> method.accept(this));
