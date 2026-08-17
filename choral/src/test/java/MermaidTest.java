@@ -1121,7 +1121,7 @@ public class MermaidTest {
 				p1->>p0: value
 				end
 				""".strip(),
-				mermaidAt( List.of( helper, root ), 1, "helper.send" ) );
+				diagramAt( List.of( helper, root ), 1, "helper.send" ).orElseThrow() );
 	}
 
 	@Test
@@ -1764,12 +1764,7 @@ public class MermaidTest {
 	}
 
 	private static String mermaidAt( String source, String marker ) {
-		return mermaidAt( List.of( source ), 0, marker );
-	}
-
-	private static String mermaidAt(
-			List<String> sources, int unitIndex, String marker ) {
-		return diagramAt( sources, unitIndex, marker ).orElseThrow();
+		return diagramAt( List.of( source ), 0, marker ).orElseThrow();
 	}
 
 	private static Optional<String> diagramAt(
