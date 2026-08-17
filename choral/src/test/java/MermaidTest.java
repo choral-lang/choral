@@ -737,7 +737,7 @@ public class MermaidTest {
 	}
 
 	@Test
-	public void helperWorldLabelsAreGroundedInOnePass() {
+	public void swappedWorldMappingsDoNotRewriteReplacementValues() {
 		String source =
 			"""
 			import choral.channels.SymChannel;
