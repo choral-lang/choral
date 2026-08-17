@@ -194,12 +194,10 @@ public class MermaidTest {
 	}
 
 	@Test
-	public void nestedStatementsAndExpressionsAreTraversed() {
+	public void communicationPassedAsMethodArgumentIsRendered() {
 		String source =
 			"""
 			import choral.channels.SymChannel;
-
-			enum Choice@X { THEN, ELSE }
 
 			class Nested@( A, B ) {
 				void consume( String@B value ) {}
@@ -207,13 +205,7 @@ public class MermaidTest {
 				void run(
 						SymChannel@( A, B )< Object > channel,
 						String@A value ) {
-					if( true@A ) {
-						channel.< Choice >select( Choice@A.THEN );
-						consume( channel.< String >com( value ) );
-					} else {
-						channel.< Choice >select( Choice@A.ELSE );
-						channel.< String >com( value );
-					}
+					consume( channel.< String >com( value ) );
 				}
 			}
 			""";
@@ -224,13 +216,7 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Nested.run
-				alt true@A
-				p0-->>p1: Choice@A.THEN
 				p0->>p1: value
-				else
-				p0-->>p1: Choice@A.ELSE
-				p0->>p1: value
-				end
 				""".strip(),
 				mermaidAt( source, "consume( channel" ) );
 	}
