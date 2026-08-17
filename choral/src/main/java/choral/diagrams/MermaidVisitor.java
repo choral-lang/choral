@@ -358,14 +358,16 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         var source = method.higherCallable().sourceCode().orElse(null);
         if (!(source instanceof MethodDefinition definition) || !hasBody(definition))
             return;
-        if (currentHelperDepth >= helperExpansionDepth)
-            return;
         labels.withMethodWorlds(definition, method, () -> visitSourceMethod(definition));
     }
 
     private void visitSourceMethod(MethodDefinition method) {
         String methodName = localMethods.contains(method)
                 ? labels.method(method) : labels.qualifiedMethod(method);
+        if (currentHelperDepth >= helperExpansionDepth) {
+            addCallNote(methodName);
+            return;
+        }
         if (activeMethods.contains(method)) {
             addNote("recursive call to " + methodName + " omitted");
             return;
@@ -381,11 +383,16 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         }
         if (!body.isEmpty()) {
             diagramLines.add("rect rgba(0, 0, 0, 0.05)");
-            diagramLines.add("Note left of " + participantId(participantWorlds.get(0))
-                    + ": " + labels.escape("call " + methodName));
+            addCallNote(methodName);
             diagramLines.addAll(body);
             diagramLines.add("end");
         }
+    }
+
+    private void addCallNote(String methodName) {
+        if (!participantWorlds.isEmpty())
+            diagramLines.add("Note left of " + participantId(participantWorlds.get(0))
+                    + ": " + labels.escape("call " + methodName));
     }
 
     private static boolean hasBody(MethodDefinition method) {

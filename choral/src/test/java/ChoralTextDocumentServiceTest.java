@@ -126,6 +126,7 @@ public class ChoralTextDocumentServiceTest {
                 participant p0 as A
                 participant p1 as B
                 Note over p0,p1: Example.run
+                Note left of p0: call helper
                 """.strip(),
                 diagramAt(service, uri, source, "void run").join());
         assertEquals(

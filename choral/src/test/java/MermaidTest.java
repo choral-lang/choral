@@ -217,6 +217,7 @@ public class MermaidTest {
 				participant p1 as B
 				Note over p0,p1: Nested.run
 				p0->>p1: value
+				Note left of p0: call consume
 				""".strip(),
 				mermaidAt( source, "consume( channel" ) );
 	}
@@ -1343,7 +1344,7 @@ public class MermaidTest {
 	}
 
 	@Test
-	public void helperExpansionDepthControlsRenderedBodies() {
+	public void helperExpansionDepthControlsRenderedBodiesButPreservesCalls() {
 		String source =
 			"""
 			import choral.channels.SymChannel;
@@ -1375,6 +1376,7 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Depth.run
+				Note left of p0: call first
 				""".strip(),
 				mermaidAt( source, "void run", 0 ) );
 		assertEquals(
@@ -1386,6 +1388,7 @@ public class MermaidTest {
 				rect rgba(0, 0, 0, 0.05)
 				Note left of p0: call first
 				p0->>p1: fromA
+				Note left of p0: call second
 				end
 				""".strip(),
 				mermaidAt( source, "void run", 1 ) );
@@ -1576,6 +1579,8 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: Typed.run
+				Note left of p0: call Helper.com
+				Note left of p0: call Helper.select
 				p0->>p1: value
 				""".strip(),
 				mermaidAt( source, "arbitrarilyNamed.< String >com" ) );
@@ -1607,6 +1612,7 @@ public class MermaidTest {
 				participant p0 as A
 				participant p1 as B
 				Note over p0,p1: ComputedReceiver.run
+				Note left of p0: call channel
 				p0->>p1: value
 				""".strip(),
 				mermaidAt( source, "this.channel" ) );
