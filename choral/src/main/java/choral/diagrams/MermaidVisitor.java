@@ -356,7 +356,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
                 new IllegalStateException("Method call has no resolved method annotation: "
                         + call.name().identifier()));
         var source = method.higherCallable().sourceCode().orElse(null);
-        if (!(source instanceof MethodDefinition definition) || !hasBody(definition))
+        if (!(source instanceof MethodDefinition definition) || !hasSourceBody(definition))
             return;
         labels.withMethodWorlds(definition, method, () -> visitSourceMethod(definition));
     }
@@ -395,7 +395,10 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
                     + ": " + labels.escape("call " + methodName));
     }
 
-    private static boolean hasBody(MethodDefinition method) {
+    private static boolean hasSourceBody(MethodDefinition method) {
+        if (method.hasPosition() && method.position().sourceFile() != null
+                && method.position().sourceFile().endsWith(".chh"))
+            return false;
         if (method instanceof ClassMethodDefinition definition)
             return definition.body().isPresent();
         if (method instanceof InterfaceMethodDefinition definition)

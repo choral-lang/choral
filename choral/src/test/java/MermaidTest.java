@@ -1448,6 +1448,36 @@ public class MermaidTest {
 	}
 
 	@Test
+	public void headerMethodsAreNotRenderedAsSourceHelpersAtAnyDepth() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class HeaderCalls@( A, B ) {
+				void run(
+						SymChannel@( A, B )< Object > channel,
+						double@A value,
+						String@A message ) {
+					Double@A boxed = Double@A.valueOf( value );
+					int@A integer = boxed.intValue();
+					channel.< String >com( message );
+				}
+			}
+			""";
+		String expected =
+			"""
+				sequenceDiagram
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: HeaderCalls.run
+				p0->>p1: message
+				""".strip();
+
+		assertEquals( expected, mermaidAt( source, "void run", 0 ) );
+		assertEquals( expected, mermaidAt( source, "void run", 1 ) );
+	}
+
+	@Test
 	public void separateStaticRendersDoNotShareState() {
 		String source =
 			"""
