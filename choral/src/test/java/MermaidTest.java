@@ -826,12 +826,12 @@ public class MermaidTest {
 			"""
 			import choral.channels.SymChannel;
 
-			class External@( A, B ) {
+			class External@( Sender, Receiver ) {
 				void recover(
-						SymChannel@( A, B )< Object > channel,
-						String@A value ) {
+						SymChannel@( Sender, Receiver )< Object > channel,
+						String@Sender value ) {
 					try {
-					} catch( Exception@A error ) {
+					} catch( Exception@Sender error ) {
 						channel.< String >com( value );
 					}
 				}
