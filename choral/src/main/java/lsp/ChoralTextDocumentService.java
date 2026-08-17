@@ -19,7 +19,6 @@ import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
-import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
@@ -82,7 +81,7 @@ public class ChoralTextDocumentService implements TextDocumentService {
 		diagnosticsProvider.setClient( client );
     }
 
-    public CompletableFuture<String> choreographyDiagram(TextDocumentPositionParams params) {
+    public CompletableFuture<String> choreographyDiagram(ChoreographyDiagramParams params) {
         if (params == null || params.getTextDocument() == null
                 || params.getTextDocument().getUri() == null) {
             return CompletableFuture.failedFuture(diagramFailure(
@@ -95,12 +94,18 @@ public class ChoralTextDocumentService implements TextDocumentService {
                     "The choreography request did not include a cursor position.",
                     ResponseErrorCode.InvalidParams));
         }
+        if (params.getHelperExpansionDepth() < 0) {
+            return CompletableFuture.failedFuture(diagramFailure(
+                    "Helper expansion depth must not be negative.",
+                    ResponseErrorCode.InvalidParams));
+        }
         Position position = new Position(
                 params.getPosition().getLine(), params.getPosition().getCharacter());
-        return diagram(uri, position);
+        return diagram(uri, position, params.getHelperExpansionDepth());
     }
 
-    private CompletableFuture<String> diagram(String uri, Position position) {
+    private CompletableFuture<String> diagram(
+            String uri, Position position, int helperExpansionDepth) {
         String content = documents.get(uri);
         if (content == null) content = readFileDocument(uri);
         if (content == null)
@@ -109,7 +114,8 @@ public class ChoralTextDocumentService implements TextDocumentService {
                     ResponseErrorCode.RequestFailed));
         try {
             AnalysisResult analysis = analyzer.analyze(uri, content, openDocuments());
-            return CompletableFuture.completedFuture(diagram(analysis, position));
+            return CompletableFuture.completedFuture(
+                    diagram(analysis, position, helperExpansionDepth));
         } catch (ResponseErrorException failure) {
             return CompletableFuture.failedFuture(failure);
         } catch (Exception failure) {
@@ -119,14 +125,16 @@ public class ChoralTextDocumentService implements TextDocumentService {
         }
     }
 
-    private String diagram(AnalysisResult analysis, Position position) {
+    private String diagram(
+            AnalysisResult analysis, Position position, int helperExpansionDepth) {
         if (!analysis.successful()) {
             boolean parseError = analysis.failure() == AnalysisFailure.PARSE_ERROR;
             String action = parseError ? "parse" : "type-check";
             throw diagramFailure("Unable to " + action + " the Choral document: "
                     + analysis.failureMessage(), ResponseErrorCode.RequestFailed);
         }
-        return choreographyDiagramProvider.diagram(analysis.compilationUnit(), position)
+        return choreographyDiagramProvider.diagram(
+                        analysis.compilationUnit(), position, helperExpansionDepth)
                 .orElse(null);
     }
 

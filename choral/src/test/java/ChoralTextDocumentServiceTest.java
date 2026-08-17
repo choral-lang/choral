@@ -9,6 +9,7 @@ import choral.ast.expression.MethodCallExpression;
 import choral.ast.expression.ScopedExpression;
 import choral.ast.statement.ExpressionStatement;
 import choral.types.GroundDataType;
+import lsp.ChoreographyDiagramParams;
 import lsp.ChoralLanguageServer;
 import lsp.ChoralTextDocumentService;
 import lsp.features.DiagnosticsProvider;
@@ -20,7 +21,6 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
-import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
@@ -44,7 +44,7 @@ public class ChoralTextDocumentServiceTest {
                 .get("choral/choreographyDiagram");
 
         assertNotNull(request);
-        assertEquals(TextDocumentPositionParams.class, request.getParameterTypes()[0]);
+        assertEquals(ChoreographyDiagramParams.class, request.getParameterTypes()[0]);
     }
 
     @Test
@@ -89,7 +89,7 @@ public class ChoralTextDocumentServiceTest {
         ChoralTextDocumentService service = new ChoralTextDocumentService();
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
 
-        String result = service.choreographyDiagram(new TextDocumentPositionParams(
+        String result = service.choreographyDiagram(new ChoreographyDiagramParams(
                 new TextDocumentIdentifier(uri), new Position(4, 45))).join();
 
         assertEquals(
@@ -101,6 +101,45 @@ public class ChoralTextDocumentServiceTest {
                 p0->>p1: value
                 """.strip(),
                 result);
+    }
+
+    @Test
+    public void helperExpansionDepthDefaultsToZeroAndCanBeRequested(@TempDir Path project) {
+        String uri = project.resolve("Example.ch").toUri().toString();
+        String source = """
+                import choral.channels.SymChannel;
+
+                class Example@( A, B ) {
+                    SymChannel@( A, B )< Object > channel;
+                    String@A value;
+
+                    void run() { helper(); }
+                    void helper() { channel.< String >com( value ); }
+                }
+                """;
+        ChoralTextDocumentService service = new ChoralTextDocumentService();
+        service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
+
+        assertEquals(
+                """
+                sequenceDiagram
+                participant p0 as A
+                participant p1 as B
+                Note over p0,p1: Example.run
+                """.strip(),
+                diagramAt(service, uri, source, "void run").join());
+        assertEquals(
+                """
+                sequenceDiagram
+                participant p0 as A
+                participant p1 as B
+                Note over p0,p1: Example.run
+                rect rgba(0, 0, 0, 0.05)
+                Note left of p0: call helper
+                p0->>p1: value
+                end
+                """.strip(),
+                diagramAt(service, uri, source, "void run", 1).join());
     }
 
     @Test
@@ -159,7 +198,7 @@ public class ChoralTextDocumentServiceTest {
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
 
         ResponseError error = diagramError(service.choreographyDiagram(
-                new TextDocumentPositionParams(
+                new ChoreographyDiagramParams(
                         new TextDocumentIdentifier(uri), new Position(1, 10))));
 
         assertEquals(ResponseErrorCode.RequestFailed.getValue(), error.getCode());
@@ -171,7 +210,7 @@ public class ChoralTextDocumentServiceTest {
         ChoralTextDocumentService service = new ChoralTextDocumentService();
 
         ResponseError error = diagramError(service.choreographyDiagram(
-                new TextDocumentPositionParams()));
+                new ChoreographyDiagramParams()));
 
         assertEquals(ResponseErrorCode.InvalidParams.getValue(), error.getCode());
         assertEquals("The choreography request did not include a document URI.", error.getMessage());
@@ -180,13 +219,25 @@ public class ChoralTextDocumentServiceTest {
     @Test
     public void requiresAChoreographyRequestPosition() {
         ChoralTextDocumentService service = new ChoralTextDocumentService();
-        TextDocumentPositionParams params = new TextDocumentPositionParams();
+        ChoreographyDiagramParams params = new ChoreographyDiagramParams();
         params.setTextDocument(new TextDocumentIdentifier("file:///Example.ch"));
 
         ResponseError error = diagramError(service.choreographyDiagram(params));
 
         assertEquals(ResponseErrorCode.InvalidParams.getValue(), error.getCode());
         assertEquals("The choreography request did not include a cursor position.", error.getMessage());
+    }
+
+    @Test
+    public void rejectsNegativeHelperExpansionDepth() {
+        ChoralTextDocumentService service = new ChoralTextDocumentService();
+        ChoreographyDiagramParams params = new ChoreographyDiagramParams(
+                new TextDocumentIdentifier("file:///Example.ch"), new Position(0, 0), -1);
+
+        ResponseError error = diagramError(service.choreographyDiagram(params));
+
+        assertEquals(ResponseErrorCode.InvalidParams.getValue(), error.getCode());
+        assertEquals("Helper expansion depth must not be negative.", error.getMessage());
     }
 
     @Test
@@ -307,7 +358,7 @@ public class ChoralTextDocumentServiceTest {
                 p1->>p0: value
                 end
                 """.strip(),
-                diagramAt(service, uri, source, "helper.send").join());
+                diagramAt(service, uri, source, "helper.send", 1).join());
     }
 
     @Test
@@ -368,7 +419,7 @@ public class ChoralTextDocumentServiceTest {
         service.didOpen(new DidOpenTextDocumentParams(
                 new TextDocumentItem(rootUri, "choral", 1, rootSource)));
 
-        String diagram = diagramAt(service, rootUri, rootSource, "helper.send").join();
+        String diagram = diagramAt(service, rootUri, rootSource, "helper.send", 1).join();
 
         assertTrue(diagram.contains("p1->>p0: unsavedValue"));
         assertFalse(diagram.contains("p1->>p0: diskValue"));
@@ -378,7 +429,8 @@ public class ChoralTextDocumentServiceTest {
                 new VersionedTextDocumentIdentifier(helperUri, 2),
                 List.of(new TextDocumentContentChangeEvent(changedHelper))));
 
-        String updatedDiagram = diagramAt(service, rootUri, rootSource, "helper.send").join();
+        String updatedDiagram = diagramAt(
+                service, rootUri, rootSource, "helper.send", 1).join();
 
         assertTrue(updatedDiagram.contains("p1->>p0: changedValue"));
         assertFalse(updatedDiagram.contains("p1->>p0: unsavedValue"));
@@ -430,7 +482,7 @@ public class ChoralTextDocumentServiceTest {
         ChoralTextDocumentService service = new ChoralTextDocumentService();
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
 
-        String diagram = diagramAt(service, uri, source, "helper.send").join();
+        String diagram = diagramAt(service, uri, source, "helper.send", 1).join();
 
         assertTrue(diagram.contains("Note left of p0: call Helper.send"));
         assertTrue(diagram.contains("p1->>p0: value"));
@@ -490,7 +542,7 @@ public class ChoralTextDocumentServiceTest {
         ChoralTextDocumentService service = new ChoralTextDocumentService();
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
 
-        String diagram = diagramAt(service, uri, source, "first.send").join();
+        String diagram = diagramAt(service, uri, source, "first.send", 2).join();
 
         assertTrue(diagram.contains("call First.send"));
         assertTrue(diagram.contains("call Second.send"));
@@ -540,7 +592,7 @@ public class ChoralTextDocumentServiceTest {
         ChoralTextDocumentService service = new ChoralTextDocumentService();
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
 
-        String diagram = diagramAt(service, uri, source, "helper.send").join();
+        String diagram = diagramAt(service, uri, source, "helper.send", 1).join();
 
         assertTrue(diagram.contains("call Helper.send"));
         assertTrue(diagram.contains("p1->>p0: value"));
@@ -597,7 +649,7 @@ public class ChoralTextDocumentServiceTest {
         ChoralTextDocumentService service = new ChoralTextDocumentService();
         service.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri, "choral", 1, source)));
 
-        String diagram = diagramAt(service, uri, source, "child.send").join();
+        String diagram = diagramAt(service, uri, source, "child.send", 1).join();
 
         assertTrue(diagram.contains("call Base.send"));
         assertTrue(diagram.contains("p1->>p0: value"));
@@ -632,6 +684,13 @@ public class ChoralTextDocumentServiceTest {
     private static CompletableFuture<String> diagramAt(
             ChoralTextDocumentService service, String uri, String source, String marker
     ) {
+        return diagramAt(service, uri, source, marker, 0);
+    }
+
+    private static CompletableFuture<String> diagramAt(
+            ChoralTextDocumentService service, String uri, String source, String marker,
+            int helperExpansionDepth
+    ) {
         int offset = source.indexOf(marker);
         int line = 0;
         int character = 0;
@@ -643,8 +702,9 @@ public class ChoralTextDocumentServiceTest {
                 character++;
             }
         }
-        return service.choreographyDiagram(new TextDocumentPositionParams(
-                new TextDocumentIdentifier(uri), new Position(line, character)));
+        return service.choreographyDiagram(new ChoreographyDiagramParams(
+                new TextDocumentIdentifier(uri), new Position(line, character),
+                helperExpansionDepth));
     }
 
     private static ResponseError diagramError(CompletableFuture<String> request) {

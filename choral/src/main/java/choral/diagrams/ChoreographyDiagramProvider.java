@@ -10,10 +10,6 @@ import java.util.stream.Stream;
 
 /** Selects a choreography declaration and renders its typed AST as Mermaid. */
 public final class ChoreographyDiagramProvider {
-    public Optional<String> diagram(CompilationUnit unit, Position cursor) {
-        return diagram(unit, cursor, 0);
-    }
-
     public Optional<String> diagram(
             CompilationUnit unit, Position cursor, int helperExpansionDepth) {
         return declarationAt(unit, cursor)

@@ -6,7 +6,6 @@ import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
-import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageClientAware;
@@ -31,7 +30,7 @@ public class ChoralLanguageServer implements LanguageServer, LanguageClientAware
     }
 
     @JsonRequest("choral/choreographyDiagram")
-    public CompletableFuture<String> choreographyDiagram(TextDocumentPositionParams params) {
+    public CompletableFuture<String> choreographyDiagram(ChoreographyDiagramParams params) {
         return textDocumentService.choreographyDiagram(params);
     }
 
