@@ -1249,7 +1249,7 @@ public class MermaidTest {
 			}
 			""";
 
-		assertEquals(
+		String expected =
 			"""
 				sequenceDiagram
 				participant p0 as A
@@ -1257,6 +1257,43 @@ public class MermaidTest {
 				Note over p0,p1: Recursive.run
 				p0->>p1: value
 				Note over p0,p1: recursive call to run omitted
+				""".strip();
+
+		assertEquals( expected, mermaidAt( source, "void run", 0 ) );
+		assertEquals( expected, mermaidAt( source, "void run", 1 ) );
+	}
+
+	@Test
+	public void recursiveHelperAtTheDepthLimitStillUsesARecursionNote() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class RecursiveHelper@( A, B ) {
+				SymChannel@( A, B )< Object > channel;
+
+				void run( String@A value ) {
+					repeat( value );
+				}
+
+				private void repeat( String@A value ) {
+					channel.< String >com( value );
+					repeat( value );
+				}
+			}
+			""";
+
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: RecursiveHelper.run
+				rect rgba(0, 0, 0, 0.05)
+				Note left of p0: call repeat
+				p0->>p1: value
+				Note over p0,p1: recursive call to repeat omitted
+				end
 				""".strip(),
 				mermaidAt( source, "void run", 1 ) );
 	}

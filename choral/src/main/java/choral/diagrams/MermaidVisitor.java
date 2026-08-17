@@ -364,12 +364,12 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     private void visitSourceMethod(MethodDefinition method) {
         String methodName = localMethods.contains(method)
                 ? labels.method(method) : labels.qualifiedMethod(method);
-        if (currentHelperDepth >= helperExpansionDepth) {
-            addCallNote(methodName);
-            return;
-        }
         if (activeMethods.contains(method)) {
             addNote("recursive call to " + methodName + " omitted");
+            return;
+        }
+        if (currentHelperDepth >= helperExpansionDepth) {
+            addCallNote(methodName);
             return;
         }
         activeMethods.add(method);
