@@ -471,13 +471,19 @@ public class MermaidTest {
 				}
 			}
 			""";
-		String diagram = mermaidAt( source, "if( forward" );
-		int guard = diagram.indexOf( "p0->>p1: ready" );
-		int alternative = diagram.indexOf( "\nalt " );
-		int branch = diagram.indexOf( "p1->>p0: value" );
 
-		assertTrue( guard >= 0 && guard < alternative );
-		assertTrue( alternative < branch );
+		assertEquals(
+			"""
+				sequenceDiagram
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Guard.run
+				p0->>p1: ready
+				alt forward. Boolean com( ready )
+				p1->>p0: value
+				end
+				""".strip(),
+				mermaidAt( source, "if( forward" ) );
 	}
 
 	@Test
