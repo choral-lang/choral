@@ -124,14 +124,16 @@ public class HeaderLoader {
 	private static boolean keepHeaderFile(
 			Path file, Collection< File > sourceFiles, boolean ignoreIfSourcePresent
 	) {
-		String f = file.toString();
-		if( f.toLowerCase().endsWith( SourceObject.HeaderSourceObject.FILE_EXTENSION ) ) {
+		String headerPath = file.toString();
+		if( headerPath.toLowerCase().endsWith(
+				SourceObject.HeaderSourceObject.FILE_EXTENSION ) ) {
 			if( ignoreIfSourcePresent ) {
-				String s = f.substring( 0,
-						f.length() - SourceObject.HeaderSourceObject.FILE_EXTENSION.length() )
+				String sourcePath = headerPath.substring( 0,
+						headerPath.length() -
+								SourceObject.HeaderSourceObject.FILE_EXTENSION.length() )
 						+ SourceObject.ChoralSourceObject.FILE_EXTENSION;
 				for( File sf : sourceFiles ) {
-					if( Paths.get( s ).compareTo( sf.toPath() ) == 0 ) {
+					if( Paths.get( sourcePath ).compareTo( sf.toPath() ) == 0 ) {
 						return false;
 					}
 				}
