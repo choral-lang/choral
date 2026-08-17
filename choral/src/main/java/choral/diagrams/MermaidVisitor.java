@@ -214,7 +214,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         visitExpression(expression.scope());
         if (expression.scopedExpression() instanceof MethodCallExpression call) {
             call.arguments().forEach(this::visitExpression);
-            addChannelEvent(expression.scope(), call);
+            appendChannelEvent(expression.scope(), call);
             visitSourceMethod(call);
         } else {
             visitExpression(expression.scopedExpression());
@@ -411,7 +411,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
         diagramLines.add("Note over " + over + ": " + labels.escape(text));
     }
 
-    private void addChannelEvent(Expression receiver, MethodCallExpression call) {
+    private void appendChannelEvent(Expression receiver, MethodCallExpression call) {
         if (!isChannelReceiver(receiver))
             return;
         Member.GroundMethod method = call.methodAnnotation().orElseThrow(() ->
