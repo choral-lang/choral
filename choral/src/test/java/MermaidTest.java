@@ -252,7 +252,7 @@ public class MermaidTest {
 			}
 			""";
 
-		assertEquals(
+		String expected =
 			"""
 				sequenceDiagram
 				participant p0 as A
@@ -270,8 +270,10 @@ public class MermaidTest {
 				p0->>p1: a
 				end
 				p1->>p2: b
-				""".strip(),
-				mermaidAt( source, "if( false@B )" ) );
+				""".strip();
+
+		assertEquals( expected, mermaidAt( source, "if( true@A )" ) );
+		assertEquals( expected, mermaidAt( source, "if( false@B )" ) );
 	}
 
 	@Test
