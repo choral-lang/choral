@@ -23,44 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MermaidTest {
 	@Test
-	public void computedReceiverIsEvaluatedBeforeOuterCommunication() {
-		String source =
-			"""
-			import choral.channels.SymChannel;
-
-			class Evaluation@( A, B ) {
-				SymChannel@( A, B )< Object > route(
-						SymChannel@( A, B )< Object > channel,
-						String@A before ) {
-					channel.< String >com( before );
-					return channel;
-				}
-
-				void run(
-						SymChannel@( A, B )< Object > channel,
-						String@A before,
-						String@A after ) {
-					this.route( channel, before ).< String >com( after );
-				}
-			}
-			""";
-
-		assertEquals(
-				"""
-					sequenceDiagram
-					participant p0 as A
-					participant p1 as B
-					Note over p0,p1: Evaluation.run
-					rect rgba(0, 0, 0, 0.05)
-					Note left of p0: call route
-					p0->>p1: before
-					end
-					p0->>p1: after
-					""".strip(),
-				mermaidAt( source, "this.route" ) );
-	}
-
-	@Test
 	public void emptyMethod() {
 		String source =
 			"""
@@ -186,7 +148,45 @@ public class MermaidTest {
 				p1->>p2: received
 				p2-->>p1: State@Shipper.DONE
 				""".strip(),
-				mermaid( source, 10, 10 ) );
+					mermaid( source, 10, 10 ) );
+	}
+
+	@Test
+	public void computedReceiverIsEvaluatedBeforeOuterCommunication() {
+		String source =
+			"""
+			import choral.channels.SymChannel;
+
+			class Evaluation@( A, B ) {
+				SymChannel@( A, B )< Object > route(
+						SymChannel@( A, B )< Object > channel,
+						String@A before ) {
+					channel.< String >com( before );
+					return channel;
+				}
+
+				void run(
+						SymChannel@( A, B )< Object > channel,
+						String@A before,
+						String@A after ) {
+					this.route( channel, before ).< String >com( after );
+				}
+			}
+			""";
+
+		assertEquals(
+				"""
+					sequenceDiagram
+					participant p0 as A
+					participant p1 as B
+					Note over p0,p1: Evaluation.run
+					rect rgba(0, 0, 0, 0.05)
+					Note left of p0: call route
+					p0->>p1: before
+					end
+					p0->>p1: after
+					""".strip(),
+				mermaidAt( source, "this.route" ) );
 	}
 
 	@Test
