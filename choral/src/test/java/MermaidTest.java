@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MermaidTest {
+	////////// BASIC DIAGRAMS //////////
+
 	@Test
 	public void emptyMethod() {
 		String source =
@@ -151,6 +153,8 @@ public class MermaidTest {
 					mermaid( source, 10, 10 ) );
 	}
 
+	////////// EXPRESSION EVALUATION ORDER //////////
+
 	@Test
 	public void computedReceiverIsEvaluatedBeforeOuterCommunication() {
 		String source =
@@ -230,6 +234,8 @@ public class MermaidTest {
 				""".strip(),
 				mermaidAt( source, "consume( channel" ) );
 	}
+
+	////////// CONTROL FLOW //////////
 
 	@Test
 	public void nestedConditionalsPreserveStructureAndOrder() {
@@ -527,6 +533,8 @@ public class MermaidTest {
 				mermaidAt( source, "if( valid )" ) );
 	}
 
+	////////// HELPER EXPANSION //////////
+
 	@Test
 	public void localHelperMethodsAreExpandedAtCallSites() {
 		String source =
@@ -658,6 +666,8 @@ public class MermaidTest {
 				""".strip(),
 				mermaidAt( source, "external.send" ) );
 	}
+
+	////////// WORLD SUBSTITUTION //////////
 
 	@Test
 	public void externalMethodWorldsAreGroundedAtTheCallSite() {
@@ -1228,6 +1238,8 @@ public class MermaidTest {
 				mermaidAt( source, "String@B value" ) );
 	}
 
+	////////// RECURSION AND SAFETY LIMITS //////////
+
 	@Test
 	public void recursiveHelperExpansionStopsWithANote() {
 		String source =
@@ -1415,6 +1427,8 @@ public class MermaidTest {
 				() -> MermaidVisitor.render( declaration, null ) );
 	}
 
+	////////// TYPED CALL DETECTION //////////
+
 	@Test
 	public void renderingAnUntypedOrdinaryCallFailsClearly() {
 		var unit = Parser.parseString(
@@ -1596,6 +1610,8 @@ public class MermaidTest {
 				mermaidAt( source, "void run" ) );
 		assertNoChoreographyAt( source, "public Constructed" );
 	}
+
+	////////// SOURCE SELECTION //////////
 
 	@Test
 	public void distinctWorldNamesReceiveDistinctParticipantIds() {
