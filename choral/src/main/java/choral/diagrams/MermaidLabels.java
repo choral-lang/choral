@@ -15,13 +15,10 @@ import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.types.Member;
 
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -31,22 +28,12 @@ import java.util.stream.Collectors;
  */
 final class MermaidLabels {
     private final PrettyPrinterVisitor prettyPrinter = new PrettyPrinterVisitor();
-    private final Set<MethodDefinition> localMethods;
     private final Deque<WorldMapping> worldMappings = new ArrayDeque<>();
 
     MermaidLabels(TemplateDeclaration declaration) {
-        localMethods = Collections.newSetFromMap(new IdentityHashMap<>());
-        if (declaration instanceof choral.ast.body.Class type)
-            localMethods.addAll(type.methods());
-        if (declaration instanceof choral.ast.body.Interface type)
-            localMethods.addAll(type.methods());
         worldMappings.push(new WorldMapping(declaration.worldParameters().stream().collect(
                 Collectors.toMap(world -> world.name().identifier(),
                         world -> world.name().identifier()))));
-    }
-
-    boolean isLocal(MethodDefinition method) {
-        return localMethods.contains(method);
     }
 
     void withMethodWorlds(
@@ -85,10 +72,8 @@ final class MermaidLabels {
                 .collect(Collectors.joining(", ")) + ")";
     }
 
-    String expandedMethod(MethodDefinition method) {
+    String qualifiedMethod(MethodDefinition method) {
         String label = method(method);
-        if (localMethods.contains(method))
-            return label;
         return method.typeAnnotation()
                 .map(annotation -> annotation.declarationContext().typeConstructor().identifier()
                         + "." + label)

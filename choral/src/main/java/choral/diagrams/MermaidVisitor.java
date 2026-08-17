@@ -53,6 +53,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
 
     /** Complete Mermaid source lines accumulated during the current render. */
     private final List<String> diagramLines = new ArrayList<>();
+    private final Set<MethodDefinition> localMethods;
     /** Methods on the current expansion stack, used to stop recursive expansion. */
     private final Set<MethodDefinition> activeMethods;
     /** Converts typed AST fragments to grounded, Mermaid-safe labels. */
@@ -74,6 +75,11 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     }
 
     private MermaidVisitor(TemplateDeclaration declaration) {
+        localMethods = Collections.newSetFromMap(new IdentityHashMap<>());
+        if (declaration instanceof choral.ast.body.Class type)
+            localMethods.addAll(type.methods());
+        if (declaration instanceof choral.ast.body.Interface type)
+            localMethods.addAll(type.methods());
         activeMethods = Collections.newSetFromMap(new IdentityHashMap<>());
         labels = new MermaidLabels(declaration);
         participantWorlds = declaration.worldParameters().stream()
@@ -87,7 +93,7 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     }
 
     private String render(MethodDefinition method) {
-        if (!labels.isLocal(method))
+        if (!localMethods.contains(method))
             throw new IllegalArgumentException("Method '"
                     + method.signature().name().identifier()
                     + "' does not belong to declaration '" + rootDeclarationName + "'");
@@ -357,7 +363,8 @@ public final class MermaidVisitor extends AbstractChoralVisitor<Void> {
     }
 
     private void visitSourceMethod(MethodDefinition method) {
-        String methodName = labels.expandedMethod(method);
+        String methodName = localMethods.contains(method)
+                ? labels.method(method) : labels.qualifiedMethod(method);
         if (activeMethods.contains(method)) {
             addNote("recursive call to " + methodName + " omitted");
             return;
