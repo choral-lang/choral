@@ -1715,6 +1715,8 @@ public class MermaidTest {
 		assertNoChoreographyAt( source, "after" );
 	}
 
+	///////////////////// TEST HARNESS /////////////////////
+
 	private static String mermaid( String source, int line, int character ) {
 		return diagram( source, line, character ).orElseThrow();
 	}
