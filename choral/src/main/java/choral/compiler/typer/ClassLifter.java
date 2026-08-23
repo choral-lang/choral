@@ -508,17 +508,7 @@ public class ClassLifter {
 			java.lang.reflect.Type[] typeArgs = paramType.getActualTypeArguments();
 
 			for( java.lang.reflect.Type typeArg : typeArgs ) {
-				// Check for wildcards
-				if( typeArg instanceof java.lang.reflect.WildcardType ) {
-					throw LiftException.wildcard();
-				}
-				GroundDataTypeOrVoid liftedTypeArgument = liftType( typeArg, scope );
-				if(liftedTypeArgument instanceof GroundReferenceType liftedHigherReferenceType){
-					liftedTypeArguments.add( liftedHigherReferenceType.typeConstructor() );
-				} else{
-					throw new RuntimeException("Type argument returned isn't a GroundReferenceType: " 
-					+ "'" + typeArg.getTypeName() + "'");
-				}
+				liftedTypeArguments.add( liftTypeArg( typeArg, scope ) );
 			}
 
 			String typeName = rawClass.getCanonicalName();
@@ -541,6 +531,44 @@ public class ClassLifter {
 		else {
 			throw LiftException.exoticType( type );
 		}
+	}
+
+	/**
+	 * A version of liftType for lifting type arguments. In Choral, type args have to be higher 
+	 * reference types, i.e. reference types that haven't been applied to worlds yet. Whereas
+	 * liftType will lift {@code List<Number>} into the ground type {@code List@A<Number>}, 
+	 * liftTypeArg will lift it into a higher reference type {@code List<Number>}.
+	 */
+	private HigherReferenceType liftTypeArg(
+			java.lang.reflect.Type type, Scope scope
+	) throws LiftException {
+		if( type instanceof java.lang.Class< ? > clazz ) {
+			if( clazz.isArray() ) throw LiftException.array();
+			if( clazz.isMemberClass() ) throw LiftException.innerClass();
+			if( clazz.isPrimitive() ) {
+				throw LiftException.castFailed( type.getTypeName(), "reference type" );
+			}
+			// Whereas liftType applies the type to world args, liftTypeArg does not
+			return liftClassOrInterface( clazz.getCanonicalName() );
+		}
+		if( type instanceof java.lang.reflect.ParameterizedType paramType ) {
+			java.lang.Class< ? > rawClass = (java.lang.Class< ? >) paramType.getRawType();
+			if( rawClass.isMemberClass() ) throw LiftException.innerClass();
+
+			List< HigherReferenceType > typeArguments = new ArrayList<>();
+			for( java.lang.reflect.Type typeArgument : paramType.getActualTypeArguments() ) {
+				typeArguments.add( liftTypeArg( typeArgument, scope ) );
+			}
+			// Supply type args but not world args
+			return liftClassOrInterface( rawClass.getCanonicalName() )
+					.partiallyApplyTo( typeArguments );
+		}
+		if( type instanceof java.lang.reflect.TypeVariable< ? > typeVariable ) {
+			return scope.assertLookupTypeParameter( typeVariable.getName() );
+		}
+		if( type instanceof java.lang.reflect.GenericArrayType ) throw LiftException.array();
+		if( type instanceof java.lang.reflect.WildcardType ) throw LiftException.wildcard();
+		throw LiftException.exoticType( type );
 	}
 
 	private GroundClass liftClass(java.lang.reflect.Type type, Scope scope) throws LiftException {
