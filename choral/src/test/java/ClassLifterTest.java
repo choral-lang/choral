@@ -18,7 +18,7 @@ import choral.utils.VerbosityLevel;
 public class ClassLifterTest {
 
 	@Test
-	public void helloWorldTest() throws IOException {
+	public void stdlibTest() throws IOException {
 		Universe universe = new Universe();
 		TaskQueue taskQueue = new TaskQueue();
 		TyperOptions opts = new TyperOptions( VerbosityLevel.WARNINGS );
@@ -53,5 +53,18 @@ public class ClassLifterTest {
 						() -> "Expected ClassLifter to find " + typeName )
 		) );
 		assertFalse( classLifter.lookup( "supplement.DoesNotExist", null ).isPresent() );
+	}
+
+	@Test
+	public void nestedGenericsTest() throws IOException {
+		Universe universe = new Universe();
+		TaskQueue taskQueue = new TaskQueue();
+		TyperOptions opts = new TyperOptions( VerbosityLevel.WARNINGS );
+
+		Typer.annotate( List.of(), HeaderLoader.loadStandardProfile().toList(), universe, opts );
+
+		ClassLifter classLifter = new ClassLifter( universe, taskQueue, opts );
+		assertTrue( classLifter.lookup( "supplement.LiftedConcrete", null ).isPresent() );
+		taskQueue.process();
 	}
 }
