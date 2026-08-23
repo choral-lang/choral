@@ -883,7 +883,11 @@ public class Typer {
 			taskQueue().enqueue( Phase.HIERARCHY, () -> {
 				for( ImportDeclaration n : imports ) {
 					if( !n.isOnDemand() ) {
-						n.setTypeAnnotation( scope.assertLookupClassOrInterface( n.name() ) );
+						try {
+							n.setTypeAnnotation( scope.assertLookupClassOrInterface( n.name() ) );
+						} catch( UnresolvedSymbolException e ) {
+							throw new AstPositionedException( n.position(), e );
+						}
 					}
 				}
 			} );
