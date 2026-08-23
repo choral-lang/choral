@@ -294,7 +294,8 @@ public class ClassLifter {
 			ClassOrInterfaceInstanceScope scope
 	) {
 		for(Method method : clazz.getDeclaredMethods()){
-			if(Modifier.isPrivate(method.getModifiers())) continue;
+			int modifiers = method.getModifiers();
+			if(!Modifier.isPublic(modifiers) && !Modifier.isProtected(modifiers)) continue;
 			if(method.isBridge()) continue;
 			Member.HigherMethod higherMethod;
 			try{
@@ -328,10 +329,10 @@ public class ClassLifter {
 			Field[] fields, ClassOrInterfaceInstanceScope scope, HigherClassOrInterface higherClass
 	) {
 		for( Field field : fields ){
-			// private fields will never be accessed
-			if(Modifier.isPrivate(field.getModifiers())) continue;
+			int modifiers = field.getModifiers();
+			if(!Modifier.isPublic(modifiers) && !Modifier.isProtected(modifiers)) continue;
 
-			EnumSet<choral.types.Modifier> fieldModifiers = parseModifiers( field.getModifiers());
+			EnumSet<choral.types.Modifier> fieldModifiers = parseModifiers( modifiers);
 			GroundDataType fieldType;
 			try{
 				fieldType = liftDataType(field.getGenericType(), scope );
