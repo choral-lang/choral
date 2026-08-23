@@ -3,6 +3,10 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import choral.compiler.HeaderLoader;
 import choral.compiler.Typer;
 import choral.compiler.TyperOptions;
@@ -24,22 +28,30 @@ public class ClassLifterTest {
 		
 		ClassLifter classLifter = new ClassLifter(universe, taskQueue, opts);
 
-		classLifter.lookup("java.nio.ByteBuffer", null );
-		classLifter.lookup("java.math.BigInteger", null );
-		classLifter.lookup("java.security.MessageDigest", null );
-		classLifter.lookup("java.security.NoSuchAlgorithmException", null );
-		classLifter.lookup("java.nio.charset.StandardCharsets", null );
-		classLifter.lookup("java.lang.System", null );
-		classLifter.lookup("java.lang.Object", null );
-		classLifter.lookup("java.lang.Enum", null );
-		classLifter.lookup("java.util.stream.BaseStream", null );
-		classLifter.lookup("java.io.PrintStream", null );
-		classLifter.lookup("java.io.Serializable", null );
-		classLifter.lookup("supplement.HelloWorld", null );
-		classLifter.lookup("java.util.HashMap", null );
-		classLifter.lookup("java.util.Deque", null );
-		classLifter.lookup("java.util.ArrayDeque", null );
-		classLifter.lookup("java.util.Random", null );
-		classLifter.lookup("java.time.chrono.AbstractChronology", null );
+		List< String > expectedTypes = List.of(
+				"java.nio.ByteBuffer",
+				"java.math.BigInteger",
+				"java.security.MessageDigest",
+				"java.security.NoSuchAlgorithmException",
+				"java.nio.charset.StandardCharsets",
+				"java.lang.System",
+				"java.lang.Object",
+				"java.lang.Enum",
+				"java.util.stream.BaseStream",
+				"java.io.PrintStream",
+				"java.io.Serializable",
+				"supplement.HelloWorld",
+				"java.util.HashMap",
+				"java.util.Deque",
+				"java.util.ArrayDeque",
+				"java.util.Random",
+				"java.time.chrono.AbstractChronology"
+		);
+
+		assertAll( expectedTypes.stream().map( typeName -> () ->
+				assertTrue( classLifter.lookup( typeName, null ).isPresent(),
+						() -> "Expected ClassLifter to find " + typeName )
+		) );
+		assertFalse( classLifter.lookup( "supplement.DoesNotExist", null ).isPresent() );
 	}
 }

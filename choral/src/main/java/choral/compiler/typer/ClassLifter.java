@@ -336,7 +336,7 @@ public class ClassLifter {
 			try{
 				fieldType = liftDataType(field.getGenericType(), scope );
 			} catch(LiftException e){
-				warn(field.getClass().getCanonicalName() + "#" + field.getName(), e);
+				warn(field.getDeclaringClass().getCanonicalName() + "#" + field.getName(), e);
 				continue;
 			}
 			Member.Field choralField = new Member.Field(
