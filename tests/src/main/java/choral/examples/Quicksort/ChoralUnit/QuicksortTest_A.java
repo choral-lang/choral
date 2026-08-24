@@ -15,9 +15,7 @@ import choral.channels.SymChannel_A;
 import choral.channels.SymChannel_B;
 import choral.examples.Quicksort.Quicksort_A;
 
-@Choreography(
-		role = "A",
-		name = "QuicksortTest" )
+@Choreography( role = "A", name = "QuicksortTest" )
 public class QuicksortTest_A {
 	@Test
 	public static void test1() {

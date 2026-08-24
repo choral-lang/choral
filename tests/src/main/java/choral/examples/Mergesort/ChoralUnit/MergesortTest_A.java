@@ -16,9 +16,7 @@ import java.util.List;
 
 import choral.choralUnit.testUtils.TestUtils_A;
 
-@Choreography(
-		role = "A",
-		name = "MergesortTest" )
+@Choreography( role = "A", name = "MergesortTest" )
 public class MergesortTest_A {
 	@Test
 	public static void test1() {

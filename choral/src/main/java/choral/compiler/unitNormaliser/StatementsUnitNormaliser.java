@@ -80,8 +80,7 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 								v.annotations(),
 								v.initializer().isPresent() ?
 										(AssignExpression) ExpressionUnitNormaliser.visitExpression(
-												v.initializer().get() ) :
-										null
+												v.initializer().get() ) : null
 						)
 				).collect( Collectors.toList() ),
 				visit( n.continuation() )
@@ -113,8 +112,8 @@ public class StatementsUnitNormaliser extends AbstractChoralVisitor< Statement >
 		return new SwitchStatement(
 				ExpressionUnitNormaliser.visitExpression( n.guard() ),
 				// this should be always present
-				n.cases().entrySet().stream().map(
-						e -> new AbstractMap.SimpleEntry<>( e.getKey(), visit( e.getValue() ) )
+				n.cases().entrySet().stream().map( e ->
+						new AbstractMap.SimpleEntry<>( e.getKey(), visit( e.getValue() ) )
 				).collect( Streams.toLinkedHashMap( Map.Entry::getKey, Map.Entry::getValue ) ),
 				visit( n.continuation() )
 		).copyPosition( n );

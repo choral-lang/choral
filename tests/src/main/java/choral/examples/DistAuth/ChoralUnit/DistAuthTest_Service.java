@@ -8,9 +8,7 @@ import choral.annotations.Choreography;
 import choral.runtime.TLSChannel.TLSChannel_A;
 import choral.choralUnit.testUtils.TestUtils_A;
 
-@Choreography(
-		role = "Service",
-		name = "DistAuthTest" )
+@Choreography( role = "Service", name = "DistAuthTest" )
 public class DistAuthTest_Service {
 	@Test
 	public static void test1() {

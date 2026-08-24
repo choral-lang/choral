@@ -38,7 +38,8 @@ public class ObjectToJSONSerializer implements ChoralSerializer< Object, String 
 
 	@Override
 	public < M > String fromObject( M o ) {
-		return o.getClass().getName() + header + gson.toJson( o );
+		return o.getClass().getName() + header
+				+ gson.toJson( o );
 	}
 
 	@Override

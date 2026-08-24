@@ -58,8 +58,9 @@ public class SourceWriter {
 	) throws IOException {
 		Path pathToFile = targetFolder
 				.map( t -> Paths.get( t.toString(), source.getCanonicalPath() ) )
-				.orElseGet( ( useCanonicalPath ) ? () -> Paths.get( source.getCanonicalPath() ) :
-						() -> Paths.get( source.sourceFile() ) );
+				.orElseGet( ( useCanonicalPath )
+						? () -> Paths.get( source.getCanonicalPath() )
+						: () -> Paths.get( source.sourceFile() ) );
 		if( pathToFile.getParent() != null ) {
 			// files in the cwd may not have a parent if the path is relative.
 			Files.createDirectories( pathToFile.getParent() );
@@ -82,7 +83,7 @@ public class SourceWriter {
 			System.err.println( "Compilation cancelled by user" );
 		}
 	}
-	
+
 	private static void writeSources( Path folder, String name, String code ){
 		try {
 			FileWriter writer = new FileWriter( folder.resolve( name ).toFile() );
@@ -93,7 +94,7 @@ public class SourceWriter {
 			System.err.format( "IOException: %s%n", e );
 		}
 	}
-	
+
 	private static void createEmptyDirectory( Path path ) throws CancelException {
 		int selection = JOptionPane.YES_OPTION;
 		if( Files.exists( path ) ) {
@@ -125,7 +126,7 @@ public class SourceWriter {
 				throw new CancelException();
 		}
 	}
-	
+
 	private static class CancelException extends Exception {}
 	*/
 

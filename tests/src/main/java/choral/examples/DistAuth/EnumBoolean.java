@@ -5,6 +5,5 @@ import choral.runtime.Serializers.KryoSerializable;
 
 @KryoSerializable
 enum EnumBoolean {
-	True,
-	False
+	True, False
 }

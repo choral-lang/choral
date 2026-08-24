@@ -68,25 +68,26 @@ public class TypesProjector extends AbstractSoloistProjector< List< ? extends No
 			if( dataType.isHigherType() ) {
 				HigherDataType higherDataType = (HigherDataType) dataType;
 				return higherDataType.worldParameters().stream()
-						.map( w -> {
-							TypeExpression e = new TypeExpression(
-									new Name( Utils.getProjectionName(
-											n.name().identifier(),
-											new WorldArgument( new Name( w.identifier() ) ),
-											higherDataType.worldParameters().stream()
-													.map( wp -> new WorldArgument(
-															new Name( wp.identifier() ) ) )
+						.map( w ->
+								{
+									TypeExpression e = new TypeExpression(
+											new Name( Utils.getProjectionName(
+													n.name().identifier(),
+													new WorldArgument( new Name( w.identifier() ) ),
+													higherDataType.worldParameters().stream()
+															.map( wp -> new WorldArgument(
+																	new Name( wp.identifier() ) ) )
+															.collect( Collectors.toList() )
+											) ),
+											Collections.singletonList( this.world ),
+											n.typeArguments().stream()
+													.map( this::visit )
+													.flatMap( List::stream )
 													.collect( Collectors.toList() )
-									) ),
-									Collections.singletonList( this.world ),
-									n.typeArguments().stream()
-											.map( this::visit )
-											.flatMap( List::stream )
-											.collect( Collectors.toList() )
-							).< TypeExpression >copyPosition( n );
-							e.setTypeAnnotation( higherDataType );
-							return e;
-						}
+									).< TypeExpression >copyPosition( n );
+									e.setTypeAnnotation( higherDataType );
+									return e;
+								}
 						)
 						.collect( Collectors.toList() );
 			} else {

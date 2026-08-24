@@ -48,15 +48,12 @@ public class KaratsubaChoralLocal {
 					long result = Long.parseLong( couple[ 2 ] );
 					long start = System.nanoTime();
 					ExecutorService executors = Executors.newFixedThreadPool( 3 );
-					Pair< SymChannel_A< Object >, SymChannel_B< Object > > ch_AB =
-							TestUtils.newLocalChannel(
-									"ch_AB" );
-					Pair< SymChannel_A< Object >, SymChannel_B< Object > > ch_BC =
-							TestUtils.newLocalChannel(
-									"ch_BC" );
-					Pair< SymChannel_A< Object >, SymChannel_B< Object > > ch_CA =
-							TestUtils.newLocalChannel(
-									"ch_CA" );
+					Pair< SymChannel_A< Object >, SymChannel_B< Object > > ch_AB = TestUtils.newLocalChannel(
+							"ch_AB" );
+					Pair< SymChannel_A< Object >, SymChannel_B< Object > > ch_BC = TestUtils.newLocalChannel(
+							"ch_BC" );
+					Pair< SymChannel_A< Object >, SymChannel_B< Object > > ch_CA = TestUtils.newLocalChannel(
+							"ch_CA" );
 					Future< ? > f1 = executors.submit(
 							() -> Karatsuba_A.multiply( left, right, ch_AB.left(),
 									ch_CA.right() ) );
@@ -67,8 +64,7 @@ public class KaratsubaChoralLocal {
 					times.add( System.nanoTime() - start );
 					if( !correct ) {
 						throw new RuntimeException(
-								"The procedure returned an unexpected result, expected: " + result
-										+ ", computed: " + f1.get() );
+								"The procedure returned an unexpected result, expected: " + result + ", computed: " + f1.get() );
 					}
 				}
 				if( write ) {

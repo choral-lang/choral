@@ -2,8 +2,6 @@ package choral.MustPass.MoveMeant.SSOWithRetry.utils;
 
 import choral.annotations.Choreography;
 
-@Choreography(
-		role = "A",
-		name = "Creds" )
+@Choreography( role = "A", name = "Creds" )
 public class Creds {
 }
