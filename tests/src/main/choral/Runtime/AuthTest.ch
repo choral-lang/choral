@@ -24,11 +24,11 @@ public class AuthTest@( A, B ) {
 			TestUtils@( A, B ).newLocalChannel( "AuthTestChannel3"@[ A, B ] )
 			>> Auth@( A, B )::new;
 		EnumBoolean@A result = auth.run( "WRONG_USER"@A, "PSW"@A );
-		try {
-			Assert@A.assertEquals( result, EnumBoolean@A.True, "Test 3: error, should have failed"@A, "Test 3: should fail"@A );
-		} catch( AssertException@A e ){
-			System@A.out.println( "Assertion Exception correctly caught in Test 3"@A );
-		}
+        try {
+            Assert@A.assertEquals( result, EnumBoolean@A.True, "Test 3: error, should have failed"@A, "Test 3: should fail"@A );
+        } catch( AssertException@A e ){
+            /* expected */
+        }
 	}
 
 	@Test

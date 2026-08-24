@@ -43,9 +43,11 @@ public class FilterSourceUnits {
     ){
         List< CompilationUnit > tempSources = new ArrayList<>();
         for( CompilationUnit sourceUnit : allSourceUnits ){
-            if( sourceUnit.primaryType().equals(symbol) ){
-                tempSources.add(sourceUnit);
-            }
+            // FIXME: this should look at *everything* declared in the source unit, not just the
+            //  one public class inside it.
+            // if( sourceUnit.primaryType().equals(symbol) ){
+            //     tempSources.add(sourceUnit);
+            // }
         }
         List< CompilationUnit > sourceUnits = new ArrayList<>();
 
@@ -61,10 +63,12 @@ public class FilterSourceUnits {
                                 tempSources.add( potentialSource );
                         } else {
                             String impClass = imp.name().substring(lastDot+1); // the class being imported
-                            if( potentialSource.primaryType().equals( impClass ) ){
-                                if( !tempSources.contains( potentialSource ) && !sourceUnits.contains( potentialSource ) )
-                                    tempSources.add( potentialSource );
-                            }
+                            // FIXME: this should look at *everything* declared in the source unit,
+                            //  not just the one public class inside it.
+                            // if( potentialSource.primaryType().equals( impClass ) ){
+                            //     if( !tempSources.contains( potentialSource ) && !sourceUnits.contains( potentialSource ) )
+                            //         tempSources.add( potentialSource );
+                            // }
                         }
                     }
                     

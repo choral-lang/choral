@@ -139,8 +139,24 @@ public class Package {
 		return Collections.unmodifiableCollection( declaredTypes.values() );
 	}
 
-	public final Optional< HigherClassOrInterface > declaredType( String name ) {
-		return Optional.ofNullable( declaredTypes.get( name ) );
+	/**
+	 * Locates a type matching the given qualified name inside this package---returning nothing if no such type exists.
+	 * If this package is 'java' and the qualified name is 'util.Iterator', the method will look for a type that
+	 * has fully qualified name 'java.util.Iterator'.
+	 */
+	public final Optional< HigherClassOrInterface > declaredType( String qualifiedTypeName ) {
+		String[] names = qualifiedTypeName.split( "\\." );
+		Package pkg = this;
+		int i = 0;
+		// final element will always be a class or interface, not a package.
+		while( i < names.length - 1 ) {
+			pkg = pkg.declaredPackages.get( names[ i ] );
+			if( pkg == null ) {
+				return Optional.empty();
+			}
+			i += 1;
+		}
+		return Optional.ofNullable( pkg.declaredTypes.get( names[ i ] ) );
 	}
 
 	final void registerDeclaredType( HigherClassOrInterface type ) {

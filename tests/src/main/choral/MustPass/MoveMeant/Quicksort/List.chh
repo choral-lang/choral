@@ -1,0 +1,33 @@
+package java.util;
+
+public interface List@A< E@X > {
+
+	Integer@A size();
+
+    Boolean@A isEmpty();
+
+    Boolean@A contains( Object@A o );
+
+    Boolean@A add( E@A e );
+
+    Boolean@A remove( Object@A o );
+
+    void clear();
+
+    E@A get( Integer@A index );
+
+    E@A set( Integer@A index, E@A element );
+
+    void add( Integer@A index, E@A element );
+
+    E@A remove( Integer@A index );
+
+    Integer@A indexOf( Object@A o );
+
+    Integer@A lastIndexOf( Object@A o );
+
+	List@A< E > subList( Integer@A fromIndex, Integer@A toIndex);
+
+	Boolean@A addAll( List@A< E > c );
+
+}

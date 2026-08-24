@@ -30,7 +30,7 @@ import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 
 /**
- * A statement wrapping an expression
+ * A statement wrapping an expression. <p> 
  * expressionStatement; continuation
  */
 
@@ -65,10 +65,8 @@ public class ExpressionStatement extends Statement {
 			return m.merge( this, ( this.getClass().cast( n ) ) );
 		} catch( ClassCastException e ) {
 			throw new ChoralException(
-					this.position().line() + ":"
-							+ this.position().column() + ":"
-							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-							this ) + "\n with " + n.getClass().getSimpleName() );
+							"Could not merge \n" + new PrettyPrinterVisitor().visit( this ) +
+									"\nwith " + n.getClass().getSimpleName() );
 		}
 	}
 

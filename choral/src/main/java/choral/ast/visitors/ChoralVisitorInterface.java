@@ -110,8 +110,6 @@ public interface ChoralVisitorInterface< R > {
 
 	R visit( Field n );
 
-	R visit( FormalMethodParameter n );
-
 	R visit( ClassMethodDefinition n );
 
 	R visit( InterfaceMethodDefinition n );

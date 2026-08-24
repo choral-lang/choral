@@ -275,7 +275,9 @@ public class DependencyVisitor implements ChoralVisitorInterface< Void > {
 
 	@Override
 	public Void visit( ReturnStatement n ) {
-		visit( n.returnExpression() );
+		if( n.returnExpression() != null ) {
+			visit( n.returnExpression() );
+		}
 		return null;
 	}
 
@@ -421,12 +423,6 @@ public class DependencyVisitor implements ChoralVisitorInterface< Void > {
 	}
 
 	@Override
-	public Void visit( FormalMethodParameter n ) {
-		visit( n.type() );
-		return null;
-	}
-
-	@Override
 	public Void visit( ClassMethodDefinition n ) {
 		visit( n.signature() );
 		n.body().ifPresent( this::visit );
@@ -436,7 +432,7 @@ public class DependencyVisitor implements ChoralVisitorInterface< Void > {
 	@Override
 	public Void visit( InterfaceMethodDefinition n ) {
 		visit( n.signature() );
-//		visit( n.body() );
+		n.body().ifPresent( this::visit );
 		return null;
 	}
 

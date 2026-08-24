@@ -1,4 +1,4 @@
-package choral.MustPass.MoveMeant.SplitAndCombine.utils;
+package MoveMeant.SplitAndCombine.utils;
 
 public class Result@A {
     public Result@A combineWith( Result@A otherResult ){ return null@A; }

@@ -74,6 +74,7 @@ public interface GroundClass extends GroundClassOrInterface, Class {
 		}
 	}
 
+	/** @see choral.types.GroundClassOrInterface#extendedClassesOrInterfaces */
 	default Stream< ? extends GroundClassOrInterface > extendedClassesOrInterfaces() {
 		if( extendedClass().isPresent() ) {
 			return Streams.concat( Stream.of( extendedClass().get() ), extendedInterfaces() );

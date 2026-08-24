@@ -30,7 +30,7 @@ import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.exceptions.ChoralException;
 
 /**
- * if( e ) { statement } else { statement }; continuation
+ * if( expression ) { statement } else { statement }; continuation
  */
 
 public class IfStatement extends Statement {
@@ -81,10 +81,8 @@ public class IfStatement extends Statement {
 			return m.merge( this, ( this.getClass().cast( n ) ) );
 		} catch( ClassCastException e ) {
 			throw new ChoralException(
-					this.position().line() + ":"
-							+ this.position().column() + ":"
-							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-							this ) + "\n with " + n.getClass().getSimpleName() );
+					"Could not merge \n" + new PrettyPrinterVisitor().visit( this ) +
+							"\nwith " + n.getClass().getSimpleName() );
 		}
 	}
 

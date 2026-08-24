@@ -1,0 +1,7 @@
+package Misc.MultiFileError;
+
+public class ErrorHelper@B{
+    public static int@B Helper(){
+        return 5@B;
+    }
+}

@@ -23,7 +23,7 @@ package choral.compiler.soloist;
 
 import choral.ast.Name;
 import choral.ast.Node;
-import choral.ast.body.FormalMethodParameter;
+import choral.ast.body.VariableDeclaration;
 import choral.ast.type.FormalTypeParameter;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.TypeExpression;
@@ -139,13 +139,15 @@ public class TypesProjector extends AbstractSoloistProjector< List< ? extends No
 	}
 
 	@Override
-	public List< FormalMethodParameter > visit( FormalMethodParameter n ) {
+	public List< VariableDeclaration > visit( VariableDeclaration n ) {
 		if( n.type().worldArguments().contains( this.world() ) ) {
 			return Collections.singletonList(
-					new FormalMethodParameter(
+					new VariableDeclaration(
 							n.name(),
 							visit( world(), n.type() ).get( 0 ),
 							n.annotations(),
+							null,
+							n.modifiers(),
 							n.position()
 					)
 			);

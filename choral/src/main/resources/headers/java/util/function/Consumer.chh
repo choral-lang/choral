@@ -1,8 +1,0 @@
-/* Choral Header Version 0.1 */
-package java.util.function;
-
-public interface Consumer@A< T@X > {
-
-    void accept( T@A t );
-
-}

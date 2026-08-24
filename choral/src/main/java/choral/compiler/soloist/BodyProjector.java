@@ -128,6 +128,10 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 	public InterfaceMethodDefinition visit( InterfaceMethodDefinition n ) {
 		return new InterfaceMethodDefinition(
 				visit( n.signature() ),
+				n.body().isPresent() ?
+						StatementsUnitNormaliser.visitStatement(
+								StatementsProjector.visit( this.world(), n.body().get() ) )
+						: null,
 				visitAndCollect( n.annotations() ),
 				n.modifiers(),
 				n.position()
@@ -150,15 +154,17 @@ public class BodyProjector extends AbstractSoloistProjector< Node > {
 		);
 	}
 
-	private FormalMethodParameter unit( FormalMethodParameter p ) {
-		List< FormalMethodParameter > l = TypesProjector.visit( this.world(), p );
+	private VariableDeclaration unit( VariableDeclaration p ) {
+		List< VariableDeclaration > l = TypesProjector.visit( this.world(), p );
 		return l.isEmpty() ?
-				new FormalMethodParameter(
+				new VariableDeclaration(
 						p.name(),
 						new TypeExpression( UnitRepresentation.UNIT,
 								Collections.singletonList( this.world() ),
 								Collections.emptyList() ),
 						visitAndCollect( p.annotations() ),
+						null,
+						p.modifiers(),
 						p.position()
 				)
 				: l.get( 0 );

@@ -178,6 +178,10 @@ public class Universe {
 		return key;
 	}
 
+	public Optional<SpecialTypeTag> specialTypeTag(String qualifiedName) {
+		return Optional.ofNullable(specialClassesConversionMap.get(qualifiedName));
+	}
+
 	public HigherClassOrInterface specialType( SpecialTypeTag key ) {
 		HigherClassOrInterface result = specialClasses.get( key );
 		if( result == null ) {

@@ -90,8 +90,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		m.put( "type", visitTypeDeclaration( n ) );
 		m.put( "extends", n.extendsInterfaces().isEmpty() ? "" :
 				" " + EXTENDS + " " + visitAndCollect( n.extendsInterfaces(), COMMA ) );
-		m.put( "methods", indent( visitAndCollect( n.methods(), SEMICOLON + NEWLINE,
-				SEMICOLON + _2NEWLINE ) ) );
+		m.put( "methods", indent( visitAndCollect( n.methods(), _2NEWLINE, _2NEWLINE ) ) );
 		m.put( "modifiers", visitModifiers( n.modifiers() ) );
 		m.put( "annotations", visitAndCollect( n.annotations(), NEWLINE, NEWLINE ) );
 
@@ -291,12 +290,22 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( MethodCallExpression n ) {
-		return
-				( n.typeArguments().isEmpty() ? "" : "< " + visitAndCollect( n.typeArguments(),
-						SPACED_COMMA ) + " >" )
-						+ visit( n.name() )
-						+ ( n.arguments().isEmpty() ? "()" : "( " + visitAndCollect( n.arguments(),
-						SPACED_COMMA ) + " )" );
+		return visitMethodCall( n, !n.typeArguments().isEmpty() );
+	}
+
+	/**
+	 * Helper for printing method calls, with an option to explicitly print "this."---useful for
+	 * method calls with typer arguments like {@code <Integer>com( 1@A )}, which is syntactically
+	 * incorrect without the "this." prefix.
+	 * @param explicitThisReceiver if true, the method call is printed with an explicit "this."
+	 */
+	private String visitMethodCall( MethodCallExpression n, boolean explicitThisReceiver ) {
+		String typeArguments = n.typeArguments().isEmpty() ? "" :
+				"< " + visitAndCollect( n.typeArguments(), SPACED_COMMA ) + " >";
+		String receiver = explicitThisReceiver ? "this." : "";
+		return receiver + typeArguments + visit( n.name() )
+				+ ( n.arguments().isEmpty() ? "()" : "( " + visitAndCollect( n.arguments(),
+				SPACED_COMMA ) + " )" );
 	}
 
 	@Override
@@ -337,7 +346,8 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 				v -> visit( v.name() ) + v.initializer().map(
 						e -> ASSIGN + visit( e.value() ) ).orElse( "" )
 		).collect( Collectors.joining( SPACED_COMMA ) );
-		return type + " " + variables + getContinuation( n, SEMICOLON );
+		String modifier = n.variables().get( 0 ).isFinal() ? "final " : "";
+		return modifier + type + " " + variables + getContinuation( n, SEMICOLON );
 	}
 
 	@Override
@@ -403,11 +413,6 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 	}
 
 	@Override
-	public String visit( FormalMethodParameter n ) {
-		return visitAndCollect( n.annotations(), " ", " " ) + visit( n.type() ) + " " + n.name();
-	}
-
-	@Override
 	public String visit( Statement n ) {
 		return n.accept( this );
 	}
@@ -426,6 +431,9 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	@Override
 	public String visit( ScopedExpression n ) {
+		if( n.scopedExpression() instanceof MethodCallExpression methodCall ) {
+			return visit( n.scope() ) + "." + visitMethodCall( methodCall, false );
+		}
 		return visit( n.scope() ) + "." + visit( n.scopedExpression() );
 	}
 
@@ -453,10 +461,17 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 		HashMap< String, Object > m = new HashMap<>();
 		m.put( "modifiers", visitModifiers( n.modifiers() ) );
 		m.put( "signature", visit( n.signature() ) );
-//        m.put("body", indent(visit(n.body())));
 		m.put( "annotations", visitAndCollect( n.annotations(), NEWLINE, NEWLINE ) );
 
-		String template = "${annotations}$modifiers$signature";
+		String template;
+		if( n.body().isPresent() ) {
+			m.put( "body", indent( visit( n.body().get() ) ) );
+			template = "${annotations}$modifiers$signature {" + NEWLINE +
+					"$body" + NEWLINE +
+					"}";
+		} else {
+			template = "${annotations}$modifiers$signature" + SEMICOLON;
+		}
 		return Utils.createVelocityTemplate( template ).render( m );
 	}
 
@@ -499,7 +514,8 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 	}
 
 	public String visit( VariableDeclaration n, String separator ) {
-		return visitAndCollect( n.annotations(), separator, separator ) + visit(
+		return visitAndCollect( n.annotations(), separator, separator )
+				+ ( n.isFinal() ? "final " : "" ) + visit(
 				n.type() ) + " " + visit( n.name() );
 	}
 

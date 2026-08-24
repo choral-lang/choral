@@ -1,6 +1,5 @@
-package choral.MustPass.MoveMeant.SimpleMethodCalls;
+package MoveMeant.SimpleMethodCalls;
 
-import choral.MustPass.MoveMeant.utils.Client;
 import choral.channels.SymChannel;
 
 class SimpleMethodCalls@( A, B ) {

@@ -1,8 +1,0 @@
-/* Choral Header Version 0.1 */
-package java.lang;
-
-import java.io.Serializable;
-
-public final class Class@A<T@A> implements Serializable@A {
-
-}

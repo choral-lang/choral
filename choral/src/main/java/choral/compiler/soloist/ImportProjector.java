@@ -168,7 +168,9 @@ public class ImportProjector implements ChoralVisitorInterface< Void > {
 
 	@Override
 	public Void visit( ReturnStatement n ) {
-		visit( n.returnExpression() );
+		if( n.returnExpression() != null ) {
+			visit( n.returnExpression() );
+		}
 		return null;
 	}
 
@@ -304,13 +306,6 @@ public class ImportProjector implements ChoralVisitorInterface< Void > {
 	}
 
 	@Override
-	public Void visit( FormalMethodParameter n ) {
-		visit( n.type() );
-		n.annotations().forEach( this::visit );
-		return null;
-	}
-
-	@Override
 	public Void visit( ClassMethodDefinition n ) {
 		visit( n.signature() );
 		n.annotations().forEach( this::visit );
@@ -322,6 +317,7 @@ public class ImportProjector implements ChoralVisitorInterface< Void > {
 	public Void visit( InterfaceMethodDefinition n ) {
 		visit( n.signature() );
 		n.annotations().forEach( this::visit );
+		n.body().ifPresent( this::visit );
 		return null;
 	}
 

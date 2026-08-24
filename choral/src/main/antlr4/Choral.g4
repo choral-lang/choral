@@ -240,7 +240,7 @@ formalParameters
 	;
 
 formalParameter
-	: annotation* referenceType Identifier
+	: annotation* variableModifier* referenceType Identifier
 	;
 
 methodBody
@@ -312,15 +312,15 @@ interfaceBody
 	;
 
 interfaceMethodDeclaration
-	: annotation* interfaceMethodModifier* methodHeader SEMI
+	: annotation* interfaceMethodModifier* methodHeader methodBody
 	;
 
 interfaceMethodModifier
 	:	'public'
 //	|	'private'//Introduced in Java 9
 	|	'abstract'
-//	|	'default'
-//	|	'static'
+	|	'default'
+	|	'static'
 	;
 
 annotation
@@ -350,7 +350,11 @@ blockStatement
 	;
 
 localVariableDeclaration
-	: annotation* referenceType variableDeclarator ( COMMA variableDeclarator )* SEMI
+	: annotation* variableModifier* referenceType variableDeclarator ( COMMA variableDeclarator )* SEMI
+	;
+
+variableModifier
+	: 'final'
 	;
 
 variableDeclarator

@@ -475,6 +475,7 @@ public class InsertMiniZincCommunications {
 					vd.type(), 
 					vd.annotations(), 
 					(AssignExpression)visitExpression(used_at_n, vd.initializer().get()),
+					vd.modifiers(),
 					vd.position());
 			
 			return insertCommunicationsBefore(

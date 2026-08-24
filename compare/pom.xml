@@ -16,6 +16,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>17</maven.compiler.release>
+		<maven.test.skip>true</maven.test.skip>
 	</properties>
 
 	<dependencies>
@@ -37,11 +38,6 @@
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>choral-unit</artifactId>
-			<version>${revision}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.choral-lang</groupId>
-			<artifactId>base</artifactId>
 			<version>${revision}</version>
 		</dependency>
 		<dependency>

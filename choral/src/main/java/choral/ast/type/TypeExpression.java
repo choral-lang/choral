@@ -30,6 +30,7 @@ import choral.types.DataType;
 import choral.types.Type;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -84,23 +85,17 @@ public class TypeExpression extends Node implements WithTypeAnnotation< DataType
 	}
 
 	@Override
-	// WARNING: used in the merge, does not check world correspondence
-	public boolean equals( Object n ) {
-		if( n instanceof TypeExpression && ( (TypeExpression) n ).typeArguments().size() == this.typeArguments().size() ) {
-			if( !this.name().equals( ( (TypeExpression) n ).name() ) ) {
-				return false;
-			}
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( !( obj instanceof TypeExpression other ) ) return false;
+		return Objects.equals( name, other.name )
+				&& Objects.equals( worlds, other.worlds )
+				&& Objects.equals( parameters, other.parameters );
+	}
 
-			for( int i = 0; i < this.typeArguments().size(); i++ ) {
-				if( ( (TypeExpression) n ).typeArguments().get( i ).equals(
-						this.typeArguments().get( i ) ) ) {
-					return false;
-				}
-			}
-			return true;
-		} else {
-			return false;
-		}
+	@Override
+	public int hashCode() {
+		return Objects.hash( name, worlds, parameters );
 	}
 
 	@Override

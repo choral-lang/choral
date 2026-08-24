@@ -41,6 +41,7 @@ import java.util.List;
 
 public class TryCatchStatement extends Statement {
 
+	// each pair corresponds to a exception catch and it's statement body. 
 	private final List< Pair< VariableDeclaration, Statement > > catches;
 	private final Statement body;
 
@@ -81,10 +82,8 @@ public class TryCatchStatement extends Statement {
 			return m.merge( this, ( this.getClass().cast( n ) ) );
 		} catch( ClassCastException e ) {
 			throw new ChoralException(
-					this.position().line() + ":"
-							+ this.position().column() + ":"
-							+ "error: Could not merge \n" + new PrettyPrinterVisitor().visit(
-							this ) + "\n with " + n.getClass().getSimpleName() );
+					"Could not merge \n" + new PrettyPrinterVisitor().visit( this ) +
+							"\nwith " + n.getClass().getSimpleName() );
 		}
 	}
 

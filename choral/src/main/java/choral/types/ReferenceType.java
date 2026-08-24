@@ -21,6 +21,10 @@
 
 package choral.types;
 
+/**
+ * (JLS 4.3) Reference types include classes (including enums and lambdas), interfaces, type variables, arrays.
+ * We also count the "null type" as a reference type.
+ */
 public interface ReferenceType extends DataType {
 	@Override
 	default boolean isPrimitive() {

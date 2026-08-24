@@ -1,7 +1,6 @@
-package choral.MustPass.MoveMeant.AmbiguousRecipient2;
+package MoveMeant.AmbiguousRecipient2;
 
 import choral.channels.SymChannel;
-import choral.MustPass.MoveMeant.AmbiguousRecipient2.utils.Client;
 
 
 public class AmbiguousRecipient2@(A,B,C){

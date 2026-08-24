@@ -26,6 +26,7 @@ import choral.ast.Position;
 import choral.ast.visitors.PrettyPrinterVisitor;
 import choral.compiler.*;
 import choral.compiler.Compiler;
+import choral.compiler.merge.MergeException;
 import choral.compiler.moveMeant.MoveMeant;
 import choral.utils.Streams.WrappedException;
 import choral.exceptions.AstPositionedException;
@@ -38,10 +39,13 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -110,7 +114,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 
 		@Override
 		public Integer call() {
-			try {
+			try( ClassPathContext ignored = useClassPath() ) {
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 				Collection< CompilationUnit > headerUnits = Stream.concat(
@@ -180,7 +184,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 
 		@Override
 		public Integer call() {
-			try {
+			try( ClassPathContext ignored = useClassPath() ) {
 				Collection< File > sourceFiles = sourcesPathOption.getPaths( true ).stream()
 						.flatMap( wrapFunction( p -> Files.find( p, 999, ( q, a ) -> {
 							if( Files.isDirectory( q ) ) return false;
@@ -309,7 +313,7 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 
 		@Override
 		public Integer call() {
-			try {
+			try( ClassPathContext ignored = useClassPath() ) {
 				Collection< CompilationUnit > sourceUnits = sourceFiles.stream().map(
 						wrapFunction( Parser::parseSourceFile ) ).collect( Collectors.toList() );
 				Collection< CompilationUnit > headerUnits = Stream.concat(
@@ -341,16 +345,32 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 	private static void printNiceErrorMessage(
 			Throwable e, VerbosityLevel verbosity
 	) {
-		if( e instanceof AstPositionedException ) {
-			AstPositionedException pe = (AstPositionedException) e;
-			if (pe.position() == null) {
-				// TODO: position should be defined!
-				System.err.println( "error: " + capitalizeFirst( e.getMessage() ) + "." );
-				if( verbosity == VerbosityLevel.DEBUG ) {
-					e.printStackTrace();
-				}
-			} else {
-				printNiceErrorMessage( (AstPositionedException) e, verbosity );
+		if( e instanceof AstPositionedException pe ) {
+			Position p = pe.position();
+			System.err.printf(
+					"%1$s:%2$d:%3$d: error: %4$s.\n\n%5$s\n",
+					relativizePath( p.sourceFile() ),
+					p.line(),
+					p.column(),
+					capitalizeFirst( pe.getInnerMessage() ),
+					formattedSnippet( pe.position() )
+			);
+			if( verbosity == VerbosityLevel.DEBUG ) {
+				e.printStackTrace();
+			}
+		} else if( e instanceof MergeException me ) {
+			Position p1 = me.n1().position(), p2 = me.n2().position();
+			String sourceFile = p1.sourceFile();
+			System.err.printf(
+					"%1$s: error: %2$s.\n\n%3$s%4$s\n%5$s\n",
+					relativizePath( sourceFile ),
+					capitalizeFirst( me.getMessage() ),
+					formattedSnippet( p1 ),
+					"   ····\n   ····",
+					formattedSnippet( p2 )
+			);
+			if( verbosity == VerbosityLevel.DEBUG ) {
+				e.printStackTrace();
 			}
 		} else if( e instanceof ChoralCompoundException ) {
 			for( ChoralException c : ( (ChoralCompoundException) e ).getCauses() ) {
@@ -371,15 +391,20 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 		}
 	}
 
-	private static void printNiceErrorMessage(
-			AstPositionedException e, VerbosityLevel verbosity
-	) {
+	/**
+	 * Produces a pretty-printed code snippet of the error line and its surrounding context, with a
+	 * marker pointing to the error column.
+	 * @param p the location of the error
+	 */
+	private static String formattedSnippet( Position p ) {
+		if ( p == null || p.sourceFile() == null ) {
+			return "";
+		}
 		// -- parameters ---------------
 		int tabSize = 2;       // size of soft tabs
 		int contextLines = 1;  // number lines to display before and after the error line
 		// -----------------------------
 		StringBuilder formattedSnippet = new StringBuilder();
-		Position p = e.position();
 		try( Stream< String > allLines = Files.lines( Paths.get( p.sourceFile() ) ) ) {
 			int lineDigits = (int) Math.ceil( Math.log10( p.line() ) ) + 1;
 			String format = "  %" + lineDigits + "d | %s\n";
@@ -401,25 +426,14 @@ public class Choral extends ChoralCommand implements Callable< Integer > {
 							length += tabSize - 1;
 						}
 					}
-					formattedSnippet.append( " ".repeat( lineDigits + 2 ) ).append( " | " ).append(
-							"-".repeat(
-									length ) ).append( "^\n" );
+					formattedSnippet.append( " ".repeat( lineDigits + 2 ) ).append( " | " )
+							.append( "-".repeat( length ) ).append( "^\n" );
 				}
 			}
 		} catch( IOException ex ) {
 			// give up printing the code snippet
 		}
-		System.err.printf(
-				"%1$s:%2$d:%3$d: error: %4$s.\n\n%5$s\n",
-				relativizePath( p.sourceFile() ),
-				p.line(),
-				p.column(),
-				capitalizeFirst( e.getInnerMessage() ),
-				formattedSnippet
-		);
-		if( verbosity == VerbosityLevel.DEBUG ) {
-			e.printStackTrace();
-		}
+		return formattedSnippet.toString();
 	}
 
 	public static String relativizePath( String path ) {
@@ -508,6 +522,15 @@ class VerbosityOptions {
 			this.setVerbosity( VerbosityLevel.DEBUG );
 		}
 	}
+
+	@Option( names = { "--info" },
+			description = "Enable info messages." )
+	private void setInfoLevel( boolean value ) {
+		if( value ) {
+			this.setVerbosity( VerbosityLevel.INFO );
+		}
+	}
+
 }
 
 @Command()
@@ -557,6 +580,16 @@ abstract class PathOption {
 		@Option( names = { "-l", "--headers" },
 				paramLabel = "<PATH>",
 				description = "Specify where to find choral header files (" + Compiler.HEADER_FILE_EXTENSION + ")." )
+		@Override
+		protected void setValue( String value ) {
+			super.setValue( value );
+		}
+	}
+
+	public final static class ClassPathOption extends PathOption {
+		@Option( names = { "-cp", "--classpath" },
+				paramLabel = "<PATH>",
+				description = "Specify where to find Java classes and JARs." )
 		@Override
 		protected void setValue( String value ) {
 			super.setValue( value );
@@ -658,6 +691,44 @@ class HeaderCompilerOptions {
 abstract class ChoralCommand {
 	@Mixin
 	VerbosityOptions verbosityOptions;
+
+	@Mixin
+	PathOption.ClassPathOption classPathOption;
+
+	protected ClassPathContext useClassPath() throws IOException {
+		return new ClassPathContext( classPathOption.getPaths() );
+	}
+
+	protected static final class ClassPathContext implements AutoCloseable {
+		private final ClassLoader previousClassLoader;
+		private final URLClassLoader classLoader;
+
+		private ClassPathContext( List< Path > classPath ) throws IOException {
+			if( classPath.isEmpty() ) {
+				previousClassLoader = null;
+				classLoader = null;
+				return;
+			}
+
+			previousClassLoader = Thread.currentThread().getContextClassLoader();
+			URL[] urls = new URL[ classPath.size() ];
+			for( int i = 0; i < classPath.size(); i++ ) {
+				Path path = classPath.get( i );
+				urls[i] = path.toAbsolutePath().normalize().toUri().toURL();
+			}
+			classLoader = new URLClassLoader( urls, previousClassLoader );
+			Thread.currentThread().setContextClassLoader( classLoader );
+		}
+
+		@Override
+		public void close() throws IOException {
+			if( classLoader == null ) {
+				return;
+			}
+			Thread.currentThread().setContextClassLoader( previousClassLoader );
+			classLoader.close();
+		}
+	}
 }
 
 class ChoralVersionProvider implements IVersionProvider {
