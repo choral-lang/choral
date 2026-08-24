@@ -12,7 +12,6 @@ target/
 .DS_Store
 .factorypath
 .flattened-pom.xml
-# ANTLR generated files
 /choral/src/main/java/choral/grammar/
 /build
 /choral/src/main/antlr4/
@@ -22,3 +21,4 @@ CLAUDE.md
 AGENTS.md
 /tests/bin
 /tests/projectedOutput
+mise.toml
