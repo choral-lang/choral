@@ -142,11 +142,17 @@ public class SoloistProjector extends ChoralVisitor {
 			} else if( !projectedBody( previous, printer ).equals( projectedBody( method, printer ) ) ) {
 				throw new AstPositionedException( method.position(), new ChoralException(
 						"Two methods at role '" + w + "' both have projected signature '" + signature
-								+ "' but different bodies." ) );
+								+ "' but different projected bodies:\n\n"
+								+ "--- first projected body ---\n"
+								+ projectedBody( previous, printer ).orElse( "<no body>" ) + "\n\n"
+								+ "--- second projected body ---\n"
+								+ projectedBody( method, printer ).orElse( "<no body>" )
+				) );
 			}
 		}
 		return new ArrayList<>( methodsBySignature.values() );
 	}
+
 
 	private Optional< String > projectedBody(
 			MethodDefinition method,
