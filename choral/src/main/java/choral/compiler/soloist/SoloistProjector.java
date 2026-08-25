@@ -23,15 +23,28 @@ package choral.compiler.soloist;
 
 import choral.ast.Name;
 import choral.ast.body.Class;
+import choral.ast.body.ClassMethodDefinition;
 import choral.ast.body.Enum;
 import choral.ast.body.Interface;
+import choral.ast.body.InterfaceMethodDefinition;
+import choral.ast.body.MethodDefinition;
+import choral.ast.statement.Statement;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.ChoralVisitor;
+import choral.ast.visitors.PrettyPrinterVisitor;
+import choral.compiler.merge.MergeException;
+import choral.compiler.merge.StatementsMerger;
+import choral.exceptions.AstPositionedException;
+import choral.exceptions.ChoralException;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SoloistProjector extends ChoralVisitor {
@@ -74,7 +87,7 @@ public class SoloistProjector extends ChoralVisitor {
 				Collections.emptyList(),
 				TypesProjector.visitAndCollect( w, n.typeParameters() ),
 				TypesProjector.visitAndCollect( w, n.extendsInterfaces() ),
-				BodyProjector.visitAndCollect( w, n.methods() ),
+				mergeMethods( BodyProjector.visitAndCollect( w, n.methods() ) ),
 				BodyProjector.visitAndCollect( w, n.annotations() ),
 				n.modifiers(),
 				n.position()
@@ -107,16 +120,111 @@ public class SoloistProjector extends ChoralVisitor {
 				TypesProjector.visitAndCollect( w, n.typeParameters() ),
 				n.superClass().isPresent() ?
 						TypesProjector.visit( w, n.superClass().get() ).get( 0 ) // this is always 1
-						: null
-				,
+						: null,
 				TypesProjector.visitAndCollect( w, n.implementsInterfaces() ),
 				BodyProjector.visitAndCollect( w, n.fields() ), // create
-				BodyProjector.visitAndCollect( w, n.methods() ),
+				mergeMethods( BodyProjector.visitAndCollect( w, n.methods() ) ),
 				BodyProjector.visitAndCollect( w, n.constructors() ),
 				BodyProjector.visitAndCollect( w, n.annotations() ),
 				n.modifiers(),
 				n.position()
 		);
+	}
+
+	/**
+	 * Two methods might appear distinct choreographically, but have the same projection for 
+	 * a specific world; see the DuplicateProjected tests for examples. We handle this by
+	 * trying to merge the duplicate methods.
+	 */
+	private < T extends MethodDefinition > List< T > mergeMethods( List< T > methods ) {
+		Map< String, List< T > > methodsBySignature = new LinkedHashMap<>();
+		PrettyPrinterVisitor printer = new PrettyPrinterVisitor();
+		for( T method : methods ) {
+			String parameterTypes = method.signature().parameters().stream()
+					.map( parameter -> printer.visit( parameter.type() ) )
+					.collect( Collectors.joining( ",", "(", ")" ) );
+			String signature = method.signature().name().identifier() + parameterTypes;
+			methodsBySignature.computeIfAbsent( signature, ignored -> new ArrayList<>() )
+					.add( method );
+		}
+
+		List< T > mergedMethods = new ArrayList<>();
+		for( Map.Entry< String, List< T > > entry : methodsBySignature.entrySet() ) {
+			String signature = entry.getKey();
+			List< T > duplicates = entry.getValue();
+			T first = duplicates.get( 0 );
+
+			// Fast path: no other methods have the same signature. Nothing to merge.
+			if( duplicates.size() == 1 ) {
+				mergedMethods.add( first );
+				continue;
+			}
+
+			List< Optional< Statement > > bodies = duplicates.stream()
+					.map( this::projectedBody )
+					.toList();
+
+			// If all bodies are empty, the merge is trivial. 
+			if( bodies.stream().allMatch( Optional::isEmpty ) ) {
+				mergedMethods.add( first );
+				continue;
+			}
+
+			try {
+				if( bodies.stream().anyMatch( Optional::isEmpty ) ) {
+					throw new MergeException(
+							"a projected method has no body", first,
+							duplicates.get( duplicates.size() - 1 ) );
+				}
+				Statement mergedBody = StatementsMerger.merge(
+						bodies.stream().map( Optional::get ).toList() );
+				mergedMethods.add( withBody( first, mergedBody ) );
+			} catch( MergeException e ) {
+				StringBuilder projectedBodies = new StringBuilder();
+				for( int i = 0; i < bodies.size(); i++ ) {
+					if( i > 0 ) {
+						projectedBodies.append( "\n\n" );
+					}
+					projectedBodies.append( "--- projected body " ).append( i + 1 )
+							.append( " ---\n" )
+							.append( bodies.get( i ).map( printer::visit ).orElse( "<no body>" ) );
+				}
+				String message = duplicates.size() + " methods at role '" + w.name().identifier()
+						+ "' have projected signature '" + signature
+						+ "' but their projected bodies cannot be merged: " + e.getMessage()
+						+ "\n\n" + projectedBodies;
+				throw new AstPositionedException(
+						duplicates.get( duplicates.size() - 1 ).position(),
+						new ChoralException( message ) );
+			}
+		}
+		return mergedMethods;
+	}
+
+
+	@SuppressWarnings( "unchecked" )
+	private < T extends MethodDefinition > T withBody( T method, Statement body ) {
+		if( method instanceof ClassMethodDefinition classMethod ) {
+			return (T) new ClassMethodDefinition(
+					classMethod.signature(), body, classMethod.annotations(),
+					classMethod.modifiers(), classMethod.position() );
+		}
+		if( method instanceof InterfaceMethodDefinition interfaceMethod ) {
+			return (T) new InterfaceMethodDefinition(
+					interfaceMethod.signature(), body, interfaceMethod.annotations(),
+					interfaceMethod.modifiers(), interfaceMethod.position() );
+		}
+		throw new SoloistProjectorException( "Unsupported projected method definition" );
+	}
+
+	private Optional< Statement > projectedBody( MethodDefinition method ) {
+		if( method instanceof ClassMethodDefinition classMethod ) {
+			return classMethod.body();
+		}
+		if( method instanceof InterfaceMethodDefinition interfaceMethod ) {
+			return interfaceMethod.body();
+		}
+		throw new SoloistProjectorException( "Unsupported projected method definition" );
 	}
 
 }
