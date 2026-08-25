@@ -87,7 +87,7 @@ public class SoloistProjector extends ChoralVisitor {
 				Collections.emptyList(),
 				TypesProjector.visitAndCollect( w, n.typeParameters() ),
 				TypesProjector.visitAndCollect( w, n.extendsInterfaces() ),
-				deduplicateMethods( BodyProjector.visitAndCollect( w, n.methods() ) ),
+				mergeMethods( BodyProjector.visitAndCollect( w, n.methods() ) ),
 				BodyProjector.visitAndCollect( w, n.annotations() ),
 				n.modifiers(),
 				n.position()
@@ -123,7 +123,7 @@ public class SoloistProjector extends ChoralVisitor {
 						: null,
 				TypesProjector.visitAndCollect( w, n.implementsInterfaces() ),
 				BodyProjector.visitAndCollect( w, n.fields() ), // create
-				deduplicateMethods( BodyProjector.visitAndCollect( w, n.methods() ) ),
+				mergeMethods( BodyProjector.visitAndCollect( w, n.methods() ) ),
 				BodyProjector.visitAndCollect( w, n.constructors() ),
 				BodyProjector.visitAndCollect( w, n.annotations() ),
 				n.modifiers(),
@@ -136,7 +136,7 @@ public class SoloistProjector extends ChoralVisitor {
 	 * a specific world; see the DuplicateProjected tests for examples. We handle this by
 	 * trying to merge the duplicate methods.
 	 */
-	private < T extends MethodDefinition > List< T > deduplicateMethods( List< T > methods ) {
+	private < T extends MethodDefinition > List< T > mergeMethods( List< T > methods ) {
 		Map< String, List< T > > methodsBySignature = new LinkedHashMap<>();
 		PrettyPrinterVisitor printer = new PrettyPrinterVisitor();
 		for( T method : methods ) {
@@ -148,34 +148,37 @@ public class SoloistProjector extends ChoralVisitor {
 					.add( method );
 		}
 
-		List< T > result = new ArrayList<>();
+		List< T > mergedMethods = new ArrayList<>();
 		for( Map.Entry< String, List< T > > entry : methodsBySignature.entrySet() ) {
 			String signature = entry.getKey();
 			List< T > duplicates = entry.getValue();
 			T first = duplicates.get( 0 );
+
+			// Fast path: no other methods have the same signature. Nothing to merge.
 			if( duplicates.size() == 1 ) {
-				result.add( first );
+				mergedMethods.add( first );
 				continue;
 			}
 
 			List< Optional< Statement > > bodies = duplicates.stream()
 					.map( this::projectedBody )
 					.toList();
+
+			// If all bodies are empty, the merge is trivial. 
 			if( bodies.stream().allMatch( Optional::isEmpty ) ) {
-				result.add( first );
+				mergedMethods.add( first );
 				continue;
 			}
+
 			try {
-				// Not all bodies are absent here, so this guards the get() calls below and
-				// reports an abstract/concrete collision through the normal merge diagnostic.
 				if( bodies.stream().anyMatch( Optional::isEmpty ) ) {
 					throw new MergeException(
-							"one projected method has no body", first,
+							"a projected method has no body", first,
 							duplicates.get( duplicates.size() - 1 ) );
 				}
 				Statement mergedBody = StatementsMerger.merge(
 						bodies.stream().map( Optional::get ).toList() );
-				result.add( withBody( first, mergedBody ) );
+				mergedMethods.add( withBody( first, mergedBody ) );
 			} catch( MergeException e ) {
 				StringBuilder projectedBodies = new StringBuilder();
 				for( int i = 0; i < bodies.size(); i++ ) {
@@ -195,7 +198,7 @@ public class SoloistProjector extends ChoralVisitor {
 						new ChoralException( message ) );
 			}
 		}
-		return result;
+		return mergedMethods;
 	}
 
 
