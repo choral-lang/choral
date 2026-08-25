@@ -486,6 +486,31 @@ public abstract class Member implements HasSource {
 		}
 
 		/**
+		 * Whether these callables have the same erased Java signature after projection at
+		 * {@code world}. Parameter types unavailable at the endpoint are both represented by
+		 * {@code Unit}; available parameter types retain their ordinary Java erasure.
+		 */
+		public boolean sameErasureAfterProjectionAt( HigherCallable other, World world ) {
+			if( !this.identifier().equals( other.identifier() ) || this.arity() != other.arity() ) {
+				return false;
+			}
+			for( int i = 0; i < this.arity(); i++ ) {
+				GroundDataType t1 = this.innerCallable().signature().parameters().get( i ).type();
+				GroundDataType t2 = other.innerCallable().signature().parameters().get( i ).type();
+				boolean t1Available = t1.worldArguments().isEmpty() || t1.worldArguments().contains( world );
+				boolean t2Available = t2.worldArguments().isEmpty() || t2.worldArguments().contains( world );
+				if( t1Available != t2Available ) {
+					return false;
+				}
+				if( t1Available && !t1.isEquivalentToErasureOf( t2 )
+						&& !t2.isEquivalentToErasureOf( t1 ) ) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/**
 		 * (JLS 8.4.2) Two method signatures m1 and m2 are override-equivalent iff either m1 is a subsignature of
 		 * m2 or m2 is a subsignature of m1.
 		 * <p>

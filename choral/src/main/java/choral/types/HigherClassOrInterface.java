@@ -938,6 +938,13 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 								+ "', both methods have the same erasure" );
 					}
 				}
+				for( World world : worldArguments() ) {
+					if( x.sameErasureAfterProjectionAt( method, world ) ) {
+						throw new StaticVerificationException( "method '" + method
+								+ "' clashes with '" + x + "' when projected at role '"
+								+ world + "', both methods have the same projected erasure" );
+					}
+				}
 			}
 			declaredMethods.add( method );
 		}
