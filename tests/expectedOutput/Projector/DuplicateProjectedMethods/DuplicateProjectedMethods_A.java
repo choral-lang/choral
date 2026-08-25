@@ -1,9 +1,17 @@
 package Projector.DuplicateProjectedMethods;
 
 import choral.annotations.Choreography;
+import choral.channels.SymChannel_A;
+import choral.lang.Unit;
 
 @Choreography( role = "A", name = "DuplicateProjectedMethods" )
 class DuplicateProjectedMethods_A {
+	SymChannel_A < Object > channel;
+
+	DuplicateProjectedMethods_A( SymChannel_A < Object > channel ) {
+		this.channel = channel;
+	}
+
 	Integer identity( Integer value ) {
 		return value;
 	}
@@ -18,6 +26,19 @@ class DuplicateProjectedMethods_A {
 	
 	void accept( int left, int right ) {
 		
+	}
+	
+	Unit communicate( String value ) {
+		return channel.< Object >com( value );
+	}
+	
+	Unit communicate( Integer value ) {
+		return channel.< Object >com( value );
+	}
+	
+	void testCommunication() {
+		communicate( "hello" );
+		communicate( Integer.valueOf( 42 ) );
 	}
 
 }

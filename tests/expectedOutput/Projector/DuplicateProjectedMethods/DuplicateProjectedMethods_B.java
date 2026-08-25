@@ -1,10 +1,17 @@
 package Projector.DuplicateProjectedMethods;
 
 import choral.annotations.Choreography;
+import choral.channels.SymChannel_B;
 import choral.lang.Unit;
 
 @Choreography( role = "B", name = "DuplicateProjectedMethods" )
 class DuplicateProjectedMethods_B {
+	SymChannel_B < Object > channel;
+
+	DuplicateProjectedMethods_B( SymChannel_B < Object > channel ) {
+		this.channel = channel;
+	}
+
 	Unit identity( Unit value ) {
 		return identity();
 	}
@@ -13,12 +20,25 @@ class DuplicateProjectedMethods_B {
 		accept();
 	}
 	
+	Object communicate( Unit value ) {
+		return communicate();
+	}
+	
+	void testCommunication() {
+		communicate( Unit.id );
+		communicate( Unit.id );
+	}
+	
 	Unit identity() {
 		return Unit.id;
 	}
 	
 	void accept() {
 		
+	}
+	
+	Object communicate() {
+		return channel.< Object >com( Unit.id );
 	}
 
 }
