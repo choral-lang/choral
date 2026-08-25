@@ -131,6 +131,11 @@ public class SoloistProjector extends ChoralVisitor {
 		);
 	}
 
+	/**
+	 * Two methods might appear distinct choreographically, but have the same projection for 
+	 * a specific world; see the DuplicateProjected tests for examples. We handle this by
+	 * trying to merge the duplicate methods.
+	 */
 	private < T extends MethodDefinition > List< T > deduplicateMethods( List< T > methods ) {
 		Map< String, T > methodsBySignature = new LinkedHashMap<>();
 		PrettyPrinterVisitor printer = new PrettyPrinterVisitor();
