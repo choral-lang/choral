@@ -29,11 +29,11 @@ class DuplicateProjectedCommunication_A {
 	}
 	
 	Unit communicate( String value ) {
-		return channel.< Object >com( "sent by the String overload" );
+		return channel.< Object >com( value );
 	}
 	
 	Unit communicate( Integer value ) {
-		return channel.< Object >com( Integer.valueOf( 42 ) );
+		return channel.< Object >com( value.toString() );
 	}
 	
 	void testCommunication() {

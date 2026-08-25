@@ -17,11 +17,11 @@ class DuplicateProjectedCommunication@( A, B ) {
     void accept( int@A left, int@A right ) {}
 
     Object@B communicate( String@A value ) {
-        return channel.< Object >com( "sent by the String overload"@A );
+        return channel.< Object >com( value );
     }
 
     Object@B communicate( Integer@A value ) {
-        return channel.< Object >com( Integer@A.valueOf( 42@A ) );
+        return channel.< Object >com( value.toString() );
     }
 
 

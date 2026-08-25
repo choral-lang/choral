@@ -97,7 +97,7 @@ public class ExpressionUnitNormaliser
 			return EUNResult.changed(
 					UnitRepresentation.unitMC(
 							( (MethodCallExpression) ( (ScopedExpression) ht.right() ).scopedExpression() ).arguments(),
-							null
+							( (StaticAccessExpression) ht.left() ).typeExpression().worldArguments().get( 0 )
 					) );
 		} else if( // we check if we have Unit.id( Exp ) *only one expression*
 				ht.left() instanceof StaticAccessExpression
@@ -118,7 +118,8 @@ public class ExpressionUnitNormaliser
 							&& scopedExpression.expression().isEmpty()
 			) {
 				return EUNResult.unChanged( UnitRepresentation.UnitFD(
-						null ) ); // this will stop the recursive visit because change is false
+						( (StaticAccessExpression) ht.left() ).typeExpression().worldArguments().get( 0 )
+				) ); // this will stop the recursive visit because change is false
 			} else {
 				EUNResult headER = visit( ht.left() );
 				return new EUNResult(
