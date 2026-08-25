@@ -189,7 +189,7 @@ public class SoloistProjector extends ChoralVisitor {
 							.append( " ---\n" )
 							.append( bodies.get( i ).map( printer::visit ).orElse( "<no body>" ) );
 				}
-				String message = duplicates.size() + " methods at role '" + w
+				String message = duplicates.size() + " methods at role '" + w.name().identifier()
 						+ "' have projected signature '" + signature
 						+ "' but their projected bodies cannot be merged: " + e.getMessage()
 						+ "\n\n" + projectedBodies;
