@@ -117,8 +117,7 @@ public class SoloistProjector extends ChoralVisitor {
 				TypesProjector.visitAndCollect( w, n.typeParameters() ),
 				n.superClass().isPresent() ?
 						TypesProjector.visit( w, n.superClass().get() ).get( 0 ) // this is always 1
-						: null
-				,
+						: null,
 				TypesProjector.visitAndCollect( w, n.implementsInterfaces() ),
 				BodyProjector.visitAndCollect( w, n.fields() ), // create
 				deduplicateMethods( BodyProjector.visitAndCollect( w, n.methods() ) ),
@@ -133,21 +132,28 @@ public class SoloistProjector extends ChoralVisitor {
 		Map< String, T > methodsBySignature = new LinkedHashMap<>();
 		PrettyPrinterVisitor printer = new PrettyPrinterVisitor();
 		for( T method : methods ) {
-			String signature = method.signature().name().identifier() + method.signature().parameters().stream()
+			String parameterTypes = method.signature().parameters().stream()
 					.map( parameter -> printer.visit( parameter.type() ) )
 					.collect( Collectors.joining( ",", "(", ")" ) );
+			String signature = method.signature().name().identifier() + parameterTypes;
 			T previous = methodsBySignature.get( signature );
 			if( previous == null ) {
 				methodsBySignature.put( signature, method );
-			} else if( !projectedBody( previous, printer ).equals( projectedBody( method, printer ) ) ) {
-				throw new AstPositionedException( method.position(), new ChoralException(
-						"Two methods at role '" + w + "' both have projected signature '" + signature
-								+ "' but different projected bodies:\n\n"
-								+ "--- first projected body ---\n"
-								+ projectedBody( previous, printer ).orElse( "<no body>" ) + "\n\n"
-								+ "--- second projected body ---\n"
-								+ projectedBody( method, printer ).orElse( "<no body>" )
-				) );
+				continue;
+			}
+
+			Optional< String > previousBody = projectedBody( previous, printer );
+			Optional< String > currentBody = projectedBody( method, printer );
+			if( !previousBody.equals( currentBody ) ) {
+				String message = "Two methods at role '" + w
+						+ "' both have projected signature '" + signature
+						+ "' but different projected bodies:\n\n"
+						+ "--- first projected body ---\n"
+						+ previousBody.orElse( "<no body>" ) + "\n\n"
+						+ "--- second projected body ---\n"
+						+ currentBody.orElse( "<no body>" );
+				throw new AstPositionedException(
+						method.position(), new ChoralException( message ) );
 			}
 		}
 		return new ArrayList<>( methodsBySignature.values() );
