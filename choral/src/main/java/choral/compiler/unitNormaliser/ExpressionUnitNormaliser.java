@@ -57,7 +57,7 @@ public class ExpressionUnitNormaliser
 			// CHECK FOR Unit.id
 			if( scope instanceof StaticAccessExpression
 					&& ( (StaticAccessExpression) scope ).typeExpression().name().equals(
-					UnitRepresentation.UNIT )
+							UnitRepresentation.UNIT )
 					&& scoped instanceof FieldAccessExpression
 					&& ( (FieldAccessExpression) scoped ).name() == ( UnitRepresentation.UID )
 			) {
@@ -83,42 +83,48 @@ public class ExpressionUnitNormaliser
 	private EUNResult _visit( ScopedExpression n ) {
 		Pair< Expression, Expression > ht = Utils.headAndTail( n );
 		if( // we check if we have Unit.id.id( Exp_1, ..., Exp_n )
-				ht.left() instanceof StaticAccessExpression
-						&& ( (StaticAccessExpression) ht.left() ).typeExpression().name().equals(
+		ht.left() instanceof StaticAccessExpression
+				&& ( (StaticAccessExpression) ht.left() ).typeExpression().name().equals(
 						UnitRepresentation.UNIT )
-						&& ht.right() instanceof ScopedExpression
-						&& ( (ScopedExpression) ht.right() ).scope() instanceof FieldAccessExpression
-						&& ( (FieldAccessExpression) ( (ScopedExpression) ht.right() ).scope() ).name().equals(
-						UnitRepresentation.UID )
-						&& ( (ScopedExpression) ht.right() ).scopedExpression() instanceof MethodCallExpression
-						&& ( (MethodCallExpression) ( (ScopedExpression) ht.right() ).scopedExpression() ).name().equals(
-						UnitRepresentation.UID )
+				&& ht.right() instanceof ScopedExpression
+				&& ( (ScopedExpression) ht.right() ).scope() instanceof FieldAccessExpression
+				&& ( (FieldAccessExpression) ( (ScopedExpression) ht.right() ).scope() ).name()
+						.equals(
+								UnitRepresentation.UID )
+				&& ( (ScopedExpression) ht.right() )
+						.scopedExpression() instanceof MethodCallExpression
+				&& ( (MethodCallExpression) ( (ScopedExpression) ht.right() ).scopedExpression() )
+						.name().equals(
+								UnitRepresentation.UID )
 		) {
 			return EUNResult.changed(
 					UnitRepresentation.unitMC(
-							( (MethodCallExpression) ( (ScopedExpression) ht.right() ).scopedExpression() ).arguments(),
-							( (StaticAccessExpression) ht.left() ).typeExpression().worldArguments().get( 0 )
+							( (MethodCallExpression) ( (ScopedExpression) ht.right() )
+									.scopedExpression() ).arguments(),
+							( (StaticAccessExpression) ht.left() ).typeExpression().worldArguments()
+									.get( 0 )
 					) );
 		} else if( // we check if we have Unit.id( Exp ) *only one expression*
-				ht.left() instanceof StaticAccessExpression
-						&& ( (StaticAccessExpression) ht.left() ).typeExpression().name().equals(
+		ht.left() instanceof StaticAccessExpression
+				&& ( (StaticAccessExpression) ht.left() ).typeExpression().name().equals(
 						UnitRepresentation.UNIT )
-						&& ht.right() instanceof MethodCallExpression
-						&& ( (MethodCallExpression) ht.right() ).name().equals(
+				&& ht.right() instanceof MethodCallExpression
+				&& ( (MethodCallExpression) ht.right() ).name().equals(
 						UnitRepresentation.UID )
-						&& ( (MethodCallExpression) ht.right() ).arguments().size() == 1
+				&& ( (MethodCallExpression) ht.right() ).arguments().size() == 1
 		) {
 			return EUNResult.changed( ( (MethodCallExpression) ht.right() ).arguments().get( 0 ) );
 		} else {
 			EUNResult scopedExpression = visitScoped( ht.right() ); // this is always present
 			if( // we check if we would have Unit.[blank] and return Unit.id
-					ht.left() instanceof StaticAccessExpression
-							&& ( (StaticAccessExpression) ht.left() ).typeExpression().name().equals(
+			ht.left() instanceof StaticAccessExpression
+					&& ( (StaticAccessExpression) ht.left() ).typeExpression().name().equals(
 							UnitRepresentation.UNIT )
-							&& scopedExpression.expression().isEmpty()
+					&& scopedExpression.expression().isEmpty()
 			) {
 				return EUNResult.unChanged( UnitRepresentation.UnitFD(
-						( (StaticAccessExpression) ht.left() ).typeExpression().worldArguments().get( 0 )
+						( (StaticAccessExpression) ht.left() ).typeExpression().worldArguments()
+								.get( 0 )
 				) ); // this will stop the recursive visit because change is false
 			} else {
 				EUNResult headER = visit( ht.left() );
@@ -129,8 +135,8 @@ public class ExpressionUnitNormaliser
 										new ScopedExpression(
 												headER.expression().get(),
 												// safe to get, since we never remove the head of the chain
-												scopedExpression.expression().get() )
-										: headER.expression.get()
+												scopedExpression.expression().get() ) :
+										headER.expression.get()
 						)
 				);
 			}
@@ -150,7 +156,8 @@ public class ExpressionUnitNormaliser
 			return _visitScoped( (ScopedExpression) e );
 		} else {
 			throw new ChoralException(
-					"Found unexpected kind of expression in scoped visit: " + e.getClass().getCanonicalName() );
+					"Found unexpected kind of expression in scoped visit: "
+							+ e.getClass().getCanonicalName() );
 		}
 	}
 
@@ -166,12 +173,12 @@ public class ExpressionUnitNormaliser
 			return new EUNResult(
 					argumentsVisit.stream().anyMatch( EUNResult::changed ),
 					Optional.of( new MethodCallExpression(
-									n.name(),
-									argumentsVisit.stream()
-											.map( er -> er.expression().get() ) // these cannot be blank
-											.collect( Collectors.toList() ),
-									n.typeArguments()
-							)
+							n.name(),
+							argumentsVisit.stream()
+									.map( er -> er.expression().get() ) // these cannot be blank
+									.collect( Collectors.toList() ),
+							n.typeArguments()
+					)
 					)
 			);
 		} else
@@ -185,18 +192,18 @@ public class ExpressionUnitNormaliser
 			// ... or an .id call where we can remove blank/NOOP arguments
 			else {
 				return new EUNResult(
-						argumentsVisit.stream().anyMatch( a ->
-								a.changed()
-										|| a.expression().isEmpty()          // the arguments will change
-										|| isNoop( a.expression().get() ) ),
+						argumentsVisit.stream().anyMatch( a -> a.changed()
+								|| a.expression().isEmpty()          // the arguments will change
+								|| isNoop( a.expression().get() ) ),
 						// in size (we remove some)
 						Optional.of(
 								new MethodCallExpression(
 										UnitRepresentation.UID,
 										argumentsVisit.stream()
 												.filter(
-														er -> er.expression().isPresent() && !isNoop(
-																er.expression().get() ) )
+														er -> er.expression().isPresent()
+																&& !isNoop(
+																		er.expression().get() ) )
 												.map( er -> er.expression().get() )
 												.collect( Collectors.toList() ),
 										n.typeArguments()
@@ -221,9 +228,9 @@ public class ExpressionUnitNormaliser
 			return new EUNResult(
 					headER.changed() || tailER.changed(),
 					headER.expression().isEmpty() ?
-							tailER.expression
-							: Optional.of(
-							getScopedOrJustHead( headER.expression().get(), tailER.expression() ) )
+							tailER.expression : Optional.of(
+									getScopedOrJustHead( headER.expression().get(),
+											tailER.expression() ) )
 			);
 		}
 	}
@@ -249,11 +256,11 @@ public class ExpressionUnitNormaliser
 		return new EUNResult(
 				argumentsList.stream().anyMatch( EUNResult::changed ),
 				Optional.of( new MethodCallExpression(
-								n.name(),
-								argumentsList.stream().map( er -> er.expression().get() ).collect(
-										Collectors.toList() ),
-								n.typeArguments()
-						)
+						n.name(),
+						argumentsList.stream().map( er -> er.expression().get() ).collect(
+								Collectors.toList() ),
+						n.typeArguments()
+				)
 				)
 		);
 	}
@@ -282,20 +289,20 @@ public class ExpressionUnitNormaliser
 	@Override
 	public EUNResult visit( AssignExpression n ) {
 		return EUNResult.unChanged( new AssignExpression(
-						visit( n.value() ).expression().get(),
-						visit( n.target() ).expression().get(),
-						n.operator()
-				)
+				visit( n.value() ).expression().get(),
+				visit( n.target() ).expression().get(),
+				n.operator()
+		)
 		);
 	}
 
 	@Override
 	public EUNResult visit( BinaryExpression n ) {
 		return EUNResult.unChanged( new BinaryExpression(
-						visit( n.left() ).expression().get(),
-						visit( n.right() ).expression().get(),
-						n.operator()
-				)
+				visit( n.left() ).expression().get(),
+				visit( n.right() ).expression().get(),
+				n.operator()
+		)
 		);
 	}
 
