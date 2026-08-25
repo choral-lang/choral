@@ -28,10 +28,13 @@ import choral.ast.body.Enum;
 import choral.ast.body.Interface;
 import choral.ast.body.InterfaceMethodDefinition;
 import choral.ast.body.MethodDefinition;
+import choral.ast.statement.Statement;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.ChoralVisitor;
 import choral.ast.visitors.PrettyPrinterVisitor;
+import choral.compiler.merge.MergeException;
+import choral.compiler.merge.StatementsMerger;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralException;
 
@@ -142,16 +145,28 @@ public class SoloistProjector extends ChoralVisitor {
 				continue;
 			}
 
-			Optional< String > previousBody = projectedBody( previous, printer );
-			Optional< String > currentBody = projectedBody( method, printer );
-			if( !previousBody.equals( currentBody ) ) {
+			Optional< Statement > previousBody = projectedBody( previous );
+			Optional< Statement > currentBody = projectedBody( method );
+			if( previousBody.isEmpty() && currentBody.isEmpty() ) {
+				continue;
+			}
+			try {
+				if( previousBody.isEmpty() || currentBody.isEmpty() ) {
+					throw new MergeException(
+							"one projected method has no body", previous, method );
+				}
+				Statement mergedBody = StatementsMerger.merge(
+						List.of( previousBody.get(), currentBody.get() ) );
+				methodsBySignature.put( signature, withBody( previous, mergedBody ) );
+			} catch( MergeException e ) {
 				String message = "Two methods at role '" + w
 						+ "' both have projected signature '" + signature
-						+ "' but different projected bodies:\n\n"
+						+ "' but their projected bodies cannot be merged: " + e.getMessage()
+						+ "\n\n"
 						+ "--- first projected body ---\n"
-						+ previousBody.orElse( "<no body>" ) + "\n\n"
+						+ previousBody.map( printer::visit ).orElse( "<no body>" ) + "\n\n"
 						+ "--- second projected body ---\n"
-						+ currentBody.orElse( "<no body>" );
+						+ currentBody.map( printer::visit ).orElse( "<no body>" );
 				throw new AstPositionedException(
 						method.position(), new ChoralException( message ) );
 			}
@@ -160,15 +175,27 @@ public class SoloistProjector extends ChoralVisitor {
 	}
 
 
-	private Optional< String > projectedBody(
-			MethodDefinition method,
-			PrettyPrinterVisitor printer
-	) {
+	@SuppressWarnings( "unchecked" )
+	private < T extends MethodDefinition > T withBody( T method, Statement body ) {
 		if( method instanceof ClassMethodDefinition classMethod ) {
-			return classMethod.body().map( printer::visit );
+			return (T) new ClassMethodDefinition(
+					classMethod.signature(), body, classMethod.annotations(),
+					classMethod.modifiers(), classMethod.position() );
 		}
 		if( method instanceof InterfaceMethodDefinition interfaceMethod ) {
-			return interfaceMethod.body().map( printer::visit );
+			return (T) new InterfaceMethodDefinition(
+					interfaceMethod.signature(), body, interfaceMethod.annotations(),
+					interfaceMethod.modifiers(), interfaceMethod.position() );
+		}
+		throw new SoloistProjectorException( "Unsupported projected method definition" );
+	}
+
+	private Optional< Statement > projectedBody( MethodDefinition method ) {
+		if( method instanceof ClassMethodDefinition classMethod ) {
+			return classMethod.body();
+		}
+		if( method instanceof InterfaceMethodDefinition interfaceMethod ) {
+			return interfaceMethod.body();
 		}
 		throw new SoloistProjectorException( "Unsupported projected method definition" );
 	}

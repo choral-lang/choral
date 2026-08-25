@@ -1,11 +1,12 @@
-package Projector.DuplicateProjectedMethods;
+package Projector.DuplicateProjectedCommunication;
 
 import choral.channels.SymChannel;
 
-class DuplicateProjectedMethods@( A, B ) {
+
+class DuplicateProjectedCommunication@( A, B ) {
     SymChannel@( A, B )< Object > channel;
 
-    DuplicateProjectedMethods( SymChannel@( A, B )< Object > channel ) {
+    DuplicateProjectedCommunication( SymChannel@( A, B )< Object > channel ) {
         this.channel = channel;
     }
 
@@ -16,12 +17,13 @@ class DuplicateProjectedMethods@( A, B ) {
     void accept( int@A left, int@A right ) {}
 
     Object@B communicate( String@A value ) {
-        return channel.< Object >com( value );
+        return channel.< Object >com( "sent by the String overload"@A );
     }
 
     Object@B communicate( Integer@A value ) {
-        return channel.< Object >com( value );
+        return channel.< Object >com( Integer@A.valueOf( 42@A ) );
     }
+
 
     void testCommunication() {
         communicate( "hello"@A );

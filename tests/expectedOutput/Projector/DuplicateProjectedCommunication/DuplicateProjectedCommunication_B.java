@@ -1,14 +1,14 @@
-package Projector.DuplicateProjectedMethods;
+package Projector.DuplicateProjectedCommunication;
 
 import choral.annotations.Choreography;
 import choral.channels.SymChannel_B;
 import choral.lang.Unit;
 
-@Choreography( role = "B", name = "DuplicateProjectedMethods" )
-class DuplicateProjectedMethods_B {
+@Choreography( role = "B", name = "DuplicateProjectedCommunication" )
+class DuplicateProjectedCommunication_B {
 	SymChannel_B < Object > channel;
 
-	DuplicateProjectedMethods_B( SymChannel_B < Object > channel ) {
+	DuplicateProjectedCommunication_B( SymChannel_B < Object > channel ) {
 		this.channel = channel;
 	}
 

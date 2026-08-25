@@ -1,14 +1,14 @@
-package Projector.DuplicateProjectedMethods;
+package Projector.DuplicateProjectedCommunication;
 
 import choral.annotations.Choreography;
 import choral.channels.SymChannel_A;
 import choral.lang.Unit;
 
-@Choreography( role = "A", name = "DuplicateProjectedMethods" )
-class DuplicateProjectedMethods_A {
+@Choreography( role = "A", name = "DuplicateProjectedCommunication" )
+class DuplicateProjectedCommunication_A {
 	SymChannel_A < Object > channel;
 
-	DuplicateProjectedMethods_A( SymChannel_A < Object > channel ) {
+	DuplicateProjectedCommunication_A( SymChannel_A < Object > channel ) {
 		this.channel = channel;
 	}
 
@@ -29,11 +29,11 @@ class DuplicateProjectedMethods_A {
 	}
 	
 	Unit communicate( String value ) {
-		return channel.< Object >com( value );
+		return channel.< Object >com( "sent by the String overload" );
 	}
 	
 	Unit communicate( Integer value ) {
-		return channel.< Object >com( value );
+		return channel.< Object >com( Integer.valueOf( 42 ) );
 	}
 	
 	void testCommunication() {
