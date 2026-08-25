@@ -137,46 +137,65 @@ public class SoloistProjector extends ChoralVisitor {
 	 * trying to merge the duplicate methods.
 	 */
 	private < T extends MethodDefinition > List< T > deduplicateMethods( List< T > methods ) {
-		Map< String, T > methodsBySignature = new LinkedHashMap<>();
+		Map< String, List< T > > methodsBySignature = new LinkedHashMap<>();
 		PrettyPrinterVisitor printer = new PrettyPrinterVisitor();
 		for( T method : methods ) {
 			String parameterTypes = method.signature().parameters().stream()
 					.map( parameter -> printer.visit( parameter.type() ) )
 					.collect( Collectors.joining( ",", "(", ")" ) );
 			String signature = method.signature().name().identifier() + parameterTypes;
-			T previous = methodsBySignature.get( signature );
-			if( previous == null ) {
-				methodsBySignature.put( signature, method );
+			methodsBySignature.computeIfAbsent( signature, ignored -> new ArrayList<>() )
+					.add( method );
+		}
+
+		List< T > result = new ArrayList<>();
+		for( Map.Entry< String, List< T > > entry : methodsBySignature.entrySet() ) {
+			String signature = entry.getKey();
+			List< T > duplicates = entry.getValue();
+			T first = duplicates.get( 0 );
+			if( duplicates.size() == 1 ) {
+				result.add( first );
 				continue;
 			}
 
-			Optional< Statement > previousBody = projectedBody( previous );
-			Optional< Statement > currentBody = projectedBody( method );
-			if( previousBody.isEmpty() && currentBody.isEmpty() ) {
+			List< Optional< Statement > > bodies = duplicates.stream()
+					.map( this::projectedBody )
+					.toList();
+			if( bodies.stream().allMatch( Optional::isEmpty ) ) {
+				result.add( first );
 				continue;
 			}
 			try {
-				if( previousBody.isEmpty() || currentBody.isEmpty() ) {
+				// Not all bodies are absent here, so this guards the get() calls below and
+				// reports an abstract/concrete collision through the normal merge diagnostic.
+				if( bodies.stream().anyMatch( Optional::isEmpty ) ) {
 					throw new MergeException(
-							"one projected method has no body", previous, method );
+							"one projected method has no body", first,
+							duplicates.get( duplicates.size() - 1 ) );
 				}
 				Statement mergedBody = StatementsMerger.merge(
-						List.of( previousBody.get(), currentBody.get() ) );
-				methodsBySignature.put( signature, withBody( previous, mergedBody ) );
+						bodies.stream().map( Optional::get ).toList() );
+				result.add( withBody( first, mergedBody ) );
 			} catch( MergeException e ) {
-				String message = "Two methods at role '" + w
-						+ "' both have projected signature '" + signature
+				StringBuilder projectedBodies = new StringBuilder();
+				for( int i = 0; i < bodies.size(); i++ ) {
+					if( i > 0 ) {
+						projectedBodies.append( "\n\n" );
+					}
+					projectedBodies.append( "--- projected body " ).append( i + 1 )
+							.append( " ---\n" )
+							.append( bodies.get( i ).map( printer::visit ).orElse( "<no body>" ) );
+				}
+				String message = duplicates.size() + " methods at role '" + w
+						+ "' have projected signature '" + signature
 						+ "' but their projected bodies cannot be merged: " + e.getMessage()
-						+ "\n\n"
-						+ "--- first projected body ---\n"
-						+ previousBody.map( printer::visit ).orElse( "<no body>" ) + "\n\n"
-						+ "--- second projected body ---\n"
-						+ currentBody.map( printer::visit ).orElse( "<no body>" );
+						+ "\n\n" + projectedBodies;
 				throw new AstPositionedException(
-						method.position(), new ChoralException( message ) );
+						duplicates.get( duplicates.size() - 1 ).position(),
+						new ChoralException( message ) );
 			}
 		}
-		return new ArrayList<>( methodsBySignature.values() );
+		return result;
 	}
 
 
