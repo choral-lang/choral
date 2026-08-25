@@ -23,15 +23,25 @@ package choral.compiler.soloist;
 
 import choral.ast.Name;
 import choral.ast.body.Class;
+import choral.ast.body.ClassMethodDefinition;
 import choral.ast.body.Enum;
 import choral.ast.body.Interface;
+import choral.ast.body.InterfaceMethodDefinition;
+import choral.ast.body.MethodDefinition;
 import choral.ast.type.FormalWorldParameter;
 import choral.ast.type.WorldArgument;
 import choral.ast.visitors.ChoralVisitor;
+import choral.ast.visitors.PrettyPrinterVisitor;
+import choral.exceptions.AstPositionedException;
+import choral.exceptions.ChoralException;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SoloistProjector extends ChoralVisitor {
@@ -74,7 +84,7 @@ public class SoloistProjector extends ChoralVisitor {
 				Collections.emptyList(),
 				TypesProjector.visitAndCollect( w, n.typeParameters() ),
 				TypesProjector.visitAndCollect( w, n.extendsInterfaces() ),
-				BodyProjector.visitAndCollect( w, n.methods() ),
+				deduplicateMethods( BodyProjector.visitAndCollect( w, n.methods() ) ),
 				BodyProjector.visitAndCollect( w, n.annotations() ),
 				n.modifiers(),
 				n.position()
@@ -111,12 +121,44 @@ public class SoloistProjector extends ChoralVisitor {
 				,
 				TypesProjector.visitAndCollect( w, n.implementsInterfaces() ),
 				BodyProjector.visitAndCollect( w, n.fields() ), // create
-				BodyProjector.visitAndCollect( w, n.methods() ),
+				deduplicateMethods( BodyProjector.visitAndCollect( w, n.methods() ) ),
 				BodyProjector.visitAndCollect( w, n.constructors() ),
 				BodyProjector.visitAndCollect( w, n.annotations() ),
 				n.modifiers(),
 				n.position()
 		);
+	}
+
+	private < T extends MethodDefinition > List< T > deduplicateMethods( List< T > methods ) {
+		Map< String, T > methodsBySignature = new LinkedHashMap<>();
+		PrettyPrinterVisitor printer = new PrettyPrinterVisitor();
+		for( T method : methods ) {
+			String signature = method.signature().name().identifier() + method.signature().parameters().stream()
+					.map( parameter -> printer.visit( parameter.type() ) )
+					.collect( Collectors.joining( ",", "(", ")" ) );
+			T previous = methodsBySignature.get( signature );
+			if( previous == null ) {
+				methodsBySignature.put( signature, method );
+			} else if( !projectedBody( previous, printer ).equals( projectedBody( method, printer ) ) ) {
+				throw new AstPositionedException( method.position(), new ChoralException(
+						"Two methods at role '" + w + "' both have projected signature '" + signature
+								+ "' but different bodies." ) );
+			}
+		}
+		return new ArrayList<>( methodsBySignature.values() );
+	}
+
+	private Optional< String > projectedBody(
+			MethodDefinition method,
+			PrettyPrinterVisitor printer
+	) {
+		if( method instanceof ClassMethodDefinition classMethod ) {
+			return classMethod.body().map( printer::visit );
+		}
+		if( method instanceof InterfaceMethodDefinition interfaceMethod ) {
+			return interfaceMethod.body().map( printer::visit );
+		}
+		throw new SoloistProjectorException( "Unsupported projected method definition" );
 	}
 
 }

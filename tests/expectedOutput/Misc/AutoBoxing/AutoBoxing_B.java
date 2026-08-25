@@ -6,21 +6,17 @@ import choral.lang.Unit;
 @Choreography( role = "B", name = "AutoBoxing" )
 public class AutoBoxing_B {
 	public void f() {
-		f1Primitive( Unit.id );
-		f1Object( Unit.id );
+		f1( Unit.id );
+		f1( Unit.id );
 		f2( Unit.id );
 		f3( 2 );
 		f4( Unit.id );
-		f5Objects( Unit.id, Unit.id );
-		f5Ints( Unit.id, Unit.id );
+		f5( Unit.id, Unit.id );
+		f5( Unit.id, Unit.id );
 	}
 	
-	public Unit f1Object( Unit i ) {
-		return f1Object();
-	}
-	
-	public Unit f1Primitive( Unit i ) {
-		return f1Primitive();
+	public Unit f1( Unit i ) {
+		return f1();
 	}
 	
 	public void f2( Unit i ) {
@@ -43,19 +39,11 @@ public class AutoBoxing_B {
 		
 	}
 	
-	public void f5Objects( Unit o1, Unit o2 ) {
-		f5Objects();
+	public void f5( Unit o1, Unit o2 ) {
+		f5();
 	}
 	
-	public void f5Ints( Unit i1, Unit i2 ) {
-		f5Ints();
-	}
-	
-	public Unit f1Object() {
-		return Unit.id;
-	}
-	
-	public Unit f1Primitive() {
+	public Unit f1() {
 		return Unit.id;
 	}
 	
@@ -71,11 +59,7 @@ public class AutoBoxing_B {
 		
 	}
 	
-	public void f5Objects() {
-		
-	}
-	
-	public void f5Ints() {
+	public void f5() {
 		
 	}
 

@@ -95,6 +95,14 @@ public class TestChoral {
 	}
 
 	@TestFactory
+	public Stream< DynamicTest > Projector() {
+		return Stream.concat(
+				discoverTests( subFolder( MUSTPASS, "Projector" ) ),
+				discoverTests( subFolder( MUSTFAIL, "Projector" ) )
+		);
+	}
+
+	@TestFactory
 	public Stream< DynamicTest > ClassLifter() {
 		return Stream.concat(
 				discoverTests( subFolder( MUSTPASS, "ClassLifter" ) ),
