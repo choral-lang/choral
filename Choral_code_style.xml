@@ -5,7 +5,7 @@
 		<setting id="org.eclipse.jdt.core.formatter.use_tabs_only_for_leading_indentations" value="false"/>
 		<setting id="org.eclipse.jdt.core.formatter.indentation.size" value="4"/>
 		<setting id="org.eclipse.jdt.core.formatter.tabulation.size" value="4"/>
-		<setting id="org.eclipse.jdt.core.formatter.text_block_indentation" value="0"/>
+		<setting id="org.eclipse.jdt.core.formatter.text_block_indentation" value="1"/>
 		<setting id="org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_type_header" value="true"/>
 		<setting id="org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_enum_declaration_header" value="true"/>
 		<setting id="org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_enum_constant_header" value="true"/>
