@@ -21,6 +21,10 @@
 
 package choral.types;
 
+import choral.ast.Name;
+import choral.ast.type.TypeExpression;
+import choral.ast.type.WorldArgument;
+
 import java.util.List;
 
 /**
@@ -48,6 +52,21 @@ public interface GroundDataType extends DataType, GroundDataTypeOrVoid {
 	HigherDataType typeConstructor();
 
 	List< ? extends World > worldArguments();
+
+	default List< WorldArgument > reifyWorldArguments() {
+		return worldArguments().stream()
+				.map( world -> {
+					WorldArgument argument = new WorldArgument( new Name( world.identifier() ), null );
+					argument.setTypeAnnotation( world );
+					return argument;
+				} )
+				.toList();
+	}
+
+	/**
+	 * Converts this (semantic) type into a (syntactic) type expression.
+	 */
+	TypeExpression reify();
 
 	boolean isInstantiationChecked();
 

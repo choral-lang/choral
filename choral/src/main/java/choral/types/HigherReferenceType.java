@@ -21,6 +21,8 @@
 
 package choral.types;
 
+import choral.ast.type.TypeExpression;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -36,6 +38,11 @@ public abstract class HigherReferenceType extends HigherDataType implements Refe
 	}
 
 //	public abstract HigherReferenceType.Definition innerType();
+
+	/**
+	 * Converts this (semantic) type into a (syntactic) type expression.
+	 */
+	public abstract TypeExpression reify();
 
 	public abstract GroundReferenceType applyTo( List< ? extends World > args );
 

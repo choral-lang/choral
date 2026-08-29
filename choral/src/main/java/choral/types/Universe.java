@@ -21,6 +21,7 @@
 
 package choral.types;
 
+import choral.ast.type.TypeExpression;
 import choral.exceptions.StaticVerificationException;
 import choral.types.kinds.Kind;
 import choral.utils.Formatting;
@@ -249,6 +250,11 @@ public class Universe {
 			super( Universe.this, worldParameters );
 		}
 
+		@Override
+		public TypeExpression reify() {
+			throw new UnsupportedOperationException( "The null type cannot be used in a type expression" );
+		}
+
 		public String toString() {
 			return this.worldParameters.stream().map( World::toString ).collect(
 					Formatting.joining( ",", "@(", ")->(", "" ) )
@@ -284,6 +290,12 @@ public class Universe {
 				return worldArguments;
 			}
 
+			@Override
+			public TypeExpression reify() {
+				throw new UnsupportedOperationException(
+						"The null type cannot be used in a type expression" );
+			}
+
 			public String toString() {
 				return "Null" +
 						worldArguments().stream().map( World::toString ).collect(
@@ -293,6 +305,11 @@ public class Universe {
 			@Override
 			public HigherNullType typeConstructor() {
 				return HigherNullType.this;
+			}
+
+			@Override
+			public HigherNullType unapplyWorlds() {
+				return typeConstructor();
 			}
 
 			@Override

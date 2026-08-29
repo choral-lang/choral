@@ -743,6 +743,6 @@ public class Normalizer {
 	 * temporaries.
 	 */
 	private static TypeExpression getType( GroundDataTypeOrVoid t ) {
-		return Utils.outerTypeExpression( (GroundDataType) box( t ) );
+		return ( (GroundDataType) box( t ) ).reify();
 	}
 }

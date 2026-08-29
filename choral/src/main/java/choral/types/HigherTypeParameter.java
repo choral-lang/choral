@@ -21,7 +21,9 @@
 
 package choral.types;
 
+import choral.ast.Name;
 import choral.ast.Node;
+import choral.ast.type.TypeExpression;
 import choral.exceptions.StaticVerificationException;
 import choral.utils.Formatting;
 
@@ -61,6 +63,14 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 	}
 
 	@Override
+	public TypeExpression reify() {
+		TypeExpression expression = new TypeExpression(
+				new Name( identifier ), List.of(), List.of() );
+		expression.setTypeAnnotation( this );
+		return expression;
+	}
+
+	@Override
 	public String toString() {
 		return identifier;
 	}
@@ -82,6 +92,13 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 					this.worldParameters.stream()
 							.map( x -> new World( universe(), x.identifier() ) ).collect(
 									Collectors.toList() ) ) {
+				@Override
+				public TypeExpression reify() {
+					TypeExpression expression = HigherTypeParameter.this.reify();
+					expression.setTypeAnnotation( this );
+					return expression;
+				}
+
 				@Override
 				public GroundReferenceType applyTo( List< ? extends World > args ) {
 					return HigherTypeParameter.this.applyTo( args );

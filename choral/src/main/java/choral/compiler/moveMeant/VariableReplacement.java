@@ -82,7 +82,7 @@ public class VariableReplacement {
 
 		// Build the communication expression
 		var methodType = comMethod.applyTo( List.of( inType.typeConstructor() ) );
-		var inTypeExpr = Utils.innerTypeExpression( inType );
+		var inTypeExpr = inType.unapplyWorlds().reify();
 
 		// The '<T>com( expr )' part
 		var scopedExpression = new MethodCallExpression( new Name( comMethod.identifier() ),

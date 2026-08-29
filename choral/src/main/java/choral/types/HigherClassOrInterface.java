@@ -21,7 +21,9 @@
 
 package choral.types;
 
+import choral.ast.Name;
 import choral.ast.Node;
+import choral.ast.type.TypeExpression;
 import choral.exceptions.StaticVerificationException;
 import choral.types.kinds.Kind;
 import choral.utils.Formatting;
@@ -207,6 +209,14 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 
 
 	@Override
+	public TypeExpression reify() {
+		TypeExpression expression = new TypeExpression(
+				new Name( identifier() ), Collections.emptyList(), Collections.emptyList() );
+		expression.setTypeAnnotation( this );
+		return expression;
+	}
+
+	@Override
 	public HigherReferenceType partiallyApplyTo( List< ? extends HigherReferenceType > typeArgs ) {
 		if( typeArgs.isEmpty() ) {
 			return this;
@@ -225,6 +235,16 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		private final List< ? extends HigherReferenceType > typeArgs;
+
+		@Override
+		public TypeExpression reify() {
+			TypeExpression expression = new TypeExpression(
+					new Name( identifier() ),
+					Collections.emptyList(),
+					typeArgs.stream().map( HigherReferenceType::reify ).toList() );
+			expression.setTypeAnnotation( this );
+			return expression;
+		}
 
 		@Override
 		public String toString() {
