@@ -50,7 +50,8 @@ public class VariableDeclaration extends Node {
 			final AssignExpression initializer,
 			final Position position
 	) {
-		this( name, type, annotations, initializer, EnumSet.noneOf( VariableModifier.class ), position );
+		this( name, type, annotations, initializer, EnumSet.noneOf( VariableModifier.class ),
+				position );
 	}
 
 	public VariableDeclaration(
@@ -60,9 +61,10 @@ public class VariableDeclaration extends Node {
 			final AssignExpression initializer,
 			final Position position
 	) {
-		this( name, type, annotations, initializer, EnumSet.noneOf( VariableModifier.class ), position );
+		this( name, type, annotations, initializer, EnumSet.noneOf( VariableModifier.class ),
+				position );
 	}
-	
+
 
 	public VariableDeclaration(
 			final Name name,
@@ -71,7 +73,7 @@ public class VariableDeclaration extends Node {
 			final AssignExpression initializer,
 			final EnumSet< VariableModifier > modifiers
 	) {
-	    this(name, Optional.of(type), annotations, initializer, modifiers, null);
+		this( name, Optional.of( type ), annotations, initializer, modifiers, null );
 	}
 
 	public VariableDeclaration(
@@ -81,10 +83,9 @@ public class VariableDeclaration extends Node {
 			final AssignExpression initializer,
 			final EnumSet< VariableModifier > modifiers
 	) {
-	    this(name, type, annotations, initializer, modifiers, null);
+		this( name, type, annotations, initializer, modifiers, null );
 	}
 
-	
 
 	public VariableDeclaration(
 			final Name name,
@@ -94,7 +95,7 @@ public class VariableDeclaration extends Node {
 			final EnumSet< VariableModifier > modifiers,
 			final Position position
 	) {
-    	this(name, Optional.of( type ), annotations, initializer, modifiers, position);
+		this( name, Optional.of( type ), annotations, initializer, modifiers, position );
 	}
 
 	public VariableDeclaration(
@@ -112,7 +113,7 @@ public class VariableDeclaration extends Node {
 		this.initializer = initializer;
 		this.modifiers = copyModifiers( modifiers );
 	}
-	
+
 
 	public Name name() {
 		return name;
@@ -153,10 +154,10 @@ public class VariableDeclaration extends Node {
 	}
 
 	private static EnumSet< VariableModifier > copyModifiers(
-			EnumSet< VariableModifier > modifiers ) {
-		return modifiers.isEmpty()
-				? EnumSet.noneOf( VariableModifier.class )
-				: EnumSet.copyOf( modifiers );
+			EnumSet< VariableModifier > modifiers
+	) {
+		return modifiers.isEmpty() ? EnumSet.noneOf( VariableModifier.class ) :
+				EnumSet.copyOf( modifiers );
 	}
 
 	@Override

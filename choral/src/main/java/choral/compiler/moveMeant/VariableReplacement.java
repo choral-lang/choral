@@ -71,10 +71,10 @@ public class VariableReplacement {
 		var comPair = Utils.findComMethod( receiver, sender, inType, callable.channels() );
 		if( comPair == null ) {
 			throw new AstPositionedException( hoist.position(),
-						new CommunicationInferenceException(
-								"No viable communication method from " + sender.identifier()
-										+ " to " + receiver.identifier()
-										+ " for type " + inType	) );
+					new CommunicationInferenceException(
+							"No viable communication method from " + sender.identifier()
+									+ " to " + receiver.identifier()
+									+ " for type " + inType ) );
 		}
 		var channelName = comPair.left().left();
 		var channelType = comPair.left().right();

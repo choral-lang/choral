@@ -52,9 +52,10 @@ public class NormalizerTest {
 	}
 
 	private static List< VariableDeclaration > hoistsForMethod(
-			Normalizer.Result result, String methodName ) {
-		for( Map.Entry< Member.HigherCallable, List< VariableDeclaration > > entry :
-				result.hoistedDefinitions().entrySet() ) {
+			Normalizer.Result result, String methodName
+	) {
+		for( Map.Entry< Member.HigherCallable, List< VariableDeclaration > > entry : result
+				.hoistedDefinitions().entrySet() ) {
 			if( entry.getKey() instanceof Member.HigherMethod method
 					&& method.identifier().equals( methodName ) ) {
 				return entry.getValue();
@@ -64,9 +65,10 @@ public class NormalizerTest {
 	}
 
 	private static List< VariableDeclaration > hoistsForConstructor(
-			Normalizer.Result result, String className ) {
-		for( Map.Entry< Member.HigherCallable, List< VariableDeclaration > > entry :
-				result.hoistedDefinitions().entrySet() ) {
+			Normalizer.Result result, String className
+	) {
+		for( Map.Entry< Member.HigherCallable, List< VariableDeclaration > > entry : result
+				.hoistedDefinitions().entrySet() ) {
 			if( entry.getKey() instanceof Member.HigherConstructor constructor
 					&& constructor.declarationContext().typeConstructor().identifier()
 							.equals( className ) ) {
@@ -84,877 +86,830 @@ public class NormalizerTest {
 
 	@Test
 	public void emptyClass() throws IOException {
-		String src =
-			"""
-			package test;
-			class Empty@( A ) { }
-			""";
+		String src = """
+				package test;
+				class Empty@( A ) { }
+				""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void sameWorldAssignment() throws IOException {
-		String src =
-			"""
-			package test;
-			class SameWorld@( A ) {
-				public void m() {
-					Integer@A x = 1@A;
-					Integer@A y = x + 1@A;
+		String src = """
+				package test;
+				class SameWorld@( A ) {
+					public void m() {
+						Integer@A x = 1@A;
+						Integer@A y = x + 1@A;
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void sameWorldMethodCall() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A ) {
-				public Integer@A m( Integer@A x ) { return x; }
-				public void run() {
-					Integer@A y = this.m( 1@A );
+		String src = """
+				package test;
+				class C@( A ) {
+					public Integer@A m( Integer@A x ) { return x; }
+					public void run() {
+						Integer@A y = this.m( 1@A );
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void sameWorldIfReturn() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A ) {
-				public Integer@A m( Boolean@A b ) {
-					if( b ) { return 1@A; } else { return 2@A; }
+		String src = """
+				package test;
+				class C@( A ) {
+					public Integer@A m( Boolean@A b ) {
+						if( b ) { return 1@A; } else { return 2@A; }
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void sameWorldBlockAndNot() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A ) {
-				public Boolean@A m( Boolean@A b ) {
-					{ Boolean@A c = !b; return c; }
+		String src = """
+				package test;
+				class C@( A ) {
+					public Boolean@A m( Boolean@A b ) {
+						{ Boolean@A c = !b; return c; }
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void sameWorldEnclosed() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A ) {
-				public Integer@A m() {
-					Integer@A x = ( 1@A + 2@A );
-					return x;
+		String src = """
+				package test;
+				class C@( A ) {
+					public Integer@A m() {
+						Integer@A x = ( 1@A + 2@A );
+						return x;
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsCrossWorldMethodArg() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A, B ) {
-				public Integer@A take( Integer@A x ) { return x; }
-				public void run( Integer@B b ) {
-					this.take( b );
+		String src = """
+				package test;
+				class C@( A, B ) {
+					public Integer@A take( Integer@A x ) { return x; }
+					public void run( Integer@B b ) {
+						this.take( b );
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class C@( A, B ) {
-				public Integer@A take( Integer@A x ) { return x; }
-				public void run( Integer@B b ) {
-					Integer@A msg0 = b;
-					this.take( msg0 );
+				""";
+		String expected = """
+				package test;
+				class C@( A, B ) {
+					public Integer@A take( Integer@A x ) { return x; }
+					public void run( Integer@B b ) {
+						Integer@A msg0 = b;
+						this.take( msg0 );
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsTwoCrossWorldArgsInOrder() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A, B, D ) {
-				public Integer@A take( Integer@A x, Integer@A y ) { return x; }
-				public void run( Integer@B b, Integer@D d ) {
-					this.take( b, d );
+		String src = """
+				package test;
+				class C@( A, B, D ) {
+					public Integer@A take( Integer@A x, Integer@A y ) { return x; }
+					public void run( Integer@B b, Integer@D d ) {
+						this.take( b, d );
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class C@( A, B, D ) {
-				public Integer@A take( Integer@A x, Integer@A y ) { return x; }
-				public void run( Integer@B b, Integer@D d ) {
-					Integer@A msg0 = b;
-					Integer@A msg1 = d;
-					this.take( msg0, msg1 );
+				""";
+		String expected = """
+				package test;
+				class C@( A, B, D ) {
+					public Integer@A take( Integer@A x, Integer@A y ) { return x; }
+					public void run( Integer@B b, Integer@D d ) {
+						Integer@A msg0 = b;
+						Integer@A msg1 = d;
+						this.take( msg0, msg1 );
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void sameWorldArgsNotHoisted() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A, B ) {
-				public Integer@A take( Integer@A x ) { return x; }
-				public void run( Integer@A a ) {
-					this.take( a );
+		String src = """
+				package test;
+				class C@( A, B ) {
+					public Integer@A take( Integer@A x ) { return x; }
+					public void run( Integer@A a ) {
+						this.take( a );
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsCrossWorldBinaryRightOperand() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A, B ) {
-				public void run( Integer@A a, Integer@B b ) {
-					Integer@A z = a + b;
+		String src = """
+				package test;
+				class C@( A, B ) {
+					public void run( Integer@A a, Integer@B b ) {
+						Integer@A z = a + b;
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class C@( A, B ) {
-				public void run( Integer@A a, Integer@B b ) {
-					Integer@A msg0 = b;
-					Integer@A z = a + msg0;
+				""";
+		String expected = """
+				package test;
+				class C@( A, B ) {
+					public void run( Integer@A a, Integer@B b ) {
+						Integer@A msg0 = b;
+						Integer@A z = a + msg0;
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsCrossWorldAssignRhs() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A, B ) {
-				public void run( Integer@A a, Integer@B b ) {
-					a = b;
+		String src = """
+				package test;
+				class C@( A, B ) {
+					public void run( Integer@A a, Integer@B b ) {
+						a = b;
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class C@( A, B ) {
-				public void run( Integer@A a, Integer@B b ) {
-					Integer@A msg0 = b;
-					a = msg0;
-				}
-			}
-		""";
+				""";
+		String expected = """
+					package test;
+					class C@( A, B ) {
+						public void run( Integer@A a, Integer@B b ) {
+							Integer@A msg0 = b;
+							a = msg0;
+						}
+					}
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsNestedAlternatingWorldMethodCallsInsideOut() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A, B ) {
-				public Integer@A takeA( Integer@A x ) { return x; }
-				public Integer@B makeB( Integer@B x ) { return x; }
-				public void run( Integer@A a ) {
-					this.takeA( this.makeB( a ) );
+		String src = """
+				package test;
+				class C@( A, B ) {
+					public Integer@A takeA( Integer@A x ) { return x; }
+					public Integer@B makeB( Integer@B x ) { return x; }
+					public void run( Integer@A a ) {
+						this.takeA( this.makeB( a ) );
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class C@( A, B ) {
-				public Integer@A takeA( Integer@A x ) { return x; }
-				public Integer@B makeB( Integer@B x ) { return x; }
-				public void run( Integer@A a ) {
-					Integer@B msg0 = a;
-					Integer@A msg1 = this.makeB( msg0 );
-					this.takeA( msg1 );
+				""";
+		String expected = """
+				package test;
+				class C@( A, B ) {
+					public Integer@A takeA( Integer@A x ) { return x; }
+					public Integer@B makeB( Integer@B x ) { return x; }
+					public void run( Integer@A a ) {
+						Integer@B msg0 = a;
+						Integer@A msg1 = this.makeB( msg0 );
+						this.takeA( msg1 );
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsThreeLevelAlternatingWorldMethodCallsInsideOut() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A, B ) {
-				public Integer@A takeA( Integer@A x ) { return x; }
-				public Integer@B makeB( Integer@B x ) { return x; }
-				public void run( Integer@B b ) {
-					this.takeA( this.makeB( this.takeA( b ) ) );
+		String src = """
+				package test;
+				class C@( A, B ) {
+					public Integer@A takeA( Integer@A x ) { return x; }
+					public Integer@B makeB( Integer@B x ) { return x; }
+					public void run( Integer@B b ) {
+						this.takeA( this.makeB( this.takeA( b ) ) );
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class C@( A, B ) {
-				public Integer@A takeA( Integer@A x ) { return x; }
-				public Integer@B makeB( Integer@B x ) { return x; }
-				public void run( Integer@B b ) {
-					Integer@A msg0 = b;
-					Integer@B msg1 = this.takeA( msg0 );
-					Integer@A msg2 = this.makeB( msg1 );
-					this.takeA( msg2 );
+				""";
+		String expected = """
+				package test;
+				class C@( A, B ) {
+					public Integer@A takeA( Integer@A x ) { return x; }
+					public Integer@B makeB( Integer@B x ) { return x; }
+					public void run( Integer@B b ) {
+						Integer@A msg0 = b;
+						Integer@B msg1 = this.takeA( msg0 );
+						Integer@A msg2 = this.makeB( msg1 );
+						this.takeA( msg2 );
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsNotExpressionAsWhole() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A, B ) {
-				public void take( Boolean@A x ) {}
-				public void run( Boolean@B b ) {
-					this.take( !b );
+		String src = """
+				package test;
+				class C@( A, B ) {
+					public void take( Boolean@A x ) {}
+					public void run( Boolean@B b ) {
+						this.take( !b );
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class C@( A, B ) {
-				public void take( Boolean@A x ) {}
-				public void run( Boolean@B b ) {
-					Boolean@A msg0 = !b;
-					this.take( msg0 );
+				""";
+		String expected = """
+				package test;
+				class C@( A, B ) {
+					public void take( Boolean@A x ) {}
+					public void run( Boolean@B b ) {
+						Boolean@A msg0 = !b;
+						this.take( msg0 );
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsEnclosedExpressionAsWhole() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A, B ) {
-				public void take( Integer@A x ) {}
-				public void run( Integer@B b ) {
-					this.take( ( b ) );
+		String src = """
+				package test;
+				class C@( A, B ) {
+					public void take( Integer@A x ) {}
+					public void run( Integer@B b ) {
+						this.take( ( b ) );
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class C@( A, B ) {
-				public void take( Integer@A x ) {}
-				public void run( Integer@B b ) {
-					Integer@A msg0 = ( b );
-					this.take( msg0 );
-				}
-			}
-		""";
+				""";
+		String expected = """
+					package test;
+					class C@( A, B ) {
+						public void take( Integer@A x ) {}
+						public void run( Integer@B b ) {
+							Integer@A msg0 = ( b );
+							this.take( msg0 );
+						}
+					}
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsThisFieldAccessAsWhole() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A, B ) {
-				public Integer@A x;
-				public void take( Integer@B x ) {}
-				public void run() {
-					this.take( this.x );
+		String src = """
+				package test;
+				class C@( A, B ) {
+					public Integer@A x;
+					public void take( Integer@B x ) {}
+					public void run() {
+						this.take( this.x );
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class C@( A, B ) {
-				public Integer@A x;
-				public void take( Integer@B x ) {}
-				public void run() {
-					Integer@B msg0 = this.x;
-					this.take( msg0 );
+				""";
+		String expected = """
+				package test;
+				class C@( A, B ) {
+					public Integer@A x;
+					public void take( Integer@B x ) {}
+					public void run() {
+						Integer@B msg0 = this.x;
+						this.take( msg0 );
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsSuperFieldAccessAsWhole() throws IOException {
-		String src =
-			"""
-			package test;
-			class Base@( D, E ) {
-				public Integer@D x;
-			}
-			class C@( A, B ) extends Base@( A, B ) {
-				public void take( Integer@B x ) {}
-				public void run() {
-					this.take( super.x );
+		String src = """
+				package test;
+				class Base@( D, E ) {
+					public Integer@D x;
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class Base@( D, E ) {
-				public Integer@D x;
-			}
-			class C@( A, B ) extends Base@( A, B ) {
-				public void take( Integer@B x ) {}
-				public void run() {
-					Integer@B msg0 = super.x;
-					this.take( msg0 );
+				class C@( A, B ) extends Base@( A, B ) {
+					public void take( Integer@B x ) {}
+					public void run() {
+						this.take( super.x );
+					}
 				}
-			}
-			""";
+				""";
+		String expected = """
+				package test;
+				class Base@( D, E ) {
+					public Integer@D x;
+				}
+				class C@( A, B ) extends Base@( A, B ) {
+					public void take( Integer@B x ) {}
+					public void run() {
+						Integer@B msg0 = super.x;
+						this.take( msg0 );
+					}
+				}
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsScopedFieldAccess() throws IOException {
-		String src =
-			"""
-			package test;
-			class Pair@D {
-				public Integer@D x;
-				public Pair( Integer@D x ) { this.x = x; }
-			}
-			class C@( A, B ) {
-				public void take( Integer@A x ) {}
-				public void run( Pair@B p ) {
-					this.take( p.x );
+		String src = """
+				package test;
+				class Pair@D {
+					public Integer@D x;
+					public Pair( Integer@D x ) { this.x = x; }
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class Pair@D {
-				public Integer@D x;
-				public Pair( Integer@D x ) { this.x = x; }
-			}
-			class C@( A, B ) {
-				public void take( Integer@A x ) {}
-				public void run( Pair@B p ) {
-					Integer@A msg0 = p.x;
-					this.take( msg0 );
+				class C@( A, B ) {
+					public void take( Integer@A x ) {}
+					public void run( Pair@B p ) {
+						this.take( p.x );
+					}
 				}
-			}
-		""";
+				""";
+		String expected = """
+				package test;
+				class Pair@D {
+					public Integer@D x;
+					public Pair( Integer@D x ) { this.x = x; }
+				}
+				class C@( A, B ) {
+					public void take( Integer@A x ) {}
+					public void run( Pair@B p ) {
+						Integer@A msg0 = p.x;
+						this.take( msg0 );
+					}
+				}
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void sameWorldDeepScopedFieldAccessNotHoisted() throws IOException {
-		String src =
-			"""
-			package test;
-			class Leaf@D {
-				public Integer@D baz;
-				public Leaf( Integer@D baz ) { this.baz = baz; }
-			}
-			class Middle@D {
-				public Leaf@D bar;
-				public Middle( Leaf@D bar ) { this.bar = bar; }
-			}
-			class Foo@D {
-				public Middle@D bar;
-				public Foo( Middle@D bar ) { this.bar = bar; }
-			}
-			class C@( A ) {
-				public void take( Integer@A x ) {}
-				public void run( Foo@A foo ) {
-					this.take( foo.bar.bar.baz );
+		String src = """
+				package test;
+				class Leaf@D {
+					public Integer@D baz;
+					public Leaf( Integer@D baz ) { this.baz = baz; }
 				}
-			}
-			""";
+				class Middle@D {
+					public Leaf@D bar;
+					public Middle( Leaf@D bar ) { this.bar = bar; }
+				}
+				class Foo@D {
+					public Middle@D bar;
+					public Foo( Middle@D bar ) { this.bar = bar; }
+				}
+				class C@( A ) {
+					public void take( Integer@A x ) {}
+					public void run( Foo@A foo ) {
+						this.take( foo.bar.bar.baz );
+					}
+				}
+				""";
 		assertEquals( prettyPrint( src ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsDeepScopedFieldAccessAsWhole() throws IOException {
-		String src =
-			"""
-			package test;
-			class Leaf@D {
-				public Integer@D baz;
-				public Leaf( Integer@D baz ) { this.baz = baz; }
-			}
-			class Middle@D {
-				public Leaf@D bar;
-				public Middle( Leaf@D bar ) { this.bar = bar; }
-			}
-			class Foo@D {
-				public Middle@D bar;
-				public Foo( Middle@D bar ) { this.bar = bar; }
-			}
-			class C@( A, B ) {
-				public void take( Integer@A x ) {}
-				public void run( Foo@B foo ) {
-					this.take( foo.bar.bar.baz );
+		String src = """
+				package test;
+				class Leaf@D {
+					public Integer@D baz;
+					public Leaf( Integer@D baz ) { this.baz = baz; }
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class Leaf@D {
-				public Integer@D baz;
-				public Leaf( Integer@D baz ) { this.baz = baz; }
-			}
-			class Middle@D {
-				public Leaf@D bar;
-				public Middle( Leaf@D bar ) { this.bar = bar; }
-			}
-			class Foo@D {
-				public Middle@D bar;
-				public Foo( Middle@D bar ) { this.bar = bar; }
-			}
-			class C@( A, B ) {
-				public void take( Integer@A x ) {}
-				public void run( Foo@B foo ) {
-					Integer@A msg0 = foo.bar.bar.baz;
-					this.take( msg0 );
+				class Middle@D {
+					public Leaf@D bar;
+					public Middle( Leaf@D bar ) { this.bar = bar; }
 				}
-			}
-		""";
+				class Foo@D {
+					public Middle@D bar;
+					public Foo( Middle@D bar ) { this.bar = bar; }
+				}
+				class C@( A, B ) {
+					public void take( Integer@A x ) {}
+					public void run( Foo@B foo ) {
+						this.take( foo.bar.bar.baz );
+					}
+				}
+				""";
+		String expected = """
+				package test;
+				class Leaf@D {
+					public Integer@D baz;
+					public Leaf( Integer@D baz ) { this.baz = baz; }
+				}
+				class Middle@D {
+					public Leaf@D bar;
+					public Middle( Leaf@D bar ) { this.bar = bar; }
+				}
+				class Foo@D {
+					public Middle@D bar;
+					public Foo( Middle@D bar ) { this.bar = bar; }
+				}
+				class C@( A, B ) {
+					public void take( Integer@A x ) {}
+					public void run( Foo@B foo ) {
+						Integer@A msg0 = foo.bar.bar.baz;
+						this.take( msg0 );
+					}
+				}
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void deduplicatesRepeatedPureVariableHoists() throws IOException {
-		String src =
-			"""
-			package test;
-			class Thing@D {}
-			class C@( A, B ) {
-				public void takeB( Thing@B first, Thing@B second ) {}
-				public void run( Thing@A y ) {
-					this.takeB( y, y );
+		String src = """
+				package test;
+				class Thing@D {}
+				class C@( A, B ) {
+					public void takeB( Thing@B first, Thing@B second ) {}
+					public void run( Thing@A y ) {
+						this.takeB( y, y );
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class Thing@D {}
-			class C@( A, B ) {
-				public void takeB( Thing@B first, Thing@B second ) {}
-				public void run( Thing@A y ) {
-					Thing@B msg0 = y;
-					this.takeB( msg0, msg0 );
+				""";
+		String expected = """
+				package test;
+				class Thing@D {}
+				class C@( A, B ) {
+					public void takeB( Thing@B first, Thing@B second ) {}
+					public void run( Thing@A y ) {
+						Thing@B msg0 = y;
+						this.takeB( msg0, msg0 );
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void deduplicatesRepeatedPureScopedFieldHoists() throws IOException {
-		String src =
-			"""
-			package test;
-			class Bar@D {}
-			class Foo@D { public Bar@D bar; }
-			class Thing@D { public Foo@D foo; }
-			class C@( A, B ) {
-				public void takeB( Bar@B first, Bar@B second ) {}
-				public void run( Thing@A y ) {
-					this.takeB( y.foo.bar, y.foo.bar );
+		String src = """
+				package test;
+				class Bar@D {}
+				class Foo@D { public Bar@D bar; }
+				class Thing@D { public Foo@D foo; }
+				class C@( A, B ) {
+					public void takeB( Bar@B first, Bar@B second ) {}
+					public void run( Thing@A y ) {
+						this.takeB( y.foo.bar, y.foo.bar );
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class Bar@D {}
-			class Foo@D { public Bar@D bar; }
-			class Thing@D { public Foo@D foo; }
-			class C@( A, B ) {
-				public void takeB( Bar@B first, Bar@B second ) {}
-				public void run( Thing@A y ) {
-					Bar@B msg0 = y.foo.bar;
-					this.takeB( msg0, msg0 );
+				""";
+		String expected = """
+				package test;
+				class Bar@D {}
+				class Foo@D { public Bar@D bar; }
+				class Thing@D { public Foo@D foo; }
+				class C@( A, B ) {
+					public void takeB( Bar@B first, Bar@B second ) {}
+					public void run( Thing@A y ) {
+						Bar@B msg0 = y.foo.bar;
+						this.takeB( msg0, msg0 );
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
-	public void doesNotDeduplicateSamePureExpressionAcrossDifferentExpectedWorlds() throws IOException {
-		String src =
-			"""
-			package test;
-			class Thing@D {}
-			class C@( A, B, D ) {
-				public void takeBoth( Thing@B atB, Thing@D atD ) {}
-				public void run( Thing@A y ) {
-					this.takeBoth( y, y );
+	public void doesNotDeduplicateSamePureExpressionAcrossDifferentExpectedWorlds()
+			throws IOException {
+		String src = """
+				package test;
+				class Thing@D {}
+				class C@( A, B, D ) {
+					public void takeBoth( Thing@B atB, Thing@D atD ) {}
+					public void run( Thing@A y ) {
+						this.takeBoth( y, y );
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class Thing@D {}
-			class C@( A, B, D ) {
-				public void takeBoth( Thing@B atB, Thing@D atD ) {}
-				public void run( Thing@A y ) {
-					Thing@B msg0 = y;
-					Thing@D msg1 = y;
-					this.takeBoth( msg0, msg1 );
+				""";
+		String expected = """
+				package test;
+				class Thing@D {}
+				class C@( A, B, D ) {
+					public void takeBoth( Thing@B atB, Thing@D atD ) {}
+					public void run( Thing@A y ) {
+						Thing@B msg0 = y;
+						Thing@D msg1 = y;
+						this.takeBoth( msg0, msg1 );
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void doesNotDeduplicateRepeatedImpureMethodCallHoists() throws IOException {
-		String src =
-			"""
-			package test;
-			class Bar@D {}
-			class Foo@D {
-				public Bar@D bar;
-				public Bar@D baz() { return bar; }
-			}
-			class Thing@D { public Foo@D foo; }
-			class C@( A, B ) {
-				public void takeB( Bar@B first, Bar@B second ) {}
-				public void run( Thing@A y ) {
-					this.takeB( y.foo.baz(), y.foo.baz() );
+		String src = """
+				package test;
+				class Bar@D {}
+				class Foo@D {
+					public Bar@D bar;
+					public Bar@D baz() { return bar; }
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class Bar@D {}
-			class Foo@D {
-				public Bar@D bar;
-				public Bar@D baz() { return bar; }
-			}
-			class Thing@D { public Foo@D foo; }
-			class C@( A, B ) {
-				public void takeB( Bar@B first, Bar@B second ) {}
-				public void run( Thing@A y ) {
-					Bar@B msg0 = y.foo.baz();
-					Bar@B msg1 = y.foo.baz();
-					this.takeB( msg0, msg1 );
+				class Thing@D { public Foo@D foo; }
+				class C@( A, B ) {
+					public void takeB( Bar@B first, Bar@B second ) {}
+					public void run( Thing@A y ) {
+						this.takeB( y.foo.baz(), y.foo.baz() );
+					}
 				}
-			}
-			""";
+				""";
+		String expected = """
+				package test;
+				class Bar@D {}
+				class Foo@D {
+					public Bar@D bar;
+					public Bar@D baz() { return bar; }
+				}
+				class Thing@D { public Foo@D foo; }
+				class C@( A, B ) {
+					public void takeB( Bar@B first, Bar@B second ) {}
+					public void run( Thing@A y ) {
+						Bar@B msg0 = y.foo.baz();
+						Bar@B msg1 = y.foo.baz();
+						this.takeB( msg0, msg1 );
+					}
+				}
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void deduplicatesOnlyPureHoistsInMixedExpressionList() throws IOException {
-		String src =
-			"""
-			package test;
-			class Bar@D {}
-			class Foo@D {
-				public Bar@D bar;
-				public Bar@D baz() { return bar; }
-			}
-			class Thing@D { public Foo@D foo; }
-			class C@( A, B ) {
-				public Integer@B takeB(
-					Thing@B t1, Thing@B t2,
-					Bar@B b1, Bar@B b2,
-					Bar@B c1, Bar@B c2 ) { return 0@B; }
-				public void run( Thing@A y ) {
-					Integer@B x = this.takeB(
-						y, y, y.foo.bar, y.foo.bar, y.foo.baz(), y.foo.baz() );
+		String src = """
+				package test;
+				class Bar@D {}
+				class Foo@D {
+					public Bar@D bar;
+					public Bar@D baz() { return bar; }
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class Bar@D {}
-			class Foo@D {
-				public Bar@D bar;
-				public Bar@D baz() { return bar; }
-			}
-			class Thing@D { public Foo@D foo; }
-			class C@( A, B ) {
-				public Integer@B takeB(
-					Thing@B t1, Thing@B t2,
-					Bar@B b1, Bar@B b2,
-					Bar@B c1, Bar@B c2 ) { return 0@B; }
-				public void run( Thing@A y ) {
-					Thing@B msg0 = y;
-					Bar@B msg1 = y.foo.bar;
-					Bar@B msg2 = y.foo.baz();
-					Bar@B msg3 = y.foo.baz();
-					Integer@B x = this.takeB(
-						msg0, msg0, msg1, msg1, msg2, msg3 );
+				class Thing@D { public Foo@D foo; }
+				class C@( A, B ) {
+					public Integer@B takeB(
+						Thing@B t1, Thing@B t2,
+						Bar@B b1, Bar@B b2,
+						Bar@B c1, Bar@B c2 ) { return 0@B; }
+					public void run( Thing@A y ) {
+						Integer@B x = this.takeB(
+							y, y, y.foo.bar, y.foo.bar, y.foo.baz(), y.foo.baz() );
+					}
 				}
-			}
-			""";
+				""";
+		String expected = """
+				package test;
+				class Bar@D {}
+				class Foo@D {
+					public Bar@D bar;
+					public Bar@D baz() { return bar; }
+				}
+				class Thing@D { public Foo@D foo; }
+				class C@( A, B ) {
+					public Integer@B takeB(
+						Thing@B t1, Thing@B t2,
+						Bar@B b1, Bar@B b2,
+						Bar@B c1, Bar@B c2 ) { return 0@B; }
+					public void run( Thing@A y ) {
+						Thing@B msg0 = y;
+						Bar@B msg1 = y.foo.bar;
+						Bar@B msg2 = y.foo.baz();
+						Bar@B msg3 = y.foo.baz();
+						Integer@B x = this.takeB(
+							msg0, msg0, msg1, msg1, msg2, msg3 );
+					}
+				}
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void doesNotReusePureHoistDeclaredOnlyInsideChildScope() throws IOException {
-		String src =
-			"""
-			package test;
-			class Thing@D {}
-			class C@( A, B ) {
-				public void takeB( Thing@B y ) {}
-				public void run( Boolean@A cond, Thing@A y ) {
-					if( cond ) { this.takeB( y ); } else { }
-					this.takeB( y );
+		String src = """
+				package test;
+				class Thing@D {}
+				class C@( A, B ) {
+					public void takeB( Thing@B y ) {}
+					public void run( Boolean@A cond, Thing@A y ) {
+						if( cond ) { this.takeB( y ); } else { }
+						this.takeB( y );
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class Thing@D {}
-			class C@( A, B ) {
-				public void takeB( Thing@B y ) {}
-				public void run( Boolean@A cond, Thing@A y ) {
-					if( cond ) { Thing@B msg0 = y; this.takeB( msg0 ); } else { }
-					Thing@B msg1 = y;
-					this.takeB( msg1 );
+				""";
+		String expected = """
+				package test;
+				class Thing@D {}
+				class C@( A, B ) {
+					public void takeB( Thing@B y ) {}
+					public void run( Boolean@A cond, Thing@A y ) {
+						if( cond ) { Thing@B msg0 = y; this.takeB( msg0 ); } else { }
+						Thing@B msg1 = y;
+						this.takeB( msg1 );
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsStaticCallArgumentAndWholeStaticCall() throws IOException {
-		String src =
-			"""
-			package test;
-			class C@( A, B ) {
-				public void run() {
-					Integer@A x = Integer@B.valueOf( 42@A );
+		String src = """
+				package test;
+				class C@( A, B ) {
+					public void run() {
+						Integer@A x = Integer@B.valueOf( 42@A );
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			class C@( A, B ) {
-				public void run() {
-					Integer@B msg0 = 42@A;
-					Integer@A msg1 = Integer@B.valueOf( msg0 );
-					Integer@A x = msg1;
+				""";
+		String expected = """
+				package test;
+				class C@( A, B ) {
+					public void run() {
+						Integer@B msg0 = 42@A;
+						Integer@A msg1 = Integer@B.valueOf( msg0 );
+						Integer@A x = msg1;
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsEnumCaseInstantiation() throws IOException {
-		String src =
-			"""
-			package test;
-			enum Choice@R { YES, NO }
-			class C@( A, B ) {
-				public void take( Choice@A choice ) {}
-				public void run() {
-					this.take( Choice@B.YES );
+		String src = """
+				package test;
+				enum Choice@R { YES, NO }
+				class C@( A, B ) {
+					public void take( Choice@A choice ) {}
+					public void run() {
+						this.take( Choice@B.YES );
+					}
 				}
-			}
-			""";
-		String expected =
-			"""
-			package test;
-			enum Choice@R { YES, NO }
-			class C@( A, B ) {
-				public void take( Choice@A choice ) {}
-				public void run() {
-					Choice@A msg0 = Choice@B.YES;
-					this.take( msg0 );
+				""";
+		String expected = """
+				package test;
+				enum Choice@R { YES, NO }
+				class C@( A, B ) {
+					public void take( Choice@A choice ) {}
+					public void run() {
+						Choice@A msg0 = Choice@B.YES;
+						this.take( msg0 );
+					}
 				}
-			}
-			""";
+				""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void hoistsCrossWorldLiteralsAndNull() throws IOException {
-		String src =
-			"""
-			package test;
-			class Box@D {}
-			class C@( A, B ) {
-				public void take( Integer@A i, Boolean@A b, String@A s, Box@A box ) {}
-				public void run() {
-					this.take( 1@B, true@B, "x"@B, null@B );
+		String src = """
+				package test;
+				class Box@D {}
+				class C@( A, B ) {
+					public void take( Integer@A i, Boolean@A b, String@A s, Box@A box ) {}
+					public void run() {
+						this.take( 1@B, true@B, "x"@B, null@B );
+					}
 				}
-			}
-			""";
+				""";
 		String expected =
-			"""
-			package test;
-			class Box@D {}
-			class C@( A, B ) {
-				public void take( Integer@A i, Boolean@A b, String@A s, Box@A box ) {}
-				public void run() {
-					Integer@A msg0 = 1@B;
-					Boolean@A msg1 = true@B;
-					String@A msg2 = "x"@B;
-					Box@A msg3 = null@B;
-					this.take( msg0, msg1, msg2, msg3 );
-				}
-			}
-			""";
+				"""
+						package test;
+						class Box@D {}
+						class C@( A, B ) {
+							public void take( Integer@A i, Boolean@A b, String@A s, Box@A box ) {}
+							public void run() {
+								Integer@A msg0 = 1@B;
+								Boolean@A msg1 = true@B;
+								String@A msg2 = "x"@B;
+								Box@A msg3 = null@B;
+								this.take( msg0, msg1, msg2, msg3 );
+							}
+						}
+						""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void normalizesHoistsInsideScopedExpressionScope() throws IOException {
 		String src =
-			"""
-			package test;
-			class Box@D {
-				public Integer@D value;
-				public Box( Integer@D value ) { this.value = value; }
-			}
-			class C@( A, B ) {
-				public Box@A getBox( Integer@A value ) { return new Box@A( value ); }
-				public void take( Integer@A value ) {}
-				public void run( Integer@B b ) {
-					this.take( this.getBox( b ).value );
-				}
-			}
-			""";
+				"""
+						package test;
+						class Box@D {
+							public Integer@D value;
+							public Box( Integer@D value ) { this.value = value; }
+						}
+						class C@( A, B ) {
+							public Box@A getBox( Integer@A value ) { return new Box@A( value ); }
+							public void take( Integer@A value ) {}
+							public void run( Integer@B b ) {
+								this.take( this.getBox( b ).value );
+							}
+						}
+						""";
 		String expected =
-			"""
-			package test;
-			class Box@D {
-				public Integer@D value;
-				public Box( Integer@D value ) { this.value = value; }
-			}
-			class C@( A, B ) {
-				public Box@A getBox( Integer@A value ) { return new Box@A( value ); }
-				public void take( Integer@A value ) {}
-				public void run( Integer@B b ) {
-					Integer@A msg0 = b;
-					this.take( this.getBox( msg0 ).value );
-				}
-			}
-			""";
+				"""
+						package test;
+						class Box@D {
+							public Integer@D value;
+							public Box( Integer@D value ) { this.value = value; }
+						}
+						class C@( A, B ) {
+							public Box@A getBox( Integer@A value ) { return new Box@A( value ); }
+							public void take( Integer@A value ) {}
+							public void run( Integer@B b ) {
+								Integer@A msg0 = b;
+								this.take( this.getBox( msg0 ).value );
+							}
+						}
+						""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void normalizesSwitchGuardAndCaseBodies() throws IOException {
 		String src =
-			"""
-			package test;
-			class C@( A, B ) {
-				public void run( Integer@A a, Integer@B b ) {
-					switch( b + a ) {
-						case 0@B -> { Integer@A x = b; }
-						default -> { Integer@A y = b; }
-					}
-				}
-			}
-			""";
+				"""
+						package test;
+						class C@( A, B ) {
+							public void run( Integer@A a, Integer@B b ) {
+								switch( b + a ) {
+									case 0@B -> { Integer@A x = b; }
+									default -> { Integer@A y = b; }
+								}
+							}
+						}
+						""";
 		String expected =
-			"""
-			package test;
-			class C@( A, B ) {
-				public void run( Integer@A a, Integer@B b ) {
-					Integer@B msg0 = a;
-					switch( b + msg0 ) {
-						case 0@B -> { Integer@A msg1 = b; Integer@A x = msg1; }
-						default -> { Integer@A msg2 = b; Integer@A y = msg2; }
-					}
-				}
-			}
-			""";
+				"""
+						package test;
+						class C@( A, B ) {
+							public void run( Integer@A a, Integer@B b ) {
+								Integer@B msg0 = a;
+								switch( b + msg0 ) {
+									case 0@B -> { Integer@A msg1 = b; Integer@A x = msg1; }
+									default -> { Integer@A msg2 = b; Integer@A y = msg2; }
+								}
+							}
+						}
+						""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 
 	@Test
 	public void recordsPureVariableHoistMetadata() throws IOException {
 		String src =
-			"""
-			package test;
-			class Thing@D {}
-			class C@( A, B ) {
-				public void takeB( Thing@B y ) {}
-				public void run( Thing@A y ) {
-					this.takeB( y );
-				}
-			}
-			""";
+				"""
+						package test;
+						class Thing@D {}
+						class C@( A, B ) {
+							public void takeB( Thing@B y ) {}
+							public void run( Thing@A y ) {
+								this.takeB( y );
+							}
+						}
+						""";
 		Normalizer.Result result = normalizeResult( src );
 		List< VariableDeclaration > hoists = hoistsForMethod( result, "run" );
 		assertEquals( 1, hoists.size() );
 		assertEquals( "msg0", hoists.get( 0 ).name().identifier() );
 		assertEquals( "Thing", hoists.get( 0 ).type().get().name().identifier() );
-		assertEquals( "B", hoists.get( 0 ).type().get().worldArguments().get( 0 ).name().identifier() );
+		assertEquals( "B",
+				hoists.get( 0 ).type().get().worldArguments().get( 0 ).name().identifier() );
 		assertTrue( hoists.get( 0 ).initializer().isPresent() );
 	}
 
 	@Test
 	public void recordsDeduplicatedPureHoistOnce() throws IOException {
 		String src =
-			"""
-			package test;
-			class Thing@D {}
-			class C@( A, B ) {
-				public void takeB( Thing@B y1, Thing@B y2 ) {}
-				public void run( Thing@A y ) {
-					this.takeB( y, y );
-				}
-			}
-			""";
+				"""
+						package test;
+						class Thing@D {}
+						class C@( A, B ) {
+							public void takeB( Thing@B y1, Thing@B y2 ) {}
+							public void run( Thing@A y ) {
+								this.takeB( y, y );
+							}
+						}
+						""";
 		Normalizer.Result result = normalizeResult( src );
 		List< VariableDeclaration > hoists = hoistsForMethod( result, "run" );
 		assertEquals( 1, hoists.size() );
@@ -964,18 +919,18 @@ public class NormalizerTest {
 	@Test
 	public void recordsRepeatedImpureHoistsSeparately() throws IOException {
 		String src =
-			"""
-			package test;
-			class Bar@D {}
-			class Foo@D { public Bar@D baz() { return new Bar@D(); } }
-			class Thing@D { public Foo@D foo; }
-			class C@( A, B ) {
-				public void takeB( Bar@B b1, Bar@B b2 ) {}
-				public void run( Thing@A y ) {
-					this.takeB( y.foo.baz(), y.foo.baz() );
-				}
-			}
-			""";
+				"""
+						package test;
+						class Bar@D {}
+						class Foo@D { public Bar@D baz() { return new Bar@D(); } }
+						class Thing@D { public Foo@D foo; }
+						class C@( A, B ) {
+							public void takeB( Bar@B b1, Bar@B b2 ) {}
+							public void run( Thing@A y ) {
+								this.takeB( y.foo.baz(), y.foo.baz() );
+							}
+						}
+						""";
 		Normalizer.Result result = normalizeResult( src );
 		List< VariableDeclaration > hoists = hoistsForMethod( result, "run" );
 		assertEquals( 2, hoists.size() );
@@ -986,17 +941,17 @@ public class NormalizerTest {
 	@Test
 	public void recordsHoistsInsideChildScopesForEnclosingMethod() throws IOException {
 		String src =
-			"""
-			package test;
-			class C@( A, B ) {
-				public void run( Integer@A a, Integer@B b ) {
-					switch( b + a ) {
-						case 0@B -> { Integer@A x = b; }
-						default -> { Integer@A y = b; }
-					}
-				}
-			}
-			""";
+				"""
+						package test;
+						class C@( A, B ) {
+							public void run( Integer@A a, Integer@B b ) {
+								switch( b + a ) {
+									case 0@B -> { Integer@A x = b; }
+									default -> { Integer@A y = b; }
+								}
+							}
+						}
+						""";
 		Normalizer.Result result = normalizeResult( src );
 		List< VariableDeclaration > hoists = hoistsForMethod( result, "run" );
 		assertEquals( 3, hoists.size() );
@@ -1008,58 +963,59 @@ public class NormalizerTest {
 	@Test
 	public void recordsConstructorHoistMetadata() throws IOException {
 		String src =
-			"""
-			package test;
-			class C@( A, B ) {
-				public C( Integer@B b ) {
-					this.takeA( b );
-				}
-				public void takeA( Integer@A x ) {}
-			}
-			""";
+				"""
+						package test;
+						class C@( A, B ) {
+							public C( Integer@B b ) {
+								this.takeA( b );
+							}
+							public void takeA( Integer@A x ) {}
+						}
+						""";
 		Normalizer.Result result = normalizeResult( src );
 		List< VariableDeclaration > hoists = hoistsForConstructor( result, "C" );
 		assertEquals( 1, hoists.size() );
 		assertEquals( "msg0", hoists.get( 0 ).name().identifier() );
 		assertEquals( "Integer", hoists.get( 0 ).type().get().name().identifier() );
-		assertEquals( "A", hoists.get( 0 ).type().get().worldArguments().get( 0 ).name().identifier() );
+		assertEquals( "A",
+				hoists.get( 0 ).type().get().worldArguments().get( 0 ).name().identifier() );
 	}
 
 	@Test
 	public void increments() throws IOException {
 		String src =
 				"""
-				package MoveMeant.Increments;
-				
-				import choral.channels.SymChannel;
-				
-				class Increments@( A, B ) {
-					public void fun( SymChannel@( A, B )< Object > ch_AB ) {
-						Boolean@B b3 = true@B;
-						Boolean@A a3 = b3 && false@A;
-						b3 &= a3 || true@B;
-						a3 |= false@A || b3;
-					}
-				}
-				""";
+						package MoveMeant.Increments;
+
+						import choral.channels.SymChannel;
+
+						class Increments@( A, B ) {
+							public void fun( SymChannel@( A, B )< Object > ch_AB ) {
+								Boolean@B b3 = true@B;
+								Boolean@A a3 = b3 && false@A;
+								b3 &= a3 || true@B;
+								a3 |= false@A || b3;
+							}
+						}
+						""";
 		String expected =
 				"""
-				package MoveMeant.Increments;
+						package MoveMeant.Increments;
 
-				import choral.channels.SymChannel;
+						import choral.channels.SymChannel;
 
-				class Increments@(A, B) {
-					public void fun( SymChannel@( A, B )< Object > ch_AB ) {
-						Boolean@( B ) b3 = true@B;
-						Boolean@( A ) msg0 = b3;
-						Boolean@( A ) a3 = msg0 && false@A;
-						Boolean@( B ) msg1 = a3;
-						b3 &= msg1 || true@B;
-						a3 |= false@A || msg0;
-					}
+						class Increments@(A, B) {
+							public void fun( SymChannel@( A, B )< Object > ch_AB ) {
+								Boolean@( B ) b3 = true@B;
+								Boolean@( A ) msg0 = b3;
+								Boolean@( A ) a3 = msg0 && false@A;
+								Boolean@( B ) msg1 = a3;
+								b3 &= msg1 || true@B;
+								a3 |= false@A || msg0;
+							}
 
-				}
-				""";
+						}
+						""";
 		assertEquals( prettyPrint( expected ), normalize( src ) );
 	}
 }

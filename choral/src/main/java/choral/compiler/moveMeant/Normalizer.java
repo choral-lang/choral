@@ -59,8 +59,8 @@ public class Normalizer {
 	 * for each rebuilt callable body, keyed by that callable's type annotation.
 	 */
 	public record Result(
-			CompilationUnit compilationUnit,
-			Map< Member.HigherCallable, List< VariableDeclaration > > hoistedDefinitions ) {
+						 CompilationUnit compilationUnit,
+						 Map< Member.HigherCallable, List< VariableDeclaration > > hoistedDefinitions) {
 	}
 
 	/**
@@ -119,9 +119,17 @@ public class Normalizer {
 			this.results.add( result );
 		}
 
-		Statement first() { return first; }
-		Statement last() { return last; }
-		List< T > results() { return results; }
+		Statement first() {
+			return first;
+		}
+
+		Statement last() {
+			return last;
+		}
+
+		List< T > results() {
+			return results;
+		}
 	}
 
 	private record HoistKey(Expression expression, List< String > expectedWorlds) {
@@ -207,7 +215,8 @@ public class Normalizer {
 							.accept( new VisitStatement(
 									method.signature().typeAnnotation().orElseThrow()
 											.innerCallable().returnType(),
-									context ) ).first();
+									context ) )
+							.first();
 				}
 				ClassMethodDefinition newMethod = new ClassMethodDefinition(
 						method.signature(),
@@ -288,7 +297,6 @@ public class Normalizer {
 							vd.type(),
 							vd.annotations(),
 							(AssignExpression) res.expression(),
-							
 							vd.position() );
 					exprs.add( res.first(), res.last(), newVd );
 				}
@@ -442,8 +450,10 @@ public class Normalizer {
 
 		@Override
 		public NormalizedExpr visit( BinaryExpression n ) {
-			NormalizedExpr l = n.left().accept( visitor( typeWithWorldsOf( n.left(), expectedType ) ) );
-			NormalizedExpr r = n.right().accept( visitor( typeWithWorldsOf( n.right(), expectedType ) ) );
+			NormalizedExpr l =
+					n.left().accept( visitor( typeWithWorldsOf( n.left(), expectedType ) ) );
+			NormalizedExpr r =
+					n.right().accept( visitor( typeWithWorldsOf( n.right(), expectedType ) ) );
 
 			var newArgs = new NormalizedResults< Expression >();
 			newArgs.add( l.first(), l.last(), l.expression() );
@@ -613,7 +623,8 @@ public class Normalizer {
 		 * continuation is left null.
 		 */
 		private VariableDeclarationStatement makeHoist(
-				Name msg, Expression expr, GroundDataTypeOrVoid expectedType ) {
+				Name msg, Expression expr, GroundDataTypeOrVoid expectedType
+		) {
 			FieldAccessExpression target = new FieldAccessExpression( msg, expr.position() );
 			target.setTypeAnnotation( expectedType );
 			AssignExpression initializer = new AssignExpression(
@@ -639,7 +650,8 @@ public class Normalizer {
 	}
 
 	private static FieldAccessExpression msgAccess(
-			Name msg, GroundDataTypeOrVoid type, Position position ) {
+			Name msg, GroundDataTypeOrVoid type, Position position
+	) {
 		FieldAccessExpression msgAccess = new FieldAccessExpression( msg, position );
 		msgAccess.setTypeAnnotation( type );
 		return msgAccess;
@@ -725,7 +737,8 @@ public class Normalizer {
 	}
 
 	private static GroundDataTypeOrVoid typeWithWorldsOf(
-			Expression typedLike, GroundDataTypeOrVoid worldSource ) {
+			Expression typedLike, GroundDataTypeOrVoid worldSource
+	) {
 		if( worldSource == null || worldSource.isVoid() ) return typeOf( typedLike );
 		GroundDataType type = (GroundDataType) typeOf( typedLike );
 		List< ? extends World > worlds = ( (GroundDataType) worldSource ).worldArguments();

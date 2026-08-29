@@ -56,7 +56,7 @@ public interface GroundPrimitiveDataType extends GroundDataType, PrimitiveDataTy
 			GroundDataType t = (GroundDataType) type;
 			return this.worldArguments().equals( t.worldArguments() )
 					&& ( this.primitiveTypeTag().isAssignableTo( t.primitiveTypeTag() )
-					|| this.boxedType().isEquivalentTo( t ) );
+							|| this.boxedType().isEquivalentTo( t ) );
 		} else {
 			return false;
 		}
@@ -66,7 +66,7 @@ public interface GroundPrimitiveDataType extends GroundDataType, PrimitiveDataTy
 		if( type instanceof GroundDataType ) {
 			GroundDataType t = (GroundDataType) type;
 			return this.primitiveTypeTag().isAssignableTo( t.primitiveTypeTag() )
-					|| this.boxedType().isEquivalentTo_relaxed( t ) ;
+					|| this.boxedType().isEquivalentTo_relaxed( t );
 		} else {
 			return false;
 		}

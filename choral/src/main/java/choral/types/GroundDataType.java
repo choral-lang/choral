@@ -56,7 +56,8 @@ public interface GroundDataType extends DataType, GroundDataTypeOrVoid {
 	default List< WorldArgument > reifyWorldArguments() {
 		return worldArguments().stream()
 				.map( world -> {
-					WorldArgument argument = new WorldArgument( new Name( world.identifier() ), null );
+					WorldArgument argument =
+							new WorldArgument( new Name( world.identifier() ), null );
 					argument.setTypeAnnotation( world );
 					return argument;
 				} )
@@ -82,7 +83,7 @@ public interface GroundDataType extends DataType, GroundDataTypeOrVoid {
 
 	default boolean isAssignableTo_relaxed( GroundDataTypeOrVoid type ) {
 		return !type.isVoid() && ( type instanceof GroundDataType ) && isSubtypeOf_relaxed(
-			(GroundDataType) type );
+				(GroundDataType) type );
 	}
 
 	boolean isEquivalentToErasureOf( GroundDataType type );

@@ -124,9 +124,7 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 				@Override
 				public World get( World placeHolder ) {
 					int i = worldParameters.indexOf( placeHolder );
-					return ( i < 0 )
-							? substitution.get( placeHolder )
-							: worldArgs.get( i );
+					return ( i < 0 ) ? substitution.get( placeHolder ) : worldArgs.get( i );
 				}
 
 				@Override
@@ -161,9 +159,8 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 		}
 
 		public String toString() {
-			return typeConstructor().toString() +
-					worldArguments().stream().map( World::toString ).collect(
-							Formatting.joining( ",", "@(", ")", "" ) );
+			return typeConstructor().toString() + worldArguments().stream().map( World::toString )
+					.collect( Formatting.joining( ",", "@(", ")", "" ) );
 		}
 
 		@Override
@@ -237,7 +234,8 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 			if( type.worldArguments().size() != worldArguments().size() ||
 					!type.worldArguments().containsAll( worldParameters ) ) {
 				throw new StaticVerificationException(
-						"illegal bound, '" + type + "' and '" + this + "' must have the same roles" );
+						"illegal bound, '" + type + "' and '" + this
+								+ "' must have the same roles" );
 			}
 			if( type instanceof GroundInterface ) {
 				if( upperClass == null ) {
@@ -379,9 +377,8 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 
 		@Override
 		public String toString() {
-			return typeConstructor().toString() +
-					worldArguments().stream().map( World::toString ).collect(
-							Formatting.joining( ",", "@(", ")", "" ) );
+			return typeConstructor().toString() + worldArguments().stream().map( World::toString )
+					.collect( Formatting.joining( ",", "@(", ")", "" ) );
 		}
 
 		@Override

@@ -81,7 +81,8 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 		MergeException._assert(
 				n1.variables().size() == n2.variables().size(),
 				"Cannot merge variable declaration expressions due to different variable sizes: "
-						+ n1.variables().size() + " and " + n2.variables().size(), n1, n2
+						+ n1.variables().size() + " and " + n2.variables().size(),
+				n1, n2
 		);
 		List< VariableDeclaration > v = new ArrayList<>();
 		for( int i = 0; i < n1.variables().size(); i++ ) {
@@ -104,7 +105,8 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 	}
 
 	private static Pair< Map< SwitchArgument< ? >, Statement >, Optional< Map.Entry< SwitchArgument< ? >, Statement > > > checkSingleDefaultCase(
-			SwitchStatement s ) {
+			SwitchStatement s
+	) {
 		Map< SwitchArgument< ? >, Statement > cases = new LinkedHashMap<>();
 		Optional< Map.Entry< SwitchArgument< ? >, Statement > > def = Optional.empty();
 
@@ -188,7 +190,8 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 	public TryCatchStatement merge( TryCatchStatement n1, TryCatchStatement n2 ) {
 		MergeException._assert( n1.catches().size() == n2.catches().size(),
 				"Cannot merge try-catch statements with different number of catch clauses: "
-						+ n1.catches().size() + " and " + n2.catches().size(), n1, n2
+						+ n1.catches().size() + " and " + n2.catches().size(),
+				n1, n2
 		);
 		List< Pair< VariableDeclaration, Statement > > mergedCatches = new ArrayList<>();
 		for( int i = 0; i < n1.catches().size(); i++ ) {
