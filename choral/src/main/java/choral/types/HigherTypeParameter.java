@@ -21,7 +21,9 @@
 
 package choral.types;
 
+import choral.ast.Name;
 import choral.ast.Node;
+import choral.ast.type.TypeExpression;
 import choral.exceptions.StaticVerificationException;
 import choral.utils.Formatting;
 
@@ -61,6 +63,14 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 	}
 
 	@Override
+	public TypeExpression reify() {
+		TypeExpression expression = new TypeExpression(
+				new Name( identifier ), List.of(), List.of() );
+		expression.setTypeAnnotation( this );
+		return expression;
+	}
+
+	@Override
 	public String toString() {
 		return identifier;
 	}
@@ -82,6 +92,13 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 					this.worldParameters.stream()
 							.map( x -> new World( universe(), x.identifier() ) ).collect(
 									Collectors.toList() ) ) {
+				@Override
+				public TypeExpression reify() {
+					TypeExpression expression = HigherTypeParameter.this.reify();
+					expression.setTypeAnnotation( this );
+					return expression;
+				}
+
 				@Override
 				public GroundReferenceType applyTo( List< ? extends World > args ) {
 					return HigherTypeParameter.this.applyTo( args );
@@ -107,9 +124,7 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 				@Override
 				public World get( World placeHolder ) {
 					int i = worldParameters.indexOf( placeHolder );
-					return ( i < 0 )
-							? substitution.get( placeHolder )
-							: worldArgs.get( i );
+					return ( i < 0 ) ? substitution.get( placeHolder ) : worldArgs.get( i );
 				}
 
 				@Override
@@ -144,9 +159,8 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 		}
 
 		public String toString() {
-			return typeConstructor().toString() +
-					worldArguments().stream().map( World::toString ).collect(
-							Formatting.joining( ",", "@(", ")", "" ) );
+			return typeConstructor().toString() + worldArguments().stream().map( World::toString )
+					.collect( Formatting.joining( ",", "@(", ")", "" ) );
 		}
 
 		@Override
@@ -220,7 +234,8 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 			if( type.worldArguments().size() != worldArguments().size() ||
 					!type.worldArguments().containsAll( worldParameters ) ) {
 				throw new StaticVerificationException(
-						"illegal bound, '" + type + "' and '" + this + "' must have the same roles" );
+						"illegal bound, '" + type + "' and '" + this
+								+ "' must have the same roles" );
 			}
 			if( type instanceof GroundInterface ) {
 				if( upperClass == null ) {
@@ -362,9 +377,8 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 
 		@Override
 		public String toString() {
-			return typeConstructor().toString() +
-					worldArguments().stream().map( World::toString ).collect(
-							Formatting.joining( ",", "@(", ")", "" ) );
+			return typeConstructor().toString() + worldArguments().stream().map( World::toString )
+					.collect( Formatting.joining( ",", "@(", ")", "" ) );
 		}
 
 		@Override

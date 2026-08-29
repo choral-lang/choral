@@ -30,6 +30,9 @@ public interface GroundReferenceType extends GroundDataType {
 	@Override
 	HigherReferenceType typeConstructor();
 
+	/** Converts this ground type back into a higher type by unapplying its world args. */
+	HigherReferenceType unapplyWorlds();
+
 	@Override
 	GroundReferenceType applySubstitution( Substitution substitution );
 

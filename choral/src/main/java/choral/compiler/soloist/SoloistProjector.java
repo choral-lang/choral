@@ -141,7 +141,7 @@ public class SoloistProjector extends ChoralVisitor {
 		PrettyPrinterVisitor printer = new PrettyPrinterVisitor();
 		for( T method : methods ) {
 			String parameterTypes = method.signature().parameters().stream()
-					.map( parameter -> printer.visit( parameter.type() ) )
+					.map( parameter -> printer.visit( parameter.type().get() ) )
 					.collect( Collectors.joining( ",", "(", ")" ) );
 			String signature = method.signature().name().identifier() + parameterTypes;
 			methodsBySignature.computeIfAbsent( signature, ignored -> new ArrayList<>() )
