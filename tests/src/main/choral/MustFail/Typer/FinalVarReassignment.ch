@@ -1,6 +1,6 @@
-package Typer.FinalVarLocalVariableReassignment;
+package Typer.FinalVarReassignment;
 
-class FinalVarLocalVariableReassignment@( A ) {
+class FinalVarReassignment@( A ) {
 	void run() {
 		final var x = 5@A;
 		x += 1@A; //! Cannot assign a value to final variable 'x'.
