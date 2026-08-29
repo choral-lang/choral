@@ -96,12 +96,12 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 		return new TryCatchStatement(
 				visit( n.body() ),
 				n.catches().stream()
-						.filter( p -> p.left().type().worldArguments().contains( this.world ) )
+						.filter( p -> p.left().type().get().worldArguments().contains( this.world ) )
 						.map( p -> new Pair<>(
 								new VariableDeclaration(
 										p.left().name(),
 										TypesProjector.visit(
-												this.world(), p.left().type()
+												this.world(), p.left().type().get()
 										).get( 0 ),
 										p.left().annotations(),
 										null,
@@ -243,7 +243,7 @@ public class StatementsProjector extends AbstractSoloistProjector< Statement > {
 			}
 		}
 
-		TypeExpression t = n.variables().get( 0 ).type();
+		TypeExpression t = n.variables().get( 0 ).inferredTypeExpression();
 		TypeExpression tp = TypesProjector.visit( this.world(), t ).get( 0 );
 		if( t.worldArguments().contains( this.world() ) ) {
 			return new VariableDeclarationStatement(

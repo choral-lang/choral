@@ -260,8 +260,8 @@ public class DependencyVisitor implements ChoralVisitorInterface< Void > {
 	public Void visit( TryCatchStatement n ) {
 		visit( n.body() );
 		n.catches().forEach( p -> {
-			if( p.left().type().worldArguments().contains( this.w ) ) {
-				visit( p.left().type() );
+			if( p.left().type().get().worldArguments().contains( this.w ) ) {
+				visit( p.left().type().get() );
 				visit( p.right() );
 			}
 		} );
@@ -459,7 +459,12 @@ public class DependencyVisitor implements ChoralVisitorInterface< Void > {
 
 	@Override
 	public Void visit( VariableDeclaration n ) {
-		visit( n.type() );
+	    if ( n.type().isPresent() ) {
+    		visit( n.type().get() );
+		}
+		else {
+		    visit( n.typeAnnotation().get().reify() );
+		}
 		n.initializer().ifPresent( this::visit );
 		return null;
 	}

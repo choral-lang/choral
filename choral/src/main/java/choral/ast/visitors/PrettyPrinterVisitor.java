@@ -341,7 +341,7 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 	@Override
 	public String visit( VariableDeclarationStatement n ) {
 		// Visit manually to preserve structure from original code
-		String type = visit( n.variables().get( 0 ).type() );
+		String type = n.variables().get( 0 ).type().map( this::visit ).orElse( "var" );
 		String variables = n.variables().stream().map(
 				v -> visit( v.name() ) + v.initializer().map(
 						e -> ASSIGN + visit( e.value() ) ).orElse( "" )
@@ -515,8 +515,8 @@ public class PrettyPrinterVisitor implements ChoralVisitorInterface< String > {
 
 	public String visit( VariableDeclaration n, String separator ) {
 		return visitAndCollect( n.annotations(), separator, separator )
-				+ ( n.isFinal() ? "final " : "" ) + visit(
-				n.type() ) + " " + visit( n.name() );
+				+ ( n.isFinal() ? "final " : "" )
+					+ n.type().map( this::visit ).orElse( "var" ) + " " + visit( n.name() );
 	}
 
 	@Override

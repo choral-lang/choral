@@ -937,8 +937,8 @@ public class NormalizerTest {
 		List< VariableDeclaration > hoists = hoistsForMethod( result, "run" );
 		assertEquals( 1, hoists.size() );
 		assertEquals( "msg0", hoists.get( 0 ).name().identifier() );
-		assertEquals( "Thing", hoists.get( 0 ).type().name().identifier() );
-		assertEquals( "B", hoists.get( 0 ).type().worldArguments().get( 0 ).name().identifier() );
+		assertEquals( "Thing", hoists.get( 0 ).type().get().name().identifier() );
+		assertEquals( "B", hoists.get( 0 ).type().get().worldArguments().get( 0 ).name().identifier() );
 		assertTrue( hoists.get( 0 ).initializer().isPresent() );
 	}
 
@@ -1021,8 +1021,8 @@ public class NormalizerTest {
 		List< VariableDeclaration > hoists = hoistsForConstructor( result, "C" );
 		assertEquals( 1, hoists.size() );
 		assertEquals( "msg0", hoists.get( 0 ).name().identifier() );
-		assertEquals( "Integer", hoists.get( 0 ).type().name().identifier() );
-		assertEquals( "A", hoists.get( 0 ).type().worldArguments().get( 0 ).name().identifier() );
+		assertEquals( "Integer", hoists.get( 0 ).type().get().name().identifier() );
+		assertEquals( "A", hoists.get( 0 ).type().get().worldArguments().get( 0 ).name().identifier() );
 	}
 
 	@Test

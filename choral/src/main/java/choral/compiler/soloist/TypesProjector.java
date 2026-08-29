@@ -140,11 +140,12 @@ public class TypesProjector extends AbstractSoloistProjector< List< ? extends No
 
 	@Override
 	public List< VariableDeclaration > visit( VariableDeclaration n ) {
-		if( n.type().worldArguments().contains( this.world() ) ) {
+		TypeExpression type = n.inferredTypeExpression();
+		if( type.worldArguments().contains( this.world() ) ) {
 			return Collections.singletonList(
 					new VariableDeclaration(
 							n.name(),
-							visit( world(), n.type() ).get( 0 ),
+							visit( world(), type ).get( 0 ),
 							n.annotations(),
 							null,
 							n.modifiers(),

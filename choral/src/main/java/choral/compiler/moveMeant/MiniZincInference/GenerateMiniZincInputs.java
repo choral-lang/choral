@@ -344,11 +344,11 @@ public class GenerateMiniZincInputs {
 		 */
 		private void visitVariableDeclaration( VariableDeclaration vd, Statement n ){
 			
-			String variable = vd.type().typeAnnotation().get() + " " + vd.name();
+			String variable = vd.typeAnnotation().get() + " " + vd.name();
 			input.in_size ++;
 			
 			input.statements_blocks.add(currentBlock);
-			input.statements_roles.add(new World( new Universe(), vd.type().worldArguments().get(0).name().identifier() ));
+			input.statements_roles.add(new World( new Universe(), vd.type().get().worldArguments().get(0).name().identifier() ));
 
 			if( !vd.initializer().isPresent() ){
 				input.statements.add( variable );

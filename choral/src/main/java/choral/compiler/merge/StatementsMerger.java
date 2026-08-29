@@ -193,8 +193,8 @@ public class StatementsMerger extends AbstractMerger< Statement > {
 		List< Pair< VariableDeclaration, Statement > > mergedCatches = new ArrayList<>();
 		for( int i = 0; i < n1.catches().size(); i++ ) {
 			MergeException._assert(
-					n1.catches().get( i ).left().type().equals(
-							n2.catches().get( i ).left().type() ),
+					n1.catches().get( i ).left().type().get().equals(
+							n2.catches().get( i ).left().type().get() ),
 					"Cannot merge try-catch statements with non-corresponding catch clauses: ", n1,
 					n2
 			);

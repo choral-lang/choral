@@ -453,7 +453,7 @@ public class ChoralVisitor implements ChoralVisitorInterface< Node > {
 	public Node visit( VariableDeclaration n ) {
 		return new VariableDeclaration(
 				safeVisit( n.name() ),
-				safeVisit( n.type() ),
+				n.type().map( this::safeVisit ),
 				visitAndCollect( n.annotations() ),
 				safeVisit( n.initializer().orElse( null ) ),
 				n.modifiers(),

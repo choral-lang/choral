@@ -281,13 +281,14 @@ public class Normalizer {
 					AssignExpression init = vd.initializer().get();
 					NormalizedExpr res =
 							init.accept( new VisitExpression(
-									(GroundDataTypeOrVoid) vd.type().typeAnnotation().orElseThrow(),
+									(GroundDataTypeOrVoid) vd.typeAnnotation().orElseThrow(),
 									context ) );
 					VariableDeclaration newVd = new VariableDeclaration(
 							vd.name(),
 							vd.type(),
 							vd.annotations(),
 							(AssignExpression) res.expression(),
+							
 							vd.position() );
 					exprs.add( res.first(), res.last(), newVd );
 				}

@@ -248,8 +248,12 @@ public class Typer {
 					visitTypeParametersBound( callableScope, nm.signature().typeParameters(),
 							true );
 					for( VariableDeclaration x : nm.signature().parameters() ) {
+						if( x.type().isEmpty() ) {
+							throw new AstPositionedException( x.position(),
+									new StaticVerificationException( "parameters cannot use the var keyword" ) );
+						}
 						GroundDataType parameterType =
-								visitGroundDataTypeExpression( callableScope, x.type(), true );
+								visitGroundDataTypeExpression( callableScope, x.type().get(), true );
 						x.setTypeAnnotation( parameterType );
 						tm.innerCallable().signature().addParameter( x.name().identifier(),
 								parameterType );
@@ -308,8 +312,12 @@ public class Typer {
 					visitTypeParametersBound( callableScope, nm.signature().typeParameters(),
 							false );
 					for( VariableDeclaration x : nm.signature().parameters() ) {
+						if( x.type().isEmpty() ) {
+							throw new AstPositionedException( x.position(),
+									new StaticVerificationException( "parameters cannot use the var keyword" ) );
+						}
 						GroundDataType parameterType =
-								visitGroundDataTypeExpression( callableScope, x.type(), false );
+								visitGroundDataTypeExpression( callableScope, x.type().get(), false );
 						x.setTypeAnnotation( parameterType );
 						tm.innerCallable().signature().addParameter( x.name().identifier(),
 								parameterType );
@@ -451,8 +459,12 @@ public class Typer {
 					visitTypeParametersBound( methodScope, nm.signature().typeParameters(),
 							true );
 					for( VariableDeclaration x : nm.signature().parameters() ) {
+						if( x.type().isEmpty() ) {
+							throw new AstPositionedException( x.position(),
+									new StaticVerificationException( "parameters cannot use the var keyword" ) );
+						}
 						GroundDataType parameterType =
-								visitGroundDataTypeExpression( methodScope, x.type(), false );
+								visitGroundDataTypeExpression( methodScope, x.type().get(), false );
 						x.setTypeAnnotation( parameterType );
 						tm.innerCallable().signature().addParameter( x.name().identifier(),
 								parameterType );
@@ -1375,9 +1387,13 @@ public class Typer {
 				boolean returnChecked = visitAsInBlock( n.body() );
 				// The "VariableDeclaration" here represents the caught exception
 				for( Pair< VariableDeclaration, Statement > c : n.catches() ) {
+					if( c.left().type().isEmpty() ) {
+						throw new AstPositionedException( c.left().position(),
+								new StaticVerificationException( "catch bindings cannot use the var keyword" ) );
+					}
 					// get the type of the exception
 					GroundDataType te = visitGroundDataTypeExpression(
-							scope, c.left().type(), false );
+							scope, c.left().type().get(), false );
 					GroundClassOrInterface expectedType = universe()
 							.specialType( SpecialTypeTag.EXCEPTION )
 							.applyTo( te.worldArguments() );
@@ -1386,7 +1402,7 @@ public class Typer {
 							te.isSubtypeOf( expectedType );
 					// exceptions only allowed one role
 					if( te.worldArguments().size() > 1 || !isSubtype ) {
-						throw new AstPositionedException( c.left().type().position(),
+						throw new AstPositionedException( c.left().type().get().position(),
 								new StaticVerificationException( "required an instance of type '"
 										+ SpecialTypeTag.EXCEPTION
 										+ "', found '" + te + "'" ) );
@@ -1444,7 +1460,11 @@ public class Typer {
 			@Override
 			public Boolean visit( VariableDeclarationStatement n ) {
 				for( VariableDeclaration x : n.variables() ) {
-					GroundDataType type = visitGroundDataTypeExpression( scope, x.type(), false );
+					if( x.type().isEmpty() ) {
+						throw new AstPositionedException( x.position(),
+								new StaticVerificationException( "The var keyword is not yet supported" ) );
+					}
+					GroundDataType type = visitGroundDataTypeExpression( scope, x.type().get(), false );
 					x.setTypeAnnotation( type );
 					x.initializer().ifPresent( e -> checkInitializer( e, n, type ) );
 					scope.declareVariable( x );
