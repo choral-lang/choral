@@ -896,7 +896,8 @@ public class AstOptimizer implements ChoralVisitor {
 			ChoralParser.LocalVariableDeclarationContext lvd
 	) {
 		debugInfo();
-		TypeExpression type = visitReferenceType( lvd.referenceType() );
+		Optional< TypeExpression > type = Optional.ofNullable( lvd.referenceType() )
+				.map( this::visitReferenceType );
 		List< Annotation > annotations = lvd.annotation().stream().map(
 				this::visitAnnotation ).collect( Collectors.toList() );
 		EnumSet< VariableModifier > modifiers = visitVariableModifiers( lvd.variableModifier() );
@@ -931,13 +932,13 @@ public class AstOptimizer implements ChoralVisitor {
 			ChoralParser.VariableDeclaratorContext vd
 	) {
 		throw new UnsupportedOperationException(
-				"visitVariableDeclarator( ChoralParser.VariableDeclaratorContext vd ) should not be used. Use visitVariableDeclarator( ChoralParser.VariableDeclaratorContext vd, TypeExpression type ) instead"
+				"visitVariableDeclarator( ChoralParser.VariableDeclaratorContext vd ) should not be used. Use visitVariableDeclarator( ChoralParser.VariableDeclaratorContext vd, Optional< TypeExpression > type ) instead"
 		);
 	}
 
 	public VariableDeclaration visitVariableDeclarator(
 			ChoralParser.VariableDeclaratorContext vd,
-			TypeExpression type,
+			Optional< TypeExpression > type,
 			List< Annotation > annotations,
 			EnumSet< VariableModifier > modifiers
 	) {

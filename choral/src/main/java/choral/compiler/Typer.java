@@ -1460,13 +1460,21 @@ public class Typer {
 			@Override
 			public Boolean visit( VariableDeclarationStatement n ) {
 				for( VariableDeclaration x : n.variables() ) {
-					if( x.type().isEmpty() ) {
-						throw new AstPositionedException( x.position(),
-								new StaticVerificationException( "The var keyword is not yet supported" ) );
+					GroundDataType type;
+					if( x.type().isPresent() ) {
+						type = visitGroundDataTypeExpression( scope, x.type().get(), false );
+						x.initializer().ifPresent( e -> checkInitializer( e, n, type ) );
+					} else {
+						AssignExpression initializer = x.initializer().orElseThrow( () ->
+								new AstPositionedException( x.position(),
+										new StaticVerificationException(
+												"var declarations require an initializer" ) ) );
+						type = assertNotVoid(
+								synth( initializer.value(), n ), initializer.value().position() );
+						initializer.target().setTypeAnnotation( type );
+						initializer.setTypeAnnotation( type );
 					}
-					GroundDataType type = visitGroundDataTypeExpression( scope, x.type().get(), false );
 					x.setTypeAnnotation( type );
-					x.initializer().ifPresent( e -> checkInitializer( e, n, type ) );
 					scope.declareVariable( x );
 				}
 				return assertReachableContinuation( n, false );
