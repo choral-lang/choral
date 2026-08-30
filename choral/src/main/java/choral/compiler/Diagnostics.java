@@ -657,7 +657,7 @@ public final class Diagnostics {
 	}
 
 	// SYMBOLS
-	
+
 	public static StaticVerificationException symbolAlreadyDefined( String name ) {
 		return raise( "Duplicate declaration for '" + name + "'" );
 	}
