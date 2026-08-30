@@ -44,7 +44,7 @@ public abstract class HigherDataType extends TypeBase
 			x.setDeclarationContext( this );
 			for( int j = 0; j < i; j++ ) {
 				if( names[ j ].equals( x.identifier() ) ) {
-					throw Diagnostics.roleParameterHasDuplicate( x.sourceCode(), names[ j ] );
+					throw Diagnostics.roleParameterAlreadyDefined( x.sourceCode(), names[ j ] );
 				}
 			}
 			names[ i++ ] = x.identifier();

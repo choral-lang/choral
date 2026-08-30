@@ -65,7 +65,7 @@ public final class CompilationUnitScope extends BaseScope {
 					singleImports.add( type.get() );
 				} else {
 					throw new AstPositionedException( ip.position(),
-							Diagnostics.symbolCannotBeResolved( ip.name() ) );
+							Diagnostics.symbolNotFound( ip.name() ) );
 				}
 			}
 			pendingSingleImports = false;

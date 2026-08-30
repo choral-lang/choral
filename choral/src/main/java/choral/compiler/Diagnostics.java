@@ -43,6 +43,92 @@ public final class Diagnostics {
 		return raise( node, "non-abstract methods must have bodies" );
 	}
 
+	public static StaticVerificationException methodClashesWithInheritedMethodReturnType(
+			Member.HigherMethod method, Member.HigherMethod other
+	) {
+		return raise( "method '" + method + "' in '" + method.declarationContext()
+				+ "' clashes with method '" + other + "' in '" + other.declarationContext()
+				+ "', attempting to use incompatible return type" );
+	}
+
+	public static StaticVerificationException inheritedMethodErasureClashesWithDeclared(
+			Member.HigherMethod declared, GroundClassOrInterface inheritor,
+			Member.HigherMethod inherited
+	) {
+		return raise( "method '" + declared + "' in '" + inheritor + "' clashes with method '"
+				+ inherited + "' in '" + inherited.declarationContext()
+				+ "', both methods have the same erasure" );
+	}
+
+	public static StaticVerificationException defaultMethodsFoundDuplicate(
+			GroundClassOrInterface type, Member.HigherMethod method, Member.HigherMethod other
+	) {
+		return raise( "Duplicate default methods inherited. '" + type + "' must override '"
+				+ method + "'' from '" + method.declarationContext() + "' which is identical to '"
+				+ other + "' from '" + other.declarationContext() + "'" );
+	}
+
+	public static StaticVerificationException concreteTypeMustImplementAbstractMethod(
+			GroundClassOrInterface type, Member.HigherMethod method
+	) {
+		return raise(
+				"'" + type + "' must either be declared as abstract or implement abstract method '"
+						+ method + "' in '" + method.declarationContext() + "'" );
+	}
+
+	public static StaticVerificationException concreteTypeMustImplementAbstractMethod(
+			Member.HigherMethod method
+	) {
+		return raise( "Implementation is not abstract and does not override abstract method '"
+				+ method + "' in '" + method.declarationContext() + "'" );
+	}
+
+	public static StaticVerificationException methodOverridesFinalMethod(
+			Member.HigherMethod child, GroundClassOrInterface type, Member.HigherMethod parent
+	) {
+		return raise( "method '" + child + "' in '" + type + "' cannot override final method '"
+				+ parent + "' in '" + parent.declarationContext() + "'" );
+	}
+
+	public static StaticVerificationException methodOverridesStaticMethod(
+			Member.HigherMethod child, GroundClassOrInterface type, Member.HigherMethod parent
+	) {
+		return raise( "instance method '" + child + "' in '" + type
+				+ "' cannot override static method '" + parent + "' in '"
+				+ parent.declarationContext() + "'" );
+	}
+
+	public static StaticVerificationException staticMethodOverridesInstanceMethod(
+			Member.HigherMethod child, GroundClassOrInterface type, Member.HigherMethod parent
+	) {
+		return raise( "static method '" + child + "' in '" + type
+				+ "' cannot override instance method '" + parent + "' in '"
+				+ parent.declarationContext() + "'" );
+	}
+
+	public static StaticVerificationException methodOverrideHasWeakerAccess(
+			Member.HigherMethod child, String type, Member.HigherMethod parent,
+			String childAccess, String parentAccess
+	) {
+		return raise( "method '" + child + "' in '" + type + "' clashes with method '"
+				+ parent + "' in '" + parent.declarationContext()
+				+ "', attempting to assign weaker access privileges '" + childAccess + "' to '"
+				+ parentAccess + "'" );
+	}
+
+	public static StaticVerificationException methodAlreadyDefined(
+			Member.HigherMethod method, HigherClassOrInterface type
+	) {
+		return raise( "method '" + method + "' is already defined in '" + type + "'" );
+	}
+
+	public static StaticVerificationException methodsHaveSameErasure(
+			Member.HigherMethod method, Member.HigherMethod other
+	) {
+		return raise( "method '" + method + "' clashes with '" + other
+				+ "', both methods have the same erasure" );
+	}
+
 	// SELECTION METHOD DECLARATIONS
 	public static AstPositionedException selectionMethodIllegalTypeParameterCount(
 			Node node, int found
@@ -86,6 +172,20 @@ public final class Diagnostics {
 				"illegal selection method, roles of the method parameter and return type must be distinct" );
 	}
 
+	// PARAMETERS
+
+	public static StaticVerificationException parameterAlreadyDefined( String identifier ) {
+		return raise( "duplicate parameter '" + identifier + "'" );
+	}
+
+	// ROLE PARAMETERS
+
+	public static ChoralException roleParameterAlreadyDefined(
+			Optional< Node > sourceCode, String identifier
+	) {
+		return raise( sourceCode, "duplicate role parameter '" + identifier + "'" );
+	}
+
 	// VARIABLE DECLARATIONS
 
 	public static AstPositionedException varUsedAsParameter( VariableDeclaration node ) {
@@ -100,6 +200,10 @@ public final class Diagnostics {
 		return raise( node, "var declarations require an initializer" );
 	}
 
+	public static StaticVerificationException variableAlreadyDefined( String identifier ) {
+		return raise( "variable '" + identifier + "' already defined in the scope" );
+	}
+
 	// ENUMS
 
 	public static AstPositionedException enumIllegalNumberOfRoles( Node node ) {
@@ -110,10 +214,94 @@ public final class Diagnostics {
 		return raise( node, formattedAssertTypeMessage( type, "enum expected, '%1$s' is %3$s" ) );
 	}
 
+	public static StaticVerificationException enumHasAbstractModifier() {
+		return raise( "modifier 'abstract' not allowed for enums" );
+	}
+
+	public static StaticVerificationException enumCaseAlreadyDefined(
+			String identifier, String typeLabel, HigherEnum type
+	) {
+		return raise( "duplicate case '" + identifier + "' in " + typeLabel + " '" + type + "'" );
+	}
+
+	public static StaticVerificationException enumCaseConflictsWithField(
+			String identifier, String typeLabel, HigherEnum type
+	) {
+		return raise( "duplicate variable '" + identifier + "', " + typeLabel + " '" + type
+				+ "' contains a field with the same identifier" );
+	}
+
+	public static StaticVerificationException enumFieldConflictsWithCase(
+			String identifier, String typeLabel, HigherEnum type
+	) {
+		return raise( "duplicate variable '" + identifier + "', " + typeLabel + " '" + type
+				+ "'  contains a case with the same identifier" );
+	}
+
+	// TYPE PARAMETERS
+
+	public static StaticVerificationException typeParameterAlreadyDefined( String identifier ) {
+		return raise( "duplicate type parameter '" + identifier + "'" );
+	}
+
+	public static StaticVerificationException typeParameterBoundHasWrongRoles(
+			GroundReferenceType type, GroundReferenceType parameter
+	) {
+		return raise( "illegal bound, '" + type + "' and '" + parameter
+				+ "' must have the same roles" );
+	}
+
+	public static StaticVerificationException typeParameterDuplicateBound(
+			GroundReferenceType type
+	) {
+		return raise( "duplicate parameter bound, '" + type + "' is repeated" );
+	}
+
+	// TYPES
+
+	public static StaticVerificationException typeArgumentNotWithinBounds(
+			String typeArgument, String appliedTypeArgument, String bounds, String worlds
+	) {
+		return raise( "type argument '" + typeArgument + "' is not within bounds, '"
+				+ appliedTypeArgument + "' must extend " + bounds + " for any role " + worlds );
+	}
+
+	public static StaticVerificationException typeArgumentsWrongCount(
+			int expected, int found
+	) {
+		return raise( "illegal type instantiation: expected " + expected
+				+ " type arguments but found " + found );
+	}
+
+	public static StaticVerificationException invalidSpecialType(
+			String identifier, String expected, String found
+	) {
+		return raise( "Invalid special type '" + identifier + "', expected " + expected
+				+ " found " + found );
+	}
+
+	public static StaticVerificationException typeHasNoPublicAccess( HigherClassOrInterface type ) {
+		return raise( type.variety().labelSingular + " '" + type.identifier( true )
+				+ "' has not public access" );
+	}
+
 	// VOID TYPE
 
 	public static AstPositionedException voidTypeIllegalArguments( TypeExpression node ) {
 		return raise( node, "illegal type instantiation, expected 0 role and 0 type arguments" );
+	}
+
+	// INHERITANCE
+
+	public static StaticVerificationException inheritanceConflictingAncestors(
+			GroundInterface first, GroundInterface second
+	) {
+		return raise(
+				"illegal inheritance, cannot implement both '" + first + "' and " + second + "'" );
+	}
+
+	public static StaticVerificationException inheritanceRepeatedInterface( GroundInterface type ) {
+		return raise( "illegal inheritance, '" + type + "' is repeated" );
 	}
 
 	// CLASSES
@@ -130,6 +318,48 @@ public final class Diagnostics {
 	) {
 		return raise( node, family + " '" + name
 				+ "' is public, should be declared in a file named '" + name + extension + "'" );
+	}
+
+	public static StaticVerificationException classExtendsFinal( GroundClass type ) {
+		return raise( "illegal inheritance, cannot inherit from final '" + type + "'" );
+	}
+
+	public static StaticVerificationException classExtendsEnum( HigherClass enumType ) {
+		return raise( "illegal inheritance, only enum types can inherit from '" + enumType + "'" );
+	}
+
+	public static StaticVerificationException classExtendsWrongNumberOfRoles(
+			GroundClassOrInterface type, GroundClassOrInterface inheritor
+	) {
+		return raise( "illegal inheritance, '" + type + "' and '" + inheritor
+				+ "' must have the same roles" );
+	}
+
+	// INTERFACES
+
+	public static StaticVerificationException interfaceExpected(
+			GroundReferenceType type, String description
+	) {
+		return raise( "interface expected, '" + type + "' is " + description );
+	}
+
+	// MODIFIERS
+
+	public static StaticVerificationException modifiersIllegalCombination( String modifiers ) {
+		return raise( "illegal combination of modifiers " + modifiers );
+	}
+
+	public static StaticVerificationException modifiersIllegalCombination(
+			Modifier first, Modifier second
+	) {
+		return raise( "illegal combination of modifiers '" + first.label + "' and '"
+				+ second.label + "'" );
+	}
+
+	public static StaticVerificationException modifiersNotAllowed(
+			String prefix, String modifiers, String where
+	) {
+		return raise( prefix + modifiers + " not allowed " + where );
 	}
 
 	// CONSTRUCTORS
@@ -170,6 +400,35 @@ public final class Diagnostics {
 	) {
 		return raise( node,
 				"cannot resolve 'super', class '" + type + "' does not extend any class" );
+	}
+
+	public static StaticVerificationException constructorMissing( GroundClass type ) {
+		return raise( "there is no default constructor available in '" + type + "'" );
+	}
+
+	public static StaticVerificationException constructorAlreadyDefined(
+			Member.HigherConstructor constructor, HigherClass type
+	) {
+		return raise( "constructor '" + constructor + "' is already defined in '" + type + "'" );
+	}
+
+	public static StaticVerificationException constructorErasureClash(
+			Member.HigherConstructor constructor, Member.HigherConstructor other
+	) {
+		return raise( "constructor '" + constructor + "' clashes with '" + other
+				+ "', both constructors have the same erasure" );
+	}
+
+	// FIELDS
+
+	public static StaticVerificationException fieldHasAbstractModifier() {
+		return raise( "modifier 'abstract' not allowed for fields" );
+	}
+
+	public static StaticVerificationException fieldAlreadyDefined(
+			String identifier, String typeLabel, HigherClassOrInterface type
+	) {
+		return raise( "duplicate variable '" + identifier + "' in " + typeLabel + " '" + type );
 	}
 
 	// TYPE MISMATCH
@@ -320,6 +579,20 @@ public final class Diagnostics {
 		return raise( node, "'" + type + "' is abstract, cannot be instantiated" );
 	}
 
+	public static StaticVerificationException instantiateWrongRoleCount(
+			int expected, int found
+	) {
+		return raise( "illegal type instantiation: expected " + expected
+				+ " role arguments but found " + found );
+	}
+
+	public static StaticVerificationException instantiateDuplicateRole(
+			World role, HigherDataType type
+	) {
+		return raise( "illegal type instantiation: role '" + role
+				+ "' must play exactly one role in '" + type + "'" );
+	}
+
 	// METHOD CALLS
 
 	public static AstPositionedException methodUnresolved(
@@ -383,272 +656,16 @@ public final class Diagnostics {
 				"Literal '" + node + "', can't be used in an expression at role '" + roles + "'" );
 	}
 
-	// STATIC VERIFICATION
-
-	public static StaticVerificationException declarationHasDuplicate( String name ) {
+	// SYMBOLS
+	
+	public static StaticVerificationException symbolAlreadyDefined( String name ) {
 		return raise( "Duplicate declaration for '" + name + "'" );
 	}
 
-	public static StaticVerificationException declarationHasDuplicate(
+	public static StaticVerificationException symbolAlreadyDefined(
 			String name, Package declarationPackage
 	) {
 		return raise( "Duplicate declaration for '" + name + "' in '" + declarationPackage + "'" );
-	}
-
-	public static StaticVerificationException parameterDuplication( String identifier ) {
-		return raise( "duplicate parameter '" + identifier + "'" );
-	}
-
-	public static ChoralException roleParameterHasDuplicate(
-			Optional< Node > sourceCode, String identifier
-	) {
-		return raise( sourceCode, "duplicate role parameter '" + identifier + "'" );
-	}
-
-	public static StaticVerificationException typeParameterHasDuplicate( String identifier ) {
-		return raise( "duplicate type parameter '" + identifier + "'" );
-	}
-
-	public static StaticVerificationException parameterHasDuplicate( String identifier ) {
-		return raise( "duplicate signature parameter '" + identifier + "'" );
-	}
-
-	public static StaticVerificationException typeArgumentNotWithinBounds(
-			String typeArgument, String appliedTypeArgument, String bounds, String worlds
-	) {
-		return raise( "type argument '" + typeArgument + "' is not within bounds, '"
-				+ appliedTypeArgument + "' must extend " + bounds + " for any role " + worlds );
-	}
-
-	public static StaticVerificationException typeParameterBoundHasWrongRoles(
-			GroundReferenceType type, GroundReferenceType parameter
-	) {
-		return raise( "illegal bound, '" + type + "' and '" + parameter
-				+ "' must have the same roles" );
-	}
-
-	public static StaticVerificationException dypeParameterDuplicateBound(
-			GroundReferenceType type
-	) {
-		return raise( "duplicate parameter bound, '" + type + "' is repeated" );
-	}
-
-	public static StaticVerificationException interfaceExpected(
-			GroundReferenceType type, String description
-	) {
-		return raise( "interface expected, '" + type + "' is " + description );
-	}
-
-	public static StaticVerificationException methodClashesWithInheritedMethodReturnType(
-			Member.HigherMethod method, Member.HigherMethod other
-	) {
-		return raise( "method '" + method + "' in '" + method.declarationContext()
-				+ "' clashes with method '" + other + "' in '" + other.declarationContext()
-				+ "', attempting to use incompatible return type" );
-	}
-
-	public static StaticVerificationException modifiersIllegalCombination( String modifiers ) {
-		return raise( "illegal combination of modifiers " + modifiers );
-	}
-
-	public static StaticVerificationException modifiersIllegalCombination(
-			Modifier first, Modifier second
-	) {
-		return raise( "illegal combination of modifiers '" + first.label + "' and '"
-				+ second.label + "'" );
-	}
-
-	public static StaticVerificationException modifiersNotAllowed(
-			String prefix, String modifiers, String where
-	) {
-		return raise( prefix + modifiers + " not allowed " + where );
-	}
-
-	public static StaticVerificationException classExtendsFinal( GroundClass type ) {
-		return raise( "illegal inheritance, cannot inherit from final '" + type + "'" );
-	}
-
-	public static StaticVerificationException classExtendsEnum( HigherClass enumType ) {
-		return raise( "illegal inheritance, only enum types can inherit from '" + enumType + "'" );
-	}
-
-	public static StaticVerificationException classExtendsWrongNumberOfRoles(
-			GroundClassOrInterface type, GroundClassOrInterface inheritor
-	) {
-		return raise( "illegal inheritance, '" + type + "' and '" + inheritor
-				+ "' must have the same roles" );
-	}
-
-	public static StaticVerificationException constructorMissing( GroundClass type ) {
-		return raise( "there is no default constructor available in '" + type + "'" );
-	}
-
-	public static StaticVerificationException constructorAlreadyDefined(
-			Member.HigherConstructor constructor, HigherClass type
-	) {
-		return raise( "constructor '" + constructor + "' is already defined in '" + type + "'" );
-	}
-
-	public static StaticVerificationException constructorErasureClash(
-			Member.HigherConstructor constructor, Member.HigherConstructor other
-	) {
-		return raise( "constructor '" + constructor + "' clashes with '" + other
-				+ "', both constructors have the same erasure" );
-	}
-
-	public static StaticVerificationException enumHasAbstractModifier() {
-		return raise( "modifier 'abstract' not allowed for enums" );
-	}
-
-	public static StaticVerificationException fieldHasAbstractModifier() {
-		return raise( "modifier 'abstract' not allowed for fields" );
-	}
-
-	public static StaticVerificationException typeArgumentsWrongCount(
-			int expected, int found
-	) {
-		return raise( "illegal type instantiation: expected " + expected
-				+ " type arguments but found " + found );
-	}
-
-	public static StaticVerificationException enumFoundDuplicateCase(
-			String identifier, String typeLabel, HigherEnum type
-	) {
-		return raise( "duplicate case '" + identifier + "' in " + typeLabel + " '" + type + "'" );
-	}
-
-	public static StaticVerificationException enumCaseConflictsWithField(
-			String identifier, String typeLabel, HigherEnum type
-	) {
-		return raise( "duplicate variable '" + identifier + "', " + typeLabel + " '" + type
-				+ "' contains a field with the same identifier" );
-	}
-
-	public static StaticVerificationException enumFieldConflictsWithCase(
-			String identifier, String typeLabel, HigherEnum type
-	) {
-		return raise( "duplicate variable '" + identifier + "', " + typeLabel + " '" + type
-				+ "'  contains a case with the same identifier" );
-	}
-
-	public static StaticVerificationException inheritanceConflictingAncestors(
-			GroundInterface first, GroundInterface second
-	) {
-		return raise(
-				"illegal inheritance, cannot implement both '" + first + "' and " + second + "'" );
-	}
-
-	public static StaticVerificationException inheritanceRepeatedInterface( GroundInterface type ) {
-		return raise( "illegal inheritance, '" + type + "' is repeated" );
-	}
-
-	public static StaticVerificationException inheritedMethodErasureClashesWithDeclared(
-			Member.HigherMethod declared, GroundClassOrInterface inheritor,
-			Member.HigherMethod inherited
-	) {
-		return raise( "method '" + declared + "' in '" + inheritor + "' clashes with method '"
-				+ inherited + "' in '" + inherited.declarationContext()
-				+ "', both methods have the same erasure" );
-	}
-
-	public static StaticVerificationException defaultMethodsFoundDuplicate(
-			GroundClassOrInterface type, Member.HigherMethod method, Member.HigherMethod other
-	) {
-		return raise( "Duplicate default methods inherited. '" + type + "' must override '"
-				+ method + "'' from '" + method.declarationContext() + "' which is identical to '"
-				+ other + "' from '" + other.declarationContext() + "'" );
-	}
-
-	public static StaticVerificationException concreteTypeMustImplementAbstractMethod(
-			GroundClassOrInterface type, Member.HigherMethod method
-	) {
-		return raise(
-				"'" + type + "' must either be declared as abstract or implement abstract method '"
-						+ method + "' in '" + method.declarationContext() + "'" );
-	}
-
-	public static StaticVerificationException concreteTypeMustImplementAbstractMethod(
-			Member.HigherMethod method
-	) {
-		return raise( "Implementation is not abstract and does not override abstract method '"
-				+ method + "' in '" + method.declarationContext() + "'" );
-	}
-
-	public static StaticVerificationException methodOverridesFinalMethod(
-			Member.HigherMethod child, GroundClassOrInterface type, Member.HigherMethod parent
-	) {
-		return raise( "method '" + child + "' in '" + type + "' cannot override final method '"
-				+ parent + "' in '" + parent.declarationContext() + "'" );
-	}
-
-	public static StaticVerificationException methodOverridesStaticMethod(
-			Member.HigherMethod child, GroundClassOrInterface type, Member.HigherMethod parent
-	) {
-		return raise( "instance method '" + child + "' in '" + type
-				+ "' cannot override static method '" + parent + "' in '"
-				+ parent.declarationContext() + "'" );
-	}
-
-	public static StaticVerificationException staticMethodOverridesInstanceMethod(
-			Member.HigherMethod child, GroundClassOrInterface type, Member.HigherMethod parent
-	) {
-		return raise( "static method '" + child + "' in '" + type
-				+ "' cannot override instance method '" + parent + "' in '"
-				+ parent.declarationContext() + "'" );
-	}
-
-	public static StaticVerificationException methodOverrideHasWeakerAccess(
-			Member.HigherMethod child, String type, Member.HigherMethod parent,
-			String childAccess, String parentAccess
-	) {
-		return raise( "method '" + child + "' in '" + type + "' clashes with method '"
-				+ parent + "' in '" + parent.declarationContext()
-				+ "', attempting to assign weaker access privileges '" + childAccess + "' to '"
-				+ parentAccess + "'" );
-	}
-
-	public static StaticVerificationException fieldHasDuplicate(
-			String identifier, String typeLabel, HigherClassOrInterface type
-	) {
-		return raise( "duplicate variable '" + identifier + "' in " + typeLabel + " '" + type );
-	}
-
-	public static StaticVerificationException methodHasDuplicate(
-			Member.HigherMethod method, HigherClassOrInterface type
-	) {
-		return raise( "method '" + method + "' is already defined in '" + type + "'" );
-	}
-
-	public static StaticVerificationException methodsHaveSameErasure(
-			Member.HigherMethod method, Member.HigherMethod other
-	) {
-		return raise( "method '" + method + "' clashes with '" + other
-				+ "', both methods have the same erasure" );
-	}
-
-	public static StaticVerificationException invalidSpecialType(
-			String identifier, String expected, String found
-	) {
-		return raise( "Invalid special type '" + identifier + "', expected " + expected
-				+ " found " + found );
-	}
-
-	public static StaticVerificationException instantiateWrongRoleCount(
-			int expected, int found
-	) {
-		return raise( "illegal type instantiation: expected " + expected
-				+ " role arguments but found " + found );
-	}
-
-	public static StaticVerificationException instantiateDuplicateRole(
-			World role, HigherDataType type
-	) {
-		return raise( "illegal type instantiation: role '" + role
-				+ "' must play exactly one role in '" + type + "'" );
-	}
-
-	public static StaticVerificationException symbolCannotBeResolved( String symbol ) {
-		return raise( "cannot resolve symbol '" + symbol + "'" );
 	}
 
 	public static StaticVerificationException symbolIsAmbiguous(
@@ -662,15 +679,6 @@ public final class Diagnostics {
 				"reference to '" + query + "' is ambiguous, " + candidatesList + " are ambiguous" );
 	}
 
-	public static StaticVerificationException typeHasNoPublicAccess( HigherClassOrInterface type ) {
-		return raise( type.variety().labelSingular + " '" + type.identifier( true )
-				+ "' has not public access" );
-	}
-
-	public static StaticVerificationException variableAlreadyDefined( String identifier ) {
-		return raise( "variable '" + identifier + "' already defined in the scope" );
-	}
-
 	public static AstPositionedException symbolNotFound( Node place, String symbol ) {
 		return raise( place, "cannot resolve symbol '" + symbol + "'" );
 	}
@@ -682,7 +690,6 @@ public final class Diagnostics {
 	public static AstPositionedException symbolNotFound( Name symbol ) {
 		return raise( symbol, "cannot resolve symbol '" + symbol.identifier() + "'" );
 	}
-
 
 	// HELPERS
 

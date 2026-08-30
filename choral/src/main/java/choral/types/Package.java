@@ -121,7 +121,7 @@ public class Package {
 			Optional< Package > x = pkg.declaredPackage( name );
 			if( x.isEmpty() ) {
 				if( declaredType( name ).isPresent() ) {
-					throw Diagnostics.declarationHasDuplicate( name );
+					throw Diagnostics.symbolAlreadyDefined( name );
 				}
 				Package y = new Package( pkg, name );
 				pkg.declaredPackages.put( name, y );
@@ -163,8 +163,8 @@ public class Package {
 		assert ( type.declarationContext() == this );
 		if( declaredTypes.containsKey( type.identifier() ) || declaredPackages.containsKey(
 				type.identifier() ) ) {
-			throw isRoot() ? Diagnostics.declarationHasDuplicate( type.identifier() ) :
-					Diagnostics.declarationHasDuplicate( type.identifier(), this );
+			throw isRoot() ? Diagnostics.symbolAlreadyDefined( type.identifier() ) :
+					Diagnostics.symbolAlreadyDefined( type.identifier(), this );
 		}
 		// System.out.println(type.variety().labelSingular + " '" + type + "' declared"); // DEBUG
 		declaredTypes.put( type.identifier(), type );

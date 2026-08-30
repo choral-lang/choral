@@ -122,7 +122,7 @@ public final class HigherEnum extends HigherClass implements Enum {
 			HigherClass t = (HigherClass) universe().specialType( Universe.SpecialTypeTag.ENUM );
 			if( t == null ) {
 				throw Diagnostics
-						.symbolCannotBeResolved( Universe.SpecialTypeTag.ENUM.qualifiedName );
+						.symbolNotFound( Universe.SpecialTypeTag.ENUM.qualifiedName );
 			}
 			super.setExtendedClass( t.applyTo( this.worldArguments(),
 					List.< HigherReferenceType >of( typeConstructor() ) ) );
@@ -156,7 +156,7 @@ public final class HigherEnum extends HigherClass implements Enum {
 
 		public void addCase( String identifier ) {
 			if( cases.contains( identifier ) ) {
-				throw Diagnostics.enumFoundDuplicateCase(
+				throw Diagnostics.enumCaseAlreadyDefined(
 						identifier, typeConstructor().variety().labelSingular, typeConstructor() );
 			}
 			if( declaredFields().anyMatch( x -> x.identifier().equals( identifier ) ) ) {

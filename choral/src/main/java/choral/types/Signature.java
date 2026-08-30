@@ -48,7 +48,7 @@ public class Signature {
 			for( Parameter x : parameters ) {
 				for( int j = 0; j < i; j++ ) {
 					if( names[ j ].equals( x.identifier() ) ) {
-						throw Diagnostics.parameterHasDuplicate( names[ j ] );
+						throw Diagnostics.parameterAlreadyDefined( names[ j ] );
 					}
 				}
 				names[ i++ ] = x.identifier();
@@ -95,7 +95,7 @@ public class Signature {
 		assert ( !finalised );
 		for( Parameter x : parameters ) {
 			if( identifier.equals( x.identifier() ) ) {
-				throw Diagnostics.parameterHasDuplicate( identifier );
+				throw Diagnostics.parameterAlreadyDefined( identifier );
 			}
 		}
 		parameters.add( new Parameter( identifier, type ) );

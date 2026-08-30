@@ -186,7 +186,7 @@ public class Universe {
 	public HigherClassOrInterface specialType( SpecialTypeTag key ) {
 		HigherClassOrInterface result = specialClasses.get( key );
 		if( result == null ) {
-			throw Diagnostics.symbolCannotBeResolved( key.qualifiedName );
+			throw Diagnostics.symbolNotFound( key.qualifiedName );
 		}
 		return result;
 	}

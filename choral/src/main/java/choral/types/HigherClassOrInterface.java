@@ -88,7 +88,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			x.setDeclarationContext( this );
 			for( int j = 0; j < i; j++ ) {
 				if( names[ j ].equals( x.identifier() ) ) {
-					throw Diagnostics.parameterDuplication( names[ j ] );
+					throw Diagnostics.parameterAlreadyDefined( names[ j ] );
 				}
 			}
 			names[ i++ ] = x.identifier();
@@ -891,7 +891,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			assert ( !interfaceFinalised );
 			assert ( field.declarationContext() == this );
 			if( declaredFields().anyMatch( x -> x.identifier().equals( field.identifier() ) ) ) {
-				throw Diagnostics.fieldHasDuplicate(
+				throw Diagnostics.fieldAlreadyDefined(
 						field.identifier(), typeConstructor().variety().labelSingular,
 						typeConstructor() );
 			}
@@ -904,7 +904,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			for( Member.HigherMethod x : declaredMethods ) {
 				if( x.sameErasureAs( method ) ) {
 					if( x.sameSignatureAs( method ) ) {
-						throw Diagnostics.methodHasDuplicate( method, typeConstructor() );
+						throw Diagnostics.methodAlreadyDefined( method, typeConstructor() );
 					} else {
 						throw Diagnostics.methodsHaveSameErasure( method, x );
 					}

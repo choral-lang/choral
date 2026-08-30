@@ -239,7 +239,7 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 					setUpperClass();
 				}
 				if( upperInterfaces().anyMatch( x -> x.isEquivalentTo( type ) ) ) {
-					throw Diagnostics.dypeParameterDuplicateBound( type );
+					throw Diagnostics.typeParameterDuplicateBound( type );
 				}
 				upperInterfaces.add( (GroundInterface) type );
 			} else {

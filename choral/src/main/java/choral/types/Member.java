@@ -260,7 +260,7 @@ public abstract class Member implements HasSource {
 					x.setDeclarationContext( this );
 					for( int j = 0; j < i; j++ ) {
 						if( names[ j ].equals( x.identifier() ) ) {
-							throw Diagnostics.typeParameterHasDuplicate( names[ j ] );
+							throw Diagnostics.typeParameterAlreadyDefined( names[ j ] );
 						}
 					}
 					names[ i++ ] = x.identifier();
