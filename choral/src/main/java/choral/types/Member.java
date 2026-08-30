@@ -24,7 +24,8 @@ package choral.types;
 import choral.ast.Node;
 import choral.ast.expression.Expression;
 import choral.ast.statement.Statement;
-import choral.exceptions.StaticVerificationException;
+import choral.compiler.Diagnostics;
+import choral.exceptions.AstPositionedException;
 import choral.utils.Formatting;
 import choral.utils.Pair;
 
@@ -212,8 +213,7 @@ public abstract class Member implements HasSource {
 		@Override
 		protected void assertModifiers( EnumSet< Modifier > modifiers ) {
 			if( modifiers.contains( ABSTRACT ) ) {
-				throw new StaticVerificationException(
-						"modifier 'abstract' not allowed for fields" );
+				throw Diagnostics.fieldHasAbstractModifier();
 			}
 			super.assertModifiers( modifiers );
 		}
@@ -260,9 +260,7 @@ public abstract class Member implements HasSource {
 					x.setDeclarationContext( this );
 					for( int j = 0; j < i; j++ ) {
 						if( names[ j ].equals( x.identifier() ) ) {
-							throw StaticVerificationException.of(
-									"duplicate type parameter '" + names[ j ] + "'",
-									x.sourceCode() );
+							throw Diagnostics.typeParameterHasDuplicate( names[ j ] );
 						}
 					}
 					names[ i++ ] = x.identifier();
@@ -302,9 +300,8 @@ public abstract class Member implements HasSource {
 				List< ? extends HigherReferenceType > typeArgs
 		) {
 			if( typeArgs.size() != typeParameters.size() ) {
-				throw new StaticVerificationException(
-						"illegal type instantiation: expected " + typeParameters.size()
-								+ " type arguments but found " + typeArgs.size() );
+				throw Diagnostics.typeArgumentsWrongCount(
+						typeParameters.size(), typeArgs.size() );
 			}
 			Substitution substitution = new Substitution() {
 				@Override

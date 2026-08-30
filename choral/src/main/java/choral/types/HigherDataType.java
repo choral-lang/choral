@@ -21,7 +21,7 @@
 
 package choral.types;
 
-import choral.exceptions.StaticVerificationException;
+import choral.compiler.Diagnostics;
 import choral.types.kinds.Kind;
 
 import java.util.List;
@@ -44,8 +44,7 @@ public abstract class HigherDataType extends TypeBase
 			x.setDeclarationContext( this );
 			for( int j = 0; j < i; j++ ) {
 				if( names[ j ].equals( x.identifier() ) ) {
-					throw StaticVerificationException.of(
-							"duplicate role parameter '" + names[ j ] + "'", x.sourceCode() );
+					throw Diagnostics.roleParameterHasDuplicate( x.sourceCode(), names[ j ] );
 				}
 			}
 			names[ i++ ] = x.identifier();
@@ -87,8 +86,7 @@ public abstract class HigherDataType extends TypeBase
 			return applyTo( worldArgs );
 		} else {
 			// default implementation, only classes and interfaces have type parameters.
-			throw new StaticVerificationException(
-					"illegal type instantiation: expected 0 type arguments but found " + typeArgs.size() );
+			throw Diagnostics.typeArgumentsWrongCount( 0, typeArgs.size() );
 		}
 	}
 
@@ -97,22 +95,19 @@ public abstract class HigherDataType extends TypeBase
 			return this;
 		} else {
 			// default implementation, only classes and interfaces have type parameters.
-			throw new StaticVerificationException(
-					"illegal type instantiation: expected 0 type arguments but found " + typeArgs.size() );
+			throw Diagnostics.typeArgumentsWrongCount( 0, typeArgs.size() );
 		}
 	}
 
 	protected void checkApplicationArguments( List< ? extends World > worldArgs ) {
 		if( worldArgs.size() != worldParameters.size() ) {
-			throw new StaticVerificationException(
-					"illegal type instantiation: expected " + worldParameters.size() + " role arguments but found " + worldArgs.size() );
+			throw Diagnostics.instantiateWrongRoleCount( worldParameters.size(), worldArgs.size() );
 		}
 		for( int i = 0; i < worldArgs.size(); i++ ) {
 			World w = worldArgs.get( i );
 			for( int j = 0; j < i; j++ ) {
 				if( w == worldArgs.get( j ) ) {
-					throw new StaticVerificationException(
-							"illegal type instantiation: role '" + w + "' must play exactly one role in '" + this + "'" );
+					throw Diagnostics.instantiateDuplicateRole( w, this );
 				}
 			}
 		}

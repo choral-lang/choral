@@ -10,13 +10,16 @@ import choral.ast.expression.*;
 import choral.ast.statement.Statement;
 import choral.ast.type.TypeExpression;
 import choral.exceptions.AstPositionedException;
+import choral.exceptions.ChoralException;
 import choral.exceptions.StaticVerificationException;
 import choral.types.*;
+import choral.types.Package;
 import choral.types.Universe.PrimitiveTypeTag;
 import choral.types.Universe.SpecialTypeTag;
 import choral.utils.Formatting;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public final class Diagnostics {
@@ -343,11 +346,295 @@ public final class Diagnostics {
 				"Literal '" + node + "', can't be used in an expression at role '" + roles + "'" );
 	}
 
+	// STATIC VERIFICATION
+
+	public static StaticVerificationException declarationHasDuplicate( String name ) {
+		return raise( "Duplicate declaration for '" + name + "'" );
+	}
+
+	public static StaticVerificationException declarationHasDuplicate(
+			String name, Package declarationPackage
+	) {
+		return raise( "Duplicate declaration for '" + name + "' in '" + declarationPackage + "'" );
+	}
+
+	public static StaticVerificationException parameterDuplication( String identifier ) {
+		return raise( "duplicate parameter '" + identifier + "'" );
+	}
+
+	public static ChoralException roleParameterHasDuplicate( Optional< Node > sourceCode, String identifier ) {
+		return raise( sourceCode, "duplicate role parameter '" + identifier + "'" );
+	}
+
+	public static StaticVerificationException typeParameterHasDuplicate( String identifier ) {
+		return raise( "duplicate type parameter '" + identifier + "'" );
+	}
+
+	public static StaticVerificationException parameterHasDuplicate( String identifier ) {
+		return raise( "duplicate signature parameter '" + identifier + "'" );
+	}
+
+	public static StaticVerificationException typeArgumentNotWithinBounds(
+			String typeArgument, String appliedTypeArgument, String bounds, String worlds
+	) {
+		return raise( "type argument '" + typeArgument + "' is not within bounds, '"
+				+ appliedTypeArgument + "' must extend " + bounds + " for any role " + worlds );
+	}
+
+	public static StaticVerificationException typeParameterBoundHasWrongRoles(
+			GroundReferenceType type, GroundReferenceType parameter
+	) {
+		return raise( "illegal bound, '" + type + "' and '" + parameter
+				+ "' must have the same roles" );
+	}
+
+	public static StaticVerificationException dypeParameterDuplicateBound( GroundReferenceType type ) {
+		return raise( "duplicate parameter bound, '" + type + "' is repeated" );
+	}
+
+	public static StaticVerificationException interfaceExpected(
+			GroundReferenceType type, String description
+	) {
+		return raise( "interface expected, '" + type + "' is " + description );
+	}
+
+	public static StaticVerificationException methodClashesWithInheritedMethodReturnType(
+			Member.HigherMethod method, Member.HigherMethod other
+	) {
+		return raise( "method '" + method + "' in '" + method.declarationContext()
+				+ "' clashes with method '" + other + "' in '" + other.declarationContext()
+				+ "', attempting to use incompatible return type" );
+	}
+
+	public static StaticVerificationException modifiersIllegalCombination( String modifiers ) {
+		return raise( "illegal combination of modifiers " + modifiers );
+	}
+
+	public static StaticVerificationException modifiersIllegalCombination( Modifier first, Modifier second ) {
+		return raise( "illegal combination of modifiers '" + first.label + "' and '"
+				+ second.label + "'" );
+	}
+
+	public static StaticVerificationException modifiersNotAllowed(
+			String prefix, String modifiers, String where
+	) {
+		return raise( prefix + modifiers + " not allowed " + where );
+	}
+
+	public static StaticVerificationException classExtendsFinal( GroundClass type ) {
+		return raise( "illegal inheritance, cannot inherit from final '" + type + "'" );
+	}
+
+	public static StaticVerificationException classExtendsEnum( HigherClass enumType ) {
+		return raise( "illegal inheritance, only enum types can inherit from '" + enumType + "'" );
+	}
+
+	public static StaticVerificationException classExtendsWrongNumberOfRoles(
+			GroundClassOrInterface type, GroundClassOrInterface inheritor
+	) {
+		return raise( "illegal inheritance, '" + type + "' and '" + inheritor
+				+ "' must have the same roles" );
+	}
+
+	public static StaticVerificationException constructorMissing( GroundClass type ) {
+		return raise( "there is no default constructor available in '" + type + "'" );
+	}
+
+	public static StaticVerificationException constructorAlreadyDefined(
+			Member.HigherConstructor constructor, HigherClass type
+	) {
+		return raise( "constructor '" + constructor + "' is already defined in '" + type + "'" );
+	}
+
+	public static StaticVerificationException constructorErasureClash(
+			Member.HigherConstructor constructor, Member.HigherConstructor other
+	) {
+		return raise( "constructor '" + constructor + "' clashes with '" + other
+				+ "', both constructors have the same erasure" );
+	}
+
+	public static StaticVerificationException enumHasAbstractModifier() {
+		return raise( "modifier 'abstract' not allowed for enums" );
+	}
+
+	public static StaticVerificationException fieldHasAbstractModifier() {
+		return raise( "modifier 'abstract' not allowed for fields" );
+	}
+
+	public static StaticVerificationException typeArgumentsWrongCount(
+			int expected, int found
+	) {
+		return raise( "illegal type instantiation: expected " + expected
+				+ " type arguments but found " + found );
+	}
+
+	public static StaticVerificationException enumFoundDuplicateCase(
+			String identifier, String typeLabel, HigherEnum type
+	) {
+		return raise( "duplicate case '" + identifier + "' in " + typeLabel + " '" + type + "'" );
+	}
+
+	public static StaticVerificationException enumCaseConflictsWithField(
+			String identifier, String typeLabel, HigherEnum type
+	) {
+		return raise( "duplicate variable '" + identifier + "', " + typeLabel + " '" + type
+				+ "' contains a field with the same identifier" );
+	}
+
+	public static StaticVerificationException enumFieldConflictsWithCase(
+			String identifier, String typeLabel, HigherEnum type
+	) {
+		return raise( "duplicate variable '" + identifier + "', " + typeLabel + " '" + type
+				+ "'  contains a case with the same identifier" );
+	}
+
+	public static StaticVerificationException inheritanceConflictingAncestors(
+			GroundInterface first, GroundInterface second
+	) {
+		return raise( "illegal inheritance, cannot implement both '" + first + "' and " + second + "'" );
+	}
+
+	public static StaticVerificationException inheritanceRepeatedInterface( GroundInterface type ) {
+		return raise( "illegal inheritance, '" + type + "' is repeated" );
+	}
+
+	public static StaticVerificationException inheritedMethodErasureClashesWithDeclared(
+			Member.HigherMethod declared, GroundClassOrInterface inheritor,
+			Member.HigherMethod inherited
+	) {
+		return raise( "method '" + declared + "' in '" + inheritor + "' clashes with method '"
+				+ inherited + "' in '" + inherited.declarationContext()
+				+ "', both methods have the same erasure" );
+	}
+
+	public static StaticVerificationException defaultMethodsFoundDuplicate(
+			GroundClassOrInterface type, Member.HigherMethod method, Member.HigherMethod other
+	) {
+		return raise( "Duplicate default methods inherited. '" + type + "' must override '"
+				+ method + "'' from '" + method.declarationContext() + "' which is identical to '"
+				+ other + "' from '" + other.declarationContext() + "'" );
+	}
+
+	public static StaticVerificationException concreteTypeMustImplementAbstractMethod(
+			GroundClassOrInterface type, Member.HigherMethod method
+	) {
+		return raise( "'" + type + "' must either be declared as abstract or implement abstract method '"
+				+ method + "' in '" + method.declarationContext() + "'" );
+	}
+
+	public static StaticVerificationException concreteTypeMustImplementAbstractMethod(
+			Member.HigherMethod method
+	) {
+		return raise( "Implementation is not abstract and does not override abstract method '"
+				+ method + "' in '" + method.declarationContext() + "'" );
+	}
+
+	public static StaticVerificationException methodOverridesFinalMethod(
+			Member.HigherMethod child, GroundClassOrInterface type, Member.HigherMethod parent
+	) {
+		return raise( "method '" + child + "' in '" + type + "' cannot override final method '"
+				+ parent + "' in '" + parent.declarationContext() + "'" );
+	}
+
+	public static StaticVerificationException methodOverridesStaticMethod(
+			Member.HigherMethod child, GroundClassOrInterface type, Member.HigherMethod parent
+	) {
+		return raise( "instance method '" + child + "' in '" + type
+				+ "' cannot override static method '" + parent + "' in '"
+				+ parent.declarationContext() + "'" );
+	}
+
+	public static StaticVerificationException staticMethodOverridesInstanceMethod(
+			Member.HigherMethod child, GroundClassOrInterface type, Member.HigherMethod parent
+	) {
+		return raise( "static method '" + child + "' in '" + type
+				+ "' cannot override instance method '" + parent + "' in '"
+				+ parent.declarationContext() + "'" );
+	}
+
+	public static StaticVerificationException methodOverrideHasWeakerAccess(
+			Member.HigherMethod child, String type, Member.HigherMethod parent,
+			String childAccess, String parentAccess
+	) {
+		return raise( "method '" + child + "' in '" + type + "' clashes with method '"
+				+ parent + "' in '" + parent.declarationContext()
+				+ "', attempting to assign weaker access privileges '" + childAccess + "' to '"
+				+ parentAccess + "'" );
+	}
+
+	public static StaticVerificationException fieldHasDuplicate(
+			String identifier, String typeLabel, HigherClassOrInterface type
+	) {
+		return raise( "duplicate variable '" + identifier + "' in " + typeLabel + " '" + type );
+	}
+
+	public static StaticVerificationException methodHasDuplicate(
+			Member.HigherMethod method, HigherClassOrInterface type
+	) {
+		return raise( "method '" + method + "' is already defined in '" + type + "'" );
+	}
+
+	public static StaticVerificationException methodsHaveSameErasure(
+			Member.HigherMethod method, Member.HigherMethod other
+	) {
+		return raise( "method '" + method + "' clashes with '" + other
+				+ "', both methods have the same erasure" );
+	}
+
+	public static StaticVerificationException invalidSpecialType(
+			String identifier, String expected, String found
+	) {
+		return raise( "Invalid special type '" + identifier + "', expected " + expected
+				+ " found " + found );
+	}
+
+	public static StaticVerificationException instantiateWrongRoleCount(
+			int expected, int found
+	) {
+		return raise( "illegal type instantiation: expected " + expected
+				+ " role arguments but found " + found );
+	}
+
+	public static StaticVerificationException instantiateDuplicateRole(
+			World role, HigherDataType type
+	) {
+		return raise( "illegal type instantiation: role '" + role
+				+ "' must play exactly one role in '" + type + "'" );
+	}
+
+	public static StaticVerificationException symbolCannotBeResolved( String symbol ) {
+		return raise( "cannot resolve symbol '" + symbol + "'" );
+	}
+
+	public static StaticVerificationException symbolIsAmbiguous( String query, List< HigherClassOrInterface > candidates ) {
+	    var candidatesList = candidates.stream()
+					.map( x -> "'" + x.identifier( true ) + "'" )
+					.collect( Collectors.collectingAndThen( Collectors.toList(), Formatting.joiningOxfordComma() ) );
+		return raise( "reference to '" + query + "' is ambiguous, " + candidatesList + " are ambiguous" );
+	}
+
+	public static StaticVerificationException typeHasNoPublicAccess( HigherClassOrInterface type ) {
+		return raise( type.variety().labelSingular + " '" + type.identifier( true )
+				+ "' has not public access" );
+	}
+
+	public static StaticVerificationException variableAlreadyDefined( String identifier ) {
+		return raise( "variable '" + identifier + "' already defined in the scope" );
+	}
+
 	// HELPERS
+
+	private static StaticVerificationException raise( String message ) {
+		return new StaticVerificationException( message );
+	}
 
 	private static AstPositionedException raise( Node node, String message ) {
 		return new AstPositionedException(
 				node.position(), new StaticVerificationException( message ) );
+	}
+
+	private static ChoralException raise( Optional< Node > node, String message ) {
+	    return node.isEmpty() ? raise(message) : raise(node.get(), message);
 	}
 
 	private static String formattedAssertTypeMessage( Type type, String format ) {

@@ -21,7 +21,7 @@
 
 package choral.types;
 
-import choral.exceptions.StaticVerificationException;
+import choral.compiler.Diagnostics;
 import choral.utils.Formatting;
 
 import java.util.EnumSet;
@@ -52,8 +52,7 @@ class ModifierUtils {
 		if( access.size() < 2 ) {
 			EnumSet< Modifier > used = EnumSet.of( PUBLIC, PRIVATE, PROTECTED );
 			used.remove( access );
-			throw new StaticVerificationException(
-					"illegal combination of modifiers " + prettyModifierList( used ) + "" );
+			throw Diagnostics.modifiersIllegalCombination( prettyModifierList( used ) );
 		}
 	}
 
@@ -64,8 +63,7 @@ class ModifierUtils {
 		copy.removeAll( allowed );
 		if( copy.size() > 0 ) { // Illegal modifiers
 			String ms = ( copy.size() > 1 ) ? "modifier " : "modifiers ";
-			throw new StaticVerificationException(
-					ms + prettyModifierList( copy ) + " not allowed " + where + "" );
+			throw Diagnostics.modifiersNotAllowed( ms, prettyModifierList( copy ), where );
 		}
 	}
 
@@ -73,8 +71,7 @@ class ModifierUtils {
 			EnumSet< Modifier > modifiers, Modifier m1, Modifier m2
 	) {
 		if( modifiers.contains( m1 ) && modifiers.contains( m2 ) ) {
-			throw new StaticVerificationException(
-					"illegal combination of modifiers '" + m1.label + "' and '" + m2.label + "'" );
+			throw Diagnostics.modifiersIllegalCombination( m1, m2 );
 		}
 	}
 

@@ -1,7 +1,7 @@
 package choral.compiler.typer.scope;
 
 import choral.ast.body.VariableDeclaration;
-import choral.exceptions.StaticVerificationException;
+import choral.compiler.Diagnostics;
 import choral.types.*;
 
 import java.util.HashMap;
@@ -38,8 +38,7 @@ public final class CallableBodyScope extends ChildScope
 		if( lookupVariable( identifier ).isEmpty() ) {
 			variables.put( identifier, declaration );
 		} else {
-			throw new StaticVerificationException( "variable '" + identifier
-					+ "' already defined in the scope" );
+			throw Diagnostics.variableAlreadyDefined( identifier );
 		}
 	}
 

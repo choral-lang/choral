@@ -1,17 +1,12 @@
 package choral.compiler.typer.scope;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import choral.ast.ImportDeclaration;
-import choral.ast.Position;
+import choral.compiler.Diagnostics;
 import choral.compiler.typer.ClassLifter;
 import choral.exceptions.AstPositionedException;
-import choral.exceptions.StaticVerificationException;
 import choral.types.*;
-import choral.types.Package;
-import choral.utils.Formatting;
 
 /**
  * Top-level scope for a single Choral source file. Resolves type names by searching the current
@@ -69,8 +64,7 @@ public final class CompilationUnitScope extends BaseScope {
 					singleImports.add( type.get() );
 				} else {
 					throw new AstPositionedException( ip.position(),
-							new StaticVerificationException(
-									"cannot resolve symbol '" + ip.name() + "'" ) );
+							Diagnostics.symbolCannotBeResolved( ip.name() ) );
 				}
 			}
 			pendingSingleImports = false;
@@ -126,15 +120,7 @@ public final class CompilationUnitScope extends BaseScope {
 				} else if( results.size() == 1 ) {
 					result = Optional.of( results.get( 0 ) );
 				} else {
-					throw new StaticVerificationException(
-						"reference to '" + query + "' is ambiguous, " +
-						results.stream().map(
-										x -> "'" + x.identifier( true ) + "'" )
-								.collect( Collectors.collectingAndThen(
-										Collectors.toList(),
-										Formatting.joiningOxfordComma() ) ) +
-						" are ambiguous"
-					);
+					throw Diagnostics.symbolIsAmbiguous( query, results );
 				}
 			}
 		}
@@ -165,10 +151,7 @@ public final class CompilationUnitScope extends BaseScope {
 
 	private void assertPublicAccess( HigherClassOrInterface type ) {
 		if( !hasPublicAccess( type ) ) {
-			throw new StaticVerificationException( type.variety().labelSingular
-					+ " '"
-					+ type.identifier( true )
-					+ "' has not public access" );
+			throw Diagnostics.typeHasNoPublicAccess( type );
 		}
 	}
 }
