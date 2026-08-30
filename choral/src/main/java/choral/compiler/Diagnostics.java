@@ -1,5 +1,6 @@
 package choral.compiler;
 
+import choral.ast.Name;
 import choral.ast.Node;
 import choral.ast.body.ClassMethodDefinition;
 import choral.ast.body.ConstructorDefinition;
@@ -621,6 +622,20 @@ public final class Diagnostics {
 	public static StaticVerificationException variableAlreadyDefined( String identifier ) {
 		return raise( "variable '" + identifier + "' already defined in the scope" );
 	}
+
+	public static AstPositionedException symbolNotFound( Node place, String symbol ) {
+    	return raise( place, "cannot resolve symbol '" + symbol + "'" );
+	}
+
+	public static StaticVerificationException symbolNotFound( String symbol ) {
+    	return raise( "cannot resolve symbol '" + symbol + "'" );
+	}
+
+	public static AstPositionedException symbolNotFound( Name symbol ) {
+    	return raise( symbol, "cannot resolve symbol '" + symbol.identifier() + "'" );
+	}
+	
+	
 
 	// HELPERS
 

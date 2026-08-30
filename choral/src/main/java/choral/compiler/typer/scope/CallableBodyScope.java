@@ -68,9 +68,9 @@ public final class CallableBodyScope extends ChildScope
 	public GroundClass lookupSuper() {
 		if( lookupThis() instanceof GroundClass c ) {
 			return c.extendedClass().orElseThrow(
-					() -> new UnresolvedSymbolException( "super" ) );
+					() -> Diagnostics.symbolNotFound( "super" ) );
 		} else {
-			throw new UnresolvedSymbolException( "super" );
+			throw Diagnostics.symbolNotFound( "super" );
 		}
 	}
 

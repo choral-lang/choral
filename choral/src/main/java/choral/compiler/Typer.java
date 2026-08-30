@@ -625,8 +625,7 @@ public class Typer {
 			HigherDataType type = scope.assertLookupDataType( n.name().identifier() );
 			List< World > worldArgs = n.worldArguments().stream()
 					.map( x -> scope.lookupWorldParameter( x.name().identifier() ).orElseThrow(
-							() -> new AstPositionedException( x.position(),
-									new UnresolvedSymbolException( x.name().identifier() ) ) ) )
+							() -> Diagnostics.symbolNotFound( x.name() ) ) )
 					.collect( Collectors.toList() );
 			List< HigherReferenceType > typeArgs = n.typeArguments().stream()
 					.map( x -> visitHigherReferenceTypeExpression( scope, x, delayBoundChecks ) )
@@ -791,7 +790,7 @@ public class Typer {
 					if( !n.isOnDemand() ) {
 						try {
 							n.setTypeAnnotation( scope.assertLookupClassOrInterface( n.name() ) );
-						} catch( UnresolvedSymbolException e ) {
+						} catch( StaticVerificationException e ) {
 							throw new AstPositionedException( n.position(), e );
 						}
 					}
@@ -1203,8 +1202,7 @@ public class Typer {
 							GroundEnum ge = (GroundEnum) guard;
 							String id = label.argument().identifier();
 							if( ge.field( id ).isEmpty() ) {
-								throw new AstPositionedException( label.argument().position(),
-										new UnresolvedSymbolException( id ) );
+								throw Diagnostics.symbolNotFound( label.argument() );
 							} else {
 								if( !casesFound.add( id ) ) {
 									throw Diagnostics.switchStatementDuplicateCase( label.argument(), id );
@@ -1697,8 +1695,7 @@ public class Typer {
 				left = null;
 				leftStatic = false;
 				if( result.isEmpty() ) {
-					throw new AstPositionedException( n.position(),
-							new UnresolvedSymbolException( identifier ) );
+					throw Diagnostics.symbolNotFound( n, identifier );
 				} else {
 					recordDependencies( n, result.get(), homeWorlds );
 					return annotate( n, result.get() );
@@ -1714,8 +1711,7 @@ public class Typer {
 				// current scope. If any worldarguments can't be found, throw exception.
 				List< World > worldArgs = m.worldArguments().stream()
 						.map( x -> scope.lookupWorldParameter( x.name().identifier() ).orElseThrow(
-								() -> new AstPositionedException( x.position(),
-										new UnresolvedSymbolException( x.name().identifier() ) ) ) )
+								() -> Diagnostics.symbolNotFound( x.name() ) ) )
 						.collect( Collectors.toList() );
 				if( !m.typeArguments().isEmpty() ) {
 					throw Diagnostics.staticMemberUnexpectedTypeArgument( m.typeArguments().get( 0 ) );
