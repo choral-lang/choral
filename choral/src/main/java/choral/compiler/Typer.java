@@ -33,6 +33,7 @@ import choral.ast.visitors.AbstractChoralVisitor;
 import choral.compiler.typer.ClassLifter;
 import choral.compiler.typer.Phase;
 import choral.compiler.typer.TaskQueue;
+import choral.compiler.typer.TypeError;
 import choral.compiler.typer.scope.*;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.StaticVerificationException;
@@ -137,7 +138,7 @@ public class Typer {
 		);
 
 		private void checkExtendsForCycles(
-				GroundClassOrInterface type, GroundClassOrInterface supertype
+				Node node, GroundClassOrInterface type, GroundClassOrInterface supertype
 		) {
 			if( !supertype.isInheritanceFinalised() ) {
 				TaskQueue.Task hs = taskQueue.hierarchyConstructionTasks.get(
@@ -145,9 +146,7 @@ public class Typer {
 				hs.prepare(); // no-op unless waiting
 				hs.run();     // no-op unless ready
 				if( hs.status() != TaskQueue.Task.Status.FINISHED ) {
-					throw new StaticVerificationException(
-							"Cyclic inheritance: '" + type + "' cannot extend '" + supertype
-									+ "'" );
+					TypeError.cyclicInheritance( node, type, supertype );
 				}
 			}
 		}
@@ -174,7 +173,8 @@ public class Typer {
 				if( n.superClass().isEmpty() ) {
 					t.innerType().setExtendedClass(); // default
 					if( t.innerType().extendedClass().isPresent() ) {
-						checkExtendsForCycles( t.innerType(), t.innerType().extendedClass().get() );
+						checkExtendsForCycles( n, t.innerType(),
+								t.innerType().extendedClass().get() );
 					}
 				} else {
 					try {
@@ -182,7 +182,7 @@ public class Typer {
 								classOrInterfaceStaticScope.getInstanceScope(),
 								n.superClass().get(), true );
 						t.innerType().setExtendedClass( s );
-						checkExtendsForCycles( t.innerType(), s );
+						checkExtendsForCycles( n, t.innerType(), s );
 					} catch( StaticVerificationException e ) {
 						throw new AstPositionedException( n.superClass().get().position(), e );
 					}
@@ -193,7 +193,7 @@ public class Typer {
 								classOrInterfaceStaticScope.getInstanceScope(),
 								x, true );
 						t.innerType().addExtendedInterface( s );
-						checkExtendsForCycles( t.innerType(), s );
+						checkExtendsForCycles( x, t.innerType(), s );
 					} catch( StaticVerificationException e ) {
 						throw new AstPositionedException( x.position(), e );
 					}
@@ -231,9 +231,7 @@ public class Typer {
 						ms.add( Modifier.valueOf( x.name() ) );
 					}
 					if( ms.contains( Modifier.ABSTRACT ) && !t.isAbstract() ) {
-						throw new AstPositionedException( nm.position(),
-								new StaticVerificationException(
-										"abstract method in non-abstract class" ) );
+						TypeError.abstractMethodInConcreteClass( nm );
 					}
 					List< HigherTypeParameter > typeParams = visitTypeParameters(
 							nm.signature().typeParameters() );
@@ -251,9 +249,7 @@ public class Typer {
 							true );
 					for( VariableDeclaration x : nm.signature().parameters() ) {
 						if( x.type().isEmpty() ) {
-							throw new AstPositionedException( x.position(),
-									new StaticVerificationException(
-											"parameters cannot use the var keyword" ) );
+							TypeError.parameterUsesVar( x );
 						}
 						GroundDataType parameterType =
 								visitGroundDataTypeExpression(
@@ -267,9 +263,7 @@ public class Typer {
 					if( r.name().identifier().equals( "void" ) ) {
 						if( !( r.worldArguments().isEmpty() && r.typeArguments().isEmpty() ) ) {
 							// void should not be in a type expression
-							throw new AstPositionedException( r.position(),
-									new StaticVerificationException(
-											"illegal type instantiation, expected 0 role and 0 type arguments" ) );
+							TypeError.illegalVoidInstantiation( r );
 						}
 						tm.innerCallable().setReturnType( universe.voidType() );
 					} else {
@@ -287,7 +281,7 @@ public class Typer {
 					}
 					taskQueue.enqueue( Phase.MEMBER_DEFINITIONS, () -> {
 						try {
-							visitMethodBody( callableScope.getScope(), tm,
+							visitMethodBody( callableScope.getScope(), tm, nm,
 									nm.body().orElse( null ) );
 						} catch( StaticVerificationException e ) {
 							throw new AstPositionedException( nm.position(), e );
@@ -296,7 +290,7 @@ public class Typer {
 				}
 				Map< Member.HigherConstructor, Member.HigherConstructor > constructorDependencies =
 						new HashMap<>( n.constructors().size() );
-				Map< Member.HigherConstructor, Position > explicitConstructorInvocations =
+				Map< Member.HigherConstructor, MethodCallExpression > explicitConstructorInvocations =
 						new HashMap<>( n.constructors().size() );
 				for( ConstructorDefinition nm : n.constructors() ) {
 					EnumSet< Modifier > ms = EnumSet.noneOf( Modifier.class );
@@ -317,9 +311,7 @@ public class Typer {
 							callableScope, nm.signature().typeParameters(), false );
 					for( VariableDeclaration x : nm.signature().parameters() ) {
 						if( x.type().isEmpty() ) {
-							throw new AstPositionedException( x.position(),
-									new StaticVerificationException(
-											"parameters cannot use the var keyword" ) );
+							TypeError.parameterUsesVar( x );
 						}
 						GroundDataType parameterType = visitGroundDataTypeExpression(
 								callableScope, x.type().get(), false );
@@ -360,10 +352,7 @@ public class Typer {
 			}
 			String name = n.name().identifier();
 			if( n.worldParameters().size() != 1 ) {
-				throw new AstPositionedException(
-						( n.worldParameters().isEmpty() ) ? n.position() :
-								n.worldParameters().get( 1 ).position(),
-						new StaticVerificationException( "enums must have exactly one role" ) );
+				TypeError.invalidEnumRoles( n );
 			}
 			HigherEnum t = new HigherEnum(
 					pkg,
@@ -375,7 +364,7 @@ public class Typer {
 			n.setTypeAnnotation( t ); // annotate AST
 			TaskQueue.Task ht = new TaskQueue.Task( Phase.HIERARCHY, () -> {
 				t.innerType().setExtendedClass(); // default
-				checkExtendsForCycles( t.innerType(), t.innerType().extendedClass().get() );
+				checkExtendsForCycles( n, t.innerType(), t.innerType().extendedClass().get() );
 				t.innerType().finaliseInheritance();
 				taskQueue.hierarchyConstructionTasks.remove( t );
 				if( !t.innerType().isInstantiationChecked() ) {
@@ -428,7 +417,7 @@ public class Typer {
 								classOrInterfaceStaticScope.getInstanceScope(),
 								x, true );
 						t.innerType().addExtendedInterface( s );
-						checkExtendsForCycles( t.innerType(), s );
+						checkExtendsForCycles( x, t.innerType(), s );
 					} catch( StaticVerificationException e ) {
 						throw new AstPositionedException( x.position(), e );
 					}
@@ -463,9 +452,7 @@ public class Typer {
 							true );
 					for( VariableDeclaration x : nm.signature().parameters() ) {
 						if( x.type().isEmpty() ) {
-							throw new AstPositionedException( x.position(),
-									new StaticVerificationException(
-											"parameters cannot use the var keyword" ) );
+							TypeError.parameterUsesVar( x );
 						}
 						GroundDataType parameterType =
 								visitGroundDataTypeExpression( methodScope, x.type().get(), false );
@@ -478,9 +465,7 @@ public class Typer {
 					if( r.name().identifier().equals( "void" ) ) {
 						if( !( r.worldArguments().isEmpty() && r.typeArguments().isEmpty() ) ) {
 							// void should not be in a type expression
-							throw new AstPositionedException( r.position(),
-									new StaticVerificationException(
-											"illegal type instantiation, expected 0 role and 0 type arguments" ) );
+							TypeError.illegalVoidInstantiation( r );
 						}
 						tm.innerCallable().setReturnType( universe.voidType() );
 					} else {
@@ -494,7 +479,7 @@ public class Typer {
 					t.innerType().addMethod( tm );
 					taskQueue.enqueue( Phase.MEMBER_DEFINITIONS, () -> {
 						try {
-							visitMethodBody( methodScope.getScope(), tm,
+							visitMethodBody( methodScope.getScope(), tm, nm,
 									nm.body().orElse( null ) );
 						} catch( StaticVerificationException e ) {
 							throw new AstPositionedException( nm.position(), e );
@@ -513,7 +498,7 @@ public class Typer {
 
 		protected abstract void checkConstructorsDependencies(
 				Map< Member.HigherConstructor, Member.HigherConstructor > dependencies,
-				Map< Member.HigherConstructor, Position > positions
+				Map< Member.HigherConstructor, MethodCallExpression > positions
 		);
 
 		private void checkIfSelectionMethod(
@@ -522,65 +507,37 @@ public class Typer {
 			for( Annotation x : annotations ) {
 				if( x.getName().identifier().equals( SELECTION_METHOD_ANNOTATION ) ) {
 					if( tm.typeParameters().size() != 1 ) {
-						throw new AstPositionedException( x.position(),
-								new StaticVerificationException(
-										"illegal selection method, expected 1 type parameter, found "
-												+ tm.typeParameters().size() ) );
+						TypeError.selectionMethodTypeParameterCount( x,
+								tm.typeParameters().size() );
 					}
 					HigherTypeParameter tp = tm.typeParameters().get( 0 );
 					if( tp.innerType().upperClass().specialTypeTag() != SpecialTypeTag.ENUM
 							|| tp.innerType().upperInterfaces().findAny().isPresent() ) {
-						throw new AstPositionedException( x.position(),
-								new StaticVerificationException(
-										"illegal selection method, the type parameter must be bounded exactly by '"
-												+ SpecialTypeTag.ENUM + "'" ) );
+						TypeError.selectionMethodTypeParameterBound( x );
 					}
 					if( tm.arity() != 1 ) {
-						throw new AstPositionedException( x.position(),
-								new StaticVerificationException(
-										"illegal selection method, expected 1 method parameter, found "
-												+ tm.innerCallable().signature().arity() ) );
+						TypeError.selectionMethodParameterCount( x,
+								tm.innerCallable().signature().arity() );
 					}
 					GroundDataType mp = tm.innerCallable().signature().parameters()
 							.get( 0 ).type();
 					if( mp.worldArguments().size() != 1 || !mp.isEquivalentTo(
 							tp.applyTo( mp.worldArguments() ) ) ) {
 						List< World > ws = World.freshWorlds( universe(), 1, "X" );
-						throw new AstPositionedException( x.position(),
-								new StaticVerificationException(
-										"illegal selection method, expected a method parameter of type '"
-												+ tp.applyTo( ws )
-												+ "' for some "
-												+ Formatting.joiningQuotedAndOxfordComma( ws )
-												+ ", found one of type '" + mp
-												+ "'" ) );
+						TypeError.selectionMethodParameterOneOfType( x, tp.applyTo( ws ), ws, mp );
 					}
 					if( tm.innerCallable().returnType().isVoid() ) {
 						List< World > ws = World.freshWorlds( universe(), 1, "X" );
-						throw new AstPositionedException( x.position(),
-								new StaticVerificationException(
-										"illegal selection method, expected return type '"
-												+ tp.applyTo( ws )
-												+ "' for some "
-												+ Formatting.joiningQuotedAndOxfordComma( ws )
-												+ ", found 'void'" ) );
+						TypeError.selectionMethodVoidReturn( x, tp.applyTo( ws ), ws );
 					}
 					GroundDataType tr = (GroundDataType) tm.innerCallable().returnType();
 					if( tr.worldArguments().size() != 1 || !tr.isEquivalentTo(
 							tp.applyTo( tr.worldArguments() ) ) ) {
 						List< World > ws = World.freshWorlds( universe(), 1, "X" );
-						throw new AstPositionedException( x.position(),
-								new StaticVerificationException(
-										"illegal selection method, expected a method parameter of type '"
-												+ tp.applyTo( ws )
-												+ "' for some "
-												+ Formatting.joiningQuotedAndOxfordComma( ws )
-												+ ", found '" + mp + "'" ) );
+						TypeError.selectionMethodParameterType( x, tp.applyTo( ws ), ws, mp );
 					}
 					if( mp.worldArguments().equals( tr.worldArguments() ) ) {
-						throw new AstPositionedException( x.position(),
-								new StaticVerificationException(
-										"illegal selection method, roles of the method parameter and return type must be distinct" ) );
+						TypeError.selectionMethodRolesNotDistinct( x );
 					}
 
 					tm.setSelectionMethod();
@@ -605,14 +562,14 @@ public class Typer {
 		protected abstract void visitMethodBody(
 				CallableBodyScope bodyScope,
 				Member.HigherMethod callable,
-				Statement body
+				MethodDefinition declaration, Statement body
 		);
 
 		protected abstract void visitConstructorBody(
 				CallableBodyScope bodyScope, Member.HigherConstructor callable,
 				ConstructorDefinition n,
 				Map< Member.HigherConstructor, Member.HigherConstructor > dependencies,
-				Map< Member.HigherConstructor, Position > positions
+				Map< Member.HigherConstructor, MethodCallExpression > positions
 		);
 
 		private List< World > visitWorldParameters( List< FormalWorldParameter > worldParameters ) {
@@ -710,137 +667,77 @@ public class Typer {
 		protected HigherReferenceType visitHigherReferenceTypeExpression(
 				Scope scope, TypeExpression n, boolean delayBoundChecks
 		) {
-			try {
-				return assertHigherReferenceType(
-						visitTypeExpression( scope, n, delayBoundChecks ) );
-			} catch( StaticVerificationException e ) {
-				throw new AstPositionedException( n.position(), e );
-			}
+			return assertHigherReferenceType(
+					n, visitTypeExpression( scope, n, delayBoundChecks ) );
 		}
 
 		protected GroundDataType visitGroundDataTypeExpression(
 				Scope scope, TypeExpression n, boolean delayBoundChecks
 		) {
-			try {
-				return assertGroundDataType(
-						visitTypeExpression( scope, n, delayBoundChecks ) );
-			} catch( StaticVerificationException e ) {
-				throw new AstPositionedException( n.position(), e );
-			}
+			return assertGroundDataType(
+					n, visitTypeExpression( scope, n, delayBoundChecks ) );
 		}
 
 		protected GroundReferenceType visitGroundReferenceTypeExpression(
 				Scope scope, TypeExpression n, boolean delayBoundChecks
 		) {
-			try {
-				return assertGroundReferenceType(
-						visitTypeExpression( scope, n, delayBoundChecks ) );
-			} catch( StaticVerificationException e ) {
-				throw new AstPositionedException( n.position(), e );
-			}
+			return assertGroundReferenceType(
+					n, visitTypeExpression( scope, n, delayBoundChecks ) );
 		}
 
 		protected GroundInterface visitGroundInterfaceExpression(
 				Scope scope, TypeExpression n, boolean delayBoundChecks
 		) {
-			try {
-				return assertGroundInterface(
-						visitTypeExpression( scope, n, delayBoundChecks ) );
-			} catch( StaticVerificationException e ) {
-				throw new AstPositionedException( n.position(), e );
-			}
+			return assertGroundInterface(
+					n, visitTypeExpression( scope, n, delayBoundChecks ) );
 		}
 
 		protected GroundClass visitGroundClassExpression(
 				Scope scope, TypeExpression n, boolean delayBoundChecks
 		) {
-			try {
-				return assertGroundClass( visitTypeExpression( scope, n, delayBoundChecks ) );
-			} catch( StaticVerificationException e ) {
-				throw new AstPositionedException( n.position(), e );
-			}
+			return assertGroundClass( n, visitTypeExpression( scope, n, delayBoundChecks ) );
 		}
 
-		private static String formattedAssertTypeMessage( Type type, String format ) {
-			String m;
-			if( type instanceof GroundEnum ) {
-				m = "an enum";
-			} else if( type instanceof GroundClass ) {
-				m = "a class";
-			} else if( type instanceof GroundInterface ) {
-				m = "an interface";
-			} else if( type instanceof GroundPrimitiveDataType ) {
-				m = "a primitive type";
-			} else if( type instanceof HigherEnum ) {
-				m = "a higher-kinded enum";
-			} else if( type instanceof HigherClass ) {
-				m = "a higher-kinded class";
-			} else if( type instanceof HigherInterface ) {
-				m = "a higher-kinded interface";
-			} else if( type instanceof HigherPrimitiveDataType ) {
-				m = "a higher-kinded primitive type";
-			} else if( type instanceof HigherReferenceType ) {
-				m = "a higher-kinded reference type";
-			} else if( type instanceof HigherDataType ) {
-				m = "a higher-kinded data type";
-			} else {
-				m = "a role";
+		private static HigherReferenceType assertHigherReferenceType( TypeExpression n, Type t ) {
+			if( !( t instanceof HigherReferenceType ) ) {
+				TypeError.requiredHigherReferenceType( n, t );
 			}
-			return String.format( format, type, type.kind(), m );
+			return (HigherReferenceType) t;
 		}
 
-		private static HigherReferenceType assertHigherReferenceType( Type t ) {
-			if( t instanceof HigherReferenceType ) {
-				return (HigherReferenceType) t;
-			} else {
-				throw new StaticVerificationException( formattedAssertTypeMessage( t,
-						"higher-kinded reference type expected, '%1$s' is %3$s" ) );
+		private static GroundDataType assertGroundDataType( TypeExpression n, Type t ) {
+			if( !( t instanceof GroundDataType ) ) {
+				TypeError.requiredDataType( n, t );
 			}
+			return (GroundDataType) t;
 		}
 
-		private static GroundDataType assertGroundDataType( Type t ) {
-			if( t instanceof GroundDataType ) {
-				return (GroundDataType) t;
-			} else {
-				throw new StaticVerificationException(
-						formattedAssertTypeMessage( t, "data type expected, '%1$s' is %3$s" ) );
+		private static GroundReferenceType assertGroundReferenceType( TypeExpression n, Type t ) {
+			if( !( t instanceof GroundReferenceType ) ) {
+				TypeError.requiredReferenceType( n, t );
 			}
+			return (GroundReferenceType) t;
 		}
 
-		private static GroundReferenceType assertGroundReferenceType( Type t ) {
-			if( t instanceof GroundReferenceType ) {
-				return (GroundReferenceType) t;
-			} else {
-				throw new StaticVerificationException( formattedAssertTypeMessage( t,
-						"reference type expected, '%1$s' is %3$s" ) );
+		private static GroundClass assertGroundClass( TypeExpression n, Type t ) {
+			if( !( t instanceof GroundClass ) ) {
+				TypeError.requiredClass( n, t );
 			}
+			return (GroundClass) t;
 		}
 
-		private static GroundClass assertGroundClass( Type t ) {
-			if( t instanceof GroundClass ) {
-				return (GroundClass) t;
-			} else {
-				throw new StaticVerificationException(
-						formattedAssertTypeMessage( t, "class expected, '%1$s' is %3$s" ) );
+		private static GroundInterface assertGroundInterface( TypeExpression n, Type t ) {
+			if( !( t instanceof GroundInterface ) ) {
+				TypeError.requiredInterface( n, t );
 			}
+			return (GroundInterface) t;
 		}
 
-		private static GroundInterface assertGroundInterface( Type t ) {
-			if( t instanceof GroundInterface ) {
-				return (GroundInterface) t;
-			} else {
-				throw new StaticVerificationException(
-						formattedAssertTypeMessage( t, "interface expected, '%1$s' is %3$s" ) );
+		private static GroundEnum assertGroundEnum( TypeExpression n, Type t ) {
+			if( !( t instanceof GroundEnum ) ) {
+				TypeError.requiredEnum( n, t );
 			}
-		}
-
-		private static GroundEnum assertGroundEnum( Type t ) {
-			if( t instanceof GroundEnum ) {
-				return (GroundEnum) t;
-			} else {
-				throw new StaticVerificationException(
-						formattedAssertTypeMessage( t, "enum expected, '%1$s' is %3$s" ) );
-			}
+			return (GroundEnum) t;
 		}
 
 		< N extends WithTypeAnnotation< ? super T >, T > T annotate( N n, T t ) {
@@ -865,14 +762,15 @@ public class Typer {
 		@Override
 		protected void checkConstructorsDependencies(
 				Map< Member.HigherConstructor, Member.HigherConstructor > dependencies,
-				Map< Member.HigherConstructor, Position > positions
+				Map< Member.HigherConstructor, MethodCallExpression > positions
 		) {
 			/* header files may specify constructor bodies but are ignored */
 		}
 
 		@Override
 		protected void visitMethodBody(
-				CallableBodyScope bodyScope, Member.HigherMethod callable, Statement body
+				CallableBodyScope bodyScope, Member.HigherMethod callable,
+				MethodDefinition declaration, Statement body
 		) {
 			/* header files may specify method bodies but are ignored */
 		}
@@ -882,7 +780,7 @@ public class Typer {
 				CallableBodyScope bodyScope, Member.HigherConstructor callable,
 				ConstructorDefinition n,
 				Map< Member.HigherConstructor, Member.HigherConstructor > dependencies,
-				Map< Member.HigherConstructor, Position > positions
+				Map< Member.HigherConstructor, MethodCallExpression > positions
 		) {
 			/* header files may specify constructor bodies but are ignored */
 		}
@@ -922,12 +820,8 @@ public class Typer {
 			String primaryType = sourceFile.substring( j, k );
 
 			if( n.isPublic() && !n.name().identifier().equals( primaryType ) ) {
-				throw new AstPositionedException( n.position(),
-						new StaticVerificationException( family
-								+ " '" + n.name().identifier()
-								+ "' is public, should be declared in a file named '"
-								+ n.name().identifier()
-								+ SourceObject.ChoralSourceObject.FILE_EXTENSION + "'" ) );
+				TypeError.publicTypeFileName( n, family, n.name().identifier(),
+						SourceObject.ChoralSourceObject.FILE_EXTENSION );
 			}
 
 		}
@@ -935,7 +829,7 @@ public class Typer {
 		@Override
 		protected void checkConstructorsDependencies(
 				Map< Member.HigherConstructor, Member.HigherConstructor > dependencies,
-				Map< Member.HigherConstructor, Position > positions
+				Map< Member.HigherConstructor, MethodCallExpression > positions
 		) {
 			Queue< Member.HigherConstructor > q = new LinkedList<>( dependencies.keySet() );
 			List< Member.HigherConstructor > v = new ArrayList<>( dependencies.keySet() );
@@ -944,9 +838,7 @@ public class Typer {
 				Member.HigherConstructor c = q.peek();
 				while( c != null ) {
 					if( v.contains( c ) ) {
-						throw new AstPositionedException( positions.get( c ),
-								new StaticVerificationException(
-										"recursive constructor invocation" ) );
+						TypeError.recursiveConstructorInvocation( positions.get( c ) );
 					}
 					v.add( c );
 					q.remove( c );
@@ -957,27 +849,24 @@ public class Typer {
 
 		@Override
 		protected void visitMethodBody(
-				CallableBodyScope bodyScope, Member.HigherMethod callable, Statement body
+				CallableBodyScope bodyScope, Member.HigherMethod callable,
+				MethodDefinition declaration, Statement body
 		) {
 			if( callable.isAbstract() ) {
 				if( body != null ) {
-					throw new AstPositionedException( body.position(),
-							new StaticVerificationException(
-									"abstract methods cannot have bodies" ) );
+					TypeError.abstractMethodHasBody( body );
 				}
 				// nothing to check :)
 			} else {
 				if( body == null ) {
-					throw new StaticVerificationException(
-							"non-abstract methods must have bodies" );
+					TypeError.concreteMethodMissingBody( declaration );
 				} else {
 					callable.addChannel( bodyScope.getChannels() );
 					boolean returnChecked = check(
 							body, callable.innerCallable().returnType(), bodyScope, callable
 					);
 					if( !callable.innerCallable().returnType().isVoid() && !returnChecked ) {
-						throw new AstPositionedException( body.position(),
-								new StaticVerificationException( "missing return statement" ) );
+						TypeError.missingReturnStatement( body );
 					}
 				}
 			}
@@ -989,7 +878,7 @@ public class Typer {
 				Member.HigherConstructor callable,
 				ConstructorDefinition d,
 				final Map< Member.HigherConstructor, Member.HigherConstructor > dependencies,
-				final Map< Member.HigherConstructor, Position > positions
+				final Map< Member.HigherConstructor, MethodCallExpression > positions
 		) {
 			if( d.explicitConstructorInvocation().isEmpty() ) {
 				GroundClass t = scope.lookupSuper();
@@ -997,27 +886,20 @@ public class Typer {
 						.filter( x -> x.isAccessibleFrom( scope.lookupThis() ) )
 						.noneMatch( x -> x.typeParameters().size() == 0 && x.arity() == 0 )
 				) {
-					throw new AstPositionedException( d.position(),
-							new StaticVerificationException(
-									"there is no default constructor available in '" + t + "'" ) );
+					TypeError.missingDefaultConstructor( d, t );
 				}
 			} else {
 				MethodCallExpression n = d.explicitConstructorInvocation().get();
 				GroundClass t = ( "this".equals( n.name().identifier() ) ) ?
 						(GroundClass) scope.lookupThis() : scope.lookupSuper();
 				if( t == null ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException(
-									"cannot resolve 'super', class '"
-											+ scope.lookupThis().typeConstructor()
-											+ "' does not extend any class" ) );
+					TypeError.unresolvedSuper( n, scope.lookupThis().typeConstructor() );
 				}
 				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
 						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = n.arguments().stream()
-						.map( x -> assertNotVoid( synth( scope, x, true, callable ),
-								x.position() ) )
+						.map( x -> assertNotVoid( synth( scope, x, true, callable ), x ) )
 						.collect( Collectors.toList() );
 				List< ? extends Member.GroundCallable > ms = findMostSpecificCallable(
 						typeArgs,
@@ -1025,28 +907,14 @@ public class Typer {
 						t.constructors().filter( x -> x.isAccessibleFrom( scope.lookupThis() ) )
 				);
 				if( ms.isEmpty() ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException( "cannot resolve constructor '" + t +
-									args.stream().map( Object::toString ).collect( Formatting
-											.joining( ",", "(", ")", "" ) )
-									+ "'" ) );
+					TypeError.unresolvedConstructor( n, t, args );
 				} else if( ms.size() > 1 ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException( "ambiguous constructor invocation, " +
-									ms.stream().map( x -> "'" + t +
-											x.signature().parameters().stream()
-													.map( y -> y.type().toString() )
-													.collect( Formatting.joining( ",", "(", ")",
-															"" ) )
-											+ "'" )
-											.collect( Collectors.collectingAndThen(
-													Collectors.toList(),
-													Formatting.joiningOxfordComma() ) ) ) );
+					TypeError.ambiguousConstructor( n, t, ms );
 				}
 				Member.GroundConstructor selected = (Member.GroundConstructor) ms.get( 0 );
 				// n.setMethodAnnotation( selected );
 				dependencies.put( callable, selected.higherCallable() );
-				positions.put( callable, n.position() );
+				positions.put( callable, n );
 			}
 			callable.addChannel( scope.getChannels() ); // find all available channels
 			check( d.blockStatements(), universe().voidType(), scope, callable );
@@ -1242,13 +1110,11 @@ public class Typer {
 			).visit( n );
 		}
 
-		GroundDataType assertNotVoid( GroundDataTypeOrVoid t, Position position ) {
+		GroundDataType assertNotVoid( GroundDataTypeOrVoid t, Expression node ) {
 			if( t.isVoid() ) {
-				throw new AstPositionedException( position,
-						new StaticVerificationException( "data type expected, found 'void'" ) );
-			} else {
-				return (GroundDataType) t;
+				TypeError.requiredDataTypeForVoid( node );
 			}
+			return (GroundDataType) t;
 		}
 
 		private final class Check extends AbstractChoralVisitor< Boolean > {
@@ -1310,10 +1176,8 @@ public class Typer {
 				GroundDataTypeOrVoid type = synth( n.condition(), n );
 				if( type.primitiveTypeTag() != PrimitiveTypeTag.BOOLEAN &&
 						type.specialTypeTag() != SpecialTypeTag.BOOLEAN ) {
-					throw new AstPositionedException( n.condition().position(),
-							new StaticVerificationException( "required an instance of type '"
-									+ PrimitiveTypeTag.BOOLEAN
-									+ "', found '" + type + "'" ) );
+					TypeError.requiredInstance( n.condition(), PrimitiveTypeTag.BOOLEAN,
+							type );
 				}
 				boolean returnChecked = visitAsInBlock( n.ifBranch() );
 				returnChecked &= visitAsInBlock( n.elseBranch() );
@@ -1336,17 +1200,7 @@ public class Typer {
 				if( !legalSwitchPrimitiveTypes.contains( guard.primitiveTypeTag() )
 						&& !legalSwitchSpecialTypes.contains( guard.specialTypeTag() )
 						&& !guard.isEnum() ) {
-					throw new AstPositionedException( n.guard().position(),
-							new StaticVerificationException( "incompatible types, found '" + guard
-									+ "', required an instance of '" + PrimitiveTypeTag.CHAR
-									+ "', '" + PrimitiveTypeTag.BYTE
-									+ "', '" + PrimitiveTypeTag.SHORT
-									+ "', '" + PrimitiveTypeTag.INT
-									+ "', '" + SpecialTypeTag.BYTE
-									+ "', '" + SpecialTypeTag.SHORT
-									+ "', '" + SpecialTypeTag.INTEGER
-									+ "', '" + SpecialTypeTag.STRING
-									+ "', or an enum type" ) );
+					TypeError.invalidSwitchGuard( n.guard(), guard );
 				}
 				boolean returnChecked = true;
 				// determines whether a case falls into the default case or not.
@@ -1362,29 +1216,20 @@ public class Typer {
 										new UnresolvedSymbolException( id ) );
 							} else {
 								if( !casesFound.add( id ) ) {
-									throw new AstPositionedException( label.argument().position(),
-											new StaticVerificationException(
-													"duplicate case '" + id + "'" ) );
+									TypeError.duplicateCase( label.argument(), id );
 								}
 							}
 						} else {
-							throw new AstPositionedException( label.argument().position(),
-									new StaticVerificationException(
-											"required a literal of type '" + guard
-													+ "', found a label" ) );
+							TypeError.requiredLiteral( label.argument(), guard );
 						}
 					} else if( entry.getKey() instanceof SwitchArgument.SwitchArgumentLiteral l ) {
 						GroundDataTypeOrVoid argument = synth( l.argument(), n );
 						String s = l.argument().content().toString();
 						if( !argument.isAssignableTo( guard ) ) {
-							throw new AstPositionedException( l.position(),
-									new StaticVerificationException( "required type '" + guard
-											+ "', found '" + guard + "'" ) );
+							TypeError.requiredType( l, guard, guard );
 						}
 						if( !casesFound.add( s ) ) {
-							throw new AstPositionedException( l.argument().position(),
-									new StaticVerificationException(
-											"duplicate case '" + s + "'" ) );
+							TypeError.duplicateCase( l.argument(), s );
 						}
 					} else {
 						hasDefault = true;
@@ -1401,9 +1246,7 @@ public class Typer {
 				// The "VariableDeclaration" here represents the caught exception
 				for( Pair< VariableDeclaration, Statement > c : n.catches() ) {
 					if( c.left().type().isEmpty() ) {
-						throw new AstPositionedException( c.left().position(),
-								new StaticVerificationException(
-										"catch bindings cannot use the var keyword" ) );
+						TypeError.catchBindingUsesVar( c.left() );
 					}
 					// get the type of the exception
 					GroundDataType te = visitGroundDataTypeExpression(
@@ -1416,10 +1259,8 @@ public class Typer {
 							te.isSubtypeOf( expectedType );
 					// exceptions only allowed one role
 					if( te.worldArguments().size() > 1 || !isSubtype ) {
-						throw new AstPositionedException( c.left().type().get().position(),
-								new StaticVerificationException( "required an instance of type '"
-										+ SpecialTypeTag.EXCEPTION
-										+ "', found '" + te + "'" ) );
+						TypeError.requiredInstance( c.left().type().get(), SpecialTypeTag.EXCEPTION,
+								te );
 					}
 					openBlock();  // ---
 					try {
@@ -1443,34 +1284,25 @@ public class Typer {
 			@Override
 			public Boolean visit( ReturnStatement n ) {
 				if( n.returnExpression() == null ) {
-					if( expected == universe().voidType() ) {
-						return assertReachableContinuation( n, true );
-					} else {
-						throw new AstPositionedException( n.position(),
-								new StaticVerificationException(
-										"missing return value" ) );
+					if( expected != universe().voidType() ) {
+						TypeError.missingReturnValue( n );
 					}
-				} else {
-					if( expected instanceof GroundDataType expected ) {
-						List< ? extends World > expectedLocation = expected.worldArguments();
-						GroundDataTypeOrVoid found =
-								synth( n.returnExpression(), n, expectedLocation );
-						boolean isAssignable = opts.relaxed() ?
-								found.isAssignableTo_relaxed( expected ) :
-								found.isAssignableTo( expected );
-						if( !isAssignable ) {
-							throw new AstPositionedException( n.position(),
-									new StaticVerificationException(
-											"required type '" + expected + "', found '" + found
-													+ "'" ) );
-						}
-						return assertReachableContinuation( n, true );
-					} else {
-						throw new AstPositionedException( n.returnExpression().position(),
-								new StaticVerificationException(
-										"cannot return a value from a method with 'void' result type" ) );
-					}
+					return assertReachableContinuation( n, true );
 				}
+
+				if( !( expected instanceof GroundDataType ) ) {
+					TypeError.valueReturnedFromVoid( n.returnExpression() );
+				}
+				GroundDataType expectedDataType = (GroundDataType) expected;
+				List< ? extends World > expectedLocation = expectedDataType.worldArguments();
+				GroundDataTypeOrVoid found = synth( n.returnExpression(), n, expectedLocation );
+				boolean isAssignable = opts.relaxed() ?
+						found.isAssignableTo_relaxed( expectedDataType ) :
+						found.isAssignableTo( expectedDataType );
+				if( !isAssignable ) {
+					TypeError.requiredType( n, expectedDataType, found );
+				}
+				return assertReachableContinuation( n, true );
 			}
 
 			@Override
@@ -1481,12 +1313,12 @@ public class Typer {
 						type = visitGroundDataTypeExpression( scope, x.type().get(), false );
 						x.initializer().ifPresent( e -> checkInitializer( e, n, type ) );
 					} else {
-						AssignExpression initializer = x.initializer()
-								.orElseThrow( () -> new AstPositionedException( x.position(),
-										new StaticVerificationException(
-												"var declarations require an initializer" ) ) );
+						if( x.initializer().isEmpty() ) {
+							TypeError.varMissingInitializer( x );
+						}
+						AssignExpression initializer = x.initializer().get();
 						type = assertNotVoid(
-								synth( initializer.value(), n ), initializer.value().position() );
+								synth( initializer.value(), n ), initializer.value() );
 						initializer.target().setTypeAnnotation( type );
 						initializer.setTypeAnnotation( type );
 					}
@@ -1506,8 +1338,7 @@ public class Typer {
 			 */
 			public boolean assertReachableContinuation( Statement n, boolean returnChecked ) {
 				if( returnChecked && n.hasContinuation() ) {
-					throw new AstPositionedException( n.continuation().position(),
-							new StaticVerificationException( "unreachable statement" ) );
+					TypeError.unreachableStatement( n.continuation() );
 				}
 				returnChecked |= visit( n.continuation() );
 				n.setReturnAnnotation( returnChecked );
@@ -1533,10 +1364,7 @@ public class Typer {
 						found.isAssignableTo_relaxed( declaredType ) :
 						found.isAssignableTo( declaredType );
 				if( !assignable ) {
-					throw new AstPositionedException( initializer.position(),
-							new StaticVerificationException(
-									"required type '" + declaredType + "', found '" + found
-											+ "'" ) );
+					TypeError.requiredType( initializer, declaredType, found );
 				}
 			}
 
@@ -1649,17 +1477,13 @@ public class Typer {
 			}
 
 			private GroundPrimitiveDataType assertUnbox(
-					GroundDataTypeOrVoid type, Position position
+					GroundDataTypeOrVoid type, Expression node
 			) {
 				GroundPrimitiveDataType result = unbox( type );
 				if( result == null ) {
-					throw new AstPositionedException( position,
-							new StaticVerificationException(
-									"primitive type expected, '" + type
-											+ "' cannot be converted" ) );
-				} else {
-					return result;
+					TypeError.requiredPrimitiveType( node, type );
 				}
+				return result;
 			}
 
 			private GroundPrimitiveDataType unbox( GroundDataTypeOrVoid type ) {
@@ -1681,13 +1505,10 @@ public class Typer {
 			private GroundDataType visitBinaryOp(
 					BinaryExpression.Operator operator, GroundDataTypeOrVoid tvl,
 					GroundDataTypeOrVoid tvr,
-					Position position
+					Expression node
 			) {
 				if( tvl.isVoid() || tvr.isVoid() ) {
-					throw new AstPositionedException( position,
-							new StaticVerificationException( "cannot apply '"
-									+ operator + "' to '" + tvl
-									+ "' and '" + tvr + "'" ) );
+					TypeError.cannotApplyBinary( node, operator, tvl, tvr );
 				}
 
 				GroundDataType leftType = (GroundDataType) tvl;
@@ -1703,10 +1524,7 @@ public class Typer {
 							rightType.worldArguments().size() == 1 &&
 							leftType.worldArguments().equals( rightType.worldArguments() ) )
 					) {
-						throw new AstPositionedException( position,
-								new StaticVerificationException( "cannot apply '"
-										+ operator + "' to '" + tvl
-										+ "' and '" + tvr + "'" ) );
+						TypeError.cannotApplyBinary( node, operator, tvl, tvr );
 					}
 				}
 
@@ -1730,8 +1548,8 @@ public class Typer {
 					case MULTIPLY:
 					case DIVIDE:
 					case REMAINDER:
-						pl = assertUnbox( leftType, position );
-						pr = assertUnbox( rightType, position );
+						pl = assertUnbox( leftType, node );
+						pr = assertUnbox( rightType, node );
 						if( pl.primitiveTypeTag().isNumeric()
 								&& pr.primitiveTypeTag().isNumeric() ) {
 							GroundPrimitiveDataType p =
@@ -1749,8 +1567,8 @@ public class Typer {
 					case LESS_EQUALS:
 					case GREATER:
 					case GREATER_EQUALS:
-						pl = assertUnbox( leftType, position );
-						pr = assertUnbox( rightType, position );
+						pl = assertUnbox( leftType, node );
+						pr = assertUnbox( rightType, node );
 						if( pl.primitiveTypeTag().isNumeric()
 								&& pr.primitiveTypeTag().isNumeric() ) {
 							return universe().primitiveDataType( PrimitiveTypeTag.BOOLEAN )
@@ -1759,8 +1577,8 @@ public class Typer {
 						break;
 					case OR: // bitwise / non-short-circuting comparison.
 					case AND:
-						pl = assertUnbox( leftType, position );
-						pr = assertUnbox( rightType, position );
+						pl = assertUnbox( leftType, node );
+						pr = assertUnbox( rightType, node );
 						if( pl.primitiveTypeTag().isIntegral()
 								&& pr.primitiveTypeTag().isIntegral() ) {
 							if( pl.primitiveTypeTag().compareTo( pr.primitiveTypeTag() ) > 0 ) {
@@ -1773,8 +1591,8 @@ public class Typer {
 						}
 					case SHORT_CIRCUITED_OR:
 					case SHORT_CIRCUITED_AND:
-						pl = ( pl == null ) ? assertUnbox( leftType, position ) : pl;
-						pr = ( pr == null ) ? assertUnbox( rightType, position ) : pr;
+						pl = ( pl == null ) ? assertUnbox( leftType, node ) : pl;
+						pr = ( pr == null ) ? assertUnbox( rightType, node ) : pr;
 						if( pl.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN
 								&& pr.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
 							return leftType;
@@ -1793,8 +1611,8 @@ public class Typer {
 							return universe().primitiveDataType( PrimitiveTypeTag.BOOLEAN )
 									.applyTo( worlds );
 						} else {
-							pl = assertUnbox( leftType, position );
-							pr = assertUnbox( rightType, position );
+							pl = assertUnbox( leftType, node );
+							pr = assertUnbox( rightType, node );
 							if( pl.primitiveTypeTag() == pr.primitiveTypeTag() ||
 									( pl.primitiveTypeTag().isNumeric()
 											&& pr.primitiveTypeTag().isNumeric() )
@@ -1804,10 +1622,8 @@ public class Typer {
 							}
 						}
 				}
-				throw new AstPositionedException( position,
-						new StaticVerificationException( "cannot apply '"
-								+ operator + "' to '" + leftType
-								+ "' and '" + rightType + "'" ) );
+				TypeError.cannotApplyBinary( node, operator, leftType, rightType );
+				throw new AssertionError( "unreachable" );
 			}
 
 			@Override
@@ -1815,32 +1631,26 @@ public class Typer {
 				assertAssignableTarget( n );
 				GroundDataTypeOrVoid tvl = synth( n.target(), Collections.emptyList() );
 				if( tvl.isVoid() ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException(
-									"expected assignable variable" ) );
+					TypeError.requiredAssignableTarget( n );
 				}
 				GroundDataType tl = (GroundDataType) tvl;
 				// the lefthand side of an assignment determines the worlds of the expression
 				homeWorlds = tl.worldArguments();
 				GroundDataTypeOrVoid tvr = synth( n.value() );
 				if( tvr.isVoid() ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException(
-									"required type '" + tl + "', found '" + tvr + "'" ) );
+					TypeError.requiredType( n, tl, tvr );
 				}
 				GroundDataType tr = (GroundDataType) tvr;
 
 				// operator of this expression is not "=", so it has an operation besides assigning
 				if( n.operator().hasOperation() ) {
-					tr = visitBinaryOp( n.operator().operation(), tl, tr, n.position() );
+					tr = visitBinaryOp( n.operator().operation(), tl, tr, n );
 				}
 				boolean assignable = opts.relaxed() ?
 						tr.isAssignableTo_relaxed( tl ) :
 						tr.isAssignableTo( tl );
 				if( !assignable ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException(
-									"required type '" + tl + "', found '" + tr + "'" ) );
+					TypeError.requiredType( n, tl, tr );
 				}
 				return annotate( n, tl );
 			}
@@ -1850,10 +1660,7 @@ public class Typer {
 					String identifier = target.name().identifier();
 					if( scope.lookupVariable( identifier ).isPresent() &&
 							scope.lookupVariable( identifier ).get().isFinal() ) {
-						throw new AstPositionedException( n.position(),
-								new StaticVerificationException(
-										"cannot assign a value to final variable '" + identifier
-												+ "'" ) );
+						TypeError.assignmentToFinalVariable( n, identifier );
 					}
 				}
 			}
@@ -1868,7 +1675,7 @@ public class Typer {
 				GroundDataTypeOrVoid tr = synth( n.right() );
 				// the expression n, is annotated with a primitive type with world(s)
 				// the type being the type of the entire binary expression
-				return annotate( n, visitBinaryOp( n.operator(), tl, tr, n.position() ) );
+				return annotate( n, visitBinaryOp( n.operator(), tl, tr, n ) );
 			}
 
 			@Override
@@ -1921,9 +1728,7 @@ public class Typer {
 										new UnresolvedSymbolException( x.name().identifier() ) ) ) )
 						.collect( Collectors.toList() );
 				if( !m.typeArguments().isEmpty() ) {
-					throw new AstPositionedException( m.typeArguments().get( 0 ).position(),
-							new StaticVerificationException(
-									"unexpected type argument in static member access" ) );
+					TypeError.unexpectedStaticTypeArgument( m.typeArguments().get( 0 ) );
 				}
 				GroundReferenceType g = type.applyTo( worldArgs );
 				annotate( n.typeExpression(), g );
@@ -1934,9 +1739,7 @@ public class Typer {
 			public GroundDataType visit( ClassInstantiationExpression n ) {
 				GroundClass t = visitGroundClassExpression( scope, n.typeExpression(), false );
 				if( t.typeConstructor().isAbstract() ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException(
-									"'" + t + "' is abstract, cannot be instantiated" ) );
+					TypeError.abstractClassInstantiation( n, t );
 				}
 				Pair< List< ? extends HigherReferenceType >, List< ? extends GroundDataType > > typeargsArgs =
 						getArgsTypeargs( scope, n );
@@ -1947,24 +1750,9 @@ public class Typer {
 						t.constructors().filter( this::checkMemberAccess )
 				);
 				if( ms.isEmpty() ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException( "cannot resolve constructor '" + t +
-									typeargsArgs.right().stream().map( Object::toString )
-											.collect( Formatting
-													.joining( ",", "(", ")", "" ) )
-									+ "'" ) );
+					TypeError.unresolvedConstructor( n, t, typeargsArgs.right() );
 				} else if( ms.size() > 1 ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException( "ambiguous constructor invocation, " +
-									ms.stream().map( x -> "'" + t +
-											x.signature().parameters().stream()
-													.map( y -> y.type().toString() )
-													.collect( Formatting.joining( ",", "(", ")",
-															"" ) )
-											+ "'" )
-											.collect( Collectors.collectingAndThen(
-													Collectors.toList(),
-													Formatting.joiningOxfordComma() ) ) ) );
+					TypeError.ambiguousConstructor( n, t, ms );
 				}
 				Member.GroundConstructor selected = (Member.GroundConstructor) ms.get( 0 );
 				n.setConstructorAnnotation( selected );
@@ -1991,22 +1779,10 @@ public class Typer {
 							type.methods( n.name().identifier() ).filter( this::checkMemberAccess )
 					);
 					if( ms.isEmpty() ) {
-						throw new AstPositionedException( n.position(),
-								new StaticVerificationException( "cannot resolve method '"
-										+ n.name().identifier()
-										+ typeargsArgs.right().stream().map( Object::toString )
-												.collect( Formatting
-														.joining( ",", "(", ")", "" ) )
-										+ "' in '" + type + "'" ) );
+						TypeError.unresolvedMethod( n, n.name().identifier(),
+								typeargsArgs.right(), type );
 					} else if( ms.size() > 1 ) {
-						throw new AstPositionedException( n.position(),
-								new StaticVerificationException(
-										"ambiguous method invocation, " +
-												ms.stream().map( Member.GroundCallable::toString )
-														.collect( Collectors.collectingAndThen(
-																Collectors.toList(),
-																Formatting
-																		.joiningOxfordComma() ) ) ) );
+						TypeError.ambiguousMethod( n, ms );
 					}
 					Member.GroundMethod selected = (Member.GroundMethod) ms.get( 0 );
 					n.setMethodAnnotation( selected );
@@ -2016,15 +1792,9 @@ public class Typer {
 					recordDependencies( n, selected.returnType(), homeWorlds );
 
 					return annotate( n, selected.returnType() );
-				} else {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException( "cannot resolve method '"
-									+ n.name().identifier()
-									+ typeargsArgs.right().stream().map( Object::toString )
-											.collect( Formatting
-													.joining( ",", "(", ")", "" ) )
-									+ "' in 'void'" ) );
 				}
+				TypeError.unresolvedMethodInVoid( n, n.name().identifier(), typeargsArgs.right() );
+				throw new AssertionError( "unreachable" );
 			}
 
 			/**
@@ -2040,9 +1810,7 @@ public class Typer {
 						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
 						.collect( Collectors.toList() );
 				List< ? extends GroundDataType > args = expression.arguments().stream()
-						.map( x -> assertNotVoid(
-								synth( x, Collections.emptyList() ),
-								x.position() ) )
+						.map( x -> assertNotVoid( synth( x, Collections.emptyList() ), x ) )
 						.collect( Collectors.toList() );
 				return new Pair<>( typeArgs, args );
 			}
@@ -2056,28 +1824,22 @@ public class Typer {
 				// t -> type ??
 				GroundDataTypeOrVoid t = visit( n.expression() );
 				// p -> primitive ??
-				GroundPrimitiveDataType p = assertUnbox( t, n.expression().position() );
+				GroundPrimitiveDataType p = assertUnbox( t, n.expression() );
 				if( p.primitiveTypeTag() == PrimitiveTypeTag.BOOLEAN ) {
 					return annotate( n, p );
-				} else {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException( "cannot apply '!' to '" + t
-									+ "'" ) );
 				}
+				TypeError.cannotApplyNot( n, t );
+				throw new AssertionError( "unreachable" );
 			}
 
 			@Override
 			public GroundDataType visit( ThisExpression n ) {
 				if( explicitConstructorArg ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException(
-									"cannot reference 'this' before constructor has been called" ) );
+					TypeError.thisBeforeConstructor( n );
 
 				}
 				if( enclosingMethod.isStatic() ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException(
-									"non-static variable 'this' cannot be referenced from a static context" ) );
+					TypeError.thisInStaticContext( n );
 				}
 				return annotate( n, scope.lookupThis() );
 			}
@@ -2085,15 +1847,11 @@ public class Typer {
 			@Override
 			public GroundDataType visit( SuperExpression n ) {
 				if( explicitConstructorArg ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException(
-									"cannot reference 'super' before supertype constructor has been called" ) );
+					TypeError.superBeforeConstructor( n );
 
 				}
 				if( enclosingMethod.isStatic() ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException(
-									"non-static variable 'super' cannot be referenced from a static context" ) );
+					TypeError.superInStaticContext( n );
 				}
 				return annotate( n, scope.lookupSuper() );
 			}
@@ -2183,10 +1941,7 @@ public class Typer {
 			private < T extends LiteralExpression< ? > > void checkWorlds( T n ) {
 				if( !opts.relaxed() ) return;
 				if( !homeWorlds.isEmpty() && !homeWorlds.contains( visitWorld( n.world() ) ) ) {
-					throw new AstPositionedException( n.position(),
-							new StaticVerificationException(
-									"Literal '" + n + "', can't be used in an expression at role '"
-											+ homeWorlds + "'" ) );
+					TypeError.literalAtWrongRole( n, homeWorlds );
 				}
 			}
 
