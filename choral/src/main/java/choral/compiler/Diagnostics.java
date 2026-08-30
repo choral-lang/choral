@@ -29,20 +29,24 @@ public final class Diagnostics {
 
 	// METHOD DECLARATIONS
 
-	public static AstPositionedException abstractMethodInConcreteClass( ClassMethodDefinition node ) {
+	public static AstPositionedException abstractMethodInConcreteClass(
+			ClassMethodDefinition node
+	) {
 		return raise( node, "abstract method in non-abstract class" );
 	}
-	
+
 	public static AstPositionedException abstractMethodHasBody( Statement node ) {
 		return raise( node, "abstract methods cannot have bodies" );
 	}
-	
+
 	public static AstPositionedException concreteMethodMissingBody( MethodDefinition node ) {
 		return raise( node, "non-abstract methods must have bodies" );
 	}
 
 	// SELECTION METHOD DECLARATIONS
-	public static AstPositionedException selectionMethodIllegalTypeParameterCount( Node node, int found ) {
+	public static AstPositionedException selectionMethodIllegalTypeParameterCount(
+			Node node, int found
+	) {
 		return raise( node, "illegal selection method, expected 1 type parameter, found " + found );
 	}
 
@@ -52,7 +56,9 @@ public final class Diagnostics {
 						+ SpecialTypeTag.ENUM + "'" );
 	}
 
-	public static AstPositionedException selectionMethodIllegalParameterCount( Node node, int found ) {
+	public static AstPositionedException selectionMethodIllegalParameterCount(
+			Node node, int found
+	) {
 		return raise( node,
 				"illegal selection method, expected 1 method parameter, found " + found );
 	}
@@ -85,25 +91,25 @@ public final class Diagnostics {
 	public static AstPositionedException varUsedAsParameter( VariableDeclaration node ) {
 		return raise( node, "parameters cannot use the var keyword" );
 	}
-	
+
 	public static AstPositionedException varUsedAsCatchBinding( VariableDeclaration node ) {
 		return raise( node, "catch bindings cannot use the var keyword" );
 	}
-	
+
 	public static AstPositionedException varMissingInitializer( VariableDeclaration node ) {
 		return raise( node, "var declarations require an initializer" );
 	}
 
 	// ENUMS
-	
+
 	public static AstPositionedException enumIllegalNumberOfRoles( Node node ) {
 		return raise( node, "enums must have exactly one role" );
 	}
-	
+
 	public static AstPositionedException enumRequired( TypeExpression node, Type type ) {
 		return raise( node, formattedAssertTypeMessage( type, "enum expected, '%1$s' is %3$s" ) );
 	}
-		
+
 	// VOID TYPE
 
 	public static AstPositionedException voidTypeIllegalArguments( TypeExpression node ) {
@@ -118,6 +124,7 @@ public final class Diagnostics {
 		return raise( node,
 				"Cyclic inheritance: '" + type + "' cannot extend '" + supertype + "'" );
 	}
+
 	public static AstPositionedException publicClassWrongFileName(
 			TemplateDeclaration node, String family, String name, String extension
 	) {
@@ -127,16 +134,18 @@ public final class Diagnostics {
 
 	// CONSTRUCTORS
 
-	public static AstPositionedException constructorInvocationIsRecursive( MethodCallExpression node ) {
+	public static AstPositionedException constructorInvocationIsRecursive(
+			MethodCallExpression node
+	) {
 		return raise( node, "recursive constructor invocation" );
 	}
-	
+
 	public static AstPositionedException constructorMissing(
 			ConstructorDefinition node, GroundClass type
 	) {
 		return raise( node, "there is no default constructor available in '" + type + "'" );
 	}
-	
+
 	public static AstPositionedException constructorInvocationCannotBeResolved(
 			Node node, GroundClass type, List< ? extends GroundDataType > arguments
 	) {
@@ -155,7 +164,7 @@ public final class Diagnostics {
 						.collect( Collectors.collectingAndThen( Collectors.toList(),
 								Formatting.joiningOxfordComma() ) ) );
 	}
-	
+
 	public static AstPositionedException superConstructorWithoutParentClass(
 			MethodCallExpression node, HigherClassOrInterface type
 	) {
@@ -180,40 +189,58 @@ public final class Diagnostics {
 	) {
 		return raise( node, "required type '" + expected + "', found '" + found + "'" );
 	}
-	
+
 	public static AstPositionedException typeMismatch(
 			Node node, GroundDataTypeOrVoid required, GroundDataTypeOrVoid found
 	) {
 		return raise( node, "required type '" + required + "', found '" + found + "'" );
 	}
-	
-	public static AstPositionedException typeMismatchExpectedPrimitiveType( Expression node, GroundDataTypeOrVoid type ) {
+
+	public static AstPositionedException typeMismatchExpectedPrimitiveType(
+			Expression node, GroundDataTypeOrVoid type
+	) {
 		return raise( node, "primitive type expected, '" + type + "' cannot be converted" );
 	}
-	
-	public static AstPositionedException typeMismatchExpectedHigherKindedReferenceType( TypeExpression node, Type type ) {
-		return raise( node, formattedAssertTypeMessage( type, "higher-kinded reference type expected, '%1$s' is %3$s" ) );
+
+	public static AstPositionedException typeMismatchExpectedHigherKindedReferenceType(
+			TypeExpression node, Type type
+	) {
+		return raise( node, formattedAssertTypeMessage( type,
+				"higher-kinded reference type expected, '%1$s' is %3$s" ) );
 	}
 
-	public static AstPositionedException typeMismatchExpectedDataType( TypeExpression node, Type type ) {
-		return raise( node, formattedAssertTypeMessage( type, "data type expected, '%1$s' is %3$s" ) );
+	public static AstPositionedException typeMismatchExpectedDataType(
+			TypeExpression node, Type type
+	) {
+		return raise( node,
+				formattedAssertTypeMessage( type, "data type expected, '%1$s' is %3$s" ) );
 	}
 
-	public static AstPositionedException typeMismatchExpectedReferenceType( TypeExpression node, Type type ) {
-		return raise( node, formattedAssertTypeMessage( type, "reference type expected, '%1$s' is %3$s" ) );
+	public static AstPositionedException typeMismatchExpectedReferenceType(
+			TypeExpression node, Type type
+	) {
+		return raise( node,
+				formattedAssertTypeMessage( type, "reference type expected, '%1$s' is %3$s" ) );
 	}
 
-	public static AstPositionedException typeMismatchExpectedClass( TypeExpression node, Type type ) {
+	public static AstPositionedException typeMismatchExpectedClass(
+			TypeExpression node, Type type
+	) {
 		return raise( node, formattedAssertTypeMessage( type, "class expected, '%1$s' is %3$s" ) );
 	}
 
-	public static AstPositionedException typeMismatchExpectedInterface( TypeExpression node, Type type ) {
-		return raise( node, formattedAssertTypeMessage( type, "interface expected, '%1$s' is %3$s" ) );
+	public static AstPositionedException typeMismatchExpectedInterface(
+			TypeExpression node, Type type
+	) {
+		return raise( node,
+				formattedAssertTypeMessage( type, "interface expected, '%1$s' is %3$s" ) );
 	}
 
 	// SWITCH STATEMENTS
 
-	public static AstPositionedException switchGuardTypeMismatch( Expression node, GroundDataTypeOrVoid found ) {
+	public static AstPositionedException switchGuardTypeMismatch(
+			Expression node, GroundDataTypeOrVoid found
+	) {
 		return raise( node, "incompatible types, found '" + found + "', required an instance of '"
 				+ PrimitiveTypeTag.CHAR + "', '" + PrimitiveTypeTag.BYTE + "', '"
 				+ PrimitiveTypeTag.SHORT + "', '" + PrimitiveTypeTag.INT + "', '"
@@ -225,7 +252,9 @@ public final class Diagnostics {
 		return raise( node, "duplicate case '" + value + "'" );
 	}
 
-	public static AstPositionedException literalRequiredFoundLabel( Node node, GroundDataTypeOrVoid type ) {
+	public static AstPositionedException literalRequiredFoundLabel(
+			Node node, GroundDataTypeOrVoid type
+	) {
 		return raise( node, "required a literal of type '" + type + "', found a label" );
 	}
 
@@ -242,7 +271,7 @@ public final class Diagnostics {
 	public static AstPositionedException controlFlowUnreachableStatement( Statement node ) {
 		return raise( node, "unreachable statement" );
 	}
-	
+
 	public static AstPositionedException returnStatementMissing( Statement node ) {
 		return raise( node, "missing return statement" );
 	}
@@ -253,20 +282,27 @@ public final class Diagnostics {
 			Expression node, BinaryExpression.Operator operator, GroundDataTypeOrVoid left,
 			GroundDataTypeOrVoid right
 	) {
-		return raise( node, "cannot apply '" + operator + "' to '" + left + "' and '" + right + "'" );
+		return raise( node,
+				"cannot apply '" + operator + "' to '" + left + "' and '" + right + "'" );
 	}
 
-	public static AstPositionedException unaryOperatorCannotApply( NotExpression node, GroundDataTypeOrVoid type ) {
+	public static AstPositionedException unaryOperatorCannotApply(
+			NotExpression node, GroundDataTypeOrVoid type
+	) {
 		return raise( node, "cannot apply '!' to '" + type + "'" );
 	}
 
 	// ASSIGNMENT
 
-	public static AstPositionedException assignmentExpectedAssignableVariable( AssignExpression node ) {
+	public static AstPositionedException assignmentExpectedAssignableVariable(
+			AssignExpression node
+	) {
 		return raise( node, "expected assignable variable" );
 	}
 
-	public static AstPositionedException assignmentToFinalVariable( AssignExpression node, String name ) {
+	public static AstPositionedException assignmentToFinalVariable(
+			AssignExpression node, String name
+	) {
 		return raise( node, "cannot assign a value to final variable '" + name + "'" );
 	}
 
@@ -363,7 +399,9 @@ public final class Diagnostics {
 		return raise( "duplicate parameter '" + identifier + "'" );
 	}
 
-	public static ChoralException roleParameterHasDuplicate( Optional< Node > sourceCode, String identifier ) {
+	public static ChoralException roleParameterHasDuplicate(
+			Optional< Node > sourceCode, String identifier
+	) {
 		return raise( sourceCode, "duplicate role parameter '" + identifier + "'" );
 	}
 
@@ -389,7 +427,9 @@ public final class Diagnostics {
 				+ "' must have the same roles" );
 	}
 
-	public static StaticVerificationException dypeParameterDuplicateBound( GroundReferenceType type ) {
+	public static StaticVerificationException dypeParameterDuplicateBound(
+			GroundReferenceType type
+	) {
 		return raise( "duplicate parameter bound, '" + type + "' is repeated" );
 	}
 
@@ -411,7 +451,9 @@ public final class Diagnostics {
 		return raise( "illegal combination of modifiers " + modifiers );
 	}
 
-	public static StaticVerificationException modifiersIllegalCombination( Modifier first, Modifier second ) {
+	public static StaticVerificationException modifiersIllegalCombination(
+			Modifier first, Modifier second
+	) {
 		return raise( "illegal combination of modifiers '" + first.label + "' and '"
 				+ second.label + "'" );
 	}
@@ -492,7 +534,8 @@ public final class Diagnostics {
 	public static StaticVerificationException inheritanceConflictingAncestors(
 			GroundInterface first, GroundInterface second
 	) {
-		return raise( "illegal inheritance, cannot implement both '" + first + "' and " + second + "'" );
+		return raise(
+				"illegal inheritance, cannot implement both '" + first + "' and " + second + "'" );
 	}
 
 	public static StaticVerificationException inheritanceRepeatedInterface( GroundInterface type ) {
@@ -519,8 +562,9 @@ public final class Diagnostics {
 	public static StaticVerificationException concreteTypeMustImplementAbstractMethod(
 			GroundClassOrInterface type, Member.HigherMethod method
 	) {
-		return raise( "'" + type + "' must either be declared as abstract or implement abstract method '"
-				+ method + "' in '" + method.declarationContext() + "'" );
+		return raise(
+				"'" + type + "' must either be declared as abstract or implement abstract method '"
+						+ method + "' in '" + method.declarationContext() + "'" );
 	}
 
 	public static StaticVerificationException concreteTypeMustImplementAbstractMethod(
@@ -607,11 +651,15 @@ public final class Diagnostics {
 		return raise( "cannot resolve symbol '" + symbol + "'" );
 	}
 
-	public static StaticVerificationException symbolIsAmbiguous( String query, List< HigherClassOrInterface > candidates ) {
-	    var candidatesList = candidates.stream()
-					.map( x -> "'" + x.identifier( true ) + "'" )
-					.collect( Collectors.collectingAndThen( Collectors.toList(), Formatting.joiningOxfordComma() ) );
-		return raise( "reference to '" + query + "' is ambiguous, " + candidatesList + " are ambiguous" );
+	public static StaticVerificationException symbolIsAmbiguous(
+			String query, List< HigherClassOrInterface > candidates
+	) {
+		var candidatesList = candidates.stream()
+				.map( x -> "'" + x.identifier( true ) + "'" )
+				.collect( Collectors.collectingAndThen( Collectors.toList(),
+						Formatting.joiningOxfordComma() ) );
+		return raise(
+				"reference to '" + query + "' is ambiguous, " + candidatesList + " are ambiguous" );
 	}
 
 	public static StaticVerificationException typeHasNoPublicAccess( HigherClassOrInterface type ) {
@@ -624,18 +672,17 @@ public final class Diagnostics {
 	}
 
 	public static AstPositionedException symbolNotFound( Node place, String symbol ) {
-    	return raise( place, "cannot resolve symbol '" + symbol + "'" );
+		return raise( place, "cannot resolve symbol '" + symbol + "'" );
 	}
 
 	public static StaticVerificationException symbolNotFound( String symbol ) {
-    	return raise( "cannot resolve symbol '" + symbol + "'" );
+		return raise( "cannot resolve symbol '" + symbol + "'" );
 	}
 
 	public static AstPositionedException symbolNotFound( Name symbol ) {
-    	return raise( symbol, "cannot resolve symbol '" + symbol.identifier() + "'" );
+		return raise( symbol, "cannot resolve symbol '" + symbol.identifier() + "'" );
 	}
-	
-	
+
 
 	// HELPERS
 
@@ -649,7 +696,7 @@ public final class Diagnostics {
 	}
 
 	private static ChoralException raise( Optional< Node > node, String message ) {
-	    return node.isEmpty() ? raise(message) : raise(node.get(), message);
+		return node.isEmpty() ? raise( message ) : raise( node.get(), message );
 	}
 
 	private static String formattedAssertTypeMessage( Type type, String format ) {

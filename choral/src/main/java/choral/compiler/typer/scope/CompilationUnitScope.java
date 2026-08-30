@@ -24,7 +24,8 @@ public final class CompilationUnitScope extends BaseScope {
 	private boolean pendingSingleImports = true;
 
 	private final choral.types.Package declarationPackage;
-	private final Map< HigherClassOrInterface, ClassOrInterfaceStaticScope > templateScopes = new HashMap<>();
+	private final Map< HigherClassOrInterface, ClassOrInterfaceStaticScope > templateScopes =
+			new HashMap<>();
 	private final ClassLifter classLifter;
 
 	public CompilationUnitScope(
@@ -39,7 +40,7 @@ public final class CompilationUnitScope extends BaseScope {
 		HashSet< String > seenImports = new HashSet<>( declaredImports.size() );
 		for( ImportDeclaration ip : declaredImports ) {
 			if( ip.isOnDemand() ) {
-				if ( seenImports.add( ip.name() ) )
+				if( seenImports.add( ip.name() ) )
 					onDemandImports.add( ip );
 			} else {
 				singleImportStatements.add( ip );
@@ -109,9 +110,9 @@ public final class CompilationUnitScope extends BaseScope {
 							// 'ip.name().length() - 2' is to cut off the '.*' segment
 							String prefix = ip.name().substring( 0, ip.name().length() - 2 );
 							return classLifter.lookup( prefix + "." + query, ip.position() );
-						})
-						.filter(Optional::isPresent )
-						.map(Optional::get )
+						} )
+						.filter( Optional::isPresent )
+						.map( Optional::get )
 						.filter( this::hasPublicAccess )
 						.toList();
 

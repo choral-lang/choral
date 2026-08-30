@@ -169,15 +169,16 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo( type ) )
 					|| ( extendedClass().isPresent() && extendedClass().get().isSubtypeOf( type,
-					false ) )
+							false ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) );
 		}
 
 		@Override
 		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo_relaxed( type ) )
-					|| ( extendedClass().isPresent() && extendedClass().get().isSubtypeOf_relaxed( type,
-					false ) )
+					|| ( extendedClass().isPresent()
+							&& extendedClass().get().isSubtypeOf_relaxed( type,
+									false ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) );
 		}
 
@@ -187,7 +188,8 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 			if( constructors.isEmpty() ) {
 				if( extendedClass != null
 						&& extendedClass.constructors().filter( x -> x.isAccessibleFrom( this ) )
-						.noneMatch( x -> x.typeParameters().size() == 0 && x.arity() == 0 ) ) {
+								.noneMatch(
+										x -> x.typeParameters().size() == 0 && x.arity() == 0 ) ) {
 					throw Diagnostics.constructorMissing( extendedClass );
 				} else {
 					Member.HigherConstructor c = new Member.HigherConstructor(
@@ -215,7 +217,8 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 			for( HigherConstructor x : constructors ) {
 				if( x.sameErasureAs( constructor ) ) {
 					if( x.sameSignatureAs( constructor ) ) {
-						throw Diagnostics.constructorAlreadyDefined( constructor, typeConstructor() );
+						throw Diagnostics.constructorAlreadyDefined( constructor,
+								typeConstructor() );
 					} else {
 						throw Diagnostics.constructorErasureClash( constructor, x );
 					}
@@ -256,15 +259,16 @@ public class HigherClass extends HigherClassOrInterface implements Class {
 		protected boolean isSubtypeOf( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo( type ) )
 					|| ( extendedClass().isPresent() && extendedClass().get().isSubtypeOf( type,
-					false ) )
+							false ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) );
 		}
 
 		@Override
 		protected boolean isSubtypeOf_relaxed( GroundDataType type, boolean strict ) {
 			return ( !strict && isEquivalentTo_relaxed( type ) )
-					|| ( extendedClass().isPresent() && extendedClass().get().isSubtypeOf_relaxed( type,
-					false ) )
+					|| ( extendedClass().isPresent()
+							&& extendedClass().get().isSubtypeOf_relaxed( type,
+									false ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) );
 		}
 

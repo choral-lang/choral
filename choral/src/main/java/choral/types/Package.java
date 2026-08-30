@@ -163,9 +163,8 @@ public class Package {
 		assert ( type.declarationContext() == this );
 		if( declaredTypes.containsKey( type.identifier() ) || declaredPackages.containsKey(
 				type.identifier() ) ) {
-			throw isRoot()
-					? Diagnostics.declarationHasDuplicate( type.identifier() )
-					: Diagnostics.declarationHasDuplicate( type.identifier(), this );
+			throw isRoot() ? Diagnostics.declarationHasDuplicate( type.identifier() ) :
+					Diagnostics.declarationHasDuplicate( type.identifier(), this );
 		}
 		// System.out.println(type.variety().labelSingular + " '" + type + "' declared"); // DEBUG
 		declaredTypes.put( type.identifier(), type );

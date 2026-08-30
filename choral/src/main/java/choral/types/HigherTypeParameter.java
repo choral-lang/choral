@@ -330,7 +330,8 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 							if( z.isSubSignatureOf( x ) ) {
 								// check assignable return type;
 								if( !z.isReturnTypeSubstitutableFor( x ) ) {
-									throw Diagnostics.methodClashesWithInheritedMethodReturnType( z, x );
+									throw Diagnostics.methodClashesWithInheritedMethodReturnType( z,
+											x );
 								}
 								inherited = false;
 								break;

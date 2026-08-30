@@ -36,7 +36,7 @@ public enum Modifier {
 	PRIVATE( "private" ),
 	FINAL( "final" ),
 	ABSTRACT( "abstract" ),
-	DEFAULT("default");
+	DEFAULT( "default" );
 
 	public final String label;
 

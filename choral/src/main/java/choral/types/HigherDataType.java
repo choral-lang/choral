@@ -154,7 +154,8 @@ public abstract class HigherDataType extends TypeBase
 	public boolean isEquivalentTo_relaxed( Type type ) {
 		if( type instanceof HigherDataType ) {
 			HigherDataType t = (HigherDataType) type;
-			return applyTo( worldParameters ).isEquivalentTo_relaxed( t.applyTo( worldParameters ) );
+			return applyTo( worldParameters )
+					.isEquivalentTo_relaxed( t.applyTo( worldParameters ) );
 		}
 		return false;
 	}

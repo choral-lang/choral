@@ -590,7 +590,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			for( Member.HigherMethod c : concreteSuperclassMethods ) {
 				if( c.isSubSignatureOf( methodToInherit ) ) {
 					if( !c.isReturnTypeSubstitutableFor( methodToInherit ) ) {
-						throw Diagnostics.methodClashesWithInheritedMethodReturnType( c, methodToInherit );
+						throw Diagnostics.methodClashesWithInheritedMethodReturnType( c,
+								methodToInherit );
 					}
 					return;
 				}
@@ -609,7 +610,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			for( Member.HigherMethod z : candidates ) {
 				if( z.isSubSignatureOf( methodToInherit ) ) {
 					if( !z.isReturnTypeSubstitutableFor( methodToInherit ) ) {
-						throw Diagnostics.methodClashesWithInheritedMethodReturnType( z, methodToInherit );
+						throw Diagnostics.methodClashesWithInheritedMethodReturnType( z,
+								methodToInherit );
 					}
 					return true;
 				}
@@ -890,7 +892,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			assert ( field.declarationContext() == this );
 			if( declaredFields().anyMatch( x -> x.identifier().equals( field.identifier() ) ) ) {
 				throw Diagnostics.fieldHasDuplicate(
-						field.identifier(), typeConstructor().variety().labelSingular, typeConstructor() );
+						field.identifier(), typeConstructor().variety().labelSingular,
+						typeConstructor() );
 			}
 			declaredFields.add( field );
 		}

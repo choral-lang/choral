@@ -519,10 +519,11 @@ public class Typer {
 					}
 					GroundDataType mp = tm.innerCallable().signature().parameters()
 							.get( 0 ).type();
-					if( mp.worldArguments().size() != 1 
-    					|| !mp.isEquivalentTo( tp.applyTo( mp.worldArguments() ) ) ) {
+					if( mp.worldArguments().size() != 1
+							|| !mp.isEquivalentTo( tp.applyTo( mp.worldArguments() ) ) ) {
 						List< World > ws = World.freshWorlds( universe(), 1, "X" );
-						throw Diagnostics.selectionMethodIllegalParameterType( x, tp.applyTo( ws ), ws, mp );
+						throw Diagnostics.selectionMethodIllegalParameterType( x, tp.applyTo( ws ),
+								ws, mp );
 					}
 					if( tm.innerCallable().returnType().isVoid() ) {
 						List< World > ws = World.freshWorlds( universe(), 1, "X" );
@@ -532,7 +533,8 @@ public class Typer {
 					if( tr.worldArguments().size() != 1 || !tr.isEquivalentTo(
 							tp.applyTo( tr.worldArguments() ) ) ) {
 						List< World > ws = World.freshWorlds( universe(), 1, "X" );
-						throw Diagnostics.selectionMethodIllegalParameterType( x, tp.applyTo( ws ), ws, mp );
+						throw Diagnostics.selectionMethodIllegalParameterType( x, tp.applyTo( ws ),
+								ws, mp );
 					}
 					if( mp.worldArguments().equals( tr.worldArguments() ) ) {
 						throw Diagnostics.selectionMethodRolesNotDistinct( x );
@@ -883,7 +885,8 @@ public class Typer {
 				GroundClass t = ( "this".equals( n.name().identifier() ) ) ?
 						(GroundClass) scope.lookupThis() : scope.lookupSuper();
 				if( t == null ) {
-					throw Diagnostics.superConstructorWithoutParentClass( n, scope.lookupThis().typeConstructor() );
+					throw Diagnostics.superConstructorWithoutParentClass( n,
+							scope.lookupThis().typeConstructor() );
 				}
 				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
 						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
@@ -1205,7 +1208,8 @@ public class Typer {
 								throw Diagnostics.symbolNotFound( label.argument() );
 							} else {
 								if( !casesFound.add( id ) ) {
-									throw Diagnostics.switchStatementDuplicateCase( label.argument(), id );
+									throw Diagnostics
+											.switchStatementDuplicateCase( label.argument(), id );
 								}
 							}
 						} else {
@@ -1248,7 +1252,8 @@ public class Typer {
 							te.isSubtypeOf( expectedType );
 					// exceptions only allowed one role
 					if( te.worldArguments().size() > 1 || !isSubtype ) {
-						throw Diagnostics.typeMismatch( c.left().type().get(), SpecialTypeTag.EXCEPTION,
+						throw Diagnostics.typeMismatch( c.left().type().get(),
+								SpecialTypeTag.EXCEPTION,
 								te );
 					}
 					openBlock();  // ---
@@ -1714,7 +1719,8 @@ public class Typer {
 								() -> Diagnostics.symbolNotFound( x.name() ) ) )
 						.collect( Collectors.toList() );
 				if( !m.typeArguments().isEmpty() ) {
-					throw Diagnostics.staticMemberUnexpectedTypeArgument( m.typeArguments().get( 0 ) );
+					throw Diagnostics
+							.staticMemberUnexpectedTypeArgument( m.typeArguments().get( 0 ) );
 				}
 				GroundReferenceType g = type.applyTo( worldArgs );
 				annotate( n.typeExpression(), g );
@@ -1736,7 +1742,8 @@ public class Typer {
 						t.constructors().filter( this::checkMemberAccess )
 				);
 				if( ms.isEmpty() ) {
-					throw Diagnostics.constructorInvocationCannotBeResolved( n, t, typeargsArgs.right() );
+					throw Diagnostics.constructorInvocationCannotBeResolved( n, t,
+							typeargsArgs.right() );
 				} else if( ms.size() > 1 ) {
 					throw Diagnostics.constructorInvocationIsAmbiguous( n, t, ms );
 				}
@@ -1779,7 +1786,8 @@ public class Typer {
 
 					return annotate( n, selected.returnType() );
 				}
-				throw Diagnostics.methodUnresolvedInVoid( n, n.name().identifier(), typeargsArgs.right() );
+				throw Diagnostics.methodUnresolvedInVoid( n, n.name().identifier(),
+						typeargsArgs.right() );
 			}
 
 			/**
