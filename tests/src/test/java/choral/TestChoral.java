@@ -739,21 +739,28 @@ public class TestChoral {
 		}
 	}
 
-	/** Returns a list of errors in xs that are not in ys. */
+	/**
+	 * Returns the errors in {@code original} that cannot be paired with an error in
+	 * {@code removed}. Each error in {@code removed} can satisfy at most one match.
+	 */
 	private static List< TestError > subtract(
 			List< TestError > original, List< TestError > removed
 	) {
 		ArrayList< TestError > result = new ArrayList<>();
+		ArrayList< TestError > remaining = new ArrayList<>( removed );
 		for( TestError x : original ) {
-			boolean found = false;
-			for( TestError y : removed ) {
-				if( x.matches( y ) ) {
-					found = true;
+			int match = -1;
+			for( int i = 0; i < remaining.size(); i++ ) {
+				if( x.matches( remaining.get( i ) ) ) {
+					match = i;
 					break;
 				}
 			}
-			if( !found )
+			if( match < 0 ) {
 				result.add( x );
+			} else {
+				remaining.remove( match );
+			}
 		}
 		return result;
 	}
