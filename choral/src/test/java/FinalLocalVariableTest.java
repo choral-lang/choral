@@ -60,8 +60,8 @@ public class FinalLocalVariableTest {
 
 	@Test
 	public void rejectsAssignmentToFinalLocalVariable() {
-		ChoralCompoundException thrown = assertThrows( ChoralCompoundException.class, () ->
-				typecheck(
+		ChoralCompoundException thrown =
+				assertThrows( ChoralCompoundException.class, () -> typecheck(
 						"""
 						package test;
 						class C@( A ) {

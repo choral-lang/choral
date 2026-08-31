@@ -72,7 +72,7 @@ public class Typer {
 			Universe universe,
 			TyperOptions opts
 	) {
-	    ErrorReporter errors = new ErrorReporter();
+		ErrorReporter errors = new ErrorReporter();
 		TaskQueue taskQueue = new TaskQueue();
 		Visitor headerVisitor = new HeaderVisitor( taskQueue, universe, opts, errors );
 		headerUnits.forEach( cu -> taskQueue.enqueue( Phase.TYPE_SYMBOL_DECLARATIONS,
@@ -223,27 +223,27 @@ public class Typer {
 			taskQueue.enqueue( Phase.MEMBER_DECLARATIONS, () -> {
 				for( Field nm : n.fields() ) {
 					try {
-					EnumSet< Modifier > ms = EnumSet.noneOf( Modifier.class );
-					for( FieldModifier x : nm.modifiers() ) {
-						ms.add( Modifier.valueOf( x.name() ) );
-					}
-					Member.Field tm = new Member.Field(
-							t.innerType(),
-							nm.name().identifier(),
-							ms,
-							visitGroundDataTypeExpression(
-									( ms.contains( Modifier.STATIC ) ) ?
-											classOrInterfaceStaticScope :
-											classOrInterfaceStaticScope.getInstanceScope(),
-									nm.typeExpression(), false ) );
-					nm.setTypeAnnotation( tm );
-					tm.setSourceCode( nm );
-					t.innerType().addField( tm );
+						EnumSet< Modifier > ms = EnumSet.noneOf( Modifier.class );
+						for( FieldModifier x : nm.modifiers() ) {
+							ms.add( Modifier.valueOf( x.name() ) );
+						}
+						Member.Field tm = new Member.Field(
+								t.innerType(),
+								nm.name().identifier(),
+								ms,
+								visitGroundDataTypeExpression(
+										( ms.contains( Modifier.STATIC ) ) ?
+												classOrInterfaceStaticScope :
+												classOrInterfaceStaticScope.getInstanceScope(),
+										nm.typeExpression(), false ) );
+						nm.setTypeAnnotation( tm );
+						tm.setSourceCode( nm );
+						t.innerType().addField( tm );
 					} catch( ChoralCompoundException ignored ) {
 					}
 				}
 				for( ClassMethodDefinition nm : n.methods() ) {
-                    // TODO Extract to helper and recover
+					// TODO Extract to helper and recover
 					EnumSet< Modifier > ms = EnumSet.noneOf( Modifier.class );
 					for( ClassMethodModifier x : nm.modifiers() ) {
 						ms.add( Modifier.valueOf( x.name() ) );
@@ -311,7 +311,7 @@ public class Typer {
 				Map< Member.HigherConstructor, MethodCallExpression > explicitConstructorInvocations =
 						new HashMap<>( n.constructors().size() );
 				for( ConstructorDefinition nm : n.constructors() ) {
-				    // TODO Extract to helper and recover
+					// TODO Extract to helper and recover
 					EnumSet< Modifier > ms = EnumSet.noneOf( Modifier.class );
 					for( ConstructorModifier m : nm.modifiers() ) {
 						ms.add( Modifier.valueOf( m.name() ) );
@@ -450,7 +450,7 @@ public class Typer {
 			taskQueue.enqueue( h );
 			taskQueue.enqueue( Phase.MEMBER_DECLARATIONS, () -> {
 				for( InterfaceMethodDefinition nm : n.methods() ) {
-				    // TODO Extract to helper and recover
+					// TODO Extract to helper and recover
 					EnumSet< Modifier > ms = EnumSet.noneOf( Modifier.class );
 					for( InterfaceMethodModifier x : nm.modifiers() ) {
 						ms.add( Modifier.valueOf( x.name() ) );
@@ -527,9 +527,9 @@ public class Typer {
 			for( Annotation x : annotations ) {
 				if( x.getName().identifier().equals( SELECTION_METHOD_ANNOTATION ) ) {
 					if( tm.typeParameters().size() != 1 ) {
-						errors.abort( 
-    						Diagnostics.selectionMethodIllegalTypeParameterCount( 
-                                x, tm.typeParameters().size() ) );
+						errors.abort(
+								Diagnostics.selectionMethodIllegalTypeParameterCount(
+										x, tm.typeParameters().size() ) );
 					}
 					HigherTypeParameter tp = tm.typeParameters().get( 0 );
 					if( tp.innerType().upperClass().specialTypeTag() != SpecialTypeTag.ENUM
@@ -537,11 +537,11 @@ public class Typer {
 						errors.abort( Diagnostics.selectionMethodIllegalTypeParameterBound( x ) );
 					}
 					if( tm.arity() != 1 ) {
-						errors.abort(  Diagnostics.selectionMethodIllegalParameterCount( 
-                                x, tm.innerCallable().signature().arity() ) );
+						errors.abort( Diagnostics.selectionMethodIllegalParameterCount(
+								x, tm.innerCallable().signature().arity() ) );
 					}
-					GroundDataType mp = 
-           					tm.innerCallable().signature().parameters().get( 0 ).type();
+					GroundDataType mp =
+							tm.innerCallable().signature().parameters().get( 0 ).type();
 					if( mp.worldArguments().size() != 1
 							|| !mp.isEquivalentTo( tp.applyTo( mp.worldArguments() ) ) ) {
 						List< World > ws = World.freshWorlds( universe(), 1, "X" );
@@ -841,8 +841,9 @@ public class Typer {
 			String primaryType = sourceFile.substring( j, k );
 
 			if( n.isPublic() && !n.name().identifier().equals( primaryType ) ) {
-				errors.abort( Diagnostics.publicClassWrongFileName( 
-        				n, family, n.name().identifier(), SourceObject.ChoralSourceObject.FILE_EXTENSION ) );
+				errors.abort( Diagnostics.publicClassWrongFileName(
+						n, family, n.name().identifier(),
+						SourceObject.ChoralSourceObject.FILE_EXTENSION ) );
 			}
 
 		}
@@ -859,7 +860,8 @@ public class Typer {
 				Member.HigherConstructor c = q.peek();
 				while( c != null ) {
 					if( v.contains( c ) ) {
-						errors.abort( Diagnostics.constructorInvocationIsRecursive( positions.get( c ) ) );
+						errors.abort( Diagnostics
+								.constructorInvocationIsRecursive( positions.get( c ) ) );
 					}
 					v.add( c );
 					q.remove( c );
@@ -914,8 +916,8 @@ public class Typer {
 				GroundClass t = ( "this".equals( n.name().identifier() ) ) ?
 						(GroundClass) scope.lookupThis() : scope.lookupSuper();
 				if( t == null ) {
-					errors.abort( Diagnostics.superConstructorWithoutParentClass( 
-    					    n, scope.lookupThis().typeConstructor() ) );
+					errors.abort( Diagnostics.superConstructorWithoutParentClass(
+							n, scope.lookupThis().typeConstructor() ) );
 				}
 				List< ? extends HigherReferenceType > typeArgs = n.typeArguments().stream()
 						.map( x -> visitHigherReferenceTypeExpression( scope, x, false ) )
@@ -1198,8 +1200,8 @@ public class Typer {
 				GroundDataTypeOrVoid type = synth( n.condition(), n );
 				if( type.primitiveTypeTag() != PrimitiveTypeTag.BOOLEAN &&
 						type.specialTypeTag() != SpecialTypeTag.BOOLEAN ) {
-					errors.abort( Diagnostics.typeMismatch( 
-           					n.condition(), PrimitiveTypeTag.BOOLEAN, type ) );
+					errors.abort( Diagnostics.typeMismatch(
+							n.condition(), PrimitiveTypeTag.BOOLEAN, type ) );
 				}
 				boolean ifReturns = visitAsInBlock( n.ifBranch() );
 				boolean elseReturns = visitAsInBlock( n.elseBranch() );
@@ -1238,13 +1240,13 @@ public class Typer {
 								errors.abort( Diagnostics.symbolNotFound( label.argument() ) );
 							} else {
 								if( !casesFound.add( id ) ) {
-									errors.abort( Diagnostics.switchStatementDuplicateCase( 
-           									label.argument(), id ) );
+									errors.abort( Diagnostics.switchStatementDuplicateCase(
+											label.argument(), id ) );
 								}
 							}
 						} else {
-							errors.abort( Diagnostics.literalRequiredFoundLabel( 
-     							label.argument(), guard ) );
+							errors.abort( Diagnostics.literalRequiredFoundLabel(
+									label.argument(), guard ) );
 						}
 					} else if( entry.getKey() instanceof SwitchArgument.SwitchArgumentLiteral l ) {
 						GroundDataTypeOrVoid argument = synth( l.argument(), n );
@@ -1253,7 +1255,8 @@ public class Typer {
 							errors.abort( Diagnostics.typeMismatch( l, guard, guard ) );
 						}
 						if( !casesFound.add( s ) ) {
-							errors.abort( Diagnostics.switchStatementDuplicateCase( l.argument(), s ) );
+							errors.abort(
+									Diagnostics.switchStatementDuplicateCase( l.argument(), s ) );
 						}
 					} else {
 						hasDefault = true;
@@ -1283,8 +1286,8 @@ public class Typer {
 							te.isSubtypeOf( expectedType );
 					// exceptions only allowed one role
 					if( te.worldArguments().size() > 1 || !isSubtype ) {
-						errors.abort( Diagnostics.typeMismatch( 
-          						c.left().type().get(),
+						errors.abort( Diagnostics.typeMismatch(
+								c.left().type().get(),
 								SpecialTypeTag.EXCEPTION,
 								te ) );
 					}
@@ -1294,8 +1297,8 @@ public class Typer {
 						c.left().setTypeAnnotation( te );
 						scope.declareVariable( c.left() );
 					} catch( StaticVerificationException e ) {
-						errors.abort( new AstPositionedException( 
-    						c.left().name().position(), e ) );
+						errors.abort( new AstPositionedException(
+								c.left().name().position(), e ) );
 					}
 					returnChecked &= visit( c.right() );
 					closeBlock(); // ---
@@ -1335,7 +1338,7 @@ public class Typer {
 			@Override
 			public Boolean visit( VariableDeclarationStatement n ) {
 				for( VariableDeclaration x : n.variables() ) {
-				    // TODO Extract to helper and parallelize exceptions
+					// TODO Extract to helper and parallelize exceptions
 					GroundDataType type;
 					if( x.type().isPresent() ) {
 						type = visitGroundDataTypeExpression( scope, x.type().get(), false );
@@ -1366,8 +1369,8 @@ public class Typer {
 			 */
 			public boolean assertReachableContinuation( Statement n, boolean returnChecked ) {
 				if( returnChecked && n.hasContinuation() ) {
-					errors.abort( Diagnostics.controlFlowUnreachableStatement( 
-					n.continuation() ) );
+					errors.abort( Diagnostics.controlFlowUnreachableStatement(
+							n.continuation() ) );
 				}
 				returnChecked |= visit( n.continuation() );
 				n.setReturnAnnotation( returnChecked );
