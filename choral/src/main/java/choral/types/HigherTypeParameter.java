@@ -24,7 +24,7 @@ package choral.types;
 import choral.ast.Name;
 import choral.ast.Node;
 import choral.ast.type.TypeExpression;
-import choral.exceptions.StaticVerificationException;
+import choral.compiler.Diagnostics;
 import choral.utils.Formatting;
 
 import java.util.ArrayList;
@@ -132,12 +132,11 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 					return substitution.get( placeHolder );
 				}
 			};
-			throw new StaticVerificationException( "type argument '"
-					+ typeArg
-					+ "' is not within bounds, '" + typeArg.applyTo( worldArgs ) + "' must extend "
-					+ prettyTypeList( innerType.upperBound().map( x -> x.applySubstitution( s2 ) ) )
-					+ " for any role "
-					+ prettyTypeList( worldArgs ) );
+			throw Diagnostics.typeArgumentNotWithinBounds(
+					typeArg.toString(),
+					typeArg.applyTo( worldArgs ).toString(),
+					prettyTypeList( innerType.upperBound().map( x -> x.applySubstitution( s2 ) ) ),
+					prettyTypeList( worldArgs ) );
 		}
 	}
 
@@ -233,17 +232,14 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 			assert ( !isBoundFinalised() );
 			if( type.worldArguments().size() != worldArguments().size() ||
 					!type.worldArguments().containsAll( worldParameters ) ) {
-				throw new StaticVerificationException(
-						"illegal bound, '" + type + "' and '" + this
-								+ "' must have the same roles" );
+				throw Diagnostics.typeParameterBoundHasWrongRoles( type, this );
 			}
 			if( type instanceof GroundInterface ) {
 				if( upperClass == null ) {
 					setUpperClass();
 				}
 				if( upperInterfaces().anyMatch( x -> x.isEquivalentTo( type ) ) ) {
-					throw new StaticVerificationException(
-							"duplicate parameter bound, '" + type + "' is repeated" );
+					throw Diagnostics.typeParameterDuplicateBound( type );
 				}
 				upperInterfaces.add( (GroundInterface) type );
 			} else {
@@ -259,8 +255,7 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 					} else {
 						s = " a type parameter";
 					}
-					throw new StaticVerificationException(
-							"interface expected, '" + type + "' is " + s );
+					throw Diagnostics.interfaceExpected( type, s );
 				}
 			}
 		}
@@ -335,11 +330,8 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 							if( z.isSubSignatureOf( x ) ) {
 								// check assignable return type;
 								if( !z.isReturnTypeSubstitutableFor( x ) ) {
-									throw new StaticVerificationException( "method '" + z
-											+ "' in '" + z.declarationContext()
-											+ "' clashes with method '" + x
-											+ "' in '" + x.declarationContext()
-											+ "', attempting to use incompatible return type" );
+									throw Diagnostics.methodClashesWithInheritedMethodReturnType( z,
+											x );
 								}
 								inherited = false;
 								break;

@@ -24,6 +24,8 @@ package choral.types;
 import choral.ast.Name;
 import choral.ast.Node;
 import choral.ast.type.TypeExpression;
+import choral.compiler.Diagnostics;
+import choral.exceptions.AstPositionedException;
 import choral.exceptions.StaticVerificationException;
 import choral.types.kinds.Kind;
 import choral.utils.Formatting;
@@ -86,8 +88,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			x.setDeclarationContext( this );
 			for( int j = 0; j < i; j++ ) {
 				if( names[ j ].equals( x.identifier() ) ) {
-					throw StaticVerificationException.of(
-							"duplicate parameter '" + names[ j ] + "'", x.sourceCode() );
+					throw Diagnostics.parameterAlreadyDefined( names[ j ] );
 				}
 			}
 			names[ i++ ] = x.identifier();
@@ -299,9 +300,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 	) {
 		super.checkApplicationArguments( worldArgs );
 		if( typeArgs.size() != typeParameters.size() ) {
-			throw new StaticVerificationException(
-					"illegal type instantiation: expected " + typeParameters.size()
-							+ " type arguments but found " + typeArgs.size() );
+			throw Diagnostics.typeArgumentsWrongCount( typeParameters.size(), typeArgs.size() );
 		}
 	}
 
@@ -359,9 +358,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 										x.worldArguments().equals( y.worldArguments() ) &&
 										!x.typeArguments().equals( y.typeArguments() )
 						).findAny().ifPresent( y -> {
-							throw new StaticVerificationException(
-									"illegal inheritance, cannot implement both '"
-											+ y + "' and " + x + "'" );
+							throw Diagnostics.inheritanceConflictingAncestors( y, x );
 						}
 						) );
 				inheritanceFinalised = true;
@@ -376,13 +373,10 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			assert ( !isInheritanceFinalised() );
 			if( type.worldArguments().size() != worldArguments().size() ||
 					!type.worldArguments().containsAll( worldParameters ) ) {
-				throw new StaticVerificationException(
-						"illegal inheritance, '" + type + "' and '" + this
-								+ "' must have the same roles" );
+				throw Diagnostics.classExtendsWrongNumberOfRoles( type, this );
 			}
 			if( extendedInterfaces().anyMatch( x -> x.isEquivalentTo( type ) ) ) {
-				throw new StaticVerificationException(
-						"illegal inheritance, '" + type + "' is repeated" );
+				throw Diagnostics.inheritanceRepeatedInterface( type );
 			}
 			extendedInterfaces.add( type );
 		}
@@ -575,10 +569,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 				}
 				if( methodToInherit.sameErasureAs( declaredMethod ) ) {
 					// (JLS 8.4.8.3) Same erasure but not a subsignature.
-					throw new StaticVerificationException( "method '" + declaredMethod
-							+ "' in '" + this + "' clashes with method '"
-							+ methodToInherit + "' in '" + methodToInherit.declarationContext()
-							+ "', both methods have the same erasure" );
+					throw Diagnostics.inheritedMethodErasureClashesWithDeclared(
+							declaredMethod, this, methodToInherit );
 				}
 			}
 
@@ -598,12 +590,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			for( Member.HigherMethod c : concreteSuperclassMethods ) {
 				if( c.isSubSignatureOf( methodToInherit ) ) {
 					if( !c.isReturnTypeSubstitutableFor( methodToInherit ) ) {
-						throw new StaticVerificationException(
-								"method '" + c
-										+ "' in '" + c.declarationContext()
-										+ "' clashes with method '" + methodToInherit
-										+ "' in '" + methodToInherit.declarationContext()
-										+ "', attempting to use incompatible return type" );
+						throw Diagnostics.methodClashesWithInheritedMethodReturnType( c,
+								methodToInherit );
 					}
 					return;
 				}
@@ -622,12 +610,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			for( Member.HigherMethod z : candidates ) {
 				if( z.isSubSignatureOf( methodToInherit ) ) {
 					if( !z.isReturnTypeSubstitutableFor( methodToInherit ) ) {
-						throw new StaticVerificationException(
-								"method '" + z
-										+ "' in '" + z.declarationContext()
-										+ "' clashes with method '" + methodToInherit
-										+ "' in '" + methodToInherit.declarationContext()
-										+ "', attempting to use incompatible return type" );
+						throw Diagnostics.methodClashesWithInheritedMethodReturnType( z,
+								methodToInherit );
 					}
 					return true;
 				}
@@ -724,12 +708,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 					// Keep both — Phase 4 will verify return-type compatibility.
 					return 0;
 				}
-				throw new StaticVerificationException(
-						"Duplicate default methods inherited. "
-								+ "'" + this + "' must override '" + m
-								+ "'' from '" + m.declarationContext()
-								+ "' which is identical to '" + earlier
-								+ "' from '" + earlier.declarationContext() + "'" );
+				throw Diagnostics.defaultMethodsFoundDuplicate( this, m, earlier );
 			}
 
 			return 0;
@@ -774,11 +753,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 					}
 					if( !m.isReturnTypeSubstitutableFor( earlier )
 							&& !earlier.isReturnTypeSubstitutableFor( m ) ) {
-						throw new StaticVerificationException(
-								"method '" + m + "' in '" + m.declarationContext()
-										+ "' clashes with method '" + earlier
-										+ "' in '" + earlier.declarationContext()
-										+ "', attempting to use incompatible return type" );
+						throw Diagnostics.methodClashesWithInheritedMethodReturnType( m, earlier );
 					}
 				}
 
@@ -810,9 +785,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 					return;
 				}
 			}
-			throw new StaticVerificationException( "'" + this + "' must either "
-					+ "be declared as abstract or implement abstract method '"
-					+ abstractMethod + "' in '" + abstractMethod.declarationContext() + "'" );
+			throw Diagnostics.concreteTypeMustImplementAbstractMethod( this, abstractMethod );
 		}
 
 		/**
@@ -824,11 +797,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			gc.extendedClass().ifPresent( superclass -> superclass.methods()
 					.filter( m -> m.isAbstract() && !m.isAccessibleFrom( this ) )
 					.forEach( m -> {
-						throw new StaticVerificationException(
-								"Implementation is not abstract and does not"
-										+ " override abstract method '"
-										+ m + "' in '"
-										+ m.declarationContext() + "'" );
+						throw Diagnostics.concreteTypeMustImplementAbstractMethod( m );
 					} )
 			);
 		}
@@ -866,28 +835,19 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		) {
 			// (8.4.3.3) Ensure we're not overriding a final method
 			if( parent.isFinal() ) {
-				throw new StaticVerificationException( "method '" + child
-						+ "' in '" + this + "' cannot override final method '"
-						+ parent + "' in '" + parent.declarationContext() + "'" );
+				throw Diagnostics.methodOverridesFinalMethod( child, this, parent );
 			}
 			// (8.4.8.1) Ensure instance methods don't override static methods
 			if( !child.isStatic() && parent.isStatic() ) {
-				throw new StaticVerificationException( "instance method '" + child
-						+ "' in '" + this + "' cannot override static method '"
-						+ parent + "' in '" + parent.declarationContext() + "'" );
+				throw Diagnostics.methodOverridesStaticMethod( child, this, parent );
 			}
 			// (8.4.8.2) Ensure static methods don't hide instance methods
 			if( child.isStatic() && !parent.isStatic() ) {
-				throw new StaticVerificationException( "static method '" + child
-						+ "' in '" + this + "' cannot override instance method '"
-						+ parent + "' in '" + parent.declarationContext() + "'" );
+				throw Diagnostics.staticMethodOverridesInstanceMethod( child, this, parent );
 			}
 			// (8.4.8.3) Ensure method return types are covariant
 			if( !child.isReturnTypeSubstitutableFor( parent ) ) {
-				throw new StaticVerificationException( "method '" + child
-						+ "' in '" + this + "' clashes with method '"
-						+ parent + "' in '" + parent.declarationContext()
-						+ "', attempting to use incompatible return type" );
+				throw Diagnostics.methodClashesWithInheritedMethodReturnType( child, parent );
 			}
 
 			// (8.4.8.3) JLS says we should issue a warning if child is not a subtype of parent; we skip that check.
@@ -896,12 +856,10 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			// (8.4.8.3) Ensure the access modifiers are compatible
 			if( child.isPrivate() || ( parent.isPublic() && !child.isPublic() )
 					|| ( parent.isProtected() && child.isPackagePrivate() ) ) {
-				throw new StaticVerificationException( "method '" + child
-						+ "' in '" + this + "' clashes with method '"
-						+ parent + "' in '" + parent.declarationContext()
-						+ "', attempting to assign weaker access privileges '"
-						+ ModifierUtils.prettyAccess( child.modifiers() ) + "' to '"
-						+ ModifierUtils.prettyAccess( parent.modifiers() ) + "'" );
+				throw Diagnostics.methodOverrideHasWeakerAccess(
+						child, this.toString(), parent,
+						ModifierUtils.prettyAccess( child.modifiers() ),
+						ModifierUtils.prettyAccess( parent.modifiers() ) );
 			}
 		}
 
@@ -933,10 +891,9 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			assert ( !interfaceFinalised );
 			assert ( field.declarationContext() == this );
 			if( declaredFields().anyMatch( x -> x.identifier().equals( field.identifier() ) ) ) {
-				throw new StaticVerificationException(
-						"duplicate variable '" + field.identifier() + "' in "
-								+ typeConstructor().variety().labelSingular + " '"
-								+ typeConstructor() );
+				throw Diagnostics.fieldAlreadyDefined(
+						field.identifier(), typeConstructor().variety().labelSingular,
+						typeConstructor() );
 			}
 			declaredFields.add( field );
 		}
@@ -947,12 +904,9 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			for( Member.HigherMethod x : declaredMethods ) {
 				if( x.sameErasureAs( method ) ) {
 					if( x.sameSignatureAs( method ) ) {
-						throw new StaticVerificationException( "method '" + method
-								+ "' is already defined in '" + typeConstructor() + "'" );
+						throw Diagnostics.methodAlreadyDefined( method, typeConstructor() );
 					} else {
-						throw new StaticVerificationException( "method '" + method
-								+ "' clashes with '" + x
-								+ "', both methods have the same erasure" );
+						throw Diagnostics.methodsHaveSameErasure( method, x );
 					}
 				}
 			}

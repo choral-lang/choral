@@ -22,7 +22,7 @@
 package choral.types;
 
 import choral.ast.type.TypeExpression;
-import choral.exceptions.StaticVerificationException;
+import choral.compiler.Diagnostics;
 import choral.types.kinds.Kind;
 import choral.utils.Formatting;
 
@@ -172,9 +172,8 @@ public class Universe {
 			if( key.variety == type.variety() ) {
 				specialClasses.put( key, type );
 			} else {
-				throw new StaticVerificationException(
-						"Invalid special type '" + type.identifier() + "', expected "
-								+ key.variety.labelSingular + " found " + type.variety() );
+				throw Diagnostics.invalidSpecialType(
+						type.identifier(), key.variety.labelSingular, type.variety().toString() );
 			}
 		}
 		return key;
@@ -187,9 +186,7 @@ public class Universe {
 	public HigherClassOrInterface specialType( SpecialTypeTag key ) {
 		HigherClassOrInterface result = specialClasses.get( key );
 		if( result == null ) {
-			throw new StaticVerificationException( "Unknown class '"
-					+ key.qualifiedName
-					+ "', missing a header?" );
+			throw Diagnostics.symbolNotFound( key.qualifiedName );
 		}
 		return result;
 	}
