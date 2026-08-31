@@ -15,16 +15,20 @@ public final class ErrorReporter {
 		diagnostics.add( error );
 	}
 
-	/** Add the error to diagnostics and throw it. */
+	/** Add the error to diagnostics and abort the current check. */
 	public < T > T abort( AstPositionedException error ) {
-    	diagnostics.add( error );
-		throw new ChoralCompoundException( List.copyOf( diagnostics ) );
+		diagnostics.add( error );
+		throw diagnosticsException();
 	}
 
-	/** Throws the recorded errors, preserving the single-error behaviour. */
+	/** Throws any recorded diagnostics. */
 	public void abortIfErrors() {
 		if( !diagnostics.isEmpty() ) {
-			throw new ChoralCompoundException( List.copyOf( diagnostics ) );
+			throw diagnosticsException();
 		}
+	}
+
+	private ChoralCompoundException diagnosticsException() {
+		return new ChoralCompoundException( List.copyOf( diagnostics ) );
 	}
 }

@@ -123,22 +123,22 @@ public class Typer {
 				try {
 					checkPrimaryTemplate( x, n, "class" );
 					visitClass( scope, pkg, x );
-				} 
-				catch(ChoralCompoundException e) {}
+				} catch( ChoralCompoundException ignored ) {
+				}
 			}
 			for( choral.ast.body.Enum x : n.enums() ) {
-				try{
+				try {
 					checkPrimaryTemplate( x, n, "enum" );
 					visitEnum( scope, pkg, x );
+				} catch( ChoralCompoundException ignored ) {
 				}
-				catch(ChoralCompoundException e) {}
 			}
 			for( choral.ast.body.Interface x : n.interfaces() ) {
 				try {
 					checkPrimaryTemplate( x, n, "interface" );
 					visitInterface( scope, pkg, x );
-    			}
-    			catch(ChoralCompoundException e) {}
+				} catch( ChoralCompoundException ignored ) {
+				}
 			}
 			visitImportDeclarations( scope, n.imports() );
 		}
@@ -239,7 +239,8 @@ public class Typer {
 					nm.setTypeAnnotation( tm );
 					tm.setSourceCode( nm );
 					t.innerType().addField( tm );
-					} catch(ChoralCompoundException e) {}
+					} catch( ChoralCompoundException ignored ) {
+					}
 				}
 				for( ClassMethodDefinition nm : n.methods() ) {
                     // TODO Extract to helper and recover
