@@ -141,6 +141,7 @@ public class Typer {
 				}
 			}
 			visitImportDeclarations( scope, n.imports() );
+			errors.abortIfErrors();
 		}
 
 		protected void visitImportDeclarations( Scope scope, List< ImportDeclaration > ns ) {
@@ -223,132 +224,30 @@ public class Typer {
 			taskQueue.enqueue( Phase.MEMBER_DECLARATIONS, () -> {
 				for( Field nm : n.fields() ) {
 					try {
-						EnumSet< Modifier > ms = EnumSet.noneOf( Modifier.class );
-						for( FieldModifier x : nm.modifiers() ) {
-							ms.add( Modifier.valueOf( x.name() ) );
-						}
-						Member.Field tm = new Member.Field(
-								t.innerType(),
-								nm.name().identifier(),
-								ms,
-								visitGroundDataTypeExpression(
-										( ms.contains( Modifier.STATIC ) ) ?
-												classOrInterfaceStaticScope :
-												classOrInterfaceStaticScope.getInstanceScope(),
-										nm.typeExpression(), false ) );
-						nm.setTypeAnnotation( tm );
-						tm.setSourceCode( nm );
-						t.innerType().addField( tm );
+						visitField( classOrInterfaceStaticScope, t, nm );
 					} catch( ChoralCompoundException ignored ) {
 					}
 				}
+				errors.abortIfErrors();
 				for( ClassMethodDefinition nm : n.methods() ) {
-					// TODO Extract to helper and recover
-					EnumSet< Modifier > ms = EnumSet.noneOf( Modifier.class );
-					for( ClassMethodModifier x : nm.modifiers() ) {
-						ms.add( Modifier.valueOf( x.name() ) );
-					}
-					if( ms.contains( Modifier.ABSTRACT ) && !t.isAbstract() ) {
-						errors.abort( Diagnostics.abstractMethodInConcreteClass( nm ) );
-					}
-					List< HigherTypeParameter > typeParams = visitTypeParameters(
-							nm.signature().typeParameters() );
-					Member.HigherMethod tm = new Member.HigherMethod(
-							t.innerType(),
-							nm.signature().name().identifier(),
-							ms,
-							typeParams );
-					nm.setTypeAnnotation( tm );
-					tm.setSourceCode( nm );
-					CallableScope callableScope = ( ms.contains( Modifier.STATIC ) ) ?
-							classOrInterfaceStaticScope.getScope( tm ) :
-							classOrInterfaceStaticScope.getInstanceScope().getScope( tm );
-					visitTypeParametersBound( callableScope, nm.signature().typeParameters(),
-							true );
-					for( VariableDeclaration x : nm.signature().parameters() ) {
-						if( x.type().isEmpty() ) {
-							errors.abort( Diagnostics.varUsedAsParameter( x ) );
-						}
-						GroundDataType parameterType =
-								visitGroundDataTypeExpression(
-										callableScope, x.type().get(), true );
-						x.setTypeAnnotation( parameterType );
-						tm.innerCallable().signature().addParameter( x.name().identifier(),
-								parameterType );
-						callableScope.getScope().declareVariable( x );
-					}
-					TypeExpression r = nm.signature().returnType();
-					if( r.name().identifier().equals( "void" ) ) {
-						if( !( r.worldArguments().isEmpty() && r.typeArguments().isEmpty() ) ) {
-							// void should not be in a type expression
-							errors.abort( Diagnostics.voidTypeIllegalArguments( r ) );
-						}
-						tm.innerCallable().setReturnType( universe.voidType() );
-					} else {
-						tm.innerCallable().setReturnType(
-								visitGroundDataTypeExpression( callableScope,
-										nm.signature().returnType(), false ) );
-					}
-					checkIfSelectionMethod( tm, nm.annotations() );
-					checkIfTypeSelectionMethod( tm, nm.annotations() );
 					try {
-						tm.innerCallable().finalise();
-						t.innerType().addMethod( tm );
-					} catch( StaticVerificationException e ) {
-						errors.abort( new AstPositionedException( nm.position(), e ) );
+						visitClassMethod( classOrInterfaceStaticScope, t, nm );
+					} catch( ChoralCompoundException ignored ) {
 					}
-					taskQueue.enqueue( Phase.MEMBER_DEFINITIONS, () -> {
-						try {
-							visitMethodBody( callableScope.getScope(), tm, nm,
-									nm.body().orElse( null ) );
-						} catch( StaticVerificationException e ) {
-							errors.abort( new AstPositionedException( nm.position(), e ) );
-						}
-					} );
 				}
+				errors.abortIfErrors();
 				Map< Member.HigherConstructor, Member.HigherConstructor > constructorDependencies =
 						new HashMap<>( n.constructors().size() );
 				Map< Member.HigherConstructor, MethodCallExpression > explicitConstructorInvocations =
 						new HashMap<>( n.constructors().size() );
 				for( ConstructorDefinition nm : n.constructors() ) {
-					// TODO Extract to helper and recover
-					EnumSet< Modifier > ms = EnumSet.noneOf( Modifier.class );
-					for( ConstructorModifier m : nm.modifiers() ) {
-						ms.add( Modifier.valueOf( m.name() ) );
-					}
-					List< HigherTypeParameter > typeParams = visitTypeParameters(
-							nm.signature().typeParameters() );
-					Member.HigherConstructor tm = new Member.HigherConstructor(
-							t.innerType(),
-							ms,
-							typeParams );
-					nm.setTypeAnnotation( tm );
-					tm.setSourceCode( nm );
-					CallableScope callableScope = classOrInterfaceStaticScope
-							.getInstanceScope().getScope( tm );
-					visitTypeParametersBound(
-							callableScope, nm.signature().typeParameters(), false );
-					for( VariableDeclaration x : nm.signature().parameters() ) {
-						if( x.type().isEmpty() ) {
-							errors.abort( Diagnostics.varUsedAsParameter( x ) );
-						}
-						GroundDataType parameterType = visitGroundDataTypeExpression(
-								callableScope, x.type().get(), false );
-						x.setTypeAnnotation( parameterType );
-						tm.innerCallable().signature().addParameter( x.name().identifier(),
-								parameterType );
-						callableScope.getScope().declareVariable( x );
-					}
 					try {
-						tm.innerCallable().finalise();
-						t.innerType().addConstructor( tm );
-					} catch( StaticVerificationException e ) {
-						errors.abort( new AstPositionedException( nm.position(), e ) );
+						visitConstructor( classOrInterfaceStaticScope, t, nm,
+								constructorDependencies, explicitConstructorInvocations );
+					} catch( ChoralCompoundException ignored ) {
 					}
-					taskQueue.enqueue( Phase.MEMBER_DEFINITIONS,
-							() -> visitConstructorBody( callableScope.getScope(), tm, nm,
-									constructorDependencies, explicitConstructorInvocations ) );
 				}
+				errors.abortIfErrors();
 				taskQueue.enqueue( Phase.MEMBER_GLOBAL_CHECKS,
 						() -> checkConstructorsDependencies( constructorDependencies,
 								explicitConstructorInvocations ) );
@@ -360,6 +259,139 @@ public class Typer {
 					}
 				} ) );
 			} );
+		}
+
+		private void visitField(
+				ClassOrInterfaceStaticScope classScope, HigherClass enclosingClass, Field n
+		) {
+			EnumSet< Modifier > modifiers = EnumSet.noneOf( Modifier.class );
+			for( FieldModifier modifier : n.modifiers() ) {
+				modifiers.add( Modifier.valueOf( modifier.name() ) );
+			}
+			Member.Field field = new Member.Field(
+					enclosingClass.innerType(),
+					n.name().identifier(),
+					modifiers,
+					visitGroundDataTypeExpression(
+							modifiers.contains( Modifier.STATIC ) ?
+									classScope : classScope.getInstanceScope(),
+							n.typeExpression(), false ) );
+			n.setTypeAnnotation( field );
+			field.setSourceCode( n );
+			enclosingClass.innerType().addField( field );
+		}
+
+		private void visitClassMethod(
+				ClassOrInterfaceStaticScope classScope, HigherClass enclosingClass,
+				ClassMethodDefinition n
+		) {
+			EnumSet< Modifier > modifiers = EnumSet.noneOf( Modifier.class );
+			for( ClassMethodModifier modifier : n.modifiers() ) {
+				modifiers.add( Modifier.valueOf( modifier.name() ) );
+			}
+			if( modifiers.contains( Modifier.ABSTRACT ) && !enclosingClass.isAbstract() ) {
+				errors.abort( Diagnostics.abstractMethodInConcreteClass( n ) );
+			}
+			List< HigherTypeParameter > typeParams = visitTypeParameters(
+					n.signature().typeParameters() );
+			Member.HigherMethod method = new Member.HigherMethod(
+					enclosingClass.innerType(),
+					n.signature().name().identifier(),
+					modifiers,
+					typeParams );
+			n.setTypeAnnotation( method );
+			method.setSourceCode( n );
+			CallableScope callableScope = modifiers.contains( Modifier.STATIC ) ?
+					classScope.getScope( method ) :
+					classScope.getInstanceScope().getScope( method );
+			visitTypeParametersBound( callableScope, n.signature().typeParameters(), true );
+			for( VariableDeclaration parameter : n.signature().parameters() ) {
+				try {
+					visitCallableParameter( callableScope, method, parameter, true );
+				} catch( ChoralCompoundException ignored ) {
+				}
+			}
+			errors.abortIfErrors();
+			TypeExpression returnType = n.signature().returnType();
+			if( returnType.name().identifier().equals( "void" ) ) {
+				if( !( returnType.worldArguments().isEmpty()
+						&& returnType.typeArguments().isEmpty() ) ) {
+					// void should not be in a type expression
+					errors.abort( Diagnostics.voidTypeIllegalArguments( returnType ) );
+				}
+				method.innerCallable().setReturnType( universe.voidType() );
+			} else {
+				method.innerCallable().setReturnType(
+						visitGroundDataTypeExpression(
+								callableScope, returnType, false ) );
+			}
+			checkIfSelectionMethod( method, n.annotations() );
+			checkIfTypeSelectionMethod( method, n.annotations() );
+			try {
+				method.innerCallable().finalise();
+				enclosingClass.innerType().addMethod( method );
+			} catch( StaticVerificationException e ) {
+				errors.abort( new AstPositionedException( n.position(), e ) );
+			}
+			taskQueue.enqueue( Phase.MEMBER_DEFINITIONS, () -> {
+				try {
+					visitMethodBody( callableScope.getScope(), method, n,
+							n.body().orElse( null ) );
+				} catch( StaticVerificationException e ) {
+					errors.abort( new AstPositionedException( n.position(), e ) );
+				}
+			} );
+		}
+
+		private void visitCallableParameter(
+				CallableScope callableScope, Member.HigherCallable callable,
+				VariableDeclaration parameter, boolean delayBoundChecks
+		) {
+			if( parameter.type().isEmpty() ) {
+				errors.abort( Diagnostics.varUsedAsParameter( parameter ) );
+			}
+			GroundDataType parameterType = visitGroundDataTypeExpression(
+					callableScope, parameter.type().get(), delayBoundChecks );
+			parameter.setTypeAnnotation( parameterType );
+			callable.innerCallable().signature().addParameter(
+					parameter.name().identifier(), parameterType );
+			callableScope.getScope().declareVariable( parameter );
+		}
+
+		private void visitConstructor(
+				ClassOrInterfaceStaticScope classScope, HigherClass enclosingClass,
+				ConstructorDefinition n,
+				Map< Member.HigherConstructor, Member.HigherConstructor > dependencies,
+				Map< Member.HigherConstructor, MethodCallExpression > explicitInvocations
+		) {
+			EnumSet< Modifier > modifiers = EnumSet.noneOf( Modifier.class );
+			for( ConstructorModifier modifier : n.modifiers() ) {
+				modifiers.add( Modifier.valueOf( modifier.name() ) );
+			}
+			List< HigherTypeParameter > typeParams = visitTypeParameters(
+					n.signature().typeParameters() );
+			Member.HigherConstructor constructor = new Member.HigherConstructor(
+					enclosingClass.innerType(), modifiers, typeParams );
+			n.setTypeAnnotation( constructor );
+			constructor.setSourceCode( n );
+			CallableScope callableScope = classScope.getInstanceScope().getScope( constructor );
+			visitTypeParametersBound( callableScope, n.signature().typeParameters(), false );
+			for( VariableDeclaration parameter : n.signature().parameters() ) {
+				try {
+					visitCallableParameter( callableScope, constructor, parameter, false );
+				} catch( ChoralCompoundException ignored ) {
+				}
+			}
+			errors.abortIfErrors();
+			try {
+				constructor.innerCallable().finalise();
+				enclosingClass.innerType().addConstructor( constructor );
+			} catch( StaticVerificationException e ) {
+				errors.abort( new AstPositionedException( n.position(), e ) );
+			}
+			taskQueue.enqueue( Phase.MEMBER_DEFINITIONS,
+					() -> visitConstructorBody( callableScope.getScope(), constructor, n,
+							dependencies, explicitInvocations ) );
 		}
 
 		private void visitEnum(
@@ -400,6 +432,7 @@ public class Typer {
 						errors.report( new AstPositionedException( c.position(), e ) );
 					}
 				}
+				errors.abortIfErrors();
 				taskQueue.enqueue( new TaskQueue.MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
 					try {
 						t.innerType().finaliseInterface();
@@ -450,62 +483,12 @@ public class Typer {
 			taskQueue.enqueue( h );
 			taskQueue.enqueue( Phase.MEMBER_DECLARATIONS, () -> {
 				for( InterfaceMethodDefinition nm : n.methods() ) {
-					// TODO Extract to helper and recover
-					EnumSet< Modifier > ms = EnumSet.noneOf( Modifier.class );
-					for( InterfaceMethodModifier x : nm.modifiers() ) {
-						ms.add( Modifier.valueOf( x.name() ) );
+					try {
+						visitInterfaceMethod( classOrInterfaceStaticScope, t, nm );
+					} catch( ChoralCompoundException ignored ) {
 					}
-					t.addImplicitMethodModifiers( ms );
-					List< HigherTypeParameter > typeParams = visitTypeParameters(
-							nm.signature().typeParameters() );
-					Member.HigherMethod tm = new Member.HigherMethod(
-							t.innerType(),
-							nm.signature().name().identifier(),
-							ms,
-							typeParams );
-					nm.setTypeAnnotation( tm );
-					tm.setSourceCode( nm );
-					CallableScope methodScope = ( ms.contains( Modifier.STATIC ) ) ?
-							classOrInterfaceStaticScope.getScope( tm ) :
-							classOrInterfaceStaticScope.getInstanceScope().getScope( tm );
-					visitTypeParametersBound( methodScope, nm.signature().typeParameters(),
-							true );
-					for( VariableDeclaration x : nm.signature().parameters() ) {
-						if( x.type().isEmpty() ) {
-							errors.abort( Diagnostics.varUsedAsParameter( x ) );
-						}
-						GroundDataType parameterType =
-								visitGroundDataTypeExpression( methodScope, x.type().get(), false );
-						x.setTypeAnnotation( parameterType );
-						tm.innerCallable().signature().addParameter( x.name().identifier(),
-								parameterType );
-						methodScope.getScope().declareVariable( x );
-					}
-					TypeExpression r = nm.signature().returnType();
-					if( r.name().identifier().equals( "void" ) ) {
-						if( !( r.worldArguments().isEmpty() && r.typeArguments().isEmpty() ) ) {
-							// void should not be in a type expression
-							errors.abort( Diagnostics.voidTypeIllegalArguments( r ) );
-						}
-						tm.innerCallable().setReturnType( universe.voidType() );
-					} else {
-						tm.innerCallable().setReturnType(
-								visitGroundDataTypeExpression( methodScope,
-										nm.signature().returnType(), false ) );
-					}
-					checkIfSelectionMethod( tm, nm.annotations() );
-					checkIfTypeSelectionMethod( tm, nm.annotations() );
-					tm.innerCallable().finalise();
-					t.innerType().addMethod( tm );
-					taskQueue.enqueue( Phase.MEMBER_DEFINITIONS, () -> {
-						try {
-							visitMethodBody( methodScope.getScope(), tm, nm,
-									nm.body().orElse( null ) );
-						} catch( StaticVerificationException e ) {
-							errors.abort( new AstPositionedException( nm.position(), e ) );
-						}
-					} );
 				}
+				errors.abortIfErrors();
 				taskQueue.enqueue( new TaskQueue.MemberTask( Phase.MEMBER_DECLARATIONS, t, () -> {
 					try {
 						t.innerType().finaliseInterface();
@@ -513,6 +496,58 @@ public class Typer {
 						errors.abort( new AstPositionedException( n.position(), e ) );
 					}
 				} ) );
+			} );
+		}
+
+		private void visitInterfaceMethod(
+				ClassOrInterfaceStaticScope interfaceScope, HigherInterface enclosingInterface,
+				InterfaceMethodDefinition n
+		) {
+			EnumSet< Modifier > modifiers = EnumSet.noneOf( Modifier.class );
+			for( InterfaceMethodModifier modifier : n.modifiers() ) {
+				modifiers.add( Modifier.valueOf( modifier.name() ) );
+			}
+			enclosingInterface.addImplicitMethodModifiers( modifiers );
+			List< HigherTypeParameter > typeParams = visitTypeParameters(
+					n.signature().typeParameters() );
+			Member.HigherMethod method = new Member.HigherMethod(
+					enclosingInterface.innerType(),
+					n.signature().name().identifier(),
+					modifiers,
+					typeParams );
+			n.setTypeAnnotation( method );
+			method.setSourceCode( n );
+			CallableScope methodScope = modifiers.contains( Modifier.STATIC ) ?
+					interfaceScope.getScope( method ) :
+					interfaceScope.getInstanceScope().getScope( method );
+			visitTypeParametersBound( methodScope, n.signature().typeParameters(), true );
+			for( VariableDeclaration parameter : n.signature().parameters() ) {
+				visitCallableParameter( methodScope, method, parameter, false );
+			}
+			TypeExpression returnType = n.signature().returnType();
+			if( returnType.name().identifier().equals( "void" ) ) {
+				if( !( returnType.worldArguments().isEmpty()
+						&& returnType.typeArguments().isEmpty() ) ) {
+					// void should not be in a type expression
+					errors.abort( Diagnostics.voidTypeIllegalArguments( returnType ) );
+				}
+				method.innerCallable().setReturnType( universe.voidType() );
+			} else {
+				method.innerCallable().setReturnType(
+						visitGroundDataTypeExpression(
+								methodScope, returnType, false ) );
+			}
+			checkIfSelectionMethod( method, n.annotations() );
+			checkIfTypeSelectionMethod( method, n.annotations() );
+			method.innerCallable().finalise();
+			enclosingInterface.innerType().addMethod( method );
+			taskQueue.enqueue( Phase.MEMBER_DEFINITIONS, () -> {
+				try {
+					visitMethodBody( methodScope.getScope(), method, n,
+							n.body().orElse( null ) );
+				} catch( StaticVerificationException e ) {
+					errors.abort( new AstPositionedException( n.position(), e ) );
+				}
 			} );
 		}
 
@@ -1337,26 +1372,37 @@ public class Typer {
 
 			@Override
 			public Boolean visit( VariableDeclarationStatement n ) {
-				for( VariableDeclaration x : n.variables() ) {
-					// TODO Extract to helper and parallelize exceptions
-					GroundDataType type;
-					if( x.type().isPresent() ) {
-						type = visitGroundDataTypeExpression( scope, x.type().get(), false );
-						x.initializer().ifPresent( e -> checkInitializer( e, n, type ) );
-					} else {
-						if( x.initializer().isEmpty() ) {
-							errors.abort( Diagnostics.varMissingInitializer( x ) );
-						}
-						AssignExpression initializer = x.initializer().get();
-						type = assertNotVoid(
-								synth( initializer.value(), n ), initializer.value() );
-						initializer.target().setTypeAnnotation( type );
-						initializer.setTypeAnnotation( type );
+				for( VariableDeclaration declaration : n.variables() ) {
+					try {
+						visitVariableDeclaration( n, declaration );
+					} catch( ChoralCompoundException ignored ) {
 					}
-					x.setTypeAnnotation( type );
-					scope.declareVariable( x );
 				}
+				errors.abortIfErrors();
 				return assertReachableContinuation( n, false );
+			}
+
+			private void visitVariableDeclaration(
+					VariableDeclarationStatement statement, VariableDeclaration declaration
+			) {
+				GroundDataType type;
+				if( declaration.type().isPresent() ) {
+					type = visitGroundDataTypeExpression(
+							scope, declaration.type().get(), false );
+					declaration.initializer().ifPresent(
+							expression -> checkInitializer( expression, statement, type ) );
+				} else {
+					if( declaration.initializer().isEmpty() ) {
+						errors.abort( Diagnostics.varMissingInitializer( declaration ) );
+					}
+					AssignExpression initializer = declaration.initializer().get();
+					type = assertNotVoid(
+							synth( initializer.value(), statement ), initializer.value() );
+					initializer.target().setTypeAnnotation( type );
+					initializer.setTypeAnnotation( type );
+				}
+				declaration.setTypeAnnotation( type );
+				scope.declareVariable( declaration );
 			}
 
 			/**
