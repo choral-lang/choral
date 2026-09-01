@@ -27,6 +27,7 @@ public abstract class Node {
 
 	// position in the original choral source file
 	private Position position;
+	private SourceRange sourceRange;
 
 	// ToDo: remove this, make position mandatory
 	@Deprecated
@@ -36,6 +37,7 @@ public abstract class Node {
 
 	protected Node( Position position ) {
 		this.position = position;
+		this.sourceRange = position == null ? null : SourceRange.at( position );
 	}
 
 	public Position position() {
@@ -44,12 +46,25 @@ public abstract class Node {
 
 	public boolean hasPosition() { return position() != null; }
 
+	public SourceRange sourceRange() {
+		return this.sourceRange;
+	}
+
+	public boolean hasSourceRange() { return sourceRange() != null; }
+
 	public void setPosition( Position position ) {
 		this.position = position;
+		this.sourceRange = position == null ? null : SourceRange.at( position );
+	}
+
+	public void setSourceRange( SourceRange sourceRange ) {
+		this.sourceRange = sourceRange;
+		this.position = sourceRange == null ? null : sourceRange.start();
 	}
 
 	public < R extends Node > R copyPosition( Node n ) {
 		this.position = n.position;
+		this.sourceRange = n.sourceRange;
 		return (R) this;
 	}
 
