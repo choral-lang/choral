@@ -11,7 +11,8 @@
 	<version>${revision}</version>
 	<groupId>org.choral-lang</groupId>
 	<artifactId>base</artifactId>
-	<name>Base</name>
+	<name>Choral Base</name>
+	<description>Choral base library</description>
 	<url>${choral.url}</url>
 	<packaging>jar</packaging>
 

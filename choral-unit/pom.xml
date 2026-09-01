@@ -11,7 +11,8 @@
 	<version>${revision}</version>
 	<groupId>org.choral-lang</groupId>
 	<artifactId>choral-unit</artifactId>
-	<name>Choral-Unit</name>
+	<name>Choral Unit</name>
+    <description>Choral unit testing framework</description>
 	<url>${choral.url}</url>
 	<packaging>jar</packaging>
 

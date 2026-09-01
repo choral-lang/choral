@@ -10,7 +10,8 @@
 	<version>${revision}</version>
 	<groupId>org.choral-lang</groupId>
 	<artifactId>runtime</artifactId>
-	<name>Runtime</name>
+	<name>Choral Runtime</name>
+	<description>The Java runtime for running Choral compiled code.</description>
 	<url>${choral.url}</url>
 	<packaging>jar</packaging>
 

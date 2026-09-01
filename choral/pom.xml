@@ -13,6 +13,7 @@
     <artifactId>choral</artifactId>
     <name>Choral</name>
     <url>${choral.url}</url>
+    <description>The Choral compiler</description>
     <packaging>jar</packaging>
 
     <properties>
