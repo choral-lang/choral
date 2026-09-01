@@ -43,7 +43,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Renders a typed Choral method directly as Mermaid sequence-diagram source.
+ * Renders the given Choral method as Mermaid sequence diagram source code.
  * The visitor appends complete Mermaid statements to {@link #diagramLines} while traversing
  * statements, expressions, and source-backed method calls in execution order.
  */
