@@ -64,14 +64,14 @@ public class TypedSourceAnalyzer {
 		TYPE_ERROR
 	}
 
-	public record AnalysisWarning( choral.ast.Position position, String message ) {
+	public record AnalysisWarning(choral.ast.Position position, String message) {
 	}
 
 	public record AnalysisResult(
-			CompilationUnit compilationUnit,
-			List< AnalysisWarning > warnings,
-			AnalysisFailure failure,
-			Exception exception
+								 CompilationUnit compilationUnit,
+								 List< AnalysisWarning > warnings,
+								 AnalysisFailure failure,
+								 Exception exception
 	) {
 		private static AnalysisResult success(
 				CompilationUnit compilationUnit, List< AnalysisWarning > warnings
@@ -130,8 +130,8 @@ public class TypedSourceAnalyzer {
 			String packageName = source.unit().packageDeclaration().orElse( "" );
 			for( String typeName : referencedTypes ) {
 				if( typeName.contains( "." ) ) continue;
-				String qualifiedName = packageName.isEmpty()
-						? typeName : packageName + "." + typeName;
+				String qualifiedName =
+						packageName.isEmpty() ? typeName : packageName + "." + typeName;
 				addSource( source.path().getParent().resolve( typeName + ".ch" ),
 						qualifiedName, sourceOverlays, units, pending );
 			}
@@ -191,9 +191,8 @@ public class TypedSourceAnalyzer {
 		if( units.containsKey( normalised ) ) return;
 		String sourceCode = sourceOverlays.get( normalised );
 		if( sourceCode == null && !Files.isRegularFile( normalised ) ) return;
-		CompilationUnit unit = sourceCode == null
-				? Parser.parseSourceFile( normalised.toFile() )
-				: Parser.parseString( sourceCode, normalised.toString() );
+		CompilationUnit unit = sourceCode == null ? Parser.parseSourceFile( normalised.toFile() ) :
+				Parser.parseString( sourceCode, normalised.toString() );
 		if( !declaresType( unit, importedName ) ) return;
 		units.put( normalised, unit );
 		pending.add( new SourceUnit( normalised, unit ) );
@@ -245,7 +244,7 @@ public class TypedSourceAnalyzer {
 		return path.toAbsolutePath().normalize();
 	}
 
-	private record SourceUnit( Path path, CompilationUnit unit ) {
+	private record SourceUnit(Path path, CompilationUnit unit) {
 	}
 
 	private static String sourceFile( String uri ) {

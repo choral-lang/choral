@@ -27,11 +27,11 @@ public class MermaidTest {
 	@Test
 	public void emptyMethod() {
 		String source =
-			"""
-			class Empty@( Customer, Seller ) {
-				void run() {}
-			}
-			""";
+				"""
+				class Empty@( Customer, Seller ) {
+					void run() {}
+				}
+				""";
 
 		assertEquals(
 				"""
@@ -46,17 +46,17 @@ public class MermaidTest {
 	@Test
 	public void oneCommunication() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Order@( Customer, Seller ) {
-				public void run(
-						SymChannel@( Customer, Seller )< Object > channel,
-						String@Customer order ) {
-					String@Seller received = channel.< String >com( order );
+				class Order@( Customer, Seller ) {
+					public void run(
+							SymChannel@( Customer, Seller )< Object > channel,
+							String@Customer order ) {
+						String@Seller received = channel.< String >com( order );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
 				"""
@@ -72,17 +72,17 @@ public class MermaidTest {
 	@Test
 	public void oneSelection() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			enum Decision@X { ACCEPT }
+				enum Decision@X { ACCEPT }
 
-			class Approval@( Customer, Seller ) {
-				public void run( SymChannel@( Customer, Seller )< Object > channel ) {
-					channel.< Decision >select( Decision@Customer.ACCEPT );
+				class Approval@( Customer, Seller ) {
+					public void run( SymChannel@( Customer, Seller )< Object > channel ) {
+						channel.< Decision >select( Decision@Customer.ACCEPT );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
 				"""
@@ -98,18 +98,18 @@ public class MermaidTest {
 	@Test
 	public void eventLabelsEscapeMermaidSyntax() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Escaped@( A, B ) {
-				void run( SymChannel@( A, B )< Object > channel ) {
-					channel.< String >com( "ready: <go>; %% end"@A );
+				class Escaped@( A, B ) {
+					void run( SymChannel@( A, B )< Object > channel ) {
+						channel.< String >com( "ready: <go>; %% end"@A );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -122,22 +122,22 @@ public class MermaidTest {
 	@Test
 	public void multipleEventsPreserveSourceOrder() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			enum State@X { DONE }
+				enum State@X { DONE }
 
-			class Shipping@( Customer, Seller, Shipper ) {
-				public void run(
-						SymChannel@( Customer, Seller )< Object > customerSeller,
-						SymChannel@( Seller, Shipper )< Object > sellerShipper,
-						String@Customer order ) {
-					String@Seller received = customerSeller.< String >com( order );
-					sellerShipper.< String >com( received );
-					sellerShipper.< State >select( State@Shipper.DONE );
+				class Shipping@( Customer, Seller, Shipper ) {
+					public void run(
+							SymChannel@( Customer, Seller )< Object > customerSeller,
+							SymChannel@( Seller, Shipper )< Object > sellerShipper,
+							String@Customer order ) {
+						String@Seller received = customerSeller.< String >com( order );
+						sellerShipper.< String >com( received );
+						sellerShipper.< State >select( State@Shipper.DONE );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
 				"""
@@ -150,7 +150,7 @@ public class MermaidTest {
 				p1->>p2: received
 				p2-->>p1: State@Shipper.DONE
 				""".strip(),
-					mermaid( source, 10, 10 ) );
+				mermaid( source, 10, 10 ) );
 	}
 
 	////////// EXPRESSION EVALUATION ORDER //////////
@@ -158,60 +158,60 @@ public class MermaidTest {
 	@Test
 	public void computedReceiverIsEvaluatedBeforeOuterCommunication() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Evaluation@( A, B ) {
-				SymChannel@( A, B )< Object > route(
-						SymChannel@( A, B )< Object > channel,
-						String@A before ) {
-					channel.< String >com( before );
-					return channel;
-				}
+				class Evaluation@( A, B ) {
+					SymChannel@( A, B )< Object > route(
+							SymChannel@( A, B )< Object > channel,
+							String@A before ) {
+						channel.< String >com( before );
+						return channel;
+					}
 
-				void run(
-						SymChannel@( A, B )< Object > channel,
-						String@A before,
-						String@A after ) {
-					this.route( channel, before ).< String >com( after );
+					void run(
+							SymChannel@( A, B )< Object > channel,
+							String@A before,
+							String@A after ) {
+						this.route( channel, before ).< String >com( after );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
 				"""
-					sequenceDiagram
-					participant p0 as A
-					participant p1 as B
-					Note over p0,p1: Evaluation.run
-					rect rgba(0, 0, 0, 0.05)
-					Note over p0,p1: call route
-					p0->>p1: before
-					end
-					p0->>p1: after
-					""".strip(),
+				sequenceDiagram
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Evaluation.run
+				rect rgba(0, 0, 0, 0.05)
+				Note over p0,p1: call route
+				p0->>p1: before
+				end
+				p0->>p1: after
+				""".strip(),
 				mermaidAt( source, "this.route", 1 ) );
 	}
 
 	@Test
 	public void communicationPassedAsMethodArgumentIsRendered() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Nested@( A, B ) {
-				void consume( String@B value ) {}
+				class Nested@( A, B ) {
+					void consume( String@B value ) {}
 
-				void run(
-						SymChannel@( A, B )< Object > channel,
-						String@A value ) {
-					consume( channel.< String >com( value ) );
+					void run(
+							SymChannel@( A, B )< Object > channel,
+							String@A value ) {
+						consume( channel.< String >com( value ) );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -227,34 +227,34 @@ public class MermaidTest {
 	@Test
 	public void nestedConditionalsPreserveStructureAndOrder() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Alternatives@( A, B, C ) {
-				void run(
-						SymChannel@( A, B )< Object > ab,
-						SymChannel@( B, C )< Object > bc,
-						SymChannel@( C, A )< Object > ca,
-						String@A a,
-						String@B b,
-						String@C c ) {
-					if( true@A ) {
-						ab.< String >com( a );
-						if( false@B ) {
-							bc.< String >com( b );
+				class Alternatives@( A, B, C ) {
+					void run(
+							SymChannel@( A, B )< Object > ab,
+							SymChannel@( B, C )< Object > bc,
+							SymChannel@( C, A )< Object > ca,
+							String@A a,
+							String@B b,
+							String@C c ) {
+						if( true@A ) {
+							ab.< String >com( a );
+							if( false@B ) {
+								bc.< String >com( b );
+							} else {
+								ca.< String >com( c );
+							}
 						} else {
-							ca.< String >com( c );
+							ab.< String >com( a );
 						}
-					} else {
-						ab.< String >com( a );
+						bc.< String >com( b );
 					}
-					bc.< String >com( b );
 				}
-			}
-			""";
+				""";
 
 		String expected =
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -280,32 +280,32 @@ public class MermaidTest {
 	@Test
 	public void switchCasesAreRenderedAsOrderedAlternatives() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			enum Route@X { FAST, SAFE }
+				enum Route@X { FAST, SAFE }
 
-			class Routing@( A, B, C ) {
-				void run(
-						SymChannel@( A, B )< Object > ab,
-						SymChannel@( B, C )< Object > bc,
-						SymChannel@( C, A )< Object > ca,
-						Route@A route,
-						String@A a,
-						String@B b,
-						String@C c ) {
-					switch( route ) {
-						case FAST -> { ab.< String >com( a ); }
-						case SAFE -> { bc.< String >com( b ); }
-						default -> { ca.< String >com( c ); }
+				class Routing@( A, B, C ) {
+					void run(
+							SymChannel@( A, B )< Object > ab,
+							SymChannel@( B, C )< Object > bc,
+							SymChannel@( C, A )< Object > ca,
+							Route@A route,
+							String@A a,
+							String@B b,
+							String@C c ) {
+						switch( route ) {
+							case FAST -> { ab.< String >com( a ); }
+							case SAFE -> { bc.< String >com( b ); }
+							default -> { ca.< String >com( c ); }
+						}
+						ab.< String >com( a );
 					}
-					ab.< String >com( a );
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -326,31 +326,31 @@ public class MermaidTest {
 	@Test
 	public void tryCatchPathsUseCriticalOptionsInOrder() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Recovery@( A, B, C ) {
-				void run(
-						SymChannel@( A, B )< Object > ab,
-						SymChannel@( B, C )< Object > bc,
-						SymChannel@( C, A )< Object > ca,
-						String@A a,
-						String@B b,
-						String@C c ) {
-					try {
-						ab.< String >com( a );
-					} catch( Exception@B first ) {
+				class Recovery@( A, B, C ) {
+					void run(
+							SymChannel@( A, B )< Object > ab,
+							SymChannel@( B, C )< Object > bc,
+							SymChannel@( C, A )< Object > ca,
+							String@A a,
+							String@B b,
+							String@C c ) {
+						try {
+							ab.< String >com( a );
+						} catch( Exception@B first ) {
+							bc.< String >com( b );
+						} catch( Exception@C second ) {
+							ca.< String >com( c );
+						}
 						bc.< String >com( b );
-					} catch( Exception@C second ) {
-						ca.< String >com( c );
 					}
-					bc.< String >com( b );
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -371,30 +371,30 @@ public class MermaidTest {
 	@Test
 	public void controlFlowWithoutDiagramContentIsOmitted() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			enum Choice@X { FIRST }
+				enum Choice@X { FIRST }
 
-			class EmptyControlFlow@( A, B ) {
-				void run(
-						SymChannel@( A, B )< Object > channel,
-						Boolean@A condition,
-						Choice@A choice,
-						String@A value ) {
-					if( condition ) {}
-					switch( choice ) {
-						case FIRST -> {}
-						default -> {}
+				class EmptyControlFlow@( A, B ) {
+					void run(
+							SymChannel@( A, B )< Object > channel,
+							Boolean@A condition,
+							Choice@A choice,
+							String@A value ) {
+						if( condition ) {}
+						switch( choice ) {
+							case FIRST -> {}
+							default -> {}
+						}
+						try {} catch( Exception@A error ) {}
+						channel.< String >com( value );
 					}
-					try {} catch( Exception@A error ) {}
-					channel.< String >com( value );
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -407,33 +407,33 @@ public class MermaidTest {
 	@Test
 	public void mixedEmptyControlFlowBranchesRemainVisible() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			enum Choice@X { FIRST }
+				enum Choice@X { FIRST }
 
-			class Partial@( A, B ) {
-				void run(
-						SymChannel@( A, B )< Object > forward,
-						SymChannel@( B, A )< Object > reverse,
-						Boolean@A ready,
-						Choice@A choice,
-						String@A fromA,
-						String@B fromB ) {
-					if( ready ) {} else { forward.< String >com( fromA ); }
-					switch( choice ) {
-						case FIRST -> {}
-						default -> { reverse.< String >com( fromB ); }
-					}
-					try {} catch( Exception@A error ) {
-						forward.< String >com( fromA );
+				class Partial@( A, B ) {
+					void run(
+							SymChannel@( A, B )< Object > forward,
+							SymChannel@( B, A )< Object > reverse,
+							Boolean@A ready,
+							Choice@A choice,
+							String@A fromA,
+							String@B fromB ) {
+						if( ready ) {} else { forward.< String >com( fromA ); }
+						switch( choice ) {
+							case FIRST -> {}
+							default -> { reverse.< String >com( fromB ); }
+						}
+						try {} catch( Exception@A error ) {
+							forward.< String >com( fromA );
+						}
 					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -451,30 +451,30 @@ public class MermaidTest {
 				p0->>p1: fromA
 				end
 				""".strip(),
-			mermaidAt( source, "if( ready )" ) );
+				mermaidAt( source, "if( ready )" ) );
 	}
 
 	@Test
 	public void guardCommunicationsPrecedeControlFlowBlocks() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Guard@( A, B ) {
-				void run(
-						SymChannel@( A, B )< Object > forward,
-						SymChannel@( B, A )< Object > reverse,
-						Boolean@A ready,
-						String@B value ) {
-					if( forward.< Boolean >com( ready ) ) {
-						reverse.< String >com( value );
+				class Guard@( A, B ) {
+					void run(
+							SymChannel@( A, B )< Object > forward,
+							SymChannel@( B, A )< Object > reverse,
+							Boolean@A ready,
+							String@B value ) {
+						if( forward.< Boolean >com( ready ) ) {
+							reverse.< String >com( value );
+						}
 					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -490,29 +490,29 @@ public class MermaidTest {
 	@Test
 	public void emptyNestedControlFlowIsOmittedFromVisibleAlternatives() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			enum StreamState@X { OFF }
+				enum StreamState@X { OFF }
 
-			class Streaming@( A, B ) {
-				void gather(
-						SymChannel@( A, B )< Object > channel,
-						Boolean@A streaming,
-						Boolean@B valid,
-						String@A value ) {
-					if( streaming ) {
-						channel.< String >com( value );
-						if( valid ) {}
-					} else {
-						channel.< StreamState >select( StreamState@A.OFF );
+				class Streaming@( A, B ) {
+					void gather(
+							SymChannel@( A, B )< Object > channel,
+							Boolean@A streaming,
+							Boolean@B valid,
+							String@A value ) {
+						if( streaming ) {
+							channel.< String >com( value );
+							if( valid ) {}
+						} else {
+							channel.< StreamState >select( StreamState@A.OFF );
+						}
 					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -531,38 +531,38 @@ public class MermaidTest {
 	@Test
 	public void localHelperMethodsAreExpandedAtCallSites() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Checkout@( A, B, C ) {
-				SymChannel@( A, B )< Object > ab;
-				SymChannel@( B, C )< Object > bc;
+				class Checkout@( A, B, C ) {
+					SymChannel@( A, B )< Object > ab;
+					SymChannel@( B, C )< Object > bc;
 
-				void run( String@A order, Boolean@B ready, String@B shipment ) {
-					receive( order );
-					this.ship( ready, shipment );
-				}
+					void run( String@A order, Boolean@B ready, String@B shipment ) {
+						receive( order );
+						this.ship( ready, shipment );
+					}
 
-				private void receive( String@A order ) {
-					ab.< String >com( order );
-				}
+					private void receive( String@A order ) {
+						ab.< String >com( order );
+					}
 
-				private void ship( Boolean@B ready, String@B shipment ) {
-					if( ready ) {
-						notifyWarehouse( shipment );
-					} else {
+					private void ship( Boolean@B ready, String@B shipment ) {
+						if( ready ) {
+							notifyWarehouse( shipment );
+						} else {
+							bc.< String >com( shipment );
+						}
+					}
+
+					private void notifyWarehouse( String@B shipment ) {
 						bc.< String >com( shipment );
 					}
 				}
-
-				private void notifyWarehouse( String@B shipment ) {
-					bc.< String >com( shipment );
-				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -590,25 +590,25 @@ public class MermaidTest {
 	@Test
 	public void helperArgumentsAreVisitedBeforeTheHelperBody() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class EvaluationOrder@( A, B ) {
-				SymChannel@( A, B )< Object > forward;
-				SymChannel@( B, A )< Object > reverse;
+				class EvaluationOrder@( A, B ) {
+					SymChannel@( A, B )< Object > forward;
+					SymChannel@( B, A )< Object > reverse;
 
-				void run( String@A value ) {
-					respond( forward.< String >com( value ) );
+					void run( String@A value ) {
+						respond( forward.< String >com( value ) );
+					}
+
+					private void respond( String@B received ) {
+						reverse.< String >com( received );
+					}
 				}
-
-				private void respond( String@B received ) {
-					reverse.< String >com( received );
-				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -625,29 +625,29 @@ public class MermaidTest {
 	@Test
 	public void methodsOnExternalObjectsAreExpanded() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class External@( A, B ) {
-				void send(
-						SymChannel@( A, B )< Object > channel,
-						String@A value ) {
-					channel.< String >com( value );
+				class External@( A, B ) {
+					void send(
+							SymChannel@( A, B )< Object > channel,
+							String@A value ) {
+						channel.< String >com( value );
+					}
 				}
-			}
 
-			class Root@( A, B ) {
-				void run(
-						External@( A, B ) external,
-						SymChannel@( A, B )< Object > channel,
-						String@A value ) {
-					external.send( channel, value );
+				class Root@( A, B ) {
+					void run(
+							External@( A, B ) external,
+							SymChannel@( A, B )< Object > channel,
+							String@A value ) {
+						external.send( channel, value );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -665,29 +665,29 @@ public class MermaidTest {
 	@Test
 	public void externalMethodWorldsAreGroundedAtTheCallSite() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class External@( Sender, Receiver ) {
-				void send(
-						SymChannel@( Sender, Receiver )< Object > channel,
-						String@Sender value ) {
-					channel.< String >com( value );
+				class External@( Sender, Receiver ) {
+					void send(
+							SymChannel@( Sender, Receiver )< Object > channel,
+							String@Sender value ) {
+						channel.< String >com( value );
+					}
 				}
-			}
 
-			class Root@( A, B ) {
-				void run(
-						External@( B, A ) external,
-						SymChannel@( B, A )< Object > channel,
-						String@B value ) {
-					external.send( channel, value );
+				class Root@( A, B ) {
+					void run(
+							External@( B, A ) external,
+							SymChannel@( B, A )< Object > channel,
+							String@B value ) {
+						external.send( channel, value );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -703,28 +703,28 @@ public class MermaidTest {
 	@Test
 	public void externalSelectionLabelsUseGroundedWorlds() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			enum Decision@X { READY }
+				enum Decision@X { READY }
 
-			class External@( Sender, Receiver ) {
-				void decide( SymChannel@( Sender, Receiver )< Object > channel ) {
-					channel.< Decision >select( Decision@Sender.READY );
+				class External@( Sender, Receiver ) {
+					void decide( SymChannel@( Sender, Receiver )< Object > channel ) {
+						channel.< Decision >select( Decision@Sender.READY );
+					}
 				}
-			}
 
-			class Root@( A, B ) {
-				void run(
-						External@( B, A ) external,
-						SymChannel@( B, A )< Object > channel ) {
-					external.decide( channel );
+				class Root@( A, B ) {
+					void run(
+							External@( B, A ) external,
+							SymChannel@( B, A )< Object > channel ) {
+						external.decide( channel );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -740,33 +740,33 @@ public class MermaidTest {
 	@Test
 	public void swappedWorldMappingsDoNotRewriteReplacementValues() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			enum Decision@X { FIRST, SECOND }
+				enum Decision@X { FIRST, SECOND }
 
-			class External@( A, B ) {
-				void decide(
-						SymChannel@( A, B )< Object > forward,
-						SymChannel@( B, A )< Object > reverse ) {
-					forward.< Decision >select( Decision@A.FIRST );
-					reverse.< Decision >select( Decision@B.SECOND );
+				class External@( A, B ) {
+					void decide(
+							SymChannel@( A, B )< Object > forward,
+							SymChannel@( B, A )< Object > reverse ) {
+						forward.< Decision >select( Decision@A.FIRST );
+						reverse.< Decision >select( Decision@B.SECOND );
+					}
 				}
-			}
 
-			class Root@( A, B ) {
-				void run(
-						External@( B, A ) external,
-						SymChannel@( B, A )< Object > reverse,
-						SymChannel@( A, B )< Object > forward ) {
-					external.decide( reverse, forward );
-					forward.< Decision >select( Decision@A.FIRST );
+				class Root@( A, B ) {
+					void run(
+							External@( B, A ) external,
+							SymChannel@( B, A )< Object > reverse,
+							SymChannel@( A, B )< Object > forward ) {
+						external.decide( reverse, forward );
+						forward.< Decision >select( Decision@A.FIRST );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -784,30 +784,30 @@ public class MermaidTest {
 	@Test
 	public void helperWorldLiteralLabelsAreGroundedInOnePass() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class External@( A, B ) {
-				void send(
-						SymChannel@( A, B )< Object > forward,
-						SymChannel@( B, A )< Object > reverse ) {
-					forward.< String >com( "first"@A );
-					reverse.< String >com( "second"@B );
+				class External@( A, B ) {
+					void send(
+							SymChannel@( A, B )< Object > forward,
+							SymChannel@( B, A )< Object > reverse ) {
+						forward.< String >com( "first"@A );
+						reverse.< String >com( "second"@B );
+					}
 				}
-			}
 
-			class Root@( A, B ) {
-				void run(
-						External@( B, A ) external,
-						SymChannel@( B, A )< Object > reverse,
-						SymChannel@( A, B )< Object > forward ) {
-					external.send( reverse, forward );
+				class Root@( A, B ) {
+					void run(
+							External@( B, A ) external,
+							SymChannel@( B, A )< Object > reverse,
+							SymChannel@( A, B )< Object > forward ) {
+						external.send( reverse, forward );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -824,32 +824,32 @@ public class MermaidTest {
 	@Test
 	public void helperCatchLabelsUseGroundedParenthesizedWorlds() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class External@( Sender, Receiver ) {
-				void recover(
-						SymChannel@( Sender, Receiver )< Object > channel,
-						String@Sender value ) {
-					try {
-					} catch( Exception@Sender error ) {
-						channel.< String >com( value );
+				class External@( Sender, Receiver ) {
+					void recover(
+							SymChannel@( Sender, Receiver )< Object > channel,
+							String@Sender value ) {
+						try {
+						} catch( Exception@Sender error ) {
+							channel.< String >com( value );
+						}
 					}
 				}
-			}
 
-			class Root@( A, B ) {
-				void run(
-						External@( B, A ) external,
-						SymChannel@( B, A )< Object > channel,
-						String@B value ) {
-					external.recover( channel, value );
+				class Root@( A, B ) {
+					void run(
+							External@( B, A ) external,
+							SymChannel@( B, A )< Object > channel,
+							String@B value ) {
+						external.recover( channel, value );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -868,30 +868,30 @@ public class MermaidTest {
 	@Test
 	public void helperInstantiationArgumentsUseGroundedParenthesizedWorlds() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Payload@X {
-				public Payload() {}
-			}
-
-			class External@( A, B ) {
-				void send( SymChannel@( A, B )< Object > channel ) {
-					channel.< Payload >com( new Payload@A() );
+				class Payload@X {
+					public Payload() {}
 				}
-			}
 
-			class Root@( A, B ) {
-				void run(
-						External@( B, A ) external,
-						SymChannel@( B, A )< Object > channel ) {
-					external.send( channel );
+				class External@( A, B ) {
+					void send( SymChannel@( A, B )< Object > channel ) {
+						channel.< Payload >com( new Payload@A() );
+					}
 				}
-			}
-			""";
+
+				class Root@( A, B ) {
+					void run(
+							External@( B, A ) external,
+							SymChannel@( B, A )< Object > channel ) {
+						external.send( channel );
+					}
+				}
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -907,21 +907,21 @@ public class MermaidTest {
 	@Test
 	public void helperExpansionRejectsMismatchedWorldArity() {
 		var unit = typedUnits( List.of(
-			"""
-			class One@X {
-				void placeholder() {}
-			}
-
-			class External@( A, B ) {
-				void send() {}
-			}
-
-			class Root@( A, B ) {
-				void run( External@( A, B ) external ) {
-					external.send();
+				"""
+				class One@X {
+					void placeholder() {}
 				}
-			}
-			""" ) ).get( 0 );
+
+				class External@( A, B ) {
+					void send() {}
+				}
+
+				class Root@( A, B ) {
+					void run( External@( A, B ) external ) {
+						external.send();
+					}
+				}
+				""" ) ).get( 0 );
 		var externalMethod = unit.classes().get( 1 ).methods().get( 0 );
 		var mismatchedAnnotation = unit.classes().get( 0 ).methods().get( 0 )
 				.typeAnnotation().orElseThrow();
@@ -945,31 +945,31 @@ public class MermaidTest {
 	@Test
 	public void inheritedSourceMethodsAreExpandedWithGroundedWorlds() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Base@( Sender, Receiver ) {
-				public void send(
-						SymChannel@( Sender, Receiver )< Object > channel,
-						String@Sender value ) {
-					channel.< String >com( value );
+				class Base@( Sender, Receiver ) {
+					public void send(
+							SymChannel@( Sender, Receiver )< Object > channel,
+							String@Sender value ) {
+						channel.< String >com( value );
+					}
 				}
-			}
 
-			class Child@( Left, Right ) extends Base@( Left, Right ) {}
+				class Child@( Left, Right ) extends Base@( Left, Right ) {}
 
-			class Root@( A, B ) {
-				void run(
-						Child@( B, A ) child,
-						SymChannel@( B, A )< Object > channel,
-						String@B value ) {
-					child.send( channel, value );
+				class Root@( A, B ) {
+					void run(
+							Child@( B, A ) child,
+							SymChannel@( B, A )< Object > channel,
+							String@B value ) {
+						child.send( channel, value );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -985,28 +985,28 @@ public class MermaidTest {
 	@Test
 	public void staticSourceMethodsAreExpanded() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class External@( Sender, Receiver ) {
-				static void send(
-						SymChannel@( Sender, Receiver )< Object > channel,
-						String@Sender value ) {
-					channel.< String >com( value );
+				class External@( Sender, Receiver ) {
+					static void send(
+							SymChannel@( Sender, Receiver )< Object > channel,
+							String@Sender value ) {
+						channel.< String >com( value );
+					}
 				}
-			}
 
-			class Root@( A, B ) {
-				void run(
-						SymChannel@( B, A )< Object > channel,
-						String@B value ) {
-					External@( B, A ).send( channel, value );
+				class Root@( A, B ) {
+					void run(
+							SymChannel@( B, A )< Object > channel,
+							String@B value ) {
+						External@( B, A ).send( channel, value );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1022,38 +1022,38 @@ public class MermaidTest {
 	@Test
 	public void externalOverloadsUseTheResolvedSourceDefinition() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class External@( Sender, Receiver ) {
-				void send(
-						SymChannel@( Sender, Receiver )< Object > channel,
-						String@Sender value ) {
-					channel.< String >com( value );
+				class External@( Sender, Receiver ) {
+					void send(
+							SymChannel@( Sender, Receiver )< Object > channel,
+							String@Sender value ) {
+						channel.< String >com( value );
+					}
+
+					void send(
+							SymChannel@( Receiver, Sender )< Object > channel,
+							String@Receiver value ) {
+						channel.< String >com( value );
+					}
 				}
 
-				void send(
-						SymChannel@( Receiver, Sender )< Object > channel,
-						String@Receiver value ) {
-					channel.< String >com( value );
+				class Root@( A, B ) {
+					void run(
+							External@( A, B ) external,
+							SymChannel@( A, B )< Object > forward,
+							SymChannel@( B, A )< Object > reverse,
+							String@A fromA,
+							String@B fromB ) {
+						external.send( forward, fromA );
+						external.send( reverse, fromB );
+					}
 				}
-			}
-
-			class Root@( A, B ) {
-				void run(
-						External@( A, B ) external,
-						SymChannel@( A, B )< Object > forward,
-						SymChannel@( B, A )< Object > reverse,
-						String@A fromA,
-						String@B fromB ) {
-					external.send( forward, fromA );
-					external.send( reverse, fromB );
-				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1073,38 +1073,38 @@ public class MermaidTest {
 	@Test
 	public void importedSourceMethodsAreExpandedAcrossCompilationUnits() {
 		String helper =
-			"""
-			package helpers;
+				"""
+				package helpers;
 
-			import choral.channels.SymChannel;
+				import choral.channels.SymChannel;
 
-			public class Helper@( Sender, Receiver ) {
-				public void send(
-						SymChannel@( Sender, Receiver )< Object > channel,
-						String@Sender value ) {
-					channel.< String >com( value );
+				public class Helper@( Sender, Receiver ) {
+					public void send(
+							SymChannel@( Sender, Receiver )< Object > channel,
+							String@Sender value ) {
+						channel.< String >com( value );
+					}
 				}
-			}
-			""";
+				""";
 		String root =
-			"""
-			package app;
+				"""
+				package app;
 
-			import choral.channels.SymChannel;
-			import helpers.Helper;
+				import choral.channels.SymChannel;
+				import helpers.Helper;
 
-			class Root@( A, B ) {
-				void run(
-						Helper@( B, A ) helper,
-						SymChannel@( B, A )< Object > channel,
-						String@B value ) {
-					helper.send( channel, value );
+				class Root@( A, B ) {
+					void run(
+							Helper@( B, A ) helper,
+							SymChannel@( B, A )< Object > channel,
+							String@B value ) {
+						helper.send( channel, value );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1120,33 +1120,33 @@ public class MermaidTest {
 	@Test
 	public void crossClassRecursionStopsAtTheSharedActiveCallSet() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class First@( A, B ) {
-				void start(
-						First@( A, B ) first,
-						Second@( A, B ) second,
-						SymChannel@( A, B )< Object > channel,
-						String@A value ) {
-					second.forward( first, second, channel, value );
+				class First@( A, B ) {
+					void start(
+							First@( A, B ) first,
+							Second@( A, B ) second,
+							SymChannel@( A, B )< Object > channel,
+							String@A value ) {
+						second.forward( first, second, channel, value );
+					}
 				}
-			}
 
-			class Second@( A, B ) {
-				void forward(
-						First@( A, B ) first,
-						Second@( A, B ) second,
-						SymChannel@( A, B )< Object > channel,
-						String@A value ) {
-					channel.< String >com( value );
-					first.start( first, second, channel, value );
+				class Second@( A, B ) {
+					void forward(
+							First@( A, B ) first,
+							Second@( A, B ) second,
+							SymChannel@( A, B )< Object > channel,
+							String@A value ) {
+						channel.< String >com( value );
+						first.start( first, second, channel, value );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1163,30 +1163,30 @@ public class MermaidTest {
 	@Test
 	public void overloadedHelpersAreResolvedFromTypedMethodAnnotations() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Overloaded@( A, B ) {
-				SymChannel@( A, B )< Object > forward;
-				SymChannel@( B, A )< Object > reverse;
+				class Overloaded@( A, B ) {
+					SymChannel@( A, B )< Object > forward;
+					SymChannel@( B, A )< Object > reverse;
 
-				void run( String@A fromA, String@B fromB ) {
-					send( fromA );
-					send( fromB );
+					void run( String@A fromA, String@B fromB ) {
+						send( fromA );
+						send( fromB );
+					}
+
+					private void send( String@A value ) {
+						forward.< String >com( value );
+					}
+
+					private void send( String@B value ) {
+						reverse.< String >com( value );
+					}
 				}
-
-				private void send( String@A value ) {
-					forward.< String >com( value );
-				}
-
-				private void send( String@B value ) {
-					reverse.< String >com( value );
-				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1206,15 +1206,15 @@ public class MermaidTest {
 	@Test
 	public void overloadedRootMethodsAreIdentifiedBySignature() {
 		String source =
-			"""
-			class OverloadedRoot@( A, B ) {
-				void run( String@A value ) {}
-				void run( String@B value ) {}
-			}
-			""";
+				"""
+				class OverloadedRoot@( A, B ) {
+					void run( String@A value ) {}
+					void run( String@B value ) {}
+				}
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1222,7 +1222,7 @@ public class MermaidTest {
 				""".strip(),
 				mermaidAt( source, "String@A value" ) );
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1236,21 +1236,21 @@ public class MermaidTest {
 	@Test
 	public void recursiveHelperExpansionStopsWithANote() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Recursive@( A, B ) {
-				SymChannel@( A, B )< Object > channel;
+				class Recursive@( A, B ) {
+					SymChannel@( A, B )< Object > channel;
 
-				void run( String@A value ) {
-					channel.< String >com( value );
-					run( value );
+					void run( String@A value ) {
+						channel.< String >com( value );
+						run( value );
+					}
 				}
-			}
-			""";
+				""";
 
 		String expected =
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1266,25 +1266,25 @@ public class MermaidTest {
 	@Test
 	public void recursiveHelperAtTheDepthLimitStillUsesARecursionNote() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class RecursiveHelper@( A, B ) {
-				SymChannel@( A, B )< Object > channel;
+				class RecursiveHelper@( A, B ) {
+					SymChannel@( A, B )< Object > channel;
 
-				void run( String@A value ) {
-					repeat( value );
+					void run( String@A value ) {
+						repeat( value );
+					}
+
+					private void repeat( String@A value ) {
+						channel.< String >com( value );
+						repeat( value );
+					}
 				}
-
-				private void repeat( String@A value ) {
-					channel.< String >com( value );
-					repeat( value );
-				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1301,29 +1301,29 @@ public class MermaidTest {
 	@Test
 	public void mutuallyRecursiveHelperExpansionStopsWithANote() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class MutuallyRecursive@( A, B ) {
-				SymChannel@( A, B )< Object > channel;
+				class MutuallyRecursive@( A, B ) {
+					SymChannel@( A, B )< Object > channel;
 
-				void run( String@A value ) {
-					first( value );
+					void run( String@A value ) {
+						first( value );
+					}
+
+					private void first( String@A value ) {
+						channel.< String >com( value );
+						second( value );
+					}
+
+					private void second( String@A value ) {
+						first( value );
+					}
 				}
-
-				private void first( String@A value ) {
-					channel.< String >com( value );
-					second( value );
-				}
-
-				private void second( String@A value ) {
-					first( value );
-				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1343,36 +1343,36 @@ public class MermaidTest {
 	@Test
 	public void configuredDepthCanExpandDeepHelperChains() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Deep@( A, B ) {
-				SymChannel@( A, B )< Object > channel;
-				String@A value;
+				class Deep@( A, B ) {
+					SymChannel@( A, B )< Object > channel;
+					String@A value;
 
-				void run() {
-					helper0();
+					void run() {
+						helper0();
+					}
+
+					private void helper0() { helper1(); }
+					private void helper1() { helper2(); }
+					private void helper2() { helper3(); }
+					private void helper3() { helper4(); }
+					private void helper4() { helper5(); }
+					private void helper5() { helper6(); }
+					private void helper6() { helper7(); }
+					private void helper7() { helper8(); }
+					private void helper8() { helper9(); }
+					private void helper9() { helper10(); }
+					private void helper10() { helper11(); }
+					private void helper11() { helper12(); }
+					private void helper12() { helper13(); }
+					private void helper13() { helper14(); }
+					private void helper14() { helper15(); }
+					private void helper15() { helper16(); }
+					private void helper16() { channel.< String >com( value ); }
 				}
-
-				private void helper0() { helper1(); }
-				private void helper1() { helper2(); }
-				private void helper2() { helper3(); }
-				private void helper3() { helper4(); }
-				private void helper4() { helper5(); }
-				private void helper5() { helper6(); }
-				private void helper6() { helper7(); }
-				private void helper7() { helper8(); }
-				private void helper8() { helper9(); }
-				private void helper9() { helper10(); }
-				private void helper10() { helper11(); }
-				private void helper11() { helper12(); }
-				private void helper12() { helper13(); }
-				private void helper13() { helper14(); }
-				private void helper14() { helper15(); }
-				private void helper15() { helper16(); }
-				private void helper16() { channel.< String >com( value ); }
-			}
-			""";
+				""";
 
 		String mermaid = mermaidAt( source, "void run", 17 );
 
@@ -1383,32 +1383,32 @@ public class MermaidTest {
 	@Test
 	public void helperExpansionDepthControlsRenderedBodiesButPreservesCalls() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Depth@( A, B ) {
-				SymChannel@( A, B )< Object > forward;
-				SymChannel@( B, A )< Object > reverse;
-				String@A fromA;
-				String@B fromB;
+				class Depth@( A, B ) {
+					SymChannel@( A, B )< Object > forward;
+					SymChannel@( B, A )< Object > reverse;
+					String@A fromA;
+					String@B fromB;
 
-				void run() {
-					first();
+					void run() {
+						first();
+					}
+
+					private void first() {
+						forward.< String >com( fromA );
+						second();
+					}
+
+					private void second() {
+						reverse.< String >com( fromB );
+					}
 				}
-
-				private void first() {
-					forward.< String >com( fromA );
-					second();
-				}
-
-				private void second() {
-					reverse.< String >com( fromB );
-				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1417,7 +1417,7 @@ public class MermaidTest {
 				""".strip(),
 				mermaidAt( source, "void run", 0 ) );
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1430,7 +1430,7 @@ public class MermaidTest {
 				""".strip(),
 				mermaidAt( source, "void run", 1 ) );
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1450,25 +1450,25 @@ public class MermaidTest {
 	@Test
 	public void helperCallNotesSpanAllParticipants() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Spanning@( A, B, C ) {
-				SymChannel@( A, B )< Object > channel;
-				String@A value;
+				class Spanning@( A, B, C ) {
+					SymChannel@( A, B )< Object > channel;
+					String@A value;
 
-				void run() {
-					helper();
+					void run() {
+						helper();
+					}
+
+					private void helper() {
+						channel.< String >com( value );
+					}
 				}
-
-				private void helper() {
-					channel.< String >com( value );
-				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1482,22 +1482,22 @@ public class MermaidTest {
 	@Test
 	public void headerMethodsAreNotRenderedAsSourceHelpersAtAnyDepth() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class HeaderCalls@( A, B ) {
-				void run(
-						SymChannel@( A, B )< Object > channel,
-						double@A value,
-						String@A message ) {
-					Double@A boxed = Double@A.valueOf( value );
-					int@A integer = boxed.intValue();
-					channel.< String >com( message );
+				class HeaderCalls@( A, B ) {
+					void run(
+							SymChannel@( A, B )< Object > channel,
+							double@A value,
+							String@A message ) {
+						Double@A boxed = Double@A.valueOf( value );
+						int@A integer = boxed.intValue();
+						channel.< String >com( message );
+					}
 				}
-			}
-			""";
+				""";
 		String expected =
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1512,43 +1512,43 @@ public class MermaidTest {
 	@Test
 	public void separateStaticRendersDoNotShareState() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Separate@( A, B ) {
-				void forward(
-						SymChannel@( A, B )< Object > channel,
-						String@A value ) {
-					channel.< String >com( value );
-				}
+				class Separate@( A, B ) {
+					void forward(
+							SymChannel@( A, B )< Object > channel,
+							String@A value ) {
+						channel.< String >com( value );
+					}
 
-				void reverse(
-						SymChannel@( B, A )< Object > channel,
-						String@B value ) {
-					channel.< String >com( value );
+					void reverse(
+							SymChannel@( B, A )< Object > channel,
+							String@B value ) {
+						channel.< String >com( value );
+					}
 				}
-			}
-			""";
+				""";
 		var unit = typedUnits( List.of( source ) ).get( 0 );
 		var declaration = unit.classes().get( 0 );
 
 		assertEquals(
 				"""
-					sequenceDiagram
-					participant p0 as A
-					participant p1 as B
-					Note over p0,p1: Separate.forward
-					p0->>p1: value
-					""".strip(),
+				sequenceDiagram
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Separate.forward
+				p0->>p1: value
+				""".strip(),
 				MermaidVisitor.render( declaration, declaration.methods().get( 0 ), 0 ) );
 		assertEquals(
 				"""
-					sequenceDiagram
-					participant p0 as A
-					participant p1 as B
-					Note over p0,p1: Separate.reverse
-					p1->>p0: value
-					""".strip(),
+				sequenceDiagram
+				participant p0 as A
+				participant p1 as B
+				Note over p0,p1: Separate.reverse
+				p1->>p0: value
+				""".strip(),
 				MermaidVisitor.render( declaration, declaration.methods().get( 1 ), 0 ) );
 		assertThrows( NullPointerException.class,
 				() -> MermaidVisitor.render( null, declaration.methods().get( 0 ), 0 ) );
@@ -1563,15 +1563,15 @@ public class MermaidTest {
 	@Test
 	public void renderingAnUntypedOrdinaryCallFailsClearly() {
 		var unit = Parser.parseString(
-			"""
-			class Untyped@( A, B ) {
-				void run() {
-					helper();
-				}
+				"""
+				class Untyped@( A, B ) {
+					void run() {
+						helper();
+					}
 
-				private void helper() {}
-			}
-			""" );
+					private void helper() {}
+				}
+				""" );
 		var declaration = unit.classes().get( 0 );
 
 		var exception = assertThrows( IllegalStateException.class,
@@ -1584,15 +1584,15 @@ public class MermaidTest {
 	@Test
 	public void rendererRejectsAMethodOwnedByAnotherDeclaration() {
 		var unit = typedUnits( List.of(
-			"""
-			class First@( A, B ) {
-				void first() {}
-			}
+				"""
+				class First@( A, B ) {
+					void first() {}
+				}
 
-			class Second@( A, B ) {
-				void second() {}
-			}
-			""" ) ).get( 0 );
+				class Second@( A, B ) {
+					void second() {}
+				}
+				""" ) ).get( 0 );
 		var first = unit.classes().get( 0 );
 		var secondMethod = unit.classes().get( 1 ).methods().get( 0 );
 
@@ -1606,26 +1606,26 @@ public class MermaidTest {
 	@Test
 	public void onlyTheMethodAtTheCursorIsRendered() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class ChannelSources@( A, B ) {
-				SymChannel@( A, B )< Object > field;
+				class ChannelSources@( A, B ) {
+					SymChannel@( A, B )< Object > field;
 
-				void fromField( String@A value ) {
-					field.< String >com( value );
+					void fromField( String@A value ) {
+						field.< String >com( value );
+					}
+
+					void fromParameter(
+							SymChannel@( B, A )< Object > parameter,
+							String@B value ) {
+						parameter.< String >com( value );
+					}
 				}
-
-				void fromParameter(
-						SymChannel@( B, A )< Object > parameter,
-						String@B value ) {
-					parameter.< String >com( value );
-				}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1634,7 +1634,7 @@ public class MermaidTest {
 				""".strip(),
 				mermaidAt( source, "fromField" ) );
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1648,29 +1648,29 @@ public class MermaidTest {
 	@Test
 	public void onlyTypedChannelCallsBecomeEvents() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Helper@( X ) {
-				String@X com( String@X value ) { return value; }
-				String@X select( String@X value ) { return value; }
-			}
-
-			class Typed@( A, B ) {
-				void run(
-						SymChannel@( A, B )< Object > arbitrarilyNamed,
-						Helper@A helper,
-						String@A value ) {
-					// fake.< String >com( value );
-					String@A fakeText = "arbitrarilyNamed.< String >com( value )"@A;
-					String@A local = helper.com( value );
-					String@A selected = helper.select( value );
-					String@B received = arbitrarilyNamed.< String >com(
-							value
-					);
+				class Helper@( X ) {
+					String@X com( String@X value ) { return value; }
+					String@X select( String@X value ) { return value; }
 				}
-			}
-			""";
+
+				class Typed@( A, B ) {
+					void run(
+							SymChannel@( A, B )< Object > arbitrarilyNamed,
+							Helper@A helper,
+							String@A value ) {
+						// fake.< String >com( value );
+						String@A fakeText = "arbitrarilyNamed.< String >com( value )"@A;
+						String@A local = helper.com( value );
+						String@A selected = helper.select( value );
+						String@B received = arbitrarilyNamed.< String >com(
+								value
+						);
+					}
+				}
+				""";
 
 		assertEquals(
 				"""
@@ -1688,22 +1688,22 @@ public class MermaidTest {
 	@Test
 	public void channelCallsOnTypedComputedReceiversBecomeEvents() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class ComputedReceiver@( A, B ) {
-				SymChannel@( A, B )< Object > channel(
-						SymChannel@( A, B )< Object > value ) {
-					return value;
-				}
+				class ComputedReceiver@( A, B ) {
+					SymChannel@( A, B )< Object > channel(
+							SymChannel@( A, B )< Object > value ) {
+						return value;
+					}
 
-				void run(
-						SymChannel@( A, B )< Object > channel,
-						String@A value ) {
-					this.channel( channel ).< String >com( value );
+					void run(
+							SymChannel@( A, B )< Object > channel,
+							String@A value ) {
+						this.channel( channel ).< String >com( value );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
 				"""
@@ -1720,22 +1720,22 @@ public class MermaidTest {
 	@Test
 	public void constructorCommunicationsAreExcluded() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			class Constructed@( A, B ) {
-				public Constructed(
-						SymChannel@( A, B )< Object > channel,
-						String@A value ) {
-					channel.< String >com( value );
+				class Constructed@( A, B ) {
+					public Constructed(
+							SymChannel@( A, B )< Object > channel,
+							String@A value ) {
+						channel.< String >com( value );
+					}
+
+					void run() {}
 				}
-
-				void run() {}
-			}
-			""";
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1750,30 +1750,30 @@ public class MermaidTest {
 	@Test
 	public void distinctWorldNamesReceiveDistinctParticipantIds() {
 		String source =
-			"""
-			class Identifiers@( A$B, A_B ) {
-				void run() {}
-			}
-			""";
+				"""
+				class Identifiers@( A$B, A_B ) {
+					void run() {}
+				}
+				""";
 
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A$B
 				participant p1 as A_B
 				Note over p0,p1: Identifiers.run
 				""".strip(),
-			mermaidAt( source, "void run" ) );
+				mermaidAt( source, "void run" ) );
 	}
 
 	@Test
 	public void participantIdentifiersFollowDeclarationOrder() {
 		String source =
-			"""
-			class International@( Customer$EU, Seller ) {
-				void run() {}
-			}
-			""";
+				"""
+				class International@( Customer$EU, Seller ) {
+					void run() {}
+				}
+				""";
 
 		assertEquals(
 				"""
@@ -1788,25 +1788,25 @@ public class MermaidTest {
 	@Test
 	public void selectsTheCorrectChoreography() {
 		String source =
-			"""
-			import choral.channels.SymChannel;
+				"""
+				import choral.channels.SymChannel;
 
-			enum Decision@W { ACCEPT }
+				enum Decision@W { ACCEPT }
 
-			class First@( A, B ) {
-				public void run(
-						SymChannel@( A, B )< Object > firstChannel,
-						String@A value ) {
-					firstChannel.< String >com( value );
+				class First@( A, B ) {
+					public void run(
+							SymChannel@( A, B )< Object > firstChannel,
+							String@A value ) {
+						firstChannel.< String >com( value );
+					}
 				}
-			}
 
-			class Second@( X, Y ) {
-				public void run( SymChannel@( X, Y )< Object > secondChannel ) {
-					secondChannel.< Decision >select( Decision@Y.ACCEPT );
+				class Second@( X, Y ) {
+					public void run( SymChannel@( X, Y )< Object > secondChannel ) {
+						secondChannel.< Decision >select( Decision@Y.ACCEPT );
+					}
 				}
-			}
-			""";
+				""";
 
 		assertEquals(
 				"""
@@ -1822,14 +1822,14 @@ public class MermaidTest {
 	@Test
 	public void selectsMethodsOnlyInsideTheirSourceRanges() {
 		String source =
-			"""
-			/* before */ class First@( A, B ) { void first() {} } /* between */ class Second@( X, Y ) { void second() {} } /* after */
-			""";
+				"""
+				/* before */ class First@( A, B ) { void first() {} } /* between */ class Second@( X, Y ) { void second() {} } /* after */
+				""";
 
 		assertNoChoreographyAt( source, "before" );
 		assertNoChoreographyAt( source, "First" );
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as A
 				participant p1 as B
@@ -1839,7 +1839,7 @@ public class MermaidTest {
 		assertNoChoreographyAt( source, "between" );
 		assertNoChoreographyAt( source, "Second" );
 		assertEquals(
-			"""
+				"""
 				sequenceDiagram
 				participant p0 as X
 				participant p1 as Y
@@ -1855,12 +1855,13 @@ public class MermaidTest {
 		return diagram( source, line, character ).orElseThrow();
 	}
 
-	private static Optional<String> diagram( String source, int line, int character ) {
+	private static Optional< String > diagram( String source, int line, int character ) {
 		return diagram( source, line, character, 0 );
 	}
 
-	private static Optional<String> diagram(
-			String source, int line, int character, int helperExpansionDepth ) {
+	private static Optional< String > diagram(
+			String source, int line, int character, int helperExpansionDepth
+	) {
 		try {
 			var unit = typedUnits( List.of( source ) ).get( 0 );
 			return new ChoreographyDiagramProvider().diagram(
@@ -1871,18 +1872,21 @@ public class MermaidTest {
 	}
 
 	private static String mermaid(
-			List<String> sources, int unitIndex, int line, int character ) {
+			List< String > sources, int unitIndex, int line, int character
+	) {
 		return diagram( sources, unitIndex, line, character ).orElseThrow();
 	}
 
-	private static Optional<String> diagram(
-			List<String> sources, int unitIndex, int line, int character ) {
+	private static Optional< String > diagram(
+			List< String > sources, int unitIndex, int line, int character
+	) {
 		return diagram( sources, unitIndex, line, character, 0 );
 	}
 
-	private static Optional<String> diagram(
-			List<String> sources, int unitIndex, int line, int character,
-			int helperExpansionDepth ) {
+	private static Optional< String > diagram(
+			List< String > sources, int unitIndex, int line, int character,
+			int helperExpansionDepth
+	) {
 		try {
 			var units = typedUnits( sources );
 			return new ChoreographyDiagramProvider().diagram(
@@ -1893,7 +1897,7 @@ public class MermaidTest {
 		}
 	}
 
-	private static List<CompilationUnit> typedUnits( List<String> sources ) {
+	private static List< CompilationUnit > typedUnits( List< String > sources ) {
 		try {
 			var units = sources.stream().map( Parser::parseString ).toList();
 			Typer.annotate(
@@ -1917,13 +1921,15 @@ public class MermaidTest {
 		return diagramAt( List.of( source ), 0, marker, helperExpansionDepth ).orElseThrow();
 	}
 
-	private static Optional<String> diagramAt(
-			List<String> sources, int unitIndex, String marker ) {
+	private static Optional< String > diagramAt(
+			List< String > sources, int unitIndex, String marker
+	) {
 		return diagramAt( sources, unitIndex, marker, 0 );
 	}
 
-	private static Optional<String> diagramAt(
-			List<String> sources, int unitIndex, String marker, int helperExpansionDepth ) {
+	private static Optional< String > diagramAt(
+			List< String > sources, int unitIndex, String marker, int helperExpansionDepth
+	) {
 		String source = sources.get( unitIndex );
 		int offset = source.indexOf( marker );
 		if( offset < 0 )
@@ -1938,8 +1944,7 @@ public class MermaidTest {
 				character++;
 			}
 		}
-		return sources.size() == 1
-				? diagram( source, line, character, helperExpansionDepth )
-				: diagram( sources, unitIndex, line, character, helperExpansionDepth );
+		return sources.size() == 1 ? diagram( source, line, character, helperExpansionDepth ) :
+				diagram( sources, unitIndex, line, character, helperExpansionDepth );
 	}
 }
