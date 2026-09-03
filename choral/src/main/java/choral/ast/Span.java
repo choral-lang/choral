@@ -3,7 +3,7 @@ package choral.ast;
 import java.util.Objects;
 
 /** The inclusive source span between two positions. */
-public record Span(Position start, Position end) {
+public record Span( Position start, Position end ) {
 	public Span {
 		Objects.requireNonNull( start );
 		Objects.requireNonNull( end );
