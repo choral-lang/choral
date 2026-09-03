@@ -5,6 +5,7 @@ import choral.compiler.Parser;
 import choral.compiler.Typer;
 import choral.compiler.TyperOptions;
 import choral.exceptions.AstPositionedException;
+import choral.exceptions.ChoralCompoundException;
 import choral.utils.VerbosityLevel;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -58,8 +60,8 @@ public class FinalLocalVariableTest {
 
 	@Test
 	public void rejectsAssignmentToFinalLocalVariable() {
-		AstPositionedException thrown = assertThrows( AstPositionedException.class, () ->
-				typecheck(
+		ChoralCompoundException thrown =
+				assertThrows( ChoralCompoundException.class, () -> typecheck(
 						"""
 						package test;
 						class C@( A ) {
@@ -70,7 +72,10 @@ public class FinalLocalVariableTest {
 						}
 						""" ) );
 
-		assertEquals( "cannot assign a value to final variable 'x'", thrown.getInnerMessage() );
+		assertEquals( 1, thrown.getCauses().size() );
+		AstPositionedException cause = assertInstanceOf(
+				AstPositionedException.class, thrown.getCauses().get( 0 ) );
+		assertEquals( "cannot assign a value to final variable 'x'", cause.getInnerMessage() );
 	}
 
 	@Test

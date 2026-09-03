@@ -21,6 +21,9 @@
 
 package choral.types;
 
+import choral.ast.Name;
+import choral.ast.type.TypeExpression;
+
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -41,6 +44,21 @@ public interface GroundClassOrInterface extends ClassOrInterface, GroundReferenc
 	}
 
 	List< ? extends HigherReferenceType > typeArguments();
+
+	@Override
+	default HigherReferenceType unapplyWorlds() {
+		return typeConstructor().partiallyApplyTo( typeArguments() );
+	}
+
+	@Override
+	default TypeExpression reify() {
+		TypeExpression expression = new TypeExpression(
+				new Name( typeConstructor().identifier() ),
+				reifyWorldArguments(),
+				typeArguments().stream().map( HigherReferenceType::reify ).toList() );
+		expression.setTypeAnnotation( this );
+		return expression;
+	}
 
 	GroundClassOrInterface applySubstitution( Substitution substitution );
 

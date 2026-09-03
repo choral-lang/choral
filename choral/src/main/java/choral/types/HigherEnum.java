@@ -22,7 +22,7 @@
 package choral.types;
 
 import choral.ast.Node;
-import choral.exceptions.StaticVerificationException;
+import choral.compiler.Diagnostics;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -79,7 +79,7 @@ public final class HigherEnum extends HigherClass implements Enum {
 	@Override
 	protected void assertModifiers( EnumSet< Modifier > modifiers ) {
 		if( modifiers.contains( ABSTRACT ) ) {
-			throw new StaticVerificationException( "modifier 'abstract' not allowed for enums" );
+			throw Diagnostics.enumHasAbstractModifier();
 		}
 		super.assertModifiers( modifiers );
 	}
@@ -101,8 +101,7 @@ public final class HigherEnum extends HigherClass implements Enum {
 		if( typeArgs.isEmpty() ) {
 			return this;
 		} else {
-			throw new StaticVerificationException(
-					"illegal type instantiation: expected 0 type arguments but found " + typeArgs.size() );
+			throw Diagnostics.typeArgumentsWrongCount( 0, typeArgs.size() );
 		}
 	}
 
@@ -122,9 +121,8 @@ public final class HigherEnum extends HigherClass implements Enum {
 		public void setExtendedClass() {
 			HigherClass t = (HigherClass) universe().specialType( Universe.SpecialTypeTag.ENUM );
 			if( t == null ) {
-				throw new StaticVerificationException( "Unknown class '" +
-						Universe.SpecialTypeTag.ENUM.qualifiedName +
-						"', missing a header?" );
+				throw Diagnostics
+						.symbolNotFound( Universe.SpecialTypeTag.ENUM.qualifiedName );
 			}
 			super.setExtendedClass( t.applyTo( this.worldArguments(),
 					List.< HigherReferenceType >of( typeConstructor() ) ) );
@@ -158,13 +156,12 @@ public final class HigherEnum extends HigherClass implements Enum {
 
 		public void addCase( String identifier ) {
 			if( cases.contains( identifier ) ) {
-				throw new StaticVerificationException( "duplicate case '" + identifier + "' in "
-						+ typeConstructor().variety().labelSingular + " '" + typeConstructor() + "'" );
+				throw Diagnostics.enumCaseAlreadyDefined(
+						identifier, typeConstructor().variety().labelSingular, typeConstructor() );
 			}
 			if( declaredFields().anyMatch( x -> x.identifier().equals( identifier ) ) ) {
-				throw new StaticVerificationException( "duplicate variable '" + identifier + "', "
-						+ typeConstructor().variety().labelSingular + " '" + typeConstructor()
-						+ "' contains a field with the same identifier" );
+				throw Diagnostics.enumCaseConflictsWithField(
+						identifier, typeConstructor().variety().labelSingular, typeConstructor() );
 			}
 			addField( new Member.Field( this, identifier, EnumSet.of( STATIC, FINAL, PUBLIC ),
 					this ) );
@@ -175,10 +172,9 @@ public final class HigherEnum extends HigherClass implements Enum {
 		public void addField( Member.Field field ) {
 			assert ( field.declarationContext() == this );
 			if( cases.contains( field.identifier() ) ) {
-				throw new StaticVerificationException(
-						"duplicate variable '" + field.identifier() + "', "
-								+ typeConstructor().variety().labelSingular + " '" + typeConstructor()
-								+ "'  contains a case with the same identifier" );
+				throw Diagnostics.enumFieldConflictsWithCase(
+						field.identifier(), typeConstructor().variety().labelSingular,
+						typeConstructor() );
 			}
 			super.addField( field );
 		}

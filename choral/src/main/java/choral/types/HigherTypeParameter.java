@@ -21,8 +21,10 @@
 
 package choral.types;
 
+import choral.ast.Name;
 import choral.ast.Node;
-import choral.exceptions.StaticVerificationException;
+import choral.ast.type.TypeExpression;
+import choral.compiler.Diagnostics;
 import choral.utils.Formatting;
 
 import java.util.ArrayList;
@@ -61,6 +63,14 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 	}
 
 	@Override
+	public TypeExpression reify() {
+		TypeExpression expression = new TypeExpression(
+				new Name( identifier ), List.of(), List.of() );
+		expression.setTypeAnnotation( this );
+		return expression;
+	}
+
+	@Override
 	public String toString() {
 		return identifier;
 	}
@@ -82,6 +92,13 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 					this.worldParameters.stream()
 							.map( x -> new World( universe(), x.identifier() ) ).collect(
 									Collectors.toList() ) ) {
+				@Override
+				public TypeExpression reify() {
+					TypeExpression expression = HigherTypeParameter.this.reify();
+					expression.setTypeAnnotation( this );
+					return expression;
+				}
+
 				@Override
 				public GroundReferenceType applyTo( List< ? extends World > args ) {
 					return HigherTypeParameter.this.applyTo( args );
@@ -107,9 +124,7 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 				@Override
 				public World get( World placeHolder ) {
 					int i = worldParameters.indexOf( placeHolder );
-					return ( i < 0 )
-							? substitution.get( placeHolder )
-							: worldArgs.get( i );
+					return ( i < 0 ) ? substitution.get( placeHolder ) : worldArgs.get( i );
 				}
 
 				@Override
@@ -117,12 +132,11 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 					return substitution.get( placeHolder );
 				}
 			};
-			throw new StaticVerificationException( "type argument '"
-					+ typeArg
-					+ "' is not within bounds, '" + typeArg.applyTo( worldArgs ) + "' must extend "
-					+ prettyTypeList( innerType.upperBound().map( x -> x.applySubstitution( s2 ) ) )
-					+ " for any role "
-					+ prettyTypeList( worldArgs ) );
+			throw Diagnostics.typeArgumentNotWithinBounds(
+					typeArg.toString(),
+					typeArg.applyTo( worldArgs ).toString(),
+					prettyTypeList( innerType.upperBound().map( x -> x.applySubstitution( s2 ) ) ),
+					prettyTypeList( worldArgs ) );
 		}
 	}
 
@@ -144,9 +158,8 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 		}
 
 		public String toString() {
-			return typeConstructor().toString() +
-					worldArguments().stream().map( World::toString ).collect(
-							Formatting.joining( ",", "@(", ")", "" ) );
+			return typeConstructor().toString() + worldArguments().stream().map( World::toString )
+					.collect( Formatting.joining( ",", "@(", ")", "" ) );
 		}
 
 		@Override
@@ -219,16 +232,14 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 			assert ( !isBoundFinalised() );
 			if( type.worldArguments().size() != worldArguments().size() ||
 					!type.worldArguments().containsAll( worldParameters ) ) {
-				throw new StaticVerificationException(
-						"illegal bound, '" + type + "' and '" + this + "' must have the same roles" );
+				throw Diagnostics.typeParameterBoundHasWrongRoles( type, this );
 			}
 			if( type instanceof GroundInterface ) {
 				if( upperClass == null ) {
 					setUpperClass();
 				}
 				if( upperInterfaces().anyMatch( x -> x.isEquivalentTo( type ) ) ) {
-					throw new StaticVerificationException(
-							"duplicate parameter bound, '" + type + "' is repeated" );
+					throw Diagnostics.typeParameterDuplicateBound( type );
 				}
 				upperInterfaces.add( (GroundInterface) type );
 			} else {
@@ -244,8 +255,7 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 					} else {
 						s = " a type parameter";
 					}
-					throw new StaticVerificationException(
-							"interface expected, '" + type + "' is " + s );
+					throw Diagnostics.interfaceExpected( type, s );
 				}
 			}
 		}
@@ -320,11 +330,8 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 							if( z.isSubSignatureOf( x ) ) {
 								// check assignable return type;
 								if( !z.isReturnTypeSubstitutableFor( x ) ) {
-									throw new StaticVerificationException( "method '" + z
-											+ "' in '" + z.declarationContext()
-											+ "' clashes with method '" + x
-											+ "' in '" + x.declarationContext()
-											+ "', attempting to use incompatible return type" );
+									throw Diagnostics.methodClashesWithInheritedMethodReturnType( z,
+											x );
 								}
 								inherited = false;
 								break;
@@ -362,9 +369,8 @@ public final class HigherTypeParameter extends HigherReferenceType implements Ty
 
 		@Override
 		public String toString() {
-			return typeConstructor().toString() +
-					worldArguments().stream().map( World::toString ).collect(
-							Formatting.joining( ",", "@(", ")", "" ) );
+			return typeConstructor().toString() + worldArguments().stream().map( World::toString )
+					.collect( Formatting.joining( ",", "@(", ")", "" ) );
 		}
 
 		@Override

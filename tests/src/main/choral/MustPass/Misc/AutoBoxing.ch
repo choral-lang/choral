@@ -1,6 +1,5 @@
 package Misc.AutoBoxing;
 
-// Known bug: https://github.com/choral-lang/choral/issues/28
 
 public class AutoBoxing@( A, B ) {
         public void f(){

@@ -14,20 +14,45 @@ on:
   pull_request:
     branches: [ "master" ]
 
-jobs:
-  build:
+permissions:
+  contents: read
 
+jobs:
+  formatting:
+    name: Spotless
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        # We need a full git history so Spotless can diff against origin/master
+        fetch-depth: 0
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
-    - name: Build with Maven
-      run: mvn -B package -DskipTests --file pom.xml
-    - name: Unit Tests
-      run: mvn test --file pom.xml
+    - name: Check formatting
+      run: mvn --batch-mode --no-transfer-progress spotless:check --file pom.xml
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        java: [ '17', '21', '23', '25' ]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK ${{ matrix.java }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ matrix.java }}
+        distribution: 'temurin'
+        cache: maven
+    - name: Build and test with Maven
+      run: mvn --batch-mode --no-transfer-progress verify --file pom.xml
+    - name: Smoke test the Choral launcher
+      run: java -jar dist/target/choral-standalone.jar check tests/src/main/choral/MustPass/Misc/HelloRoles.ch

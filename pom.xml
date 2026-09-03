@@ -58,10 +58,27 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin> 
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.43.0</version>
+                <configuration>
+                    <ratchetFrom>origin/master</ratchetFrom>
+                    <java>
+                        <excludes>
+                            <exclude>tests/expectedOutput/**</exclude>
+                            <exclude>tests/projectedOutput/**</exclude>
+                        </excludes>
+                        <eclipse>
+                            <file>Choral_code_style.xml</file>
+                        </eclipse>
+                    </java>
+                </configuration>
             </plugin>
         </plugins>
     </build>
