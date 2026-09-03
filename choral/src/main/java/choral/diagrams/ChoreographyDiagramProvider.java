@@ -1,7 +1,7 @@
 package choral.diagrams;
 
 import choral.ast.CompilationUnit;
-import choral.ast.SourceRange;
+import choral.ast.Span;
 import choral.ast.body.MethodDefinition;
 import choral.ast.body.TemplateDeclaration;
 
@@ -32,14 +32,14 @@ public final class ChoreographyDiagramProvider {
     }
 
     private static boolean contains(choral.ast.Node node, Position cursor) {
-        if (cursor == null || !node.hasSourceRange())
+        if (cursor == null || node.span() == null)
             return false;
-        SourceRange sourceRange = node.sourceRange();
+        Span span = node.span();
         int line = cursor.line() + 1;
-        return atOrAfter(line, cursor.character(), sourceRange.start().line(),
-                sourceRange.start().column()) &&
-                atOrBefore(line, cursor.character(), sourceRange.end().line(),
-                        sourceRange.end().column());
+        return atOrAfter(line, cursor.character(), span.start().line(),
+                span.start().column()) &&
+                atOrBefore(line, cursor.character(), span.end().line(),
+                        span.end().column());
     }
 
     private static boolean atOrAfter(int line, int character, int boundaryLine,

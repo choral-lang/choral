@@ -243,7 +243,7 @@ public class AstOptimizer implements ChoralVisitor {
 				modifiers,
 				getPosition( cls )
 		);
-		c.setSourceRange( getSourceRange( cls ) );
+		c.setSpan( getSpan( cls ) );
 		classes.add( c );
 		return null;
 	}
@@ -294,7 +294,7 @@ public class AstOptimizer implements ChoralVisitor {
 				modifiers,
 				getPosition( id )
 		);
-		i.setSourceRange( getSourceRange( id ) );
+		i.setSpan( getSpan( id ) );
 		interfaces.add( i );
 		return null;
 	}
@@ -620,7 +620,7 @@ public class AstOptimizer implements ChoralVisitor {
 			}
 		}
 
-		return withSourceRange( new ClassMethodDefinition(
+		return withSpan( new ClassMethodDefinition(
 				visitMethodHeader( md.methodHeader() ),
 				visitMethodBody( md.methodBody() ).orElse( null ),
 				md.annotation().stream().map( this::visitAnnotation ).collect(
@@ -784,7 +784,7 @@ public class AstOptimizer implements ChoralVisitor {
 			}
 		}
 
-		return withSourceRange( new InterfaceMethodDefinition(
+		return withSpan( new InterfaceMethodDefinition(
 				visitMethodHeader( imd.methodHeader() ),
 				visitMethodBody( imd.methodBody() ).orElse( null ),
 				imd.annotation().stream().map( this::visitAnnotation ).collect(
@@ -1719,13 +1719,13 @@ public class AstOptimizer implements ChoralVisitor {
 		return getPosition( c.getStart() );
 	}
 
-	private SourceRange getSourceRange( ParserRuleContext context ) {
-		return new SourceRange(
+	private Span getSpan( ParserRuleContext context ) {
+		return new Span(
 				getPosition( context.getStart() ), getPosition( context.getStop() ) );
 	}
 
-	private < T extends Node > T withSourceRange( T node, ParserRuleContext context ) {
-		node.setSourceRange( getSourceRange( context ) );
+	private < T extends Node > T withSpan( T node, ParserRuleContext context ) {
+		node.setSpan( getSpan( context ) );
 		return node;
 	}
 
