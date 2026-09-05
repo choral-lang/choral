@@ -18,7 +18,6 @@
         <module>base</module>
         <module>choral</module>
         <module>choral-unit</module>
-        <module>compare</module>
         <module>runtime</module>
         <module>tests</module>
     </modules>

@@ -35,12 +35,6 @@
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
-			<artifactId>compare</artifactId>
-			<version>${revision}</version>
-			<type>jar</type>
-		</dependency>
-		<dependency>
-			<groupId>org.choral-lang</groupId>
 			<artifactId>runtime</artifactId>
 			<version>${revision}</version>
 			<type>jar</type>
