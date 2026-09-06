@@ -23,53 +23,42 @@
         <dependency>
             <groupId>org.choral-lang</groupId>
             <artifactId>base</artifactId>
-            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>org.choral-lang</groupId>
             <artifactId>runtime</artifactId>
-            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>org.choral-lang</groupId>
             <artifactId>choral</artifactId>
-            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>org.choral-lang</groupId>
             <artifactId>choral-unit</artifactId>
-            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
-            <version>4.9.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity</artifactId>
-            <version>1.7</version>
         </dependency>
         <dependency>
             <groupId>com.esotericsoftware</groupId>
             <artifactId>kryo</artifactId>
-            <version>5.3.0</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.10.0</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.18.0</version>
         </dependency>
         <dependency>
             <groupId>io.github.java-diff-utils</groupId>
             <artifactId>java-diff-utils</artifactId>
-            <version>4.15</version>
         </dependency>
     </dependencies>
 
@@ -78,7 +67,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-clean-plugin</artifactId>
-                <version>3.3.2</version>
                 <configuration>
                     <filesets>
                         <fileset>
@@ -93,7 +81,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
                 <configuration>
                     <printSummary>false</printSummary>
                 </configuration>

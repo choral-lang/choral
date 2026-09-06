@@ -24,27 +24,22 @@
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>choral</artifactId>
-			<version>${revision}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.choral-lang</groupId>
 			<artifactId>base</artifactId>
-			<version>${revision}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.esotericsoftware</groupId>
 			<artifactId>kryo</artifactId>
-			<version>5.3.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>2.9.0</version>
 		</dependency>
 		<dependency>
 			<groupId>io.github.classgraph</groupId>
 			<artifactId>classgraph</artifactId>
-			<version>4.8.140</version>
 		</dependency>
 	</dependencies>
 </project>
