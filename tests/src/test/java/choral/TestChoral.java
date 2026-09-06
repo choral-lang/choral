@@ -56,10 +56,10 @@ import org.junit.jupiter.api.function.Executable;
 
 public class TestChoral {
 
-	private static final String RUNTIME =
-			Paths.get( "..", "runtime", "src", "main", "choral" ).toString();
-	private static final String CHORALUNIT =
-			Paths.get( "..", "choral-unit", "src", "main", "choral" ).toString();
+	private static final String RUNTIME_HEADERS =
+			Paths.get( "..", "runtime", "src", "main", "resources", "headers" ).toString();
+	private static final String CHORALUNIT_HEADERS =
+			Paths.get( "..", "choral-unit", "src", "main", "resources", "headers" ).toString();
 	private static final String MUSTFAIL =
 			Paths.get( "src", "main", "choral", "MustFail" ).toString();
 	private static final String MUSTPASS =
@@ -294,7 +294,7 @@ public class TestChoral {
 		parameters.add( "--verbosity=WARNINGS" );
 		parameters.add( "--headers=" +
 				String.join( File.pathSeparator, compilationRequest.sourceFolder() ) +
-				File.pathSeparator + RUNTIME + File.pathSeparator + CHORALUNIT );
+				File.pathSeparator + RUNTIME_HEADERS + File.pathSeparator + CHORALUNIT_HEADERS );
 		parameters.add( "-t" );
 		parameters.add( PROJECTED );
 		parameters.add( "-s" );
