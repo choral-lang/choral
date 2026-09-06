@@ -23,22 +23,6 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-clean-plugin</artifactId>
-                <version>2.4.1</version>
-                <configuration>
-                    <filesets>
-                        <fileset>
-                            <directory>src/main/java/choral/grammar</directory>
-                            <includes>
-                                <include>**/*</include>
-                            </includes>
-                            <followSymlinks>false</followSymlinks>
-                        </fileset>
-                    </filesets>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.0.0</version>
@@ -60,7 +44,6 @@
                                 <argument>-package</argument>
                                 <argument>choral.grammar</argument>
                             </arguments>
-                            <outputDirectory>${basedir}/src/main/java/choral/grammar</outputDirectory>
                             <visitor>true</visitor>
                         </configuration>
                     </execution>
