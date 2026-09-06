@@ -53,12 +53,4 @@ xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assemb
 	</fileSets>
 
   <includeBaseDirectory>false</includeBaseDirectory>
-
-  <!--<dependencySets>
-	  <dependencySet>
-		  <outputDirectory>choral/dist</outputDirectory>
-		  <useProjectArtifact>false</useProjectArtifact>
-		  <unpack>false</unpack>
-	  </dependencySet>
-  </dependencySets>-->
 </assembly>

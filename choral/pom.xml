@@ -56,7 +56,6 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <addClasspath>true</addClasspath>
                             <mainClass>choral.Choral</mainClass>
                         </manifest>
                     </archive>
