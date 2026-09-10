@@ -35,7 +35,7 @@ jobs:
           cache: maven
 
       - name: Install Choral
-        run: mvn --batch-mode --no-transfer-progress install
+        run: mvn --batch-mode --no-transfer-progress install -DskipTests
 
       - name: Check out IRC
         uses: actions/checkout@v4
@@ -45,4 +45,4 @@ jobs:
 
       - name: Build and test IRC
         working-directory: irc
-        run: mvn --batch-mode --no-transfer-progress verify -Dchoral.version=0.0.0-SNAPSHOT
+        run: mvn --batch-mode --no-transfer-progress verify "-Dchoral.version=0.0.0-SNAPSHOT"
