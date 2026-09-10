@@ -23,6 +23,25 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
+      - name: Validate release version
+        shell: bash
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          if [[ ! "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag '$TAG_NAME' must match v#.#.#" >&2
+            exit 1
+          fi
+
+          VERSION="${TAG_NAME#v}"
+          PROJECT_VERSION="$(mvn --batch-mode --quiet --non-recursive help:evaluate -Dexpression=project.version -DforceStdout -Dstyle.color=never)"
+          if [[ "$PROJECT_VERSION" != "$VERSION" ]]; then
+            echo "Release tag version '$VERSION' does not match Maven project version '$PROJECT_VERSION'" >&2
+            exit 1
+          fi
+
+          echo "choralVersion=$VERSION" >> "$GITHUB_ENV"
+
       - name: Build with Maven
         run: mvn --batch-mode package
 
@@ -30,11 +49,7 @@ jobs:
         run: mvn --batch-mode test
 
       - name: Prepare Artifact
-        run: |
-          TAG_NAME=${{github.event.release.tag_name}}
-          VERSION=$(echo $TAG_NAME | sed -e 's/v\(.*\)/\1/')
-          echo "choralVersion=$VERSION" >> $GITHUB_ENV
-          unzip "dist/target/choral-$VERSION" -d "dist/target/choral-$VERSION"
+        run: unzip "dist/target/choral-${{env.choralVersion}}" -d "dist/target/choral-${{env.choralVersion}}"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
