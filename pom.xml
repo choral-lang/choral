@@ -3,16 +3,51 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.choral-lang</groupId>
     <artifactId>distribution</artifactId>
+    <name>Distribution</name>
     <version>${revision}</version>
     <packaging>pom</packaging>
     <properties>
-        <revision>0.1.12-SNAPSHOT</revision>
+        <revision>0.0.0-SNAPSHOT</revision>
         <choral.url>https://www.choral-lang.org/</choral.url>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <antlr.version>4.9.3</antlr.version>
     </properties>
 
+    <licenses>
+        <license>
+            <name>GNU Lesser General Public License v2.1</name>
+            <url>http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Fabrizio Montesi</name>
+            <email>fmontesi@imada.sdu.dk</email>
+            <organization>University of Southern Denmark</organization>
+            <organizationUrl>https://www.sdu.dk/</organizationUrl>
+        </developer>
+        <developer>
+            <name>Marco Peressotti</name>
+            <email>peressotti@imada.sdu.dk</email>
+            <organization>University of Southern Denmark</organization>
+            <organizationUrl>https://www.sdu.dk/</organizationUrl>
+        </developer>
+        <developer>
+            <name>Saverio Giallorenzo</name>
+            <email>saverio.giallorenzo@gmail.com</email>
+            <organization>University of Bologna</organization>
+            <organizationUrl>https://www.unibo.it/</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm child.scm.connection.inherit.append.path="false" child.scm.developerConnection.inherit.append.path="false" child.scm.url.inherit.append.path="false">
+        <connection>scm:git:https://github.com/choral-lang/choral.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/choral-lang/choral.git</developerConnection>
+        <url>https://github.com/choral-lang/choral</url>
+    </scm>
 
     <modules>
         <module>dist</module>
@@ -22,14 +57,6 @@
         <module>runtime</module>
         <module>tests</module>
     </modules>
-
-    <distributionManagement>
-        <repository>
-            <id>github</id>
-            <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/choral-lang/choral</url>
-        </repository>
-    </distributionManagement>
 
     <dependencyManagement>
         <dependencies>
@@ -189,7 +216,7 @@
                 <artifactId>flatten-maven-plugin</artifactId>
                 <configuration>
                     <updatePomFile>true</updatePomFile>
-                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                    <flattenMode>oss</flattenMode>
                 </configuration>
                 <executions>
                     <execution>
@@ -226,4 +253,82 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.11.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                            <waitUntil>published</waitUntil>
+                            <excludeArtifacts>
+                                <artifact>compare</artifact>
+                                <artifact>choral-zip</artifact>
+                                <artifact>tests</artifact>
+                                <artifact>distribution</artifact>
+                            </excludeArtifacts>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.4.0</version>
+                        <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <phase>verify</phase>
+                            <goals>
+                            <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.12.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadoc</id>
+                                <goals>
+                                <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <stylesheet>java</stylesheet>
+                            <doclint>none</doclint>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
