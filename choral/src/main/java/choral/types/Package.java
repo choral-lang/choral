@@ -21,7 +21,8 @@
 
 package choral.types;
 
-import choral.exceptions.StaticVerificationException;
+import choral.compiler.Diagnostics;
+import choral.exceptions.AstPositionedException;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -120,8 +121,7 @@ public class Package {
 			Optional< Package > x = pkg.declaredPackage( name );
 			if( x.isEmpty() ) {
 				if( declaredType( name ).isPresent() ) {
-					throw new StaticVerificationException(
-							"Duplicate declaration for '" + name + "'" );
+					throw Diagnostics.symbolAlreadyDefined( name );
 				}
 				Package y = new Package( pkg, name );
 				pkg.declaredPackages.put( name, y );
@@ -163,8 +163,8 @@ public class Package {
 		assert ( type.declarationContext() == this );
 		if( declaredTypes.containsKey( type.identifier() ) || declaredPackages.containsKey(
 				type.identifier() ) ) {
-			throw StaticVerificationException.of( "Duplicate declaration for '" + type.identifier()
-					+ ( ( isRoot() ) ? "'" : "' in '" + this + "'" ), type.sourceCode() );
+			throw isRoot() ? Diagnostics.symbolAlreadyDefined( type.identifier() ) :
+					Diagnostics.symbolAlreadyDefined( type.identifier(), this );
 		}
 		// System.out.println(type.variety().labelSingular + " '" + type + "' declared"); // DEBUG
 		declaredTypes.put( type.identifier(), type );

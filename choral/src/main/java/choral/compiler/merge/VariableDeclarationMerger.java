@@ -41,12 +41,15 @@ class VariableDeclarationMerger extends AbstractMerger< VariableDeclaration > {
 				errorPrefix + "different variable names: " + n1.name() + " and " + n2.name(), n1, n2
 		);
 		MergeException._assert(
-				n1.type().equals( n2.type() ),
-				errorPrefix + "different types:  " + n1.type() + " and " + n2.type(), n1, n2
+				n1.inferredTypeExpression().equals( n2.inferredTypeExpression() ),
+				errorPrefix + "different types:  " + n1.inferredTypeExpression() + " and "
+						+ n2.inferredTypeExpression(),
+				n1, n2
 		);
 		MergeException._assert(
 				n1.annotations().equals( n2.annotations() ),
-				errorPrefix + "different annotation lists: " + n1.annotations() + " and " + n2.annotations(),
+				errorPrefix + "different annotation lists: " + n1.annotations() + " and "
+						+ n2.annotations(),
 				n1, n2
 		);
 
@@ -54,17 +57,19 @@ class VariableDeclarationMerger extends AbstractMerger< VariableDeclaration > {
 		MergeException._assert(
 				( i1.isPresent() && i2.isPresent() ) || ( i1.isEmpty() && i2.isEmpty() ),
 				errorPrefix + "different initializers: " + i1.orElse( null ) + " and " + i2.orElse(
-						null ), n1, n2
+						null ),
+				n1, n2
 		);
 
 		return new VariableDeclaration(
 				n1.name(),
-				n1.type(),
+				n1.inferredTypeExpression(),
 				n1.annotations(),
-				i1.isPresent() && i2.isPresent()
-						? (AssignExpression) ExpressionsMerger.mergeExpressions( i1.get(),
-						i2.get() )
-						: null,
+				i1.isPresent() && i2.isPresent() ?
+						(AssignExpression) ExpressionsMerger.mergeExpressions(
+								i1.get(), i2.get()
+						) :
+						null,
 				n1.modifiers()
 		);
 	}

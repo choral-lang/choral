@@ -1,4 +1,4 @@
-# Choral
+# Choral [![Build Status](https://github.com/choral-lang/choral/actions/workflows/maven-tests.yml/badge.svg?event=push)](https://github.com/choral-lang/choral/actions/workflows/maven-tests.yml)
 
 A compiler for the Choral programming language. Learn more at [https://choral-lang.org/](https://choral-lang.org/).
 

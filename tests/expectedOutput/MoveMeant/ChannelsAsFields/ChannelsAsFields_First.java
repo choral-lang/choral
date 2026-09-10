@@ -12,7 +12,7 @@ public class ChannelsAsFields_First {
 	SymChannel_A < Object > ch_AC;
 	DiDataChannel_A < Object > diData;
 	DiSelectChannel_A diSelect;
-	int var;
+	int firstValue;
 
 	ChannelsAsFields_First( SymChannel_A < Object > ch_AB, SymChannel_A < Object > ch_AC ) {
 		this.ch_AB = ch_AB;

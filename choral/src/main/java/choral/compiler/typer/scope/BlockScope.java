@@ -1,7 +1,7 @@
 package choral.compiler.typer.scope;
 
 import choral.ast.body.VariableDeclaration;
-import choral.exceptions.StaticVerificationException;
+import choral.compiler.Diagnostics;
 import choral.types.GroundClass;
 import choral.types.GroundClassOrInterface;
 import choral.types.GroundDataType;
@@ -39,8 +39,7 @@ public class BlockScope extends ChildScope
 		if( lookupVariable( identifier ).isEmpty() ) {
 			variables.put( identifier, declaration );
 		} else {
-			throw new StaticVerificationException( "variable '" + identifier
-					+ "' already defined in the scope" );
+			throw Diagnostics.variableAlreadyDefined( identifier );
 		}
 	}
 

@@ -35,7 +35,8 @@ public class ImportProjector implements ChoralVisitorInterface< Void > {
 	private List< ImportDeclaration > projectAllImports( List< ImportDeclaration > cImports ) {
 		List< ImportDeclaration > pImports = new ArrayList<>();
 		for( ImportDeclaration i : cImports ) {
-			if( i.typeAnnotation().isPresent() && i.typeAnnotation().get().worldParameters().size() > 1 ) {
+			if( i.typeAnnotation().isPresent()
+					&& i.typeAnnotation().get().worldParameters().size() > 1 ) {
 				for( World worldParameter : i.typeAnnotation().get().worldParameters() ) {
 					pImports.add(
 							new ImportDeclaration( i.name() + "_" + worldParameter.identifier(),
@@ -346,7 +347,11 @@ public class ImportProjector implements ChoralVisitorInterface< Void > {
 
 	@Override
 	public Void visit( VariableDeclaration n ) {
-		visit( n.type() );
+		if( n.type().isPresent() ) {
+			visit( n.type().get() );
+		} else {
+			visit( n.typeAnnotation().get().reify() );
+		}
 		n.annotations().forEach( this::visit );
 		n.initializer().ifPresent( this::visit );
 		return null;
@@ -393,12 +398,11 @@ public class ImportProjector implements ChoralVisitorInterface< Void > {
 	private void addImport( String name ) {
 		usedImports.addAll(
 				imports.stream()
-						.filter( i ->
-								i.name().endsWith( "*" )
-										|| ( i.name().contains( "." )
+						.filter( i -> i.name().endsWith( "*" )
+								|| ( i.name().contains( "." )
 										&& i.name().substring(
-										i.name().lastIndexOf( "." ) + 1 ).equals( name ) )
-										|| i.name().equals( name )
+												i.name().lastIndexOf( "." ) + 1 ).equals( name ) )
+								|| i.name().equals( name )
 						).collect( Collectors.toSet() )
 		);
 		imports.removeAll( usedImports );

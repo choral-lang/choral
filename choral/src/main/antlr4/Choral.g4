@@ -350,7 +350,10 @@ blockStatement
 	;
 
 localVariableDeclaration
-	: annotation* variableModifier* referenceType variableDeclarator ( COMMA variableDeclarator )* SEMI
+	: annotation* variableModifier*
+	  ( referenceType variableDeclarator ( COMMA variableDeclarator )*
+	  | VAR variableDeclarator
+	  ) SEMI
 	;
 
 variableModifier
@@ -614,6 +617,7 @@ TRY			: 'try';
 CATCH		: 'catch';
 NULL		: 'null';
 VOID 		: 'void';
+VAR         : 'var';
 AMPERSAND	: '&';
 
 

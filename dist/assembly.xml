@@ -9,13 +9,6 @@ xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assemb
   </formats>
   <fileSets>
 		<fileSet>
-			<directory>../choral/target</directory>
-			<includes>
-				<include>choral-${revision}.jar</include>
-			</includes>
-			<outputDirectory>choral/dist</outputDirectory>
-		</fileSet>
-		<fileSet>
 			<directory>../base/target</directory>
 			<includes>
 				<include>base-${revision}.jar</include>
@@ -53,12 +46,4 @@ xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assemb
 	</fileSets>
 
   <includeBaseDirectory>false</includeBaseDirectory>
-
-  <!--<dependencySets>
-	  <dependencySet>
-		  <outputDirectory>choral/dist</outputDirectory>
-		  <useProjectArtifact>false</useProjectArtifact>
-		  <unpack>false</unpack>
-	  </dependencySet>
-  </dependencySets>-->
 </assembly>

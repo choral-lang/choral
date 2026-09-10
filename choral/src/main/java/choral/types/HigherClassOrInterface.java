@@ -21,7 +21,11 @@
 
 package choral.types;
 
+import choral.ast.Name;
 import choral.ast.Node;
+import choral.ast.type.TypeExpression;
+import choral.compiler.Diagnostics;
+import choral.exceptions.AstPositionedException;
 import choral.exceptions.StaticVerificationException;
 import choral.types.kinds.Kind;
 import choral.utils.Formatting;
@@ -84,8 +88,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			x.setDeclarationContext( this );
 			for( int j = 0; j < i; j++ ) {
 				if( names[ j ].equals( x.identifier() ) ) {
-					throw StaticVerificationException.of(
-							"duplicate parameter '" + names[ j ] + "'", x.sourceCode() );
+					throw Diagnostics.parameterAlreadyDefined( names[ j ] );
 				}
 			}
 			names[ i++ ] = x.identifier();
@@ -207,6 +210,14 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 
 
 	@Override
+	public TypeExpression reify() {
+		TypeExpression expression = new TypeExpression(
+				new Name( identifier() ), Collections.emptyList(), Collections.emptyList() );
+		expression.setTypeAnnotation( this );
+		return expression;
+	}
+
+	@Override
 	public HigherReferenceType partiallyApplyTo( List< ? extends HigherReferenceType > typeArgs ) {
 		if( typeArgs.isEmpty() ) {
 			return this;
@@ -227,16 +238,19 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		private final List< ? extends HigherReferenceType > typeArgs;
 
 		@Override
+		public TypeExpression reify() {
+			TypeExpression expression = new TypeExpression(
+					new Name( identifier() ),
+					Collections.emptyList(),
+					typeArgs.stream().map( HigherReferenceType::reify ).toList() );
+			expression.setTypeAnnotation( this );
+			return expression;
+		}
+
+		@Override
 		public String toString() {
-			return //this.worldParameters.stream().map( World::toString ).collect(
-					//Formatting.joining( ",", "@(", ")->(", "" ) )
-					identifier( true )
-							//+ this.worldParameters.stream().map( World::toString ).collect(
-							//Formatting.joining( ",", "@(", ")", "" ) )
-							+ this.typeArgs.stream().map( HigherReferenceType::toString ).collect(
-							Formatting.joining( ",", "<", ">", "" ) )
-					//+ ")"
-					;
+			return identifier( true ) + this.typeArgs.stream().map( HigherReferenceType::toString )
+					.collect( Formatting.joining( ",", "<", ">", "" ) );
 		}
 
 		@Override
@@ -250,7 +264,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 				Lambda other = (Lambda) obj;
 				return this.isSameKind( other ) && this.applyTo(
 						this.worldParameters ).isEquivalentTo(
-						other.applyTo( this.worldParameters ) );
+								other.applyTo( this.worldParameters ) );
 			}
 			return false;
 		}
@@ -286,8 +300,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 	) {
 		super.checkApplicationArguments( worldArgs );
 		if( typeArgs.size() != typeParameters.size() ) {
-			throw new StaticVerificationException(
-					"illegal type instantiation: expected " + typeParameters.size() + " type arguments but found " + typeArgs.size() );
+			throw Diagnostics.typeArgumentsWrongCount( typeParameters.size(), typeArgs.size() );
 		}
 	}
 
@@ -313,11 +326,11 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		public final String toString() {
-			return typeConstructor().toString() +
-					worldArguments().stream().map( World::toString ).collect(
-							Formatting.joining( ",", "@(", ")", "" ) ) +
-					typeArguments().stream().map( HigherReferenceType::toString ).collect(
-							Formatting.joining( ",", "<", ">", "" ) );
+			return typeConstructor().toString() + worldArguments().stream().map( World::toString )
+					.collect(
+							Formatting.joining( ",", "@(", ")", "" ) ) + typeArguments().stream()
+									.map( HigherReferenceType::toString ).collect(
+											Formatting.joining( ",", "<", ">", "" ) );
 		}
 
 		@Override
@@ -335,20 +348,18 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		public void finaliseInheritance() {
 			if( !isInheritanceFinalised() ) {
 				allExtendedInterfaces = Stream.concat( extendedInterfaces(),
-								extendedClassesOrInterfaces().flatMap(
-										GroundClassOrInterface::allExtendedInterfaces ) )
+						extendedClassesOrInterfaces().flatMap(
+								GroundClassOrInterface::allExtendedInterfaces ) )
 						.collect( Collectors.toList() );
 				extendedClassesOrInterfaces().flatMap(
-								GroundClassOrInterface::allExtendedInterfaces )
-						.forEach( x -> extendedInterfaces().filter( y ->
-								x.typeConstructor() == y.typeConstructor() &&
+						GroundClassOrInterface::allExtendedInterfaces )
+						.forEach( x -> extendedInterfaces().filter(
+								y -> x.typeConstructor() == y.typeConstructor() &&
 										x.worldArguments().equals( y.worldArguments() ) &&
 										!x.typeArguments().equals( y.typeArguments() )
 						).findAny().ifPresent( y -> {
-									throw new StaticVerificationException(
-											"illegal inheritance, cannot implement both '"
-													+ y + "' and " + x + "'" );
-								}
+							throw Diagnostics.inheritanceConflictingAncestors( y, x );
+						}
 						) );
 				inheritanceFinalised = true;
 			}
@@ -362,12 +373,10 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			assert ( !isInheritanceFinalised() );
 			if( type.worldArguments().size() != worldArguments().size() ||
 					!type.worldArguments().containsAll( worldParameters ) ) {
-				throw new StaticVerificationException(
-						"illegal inheritance, '" + type + "' and '" + this + "' must have the same roles" );
+				throw Diagnostics.classExtendsWrongNumberOfRoles( type, this );
 			}
 			if( extendedInterfaces().anyMatch( x -> x.isEquivalentTo( type ) ) ) {
-				throw new StaticVerificationException(
-						"illegal inheritance, '" + type + "' is repeated" );
+				throw Diagnostics.inheritanceRepeatedInterface( type );
 			}
 			extendedInterfaces.add( type );
 		}
@@ -406,12 +415,13 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 				return true;
 			} else if( type instanceof Proxy ) {
 				Proxy other = (Proxy) type;
-				if (other.definition() != this)
+				if( other.definition() != this )
 					return false;
-				if (typeArguments().size() != other.typeArguments().size())
+				if( typeArguments().size() != other.typeArguments().size() )
 					return false;
-				for( int i = 0; i < typeArguments().size(); i++ ){
-					if ( !typeArguments().get(i).isEquivalentTo_relaxed( other.typeArguments().get(i) ) )
+				for( int i = 0; i < typeArguments().size(); i++ ) {
+					if( !typeArguments().get( i )
+							.isEquivalentTo_relaxed( other.typeArguments().get( i ) ) )
 						return false;
 				}
 				return true;
@@ -425,7 +435,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			return ( !strict && isEquivalentTo( type ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) )
 					|| ( type.isEquivalentTo(
-					universe().topReferenceType( worldArguments() ) ) );
+							universe().topReferenceType( worldArguments() ) ) );
 		}
 
 		@Override
@@ -433,7 +443,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			return ( !strict && isEquivalentTo_relaxed( type ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) )
 					|| ( type.isEquivalentTo_relaxed(
-					universe().topReferenceType( worldArguments() ) ) );
+							universe().topReferenceType( worldArguments() ) ) );
 		}
 
 		private boolean interfaceFinalised = false;
@@ -462,7 +472,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		private void inheritFields() {
 			extendedClassesOrInterfaces().flatMap( GroundReferenceType::fields )
 					.filter( x -> x.isAccessibleFrom( this ) &&
-							declaredFields().noneMatch( y -> x.identifier().equals( y.identifier() ) ) )
+							declaredFields()
+									.noneMatch( y -> x.identifier().equals( y.identifier() ) ) )
 					.forEach( inheritedFields::add );
 		}
 
@@ -479,11 +490,10 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 				// === CLASS INHERITANCE (JLS 8.4.8) ===
 
 				// Phase 1a: Inherit concrete methods from direct superclass
-				gc.extendedClass().ifPresent( superclass ->
-						superclass.methods()
-								.filter( m -> !m.isAbstract() && m.isAccessibleFrom( this ) )
-								.forEach( m -> collectCandidate(
-										m, candidates, implementedByDeclared ) )
+				gc.extendedClass().ifPresent( superclass -> superclass.methods()
+						.filter( m -> !m.isAbstract() && m.isAccessibleFrom( this ) )
+						.forEach( m -> collectCandidate(
+								m, candidates, implementedByDeclared ) )
 				);
 
 				List< Member.HigherMethod > concreteSuperclassMethods =
@@ -491,12 +501,11 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 
 				// (JLS 8.4.8 (d)) An abstract supertype method is not inherited if a
 				// concrete superclass method already has a subsignature.
-				gc.extendedClass().ifPresent( superclass ->
-						superclass.methods()
-								.filter( m -> m.isAbstract() && m.isAccessibleFrom( this ) )
-								.forEach( m -> collectCandidateIfNotSatisfied(
-										m, candidates, concreteSuperclassMethods,
-										implementedByDeclared ) )
+				gc.extendedClass().ifPresent( superclass -> superclass.methods()
+						.filter( m -> m.isAbstract() && m.isAccessibleFrom( this ) )
+						.forEach( m -> collectCandidateIfNotSatisfied(
+								m, candidates, concreteSuperclassMethods,
+								implementedByDeclared ) )
 				);
 
 				// (JLS 9.4.1.1) Static interface methods are not inherited.
@@ -560,10 +569,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 				}
 				if( methodToInherit.sameErasureAs( declaredMethod ) ) {
 					// (JLS 8.4.8.3) Same erasure but not a subsignature.
-					throw new StaticVerificationException( "method '" + declaredMethod
-							+ "' in '" + this + "' clashes with method '"
-							+ methodToInherit + "' in '" + methodToInherit.declarationContext()
-							+ "', both methods have the same erasure" );
+					throw Diagnostics.inheritedMethodErasureClashesWithDeclared(
+							declaredMethod, this, methodToInherit );
 				}
 			}
 
@@ -583,12 +590,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			for( Member.HigherMethod c : concreteSuperclassMethods ) {
 				if( c.isSubSignatureOf( methodToInherit ) ) {
 					if( !c.isReturnTypeSubstitutableFor( methodToInherit ) ) {
-						throw new StaticVerificationException(
-								"method '" + c
-										+ "' in '" + c.declarationContext()
-										+ "' clashes with method '" + methodToInherit
-										+ "' in '" + methodToInherit.declarationContext()
-										+ "', attempting to use incompatible return type" );
+						throw Diagnostics.methodClashesWithInheritedMethodReturnType( c,
+								methodToInherit );
 					}
 					return;
 				}
@@ -607,12 +610,8 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			for( Member.HigherMethod z : candidates ) {
 				if( z.isSubSignatureOf( methodToInherit ) ) {
 					if( !z.isReturnTypeSubstitutableFor( methodToInherit ) ) {
-						throw new StaticVerificationException(
-								"method '" + z
-										+ "' in '" + z.declarationContext()
-										+ "' clashes with method '" + methodToInherit
-										+ "' in '" + methodToInherit.declarationContext()
-										+ "', attempting to use incompatible return type" );
+						throw Diagnostics.methodClashesWithInheritedMethodReturnType( z,
+								methodToInherit );
 					}
 					return true;
 				}
@@ -709,12 +708,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 					// Keep both — Phase 4 will verify return-type compatibility.
 					return 0;
 				}
-				throw new StaticVerificationException(
-						"Duplicate default methods inherited. "
-								+ "'" + this + "' must override '" + m
-								+ "'' from '" + m.declarationContext()
-								+ "' which is identical to '" + earlier
-								+ "' from '" + earlier.declarationContext() + "'" );
+				throw Diagnostics.defaultMethodsFoundDuplicate( this, m, earlier );
 			}
 
 			return 0;
@@ -759,11 +753,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 					}
 					if( !m.isReturnTypeSubstitutableFor( earlier )
 							&& !earlier.isReturnTypeSubstitutableFor( m ) ) {
-						throw new StaticVerificationException(
-								"method '" + m + "' in '" + m.declarationContext()
-										+ "' clashes with method '" + earlier
-										+ "' in '" + earlier.declarationContext()
-										+ "', attempting to use incompatible return type" );
+						throw Diagnostics.methodClashesWithInheritedMethodReturnType( m, earlier );
 					}
 				}
 
@@ -795,9 +785,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 					return;
 				}
 			}
-			throw new StaticVerificationException( "'" + this + "' must either "
-					+ "be declared as abstract or implement abstract method '"
-					+ abstractMethod + "' in '" + abstractMethod.declarationContext() + "'" );
+			throw Diagnostics.concreteTypeMustImplementAbstractMethod( this, abstractMethod );
 		}
 
 		/**
@@ -806,16 +794,11 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		 * error for a concrete subclass.
 		 */
 		private void checkInaccessibleAbstractObligations( GroundClass gc ) {
-			gc.extendedClass().ifPresent( superclass ->
-					superclass.methods()
-							.filter( m -> m.isAbstract() && !m.isAccessibleFrom( this ) )
-							.forEach( m -> {
-								throw new StaticVerificationException(
-										"Implementation is not abstract and does not"
-												+ " override abstract method '"
-												+ m + "' in '"
-												+ m.declarationContext() + "'" );
-							} )
+			gc.extendedClass().ifPresent( superclass -> superclass.methods()
+					.filter( m -> m.isAbstract() && !m.isAccessibleFrom( this ) )
+					.forEach( m -> {
+						throw Diagnostics.concreteTypeMustImplementAbstractMethod( m );
+					} )
 			);
 		}
 
@@ -847,31 +830,24 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			} );
 		}
 
-		private void checkOverrideRequirementsOrThrow(Member.HigherMethod child, Member.HigherMethod parent) {
+		private void checkOverrideRequirementsOrThrow(
+				Member.HigherMethod child, Member.HigherMethod parent
+		) {
 			// (8.4.3.3) Ensure we're not overriding a final method
 			if( parent.isFinal() ) {
-				throw new StaticVerificationException( "method '" + child
-						+ "' in '" + this + "' cannot override final method '"
-						+ parent + "' in '" + parent.declarationContext() + "'" );
+				throw Diagnostics.methodOverridesFinalMethod( child, this, parent );
 			}
 			// (8.4.8.1) Ensure instance methods don't override static methods
 			if( !child.isStatic() && parent.isStatic() ) {
-				throw new StaticVerificationException( "instance method '" + child
-						+ "' in '" + this + "' cannot override static method '"
-						+ parent + "' in '" + parent.declarationContext() + "'" );
+				throw Diagnostics.methodOverridesStaticMethod( child, this, parent );
 			}
 			// (8.4.8.2) Ensure static methods don't hide instance methods
 			if( child.isStatic() && !parent.isStatic() ) {
-				throw new StaticVerificationException( "static method '" + child
-						+ "' in '" + this + "' cannot override instance method '"
-						+ parent + "' in '" + parent.declarationContext() + "'" );
+				throw Diagnostics.staticMethodOverridesInstanceMethod( child, this, parent );
 			}
 			// (8.4.8.3) Ensure method return types are covariant
-			if( !child.isReturnTypeSubstitutableFor(parent) ) {
-				throw new StaticVerificationException( "method '" + child
-						+ "' in '" + this + "' clashes with method '"
-						+ parent + "' in '" + parent.declarationContext()
-						+ "', attempting to use incompatible return type" );
+			if( !child.isReturnTypeSubstitutableFor( parent ) ) {
+				throw Diagnostics.methodClashesWithInheritedMethodReturnType( child, parent );
 			}
 
 			// (8.4.8.3) JLS says we should issue a warning if child is not a subtype of parent; we skip that check.
@@ -880,12 +856,10 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			// (8.4.8.3) Ensure the access modifiers are compatible
 			if( child.isPrivate() || ( parent.isPublic() && !child.isPublic() )
 					|| ( parent.isProtected() && child.isPackagePrivate() ) ) {
-				throw new StaticVerificationException( "method '" + child
-						+ "' in '" + this + "' clashes with method '"
-						+ parent + "' in '" + parent.declarationContext()
-						+ "', attempting to assign weaker access privileges '"
-						+ ModifierUtils.prettyAccess( child.modifiers() ) + "' to '"
-						+ ModifierUtils.prettyAccess( parent.modifiers() ) + "'" );
+				throw Diagnostics.methodOverrideHasWeakerAccess(
+						child, this.toString(), parent,
+						ModifierUtils.prettyAccess( child.modifiers() ),
+						ModifierUtils.prettyAccess( parent.modifiers() ) );
 			}
 		}
 
@@ -917,9 +891,9 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			assert ( !interfaceFinalised );
 			assert ( field.declarationContext() == this );
 			if( declaredFields().anyMatch( x -> x.identifier().equals( field.identifier() ) ) ) {
-				throw new StaticVerificationException(
-						"duplicate variable '" + field.identifier() + "' in "
-								+ typeConstructor().variety().labelSingular + " '" + typeConstructor() );
+				throw Diagnostics.fieldAlreadyDefined(
+						field.identifier(), typeConstructor().variety().labelSingular,
+						typeConstructor() );
 			}
 			declaredFields.add( field );
 		}
@@ -930,12 +904,9 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			for( Member.HigherMethod x : declaredMethods ) {
 				if( x.sameErasureAs( method ) ) {
 					if( x.sameSignatureAs( method ) ) {
-						throw new StaticVerificationException( "method '" + method
-								+ "' is already defined in '" + typeConstructor() + "'" );
+						throw Diagnostics.methodAlreadyDefined( method, typeConstructor() );
 					} else {
-						throw new StaticVerificationException( "method '" + method
-								+ "' clashes with '" + x
-								+ "', both methods have the same erasure" );
+						throw Diagnostics.methodsHaveSameErasure( method, x );
 					}
 				}
 			}
@@ -958,11 +929,11 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 		}
 
 		public final String toString() {
-			return typeConstructor().toString() +
-					worldArguments().stream().map( World::toString ).collect(
-							Formatting.joining( ",", "@(", ")", "" ) ) +
-					typeArguments().stream().map( HigherReferenceType::toString ).collect(
-							Formatting.joining( ",", "<", ">", "" ) );
+			return typeConstructor().toString() + worldArguments().stream().map( World::toString )
+					.collect(
+							Formatting.joining( ",", "@(", ")", "" ) ) + typeArguments().stream()
+									.map( HigherReferenceType::toString ).collect(
+											Formatting.joining( ",", "<", ">", "" ) );
 		}
 
 		public final List< ? extends HigherReferenceType > typeArguments() {
@@ -1027,16 +998,17 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 				return type.isEquivalentTo_relaxed( this );
 			} else if( type instanceof Proxy ) {
 				Proxy other = (Proxy) type;
-				if (this.definition() != other.definition())
+				if( this.definition() != other.definition() )
 					return false;
-				if (typeArguments().size() != other.typeArguments().size()) 
+				if( typeArguments().size() != other.typeArguments().size() )
 					return false;
-				for( int i = 0; i < typeArguments().size(); i++ ){
-					if ( !typeArguments().get(i).isEquivalentTo_relaxed( other.typeArguments().get(i) ) )
+				for( int i = 0; i < typeArguments().size(); i++ ) {
+					if( !typeArguments().get( i )
+							.isEquivalentTo_relaxed( other.typeArguments().get( i ) ) )
 						return false;
 				}
 				return true;
-						
+
 			} else {
 				return false;
 			}
@@ -1047,7 +1019,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			return ( !strict && isEquivalentTo( type ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf( type, false ) )
 					|| ( type.isEquivalentTo(
-					universe().topReferenceType( worldArguments() ) ) );
+							universe().topReferenceType( worldArguments() ) ) );
 		}
 
 		@Override
@@ -1055,7 +1027,7 @@ public abstract class HigherClassOrInterface extends HigherReferenceType
 			return ( !strict && isEquivalentTo_relaxed( type ) )
 					|| extendedInterfaces().anyMatch( x -> x.isSubtypeOf_relaxed( type, false ) )
 					|| ( type.isEquivalentTo_relaxed(
-					universe().topReferenceType( worldArguments() ) ) );
+							universe().topReferenceType( worldArguments() ) ) );
 		}
 
 		@Override

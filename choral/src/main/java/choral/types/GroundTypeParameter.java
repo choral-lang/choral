@@ -21,6 +21,10 @@
 
 package choral.types;
 
+import choral.ast.Name;
+import choral.ast.type.TypeExpression;
+
+import java.util.List;
 import java.util.stream.Stream;
 
 /** @see choral.types.GroundDataType */
@@ -28,6 +32,21 @@ public interface GroundTypeParameter extends GroundReferenceType, TypeParameter 
 
 	@Override
 	HigherTypeParameter typeConstructor();
+
+	@Override
+	default HigherTypeParameter unapplyWorlds() {
+		return typeConstructor();
+	}
+
+	@Override
+	default TypeExpression reify() {
+		TypeExpression expression = new TypeExpression(
+				new Name( typeConstructor().identifier() ),
+				reifyWorldArguments(),
+				List.of() );
+		expression.setTypeAnnotation( this );
+		return expression;
+	}
 
 	boolean isBoundFinalised();
 

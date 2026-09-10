@@ -38,7 +38,7 @@ import static choral.ast.body.VariableModifier.FINAL;
 public class VariableDeclaration extends Node {
 
 	private final Name name;
-	private final TypeExpression type;
+	private final Optional< TypeExpression > type;
 	private final List< Annotation > annotations;
 	private final AssignExpression initializer;
 	private final EnumSet< VariableModifier > modifiers;
@@ -50,8 +50,21 @@ public class VariableDeclaration extends Node {
 			final AssignExpression initializer,
 			final Position position
 	) {
-		this( name, type, annotations, initializer, EnumSet.noneOf( VariableModifier.class ), position );
+		this( name, type, annotations, initializer, EnumSet.noneOf( VariableModifier.class ),
+				position );
 	}
+
+	public VariableDeclaration(
+			final Name name,
+			final Optional< TypeExpression > type,
+			final List< Annotation > annotations,
+			final AssignExpression initializer,
+			final Position position
+	) {
+		this( name, type, annotations, initializer, EnumSet.noneOf( VariableModifier.class ),
+				position );
+	}
+
 
 	public VariableDeclaration(
 			final Name name,
@@ -60,16 +73,34 @@ public class VariableDeclaration extends Node {
 			final AssignExpression initializer,
 			final EnumSet< VariableModifier > modifiers
 	) {
-		this.name = name;
-		this.type = type;
-		this.annotations = annotations;
-		this.initializer = initializer;
-		this.modifiers = copyModifiers( modifiers );
+		this( name, Optional.of( type ), annotations, initializer, modifiers, null );
 	}
 
 	public VariableDeclaration(
 			final Name name,
+			final Optional< TypeExpression > type,
+			final List< Annotation > annotations,
+			final AssignExpression initializer,
+			final EnumSet< VariableModifier > modifiers
+	) {
+		this( name, type, annotations, initializer, modifiers, null );
+	}
+
+
+	public VariableDeclaration(
+			final Name name,
 			final TypeExpression type,
+			final List< Annotation > annotations,
+			final AssignExpression initializer,
+			final EnumSet< VariableModifier > modifiers,
+			final Position position
+	) {
+		this( name, Optional.of( type ), annotations, initializer, modifiers, position );
+	}
+
+	public VariableDeclaration(
+			final Name name,
+			final Optional< TypeExpression > type,
 			final List< Annotation > annotations,
 			final AssignExpression initializer,
 			final EnumSet< VariableModifier > modifiers,
@@ -83,12 +114,17 @@ public class VariableDeclaration extends Node {
 		this.modifiers = copyModifiers( modifiers );
 	}
 
+
 	public Name name() {
 		return name;
 	}
 
-	public TypeExpression type() {
+	public Optional< TypeExpression > type() {
 		return type;
+	}
+
+	public TypeExpression inferredTypeExpression() {
+		return type.orElseGet( () -> typeAnnotation().get().reify() );
 	}
 
 	public List< Annotation > annotations() {
@@ -118,10 +154,10 @@ public class VariableDeclaration extends Node {
 	}
 
 	private static EnumSet< VariableModifier > copyModifiers(
-			EnumSet< VariableModifier > modifiers ) {
-		return modifiers.isEmpty()
-				? EnumSet.noneOf( VariableModifier.class )
-				: EnumSet.copyOf( modifiers );
+			EnumSet< VariableModifier > modifiers
+	) {
+		return modifiers.isEmpty() ? EnumSet.noneOf( VariableModifier.class ) :
+				EnumSet.copyOf( modifiers );
 	}
 
 	@Override

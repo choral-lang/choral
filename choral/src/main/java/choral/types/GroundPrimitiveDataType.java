@@ -21,6 +21,11 @@
 
 package choral.types;
 
+import choral.ast.Name;
+import choral.ast.type.TypeExpression;
+
+import java.util.List;
+
 /** @see choral.types.GroundDataType */
 public interface GroundPrimitiveDataType extends GroundDataType, PrimitiveDataType {
 
@@ -29,6 +34,16 @@ public interface GroundPrimitiveDataType extends GroundDataType, PrimitiveDataTy
 
 	@Override
 	GroundPrimitiveDataType applySubstitution( Substitution substitution );
+
+	@Override
+	default TypeExpression reify() {
+		TypeExpression expression = new TypeExpression(
+				new Name( primitiveTypeTag().toString() ),
+				reifyWorldArguments(),
+				List.of() );
+		expression.setTypeAnnotation( this );
+		return expression;
+	}
 
 	@Override
 	default GroundClass boxedType() {
@@ -41,7 +56,7 @@ public interface GroundPrimitiveDataType extends GroundDataType, PrimitiveDataTy
 			GroundDataType t = (GroundDataType) type;
 			return this.worldArguments().equals( t.worldArguments() )
 					&& ( this.primitiveTypeTag().isAssignableTo( t.primitiveTypeTag() )
-					|| this.boxedType().isEquivalentTo( t ) );
+							|| this.boxedType().isEquivalentTo( t ) );
 		} else {
 			return false;
 		}
@@ -51,7 +66,7 @@ public interface GroundPrimitiveDataType extends GroundDataType, PrimitiveDataTy
 		if( type instanceof GroundDataType ) {
 			GroundDataType t = (GroundDataType) type;
 			return this.primitiveTypeTag().isAssignableTo( t.primitiveTypeTag() )
-					|| this.boxedType().isEquivalentTo_relaxed( t ) ;
+					|| this.boxedType().isEquivalentTo_relaxed( t );
 		} else {
 			return false;
 		}

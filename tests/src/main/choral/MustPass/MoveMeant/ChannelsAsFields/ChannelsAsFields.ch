@@ -12,7 +12,7 @@ public class ChannelsAsFields@( First, Second, C ){
 	SymChannel@( First, C )< Object > ch_AC;
 	DiDataChannel@( First, Second )< Object > diData;
 	DiSelectChannel@( First, Second ) diSelect;
-	int@First var;
+	int@First firstValue;
 	String@Second var2;
 	Object@C var3;
 
