@@ -19,11 +19,8 @@ When running the command `mvn test`, the option `-DliftVerbose` is available if 
 
 ## Issuing a new release
 
-To issue a new version of Choral:
+To issue a new version of Choral, go to [releases](https://github.com/choral-lang/choral/releases) and publish a release for that commit. The tag must use the exact format `v#.#.#`, for example `v0.1.13`.
 
-1. Bump the version number under `project.properties.revision` in the root [`pom.xml`](/pom.xml) file.
-2. Make a new commit with the change and push it to Github.
-3. Go to [releases](https://github.com/choral-lang/choral/releases) and create a new release. Make sure that the tag follows the exact format `v#.#.#`, where `#.#.#` is the new version number from step 1.
-4. After the release has been created, a new [action](https://github.com/choral-lang/choral/actions) will have started. When it finishes, download the `choral-#.#.#.zip` artifact and upload it to the release.
+Publishing the release triggers a [GitHub workflow](https://github.com/choral-lang/choral/actions/workflows/maven-publish.yml) that validates the tag, tests Choral, publishes the libraries to Maven Central, and attaches `choral-#.#.#.zip` to the GitHub release.
 
-Following these steps, ensures that the installation script and maven package is updated properly.
+The workflow requires valid `CENTRAL_TOKEN_USERNAME`, `CENTRAL_TOKEN_PASSWORD`, `GPG_SIGNING_KEY`, and `GPG_SIGNING_KEY_PASSWORD` repository secrets. Maven Central release versions and Git tags are immutable, so never reuse a released version.

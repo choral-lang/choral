@@ -7,7 +7,7 @@
     <version>${revision}</version>
     <packaging>pom</packaging>
     <properties>
-        <revision>0.1.12-SNAPSHOT</revision>
+        <revision>0.0.0-SNAPSHOT</revision>
         <choral.url>https://www.choral-lang.org/</choral.url>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
@@ -43,10 +43,10 @@
         </developer>
     </developers>
 
-    <scm>
-        <connection>scm:git:git://github.com/choral-lang/choral.git</connection>
-        <developerConnection>scm:git:ssh://github.com:choral-lang/choral.git</developerConnection>
-        <url>http://github.com/choral-lang/choral/tree/master</url>
+    <scm child.scm.connection.inherit.append.path="false" child.scm.developerConnection.inherit.append.path="false" child.scm.url.inherit.append.path="false">
+        <connection>scm:git:https://github.com/choral-lang/choral.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/choral-lang/choral.git</developerConnection>
+        <url>https://github.com/choral-lang/choral</url>
     </scm>
 
     <modules>

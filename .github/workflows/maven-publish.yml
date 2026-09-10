@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
@@ -23,7 +25,7 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
-      - name: Validate release version
+      - name: Validate release tag
         shell: bash
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
@@ -34,32 +36,29 @@ jobs:
           fi
 
           VERSION="${TAG_NAME#v}"
-          PROJECT_VERSION="$(mvn --batch-mode --quiet --non-recursive help:evaluate -Dexpression=project.version -DforceStdout -Dstyle.color=never)"
+          PROJECT_VERSION="$(mvn --batch-mode --quiet --non-recursive -Drevision="$VERSION" help:evaluate -Dexpression=project.version -DforceStdout -Dstyle.color=never)"
           if [[ "$PROJECT_VERSION" != "$VERSION" ]]; then
-            echo "Release tag version '$VERSION' does not match Maven project version '$PROJECT_VERSION'" >&2
+            echo "Maven resolved project version '$PROJECT_VERSION' instead of release version '$VERSION'" >&2
             exit 1
           fi
 
-          echo "choralVersion=$VERSION" >> "$GITHUB_ENV"
+          echo "CHORAL_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=$TAG_NAME" >> "$GITHUB_ENV"
 
       - name: Build with Maven
-        run: mvn --batch-mode package
+        run: mvn --batch-mode -Drevision="$CHORAL_VERSION" package
 
-      - name: Unit Tests
-        run: mvn --batch-mode test
-
-      - name: Prepare Artifact
-        run: unzip "dist/target/choral-${{env.choralVersion}}" -d "dist/target/choral-${{env.choralVersion}}"
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: choral-${{env.choralVersion}}
-          path: dist/target/choral-${{env.choralVersion}}/*
+      - name: Validate distribution
+        run: unzip -t "dist/target/choral-$CHORAL_VERSION.zip"
 
       - name: Publish package
-        run: mvn -P release --batch-mode deploy -DskipTests
+        run: mvn --batch-mode -Drevision="$CHORAL_VERSION" -P release deploy -DskipTests
         env:
           MAVEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+
+      - name: Attach distribution to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$RELEASE_TAG" "dist/target/choral-$CHORAL_VERSION.zip" --clobber
