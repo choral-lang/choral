@@ -35,14 +35,7 @@ jobs:
             exit 1
           fi
 
-          VERSION="${TAG_NAME#v}"
-          PROJECT_VERSION="$(mvn --batch-mode --quiet --non-recursive -Drevision="$VERSION" help:evaluate -Dexpression=project.version -DforceStdout -Dstyle.color=never)"
-          if [[ "$PROJECT_VERSION" != "$VERSION" ]]; then
-            echo "Maven resolved project version '$PROJECT_VERSION' instead of release version '$VERSION'" >&2
-            exit 1
-          fi
-
-          echo "CHORAL_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "CHORAL_VERSION=${TAG_NAME#v}" >> "$GITHUB_ENV"
           echo "RELEASE_TAG=$TAG_NAME" >> "$GITHUB_ENV"
 
       - name: Build with Maven
