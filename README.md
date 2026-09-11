@@ -1,9 +1,13 @@
 # Choral [![Build Status](https://github.com/choral-lang/choral/actions/workflows/maven-tests.yml/badge.svg?event=push)](https://github.com/choral-lang/choral/actions/workflows/maven-tests.yml)
 
-A compiler for the Choral programming language. Learn more at [https://choral-lang.org/](https://choral-lang.org/).
+Choral is a [choreographic programming language](https://en.wikipedia.org/wiki/Choreographic_programming) that compiles to Java. Try out the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=choral.vscode-choral), look at some [examples](https://github.com/choral-lang/examples), and use it in your own project with the [Maven plugin](https://github.com/choral-lang/choral-maven-plugin). For a guided tour, check out the [official documentation](https://www.choral-lang.org).
 
-To build the project, install [Maven](https://maven.apache.org/) and run the command `mvn install`.
-Run the command `mvn test` to test the compiler.
+## Local Development
+
+### Installation
+
+To build the compiler from source, install [Maven](https://maven.apache.org/) and run the command `mvn install`.
+Use `mvn test` to run the test suite.
 
 To use the `choral` executable, you'll need to update your `PATH` and 
 `CHORAL_HOME` environment variables:
@@ -13,11 +17,11 @@ export CHORAL_HOME="PATH_TO_CHORAL/dist/target"
 ```
 To compile a Choral class called `HelloRoles`, run the command `choral epp HelloRoles`.
 
-## Testing
+### Testing
 
 When running the command `mvn test`, the option `-DliftVerbose` is available if one wishes to see verbose warnings from the ClassLifter. This is disabled by default. 
 
-## Issuing a new release
+### Issuing a new release
 
 To issue a new version of Choral, go to [releases](https://github.com/choral-lang/choral/releases) and publish a release for that commit. The tag must use the exact format `v#.#.#`, for example `v0.1.13`.
 
