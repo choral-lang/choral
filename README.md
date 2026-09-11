@@ -17,10 +17,6 @@ export CHORAL_HOME="PATH_TO_CHORAL/dist/target"
 ```
 To compile a Choral class called `HelloRoles`, run the command `choral epp HelloRoles`.
 
-### Testing
-
-When running the command `mvn test`, the option `-DliftVerbose` is available if one wishes to see verbose warnings from the ClassLifter. This is disabled by default. 
-
 ### Issuing a new release
 
 To issue a new version of Choral, go to [releases](https://github.com/choral-lang/choral/releases) and publish a release for that commit. The tag must use the exact format `v#.#.#`, for example `v0.1.13`.
