@@ -765,6 +765,7 @@ public abstract class Member implements HasSource {
 						signature,
 						false
 				);
+				sourceCode().ifPresent( result::setSourceCode );
 				result.innerCallable.setReturnType(
 						this.innerCallable.returnType.applySubstitution( newSubstitution ) );
 				if( isSelectionMethod() ) {
@@ -800,6 +801,7 @@ public abstract class Member implements HasSource {
 					signature,
 					false
 			);
+			sourceCode().ifPresent( result::setSourceCode );
 			result.innerCallable.setReturnType(
 					this.innerCallable.returnType.applySubstitution( newSubstitution ) );
 			if( isSelectionMethod() ) {
