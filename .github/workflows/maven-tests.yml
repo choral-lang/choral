@@ -10,9 +10,9 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
 permissions:
   contents: read
@@ -25,7 +25,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        # We need a full git history so Spotless can diff against origin/master
+        # We need a full git history so Spotless can diff against origin/main
         fetch-depth: 0
     - name: Set up JDK 17
       uses: actions/setup-java@v4
