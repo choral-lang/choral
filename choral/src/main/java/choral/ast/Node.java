@@ -27,7 +27,6 @@ public abstract class Node {
 
 	// position in the original choral source file
 	private Position position;
-	private Span span;
 
 	// ToDo: remove this, make position mandatory
 	@Deprecated
@@ -37,34 +36,20 @@ public abstract class Node {
 
 	protected Node( Position position ) {
 		this.position = position;
-		this.span = position == null ? null : Span.at( position );
 	}
 
 	public Position position() {
 		return this.position;
 	}
 
-	public boolean hasPosition() {
-		return position() != null;
-	}
-
-	public Span span() {
-		return this.span;
-	}
+	public boolean hasPosition() { return position() != null; }
 
 	public void setPosition( Position position ) {
 		this.position = position;
-		this.span = position == null ? null : Span.at( position );
-	}
-
-	public void setSpan( Span span ) {
-		this.span = span;
-		this.position = span == null ? null : span.start();
 	}
 
 	public < R extends Node > R copyPosition( Node n ) {
 		this.position = n.position;
-		this.span = n.span;
 		return (R) this;
 	}
 
