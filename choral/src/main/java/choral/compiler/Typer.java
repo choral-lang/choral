@@ -683,7 +683,7 @@ public class Typer {
 		private Type visitTypeExpression(
 				Scope scope, TypeExpression n, boolean delayBoundChecks
 		) {
-			HigherDataType type = scope.assertLookupDataType( n.name().identifier() );
+			HigherDataType type = scope.assertLookupDataType( n.name() );
 			List< World > worldArgs = n.worldArguments().stream()
 					.map( x -> scope.lookupWorldParameter( x.name().identifier() ).orElseGet(
 							() -> errors.abort( Diagnostics.symbolNotFound( x.name() ) ) ) )

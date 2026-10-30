@@ -1,24 +1,21 @@
 package lsp.features;
 
-import choral.ast.CompilationUnit;
-import choral.compiler.HeaderLoader;
-import choral.compiler.Parser;
-import choral.compiler.Typer;
-import choral.compiler.TyperOptions;
 import choral.exceptions.AstPositionedException;
 import choral.exceptions.ChoralCompoundException;
 import choral.exceptions.ChoralException;
-import choral.utils.VerbosityLevel;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.services.LanguageClient;
 
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DiagnosticsProvider {
+	private final TypedSourceAnalyzer analyzer = new TypedSourceAnalyzer();
 	private LanguageClient client;
 
 	public void setClient( LanguageClient client ) {
@@ -26,27 +23,33 @@ public class DiagnosticsProvider {
 	}
 
 	public List< Diagnostic > analyze( String uri, String content ) {
+		return diagnostics( uri, analyzer.analyze( uri, content ) );
+	}
+
+	public List< Diagnostic > diagnostics(
+			String uri, TypedSourceAnalyzer.AnalysisResult analysis
+	) {
 		List< Diagnostic > diagnostics = new ArrayList<>();
+		for( TypedSourceAnalyzer.AnalysisWarning warning : analysis.warnings() ) {
+			choral.ast.Position position = warning.position();
+			if( !belongsTo( uri, position ) ) continue;
+			if( position == null ) position = new choral.ast.Position( null, 1, 1 );
+			Diagnostic diagnostic = warningDiagnostic( warning.message() );
+			setRange( diagnostic, position );
+			diagnostics.add( diagnostic );
+		}
+		if( analysis.exception() != null )
+			addErrorDiagnostics( uri, diagnostics, analysis.exception() );
+		return List.copyOf( diagnostics );
+	}
 
-		try { // choral compiler errors are reported through exceptions
-			// so try to parse and type program, then catch any exceptions
-			// to pass along error messages to language client
-			CompilationUnit compUnit = Parser.parseString( content );
-
-			List< CompilationUnit > headerUnits = HeaderLoader.loadStandardProfile().toList();
-
-			TyperOptions typerOptions = new TyperOptions( VerbosityLevel.WARNINGS )
-					.withInfoChannel( ( pos, s ) -> {
-						if( pos == null ) pos = new choral.ast.Position( null, 1, 1 );
-						Diagnostic diagnostic = warningDiagnostic( s );
-						setRange( diagnostic, pos );
-						diagnostics.add( diagnostic );
-					} );
-			Typer.annotate( List.of( compUnit ), headerUnits, typerOptions );
-
-		} catch( ChoralCompoundException e ) {
+	private static void addErrorDiagnostics(
+			String uri, List< Diagnostic > diagnostics, Exception exception
+	) {
+		if( exception instanceof ChoralCompoundException e ) {
 			for( ChoralException cause : e.getCauses() ) {
 				if( cause instanceof AstPositionedException ape ) {
+					if( !belongsTo( uri, ape.position() ) ) continue;
 					Diagnostic diagnostic = errorDiagnostic( ape.getMessage() );
 					setRange( diagnostic, ape.position() );
 					diagnostics.add( diagnostic );
@@ -55,17 +58,29 @@ public class DiagnosticsProvider {
 					diagnostics.add( diagnostic );
 				}
 			}
-		} catch( AstPositionedException e ) {
+		} else if( exception instanceof AstPositionedException e ) {
+			if( !belongsTo( uri, e.position() ) ) return;
 			Diagnostic diagnostic = errorDiagnostic( e.getMessage() );
 			setRange( diagnostic, e.position() );
 			diagnostics.add( diagnostic );
-
-		} catch( Exception e ) {
-			Diagnostic diagnostic = errorDiagnostic( "Internal compiler error: " + e.getMessage() );
+		} else {
+			Diagnostic diagnostic = errorDiagnostic(
+					"Internal compiler error: " + exception.getMessage() );
 			diagnostics.add( diagnostic );
 		}
+	}
 
-		return diagnostics;
+	private static boolean belongsTo( String uri, choral.ast.Position position ) {
+		Path documentPath = sourcePath( uri );
+		if( documentPath == null || position == null || position.sourceFile() == null )
+			return true;
+		return documentPath.toAbsolutePath().normalize().equals(
+				Path.of( position.sourceFile() ).toAbsolutePath().normalize() );
+	}
+
+	private static Path sourcePath( String uri ) {
+		if( uri == null || !uri.startsWith( "file:" ) ) return null;
+		return Path.of( URI.create( uri ) );
 	}
 
 	private static Diagnostic warningDiagnostic( String message ) {
@@ -78,6 +93,7 @@ public class DiagnosticsProvider {
 
 	private static Diagnostic errorDiagnostic( String message ) {
 		Diagnostic diagnostic = new Diagnostic();
+		diagnostic.setRange( new Range( new Position( 0, 0 ), new Position( 0, 0 ) ) );
 		diagnostic.setSeverity( DiagnosticSeverity.Error );
 		diagnostic.setMessage( message );
 		diagnostic.setSource( "choral-compiler" );
@@ -85,6 +101,10 @@ public class DiagnosticsProvider {
 	}
 
 	private static void setRange( Diagnostic diagnostic, choral.ast.Position position ) {
+		if( position == null ) {
+			diagnostic.setRange( new Range( new Position( 0, 0 ), new Position( 0, 0 ) ) );
+			return;
+		}
 		// position.line() -1 to account for diff between 0-indexing and 1-indexing
 		Range range = new Range( new Position( position.line() - 1, position.column() ),
 				new Position( position.line() - 1, position.column() ) );
