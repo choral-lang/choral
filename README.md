@@ -22,3 +22,8 @@ To compile a Choral class called `HelloRoles`, run the command `choral epp Hello
 To issue a new version of Choral, go to [releases](https://github.com/choral-lang/choral/releases) and publish a release for that commit. The tag must use the exact format `v#.#.#`, for example `v0.1.13`.
 
 Publishing the release triggers a [GitHub workflow](https://github.com/choral-lang/choral/actions/workflows/maven-publish.yml) that validates the tag, tests Choral, publishes the libraries to Maven Central, and attaches `choral-#.#.#.zip` to the GitHub release.
+
+### Repository settings
+
+The [GitHub Terraform configuration](infra/github/README.md) manages default-branch
+protection, including required pull requests and squash merges.
